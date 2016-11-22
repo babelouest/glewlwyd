@@ -1,0 +1,137 @@
+
+DROP TABLE IF EXISTS `g_client_authorization_type`;
+DROP TABLE IF EXISTS `g_resource_scope`;
+DROP TABLE IF EXISTS `g_user_scope`;
+DROP TABLE IF EXISTS `g_access_token`;
+DROP TABLE IF EXISTS `g_refresh_token`;
+DROP TABLE IF EXISTS `g_resource`;
+DROP TABLE IF EXISTS `g_redirect_uri`;
+DROP TABLE IF EXISTS `g_client`;
+DROP TABLE IF EXISTS `g_authorization_type`;
+DROP TABLE IF EXISTS `g_scope`;
+DROP TABLE IF EXISTS `g_user`;
+
+-- ----------- --
+-- Data tables --
+-- ----------- --
+
+-- User table, contains registered users with their password encrypted
+CREATE TABLE `g_user` (
+  `gu_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `gu_name` TEXT,
+  `gu_email` TEXT,
+  `gu_login` TEXT NOT NULL UNIQUE,
+  `gu_password` TEXT NOT NULL,
+  `gu_enabled` INTEGER DEFAULT 1
+);
+CREATE INDEX `i_g_user` ON `g_user`(`gu_id`);
+
+-- Scope table, contain all scope values available
+CREATE TABLE `g_scope` (
+  `gs_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `gs_name` TEXT NOT NULL
+);
+CREATE INDEX `i_g_scope` ON `g_scope`(`gs_id`);
+
+-- Authorization type table, to store authorization type available
+CREATE TABLE `g_authorization_type` (
+  `got_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `got_code` INTEGER NOT NULL UNIQUE, -- 0: Authorization Code Grant, 1: Code Grant, 2: Implicit Grant, 3: Resource Owner Password Credentials Grant, 4: Client Credentials Grant
+  `got_name` TEXT NOT NULL,
+  `got_description` TEXT,
+  `got_enabled` INTEGER DEFAULT 1
+);
+CREATE INDEX `i_g_authorization_type` ON `g_authorization_type`(`got_id`);
+
+-- Client table, contains all registered clients with their client_id
+CREATE TABLE `g_client` (
+  `gc_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `gc_name` TEXT NOT NULL,
+  `gc_description` TEXT,
+  `gc_client_id` TEXT NOT NULL UNIQUE,
+  `gc_client_password` TEXT NOT NULL,
+  `gc_enabled` INTEGER DEFAULT 1
+);
+CREATE INDEX `i_g_client` ON `g_client`(`gc_id`);
+
+-- Redirect URI, contains all registered redirect_uti values for the clients
+CREATE TABLE `g_redirect_uri` (
+  `gru_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `gc_id` INTEGER NOT NULL,
+  `gru_name` TEXT NOT NULL,
+  `gru_uri` TEXT,
+  `gru_enabled` INTEGER DEFAULT 1,
+  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`)
+);
+CREATE INDEX `i_g_redirect_uri` ON `g_redirect_uri`(`gru_id`);
+
+-- Resource table, contains all registered resource server
+CREATE TABLE `g_resource` (
+  `gr_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `gr_name` TEXT NOT NULL,
+  `gr_description` TEXT,
+  `gr_enabled` INTEGER DEFAULT 1
+);
+CREATE INDEX `i_g_resource` ON `g_resource`(`gr_id`);
+
+-- ------------ --
+-- Token tables --
+-- ------------ --
+
+-- Refresh token table, to store a signature and meta information on all refresh_tokens sent
+CREATE TABLE `g_refresh_token` (
+  `grt_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `grt_hash` TEXT NOT NULL,
+  `grt_username` TEXT NOT NULL,
+  `grt_scope` TEXT,
+  `grt_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `grt_last_seen` TIMESTAMP,
+  `grt_expired_at` TIMESTAMP,
+  `grt_ip_source` TEXT NOT NULL,
+  `grt_enabled` INTEGER DEFAULT 1
+);
+CREATE INDEX `i_g_refresh_token` ON `g_refresh_token`(`grt_id`);
+
+-- Access token table, to store meta information on access_token sent
+CREATE TABLE `g_access_token` (
+  `gat_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `grt_id` INTEGER,
+  `gat_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `gat_source_ip` TEXT NOT NULL,
+  FOREIGN KEY(`grt_id`) REFERENCES `g_refresh_token`(`grt_id`)
+);
+CREATE INDEX `i_g_access_token` ON `g_access_token`(`gat_id`);
+
+-- -------------- --
+-- Linking tables --
+-- -------------- --
+
+-- User scope table, to store scope available for each user
+CREATE TABLE `g_user_scope` (
+  `gus_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `gu_id` INTEGER NOT NULL,
+  `gs_id` INTEGER NOT NULL,
+  FOREIGN KEY(`gu_id`) REFERENCES `g_user`(`gu_id`),
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+);
+CREATE INDEX `i_g_user_scope` ON `g_user_scope`(`gus_id`);
+
+-- Resource scope table, to store the scopes provided by the resource server
+CREATE TABLE `g_resource_scope` (
+  `grs_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `gr_id` INTEGER NOT NULL,
+  `gs_id` INTEGER NOT NULL,
+  FOREIGN KEY(`gr_id`) REFERENCES `g_resource`(`gr_id`),
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+);
+CREATE INDEX `i_g_resource_scope` ON `g_resource_scope`(`grs_id`);
+
+-- Client authorization type table, to store authorization types available for the client
+CREATE TABLE `g_client_authorization_type` (
+  `gcat_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `gc_id` INTEGER NOT NULL,
+  `got_id` INTEGER NOT NULL,
+  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`),
+  FOREIGN KEY(`got_id`) REFERENCES `g_authorization_type`(`got_id`)
+);
+CREATE INDEX `i_g_client_authorization_type` ON `g_client_authorization_type`(`gcat_id`);

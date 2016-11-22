@@ -1,0 +1,69 @@
+#
+#
+# Glewlwyd OAuth2 Authorization Server
+#
+# Copyright 2016 Nicolas Mora <mail@babelouest.org>
+# Gnu Public License V3 <http://fsf.org/>
+#
+#
+
+# port to open for remote commands
+port=4593
+
+# url prefix
+url_prefix="glewlwyd"
+
+# path to static files for /static url
+static_files_path="/var/www/"
+
+# static files prefix
+static_files_prefix = "static"
+
+# access-control-allow-origin value
+allow_origin="*"
+
+# log mode (console, syslog, file)
+log_mode="console"
+
+# log level: NONE, ERROR, WARNING, INFO, DEBUG
+log_level="DEBUG"
+
+# output to log file (required if log_mode is file)
+log_file="/tmp/glewlwyd.log"
+
+# use scope for access control (default false)
+use_scope=true
+
+# MariaDB/Mysql database connection
+database =
+{
+  type = "mariadb";
+  host = "lohot";
+  user = "glewlwyd";
+  password = "glewlwyd";
+  dbname = "glewlwyd";
+  port = 0;
+};
+
+# SQLite database connection
+# database =
+# {
+#    type = "sqlite3";
+#    path = "/tmp/glewlwyd.db";
+# };
+
+# Authentication configuration
+authentication =
+{
+
+   database_auth  = true
+   
+   ldap_auth      = true
+   uri            = "ldap://localhost"
+   bind_dn        = "cn=operator,dc=example,dc=org"
+   bind_passwd    = "password"
+   base_search    = "dc=example,dc=org"
+   login_property = "uid"
+   filter         = "o=oauth"
+   scope_property = "o"
+}
