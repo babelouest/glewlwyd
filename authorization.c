@@ -15,18 +15,19 @@
  * License as published by the Free Software Foundation;
  * version 3 of the License.
  *
- * This library is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU GENERAL PUBLIC LICENSE for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
+ * License along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
  
 #include <ldap.h>
 #include <openssl/md5.h>
+#include <uuid/uuid.h>
 
 #include "glewlwyd.h"
 
@@ -108,7 +109,7 @@ int serialize_access_token(struct config_elements * config, const uint auth_type
                   "table",
                   GLEWLWYD_TABLE_ACCESS_TOKEN,
                   "values",
-                    "grt_authorization_type",
+                    "gat_authorization_type",
                     auth_type,
                     "gat_ip_source",
                     ip_source,
@@ -138,7 +139,7 @@ int serialize_access_token(struct config_elements * config, const uint auth_type
               "table",
               GLEWLWYD_TABLE_ACCESS_TOKEN,
               "values",
-                "grt_authorization_type",
+                "gat_authorization_type",
                 auth_type,
                 "gat_ip_source",
                 ip_source
@@ -321,7 +322,7 @@ json_t * auth_check_scope_database(struct config_elements * config, const char *
       scope_list_allowed = json_pack("{si}", "result", G_ERROR);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for scope_list_save or login_escaped or scope_list_escaped");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for scope_list_save %s or login_escaped %s or scope_list_escaped %s", scope_list_save, login_escaped, scope_list_escaped);
     scope_list_allowed = json_pack("{si}", "result", G_ERROR);
   }
   return scope_list_allowed;
@@ -614,14 +615,12 @@ json_t * session_check(struct config_elements * config, const struct _u_request 
   long expiration;
   time_t now;
   
-  y_log_message(Y_LOG_LEVEL_DEBUG, "session is %s", session_value);
   if (session_value != NULL) {
     if (!jwt_decode(&jwt, session_value, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
       time(&now);
       expiration = jwt_get_grant_int(jwt, "iat") + jwt_get_grant_int(jwt, "expires_in");
-      y_log_message(Y_LOG_LEVEL_DEBUG, "now is %ld, expires is %ld", now, expiration);
       if (now < expiration) {
-        j_result = json_pack("{si}", "result", G_OK);
+        j_result = json_pack("{siss}", "result", G_OK, "username", jwt_get_grant(jwt, "username"));
       } else {
         j_result = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       }
@@ -769,14 +768,14 @@ int auth_check_client_user_scope(struct config_elements * config, const char * c
   client_id_escaped = h_escape_string(config->conn, client_id);
   client_clause = msprintf("= (SELECT `gc_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT, client_id_escaped);
   scope_clause = msprintf("IN (SELECT `gs_id` FROM `%s` WHERE `gs_name` IN (%s))", GLEWLWYD_TABLE_SCOPE, escaped_scope_list);
-  j_query = json_pack("{sss[s]s{sss{ssss}s{ssss}}}"
+  j_query = json_pack("{sss[s]s{sss{ssss}s{ssss}}}",
             "table",
             GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
             "columns",
               "gcus_id",
             "where",
-              "gcus_username",
-              "username",
+              "gco_username",
+              username,
               "gc_id",
                 "operator",
                 "raw",
@@ -791,6 +790,7 @@ int auth_check_client_user_scope(struct config_elements * config, const char * c
   free(client_id_escaped);
   free(client_clause);
   free(scope_clause);
+  free(escaped_scope_list);
   res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -800,4 +800,193 @@ int auth_check_client_user_scope(struct config_elements * config, const char * c
   } else {
     return G_ERROR_DB;
   }
+}
+
+int grant_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list) {
+  json_t * j_query, * j_result;
+  char * save_scope_list = nstrdup(scope_list), * scope, * saveptr;
+  char * where_clause_scope, * scope_escaped;
+  int res, to_return = G_OK;
+  json_int_t gc_id;
+  
+  if (client_id != NULL && username != NULL && save_scope_list != NULL && strlen(save_scope_list) > 0) {
+    j_query = json_pack("{sss[s]s{ss}}",
+                        "table",
+                        GLEWLWYD_TABLE_CLIENT,
+                        "columns",
+                          "gc_id",
+                        "where",
+                          "gc_client_id",
+                          client_id);
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      gc_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id"));
+      json_decref(j_result);
+      scope = strtok_r(save_scope_list, " ", &saveptr);
+      while (scope != NULL) {
+        // Check if this user hasn't granted access to this client for this scope
+        scope_escaped = h_escape_string(config->conn, scope);
+        where_clause_scope = msprintf("= (SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, scope_escaped);
+        j_query = json_pack("{sss[s]s{sIsss{ssss}}}",
+                            "table",
+                            GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
+                            "columns",
+                              "gcus_id",
+                            "where",
+                              "gc_id",
+                              gc_id,
+                              "gco_username",
+                              username,
+                              "gs_id",
+                                "operator",
+                                "raw",
+                                "value",
+                                where_clause_scope);
+        free(where_clause_scope);
+        res = h_select(config->conn, j_query, &j_result, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          if (json_array_size(j_result) == 0) {
+            // Add grant to this scope
+            where_clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, scope_escaped);
+            j_query = json_pack("{sss{sIsss{ss}}}",
+                                "table",
+                                GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
+                                "values",
+                                  "gc_id",
+                                  gc_id,
+                                  "gco_username",
+                                  username,
+                                  "gs_id",
+                                    "raw",
+                                    where_clause_scope);
+            free(where_clause_scope);
+            res = h_insert(config->conn, j_query, NULL);
+            json_decref(j_query);
+            if (res != H_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "grant_client_user_scope_access - Error adding scope %s to client_id %s for user %s", scope, client_id, username);
+              to_return = G_ERROR_DB;
+            }
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "grant_client_user_scope_access - Error getting grant for scope %s to client_id %s for user %s", scope, client_id, username);
+          to_return = G_ERROR_DB;
+        }
+        free(scope_escaped);
+        scope = strtok_r(NULL, " ", &saveptr);
+      }
+    } else {
+      // Error, client_id not found
+      y_log_message(Y_LOG_LEVEL_ERROR, "grant_client_user_scope_access - Error client_id %s not found", client_id);
+      to_return = G_ERROR_DB;
+    }
+  } else {
+    // Error input parameters
+    y_log_message(Y_LOG_LEVEL_ERROR, "grant_client_user_scope_access - Error input parameters");
+    to_return = G_ERROR_PARAM;
+  }
+  free(save_scope_list);
+  
+  return to_return;
+}
+
+// Generate an authorization code and store in the database 
+char * generate_authorization_code(struct config_elements * config, const char * username, const char * client_id, const char * scope_list, const char * redirect_uri, const char * ip_source) {
+  uuid_t uuid;
+  char * code_value = malloc(37*sizeof(char)), * code_hash, * clause_client_id, * clause_redirect_uri, * clause_scope, * escape;
+  char * save_scope_list, * scope, * saveptr;
+  json_t * j_query, * j_result;
+  int res;
+  json_int_t gco_id;
+  
+  if (username != NULL && client_id != NULL && redirect_uri != NULL && ip_source != NULL) {
+    uuid_generate_random(uuid);
+    uuid_unparse_lower(uuid, code_value);
+    code_hash = str2md5(code_value, strlen(code_value));
+    
+    escape = h_escape_string(config->conn, client_id);
+    clause_client_id = msprintf("(SELECT `gc_id` FROM `%s` WHERE `gc_client_id` = '%s')", GLEWLWYD_TABLE_CLIENT, escape);
+    free(escape);
+    
+    escape = h_escape_string(config->conn, redirect_uri);
+    clause_redirect_uri = msprintf("(SELECT `gru_id` FROM `%s` WHERE `gru_uri` = '%s')", GLEWLWYD_TABLE_REDIRECT_URI, escape);
+    free(escape);
+    
+    j_query = json_pack("{sss{sssssss{ss}s{ss}}}",
+                        "table",
+                        GLEWLWYD_TABLE_CODE,
+                        "values",
+                          "gco_code_hash",
+                          code_hash,
+                          "gco_ip_source",
+                          ip_source,
+                          "gco_username",
+                          username,
+                          "gc_id",
+                            "raw",
+                            clause_client_id,
+                          "gru_id",
+                            "raw",
+                            clause_redirect_uri);
+    free(clause_client_id);
+    free(clause_redirect_uri);
+    res = h_insert(config->conn, j_query, NULL);
+    json_decref(j_query);
+    
+    if (res == H_OK) {
+      j_query = json_pack("{sss[s]s{ss}}",
+                          "table",
+                          GLEWLWYD_TABLE_CODE,
+                          "columns",
+                            "gco_id",
+                          "where",
+                            "gco_code_hash",
+                            code_hash);
+      res = h_select(config->conn, j_query, &j_result, NULL);
+      json_decref(j_query);
+      
+      if (res == H_OK) {
+        gco_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "gco_id"));
+        json_decref(j_result);
+        j_query = json_pack("{sss[]}",
+                            "table",
+                            GLEWLWYD_TABLE_CODE_SCOPE,
+                            "values");
+        save_scope_list = nstrdup(scope_list);
+        scope = strtok_r(save_scope_list, " ", &saveptr);
+        while (scope != NULL) {
+          escape = h_escape_string(config->conn, scope);
+          clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name` = '%s')", GLEWLWYD_TABLE_SCOPE, escape);
+          json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIs{ss}}", "gco_id", gco_id, "gs_id", "raw", clause_scope));
+          free(clause_scope);
+          free(escape);
+          scope = strtok_r(NULL, " ", &saveptr);
+        }
+        
+        if (json_array_size(json_object_get(j_query, "values")) > 0) {
+          res = h_insert(config->conn, j_query, NULL);
+          json_decref(j_query);
+          if (res != H_OK) {
+            free(code_value);
+            code_value = NULL;
+            y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error insert into %s", GLEWLWYD_TABLE_CODE_SCOPE);
+          }
+        }
+        free(save_scope_list);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error getting id from %s", GLEWLWYD_TABLE_CODE);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error insert into %s", GLEWLWYD_TABLE_CODE);
+    }
+    free(code_hash);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error input arameters");
+  }
+  return code_value;
+}
+
+json_t * validate_authorization_code(struct config_elements * config, const char * authorization_code, const char * client_id, const char * redirect_uri, const char * ip_source) {
+  return NULL;
 }

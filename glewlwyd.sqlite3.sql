@@ -1,4 +1,7 @@
 
+DROP TABLE IF EXISTS `g_code_scope`;
+DROP TABLE IF EXISTS `g_code`;
+DROP TABLE IF EXISTS `g_client_user_scope`;
 DROP TABLE IF EXISTS `g_client_authorization_type`;
 DROP TABLE IF EXISTS `g_resource_scope`;
 DROP TABLE IF EXISTS `g_user_scope`;
@@ -135,3 +138,39 @@ CREATE TABLE `g_client_authorization_type` (
   FOREIGN KEY(`got_id`) REFERENCES `g_authorization_type`(`got_id`)
 );
 CREATE INDEX `i_g_client_authorization_type` ON `g_client_authorization_type`(`gcat_id`);
+
+-- Client user scope table, to store the authorization of the user to use scope for this client
+CREATE TABLE `g_client_user_scope` (
+  `gcus_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `gc_id` INTEGER NOT NULL,
+  `gco_username` TEXT NOT NULL,
+  `gs_id` INTEGER NOT NULL,
+  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`),
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+);
+CREATE INDEX `i_g_client_user_scope` ON `g_client_user_scope`(`gcus_id`);
+
+-- Code table, used to store auth code sent with response_type code and validate it with response_type authorization_code
+CREATE TABLE `g_code` (
+  `gco_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `gco_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `gco_code_hash` TEXT NOT NULL,
+  `gco_ip_source` TEXT NOT NULL,
+  `gco_enabled` INTEGER DEFAULT 1,
+  `gc_id` INTEGERNOT NULL,
+  `gco_username` TEXT NOT NULL,
+  `gru_id` INTEGER,
+  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`),
+  FOREIGN KEY(`gru_id`) REFERENCES `g_redirect_uri`(`gru_id`)
+);
+CREATE INDEX `i_g_code` ON `g_code`(`gco_id`);
+
+-- Code scope table, used to link a generated code to a list of scopes
+CREATE TABLE `g_code_scope` (
+  `gcs_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `gco_id` INTEGER NOT NULL,
+  `gs_id` INTEGER NOT NULL,
+  FOREIGN KEY(`gco_id`) REFERENCES `g_code`(`gco_id`),
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+);
+CREATE INDEX `i_g_code_scope` ON `g_code_scope`(`gcs_id`);

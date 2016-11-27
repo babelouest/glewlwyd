@@ -15,13 +15,13 @@
  * License as published by the Free Software Foundation;
  * version 3 of the License.
  *
- * This library is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU GENERAL PUBLIC LICENSE for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
+ * License along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 #include <string.h>
@@ -31,40 +31,50 @@
 int callback_glewlwyd_authorization (const struct _u_request * request, struct _u_response * response, void * user_data) {
   const char * response_type = (0 == nstrcasecmp("POST", request->http_verb))?u_map_get(request->map_post_body, "response_type"):u_map_get(request->map_url, "response_type");
   int result = U_OK;
+  char * redirect_url;
   
   if (0 == nstrcmp("code", response_type)) {
     if (0 == nstrcasecmp("GET", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_CODE) == G_OK) {
       result = check_auth_type_auth_code_grant(request, response, user_data);
     } else {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "response_type %s not allowed with method %s or disabled in configuration", response_type, request->http_verb);
-      response->status = 403;
+      if (u_map_get(request->map_url, "redirect_uri") != NULL) {
+        response->status = 302;
+        redirect_url = msprintf("%s#error=unsupported_response_type%s%s", u_map_get(request->map_url, "redirect_uri"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        free(redirect_url);
+      } else {
+        response->status = 403;
+      }
     }
   } else if (0 == nstrcmp("authorization_code", response_type)) {
     if (0 == nstrcasecmp("POST", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
       result = check_auth_type_access_token_request(request, response, user_data);
     } else {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "response_type %s not allowed with method %s or disabled in configuration", response_type, request->http_verb);
       response->status = 403;
     }
   } else if (0 == nstrcmp("token", response_type)) {
     if (0 == nstrcasecmp("GET", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT) == G_OK) {
       result = check_auth_type_implicit_grant(request, response, user_data);
     } else {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "response_type %s not allowed with method %s or disabled in configuration", response_type, request->http_verb);
-      response->status = 403;
+      if (u_map_get(request->map_url, "redirect_uri") != NULL) {
+        response->status = 302;
+        redirect_url = msprintf("%s#error=unsupported_response_type%s%s", u_map_get(request->map_url, "redirect_uri"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        free(redirect_url);
+      } else {
+        response->status = 403;
+      }
     }
   } else if (0 == nstrcmp("password", response_type)) {
     if (0 == nstrcasecmp("POST", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS) == G_OK) {
       result = check_auth_type_resource_owner_pwd_cred(request, response, user_data);
     } else {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "response_type %s not allowed with method %s or disabled in configuration", response_type, request->http_verb);
       response->status = 403;
     }
   } else if (0 == nstrcmp("client_credentials", response_type)) {
     if (0 == nstrcasecmp("POST", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS) == G_OK) {
       result = check_auth_type_client_credentials_grant(request, response, user_data);
     } else {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "response_type %s not allowed with method %s or disabled in configuration", response_type, request->http_verb);
       response->status = 403;
     }
   } else {
@@ -94,7 +104,7 @@ int callback_glewlwyd_user_authorization (const struct _u_request * request, str
     
     // Store session cookie
     session_token = generate_session_token(config, u_map_get(request->map_post_body, "username"), ip_source, json_string_value(json_object_get(j_result, "scope")), now);
-    ulfius_add_cookie_to_response(response, config->session_key, session_token, NULL, config->session_expiration, NULL, "/", 1, 0);
+    ulfius_add_cookie_to_response(response, config->session_key, session_token, NULL, config->session_expiration, NULL, "/", 0, 0);
   } else {
     response->status = 403;
   }
@@ -104,6 +114,15 @@ int callback_glewlwyd_user_authorization (const struct _u_request * request, str
 }
 
 int callback_glewlwyd_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_session = session_check(config, request);
+  int res = grant_client_user_scope_access(config, u_map_get(request->map_post_body, "client_id"), json_string_value(json_object_get(j_session, "username")), u_map_get(request->map_post_body, "scope"));
+  
+  if (res != G_OK) {
+    response->status = 500;
+  }
+  json_decref(j_session);
+
   return U_OK;
 }
 
@@ -195,13 +214,19 @@ int callback_glewlwyd_api_description (const struct _u_request * request, struct
   return U_OK;
 };
 
-int callback_glewlwyd_check_auth_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  json_t * j_result = session_check(((struct config_elements *)user_data), request);
+int callback_glewlwyd_check_auth_session_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  json_t * j_session = session_check(((struct config_elements *)user_data), request), * j_scope;
   int res = U_OK;
   
-  if (!check_result_value(j_result, G_OK)) {
+  if (!check_result_value(j_session, G_OK)) {
     res = U_ERROR_UNAUTHORIZED;
+  } else {
+    // Check if user has access to scopes
+    j_scope = auth_check_scope(((struct config_elements *)user_data), json_string_value(json_object_get(j_session, "username")), u_map_get(request->map_post_body, "scope"));
+    if (!check_result_value(j_scope, G_OK)) {
+      res = U_ERROR_UNAUTHORIZED;
+    }
   }
-  json_decref(j_result);
+  json_decref(j_session);
   return res;
 }

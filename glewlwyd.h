@@ -15,13 +15,13 @@
  * License as published by the Free Software Foundation;
  * version 3 of the License.
  *
- * This library is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU GENERAL PUBLIC LICENSE for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
+ * License along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -73,6 +73,8 @@
 #define GLEWLWYD_TABLE_AUTHORIZATION_TYPE        "g_authorization_type"
 #define GLEWLWYD_TABLE_SCOPE                     "g_scope"
 #define GLEWLWYD_TABLE_USER                      "g_user"
+#define GLEWLWYD_TABLE_CODE                      "g_code"
+#define GLEWLWYD_TABLE_CODE_SCOPE                "g_code_scope"
 
 #define GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE                  0
 #define GLEWLWYD_AUHORIZATION_TYPE_CODE                                1
@@ -141,7 +143,7 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
 int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, struct _u_response * response, void * user_data);
 int check_auth_type_client_credentials_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int callback_glewlwyd_check_auth_session (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_check_auth_session_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_token (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -160,9 +162,11 @@ json_t * auth_check_scope(struct config_elements * config, const char * username
 json_t * auth_check_scope_database(struct config_elements * config, const char * username, const char * scope_list);
 json_t * auth_check_scope_ldap(struct config_elements * config, const char * username, const char * scope_list);
 json_t * session_check(struct config_elements * config, const struct _u_request * request);
+json_t * validate_authorization_code(struct config_elements * config, const char * authorization_code, const char * client_id, const char * redirect_uri, const char * ip_source);
 char * generate_access_token(struct config_elements * config, const char * refresh_token, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
 char * generate_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
 char * generate_session_token(struct config_elements * config, const char * username, const char * ip_source, const char * scope_list, time_t now);
+char * generate_authorization_code(struct config_elements * config, const char * username, const char * client_id, const char * scope_list, const char * redirect_uri, const char * ip_source);
 
 int client_check(struct config_elements * config, uint auth_check, const char * client_id, const char * redirect_uri);
 int auth_check_client_user_scope(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
@@ -170,5 +174,7 @@ int auth_check_client_user_scope(struct config_elements * config, const char * c
 int serialize_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * refresh_token, time_t now);
 int serialize_access_token(struct config_elements * config, const uint auth_type, const char * ip_source, const char * refresh_token);
 int is_authorization_type_enabled(struct config_elements * config, uint authorization_type);
+
+int grant_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
 
 #endif
