@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS `g_client_user_scope`;
 DROP TABLE IF EXISTS `g_client_authorization_type`;
 DROP TABLE IF EXISTS `g_resource_scope`;
 DROP TABLE IF EXISTS `g_user_scope`;
+DROP TABLE IF EXISTS `g_client_scope`;
 DROP TABLE IF EXISTS `g_access_token`;
 DROP TABLE IF EXISTS `g_refresh_token`;
 DROP TABLE IF EXISTS `g_resource`;
@@ -55,6 +56,7 @@ CREATE TABLE `g_client` (
   `gc_description` VARCHAR(256),
   `gc_client_id` VARCHAR(128) NOT NULL UNIQUE,
   `gc_client_password` VARCHAR(128) NOT NULL,
+  `gc_confidential` TINYINT(1) DEFAULT 0,
   `gc_enabled` TINYINT(1) DEFAULT 1
 );
 

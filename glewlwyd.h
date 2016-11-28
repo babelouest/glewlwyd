@@ -74,6 +74,7 @@
 #define GLEWLWYD_TABLE_SCOPE                     "g_scope"
 #define GLEWLWYD_TABLE_USER                      "g_user"
 #define GLEWLWYD_TABLE_CODE                      "g_code"
+#define GLEWLWYD_TABLE_CLIENT_SCOPE              "g_client_scope"
 #define GLEWLWYD_TABLE_CODE_SCOPE                "g_code_scope"
 
 #define GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE                  0
@@ -167,8 +168,9 @@ char * generate_access_token(struct config_elements * config, const char * refre
 char * generate_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
 char * generate_session_token(struct config_elements * config, const char * username, const char * ip_source, const char * scope_list, time_t now);
 char * generate_authorization_code(struct config_elements * config, const char * username, const char * client_id, const char * scope_list, const char * redirect_uri, const char * ip_source);
+char * generate_client_access_token(struct config_elements * config, const char * client_id, const char * ip_source, time_t now);
 
-int client_check(struct config_elements * config, uint auth_check, const char * client_id, const char * redirect_uri);
+json_t * client_check(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
 int auth_check_client_user_scope(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
 
 int serialize_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * refresh_token, time_t now);

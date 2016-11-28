@@ -114,6 +114,8 @@ int main (int argc, char ** argv) {
 
   u_map_put(config->instance->default_headers, "Access-Control-Allow-Origin", config->allow_origin);
   u_map_put(config->instance->default_headers, "Access-Control-Allow-Credentials", "true");
+  u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
+  u_map_put(config->instance->default_headers, "Pragma", "no-cache");
 
   config->mime_types = malloc(sizeof(struct _u_map));
   if (config->mime_types == NULL) {

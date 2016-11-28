@@ -244,10 +244,35 @@ char * generate_access_token(struct config_elements * config, const char * refre
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - Error serializing token");
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - generating token");
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - Error generating token");
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - Error cloning jwt");
+  }
+  jwt_free(jwt);
+  return token;
+}
+
+char * generate_client_access_token(struct config_elements * config, const char * client_id, const char * ip_source, time_t now) {
+  jwt_t * jwt;
+  char * token = NULL;
+  
+  jwt = jwt_dup(config->jwt);
+  if (jwt != NULL) {
+    // Build jwt payload
+    jwt_add_grant(jwt, "client_id", client_id);
+    jwt_add_grant_int(jwt, "iat", now);
+    jwt_add_grant_int(jwt, "expires_in", config->access_token_expiration);
+    token = jwt_encode_str(jwt);
+    if (token != NULL) {
+      if (serialize_access_token(config, GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS, ip_source, NULL) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - Error serializing token");
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - Error generating token");
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - Error cloning jwt");
   }
   jwt_free(jwt);
   return token;
@@ -543,15 +568,29 @@ int is_authorization_type_enabled(struct config_elements * config, uint authoriz
   }
 }
 
-int client_check(struct config_elements * config, const uint auth_type, const char * client_id, const char * redirect_uri) {
-  json_t * j_result;
-  int res, to_return;
-  char * redirect_uri_escaped, * client_id_escaped, * query;
+/**
+ * Check client credentials
+ * If client_id_header is set, client must be confidential and password must match
+ * otherwise client is public
+ * if refined scope is empty, client has no access
+ */
+json_t * client_check(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type) {
+  json_t * j_result, * j_return;
+  int res, is_confidential;
+  char * redirect_uri_escaped, * client_id_escaped, * query, * tmp, * password_escaped;
   
-  if (client_id != NULL && redirect_uri != NULL) {
+  
+  if ((client_id != NULL || client_id_header != NULL) && redirect_uri != NULL) {
+    if (client_id_header != NULL) {
+      client_id_escaped = h_escape_string(config->conn, client_id_header);
+      is_confidential = 1;
+    } else {
+      client_id_escaped = h_escape_string(config->conn, client_id);
+      is_confidential = 0;
+    }
+    
     // I don't want to build a huge j_query since there are 4 tables involved so I'll build my own sql query
     redirect_uri_escaped = h_escape_string(config->conn, redirect_uri);
-    client_id_escaped = h_escape_string(config->conn, client_id);
     query = msprintf("SELECT `%s`.`gc_id` FROM `%s`, `%s`, `%s` WHERE `%s`.`gc_id`=`%s`.`gc_id` AND `%s`.`gc_id`=`%s`.`gc_id`\
                       AND `%s`.`gc_enabled`=1 AND `%s`.`gru_enabled`=1 AND `%s`.`gru_uri`='%s' AND `%s`.`gc_client_id`='%s' \
                       AND `%s`.`got_id`=(SELECT `got_id` FROM `%s` WHERE `got_code`=%d);", 
@@ -580,26 +619,39 @@ int client_check(struct config_elements * config, const uint auth_type, const ch
             GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE,
             GLEWLWYD_TABLE_AUTHORIZATION_TYPE,
             auth_type);
+    free(redirect_uri_escaped);
+    
+    if (is_confidential) {
+      if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
+        password_escaped = h_escape_string(config->conn, client_password_header);
+        tmp = msprintf("%s AND `gc_client_password` = PASSWORD('%s')", query, password_escaped);
+      } else {
+        password_escaped = str2md5(client_password_header, strlen(client_password_header));
+        tmp = msprintf("%s AND `gc_client_password` = '%s'", query, password_escaped);
+      }
+      free(query);
+      query = tmp;
+    }
+    
     res = h_execute_query_json(config->conn, query, &j_result);
     free(query);
-    free(redirect_uri_escaped);
-    free(client_id_escaped);
     if (res == H_OK) {
       if (json_array_size(j_result) > 0) {
-        to_return = G_OK;
+        j_return = json_pack("{siss}", "result", G_OK, "client_id", (is_confidential?client_id_header:client_id));
       } else {
-        to_return = G_ERROR_UNAUTHORIZED;
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       }
       json_decref(j_result);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "client_check - Error executing query");
-      to_return = G_ERROR_DB;
+      y_log_message(Y_LOG_LEVEL_ERROR, "client_check - Error executing query auth");
+      j_return = json_pack("{si}", "result", G_ERROR_DB);
     }
+    free(client_id_escaped);
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "Error params, client_id is %s, redirect_uri is %s", client_id, redirect_uri);
-    to_return = G_ERROR_PARAM;
+    y_log_message(Y_LOG_LEVEL_DEBUG, "client_check - Error params, client_id is %s, redirect_uri is %s", client_id, redirect_uri);
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
-  return to_return;
+  return j_return;
 }
 
 /**
@@ -988,5 +1040,118 @@ char * generate_authorization_code(struct config_elements * config, const char *
 }
 
 json_t * validate_authorization_code(struct config_elements * config, const char * authorization_code, const char * client_id, const char * redirect_uri, const char * ip_source) {
-  return NULL;
+  json_t * j_query, * j_result, * j_scope, * j_element, * j_return;
+  size_t index;
+  int res;
+  json_int_t gco_id;
+  char * code_hash, * escape, * escape_ip_source, * clause_redirect_uri, * clause_client_id, * col_gco_date, * clause_gco_date, * clause_scope, * scope_list = NULL, * tmp;
+
+  if (authorization_code != NULL && client_id != NULL) {
+    code_hash = str2md5(authorization_code, strlen(authorization_code));
+    escape_ip_source = h_escape_string(config->conn, ip_source);
+    escape = h_escape_string(config->conn, redirect_uri);
+    clause_redirect_uri = msprintf("(SELECT `gru_id` FROM `%s` WHERE `gru_uri`='%s')", GLEWLWYD_TABLE_REDIRECT_URI, escape);
+    free(escape);
+    escape = h_escape_string(config->conn, client_id);
+    clause_client_id = msprintf("(SELECT `gc_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT, escape);
+    free(escape);
+    
+    if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
+      col_gco_date = nstrdup("UNIX_TIMESTAMP(`gco_date`)");
+      clause_gco_date = nstrdup("(UNIX_TIMESTAMP(NOW()) - 600)");
+    } else {
+      col_gco_date = nstrdup("gco_date");
+      clause_gco_date = nstrdup("(strftime('%s','now') - 600)");
+    }
+    
+    j_query = json_pack("{sss[ss]s{si ss ss s{ssss} s{ssss} s{ssss}}}",
+                        "table",
+                        GLEWLWYD_TABLE_CODE,
+                        "columns",
+                          "gco_id",
+                          "gco_username",
+                        "where",
+                          "gco_enabled",
+                          1,
+                          "gco_code_hash",
+                          code_hash,
+                          "gco_ip_source",
+                          escape_ip_source,
+                          "gru_id",
+                            "operator",
+                            "raw",
+                            "value",
+                            clause_redirect_uri,
+                          "gc_id",
+                            "operator",
+                            "raw",
+                            "value",
+                            clause_client_id,
+                          col_gco_date,
+                            "operator",
+                            "raw",
+                            "value",
+                            clause_gco_date);
+    free(clause_gco_date);
+    free(col_gco_date);
+    free(clause_client_id);
+    free(clause_redirect_uri);
+    free(escape_ip_source);
+    free(code_hash);
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      if (json_array_size(j_result) > 0) {
+        // Get scope_list (if any)
+        if (config->use_scope) {
+          gco_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "gco_id"));
+          clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gc_id`=%" JSON_INTEGER_FORMAT ")", GLEWLWYD_TABLE_CODE_SCOPE, gco_id);
+          j_query = json_pack("{sss[s]s{ssss}}",
+                              "table",
+                              GLEWLWYD_TABLE_SCOPE,
+                              "columns",
+                              "gs_name",
+                              "where",
+                                "gs_id",
+                                  "operator",
+                                  "raw",
+                                  "value",
+                                  clause_scope);
+          free(clause_scope);
+          res = h_select(config->conn, j_query, &j_scope, NULL);
+          json_decref(j_query);
+          if (res == H_OK) {
+            json_array_foreach(j_scope, index, j_element) {
+              if (scope_list == NULL) {
+                scope_list = nstrdup(json_string_value(json_object_get(j_element, "gs_name")));
+              } else {
+                tmp = msprintf("%s %s", scope_list, json_string_value(json_object_get(j_element, "gs_name")));
+                free(scope_list);
+                scope_list = tmp;
+              }
+            }
+          } else {
+            j_return = json_pack("{si}", "result", G_ERROR_DB);
+          }
+          json_decref(j_scope);
+          
+          if (scope_list != NULL) {
+            j_return = json_pack("{sisssssI}", "result", G_OK, "scope", scope_list, "username", json_string_value(json_object_get(json_array_get(j_result, 0), "gco_username")), "gco_id", json_integer_value((json_object_get(json_array_get(j_result, 0), "gco_id"))));
+          } else {
+            j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          }
+        } else {
+          j_return = json_pack("{sisssI}", "result", G_OK, "username", json_string_value(json_object_get(json_array_get(j_result, 0), "gco_username")), "gco_id", json_integer_value((json_object_get(json_array_get(j_result, 0), "gco_id"))));
+        }
+      } else {
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      }
+      json_decref(j_result);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_DB);
+    }
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  }
+  return j_return;
 }

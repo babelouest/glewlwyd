@@ -53,6 +53,7 @@ CREATE TABLE `g_client` (
   `gc_description` TEXT,
   `gc_client_id` TEXT NOT NULL UNIQUE,
   `gc_client_password` TEXT NOT NULL,
+  `gc_confidential` INTEGER DEFAULT 0,
   `gc_enabled` INTEGER DEFAULT 1
 );
 CREATE INDEX `i_g_client` ON `g_client`(`gc_id`);
