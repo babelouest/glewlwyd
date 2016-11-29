@@ -3,16 +3,17 @@
 -- Test values --
 -- ----------- --
 
-INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('authorization_code', 0, 'Authorization Code Grant - Access token: https://tools.ietf.org/html/rfc6749#section-4.1');
-INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('code', 1, 'Authorization Code Grant - Authorization: https://tools.ietf.org/html/rfc6749#section-4.1');
-INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('token', 2, 'Implicit Grant: https://tools.ietf.org/html/rfc6749#section-4.2');
-INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('password', 3, 'Resource Owner Password Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.3');
-INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('client_credentials', 4, 'Client Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.4');
-
+-- Mariadb/Mysql user add queries
 INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('admin', PASSWORD('MyAdminPassword2016!'), 1);
 INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user1', PASSWORD('MyUser1Password!'), 1);
 INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user2', PASSWORD('MyUser2Password!'), 1);
 INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user3', PASSWORD('MyUser3Password!'), 1);
+
+-- SQLite3 user add queries (passwords are md5 encoded, but they are the same as below)
+-- INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('admin', '16ae549bfe99ce44c4134d5f6b0f1d97', 1);
+-- INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user1', 'e630e606f6188038d23a86c5e9bb2377', 1);
+-- INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user2', '4864d80e57cdd46d90900341660cc221', 1);
+-- INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user3', '312b3efa1cc1e700b08cfa0981dca89f', 1);
 
 INSERT INTO g_scope (gs_name) VALUES ('scope1');
 INSERT INTO g_scope (gs_name) VALUES ('scope2');
@@ -22,15 +23,16 @@ INSERT INTO g_client (gc_name, gc_description, gc_client_id) VALUES ('client1', 
 INSERT INTO g_client (gc_name, gc_description, gc_client_id) VALUES ('client2', 'Description for client2', 'client2_id');
 INSERT INTO g_client (gc_name, gc_description, gc_client_id) VALUES ('client3', 'Description for client3', 'client3_id');
 
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', 'http://localhost/example-client1.com/cb1', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_2', 'http://localhost/example-client1.com/cb2', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client2', 'http://localhost/example-client2.com/cb', (SELECT gc_id from g_client WHERE gc_client_id='client2_id'));
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client3', 'http://localhost/example-client3.com/cb', (SELECT gc_id from g_client WHERE gc_client_id='client3_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', '../static/redirect.html?param=client1_cb1', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_2', '../static/redirect.html?param=client1_cb2', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client2', '../static/redirect.html?param=client2_cb', (SELECT gc_id from g_client WHERE gc_client_id='client2_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client3', '../static/redirect.html?param=client3_cb', (SELECT gc_id from g_client WHERE gc_client_id='client3_id'));
 
 INSERT INTO g_resource (gr_name, gr_description) VALUES ('resource1', 'Description for resource1');
 INSERT INTO g_resource (gr_name, gr_description) VALUES ('resource2', 'Description for resource2');
 INSERT INTO g_resource (gr_name, gr_description) VALUES ('resource3', 'Description for resource3');
 
+INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_admin'));
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user1'), (SELECT gs_id from g_scope WHERE gs_name='scope1'));
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user1'), (SELECT gs_id from g_scope WHERE gs_name='scope2'));
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user2'), (SELECT gs_id from g_scope WHERE gs_name='scope1'));

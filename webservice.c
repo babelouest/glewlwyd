@@ -28,6 +28,15 @@
 
 #include "glewlwyd.h"
 
+/**
+ * authorization endpoint
+ * handles the following response_types:
+ *  - code
+ *  - token
+ *  - password
+ *  - client_credentials
+ * POST and GET methods only
+ */
 int callback_glewlwyd_authorization (const struct _u_request * request, struct _u_response * response, void * user_data) {
   const char * response_type = (0 == nstrcasecmp("POST", request->http_verb))?u_map_get(request->map_post_body, "response_type"):u_map_get(request->map_url, "response_type");
   int result = U_OK;
@@ -72,13 +81,20 @@ int callback_glewlwyd_authorization (const struct _u_request * request, struct _
       response->status = 403;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "response_type %s unknown", response_type);
+    y_log_message(Y_LOG_LEVEL_ERROR, "response_type %s unknown", response_type);
     response->status = 400;
   }
   
   return result;
 }
 
+/**
+ * Token endpoint
+ * Handles the following response_types:
+ *  - authorization_code
+ *  - refresh_token
+ * POST method only
+ */
 int callback_glewlwyd_token (const struct _u_request * request, struct _u_response * response, void * user_data) {
   const char * response_type = u_map_get(request->map_post_body, "response_type");
   int result = U_OK;
@@ -95,6 +111,11 @@ int callback_glewlwyd_token (const struct _u_request * request, struct _u_respon
   return result;
 }
 
+/**
+ * User authorization endpoint
+ * Validates the user/password
+ * then if user is valid, stores a cookie
+ */
 int callback_glewlwyd_user_authorization (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_result = auth_check(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"), u_map_get(request->map_post_body, "scope"));
@@ -109,17 +130,24 @@ int callback_glewlwyd_user_authorization (const struct _u_request * request, str
     response->json_body = json_copy(j_result);
     
     // Store session cookie
-    session_token = generate_session_token(config, u_map_get(request->map_post_body, "username"), ip_source, json_string_value(json_object_get(j_result, "scope")), now);
+    session_token = generate_session_token(config, u_map_get(request->map_post_body, "username"), ip_source, now);
     ulfius_add_cookie_to_response(response, config->session_key, session_token, NULL, config->session_expiration, NULL, "/", 0, 0);
     free(session_token);
-  } else {
+  } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Error login/password for username %s at ip address %s", u_map_get(request->map_post_body, "username"), ip_source);
     response->status = 403;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_authorization - error checking credentials");
+    response->status = 500;
   }
   json_decref(j_result);
   
   return U_OK;
 }
 
+/**
+ * scope grant for a client_id by a user
+ */
 int callback_glewlwyd_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = session_check(config, request);
@@ -133,12 +161,19 @@ int callback_glewlwyd_user_scope_grant (const struct _u_request * request, struc
   return U_OK;
 }
 
+/**
+ * default callback endpoint
+ * return an error 404
+ */
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data) {
   response->status = 404;
   response->json_body = json_pack("{ssss}", "error", "resource not found", "message", "no resource available at this address");
   return U_OK;
 }
 
+/**
+ * static file callback endpoint
+ */
 int callback_glewlwyd_static_file (const struct _u_request * request, struct _u_response * response, void * user_data) {
   void * buffer = NULL;
   size_t length, res;
@@ -176,7 +211,6 @@ int callback_glewlwyd_static_file (const struct _u_request * request, struct _u_
     }
 
     if (buffer) {
-      y_log_message(Y_LOG_LEVEL_INFO, "Static File Server - Serving file %s", file_requested);
       content_type = u_map_get_case(((struct config_elements *)user_data)->mime_types, get_filename_ext(file_requested));
       if (content_type == NULL) {
         content_type = u_map_get(((struct config_elements *)user_data)->mime_types, "*");
@@ -199,6 +233,10 @@ int callback_glewlwyd_static_file (const struct _u_request * request, struct _u_
   return U_OK;
 }
 
+/**
+ * OPTIONS callback function
+ * Send mandatory parameters for browsers to call REST APIs
+ */
 int callback_glewlwyd_options (const struct _u_request * request, struct _u_response * response, void * user_data) {
   u_map_put(response->map_header, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   u_map_put(response->map_header, "Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Bearer, Authorization");
@@ -206,12 +244,20 @@ int callback_glewlwyd_options (const struct _u_request * request, struct _u_resp
   return U_OK;
 }
 
+/**
+ * root endpoint
+ * redirects to static files address
+ */
 int callback_glewlwyd_root (const struct _u_request * request, struct _u_response * response, void * user_data) {
   response->status = 301;
   ulfius_add_header_to_response(response, "Location", ((struct config_elements *)user_data)->static_files_prefix);
   return U_OK;
 };
 
+/**
+ * api description endpoint
+ * send the location of prefixes
+ */
 int callback_glewlwyd_api_description (const struct _u_request * request, struct _u_response * response, void * user_data) {
   response->json_body = json_pack("{ssss}", 
                         "glewlwyd_prefix", 
@@ -221,6 +267,9 @@ int callback_glewlwyd_api_description (const struct _u_request * request, struct
   return U_OK;
 };
 
+/**
+ * check if connected user has access to scope
+ */
 int callback_glewlwyd_check_auth_session_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   json_t * j_session = session_check(((struct config_elements *)user_data), request), * j_scope;
   int res = U_OK;

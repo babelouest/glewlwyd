@@ -22,6 +22,7 @@
 CC=gcc
 CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 LIBS=-lc -lulfius -lyder -ljansson -lorcania -lhoel -ljwt -lconfig -lldap -luuid -lcrypto
+OBJECTS=glewlwyd.o authorization.o oauth.o webservice.o token.o user.o client.o admin.o
 PREFIX=/usr/local
 
 all: release
@@ -37,20 +38,11 @@ release: ADDITIONALFLAGS=-O3
 
 release: glewlwyd
 
-glewlwyd.o: glewlwyd.c glewlwyd.h
-	$(CC) $(CFLAGS) glewlwyd.c
+%.o: %.c glewlwyd.h
+	$(CC) $(CFLAGS) $<
 
-authorization.o: authorization.c glewlwyd.h
-	$(CC) $(CFLAGS) authorization.c
-
-oauth.o: oauth.c glewlwyd.h
-	$(CC) $(CFLAGS) oauth.c
-
-webservice.o: webservice.c glewlwyd.h
-	$(CC) $(CFLAGS) webservice.c
-
-glewlwyd: glewlwyd.o authorization.o oauth.o webservice.o
-	$(CC) -o glewlwyd glewlwyd.o authorization.o oauth.o webservice.o $(LIBS)
+glewlwyd: $(OBJECTS)
+	$(CC) -o $@ $^ $(LIBS)
 
 memcheck: debug
 	valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./glewlwyd --config-file=glewlwyd.conf 2>valgrind.txt

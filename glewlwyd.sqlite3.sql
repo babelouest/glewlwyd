@@ -1,4 +1,5 @@
 
+DROP TABLE IF EXISTS `g_refresh_token_scope`;
 DROP TABLE IF EXISTS `g_code_scope`;
 DROP TABLE IF EXISTS `g_code`;
 DROP TABLE IF EXISTS `g_client_user_scope`;
@@ -175,3 +176,20 @@ CREATE TABLE `g_code_scope` (
   FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
 );
 CREATE INDEX `i_g_code_scope` ON `g_code_scope`(`gcs_id`);
+
+-- Refresh token scope table, used to link a generated refresh token to a list of scopes
+CREATE TABLE `g_refresh_token_scope` (
+  `grts_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `grt_id` INTEGER NOT NULL,
+  `gs_id` INTEGER NOT NULL,
+  FOREIGN KEY(`grt_id`) REFERENCES `g_refresh_token`(`grt_id`),
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+);
+CREATE INDEX `i_g_refresh_token_scope` ON `g_refresh_token_scope`(`grts_id`);
+
+INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('authorization_code', 0, 'Authorization Code Grant - Access token: https://tools.ietf.org/html/rfc6749#section-4.1');
+INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('code', 1, 'Authorization Code Grant - Authorization: https://tools.ietf.org/html/rfc6749#section-4.1');
+INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('token', 2, 'Implicit Grant: https://tools.ietf.org/html/rfc6749#section-4.2');
+INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('password', 3, 'Resource Owner Password Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.3');
+INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('client_credentials', 4, 'Client Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.4');
+INSERT INTO g_scope (gs_name) VALUES ('g_admin');

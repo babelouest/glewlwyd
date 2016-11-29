@@ -7,6 +7,7 @@
  * or users stored in the database 
  * 
  * main functions definitions
+ * and main process start
  *
  * Copyright 2016 Nicolas Mora <mail@babelouest.org>
  *
@@ -37,6 +38,14 @@
 
 #include "glewlwyd.h"
 
+/**
+ *
+ * Main function
+ * 
+ * Initialize config structure, parse the arguments and the config file
+ * Then run the webservice
+ *
+ */
 int main (int argc, char ** argv) {
   struct config_elements * config = malloc(sizeof(struct config_elements));
   if (config == NULL) {
@@ -67,6 +76,14 @@ int main (int argc, char ** argv) {
   }
   ulfius_init_instance(config->instance, -1, NULL);
 
+  config->mime_types = malloc(sizeof(struct _u_map));
+  if (config->mime_types == NULL) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "init - Error allocating resources for config->mime_types, aborting");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  u_map_init(config->mime_types);
+  u_map_put(config->mime_types, "*", "application/octet-stream");
+  
   global_handler_variable = GLEWLWYD_RUNNING;
   // Catch end signals to make a clean exit
   signal (SIGQUIT, exit_handler);
@@ -117,26 +134,6 @@ int main (int argc, char ** argv) {
   u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
 
-  config->mime_types = malloc(sizeof(struct _u_map));
-  if (config->mime_types == NULL) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "init - Error allocating resources for config->mime_types, aborting");
-    exit_server(&config, GLEWLWYD_ERROR);
-  }
-  u_map_init(config->mime_types);
-  // TODO put this in the config file
-  u_map_put(config->mime_types, ".html", "text/html");
-  u_map_put(config->mime_types, ".css", "text/css");
-  u_map_put(config->mime_types, ".js", "application/javascript");
-  u_map_put(config->mime_types, ".png", "image/png");
-  u_map_put(config->mime_types, ".jpeg", "image/jpeg");
-  u_map_put(config->mime_types, ".jpg", "image/jpeg");
-  u_map_put(config->mime_types, ".ttf", "font/ttf");
-  u_map_put(config->mime_types, ".woff", "font/woff");
-  u_map_put(config->mime_types, ".woff2", "font/woff2");
-  u_map_put(config->mime_types, ".json", "application/json");
-  u_map_put(config->mime_types, ".map", "application/octet-stream");
-  u_map_put(config->mime_types, "*", "application/octet-stream");
-  
   y_log_message(Y_LOG_LEVEL_INFO, "Start glewlwyd on port %d, prefix: %s", config->instance->port, config->url_prefix);
   if (ulfius_start_framework(config->instance) == U_OK) {
     while (global_handler_variable == GLEWLWYD_RUNNING) {
@@ -196,7 +193,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
  */
 int build_config_from_args(int argc, char ** argv, struct config_elements * config) {
   int next_option;
-  const char * short_options = "c::p::b::u::d::a::s::m::l::f::r::h::";
+  const char * short_options = "c::p::u::m::l::f::h::";
   char * tmp = NULL, * to_free = NULL, * one_log_mode = NULL;
   static const struct option long_options[]= {
     {"config-file", optional_argument, NULL, 'c'},
@@ -355,12 +352,19 @@ void print_help(FILE * output) {
 
 /**
  * handles signal catch to exit properly when ^C is used for example
+ * I don't like global variables but it looks fine to people who designed this
  */
 void exit_handler(int signal) {
   y_log_message(Y_LOG_LEVEL_INFO, "Gareth caught a stop or kill signal (%d), exiting", signal);
   global_handler_variable = GLEWLWYD_STOP;
 }
 
+/**
+ *
+ * Read the content of a file and return it as a char *
+ * returned value must be free'd after use
+ *
+ */
 char * get_file_content(const char * file_path) {
   char * buffer = NULL;
   size_t length, res;
@@ -393,13 +397,14 @@ char * get_file_content(const char * file_path) {
 int build_config_from_file(struct config_elements * config) {
   
   config_t cfg;
-  config_setting_t * root, * database, * auth, * jwt;
+  config_setting_t * root, * database, * auth, * jwt, * mime_type_list, * mime_type;
   const char * cur_prefix, * cur_log_mode, * cur_log_level, * cur_log_file = NULL, * one_log_mode, 
              * db_type, * db_sqlite_path, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL, * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL, * cur_session_key = NULL,
              * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL, * cur_auth_ldap_filter = NULL, * cur_auth_ldap_login_property = NULL, * cur_auth_ldap_scope_property = NULL, * cur_auth_ldap_base_search = NULL,
-             * cur_rsa_key_file = NULL, * cur_rsa_pub_file = NULL, * cur_sha_secret = NULL;
+             * cur_rsa_key_file = NULL, * cur_rsa_pub_file = NULL, * cur_sha_secret = NULL,
+             * extension = NULL, * mime_type_value = NULL;
   int db_mariadb_port = 0;
-  int cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa, cur_use_sha;
+  int cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa, cur_use_sha, i;
   
   config_init(&cfg);
   
@@ -696,6 +701,19 @@ int build_config_from_file(struct config_elements * config) {
       }
     }
   }
+  
+  // Populate mime types u_map
+  mime_type_list = config_lookup(&cfg, "static_files_mime_types");
+  if (mime_type_list != NULL) {
+    for (i=0; i<config_setting_length(mime_type_list); i++) {
+      mime_type = config_setting_get_elem(mime_type_list, i);
+      if (mime_type != NULL) {
+        if (config_setting_lookup_string(mime_type, "extension", &extension) && config_setting_lookup_string(mime_type, "type", &mime_type_value)) {
+          u_map_put(config->mime_types, extension, mime_type_value);
+        }
+      }
+    }
+  }
     
   config_destroy(&cfg);
   return 1;
@@ -737,7 +755,7 @@ int check_config(struct config_elements * config) {
 }
 
 /**
- * return the filename extension
+ * Return the filename extension
  */
 const char * get_filename_ext(const char *path) {
     const char *dot = strrchr(path, '.');
@@ -748,6 +766,11 @@ const char * get_filename_ext(const char *path) {
     return dot;
 }
 
+/**
+ * Return the source ip address of the request
+ * Based on the header value "X-Forwarded-For" if set, which means the request is forwarded by a proxy
+ * otherwise the call is direct, return the client_address
+ */
 const char * get_ip_source(const struct _u_request * request) {
   const char * ip_source = u_map_get(request->map_header, "X-Forwarded-For");
   
@@ -763,55 +786,73 @@ const char * get_ip_source(const struct _u_request * request) {
   return ip_source;
 };
 
-/* Converts a hex character to its integer value */
+/**
+ * Converts a hex character to its integer value
+ */
 char from_hex(char ch) {
   return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
 }
 
-/* Converts an integer value to its hex character*/
+/**
+ * Converts an integer value to its hex character
+ */
 char to_hex(char code) {
   static char hex[] = "0123456789abcdef";
   return hex[code & 15];
 }
 
-/* Returns a url-encoded version of str */
-/* IMPORTANT: be sure to free() the returned string after use */
-char *url_encode(char *str) {
-  char *pstr = str, *buf = malloc(strlen(str) * 3 + 1), *pbuf = buf;
-  while (*pstr) {
-    if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') 
-      *pbuf++ = *pstr;
-    else if (*pstr == ' ') 
-      *pbuf++ = '+';
+/**
+ * Returns a url-encoded version of str
+ * IMPORTANT: be sure to free() the returned string after use 
+ * Thanks Geek Hideout!
+ * http://www.geekhideout.com/urlcode.shtml
+ */
+char * url_encode(char * str) {
+  char * pstr = str, * buf = malloc(strlen(str) * 3 + 1), * pbuf = buf;
+  while (* pstr) {
+    if (isalnum(* pstr) || * pstr == '-' || * pstr == '_' || * pstr == '.' || * pstr == '~') 
+      * pbuf++ = * pstr;
+    else if (* pstr == ' ') 
+      * pbuf++ = '+';
     else 
-      *pbuf++ = '%', *pbuf++ = to_hex(*pstr >> 4), *pbuf++ = to_hex(*pstr & 15);
+      * pbuf++ = '%', * pbuf++ = to_hex(* pstr >> 4), * pbuf++ = to_hex(* pstr & 15);
     pstr++;
   }
-  *pbuf = '\0';
+  * pbuf = '\0';
   return buf;
 }
 
-/* Returns a url-decoded version of str */
-/* IMPORTANT: be sure to free() the returned string after use */
-char *url_decode(char *str) {
-  char *pstr = str, *buf = malloc(strlen(str) + 1), *pbuf = buf;
-  while (*pstr) {
-    if (*pstr == '%') {
+/**
+ * Returns a url-decoded version of str
+ * IMPORTANT: be sure to free() the returned string after use
+ * Thanks Geek Hideout!
+ * http://www.geekhideout.com/urlcode.shtml
+ */
+char * url_decode(char * str) {
+  char * pstr = str, * buf = malloc(strlen(str) + 1), * pbuf = buf;
+  while (* pstr) {
+    if (* pstr == '%') {
       if (pstr[1] && pstr[2]) {
-        *pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
+        * pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
         pstr += 2;
       }
-    } else if (*pstr == '+') { 
-      *pbuf++ = ' ';
+    } else if (* pstr == '+') { 
+      * pbuf++ = ' ';
     } else {
-      *pbuf++ = *pstr;
+      * pbuf++ = * pstr;
     }
     pstr++;
   }
-  *pbuf = '\0';
+  * pbuf = '\0';
   return buf;
 }
 
+/**
+ *
+ * Converts a string into a md5 hash
+ * Returned value must be free'd after use
+ *
+ */
 char * str2md5(const char * str, int length) {
   int n;
   MD5_CTX c;
@@ -839,6 +880,12 @@ char * str2md5(const char * str, int length) {
   return out;
 }
 
+/**
+ *
+ * Generates a query string based on url and post parameters of a request
+ * Returned value must be free'd after use
+ *
+ */
 char * generate_query_parameters(const struct _u_request * request) {
   char * query = NULL, * param, * tmp;
   const char ** keys;
@@ -876,7 +923,10 @@ char * generate_query_parameters(const struct _u_request * request) {
 }
 
 /**
- * decode a u_map into a string
+ *
+ * Decode a u_map into a string
+ * Returned value must be free'd after use
+ *
  */
 char * print_map(const struct _u_map * map) {
   char * line, * to_return = NULL;

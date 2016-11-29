@@ -19,6 +19,51 @@ static_files_path="/var/www/"
 # static files prefix
 static_files_prefix = "static"
 
+# mime types for static files
+static_files_mime_types =
+(
+  {
+    extension = ".html"
+    type = "text/html"
+  },
+  {
+    extension = ".css"
+    type = "text/css"
+  },
+  {
+    extension = ".js"
+    type = "application/javascript"
+  },
+  {
+    extension = ".png"
+    type = "image/png"
+  },
+  {
+    extension = ".jpg"
+    type = "image/jpeg"
+  },
+  {
+    extension = ".jpeg"
+    type = "image/jpeg"
+  },
+  {
+    extension = ".ttf"
+    type = "font/ttf"
+  },
+  {
+    extension = ".woff"
+    type = "font/woff"
+  },
+  {
+    extension = ".woff2"
+    type = "font/woff2"
+  },
+  {
+    extension = ".map"
+    type = "application/octet-stream"
+  }
+)
+
 # access-control-allow-origin value
 allow_origin="*"
 

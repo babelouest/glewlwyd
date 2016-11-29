@@ -4,6 +4,7 @@
 -- FLUSH PRIVILEGES;
 -- USE `glewlwyd_dev`;
 
+DROP TABLE IF EXISTS `g_refresh_token_scope`;
 DROP TABLE IF EXISTS `g_code_scope`;
 DROP TABLE IF EXISTS `g_code`;
 DROP TABLE IF EXISTS `g_client_user_scope`;
@@ -88,7 +89,6 @@ CREATE TABLE `g_refresh_token` (
   `grt_hash` VARCHAR(32) NOT NULL,
   `grt_authorization_type` INT(2) NOT NULL, -- 0: Authorization Code Grant, 1: Implicit Grant, 2: Resource Owner Password Credentials Grant, 3: Client Credentials Grant
   `grt_username` VARCHAR(128) NOT NULL,
-  `grt_scope` VARCHAR(128),
   `grt_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `grt_last_seen` TIMESTAMP,
   `grt_expired_at` TIMESTAMP,
@@ -169,3 +169,19 @@ CREATE TABLE `g_code_scope` (
   FOREIGN KEY(`gco_id`) REFERENCES `g_code`(`gco_id`),
   FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
 );
+
+-- Refresh token scope table, used to link a generated refresh token to a list of scopes
+CREATE TABLE `g_refresh_token_scope` (
+  `grts_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `grt_id` INT(11) NOT NULL,
+  `gs_id` INT(11) NOT NULL,
+  FOREIGN KEY(`grt_id`) REFERENCES `g_refresh_token`(`grt_id`),
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+);
+
+INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('authorization_code', 0, 'Authorization Code Grant - Access token: https://tools.ietf.org/html/rfc6749#section-4.1');
+INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('code', 1, 'Authorization Code Grant - Authorization: https://tools.ietf.org/html/rfc6749#section-4.1');
+INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('token', 2, 'Implicit Grant: https://tools.ietf.org/html/rfc6749#section-4.2');
+INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('password', 3, 'Resource Owner Password Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.3');
+INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('client_credentials', 4, 'Client Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.4');
+INSERT INTO g_scope (gs_name) VALUES ('g_admin');
