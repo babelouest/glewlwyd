@@ -20,7 +20,7 @@
 #
 
 CC=gcc
-CFLAGS=-c -Wall -I$(LIBYDER_LOCATION) -D_REENTRANT $(ADDITIONALFLAGS)
+CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 LIBS=-lc -lulfius -lyder -ljansson -lorcania -lhoel -ljwt -lconfig -lldap -luuid -lcrypto
 PREFIX=/usr/local
 

@@ -660,6 +660,7 @@ int build_config_from_file(struct config_elements * config) {
       config_setting_lookup_string(jwt, "sha_secret", &cur_sha_secret);
       if (cur_sha_secret != NULL) {
         jwt_set_alg(config->jwt, JWT_ALG_HS512, (const unsigned char *)cur_sha_secret, strlen(cur_sha_secret));
+        config->jwt_decode_key = nstrdup(cur_sha_secret);
       } else {
         config_destroy(&cfg);
         fprintf(stderr, "Error, sha_secret incorrect\n");

@@ -40,7 +40,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
   time_t now;
   
   // Check if client is allowed to perform this request
-  j_client_check = client_check(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE);
+  j_client_check = client_check(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_CODE);
   if (check_result_value(j_client_check, G_OK)) {
     // Client is allowed to use implicit grant with this redirection_uri
     session_payload = session_check(config, request);
@@ -171,6 +171,9 @@ int check_auth_type_access_token_request (const struct _u_request * request, str
       response->status = 500;
     }
     free(refresh_token);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - code invalid");
+    response->status = 400;
   }
   json_decref(j_validate);
   
@@ -290,7 +293,7 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
                                 now);
         if (response->json_body != NULL) {
           if (config->use_scope) {
-            json_object_set_new(response->json_body, "scope", json_string(u_map_get(request->map_post_body, "scope")));
+            json_object_set_new(response->json_body, "scope", json_copy(json_object_get(j_result, "scope")));
           }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for response->json_body");
@@ -300,10 +303,12 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
         y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for access_token");
         response->status = 500;
       }
+      free(access_token);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for refresh_token");
       response->status = 500;
     }
+    free(refresh_token);
   } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
     response->status = 403;
   } else {
@@ -340,5 +345,99 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
     response->status = 403;
   }
   json_decref(j_client_check);
+  return U_OK;
+}
+
+int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  char * access_token, * token_hash, * clause_expired_at, * last_seen_value;
+  json_t * j_query, * j_result;
+  int res;
+  const char * refresh_token = u_map_get(request->map_post_body, "refresh_token");
+  const char * ip_source = get_ip_source(request);
+  jwt_t * jwt;
+  time_t now;
+  
+  // TODO: Implement scope in this function
+  if (refresh_token != NULL) {
+    time(&now);
+    token_hash = str2md5(refresh_token, strlen(refresh_token));
+    
+    if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
+      clause_expired_at = nstrdup("> NOW()");
+    } else {
+      clause_expired_at = nstrdup("> (strftime('%s','now'))");
+    }
+
+    j_query = json_pack("{sss[s]s{sssis{ssss}}}",
+                        "table",
+                        GLEWLWYD_TABLE_REFRESH_TOKEN,
+                        "columns",
+                          "grt_id",
+                        "where",
+                          "grt_hash",
+                          token_hash,
+                          "grt_enabled",
+                          1,
+                          "grt_expired_at",
+                            "operator",
+                            "raw",
+                            "value",
+                            clause_expired_at);
+    free(clause_expired_at);
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      if (!jwt_decode(&jwt, refresh_token, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
+        last_seen_value = msprintf(config->conn->type==HOEL_DB_TYPE_MARIADB?"FROM_UNIXTIME(%d)":"%d", now);
+        j_query = json_pack("{sss{ss}s{ss}}",
+                            "table",
+                            GLEWLWYD_TABLE_REFRESH_TOKEN,
+                            "set",
+                              "grt_last_seen",
+                              last_seen_value,
+                            "where",
+                              "grt_hash",
+                              token_hash);
+        free(last_seen_value);
+        res = h_update(config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          access_token = generate_access_token(config, refresh_token, jwt_get_grant(jwt, "username"), GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN, ip_source, NULL, now);
+          if (access_token != NULL) {
+            response->json_body = json_pack("{sssssi}",
+                                            "access_token",
+                                            access_token,
+                                            "token_type",
+                                            "bearer",
+                                            "expires_in",
+                                            config->access_token_expiration);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error generating access_token");
+            response->status = 500;
+            response->json_body = json_pack("{ss}", "error", "server_error");
+          }
+          free(access_token);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error updating grt_last_seen");
+          response->status = 500;
+          response->json_body = json_pack("{ss}", "error", "server_error");
+          }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error decoding refresh_token");
+        response->status = 500;
+        response->json_body = json_pack("{ss}", "error", "server_error");
+      }
+      jwt_free(jwt);
+    } else {
+      response->status = 400;
+      response->json_body = json_pack("{ss}", "error", "invalid_grant");
+    }
+    free(token_hash);
+    json_decref(j_result);
+  } else {
+    response->status = 400;
+    response->json_body = json_pack("{ss}", "error", "invalid_request");
+  }
   return U_OK;
 }

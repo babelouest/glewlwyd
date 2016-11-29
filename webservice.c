@@ -46,12 +46,6 @@ int callback_glewlwyd_authorization (const struct _u_request * request, struct _
         response->status = 403;
       }
     }
-  } else if (0 == nstrcmp("authorization_code", response_type)) {
-    if (0 == nstrcasecmp("POST", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
-      result = check_auth_type_access_token_request(request, response, user_data);
-    } else {
-      response->status = 403;
-    }
   } else if (0 == nstrcmp("token", response_type)) {
     if (0 == nstrcasecmp("GET", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT) == G_OK) {
       result = check_auth_type_implicit_grant(request, response, user_data);
@@ -86,7 +80,19 @@ int callback_glewlwyd_authorization (const struct _u_request * request, struct _
 }
 
 int callback_glewlwyd_token (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_OK;
+  const char * response_type = u_map_get(request->map_post_body, "response_type");
+  int result = U_OK;
+  
+  if (0 == nstrcmp("authorization_code", response_type)) {
+    if (0 == nstrcasecmp("POST", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
+      result = check_auth_type_access_token_request(request, response, user_data);
+    } else {
+      response->status = 403;
+    }
+  } else if (0 == nstrcmp("refresh_token", response_type)) {
+    result = get_access_token_from_refresh(request, response, user_data);
+  }
+  return result;
 }
 
 int callback_glewlwyd_user_authorization (const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -105,6 +111,7 @@ int callback_glewlwyd_user_authorization (const struct _u_request * request, str
     // Store session cookie
     session_token = generate_session_token(config, u_map_get(request->map_post_body, "username"), ip_source, json_string_value(json_object_get(j_result, "scope")), now);
     ulfius_add_cookie_to_response(response, config->session_key, session_token, NULL, config->session_expiration, NULL, "/", 0, 0);
+    free(session_token);
   } else {
     response->status = 403;
   }
@@ -226,6 +233,7 @@ int callback_glewlwyd_check_auth_session_grant (const struct _u_request * reques
     if (!check_result_value(j_scope, G_OK)) {
       res = U_ERROR_UNAUTHORIZED;
     }
+    json_decref(j_scope);
   }
   json_decref(j_session);
   return res;

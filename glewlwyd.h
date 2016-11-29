@@ -82,6 +82,7 @@
 #define GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT                            2
 #define GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS 3
 #define GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS                  4
+#define GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN                       5
 
 int global_handler_variable;
 
@@ -143,6 +144,7 @@ int check_auth_type_access_token_request (const struct _u_request * request, str
 int check_auth_type_implicit_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, struct _u_response * response, void * user_data);
 int check_auth_type_client_credentials_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
+int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_check_auth_session_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);

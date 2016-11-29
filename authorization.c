@@ -184,6 +184,7 @@ char * generate_refresh_token(struct config_elements * config, const char * user
   if (jwt != NULL) {
     // Build jwt payload
     jwt_add_grant(jwt, "username", username);
+    jwt_add_grant(jwt, "type", "refresh_token");
     jwt_add_grant_int(jwt, "iat", now);
     jwt_add_grant_int(jwt, "expires_in", config->access_token_expiration);
     if (config->use_scope && scope_list != NULL) {
@@ -212,6 +213,7 @@ char * generate_session_token(struct config_elements * config, const char * user
   if (jwt != NULL) {
     // Build jwt payload
     jwt_add_grant(jwt, "username", username);
+    jwt_add_grant(jwt, "type", "session_token");
     jwt_add_grant_int(jwt, "iat", now);
     jwt_add_grant_int(jwt, "expires_in", config->session_expiration);
     token = jwt_encode_str(jwt);
@@ -233,6 +235,7 @@ char * generate_access_token(struct config_elements * config, const char * refre
   if (jwt != NULL) {
     // Build jwt payload
     jwt_add_grant(jwt, "username", username);
+    jwt_add_grant(jwt, "type", "access_token");
     jwt_add_grant_int(jwt, "iat", now);
     jwt_add_grant_int(jwt, "expires_in", config->access_token_expiration);
     if (config->use_scope && scope_list != NULL) {
@@ -261,6 +264,7 @@ char * generate_client_access_token(struct config_elements * config, const char 
   if (jwt != NULL) {
     // Build jwt payload
     jwt_add_grant(jwt, "client_id", client_id);
+    jwt_add_grant(jwt, "type", "client_token");
     jwt_add_grant_int(jwt, "iat", now);
     jwt_add_grant_int(jwt, "expires_in", config->access_token_expiration);
     token = jwt_encode_str(jwt);
@@ -633,6 +637,7 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
       query = tmp;
     }
     
+
     res = h_execute_query_json(config->conn, query, &j_result);
     free(query);
     if (res == H_OK) {
@@ -926,6 +931,7 @@ int grant_client_user_scope_access(struct config_elements * config, const char *
           to_return = G_ERROR_DB;
         }
         free(scope_escaped);
+        json_decref(j_result);
         scope = strtok_r(NULL, " ", &saveptr);
       }
     } else {
@@ -1045,23 +1051,23 @@ json_t * validate_authorization_code(struct config_elements * config, const char
   int res;
   json_int_t gco_id;
   char * code_hash, * escape, * escape_ip_source, * clause_redirect_uri, * clause_client_id, * col_gco_date, * clause_gco_date, * clause_scope, * scope_list = NULL, * tmp;
-
+  
   if (authorization_code != NULL && client_id != NULL) {
     code_hash = str2md5(authorization_code, strlen(authorization_code));
     escape_ip_source = h_escape_string(config->conn, ip_source);
     escape = h_escape_string(config->conn, redirect_uri);
-    clause_redirect_uri = msprintf("(SELECT `gru_id` FROM `%s` WHERE `gru_uri`='%s')", GLEWLWYD_TABLE_REDIRECT_URI, escape);
+    clause_redirect_uri = msprintf("= (SELECT `gru_id` FROM `%s` WHERE `gru_uri`='%s')", GLEWLWYD_TABLE_REDIRECT_URI, escape);
     free(escape);
     escape = h_escape_string(config->conn, client_id);
-    clause_client_id = msprintf("(SELECT `gc_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT, escape);
+    clause_client_id = msprintf("= (SELECT `gc_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT, escape);
     free(escape);
     
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
       col_gco_date = nstrdup("UNIX_TIMESTAMP(`gco_date`)");
-      clause_gco_date = nstrdup("(UNIX_TIMESTAMP(NOW()) - 600)");
+      clause_gco_date = nstrdup("> (UNIX_TIMESTAMP(NOW()) - 600)");
     } else {
       col_gco_date = nstrdup("gco_date");
-      clause_gco_date = nstrdup("(strftime('%s','now') - 600)");
+      clause_gco_date = nstrdup("> (strftime('%s','now') - 600)");
     }
     
     j_query = json_pack("{sss[ss]s{si ss ss s{ssss} s{ssss} s{ssss}}}",
@@ -1105,8 +1111,8 @@ json_t * validate_authorization_code(struct config_elements * config, const char
         // Get scope_list (if any)
         if (config->use_scope) {
           gco_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "gco_id"));
-          clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gc_id`=%" JSON_INTEGER_FORMAT ")", GLEWLWYD_TABLE_CODE_SCOPE, gco_id);
-          j_query = json_pack("{sss[s]s{ssss}}",
+          clause_scope = msprintf("= (SELECT `gs_id` FROM `%s` WHERE `gco_id`=%" JSON_INTEGER_FORMAT ")", GLEWLWYD_TABLE_CODE_SCOPE, gco_id);
+          j_query = json_pack("{sss[s]s{s{ssss}}}",
                               "table",
                               GLEWLWYD_TABLE_SCOPE,
                               "columns",
@@ -1131,6 +1137,7 @@ json_t * validate_authorization_code(struct config_elements * config, const char
               }
             }
           } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error executng query scope");
             j_return = json_pack("{si}", "result", G_ERROR_DB);
           }
           json_decref(j_scope);
@@ -1148,6 +1155,7 @@ json_t * validate_authorization_code(struct config_elements * config, const char
       }
       json_decref(j_result);
     } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error executng query code");
       j_return = json_pack("{si}", "result", G_ERROR_DB);
     }
   } else {
