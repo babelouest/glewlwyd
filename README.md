@@ -8,13 +8,39 @@ Fully written in C language, based on [Ulfius](https://github.com/babelouest/ulf
 
 ## Installation
 
-### TL;DR
-
 Download Glewlwyd and its dependendencies, compile and install.
 
 ```shell
-$ sudo apt-get install toutoutou
-$ git clone glewlwyd
+$ sudo apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev uuid-dev libldap2-dev libmysqlclient-dev libsqlite3-dev libconfig-dev libssl-dev
+
+# Install libjwt
+$ git clone https://github.com/benmcollins/libjwt.git
+$ cd libjwt/
+$ autoreconf -i
+$ ./configure
+$ make
+$ sudo make install
+
+# Install Ulfius
+$ git clone https://github.com/babelouest/ulfius.git
+$ cd ulfius/
+$ git submodule update --init
+$ make
+$ sudo make install
+
+# Install Hoel
+$ git clone https://github.com/babelouest/hoel.git
+$ cd hoel/
+$ make
+$ sudo make install
+
+# Install glewlwyd
+$ git clone https://github.com/babelouest/glewlwyd.git
 $ cd glewlwyd
-$ make && sudo make install
+$ make 
+$ sudo make install
 ```
+
+## Usage
+
+Work in progress...
