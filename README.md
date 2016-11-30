@@ -4,7 +4,7 @@
 
 Lightweight, fast and easy to install on small systems. Requires a MySql or SQLite3 database. Handles LDAP or database for users backend.
 
-Fully written in C language, based on [Ulfius](https://github.com/babelouest/ulfius) HTTP franework and [Hoel](https://github.com/babelouest/hoel) database framework.
+Fully written in C language, based on [Ulfius](https://github.com/babelouest/ulfius) HTTP framework, [Hoel](https://github.com/babelouest/hoel) database framework and [Libjwt](https://github.com/benmcollins/libjwt.git) library.
 
 ## Installation
 
