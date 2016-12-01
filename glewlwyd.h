@@ -70,13 +70,13 @@
 #define GLEWLWYD_TABLE_REFRESH_TOKEN             "g_refresh_token"
 #define GLEWLWYD_TABLE_ACCESS_TOKEN              "g_access_token"
 #define GLEWLWYD_TABLE_CODE                      "g_code"
+#define GLEWLWYD_TABLE_AUTHORIZATION_TYPE        "g_authorization_type"
 
 // Link tables
 #define GLEWLWYD_TABLE_CLIENT_USER_SCOPE         "g_client_user_scope"
 #define GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE "g_client_authorization_type"
 #define GLEWLWYD_TABLE_RESOURCE_SCOPE            "g_resource_scope"
 #define GLEWLWYD_TABLE_USER_SCOPE                "g_user_scope"
-#define GLEWLWYD_TABLE_AUTHORIZATION_TYPE        "g_authorization_type"
 #define GLEWLWYD_TABLE_CLIENT_SCOPE              "g_client_scope"
 #define GLEWLWYD_TABLE_CODE_SCOPE                "g_code_scope"
 #define GLEWLWYD_TABLE_REFRESH_TOKEN_SCOPE       "g_refresh_token_scope"
@@ -171,6 +171,7 @@ json_t * auth_check_scope_ldap(struct config_elements * config, const char * use
 json_t * session_check(struct config_elements * config, const struct _u_request * request);
 json_t * validate_authorization_code(struct config_elements * config, const char * authorization_code, const char * client_id, const char * redirect_uri, const char * ip_source);
 json_t * client_check(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
+int client_auth(struct config_elements * config, const char * client_id, const char * client_password);
 int auth_check_client_user_scope(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
 
 char * generate_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);

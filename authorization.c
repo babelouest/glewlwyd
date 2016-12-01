@@ -222,6 +222,7 @@ json_t * auth_check_credentials_ldap(struct config_elements * config, const char
           if (result_login == LDAP_SUCCESS) {
             res = json_pack("{si}", "result", G_OK);
           } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "User '%s' error log in", username);
             res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
           }
         }
@@ -242,27 +243,28 @@ json_t * auth_check_credentials_ldap(struct config_elements * config, const char
 json_t * auth_check_scope_database(struct config_elements * config, const char * username, const char * scope_list) {
   json_t * j_query, * j_result, * scope_list_allowed, * j_value;
   int res;
-  char * scope, * scope_escaped, * saveptr, * scope_list_escaped = strdup(""), * scope_list_save = nstrdup(scope_list), * login_escaped = h_escape_string(config->conn, username), * scope_list_join;
+  char * scope, * scope_escaped, * saveptr, * scope_list_escaped = NULL, * scope_list_save = nstrdup(scope_list), * login_escaped = h_escape_string(config->conn, username), * scope_list_join;
   char * where_clause, * tmp;
   size_t index;
   
-  if (scope_list_save != NULL && login_escaped != NULL && scope_list_escaped != NULL) {
+  if (scope_list == NULL || username == NULL) {
+    scope_list_allowed = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if (scope_list_save != NULL && login_escaped != NULL) {
     scope = strtok_r(scope_list_save, " ", &saveptr);
     while (scope != NULL) {
       scope_escaped = h_escape_string(config->conn, scope);
-      if (nstrlen(scope_list_escaped) > 0) {
+      if (scope_list_escaped != NULL) {
         tmp = msprintf("%s,'%s'", scope_list_escaped, scope_escaped);
         free(scope_list_escaped);
         scope_list_escaped = tmp;
       } else {
-        free(scope_list_escaped);
         scope_list_escaped = msprintf("'%s'", scope_escaped);
       }
       free(scope_escaped);
       scope = strtok_r(NULL, " ", &saveptr);
     }
     free(scope_list_save);
-    where_clause = msprintf("IN (SELECT gs_id FROM %s WHERE gu_id = (SELECT gu_id FROM %s WHERE gu_login='%s') AND gs_id IN (SELECT gs_id FROM %s WHERE gs_name in (%s)))", GLEWLWYD_TABLE_USER_SCOPE, GLEWLWYD_TABLE_USER, login_escaped, GLEWLWYD_TABLE_SCOPE, scope_list_escaped);
+    where_clause = msprintf("IN (SELECT gs_id FROM %s WHERE gu_id = (SELECT gu_id FROM %s WHERE gu_login='%s') AND gs_id IN (SELECT gs_id FROM %s WHERE gs_name IN (%s)))", GLEWLWYD_TABLE_USER_SCOPE, GLEWLWYD_TABLE_USER, login_escaped, GLEWLWYD_TABLE_SCOPE, scope_list_escaped);
     j_query = json_pack("{sss[s]s{s{ssss}}}",
               "table",
               GLEWLWYD_TABLE_SCOPE,
@@ -296,19 +298,20 @@ json_t * auth_check_scope_database(struct config_elements * config, const char *
           scope_list_allowed = json_pack("{siss}", "result", G_OK, "scope", scope_list_join);
           free(scope_list_join);
         } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_scope_database - Error user '%s' with scope %s", username, scope_list);
           scope_list_allowed = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
         json_decref(j_result);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error executing sql query");
+        y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_scope_database - Error executing sql query");
         scope_list_allowed = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for j_query");
+      y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_scope_database - Error allocating resources for j_query");
       scope_list_allowed = json_pack("{si}", "result", G_ERROR);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for scope_list_save %s or login_escaped %s or scope_list_escaped %s", scope_list_save, login_escaped, scope_list_escaped);
+    y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_scope_database - Error allocating resources for scope_list_save %s or login_escaped %s or scope_list_escaped %s", scope_list_save, login_escaped, scope_list_escaped);
     scope_list_allowed = json_pack("{si}", "result", G_ERROR);
   }
   return scope_list_allowed;
@@ -417,7 +420,6 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
       query = tmp;
     }
     
-
     res = h_execute_query_json(config->conn, query, &j_result);
     free(query);
     if (res == H_OK) {
@@ -436,6 +438,67 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
   return j_return;
+}
+
+/**
+ *
+ * Check if client credentials are valid
+ */
+int client_auth(struct config_elements * config, const char * client_id, const char * client_password) {
+  json_t * j_query, * j_result;
+  int res, to_return;
+  char * client_id_escaped, * client_password_escaped, * clause_client_password, * clause_client_authorization_type;
+  
+  if (client_id != NULL && client_password != NULL) {
+    client_id_escaped = h_escape_string(config->conn, client_id);
+    clause_client_authorization_type = msprintf("= (SELECT `gc_id` FROM `%s` WHERE `gc_id` = (SELECT `gc_id` FROM `%s` WHERE `gc_client_id` = '%s') and `got_id` = (SELECT `got_id` FROM `%s` WHERE `got_code` = %d))", GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE, GLEWLWYD_TABLE_CLIENT, client_id_escaped, GLEWLWYD_TABLE_AUTHORIZATION_TYPE, GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS);
+    if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
+      client_password_escaped = h_escape_string(config->conn, client_password);
+      clause_client_password = msprintf("= PASSWORD('%s')", client_password_escaped);
+    } else {
+      client_password_escaped = str2md5(client_password, strlen(client_password));
+      clause_client_password = msprintf("= '%s'", client_password_escaped);
+    }
+    
+    j_query = json_pack("{sss[s]s{sss{ssss}sisis{ssss}}}",
+                        "table",
+                        GLEWLWYD_TABLE_CLIENT,
+                        "columns",
+                          "gc_id",
+                        "where",
+                          "gc_client_id",
+                          client_id,
+                          "gc_client_password",
+                            "operator",
+                            "raw",
+                            "value",
+                            clause_client_password,
+                          "gc_enabled",
+                          1,
+                          "gc_confidential",
+                          1,
+                          "gc_id",
+                            "operator",
+                            "raw",
+                            "value",
+                            clause_client_authorization_type);
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    free(clause_client_password);
+    free(client_password_escaped);
+    free(client_id_escaped);
+    free(clause_client_authorization_type);
+    if (res == H_OK) {
+      to_return = json_array_size(j_result)>0?G_OK:G_ERROR_UNAUTHORIZED;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "client_auth - Error executing j_query");
+      to_return = G_ERROR_DB;
+    }
+    json_decref(j_result);
+  } else {
+    to_return = G_ERROR_UNAUTHORIZED;
+  }
+  return to_return;
 }
 
 /**
@@ -601,7 +664,7 @@ int auth_check_client_user_scope(struct config_elements * config, const char * c
   char * client_id_escaped, * client_clause, * scope_clause;
   
   save_scope_list = strdup(scope_list);
-  scope = strtok_r(save_scope_list, ",", &saveptr);
+  scope = strtok_r(save_scope_list, " ", &saveptr);
   while (scope != NULL) {
     nb_scope++;
     escaped_scope = h_escape_string(config->conn, scope);
@@ -613,7 +676,7 @@ int auth_check_client_user_scope(struct config_elements * config, const char * c
       escaped_scope_list = tmp;
     }
     free(escaped_scope);
-    scope = strtok_r(NULL, ",", &saveptr);
+    scope = strtok_r(NULL, " ", &saveptr);
   }
   free(save_scope_list);
   
@@ -821,7 +884,7 @@ json_t * validate_authorization_code(struct config_elements * config, const char
         // Get scope_list (if any)
         if (config->use_scope) {
           gco_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "gco_id"));
-          clause_scope = msprintf("= (SELECT `gs_id` FROM `%s` WHERE `gco_id`=%" JSON_INTEGER_FORMAT ")", GLEWLWYD_TABLE_CODE_SCOPE, gco_id);
+          clause_scope = msprintf("IN (SELECT `gs_id` FROM `%s` WHERE `gco_id`=%" JSON_INTEGER_FORMAT ")", GLEWLWYD_TABLE_CODE_SCOPE, gco_id);
           j_query = json_pack("{sss[s]s{s{ssss}}}",
                               "table",
                               GLEWLWYD_TABLE_SCOPE,
@@ -847,7 +910,7 @@ json_t * validate_authorization_code(struct config_elements * config, const char
               }
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error executng query scope");
+            y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error executing query scope");
             j_return = json_pack("{si}", "result", G_ERROR_DB);
           }
           json_decref(j_scope);

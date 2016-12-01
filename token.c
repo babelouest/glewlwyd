@@ -91,7 +91,7 @@ int serialize_refresh_token(struct config_elements * config, const char * userna
             while (scope != NULL) {
               scope_escape = h_escape_string(config->conn, scope);
               scope_clause = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name` = '%s')", GLEWLWYD_TABLE_SCOPE, scope_escape);
-              json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIss}", "grt_id", grt_id, "gs_id", scope_clause));
+              json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIs{ss}}", "grt_id", grt_id, "gs_id", "raw", scope_clause));
               free(scope_clause);
               free(scope_escape);
               scope = strtok_r(NULL, " ", &saveptr);

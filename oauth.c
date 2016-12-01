@@ -30,8 +30,8 @@
 #include "glewlwyd.h"
 
 /**
- * The most used authorization type: client redirects user to login page, 
- * Then if authorized, glewlwyd redirects to redirect_uri with a code in the uri
+ * The most used authorization type: if client is authorized and has granted access to scope, 
+ * glewlwyd redirects to redirect_uri with a code in the uri
  * If necessary, two intermediate steps can be used: login page and grant access page
  */
 int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -336,16 +336,14 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
  * Send an access_token to a confidential client
  */
 int check_auth_type_client_credentials_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  json_t * j_client_check;
   struct config_elements * config = (struct config_elements *)user_data;
   char * access_token;
   const char * ip_source = get_ip_source(request);
   time_t now;
   
-  j_client_check = client_check(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE);
-  if (request->auth_basic_user != NULL && request->auth_basic_password != NULL && check_result_value(j_client_check, G_OK)) {
+  if (client_auth(config, request->auth_basic_user, request->auth_basic_password) == G_OK) {
     time(&now);
-    access_token = generate_client_access_token(config, json_string_value(json_object_get(j_client_check, "client_id")), ip_source, now);
+    access_token = generate_client_access_token(config, request->auth_basic_user, ip_source, now);
     if (access_token != NULL) {
       response->json_body = json_pack("{sssssi}",
                                       "access_token", access_token,
@@ -357,10 +355,9 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
       response->status = 500;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Error client_id/client_password for client_id %s at ip address %s", json_string_value(json_object_get(j_client_check, "client_id")), ip_source);
+    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Error client_id/client_password for client_id %s at ip address %s", request->auth_basic_user, ip_source);
     response->status = 403;
   }
-  json_decref(j_client_check);
   return U_OK;
 }
 
@@ -369,7 +366,7 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
  */
 int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  char * access_token, * token_hash, * clause_expired_at, * last_seen_value, * scope, * scope_list_save, * scope_escaped, * scope_list_escaped, * saveptr, * clause_scope_list, * new_scope_list, * tmp;
+  char * access_token, * token_hash, * clause_expired_at, * last_seen_value, * scope, * scope_list_save, * scope_escaped, * scope_list_escaped, * saveptr, * clause_scope_list, * new_scope_list = NULL, * tmp;
   json_t * j_query, * j_result, * j_element;
   size_t index;
   int res;
@@ -438,11 +435,11 @@ int get_access_token_from_refresh (const struct _u_request * request, struct _u_
               free(scope_escaped);
               scope = strtok_r(NULL, " ", &saveptr);
             }
-            clause_scope_list = msprintf("(SELECT `gs_id` FROM `%s` WHERE `grt_id` = (SELECT `grt_id` FROM `%s` WHERE `grt_hash` = '%s') AND `gs_id` IN (SELECT `gs_id` FROM `%s` WHERE `gs_name` IN (%s)))", GLEWLWYD_TABLE_REFRESH_TOKEN_SCOPE, GLEWLWYD_TABLE_REFRESH_TOKEN, token_hash, GLEWLWYD_TABLE_SCOPE, scope_list_escaped);
+            clause_scope_list = msprintf("IN (SELECT `gs_id` FROM `%s` WHERE `grt_id` = (SELECT `grt_id` FROM `%s` WHERE `grt_hash` = '%s' AND `grt_enabled` = 1) AND `gs_id` IN (SELECT `gs_id` FROM `%s` WHERE `gs_name` IN (%s)))", GLEWLWYD_TABLE_REFRESH_TOKEN_SCOPE, GLEWLWYD_TABLE_REFRESH_TOKEN, token_hash, GLEWLWYD_TABLE_SCOPE, scope_list_escaped);
             free(scope_list_save);
             free(scope_list_escaped);
           } else {
-            clause_scope_list = msprintf("(SELECT `gs_id` FROM `%s` WHERE `grt_id` = (SELECT `grt_id` FROM `%s` WHERE `grt_hash` = '%s'))", GLEWLWYD_TABLE_REFRESH_TOKEN_SCOPE, GLEWLWYD_TABLE_REFRESH_TOKEN, token_hash);
+            clause_scope_list = msprintf("IN (SELECT `gs_id` FROM `%s` WHERE `grt_id` = (SELECT `grt_id` FROM `%s` WHERE `grt_hash` = '%s' AND `grt_enabled` = 1))", GLEWLWYD_TABLE_REFRESH_TOKEN_SCOPE, GLEWLWYD_TABLE_REFRESH_TOKEN, token_hash);
           }
           j_query = json_pack("{sss[s]s{s{ssss}}}",
                               "table",
@@ -484,6 +481,10 @@ int get_access_token_from_refresh (const struct _u_request * request, struct _u_
               response->json_body = json_pack("{ss}", "error", "server_error");
             }
             free(access_token);
+          } else if (res != H_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error database while validating refresh_token");
+            response->status = 500;
+            response->json_body = json_pack("{ss}", "error", "server_error");
           } else {
             response->status = 400;
             response->json_body = json_pack("{ss}", "error", "invalid_scope");
