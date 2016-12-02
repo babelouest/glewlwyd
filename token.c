@@ -393,33 +393,37 @@ char * generate_authorization_code(struct config_elements * config, const char *
       json_decref(j_query);
       
       if (res == H_OK) {
-        gco_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "gco_id"));
-        json_decref(j_result);
-        j_query = json_pack("{sss[]}",
-                            "table",
-                            GLEWLWYD_TABLE_CODE_SCOPE,
-                            "values");
-        save_scope_list = nstrdup(scope_list);
-        scope = strtok_r(save_scope_list, " ", &saveptr);
-        while (scope != NULL) {
-          escape = h_escape_string(config->conn, scope);
-          clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name` = '%s')", GLEWLWYD_TABLE_SCOPE, escape);
-          json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIs{ss}}", "gco_id", gco_id, "gs_id", "raw", clause_scope));
-          free(clause_scope);
-          free(escape);
-          scope = strtok_r(NULL, " ", &saveptr);
-        }
-        
-        if (json_array_size(json_object_get(j_query, "values")) > 0) {
-          res = h_insert(config->conn, j_query, NULL);
-          json_decref(j_query);
-          if (res != H_OK) {
-            free(code_value);
-            code_value = NULL;
-            y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error insert into %s", GLEWLWYD_TABLE_CODE_SCOPE);
-          }
-        }
-        free(save_scope_list);
+				if (config->use_scope) {
+					gco_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "gco_id"));
+					json_decref(j_result);
+					j_query = json_pack("{sss[]}",
+															"table",
+															GLEWLWYD_TABLE_CODE_SCOPE,
+															"values");
+					save_scope_list = nstrdup(scope_list);
+					scope = strtok_r(save_scope_list, " ", &saveptr);
+					while (scope != NULL) {
+						escape = h_escape_string(config->conn, scope);
+						clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name` = '%s')", GLEWLWYD_TABLE_SCOPE, escape);
+						json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIs{ss}}", "gco_id", gco_id, "gs_id", "raw", clause_scope));
+						free(clause_scope);
+						free(escape);
+						scope = strtok_r(NULL, " ", &saveptr);
+					}
+					
+					if (json_array_size(json_object_get(j_query, "values")) > 0) {
+						res = h_insert(config->conn, j_query, NULL);
+						json_decref(j_query);
+						if (res != H_OK) {
+							free(code_value);
+							code_value = NULL;
+							y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error insert into %s", GLEWLWYD_TABLE_CODE_SCOPE);
+						}
+					}
+					free(save_scope_list);
+				} else {
+					json_decref(j_result);
+				}
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error getting id from %s", GLEWLWYD_TABLE_CODE);
       }
