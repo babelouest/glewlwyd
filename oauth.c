@@ -5,6 +5,7 @@
  * OAuth2 authentiation server
  * Users are authenticated with a LDAP server
  * or users stored in the database 
+ * Provides Json Web Tokens (jwt)
  * 
  * main functions definitions
  *
@@ -286,7 +287,7 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
   time_t now;
   char * refresh_token, * access_token;
   const char * ip_source = get_ip_source(request);
-  json_t * j_result = auth_check(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"), u_map_get(request->map_post_body, "scope"));
+  json_t * j_result = auth_check_credentials_scope(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"), u_map_get(request->map_post_body, "scope"));
   
   if (check_result_value(j_result, G_OK)) {
     time(&now);
@@ -367,7 +368,7 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
 int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   char * access_token, * token_hash, * clause_expired_at, * last_seen_value, * scope, * scope_list_save, * scope_escaped, * scope_list_escaped, * saveptr, * clause_scope_list, * new_scope_list = NULL, * tmp;
-  json_t * j_query, * j_result, * j_element;
+  json_t * j_query, * j_result, * j_result2, * j_element;
   size_t index;
   int res;
   const char * refresh_token = u_map_get(request->map_post_body, "refresh_token");
@@ -403,7 +404,7 @@ int get_access_token_from_refresh (const struct _u_request * request, struct _u_
     free(clause_expired_at);
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
-    if (res == H_OK) {
+    if (res == H_OK && json_array_size(j_result) > 0) {
       if (!jwt_decode(&jwt, refresh_token, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
         last_seen_value = msprintf(config->conn->type==HOEL_DB_TYPE_MARIADB?"FROM_UNIXTIME(%d)":"%d", now);
         j_query = json_pack("{sss{ss}s{ss}}",
@@ -453,10 +454,10 @@ int get_access_token_from_refresh (const struct _u_request * request, struct _u_
                                   "value",
                                   clause_scope_list);
           free(clause_scope_list);
-          res = h_select(config->conn, j_query, &j_result, NULL);
+          res = h_select(config->conn, j_query, &j_result2, NULL);
           json_decref(j_query);
-          if (res == H_OK && json_array_size(j_result) > 0) {
-            json_array_foreach(j_result, index, j_element) {
+          if (res == H_OK && json_array_size(j_result2) > 0) {
+            json_array_foreach(j_result2, index, j_element) {
               if (new_scope_list == NULL) {
                 new_scope_list = nstrdup(json_string_value(json_object_get(j_element, "gs_name")));
               } else {
@@ -489,7 +490,7 @@ int get_access_token_from_refresh (const struct _u_request * request, struct _u_
             response->status = 400;
             response->json_body = json_pack("{ss}", "error", "invalid_scope");
           }
-          json_decref(j_result);
+          json_decref(j_result2);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error updating grt_last_seen");
           response->status = 500;

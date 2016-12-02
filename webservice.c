@@ -5,6 +5,7 @@
  * OAuth2 authentiation server
  * Users are authenticated with a LDAP server
  * or users stored in the database 
+ * Provides Json Web Tokens (jwt)
  * 
  * main functions definitions
  *
@@ -118,7 +119,7 @@ int callback_glewlwyd_token (const struct _u_request * request, struct _u_respon
  */
 int callback_glewlwyd_user_authorization (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_result = auth_check(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"), u_map_get(request->map_post_body, "scope"));
+  json_t * j_result = auth_check_credentials(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"));
   char * session_token;
   const char * ip_source = get_ip_source(request);
   time_t now;

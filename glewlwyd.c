@@ -5,6 +5,7 @@
  * OAuth2 authentiation server
  * Users are authenticated with a LDAP server
  * or users stored in the database 
+ * Provides Json Web Tokens (jwt)
  * 
  * main functions definitions
  * and main process start

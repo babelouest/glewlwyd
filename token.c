@@ -5,6 +5,7 @@
  * OAuth2 authentiation server
  * Users are authenticated with a LDAP server
  * or users stored in the database 
+ * Provides Json Web Tokens (jwt)
  * 
  * token services
  *
@@ -26,6 +27,7 @@
  */
 
 #include <uuid/uuid.h>
+#include <string.h>
 
 #include "glewlwyd.h"
 
@@ -35,7 +37,7 @@
 int serialize_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * refresh_token, const char * scope_list, time_t now) {
   json_t * j_query, * j_result;
   int res, to_return;
-  char * token_hash, * last_seen_value, * expired_at_value, * scope, * scope_escape, * scope_clause, * save_scope_list, * saveptr;
+  char * token_hash, * last_seen_value, * expired_at_value, * scope, * scope_escape, * scope_clause, * save_scope_list, * saveptr = NULL;
   json_int_t grt_id;
   
   token_hash = str2md5(refresh_token, strlen(refresh_token));
@@ -100,7 +102,6 @@ int serialize_refresh_token(struct config_elements * config, const char * userna
             
             if (json_array_size(json_object_get(j_query, "values")) > 0) {
               res = h_insert(config->conn, j_query, NULL);
-              json_decref(j_query);
               if (res == H_OK) {
                 to_return = G_OK;
               } else {
@@ -111,6 +112,7 @@ int serialize_refresh_token(struct config_elements * config, const char * userna
               y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error no scope given");
               to_return = G_ERROR;
             }
+            json_decref(j_query);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error executing query select");
             to_return = G_ERROR_DB;

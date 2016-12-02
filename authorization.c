@@ -5,6 +5,7 @@
  * OAuth2 authentiation server
  * Users are authenticated with a LDAP server
  * or users stored in the database 
+ * Provides Json Web Tokens (jwt)
  * 
  * main functions definitions
  *
@@ -35,16 +36,52 @@
  * All inclusive authentication check for a user
  * 
  */
-json_t * auth_check(struct config_elements * config, const char * username, const char * password, const char * scope_list) {
+json_t * auth_check_credentials_scope(struct config_elements * config, const char * username, const char * password, const char * scope_list) {
+  json_t * j_res_auth = NULL, * j_res_scope = NULL, * j_res;
+  
+  if (scope_list == NULL && config->use_scope) {
+    j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  } else if (username != NULL && password != NULL) {
+    if (config->has_auth_ldap) {
+      j_res_auth = auth_check_credentials_ldap(config, username, password);
+      if (check_result_value(j_res_auth, G_OK)) {
+        j_res_scope = auth_check_scope_ldap(config, username, scope_list);
+      }
+    }
+    
+    if (config->has_auth_database && !check_result_value(j_res_auth, G_OK)) {
+      json_decref(j_res_auth);
+      j_res_auth = auth_check_credentials_database(config, username, password);
+      if (check_result_value(j_res_auth, G_OK)) {
+        j_res_scope = auth_check_scope_database(config, username, scope_list);
+      }
+      json_decref(j_res_auth);
+    }
+    
+    if (check_result_value(j_res_scope, G_OK)) {
+      j_res = json_copy(j_res_scope);
+    } else if (check_result_value(j_res_scope, G_ERROR_UNAUTHORIZED)) {
+      j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    } else {
+      j_res = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_res_scope);
+  } else {
+    j_res = json_pack("{si}", "result", G_ERROR_PARAM);
+  }
+  return j_res;
+}
+
+json_t * auth_check_credentials(struct config_elements * config, const char * username, const char * password) {
   json_t * j_res = NULL;
   
   if (username != NULL && password != NULL) {
     if (config->has_auth_ldap) {
-      j_res = auth_check_credentials_ldap(config, username, password, scope_list);
+      j_res = auth_check_credentials_ldap(config, username, password);
     }
-    if (config->has_auth_database && (j_res == NULL || json_integer_value(json_object_get(j_res, "result")) != G_OK)) {
+    if (config->has_auth_database && !check_result_value(j_res, G_OK)) {
       json_decref(j_res);
-      j_res = auth_check_credentials_database(config, username, password, scope_list);
+      j_res = auth_check_credentials_database(config, username, password);
     }
   } else {
     j_res = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -56,7 +93,7 @@ json_t * auth_check(struct config_elements * config, const char * username, cons
  * Check if the username and password specified are valid as a database user
  * On success, return a json array with all scope values available
  */
-json_t * auth_check_credentials_database(struct config_elements * config, const char * username, const char * password, const char * scope_list) {
+json_t * auth_check_credentials_database(struct config_elements * config, const char * username, const char * password) {
   json_t * j_query, * j_result;
   char * escaped, * str_password;
   int res, res_size;
@@ -96,11 +133,7 @@ json_t * auth_check_credentials_database(struct config_elements * config, const 
       if (res_size == 0) {
         return json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       } else if (res_size == 1) {
-        if (config->use_scope && scope_list != NULL) {
-          return auth_check_scope_database(config, username, scope_list);
-        } else {
-          return json_pack("{si}", "result", G_OK);
-        }
+        return json_pack("{si}", "result", G_OK);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "Error in database while getting credentials (obviously)");
         return json_pack("{si}", "result", G_ERROR_DB);
@@ -115,7 +148,7 @@ json_t * auth_check_credentials_database(struct config_elements * config, const 
 /**
  * Check if the username and password specified are valid as a LDAP user
  */
-json_t * auth_check_credentials_ldap(struct config_elements * config, const char * username, const char * password, const char * scope_list) {
+json_t * auth_check_credentials_ldap(struct config_elements * config, const char * username, const char * password) {
   LDAP * ldap;
   LDAPMessage * answer, * entry;
   
@@ -165,66 +198,17 @@ json_t * auth_check_credentials_ldap(struct config_elements * config, const char
         y_log_message(Y_LOG_LEVEL_ERROR, "ldap search: error getting first result");
         res = json_pack("{si}", "result", G_ERROR);
       } else {
-        if (config->use_scope && scope_list != NULL) {
-          struct berval ** values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property);
-          char * new_scope_list = strdup("");
-          int i;
-          
-          for (i=0; i < ldap_count_values_len(values); i++) {
-            char * str_value = malloc(values[i]->bv_len + 1);
-            char * scope_list_dup = strdup(scope_list);
-            char * token, * save_ptr = NULL;
-            
-            snprintf(str_value, values[i]->bv_len + 1, "%s", values[i]->bv_val);
-            token = strtok_r(scope_list_dup, " ", &save_ptr);
-            while (token != NULL) {
-              if (0 == strcmp(token, str_value)) {
-                if (strlen(new_scope_list) > 0) {
-                  char * tmp = msprintf("%s %s", new_scope_list, token);
-                  free(new_scope_list);
-                  new_scope_list = tmp;
-                } else {
-                  free(new_scope_list);
-                  new_scope_list = strdup(token);
-                }
-              }
-              token = strtok_r(NULL, " ", &save_ptr);
-            }
-            free(scope_list_dup);
-            free(str_value);
-          }
-          ldap_value_free_len(values);
-          if (nstrlen(new_scope_list) > 0) {
-            // Testing the first result to username with the given password
-            user_dn = ldap_get_dn(ldap, entry);
-            cred.bv_val = (char *)password;
-            cred.bv_len = strlen(password);
-            result_login = ldap_sasl_bind_s(ldap, user_dn, ldap_mech, &cred, NULL, NULL, &servcred);
-            ldap_memfree(user_dn);
-            if (result_login == LDAP_SUCCESS) {
-              res = json_pack("{siss}", "result", G_OK, "scope", new_scope_list);
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, bind error");
-              res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-            }
-          } else {
-            // User hasn't all of part of the scope requested, sending unauthorized answer
-            y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, scope incorrect");
-            res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-          }
+        // Testing the first result to username with the given password
+        user_dn = ldap_get_dn(ldap, entry);
+        cred.bv_val = (char *)password;
+        cred.bv_len = strlen(password);
+        result_login = ldap_sasl_bind_s(ldap, user_dn, ldap_mech, &cred, NULL, NULL, &servcred);
+        ldap_memfree(user_dn);
+        if (result_login == LDAP_SUCCESS) {
+          res = json_pack("{si}", "result", G_OK);
         } else {
-          // Testing the first result to username with the given password
-          user_dn = ldap_get_dn(ldap, entry);
-          cred.bv_val = (char *)password;
-          cred.bv_len = strlen(password);
-          result_login = ldap_sasl_bind_s(ldap, user_dn, ldap_mech, &cred, NULL, NULL, &servcred);
-          ldap_memfree(user_dn);
-          if (result_login == LDAP_SUCCESS) {
-            res = json_pack("{si}", "result", G_OK);
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "User '%s' error log in", username);
-            res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-          }
+          y_log_message(Y_LOG_LEVEL_ERROR, "User '%s' error log in", username);
+          res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
       }
     }
@@ -920,6 +904,7 @@ json_t * validate_authorization_code(struct config_elements * config, const char
           } else {
             j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
           }
+          free(scope_list);
         } else {
           j_return = json_pack("{sisssI}", "result", G_OK, "username", json_string_value(json_object_get(json_array_get(j_result, 0), "gco_username")), "gco_id", json_integer_value((json_object_get(json_array_get(j_result, 0), "gco_id"))));
         }

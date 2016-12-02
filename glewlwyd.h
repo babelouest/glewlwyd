@@ -5,6 +5,7 @@
  * OAuth2 authentiation server
  * Users are authenticated with a LDAP server
  * or users stored in the database 
+ * Provides Json Web Tokens (jwt)
  * 
  * Declarations for constants and prototypes
  *
@@ -162,9 +163,10 @@ int callback_glewlwyd_api_description (const struct _u_request * request, struct
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-json_t * auth_check(struct config_elements * config, const char * username, const char * password, const char * scope_list);
-json_t * auth_check_credentials_database(struct config_elements * config, const char * username, const char * password, const char * scope_list);
-json_t * auth_check_credentials_ldap(struct config_elements * config, const char * username, const char * password, const char * scope_list);
+json_t * auth_check_credentials_scope(struct config_elements * config, const char * username, const char * password, const char * scope_list);
+json_t * auth_check_credentials(struct config_elements * config, const char * username, const char * password);
+json_t * auth_check_credentials_database(struct config_elements * config, const char * username, const char * password);
+json_t * auth_check_credentials_ldap(struct config_elements * config, const char * username, const char * password);
 json_t * auth_check_scope(struct config_elements * config, const char * username, const char * scope_list);
 json_t * auth_check_scope_database(struct config_elements * config, const char * username, const char * scope_list);
 json_t * auth_check_scope_ldap(struct config_elements * config, const char * username, const char * scope_list);
