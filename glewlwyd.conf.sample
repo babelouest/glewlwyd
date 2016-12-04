@@ -126,6 +126,8 @@ authentication =
    login_property = "uid"
    filter         = "o=oauth"
    scope_property = "o"
+   email_property = "mailbox"
+   name_property  = "displayName"
 }
 
 # jwt parameters

@@ -38,7 +38,8 @@ CREATE TABLE `g_user` (
 -- Scope table, contain all scope values available
 CREATE TABLE `g_scope` (
   `gs_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
-  `gs_name` VARCHAR(128) NOT NULL
+  `gs_name` VARCHAR(128) NOT NULL,
+  `gs_description` VARCHAR(512)
 );
 
 -- Authorization type table, to store authorization type available

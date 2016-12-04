@@ -119,8 +119,11 @@ int main (int argc, char ** argv) {
   // Token endpoint
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/token/", NULL, NULL, NULL, &callback_glewlwyd_token, (void*)config);
   
-  // User login endpoint
+  // User endpoints
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/auth/", NULL, NULL, NULL, &callback_glewlwyd_get_user_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/auth/", NULL, NULL, NULL, &callback_glewlwyd_user_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/auth/", NULL, NULL, NULL, &callback_glewlwyd_delete_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_auth_session_grant, (void*)config, NULL, &callback_glewlwyd_get_user_scope_grant, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_auth_session_grant, (void*)config, NULL, &callback_glewlwyd_user_scope_grant, (void*)config);
   
   // Other configuration
@@ -174,6 +177,8 @@ void exit_server(struct config_elements ** config, int exit_value) {
       free((*config)->auth_ldap->login_property);
       free((*config)->auth_ldap->scope_property);
       free((*config)->auth_ldap->base_search);
+      free((*config)->auth_ldap->name_property);
+      free((*config)->auth_ldap->email_property);
       free((*config)->auth_ldap);
     }
     h_close_db((*config)->conn);
@@ -401,7 +406,7 @@ int build_config_from_file(struct config_elements * config) {
   config_setting_t * root, * database, * auth, * jwt, * mime_type_list, * mime_type;
   const char * cur_prefix, * cur_log_mode, * cur_log_level, * cur_log_file = NULL, * one_log_mode, 
              * db_type, * db_sqlite_path, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL, * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL, * cur_session_key = NULL,
-             * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL, * cur_auth_ldap_filter = NULL, * cur_auth_ldap_login_property = NULL, * cur_auth_ldap_scope_property = NULL, * cur_auth_ldap_base_search = NULL,
+             * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL, * cur_auth_ldap_filter = NULL, * cur_auth_ldap_login_property = NULL, * cur_auth_ldap_scope_property = NULL, * cur_auth_ldap_base_search = NULL, * cur_auth_ldap_name_property = NULL, * cur_auth_ldap_email_property = NULL,
              * cur_rsa_key_file = NULL, * cur_rsa_pub_file = NULL, * cur_sha_secret = NULL,
              * extension = NULL, * mime_type_value = NULL;
   int db_mariadb_port = 0;
@@ -565,11 +570,13 @@ int build_config_from_file(struct config_elements * config) {
       config_setting_lookup_string(auth, "bind_passwd", &cur_auth_ldap_bind_passwd);
       config_setting_lookup_string(auth, "filter", &cur_auth_ldap_filter);
       config_setting_lookup_string(auth, "login_property", &cur_auth_ldap_login_property);
+      config_setting_lookup_string(auth, "name_property", &cur_auth_ldap_name_property);
+      config_setting_lookup_string(auth, "email_property", &cur_auth_ldap_email_property);
       if (config->use_scope) {
         config_setting_lookup_string(auth, "scope_property", &cur_auth_ldap_scope_property);
       }
       config_setting_lookup_string(auth, "base_search", &cur_auth_ldap_base_search);
-      if (cur_auth_ldap_uri != NULL && cur_auth_ldap_bind_dn != NULL && cur_auth_ldap_bind_passwd != NULL && cur_auth_ldap_filter != NULL && cur_auth_ldap_login_property != NULL && (cur_auth_ldap_scope_property != NULL || !config->use_scope) && cur_auth_ldap_base_search != NULL) {
+      if (cur_auth_ldap_uri != NULL && cur_auth_ldap_bind_dn != NULL && cur_auth_ldap_bind_passwd != NULL && cur_auth_ldap_filter != NULL && cur_auth_ldap_login_property != NULL && (cur_auth_ldap_scope_property != NULL || !config->use_scope) && cur_auth_ldap_base_search != NULL && cur_auth_ldap_name_property != NULL && cur_auth_ldap_email_property != NULL) {
         config->auth_ldap = malloc(sizeof(struct _auth_ldap));
         if (config->auth_ldap == NULL) {
           config_destroy(&cfg);
@@ -616,6 +623,18 @@ int build_config_from_file(struct config_elements * config) {
           if (config->auth_ldap->base_search == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->base_search\n");
+            return 0;
+          }
+          config->auth_ldap->name_property = nstrdup(cur_auth_ldap_name_property);
+          if (config->auth_ldap->name_property == NULL) {
+            config_destroy(&cfg);
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->name_property\n");
+            return 0;
+          }
+          config->auth_ldap->email_property = nstrdup(cur_auth_ldap_email_property);
+          if (config->auth_ldap->email_property == NULL) {
+            config_destroy(&cfg);
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->email_property\n");
             return 0;
           }
         }

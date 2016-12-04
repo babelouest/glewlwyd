@@ -33,7 +33,8 @@ CREATE INDEX `i_g_user` ON `g_user`(`gu_id`);
 -- Scope table, contain all scope values available
 CREATE TABLE `g_scope` (
   `gs_id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `gs_name` TEXT NOT NULL
+  `gs_name` TEXT NOT NULL,
+  `gs_description` TEXT
 );
 CREATE INDEX `i_g_scope` ON `g_scope`(`gs_id`);
 

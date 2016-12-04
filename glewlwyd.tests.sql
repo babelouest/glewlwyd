@@ -4,10 +4,10 @@
 -- ----------- --
 
 -- Mariadb/Mysql user add queries
-INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('admin', PASSWORD('MyAdminPassword2016!'), 1);
-INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user1', PASSWORD('MyUser1Password!'), 1);
-INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user2', PASSWORD('MyUser2Password!'), 1);
-INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user3', PASSWORD('MyUser3Password!'), 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', PASSWORD('MyAdminPassword2016!'), 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user1', 'Dave Lopper1', 'user1@glewlwyd.domain', PASSWORD('MyUser1Password!'), 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user2', 'Dave Lopper2', 'user2@glewlwyd.domain', PASSWORD('MyUser2Password!'), 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user3', 'Dave Lopper3', 'user3@glewlwyd.domain', PASSWORD('MyUser3Password!'), 1);
 
 -- SQLite3 user add queries (passwords are md5 encoded, but they are the same as below)
 -- INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('admin', '16ae549bfe99ce44c4134d5f6b0f1d97', 1);
@@ -15,9 +15,9 @@ INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user3', PASSWORD
 -- INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user2', '4864d80e57cdd46d90900341660cc221', 1);
 -- INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user3', '312b3efa1cc1e700b08cfa0981dca89f', 1);
 
-INSERT INTO g_scope (gs_name) VALUES ('scope1');
-INSERT INTO g_scope (gs_name) VALUES ('scope2');
-INSERT INTO g_scope (gs_name) VALUES ('scope3');
+INSERT INTO g_scope (gs_name, gs_description) VALUES ('scope1', 'Description for scope1');
+INSERT INTO g_scope (gs_name, gs_description) VALUES ('scope2', 'Description for scope2');
+INSERT INTO g_scope (gs_name, gs_description) VALUES ('scope3', 'Description for scope3');
 
 INSERT INTO g_client (gc_name, gc_description, gc_client_id) VALUES ('client1', 'Description for client1', 'client1_id');
 INSERT INTO g_client (gc_name, gc_description, gc_client_id) VALUES ('client2', 'Description for client2', 'client2_id');

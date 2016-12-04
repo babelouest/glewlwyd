@@ -151,15 +151,21 @@ int callback_glewlwyd_user_authorization (const struct _u_request * request, str
  */
 int callback_glewlwyd_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_session = session_check(config, request);
-  int res = grant_client_user_scope_access(config, u_map_get(request->map_post_body, "client_id"), json_string_value(json_object_get(j_session, "username")), u_map_get(request->map_post_body, "scope"));
+  int res;
+  json_t * j_scope, * j_session = session_check(((struct config_elements *)user_data), request);;
   
-  if (res != G_OK) {
-    response->status = 500;
+  // Check if user has access to scopes
+  j_scope = auth_check_scope(((struct config_elements *)user_data), json_string_value(json_object_get(j_session, "username")), u_map_get(request->map_post_body, "scope"));
+  if (!check_result_value(j_scope, G_OK)) {
+    response->status = 403;
+    res = U_OK;
+  } else {
+    res = grant_client_user_scope_access(config, u_map_get(request->map_post_body, "client_id"), json_string_value(json_object_get(j_session, "username")), u_map_get(request->map_post_body, "scope"));
   }
+  json_decref(j_scope);
   json_decref(j_session);
-
-  return U_OK;
+  
+  return res;
 }
 
 /**
@@ -272,19 +278,58 @@ int callback_glewlwyd_api_description (const struct _u_request * request, struct
  * check if connected user has access to scope
  */
 int callback_glewlwyd_check_auth_session_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  json_t * j_session = session_check(((struct config_elements *)user_data), request), * j_scope;
+  json_t * j_session = session_check(((struct config_elements *)user_data), request);
   int res = U_OK;
   
   if (!check_result_value(j_session, G_OK)) {
     res = U_ERROR_UNAUTHORIZED;
   } else {
-    // Check if user has access to scopes
-    j_scope = auth_check_scope(((struct config_elements *)user_data), json_string_value(json_object_get(j_session, "username")), u_map_get(request->map_post_body, "scope"));
-    if (!check_result_value(j_scope, G_OK)) {
-      res = U_ERROR_UNAUTHORIZED;
-    }
-    json_decref(j_scope);
+    res = U_OK;
   }
   json_decref(j_session);
   return res;
+}
+
+int callback_glewlwyd_get_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_session = session_check(config, request), * j_user;
+  
+  if (!check_result_value(j_session, G_OK)) {
+    response->status = 500;
+  } else {
+    j_user = get_user_profile(config, json_string_value(json_object_get(j_session, "username")));
+    if (check_result_value(j_user, G_OK)) {
+      response->json_body = json_copy(json_object_get(j_user, "user"));
+    }
+    json_decref(j_user);
+  }
+  json_decref(j_session);
+  return U_OK;
+}
+
+int callback_glewlwyd_delete_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  ulfius_add_cookie_to_response(response, config->session_key, "", NULL, 0, NULL, "/", 0, 0);
+  return U_OK;
+}
+
+int callback_glewlwyd_get_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_session = session_check(config, request);
+  json_t * j_scope_grant;
+  
+  if (!check_result_value(j_session, G_OK)) {
+    response->status = 500;
+  } else {
+    j_scope_grant = get_user_scope_grant(config, json_string_value(json_object_get(j_session, "username")));
+    if (check_result_value(j_scope_grant, G_OK)) {
+      response->json_body = json_copy(json_object_get(j_scope_grant, "scope"));
+    } else {
+      response->status = 500;
+    }
+    json_decref(j_scope_grant);
+  }
+  json_decref(j_session);
+  
+  return U_OK;
 }

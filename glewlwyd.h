@@ -99,6 +99,8 @@ struct _auth_ldap {
   char * login_property;
   char * scope_property;
   char * base_search;
+  char * name_property;
+  char * email_property;
 };
 
 struct config_elements {
@@ -156,6 +158,9 @@ int callback_glewlwyd_authorization (const struct _u_request * request, struct _
 int callback_glewlwyd_token (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_options (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_static_file (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_root (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -175,6 +180,14 @@ json_t * validate_authorization_code(struct config_elements * config, const char
 json_t * client_check(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
 int client_auth(struct config_elements * config, const char * client_id, const char * client_password);
 int auth_check_client_user_scope(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
+
+json_t * get_user_profile(struct config_elements * config, const char * username);
+json_t * get_user_profile_database(struct config_elements * config, const char * username);
+json_t * get_user_profile_ldap(struct config_elements * config, const char * username);
+
+json_t * get_user_scope_grant(struct config_elements * config, const char * username);
+json_t * get_user_scope_grant_database(struct config_elements * config, const char * username);
+json_t * get_user_scope_grant_ldap(struct config_elements * config, const char * username);
 
 char * generate_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
 char * generate_access_token(struct config_elements * config, const char * refresh_token, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
