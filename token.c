@@ -158,7 +158,7 @@ int serialize_access_token(struct config_elements * config, const uint auth_type
               "set",
                 "grt_last_seen",
                   "raw",
-                  "NOW()",
+                  (config->conn->type==HOEL_DB_TYPE_MARIADB?"NOW()":"(strftime('%s','now')"),
               "where",
                 "grt_hash",
                 refresh_token_hash_escaped);
@@ -266,12 +266,54 @@ char * generate_session_token(struct config_elements * config, const char * user
     token = jwt_encode_str(jwt);
     if (token == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "generate_session_token - generating token");
+    } else {
+      if (serialize_session_token(config, username, ip_source, token, now) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_session_token - Error serializing session_token");
+      }
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "generate_session_token - Error cloning jwt");
   }
   jwt_free(jwt);
   return token;
+}
+
+int serialize_session_token(struct config_elements * config, const char * username, const char * ip_source, const char * session_token, time_t now) {
+  json_t * j_query;
+  int res;
+  char * session_hash = str2md5(session_token, strlen(session_token)), * last_seen_value, * expired_at_value;
+  
+  if (session_token != NULL) {
+    last_seen_value = msprintf(config->conn->type==HOEL_DB_TYPE_MARIADB?"FROM_UNIXTIME(%d)":"%d", now);
+    expired_at_value = msprintf(config->conn->type==HOEL_DB_TYPE_MARIADB?"FROM_UNIXTIME(%d)":"%d", (now+config->session_expiration));
+    j_query = json_pack("{sss{sssss{ss}s{ss}s{ss}ss}}",
+                        "table",
+                        GLEWLWYD_TABLE_SESSION,
+                        "values",
+                          "gss_hash",
+                          session_hash,
+                          "gss_username",
+                          username,
+                          "gss_issued_at",
+                            "raw",
+                            last_seen_value,
+                          "gss_last_seen",
+                            "raw",
+                            last_seen_value,
+                          "gss_expired_at",
+                            "raw",
+                            expired_at_value,
+                          "gss_ip_source",
+                          ip_source);
+    free(session_hash);
+    free(last_seen_value);
+    free(expired_at_value);
+    res = h_insert(config->conn, j_query, NULL);
+    json_decref(j_query);
+    return (res==H_OK?G_OK:G_ERROR_DB);
+  } else {
+    return G_ERROR_PARAM;
+  }
 }
 
 /**
@@ -435,4 +477,143 @@ char * generate_authorization_code(struct config_elements * config, const char *
     y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error input arameters");
   }
   return code_value;
+}
+
+/**
+ *
+ * Session is checked by validating the cookie named after config->session_key
+ * The cookie value is a jwt itself
+ *
+ */
+json_t * session_get(struct config_elements * config, const char * session_value) {
+  json_t * j_result, * j_grants;
+  jwt_t * jwt;
+  
+  if (session_value != NULL) {
+    if (!jwt_decode(&jwt, session_value, NULL, 0)) {
+			char * grant_str = jwt_get_grants_json(jwt, NULL);
+      j_grants = json_loads(grant_str, JSON_DECODE_ANY, NULL);
+      free(grant_str);
+      if (j_grants != NULL) {
+        j_result = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+      } else {
+        j_result = json_pack("{si}", "result", G_ERROR);
+      }
+    } else {
+      j_result = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    }
+    jwt_free(jwt);
+  } else {
+    j_result = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  }
+  
+  return j_result;
+}
+
+json_t * session_check(struct config_elements * config, const char * session_value) {
+  json_t * j_query, * j_result, * j_return, * j_grants;
+  char * session_hash, * clause_expired_at, * grants;
+  int res;
+  jwt_t * jwt;
+  time_t now;
+  long expiration;
+  
+  if (session_value != NULL) {
+    if (!jwt_decode(&jwt, session_value, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
+      time(&now);
+      expiration = jwt_get_grant_int(jwt, "iat") + jwt_get_grant_int(jwt, "expires_in");
+      if (now < expiration) {
+        session_hash = str2md5(session_value, strlen(session_value));
+        if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
+          clause_expired_at = nstrdup("> NOW()");
+        } else {
+          clause_expired_at = nstrdup("> (strftime('%s','now'))");
+        }
+        j_query = json_pack("{sss[s]s{sssis{ssss}}}",
+                          "table",
+                          GLEWLWYD_TABLE_SESSION,
+                          "columns",
+                            "gss_id",
+                          "where",
+                            "gss_hash",
+                            session_hash,
+                            "gss_enabled",
+                            1,
+                            "gss_expired_at",
+                              "operator",
+                              "raw",
+                              "value",
+                              clause_expired_at);
+        free(clause_expired_at);
+        res = h_select(config->conn, j_query, &j_result, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          if (json_array_size(j_result) > 0) {
+            j_query = json_pack("{sss{ss}s{ss}}",
+                                "table",
+                                GLEWLWYD_TABLE_SESSION,
+                                "set",
+                                "gss_last_seen",
+                                  "raw",
+                                  (config->conn->type==HOEL_DB_TYPE_MARIADB?"NOW()":"(strftime('%s','now')"),
+                                "where",
+                                  "gss_hash",
+                                  session_hash);
+            res = h_update(config->conn, j_query, NULL);
+            json_decref(j_query);
+            if (res == H_OK) {
+							grants = jwt_get_grants_json(jwt, NULL);
+              j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
+              free(grants);
+              if (j_grants != NULL) {
+                j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+              } else {
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
+            } else {
+              j_return = json_pack("{si}", "result", G_ERROR_DB);
+            }
+          } else {
+            j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          }
+        } else {
+          j_return = json_pack("{si}", "result", G_ERROR_DB);
+        }
+        free(session_hash);
+        json_decref(j_result);
+      } else {
+        j_result = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      }
+    } else {
+      j_result = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    }
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  }
+  return j_return;
+}
+
+int session_delete(struct config_elements * config, const char * session_value) {
+  json_t * j_query;
+  char * session_hash;
+  int res;
+  
+  session_hash = str2md5(session_value, strlen(session_value));
+  if (session_hash != NULL) {
+    j_query = json_pack("{sss{si}s{ss}}",
+                        "table",
+                        GLEWLWYD_TABLE_SESSION,
+                        "set",
+                          "gss_enabled",
+                          0,
+                        "where",
+                        "gss_hash",
+                        session_hash);
+    res = h_update(config->conn, j_query, NULL);
+    json_decref(j_query);
+    free(session_hash);
+    return (res==H_OK?G_OK:G_ERROR_DB);
+  } else {
+    return G_ERROR_PARAM;
+  }
 }

@@ -82,8 +82,15 @@ int callback_glewlwyd_authorization (const struct _u_request * request, struct _
       response->status = 403;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "response_type %s unknown", response_type);
-    response->status = 400;
+    if (u_map_get(request->map_url, "redirect_uri") != NULL) {
+      response->status = 302;
+      redirect_url = msprintf("%s#error=unsupported_response_type%s%s", u_map_get(request->map_url, "redirect_uri"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+      ulfius_add_header_to_response(response, "Location", redirect_url);
+      free(redirect_url);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "response_type %s unknown", response_type);
+      response->status = 400;
+    }
   }
   
   return result;
@@ -117,7 +124,7 @@ int callback_glewlwyd_token (const struct _u_request * request, struct _u_respon
  * Validates the user/password
  * then if user is valid, stores a cookie
  */
-int callback_glewlwyd_user_authorization (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_check_user_authorization (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_result = auth_check_credentials(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"));
   char * session_token;
@@ -126,10 +133,6 @@ int callback_glewlwyd_user_authorization (const struct _u_request * request, str
   
   time(&now);
   if (check_result_value(j_result, G_OK)) {
-    // Return scope in json body
-    json_object_del(j_result, "result");
-    response->json_body = json_copy(j_result);
-    
     // Store session cookie
     session_token = generate_session_token(config, u_map_get(request->map_post_body, "username"), ip_source, now);
     ulfius_add_cookie_to_response(response, config->session_key, session_token, NULL, config->session_expiration, NULL, "/", 0, 0);
@@ -138,7 +141,7 @@ int callback_glewlwyd_user_authorization (const struct _u_request * request, str
     y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Error login/password for username %s at ip address %s", u_map_get(request->map_post_body, "username"), ip_source);
     response->status = 403;
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_authorization - error checking credentials");
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_user_authorization - error checking credentials");
     response->status = 500;
   }
   json_decref(j_result);
@@ -152,15 +155,15 @@ int callback_glewlwyd_user_authorization (const struct _u_request * request, str
 int callback_glewlwyd_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   int res;
-  json_t * j_scope, * j_session = session_check(((struct config_elements *)user_data), request);;
+  json_t * j_scope, * j_session = session_get(config, u_map_get(request->map_cookie, config->session_key));
   
   // Check if user has access to scopes
-  j_scope = auth_check_scope(((struct config_elements *)user_data), json_string_value(json_object_get(j_session, "username")), u_map_get(request->map_post_body, "scope"));
+  j_scope = auth_check_scope(((struct config_elements *)user_data), json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "scope"));
   if (!check_result_value(j_scope, G_OK)) {
     response->status = 403;
     res = U_OK;
   } else {
-    res = grant_client_user_scope_access(config, u_map_get(request->map_post_body, "client_id"), json_string_value(json_object_get(j_session, "username")), u_map_get(request->map_post_body, "scope"));
+    res = grant_client_user_scope_access(config, u_map_get(request->map_post_body, "client_id"), json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "scope"));
   }
   json_decref(j_scope);
   json_decref(j_session);
@@ -277,10 +280,12 @@ int callback_glewlwyd_api_description (const struct _u_request * request, struct
 /**
  * check if connected user has access to scope
  */
-int callback_glewlwyd_check_auth_session_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  json_t * j_session = session_check(((struct config_elements *)user_data), request);
+int callback_glewlwyd_check_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_session = NULL;
   int res = U_OK;
   
+  j_session = session_check(config, u_map_get(request->map_cookie, config->session_key));
   if (!check_result_value(j_session, G_OK)) {
     res = U_ERROR_UNAUTHORIZED;
   } else {
@@ -292,12 +297,13 @@ int callback_glewlwyd_check_auth_session_grant (const struct _u_request * reques
 
 int callback_glewlwyd_get_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_session = session_check(config, request), * j_user;
+  json_t * j_session, * j_user;
   
+  j_session = session_get(config, u_map_get(request->map_cookie, config->session_key));
   if (!check_result_value(j_session, G_OK)) {
     response->status = 500;
   } else {
-    j_user = get_user_profile(config, json_string_value(json_object_get(j_session, "username")));
+    j_user = get_user_profile(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")));
     if (check_result_value(j_user, G_OK)) {
       response->json_body = json_copy(json_object_get(j_user, "user"));
     }
@@ -315,13 +321,13 @@ int callback_glewlwyd_delete_user_session (const struct _u_request * request, st
 
 int callback_glewlwyd_get_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_session = session_check(config, request);
+  json_t * j_session = session_get(config, u_map_get(request->map_cookie, config->session_key));
   json_t * j_scope_grant;
   
   if (!check_result_value(j_session, G_OK)) {
     response->status = 500;
   } else {
-    j_scope_grant = get_user_scope_grant(config, json_string_value(json_object_get(j_session, "username")));
+    j_scope_grant = get_user_scope_grant(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")));
     if (check_result_value(j_scope_grant, G_OK)) {
       response->json_body = json_copy(json_object_get(j_scope_grant, "scope"));
     } else {

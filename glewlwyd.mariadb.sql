@@ -84,7 +84,7 @@ CREATE TABLE `g_resource` (
 -- Token tables --
 -- ------------ --
 
--- Refresh token table, to store a signature and meta information on all refresh_tokens sent
+-- Refresh token table, to store a signature and meta information on all refresh tokens sent
 CREATE TABLE `g_refresh_token` (
   `grt_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `grt_hash` VARCHAR(32) NOT NULL,
@@ -97,7 +97,7 @@ CREATE TABLE `g_refresh_token` (
   `grt_enabled` TINYINT(1) DEFAULT 1
 );
 
--- Access token table, to store meta information on access_token sent
+-- Access token table, to store meta information on access tokensw sent
 CREATE TABLE `g_access_token` (
   `gat_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `grt_id` INT(11),
@@ -105,6 +105,18 @@ CREATE TABLE `g_access_token` (
   `gat_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `gat_ip_source` VARCHAR(64) NOT NULL,
   FOREIGN KEY(`grt_id`) REFERENCES `g_refresh_token`(`grt_id`)
+);
+
+-- Session table, to store signature and meta information on session tokens sent
+CREATE TABLE `g_session` (
+  `gss_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gss_hash` VARCHAR(32) NOT NULL,
+  `gss_username` VARCHAR(128) NOT NULL,
+  `gss_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `gss_last_seen` TIMESTAMP,
+  `gss_expired_at` TIMESTAMP,
+  `gss_ip_source` VARCHAR(64) NOT NULL,
+  `gss_enabled` TINYINT(1) DEFAULT 1
 );
 
 -- -------------- --

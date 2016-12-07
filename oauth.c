@@ -46,18 +46,18 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
   j_client_check = client_check(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_CODE);
   if (check_result_value(j_client_check, G_OK)) {
     // Client is allowed to use implicit grant with this redirection_uri
-    session_payload = session_check(config, request);
+    session_payload = session_get(config, u_map_get(request->map_cookie, config->session_key));
     if (check_result_value(session_payload, G_OK)) {
       // User Session is valid
       time(&now);
       if (config->use_scope) {
-        j_scope = auth_check_scope(config, json_string_value(json_object_get(session_payload, "username")), u_map_get(request->map_url, "scope"));
+        j_scope = auth_check_scope(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "scope"));
         if (check_result_value(j_scope, G_OK)) {
           // User is allowed for this scope
-          if (auth_check_client_user_scope(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(session_payload, "username")), json_string_value(json_object_get(j_scope, "scope"))) == G_OK) {
+          if (auth_check_client_user_scope(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), json_string_value(json_object_get(j_scope, "scope"))) == G_OK) {
             // User has granted access to the cleaned scope list for this client
             // Generate code, generate the url and redirect to it
-            authorization_code = generate_authorization_code(config, json_string_value(json_object_get(session_payload, "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(j_scope, "scope")), u_map_get(request->map_url, "redirect_uri"), ip_source);
+            authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(j_scope, "scope")), u_map_get(request->map_url, "redirect_uri"), ip_source);
             redirect_url = msprintf("%s#code=%s%s%s", u_map_get(request->map_url, "redirect_uri"), authorization_code, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
             ulfius_add_header_to_response(response, "Location", redirect_url);
             free(redirect_url);
@@ -84,7 +84,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
         json_decref(j_scope);
       } else {
         // Generate code, generate the url and redirect to it
-        authorization_code = generate_authorization_code(config, json_string_value(json_object_get(session_payload, "username")), u_map_get(request->map_url, "client_id"), NULL, u_map_get(request->map_url, "redirect_uri"), ip_source);
+        authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "client_id"), NULL, u_map_get(request->map_url, "redirect_uri"), ip_source);
         redirect_url = msprintf("%s#code=%s%s%s", u_map_get(request->map_url, "redirect_uri"), authorization_code, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
         ulfius_add_header_to_response(response, "Location", redirect_url);
         free(redirect_url);
@@ -180,6 +180,7 @@ int check_auth_type_access_token_request (const struct _u_request * request, str
     free(refresh_token);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - code invalid");
+    response->json_body = json_pack("{ss}", "error", json_string_value(json_object_get(j_validate, "error")));
     response->status = 400;
   }
   json_decref(j_validate);
@@ -203,17 +204,17 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
   j_client_check = client_check(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT);
   if (check_result_value(j_client_check, G_OK)) {
     // Client is allowed to use implicit grant with this redirection_uri
-    session_payload = session_check(config, request);
+    session_payload = session_check(config, u_map_get(request->map_cookie, config->session_key));
     if (check_result_value(session_payload, G_OK)) {
       // User Session is valid
       time(&now);
       if (config->use_scope) {
-        j_scope = auth_check_scope(config, json_string_value(json_object_get(session_payload, "username")), u_map_get(request->map_url, "scope"));
+        j_scope = auth_check_scope(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "scope"));
         if (check_result_value(j_scope, G_OK)) {
           // User is allowed for this scope
-          if (auth_check_client_user_scope(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(session_payload, "username")), json_string_value(json_object_get(j_scope, "scope"))) == G_OK) {
+          if (auth_check_client_user_scope(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), json_string_value(json_object_get(j_scope, "scope"))) == G_OK) {
             // User has granted access to the cleaned scope list for this client
-            access_token = generate_access_token(config, NULL, json_string_value(json_object_get(session_payload, "username")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_scope, "scope")), now);
+            access_token = generate_access_token(config, NULL, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_scope, "scope")), now);
             if (u_map_get(request->map_url, "state") != NULL) {
               redirect_url = msprintf("%s#access_token=%s&token_type=bearer&expires_in=%d&state=%s", u_map_get(request->map_url, "redirect_uri"), access_token, config->access_token_expiration, u_map_get(request->map_url, "state"));
             } else {
@@ -244,7 +245,7 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
         json_decref(j_scope);
       } else {
         // Generate access_token, generate the url and redirect to it
-        access_token = generate_access_token(config, NULL, json_string_value(json_object_get(session_payload, "username")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, NULL, now);
+        access_token = generate_access_token(config, NULL, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, NULL, now);
         redirect_url = msprintf("%s#access_token=%s&token_type=bearer&expires_in=%d%s", u_map_get(request->map_url, "redirect_uri"), access_token, config->access_token_expiration, (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
         ulfius_add_header_to_response(response, "Location", redirect_url);
         free(redirect_url);

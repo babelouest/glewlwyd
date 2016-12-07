@@ -70,6 +70,7 @@
 #define GLEWLWYD_TABLE_REDIRECT_URI              "g_redirect_uri"
 #define GLEWLWYD_TABLE_REFRESH_TOKEN             "g_refresh_token"
 #define GLEWLWYD_TABLE_ACCESS_TOKEN              "g_access_token"
+#define GLEWLWYD_TABLE_SESSION                   "g_session"
 #define GLEWLWYD_TABLE_CODE                      "g_code"
 #define GLEWLWYD_TABLE_AUTHORIZATION_TYPE        "g_authorization_type"
 
@@ -153,10 +154,10 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
 int check_auth_type_client_credentials_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int callback_glewlwyd_check_auth_session_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_check_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_token (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_user_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_check_user_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -175,7 +176,8 @@ json_t * auth_check_credentials_ldap(struct config_elements * config, const char
 json_t * auth_check_scope(struct config_elements * config, const char * username, const char * scope_list);
 json_t * auth_check_scope_database(struct config_elements * config, const char * username, const char * scope_list);
 json_t * auth_check_scope_ldap(struct config_elements * config, const char * username, const char * scope_list);
-json_t * session_check(struct config_elements * config, const struct _u_request * request);
+json_t * session_get(struct config_elements * config, const char * session_value);
+json_t * session_check(struct config_elements * config, const char * session_value);
 json_t * validate_authorization_code(struct config_elements * config, const char * authorization_code, const char * client_id, const char * redirect_uri, const char * ip_source);
 json_t * client_check(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
 int client_auth(struct config_elements * config, const char * client_id, const char * client_password);
@@ -197,6 +199,7 @@ char * generate_client_access_token(struct config_elements * config, const char 
 
 int serialize_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * refresh_token, const char * scope_list, time_t now);
 int serialize_access_token(struct config_elements * config, const uint auth_type, const char * ip_source, const char * refresh_token, const char * scope_list);
+int serialize_session_token(struct config_elements * config, const char * username, const char * ip_source, const char * session_token, time_t now);
 
 int is_authorization_type_enabled(struct config_elements * config, uint authorization_type);
 

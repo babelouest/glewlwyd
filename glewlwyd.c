@@ -120,11 +120,11 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/token/", NULL, NULL, NULL, &callback_glewlwyd_token, (void*)config);
   
   // User endpoints
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/auth/", NULL, NULL, NULL, &callback_glewlwyd_get_user_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/auth/", NULL, NULL, NULL, &callback_glewlwyd_user_authorization, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/auth/", NULL, NULL, NULL, &callback_glewlwyd_delete_user_session, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_auth_session_grant, (void*)config, NULL, &callback_glewlwyd_get_user_scope_grant, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_auth_session_grant, (void*)config, NULL, &callback_glewlwyd_user_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/auth/", &callback_glewlwyd_check_session, (void*)config, NULL, &callback_glewlwyd_get_user_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/auth/", NULL, NULL, NULL, &callback_glewlwyd_check_user_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/auth/", &callback_glewlwyd_check_session, (void*)config, NULL, &callback_glewlwyd_delete_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_session, (void*)config, NULL, &callback_glewlwyd_get_user_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_session, (void*)config, NULL, &callback_glewlwyd_user_scope_grant, (void*)config);
   
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/", NULL, NULL, NULL, NULL, &callback_glewlwyd_root, (void*)config);
@@ -132,19 +132,19 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", NULL, NULL, NULL, &callback_glewlwyd_options, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->static_files_prefix, "*", NULL, NULL, NULL, &callback_glewlwyd_static_file, (void*)config);
   ulfius_set_default_endpoint(config->instance, NULL, NULL, NULL, &callback_default, (void*)config);
-
+  
   u_map_put(config->instance->default_headers, "Access-Control-Allow-Origin", config->allow_origin);
   u_map_put(config->instance->default_headers, "Access-Control-Allow-Credentials", "true");
   u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
-
+  
   y_log_message(Y_LOG_LEVEL_INFO, "Start glewlwyd on port %d, prefix: %s", config->instance->port, config->url_prefix);
   if (ulfius_start_framework(config->instance) == U_OK) {
     while (global_handler_variable == GLEWLWYD_RUNNING) {
       sleep(1);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error starting gareth webserver");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error starting glewlwyd webserver");
     exit_server(&config, GLEWLWYD_ERROR);
   }
   exit_server(&config, GLEWLWYD_STOP);
@@ -331,7 +331,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
  * Print help message to output file specified
  */
 void print_help(FILE * output) {
-  fprintf(output, "\nGareth Messaging REST Webservice\n");
+  fprintf(output, "\nGlewlwyd Messaging REST Webservice\n");
   fprintf(output, "\n");
   fprintf(output, "Messaging system using a JSON/REST interface\n");
   fprintf(output, "\n");
@@ -361,7 +361,7 @@ void print_help(FILE * output) {
  * I don't like global variables but it looks fine to people who designed this
  */
 void exit_handler(int signal) {
-  y_log_message(Y_LOG_LEVEL_INFO, "Gareth caught a stop or kill signal (%d), exiting", signal);
+  y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd caught a stop or kill signal (%d), exiting", signal);
   global_handler_variable = GLEWLWYD_STOP;
 }
 
@@ -482,7 +482,7 @@ int build_config_from_file(struct config_elements * config) {
     }
   }
 
-  if (!y_init_logs(GLEWLWYD_LOG_NAME, config->log_mode, config->log_level, config->log_file, "Starting Gareth alert and messenger service")) {
+  if (!y_init_logs(GLEWLWYD_LOG_NAME, config->log_mode, config->log_level, config->log_file, "Starting Glewlwyd Oauth2 authentication service")) {
     fprintf(stderr, "Error initializing logs\n");
     exit_server(&config, GLEWLWYD_ERROR);
   }

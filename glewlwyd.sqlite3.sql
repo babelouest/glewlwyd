@@ -108,6 +108,19 @@ CREATE TABLE `g_access_token` (
 );
 CREATE INDEX `i_g_access_token` ON `g_access_token`(`gat_id`);
 
+-- Session table, to store signature and meta information on session tokens sent
+CREATE TABLE `g_session` (
+  `gss_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `gss_hash` TEXT NOT NULL,
+  `gss_username` TEXT NOT NULL,
+  `gss_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `gss_last_seen` TIMESTAMP,
+  `gss_expired_at` TIMESTAMP,
+  `gss_ip_source` TEXT NOT NULL,
+  `gss_enabled` INTEGER DEFAULT 1
+);
+CREATE INDEX `i_g_session` ON `g_session`(`gss_id`);
+
 -- -------------- --
 -- Linking tables --
 -- -------------- --
