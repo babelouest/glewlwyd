@@ -261,7 +261,6 @@ json_t * auth_check_scope_database(struct config_elements * config, const char *
                   "value",
                   where_clause);
     free(scope_list_escaped);
-    free(login_escaped);
     free(where_clause);
     if (j_query != NULL) {
       res = h_select(config->conn, j_query, &j_result, NULL);
@@ -298,6 +297,7 @@ json_t * auth_check_scope_database(struct config_elements * config, const char *
     y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_scope_database - Error allocating resources for scope_list_save %s or login_escaped %s or scope_list_escaped %s", scope_list_save, login_escaped, scope_list_escaped);
     scope_list_allowed = json_pack("{si}", "result", G_ERROR);
   }
+  free(login_escaped);
   return scope_list_allowed;
 }
 
@@ -483,39 +483,6 @@ int client_auth(struct config_elements * config, const char * client_id, const c
     to_return = G_ERROR_UNAUTHORIZED;
   }
   return to_return;
-}
-
-/**
- *
- * Session is checked by validating the cookie named after config->session_key
- * The cookie value is a jwt itself
- *
- */
-json_t * session_check(struct config_elements * config, const struct _u_request * request) {
-  json_t * j_result;
-  const char * session_value = u_map_get(request->map_cookie, config->session_key);
-  jwt_t * jwt;
-  long expiration;
-  time_t now;
-  
-  if (session_value != NULL) {
-    if (!jwt_decode(&jwt, session_value, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
-      time(&now);
-      expiration = jwt_get_grant_int(jwt, "iat") + jwt_get_grant_int(jwt, "expires_in");
-      if (now < expiration) {
-        j_result = json_pack("{siss}", "result", G_OK, "username", jwt_get_grant(jwt, "username"));
-      } else {
-        j_result = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-      }
-    } else {
-      j_result = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-    }
-    jwt_free(jwt);
-  } else {
-    j_result = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-  }
-  
-  return j_result;
 }
 
 /**
@@ -895,29 +862,29 @@ json_t * validate_authorization_code(struct config_elements * config, const char
             }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error executing query scope");
-            j_return = json_pack("{si}", "result", G_ERROR_DB);
+            j_return = json_pack("{siss}", "result", G_ERROR_DB, "error", "server_error");
           }
           json_decref(j_scope);
           
           if (scope_list != NULL) {
             j_return = json_pack("{sisssssI}", "result", G_OK, "scope", scope_list, "username", json_string_value(json_object_get(json_array_get(j_result, 0), "gco_username")), "gco_id", json_integer_value((json_object_get(json_array_get(j_result, 0), "gco_id"))));
           } else {
-            j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+            j_return = json_pack("{siss}", "result", G_ERROR_UNAUTHORIZED, "error", "invalid_scope");
           }
           free(scope_list);
         } else {
           j_return = json_pack("{sisssI}", "result", G_OK, "username", json_string_value(json_object_get(json_array_get(j_result, 0), "gco_username")), "gco_id", json_integer_value((json_object_get(json_array_get(j_result, 0), "gco_id"))));
         }
       } else {
-        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        j_return = json_pack("{siss}", "result", G_ERROR_UNAUTHORIZED, "error", "access_denied");
       }
       json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error executng query code");
-      j_return = json_pack("{si}", "result", G_ERROR_DB);
+      j_return = json_pack("{siss}", "result", G_ERROR_DB, "error", "server_error");
     }
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    j_return = json_pack("{siss}", "result", G_ERROR_UNAUTHORIZED, "error", "unauthorized_client");
   }
   return j_return;
 }
