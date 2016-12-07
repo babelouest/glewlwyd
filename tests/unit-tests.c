@@ -1,0 +1,121 @@
+
+#include <string.h>
+#include <jansson.h>
+#include <ulfius.h>
+#include <orcania.h>
+
+#include "unit-tests.h"
+
+/**
+ * decode a u_map into a string
+ */
+char * print_map(const struct _u_map * map) {
+  char * line, * to_return = NULL;
+  const char **keys;
+  int len, i;
+  if (map != NULL) {
+    keys = u_map_enum_keys(map);
+    for (i=0; keys[i] != NULL; i++) {
+      len = snprintf(NULL, 0, "key is %s, value is %s\n", keys[i], u_map_get(map, keys[i]));
+      line = malloc((len+1)*sizeof(char));
+      snprintf(line, (len+1), "key is %s, value is %s\n", keys[i], u_map_get(map, keys[i]));
+      if (to_return != NULL) {
+        len = strlen(to_return) + strlen(line) + 1;
+        to_return = realloc(to_return, (len+1)*sizeof(char));
+      } else {
+        to_return = malloc((strlen(line) + 1)*sizeof(char));
+        to_return[0] = 0;
+      }
+      strcat(to_return, line);
+      free(line);
+    }
+    return to_return;
+  } else {
+    return NULL;
+  }
+}
+
+/**
+ * Developper-friendly response print
+ */
+void print_response(struct _u_response * response) {
+  char * dump_json = NULL;
+  if (response != NULL) {
+    printf("Status: %ld\n\n", response->status);
+    if (response->json_body != NULL) {
+      dump_json = json_dumps(response->json_body, JSON_INDENT(2));
+      printf("Json body:\n%s\n\n", dump_json);
+      free(dump_json);
+    } else if (response->string_body != NULL) {
+      printf("String body: %s\n\n", response->string_body);
+    }
+  }
+}
+
+int test_request(struct _u_request * req, long int expected_status, json_t * expected_json_body, const char * exptected_string_body, const char * expected_redirect_uri_contains) {
+  int res, to_return = 0;
+  struct _u_response response;
+  
+  ulfius_init_response(&response);
+  res = ulfius_send_http_request(req, &response);
+  if (res == U_OK) {
+    if (response.status != expected_status) {
+      printf("##########################\nError status (%s %s %ld)\n", req->http_verb, req->http_url, expected_status);
+      print_response(&response);
+      printf("##########################\n\n");
+    } else if (expected_json_body != NULL && (response.json_body == NULL || json_search(response.json_body, expected_json_body) == NULL)) {
+      char * dump_expected = json_dumps(expected_json_body, JSON_ENCODE_ANY), * dump_response = json_dumps(response.json_body, JSON_ENCODE_ANY);
+      printf("##########################\nError json (%s %s)\n", req->http_verb, req->http_url);
+      printf("Expected result in response:\n%s\nWhile response is:\n%s\n", dump_expected, dump_response);
+      printf("##########################\n\n");
+      free(dump_expected);
+      free(dump_response);
+    } else if (exptected_string_body != NULL && nstrnstr((const char *)response.binary_body, exptected_string_body, response.binary_body_length) == NULL) {
+      printf("##########################\nError (%s %s)\n", req->http_verb, req->http_url);
+      printf("Expected result in response:\n%s\nWhile response is:\n%s\n", exptected_string_body, (const char *)response.binary_body);
+      printf("##########################\n\n");
+    } else if (expected_redirect_uri_contains != NULL && nstrstr(u_map_get(response.map_header, "Location"), expected_redirect_uri_contains) == NULL) {
+      printf("##########################\nError (%s %s)\n", req->http_verb, req->http_url);
+      printf("expected_redirect_uri_contains is %s\nwhile redirect_uri is %s\n", expected_redirect_uri_contains, u_map_get(response.map_header, "Location"));
+      printf("##########################\n\n");
+    } else {
+      to_return = 1;
+    }
+  } else {
+    printf("Error in http request: %d\n", res);
+  }
+  ulfius_clean_response(&response);
+  return to_return;
+}
+
+int run_simple_test(struct _u_request * req, const char * method, const char * url, const char * auth_basic_user, const char * auth_basic_password, json_t * json_body, const struct _u_map * body, int expected_status, json_t * expected_json_body, const char * exptected_string_body, const char * expected_redirect_uri_contains) {
+  struct _u_request * request;
+  int res;
+  
+  if (req != NULL) {
+    request = ulfius_duplicate_request(req);
+    free(request->http_verb);
+    free(request->http_url);
+  } else {
+    request = malloc(sizeof (struct _u_request));
+    ulfius_init_request(request);
+  }
+  request->http_verb = nstrdup(method);
+  request->http_url = strdup(url);
+  if (body != NULL) {
+    u_map_copy_into(body, request->map_post_body);
+  } else if (json_body != NULL) {
+    json_decref(request->json_body);
+    request->json_body = json_copy(json_body);
+  }
+  free(request->auth_basic_user);
+  free(request->auth_basic_password);
+  request->auth_basic_user = nstrdup(auth_basic_user);
+  request->auth_basic_password = nstrdup(auth_basic_password);
+  
+  res = test_request(request, expected_status, expected_json_body, exptected_string_body, expected_redirect_uri_contains);
+  
+  ulfius_clean_request_full(request);
+  
+  return res;
+}
