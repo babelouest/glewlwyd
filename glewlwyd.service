@@ -1,0 +1,15 @@
+[Unit]
+Description=Glewlwyd OAuth2 authentication provider
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/glewlwyd.conf
+ExecStart=/usr/local/bin/glewlwyd --config-file=/etc/glewlwyd.conf
+User=pi
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+Alias=glewlwyd

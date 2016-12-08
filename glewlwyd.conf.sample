@@ -13,11 +13,11 @@ port=4593
 # url prefix
 url_prefix="glewlwyd"
 
-# path to static files for /static url
+# path to static files for /webapp url
 static_files_path="/var/www/"
 
 # static files prefix
-static_files_prefix = "static"
+static_files_prefix = "app"
 
 # mime types for static files
 static_files_mime_types =
@@ -123,18 +123,25 @@ authentication =
    bind_dn        = "cn=operator,dc=example,dc=org"
    bind_passwd    = "password"
    
-   base_search_user    = "ou=users,dc=example,dc=org"
-   login_property_user = "uid"
-   filter_user         = "&((o=oauth)(o=user))"
-   scope_property_user = "o"
-   email_property_user = "mailbox"
-   name_property_user  = "displayName"
+   base_search    = "ou=users,dc=example,dc=org"
+   login_property = "uid"
+   filter         = "&((o=oauth)(o=user))"
+   scope_property = "o"
+   email_property = "mailbox"
+   name_property  = "displayName"
    
-   base_search_client    = "ou=private,dc=example,dc=org"
-   login_property_client = "uid"
-   filter_client         = "&((o=oauth)(o=client))"
-   scope_property_client = "o"
-   name_property_client  = "displayName"
+#   base_search_user    = "ou=users,dc=example,dc=org"
+#   login_property_user = "uid"
+#   filter_user         = "&((o=oauth)(o=user))"
+#   scope_property_user = "o"
+#   email_property_user = "mailbox"
+#   name_property_user  = "displayName"
+   
+#   base_search_client    = "ou=private,dc=example,dc=org"
+#   login_property_client = "uid"
+#   filter_client         = "&((o=oauth)(o=client))"
+#   scope_property_client = "o"
+#   name_property_client  = "displayName"
 }
 
 # jwt parameters
