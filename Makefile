@@ -19,33 +19,27 @@
 # License along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-CC=gcc
-CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
-LIBS=-lc -lulfius -lyder -ljansson -lorcania -lhoel -ljwt -lconfig -lldap -luuid -lcrypto
-OBJECTS=glewlwyd.o authorization.o oauth.o webservice.o token.o user.o client.o admin.o
-PREFIX=/usr/local
+GLEWLWYD_SOURCE=./src
+GLEWLWYD_TESTS=./tests
 
-all: release
+all:
+	cd $(GLEWLWYD_SOURCE) && $(MAKE)
+
+debug:
+	cd $(GLEWLWYD_SOURCE) && $(MAKE) debug
+
+install:
+	cd $(GLEWLWYD_SOURCE) && $(MAKE) install
+
+memcheck:
+	cd $(GLEWLWYD_SOURCE) && $(MAKE) memcheck
+
+test-debug:
+	cd $(GLEWLWYD_SOURCE) && $(MAKE) test-debug
+
+test:
+	cd $(GLEWLWYD_TESTS) && $(MAKE) test
 
 clean:
-	rm -f *.o glewlwyd valgrind.txt
-
-debug: ADDITIONALFLAGS=-DDEBUG -g -O0
-
-debug: glewlwyd
-
-release: ADDITIONALFLAGS=-O3
-
-release: glewlwyd
-
-%.o: %.c glewlwyd.h
-	$(CC) $(CFLAGS) $<
-
-glewlwyd: $(OBJECTS)
-	$(CC) -o $@ $^ $(LIBS)
-
-memcheck: debug
-	valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./glewlwyd --config-file=glewlwyd.conf 2>valgrind.txt
-
-install: glewlwyd
-	cp -f glewlwyd $(PREFIX)/bin
+	cd $(GLEWLWYD_SOURCE) && $(MAKE) clean
+	cd $(GLEWLWYD_TESTS) && $(MAKE) clean
