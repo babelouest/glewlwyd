@@ -223,10 +223,13 @@ int serialize_access_token(struct config_elements * config, const uint auth_type
 char * generate_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now) {
   jwt_t * jwt;
   char * token = NULL;
+  char salt[GLEWLWYD_SALT_LENGTH + 1] = {0};
   
   jwt = jwt_dup(config->jwt);
   if (jwt != NULL) {
     // Build jwt payload
+    rand_string(salt, GLEWLWYD_SALT_LENGTH);
+    jwt_add_grant(jwt, "salt", salt);
     jwt_add_grant(jwt, "username", username);
     jwt_add_grant(jwt, "type", "refresh_token");
     jwt_add_grant_int(jwt, "iat", now);
@@ -255,10 +258,13 @@ char * generate_refresh_token(struct config_elements * config, const char * user
 char * generate_session_token(struct config_elements * config, const char * username, const char * ip_source, time_t now) {
   jwt_t * jwt;
   char * token = NULL;
+  char salt[GLEWLWYD_SALT_LENGTH + 1] = {0};
   
   jwt = jwt_dup(config->jwt);
   if (jwt != NULL) {
     // Build jwt payload
+    rand_string(salt, GLEWLWYD_SALT_LENGTH);
+    jwt_add_grant(jwt, "salt", salt);
     jwt_add_grant(jwt, "username", username);
     jwt_add_grant(jwt, "type", "session_token");
     jwt_add_grant_int(jwt, "iat", now);
@@ -322,10 +328,13 @@ int serialize_session_token(struct config_elements * config, const char * userna
 char * generate_access_token(struct config_elements * config, const char * refresh_token, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now) {
   jwt_t * jwt;
   char * token = NULL;
+  char salt[GLEWLWYD_SALT_LENGTH + 1] = {0};
   
   jwt = jwt_dup(config->jwt);
   if (jwt != NULL) {
     // Build jwt payload
+    rand_string(salt, GLEWLWYD_SALT_LENGTH);
+    jwt_add_grant(jwt, "salt", salt);
     jwt_add_grant(jwt, "username", username);
     jwt_add_grant(jwt, "type", "access_token");
     jwt_add_grant_int(jwt, "iat", now);
@@ -354,10 +363,13 @@ char * generate_access_token(struct config_elements * config, const char * refre
 char * generate_client_access_token(struct config_elements * config, const char * client_id, const char * ip_source, time_t now) {
   jwt_t * jwt;
   char * token = NULL;
+  char salt[GLEWLWYD_SALT_LENGTH + 1] = {0};
   
   jwt = jwt_dup(config->jwt);
   if (jwt != NULL) {
     // Build jwt payload
+    rand_string(salt, GLEWLWYD_SALT_LENGTH);
+    jwt_add_grant(jwt, "salt", salt);
     jwt_add_grant(jwt, "client_id", client_id);
     jwt_add_grant(jwt, "type", "client_token");
     jwt_add_grant_int(jwt, "iat", now);

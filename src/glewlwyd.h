@@ -40,7 +40,7 @@
 #define _HOEL_SQLITE
 #include <hoel.h>
 
-#define _GLEWLWYD_VERSION 0.2
+#define _GLEWLWYD_VERSION 0.8
 #define GLEWLWYD_LOG_NAME "Glewlwyd"
 
 // Configuration management
@@ -50,6 +50,7 @@
 #define GLEWLWYD_ACCESS_TOKEN_EXP_DEFAULT   3600
 #define GLEWLWYD_SESSION_KEY_DEFAULT        "GLEWLWYD_SESSION_ID"
 #define GLEWLWYD_SESSION_EXPIRATION_DEFAULT 604800
+#define GLEWLWYD_SALT_LENGTH                16
 
 #define GLEWLWYD_RUNNING  0
 #define GLEWLWYD_STOP     1
@@ -146,6 +147,7 @@ char *url_decode(char *str);
 char *url_encode(char *str);
 char * generate_query_parameters(const struct _u_request * request);
 const char * get_ip_source(const struct _u_request * request);
+char * rand_string(char * str, size_t size);
 
 int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int check_auth_type_access_token_request (const struct _u_request * request, struct _u_response * response, void * user_data);

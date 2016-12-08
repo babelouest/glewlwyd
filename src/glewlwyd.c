@@ -49,6 +49,8 @@
  */
 int main (int argc, char ** argv) {
   struct config_elements * config = malloc(sizeof(struct config_elements));
+  
+  srand(time(NULL));
   if (config == NULL) {
     fprintf(stderr, "Memory error - config\n");
     return 1;
@@ -976,4 +978,24 @@ char * print_map(const struct _u_map * map) {
   } else {
     return NULL;
   }
+}
+
+/**
+ * Generates a random string and store it in str
+ */
+char * rand_string(char * str, size_t str_size) {
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.\"!/$%?&*()_-+=<>{}[]'";
+    size_t n;
+    
+    if (str_size > 0 && str != NULL) {
+        --str_size;
+        for (n = 0; n < str_size; n++) {
+            int key = rand() % (int) (sizeof charset - 1);
+            str[n] = charset[key];
+        }
+        str[str_size] = '\0';
+        return str;
+    } else {
+      return NULL;
+    }
 }

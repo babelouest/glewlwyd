@@ -313,19 +313,25 @@ json_t * auth_check_credentials_scope(struct config_elements * config, const cha
       if (check_result_value(j_res_auth, G_OK)) {
         j_res_scope = auth_check_scope_database(config, username, scope_list);
       }
-      json_decref(j_res_auth);
     }
     
-    if (check_result_value(j_res_scope, G_OK)) {
-      j_res = json_copy(j_res_scope);
-    } else if (check_result_value(j_res_scope, G_ERROR_UNAUTHORIZED)) {
-      j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    if (check_result_value(j_res_auth, G_OK)) {
+      if (check_result_value(j_res_scope, G_OK)) {
+        j_res = json_copy(j_res_scope);
+      } else if (check_result_value(j_res_scope, G_ERROR_UNAUTHORIZED)) {
+        j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      } else {
+        j_res = json_pack("{si}", "result", G_ERROR);
+      }
     } else {
-      j_res = json_pack("{si}", "result", G_ERROR);
+      j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
     json_decref(j_res_scope);
+    json_decref(j_res_auth);
+  } else if (check_result_value(j_res_auth, G_ERROR_UNAUTHORIZED)) {
+    j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   } else {
-    j_res = json_pack("{si}", "result", G_ERROR_PARAM);
+    j_res = json_pack("{si}", "result", G_ERROR);
   }
   return j_res;
 }
