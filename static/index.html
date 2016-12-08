@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		
+		<meta charset="utf-8">
+		<title>Glewlwyd test page</title>
+		<meta name="description" content="Glewlwyd OAuth2 Authorization Server">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="bootstrap.min.css">
+		<script src="jquery-3.1.1.min.js"></script>
+		<script src="bootstrap.min.js"></script>
+		<style>
+		body {
+		  padding-top: 40px;
+		  padding-bottom: 40px;
+		  background-color: #eee;
+		}
+
+		.form-signin {
+		  max-width: 330px;
+		  padding: 15px;
+		  margin: 0 auto;
+		}
+		.form-signin .form-signin-heading,
+		.form-signin .checkbox {
+		  margin-bottom: 10px;
+		}
+		.form-signin .checkbox {
+		  font-weight: normal;
+		}
+		.form-signin .form-control {
+		  position: relative;
+		  height: auto;
+		  -webkit-box-sizing: border-box;
+			 -moz-box-sizing: border-box;
+				  box-sizing: border-box;
+		  padding: 10px;
+		  font-size: 16px;
+		}
+		.form-signin .form-control:focus {
+		  z-index: 2;
+		}
+		.form-signin input[type="email"] {
+		  margin-bottom: -1px;
+		  border-bottom-right-radius: 0;
+		  border-bottom-left-radius: 0;
+		}
+		.form-signin input[type="password"] {
+		  margin-bottom: 10px;
+		  border-top-left-radius: 0;
+		  border-top-right-radius: 0;
+		}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+      <div class="row">
+        <div class="col-md-2">
+          <label for="response_type">response_type</label>
+        </div>
+        <div class="col-md-2">
+          <select id="response_type" class="form-control">
+            <option value="code">code</option>
+            <option value="authorization_code">authorization_code</option>
+            <option value="token">token</option>
+            <option value="password">password</option>
+            <option value="client_credentials">client_credentials</option>
+            <option value="refresh_token">refresh_token</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="client_id">client</label>
+        </div>
+        <div class="col-md-2">
+          <select id="client_id" class="form-control">
+            <option value="client1_id">client1</option>
+            <option value="client2_id">client2</option>
+            <option value="client3_id">client3</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="clientpassword">client password</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="clientpassword" name="clientpassword" value="" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="redirect_uri">redirect_uri</label>
+        </div>
+        <div class="col-md-2">
+          <select id="redirect_uri" class="form-control">
+            <option value="../static/index.html?param=client1_cb1">uri_client1_1</option>
+            <option value="../static/index.html?param=client1_cb2">uri_client1_2</option>
+            <option value="../static/index.html?param=client2_cb">uri_client2</option>
+            <option value="../static/index.html?param=client3_cb">uri_client3</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="scope">scope</label>
+        </div>
+        <div class="col-md-2">
+          <select id="scope" class="form-control" multiple size="3">
+            <option value="scope1">scope1</option>
+            <option value="scope2">scope2</option>
+            <option value="scope3">scope3</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="state">state</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="state" name="state" value="xyz" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="username">username</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="username" name="username" value="" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="password">password</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="password" name="password" value="" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="code">code</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="code" name="code" value="" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="refresh_token">refresh_token</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="refresh_token" name="refresh_token" value="" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <button type="button" name="run" id="run" class="btn btn-lg btn-primary btn-block">Run test</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-8" id="result" name="result" style="word-wrap: break-word;">
+        </div>
+      </div>
+		</div>
+	</body>
+<script>
+  var params;
+	function getQueryParams(qs) {
+		qs = qs.split('+').join(' ');
+
+		var params = {},
+			tokens,
+			re = /[?&]?([^=]+)=([^&]*)/g;
+
+		while (tokens = re.exec(qs)) {
+			params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
+		}
+
+		return params;
+	}
+	
+	window.onload = function () {
+		params = getQueryParams(location.hash.slice(1));
+    if (params.code) {
+      $("#code").val(params.code);
+    }
+	};
+
+  function setAuthHeader(xhr){
+    var creds = $("#client_id").val() + ':' + $("#clientpassword").val();
+    var basicScheme = btoa(creds);
+    var hashStr = "Basic "+basicScheme;
+    xhr.setRequestHeader('Authorization', hashStr);
+  }
+
+  $("#run").click(function () {
+    $("#result").empty();
+    switch ($("#response_type").val()) {
+      case "code":
+        var url = "../glewlwyd/auth?response_type=code&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&scope=" + $("#scope").val().join(" ");
+        window.location = url;
+        break;
+      case "authorization_code":
+        $.post("../glewlwyd/token", {response_type: "authorization_code", client_id: $("#client_id").val(), redirect_uri: $("#redirect_uri").val(), code: $("#code").val()},
+        function (result, status, request) {
+          $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
+          for (var key in result) {
+            $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+          }
+        })
+        .fail(function (error) {
+          $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+          $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+        });
+        break;
+      case "token":
+        var url = "../glewlwyd/auth?response_type=token&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&scope=" + $("#scope").val().join(" ");
+        window.location = url;
+        break;
+      case "password":
+        $.post("../glewlwyd/auth", {response_type: "password", username: $("#username").val(), password: $("#password").val(), state: $("#state").val(), scope: $("#scope").val().join(" ")},
+        function (result, status, request) {
+          $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
+          for (var key in result) {
+            $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+          }
+        })
+        .fail(function (error) {
+          $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+          $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+        });
+        break;
+      case "client_credentials":
+        $.ajax
+        ({
+          type: "POST",
+          url: "../glewlwyd/auth",
+          async: false,
+          headers: {
+            "Authorization": "Basic " + btoa($("#client_id").val() + ":" + $("#clientpassword").val())
+          },
+          data: {response_type: "client_credentials", scope: $("#scope").val().join(" ")},
+          success: function (result, status, request) {
+            $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
+            for (var key in result) {
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+            }
+          },
+          error: function (error) {
+            $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+            $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+          }
+        });
+        break;
+      case "refresh_token":
+        $.post("../glewlwyd/token", {response_type: "refresh_token", refresh_token: $("#refresh_token").val()},
+        function (result, status, request) {
+          $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
+          for (var key in result) {
+            $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+          }
+        })
+        .fail(function (error) {
+          $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+          $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+        });
+        break;
+    }
+  });
+</script>
+</html>

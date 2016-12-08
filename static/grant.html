@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		
+		<meta charset="utf-8">
+		<title>Glewlwyd grant access page</title>
+		<meta name="description" content="Glewlwyd OAuth2 Authorization Server">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="bootstrap.min.css">
+		<script src="jquery-3.1.1.min.js"></script>
+		<script src="bootstrap.min.js"></script>
+		<style>
+		body {
+		  padding-top: 40px;
+		  padding-bottom: 40px;
+		  background-color: #eee;
+		}
+
+		.form-signin {
+		  max-width: 330px;
+		  padding: 15px;
+		  margin: 0 auto;
+		}
+		.form-signin .form-signin-heading,
+		.form-signin .checkbox {
+		  margin-bottom: 10px;
+		}
+		.form-signin .checkbox {
+		  font-weight: normal;
+		}
+		.form-signin .form-control {
+		  position: relative;
+		  height: auto;
+		  -webkit-box-sizing: border-box;
+			 -moz-box-sizing: border-box;
+				  box-sizing: border-box;
+		  padding: 10px;
+		  font-size: 16px;
+		}
+		.form-signin .form-control:focus {
+		  z-index: 2;
+		}
+		.form-signin input[type="email"] {
+		  margin-bottom: -1px;
+		  border-bottom-right-radius: 0;
+		  border-bottom-left-radius: 0;
+		}
+		.form-signin input[type="password"] {
+		  margin-bottom: 10px;
+		  border-top-left-radius: 0;
+		  border-top-right-radius: 0;
+		}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<form class="form-signin" action="" method="POST" enctype="application/x-www-form-urlencoded">
+				<label>Do you grant access to the following client for the following access?</label>
+				<div>
+          <label>Client: </label>
+          <span id="clientDiv"></span>
+        </div>
+				<div>
+          <label>Access: </label>
+          <span id="grantDiv"></span>
+        </div>
+        <div style="display: none;" id="errorMessage">
+          <center><h4><label class="label label-warning">Error granting scope</label></h4></center>
+        </div>
+        <button type="button" name="grantbut" id="grantbut" class="btn btn-lg btn-primary btn-block">Grant access</button>
+			</form>
+		</div>
+	</body>
+	
+<script>
+  var params;
+	function getQueryParams(qs) {
+		qs = qs.split('+').join(' ');
+
+		var params = {},
+			tokens,
+			re = /[?&]?([^=]+)=([^&]*)/g;
+
+		while (tokens = re.exec(qs)) {
+			params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
+		}
+
+		return params;
+	}
+	
+	window.onload = function() {
+		params = getQueryParams(location.search);
+    
+    $("#clientDiv").text(params.client_id);
+    $("#grantDiv").text(params.scope);
+	}
+  
+  $("#grantbut").click(function () {
+    $.post("../glewlwyd/user/grant", {client_id: params.client_id, scope: params.scope}, function (data) {
+      var redirect = "../glewlwyd/auth" + location.search;
+      window.location = redirect;
+    })
+    .fail(function (error) {
+      $("#errorMessage").show();
+    });
+  });
+</script>
+</html>
