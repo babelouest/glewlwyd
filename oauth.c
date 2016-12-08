@@ -48,47 +48,59 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
     // Client is allowed to use implicit grant with this redirection_uri
     session_payload = session_get(config, u_map_get(request->map_cookie, config->session_key));
     if (check_result_value(session_payload, G_OK)) {
-      // User Session is valid
-      time(&now);
-      if (config->use_scope) {
-        j_scope = auth_check_scope(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "scope"));
-        if (check_result_value(j_scope, G_OK)) {
-          // User is allowed for this scope
-          if (auth_check_client_user_scope(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), json_string_value(json_object_get(j_scope, "scope"))) == G_OK) {
-            // User has granted access to the cleaned scope list for this client
-            // Generate code, generate the url and redirect to it
-            authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(j_scope, "scope")), u_map_get(request->map_url, "redirect_uri"), ip_source);
-            redirect_url = msprintf("%s#code=%s%s%s", u_map_get(request->map_url, "redirect_uri"), authorization_code, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
-            ulfius_add_header_to_response(response, "Location", redirect_url);
-            free(redirect_url);
-            free(authorization_code);
-            response->status = 302;
+      if (u_map_get(request->map_url, "login_validated") != NULL) {
+        // User Session is valid and confirmed by the owner
+        time(&now);
+        if (config->use_scope) {
+          j_scope = auth_check_scope(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "scope"));
+          if (check_result_value(j_scope, G_OK)) {
+            // User is allowed for this scope
+            if (auth_check_client_user_scope(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), json_string_value(json_object_get(j_scope, "scope"))) == G_OK) {
+              // User has granted access to the cleaned scope list for this client
+              // Generate code, generate the url and redirect to it
+              authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(j_scope, "scope")), u_map_get(request->map_url, "redirect_uri"), ip_source);
+              redirect_url = msprintf("%s#code=%s%s%s", u_map_get(request->map_url, "redirect_uri"), authorization_code, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+              ulfius_add_header_to_response(response, "Location", redirect_url);
+              free(redirect_url);
+              free(authorization_code);
+              response->status = 302;
+            } else {
+              // User has not granted access to the cleaned scope list for this client, redirect to grant access page
+              cb_encoded = url_encode(request->http_url);
+              query = generate_query_parameters(request);
+              redirect_url = msprintf("../%s/grant.html?%s", config->static_files_prefix, query);
+              ulfius_add_header_to_response(response, "Location", redirect_url);
+              free(redirect_url);
+              free(cb_encoded);
+              free(query);
+              response->status = 302;
+            }
           } else {
-            // User has not granted access to the cleaned scope list for this client, redirect to grant access page
-            cb_encoded = url_encode(request->http_url);
-            query = generate_query_parameters(request);
-            redirect_url = msprintf("../%s/grant.html?%s", config->static_files_prefix, query);
+            // Scope is not allowed for this user
+            response->status = 302;
+            redirect_url = msprintf("%s#error=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
             ulfius_add_header_to_response(response, "Location", redirect_url);
             free(redirect_url);
-            free(cb_encoded);
-            free(query);
-            response->status = 302;
           }
+          json_decref(j_scope);
         } else {
-          // Scope is not allowed for this user
-          response->status = 302;
-          redirect_url = msprintf("%s#error=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+          // Generate code, generate the url and redirect to it
+          authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "client_id"), NULL, u_map_get(request->map_url, "redirect_uri"), ip_source);
+          redirect_url = msprintf("%s#code=%s%s%s", u_map_get(request->map_url, "redirect_uri"), authorization_code, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
           ulfius_add_header_to_response(response, "Location", redirect_url);
           free(redirect_url);
+          free(authorization_code);
+          response->status = 302;
         }
-        json_decref(j_scope);
       } else {
-        // Generate code, generate the url and redirect to it
-        authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "client_id"), NULL, u_map_get(request->map_url, "redirect_uri"), ip_source);
-        redirect_url = msprintf("%s#code=%s%s%s", u_map_get(request->map_url, "redirect_uri"), authorization_code, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+        // Redirect to login page
+        cb_encoded = url_encode(request->http_url);
+        query = generate_query_parameters(request);
+        redirect_url = msprintf("../%s/login.html?%s", config->static_files_prefix, query);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         free(redirect_url);
-        free(authorization_code);
+        free(cb_encoded);
+        free(query);
         response->status = 302;
       }
     } else {
@@ -206,51 +218,63 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
     // Client is allowed to use implicit grant with this redirection_uri
     session_payload = session_check(config, u_map_get(request->map_cookie, config->session_key));
     if (check_result_value(session_payload, G_OK)) {
-      // User Session is valid
-      time(&now);
-      if (config->use_scope) {
-        j_scope = auth_check_scope(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "scope"));
-        if (check_result_value(j_scope, G_OK)) {
-          // User is allowed for this scope
-          if (auth_check_client_user_scope(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), json_string_value(json_object_get(j_scope, "scope"))) == G_OK) {
-            // User has granted access to the cleaned scope list for this client
-            access_token = generate_access_token(config, NULL, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_scope, "scope")), now);
-            if (u_map_get(request->map_url, "state") != NULL) {
-              redirect_url = msprintf("%s#access_token=%s&token_type=bearer&expires_in=%d&state=%s", u_map_get(request->map_url, "redirect_uri"), access_token, config->access_token_expiration, u_map_get(request->map_url, "state"));
+      if (u_map_get(request->map_url, "login_validated") != NULL) {
+        // User Session is valid
+        time(&now);
+        if (config->use_scope) {
+          j_scope = auth_check_scope(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "scope"));
+          if (check_result_value(j_scope, G_OK)) {
+            // User is allowed for this scope
+            if (auth_check_client_user_scope(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), json_string_value(json_object_get(j_scope, "scope"))) == G_OK) {
+              // User has granted access to the cleaned scope list for this client
+              access_token = generate_access_token(config, NULL, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_scope, "scope")), now);
+              if (u_map_get(request->map_url, "state") != NULL) {
+                redirect_url = msprintf("%s#access_token=%s&token_type=bearer&expires_in=%d&state=%s", u_map_get(request->map_url, "redirect_uri"), access_token, config->access_token_expiration, u_map_get(request->map_url, "state"));
+              } else {
+                redirect_url = msprintf("%s#access_token=%s&token_type=bearer&expires_in=%d", u_map_get(request->map_url, "redirect_uri"), access_token, config->access_token_expiration);
+              }
+              ulfius_add_header_to_response(response, "Location", redirect_url);
+              free(redirect_url);
+              free(access_token);
+              response->status = 302;
             } else {
-              redirect_url = msprintf("%s#access_token=%s&token_type=bearer&expires_in=%d", u_map_get(request->map_url, "redirect_uri"), access_token, config->access_token_expiration);
+              // User has not granted access to the cleaned scope list for this client, redirect to grant access page
+              cb_encoded = url_encode(request->http_url);
+              query = generate_query_parameters(request);
+              redirect_url = msprintf("../%s/grant.html?%s", config->static_files_prefix, query);
+              ulfius_add_header_to_response(response, "Location", redirect_url);
+              free(redirect_url);
+              free(cb_encoded);
+              free(query);
+              response->status = 302;
             }
-            ulfius_add_header_to_response(response, "Location", redirect_url);
-            free(redirect_url);
-            free(access_token);
-            response->status = 302;
           } else {
-            // User has not granted access to the cleaned scope list for this client, redirect to grant access page
-            cb_encoded = url_encode(request->http_url);
-            query = generate_query_parameters(request);
-            redirect_url = msprintf("../%s/grant.html?%s", config->static_files_prefix, query);
+            // Scope is not allowed for this user
+            response->status = 302;
+            redirect_url = msprintf("%s#error=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
             ulfius_add_header_to_response(response, "Location", redirect_url);
             free(redirect_url);
-            free(cb_encoded);
-            free(query);
-            response->status = 302;
           }
+          json_decref(j_scope);
         } else {
-          // Scope is not allowed for this user
-          response->status = 302;
-          redirect_url = msprintf("%s#error=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+          // Generate access_token, generate the url and redirect to it
+          access_token = generate_access_token(config, NULL, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, NULL, now);
+          redirect_url = msprintf("%s#access_token=%s&token_type=bearer&expires_in=%d%s", u_map_get(request->map_url, "redirect_uri"), access_token, config->access_token_expiration, (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
           ulfius_add_header_to_response(response, "Location", redirect_url);
           free(redirect_url);
+          response->status = 302;
+          free(access_token);
         }
-        json_decref(j_scope);
       } else {
-        // Generate access_token, generate the url and redirect to it
-        access_token = generate_access_token(config, NULL, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, NULL, now);
-        redirect_url = msprintf("%s#access_token=%s&token_type=bearer&expires_in=%d%s", u_map_get(request->map_url, "redirect_uri"), access_token, config->access_token_expiration, (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+        // Redirect to login page
+        cb_encoded = url_encode(request->http_url);
+        query = generate_query_parameters(request);
+        redirect_url = msprintf("../%s/login.html?%s", config->static_files_prefix, query);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         free(redirect_url);
+        free(cb_encoded);
+        free(query);
         response->status = 302;
-        free(access_token);
       }
     } else {
       // Redirect to login page
@@ -326,7 +350,7 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
     }
     free(refresh_token);
   } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Error login/password for username %s at ip address %s", u_map_get(request->map_post_body, "username"), ip_source);
+    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
     response->status = 403;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error checking credentials");
@@ -344,22 +368,50 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
   char * access_token;
   const char * ip_source = get_ip_source(request);
   time_t now;
+  json_t * j_scope_list;
   
   if (client_auth(config, request->auth_basic_user, request->auth_basic_password) == G_OK) {
-    time(&now);
-    access_token = generate_client_access_token(config, request->auth_basic_user, ip_source, now);
-    if (access_token != NULL) {
-      response->json_body = json_pack("{sssssi}",
-                                      "access_token", access_token,
-                                      "token_type", "bearer",
-                                      "expires_in", config->access_token_expiration);
-      free(access_token);
+    if (config->use_scope) {
+      j_scope_list = auth_check_client_scope(config, request->auth_basic_user, u_map_get(request->map_post_body, "scope"));
+      if (check_result_value(j_scope_list, G_OK)) {
+        time(&now);
+        access_token = generate_client_access_token(config, request->auth_basic_user, ip_source, now);
+        if (access_token != NULL) {
+          response->json_body = json_pack("{sssssiso}",
+                                          "access_token", access_token,
+                                          "token_type", "bearer",
+                                          "expires_in", config->access_token_expiration,
+                                          "scope",
+                                          json_copy(json_object_get(j_scope_list, "scope")));
+          free(access_token);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - Error generating access_token");
+          response->json_body = json_pack("{ss}", "error", "server_error");
+          response->status = 500;
+        }
+      } else {
+        response->json_body = json_pack("{ss}", "error", "scope_invalid");
+        response->status = 400;
+      }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - Error generating access_token");
-      response->status = 500;
+      time(&now);
+      access_token = generate_client_access_token(config, request->auth_basic_user, ip_source, now);
+      if (access_token != NULL) {
+        response->json_body = json_pack("{sssssi}",
+                                        "access_token", access_token,
+                                        "token_type", "bearer",
+                                        "expires_in", config->access_token_expiration);
+        free(access_token);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - Error generating access_token");
+        response->json_body = json_pack("{ss}", "error", "server_error");
+        response->status = 500;
+      }
     }
+    json_decref(j_scope_list);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Error client_id/client_password for client_id %s at ip address %s", request->auth_basic_user, ip_source);
+    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Error client_id/client_password for client_id %s at IP Address %s", request->auth_basic_user, ip_source);
+    response->json_body = json_pack("{ss}", "error", "invalid_client");
     response->status = 403;
   }
   return U_OK;

@@ -26,6 +26,9 @@ INSERT INTO g_client (gc_name, gc_description, gc_client_id, gc_client_password,
 -- SQLite3
 -- INSERT INTO g_client (gc_name, gc_description, gc_client_id, gc_client_password, gc_confidential) VALUES ('client3', 'Description for client3', 'client3_id', '55aaa4e4319042e9f237781d5633091b', 1);
 
+INSERT INTO g_client_scope (gc_id, gs_id) VALUES ((SELECT gc_id from g_client WHERE gc_client_id='client3_id'), (SELECT gs_id from g_scope WHERE gs_name='scope2'));
+INSERT INTO g_client_scope (gc_id, gs_id) VALUES ((SELECT gc_id from g_client WHERE gc_client_id='client3_id'), (SELECT gs_id from g_scope WHERE gs_name='scope3'));
+
 INSERT INTO g_client_authorization_type (gc_id, got_id) VALUES ((SELECT gc_id FROM g_client WHERE gc_client_id='client3_id'), (SELECT got_id FROM g_authorization_type WHERE got_code=4));
 
 INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', '../static/index.html?param=client1_cb1', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));

@@ -176,6 +176,7 @@ json_t * auth_check_credentials_ldap(struct config_elements * config, const char
 json_t * auth_check_scope(struct config_elements * config, const char * username, const char * scope_list);
 json_t * auth_check_scope_database(struct config_elements * config, const char * username, const char * scope_list);
 json_t * auth_check_scope_ldap(struct config_elements * config, const char * username, const char * scope_list);
+json_t * auth_check_client_scope(struct config_elements * config, const char * client_id, const char * scope_list);
 json_t * session_get(struct config_elements * config, const char * session_value);
 json_t * session_check(struct config_elements * config, const char * session_value);
 json_t * validate_authorization_code(struct config_elements * config, const char * authorization_code, const char * client_id, const char * redirect_uri, const char * ip_source);

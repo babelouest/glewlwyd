@@ -582,10 +582,10 @@ json_t * session_check(struct config_elements * config, const char * session_val
         free(session_hash);
         json_decref(j_result);
       } else {
-        j_result = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       }
     } else {
-      j_result = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);

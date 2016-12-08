@@ -122,12 +122,19 @@ authentication =
    uri            = "ldap://localhost"
    bind_dn        = "cn=operator,dc=example,dc=org"
    bind_passwd    = "password"
-   base_search    = "dc=example,dc=org"
-   login_property = "uid"
-   filter         = "o=oauth"
-   scope_property = "o"
-   email_property = "mailbox"
-   name_property  = "displayName"
+   
+   base_search_user    = "ou=users,dc=example,dc=org"
+   login_property_user = "uid"
+   filter_user         = "&((o=oauth)(o=user))"
+   scope_property_user = "o"
+   email_property_user = "mailbox"
+   name_property_user  = "displayName"
+   
+   base_search_client    = "ou=private,dc=example,dc=org"
+   login_property_client = "uid"
+   filter_client         = "&((o=oauth)(o=client))"
+   scope_property_client = "o"
+   name_property_client  = "displayName"
 }
 
 # jwt parameters

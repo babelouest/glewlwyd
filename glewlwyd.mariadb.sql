@@ -10,10 +10,12 @@ DROP TABLE IF EXISTS `g_code`;
 DROP TABLE IF EXISTS `g_client_user_scope`;
 DROP TABLE IF EXISTS `g_client_authorization_type`;
 DROP TABLE IF EXISTS `g_resource_scope`;
+DROP TABLE IF EXISTS `g_client_scope`;
 DROP TABLE IF EXISTS `g_user_scope`;
 DROP TABLE IF EXISTS `g_client_scope`;
 DROP TABLE IF EXISTS `g_access_token`;
 DROP TABLE IF EXISTS `g_refresh_token`;
+DROP TABLE IF EXISTS `g_session`;
 DROP TABLE IF EXISTS `g_resource`;
 DROP TABLE IF EXISTS `g_redirect_uri`;
 DROP TABLE IF EXISTS `g_client`;
@@ -129,6 +131,15 @@ CREATE TABLE `g_user_scope` (
   `gu_id` INT(11) NOT NULL,
   `gs_id` INT(11) NOT NULL,
   FOREIGN KEY(`gu_id`) REFERENCES `g_user`(`gu_id`),
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+);
+
+-- Client scope table, to store scope available for a client on client authentication
+CREATE TABLE `g_client_scope` (
+  `gcs_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gc_id` INT(11) NOT NULL,
+  `gs_id` INT(11) NOT NULL,
+  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`),
   FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
 );
 

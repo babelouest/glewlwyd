@@ -138,7 +138,7 @@ int callback_glewlwyd_check_user_authorization (const struct _u_request * reques
     ulfius_add_cookie_to_response(response, config->session_key, session_token, NULL, config->session_expiration, NULL, "/", 0, 0);
     free(session_token);
   } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Error login/password for username %s at ip address %s", u_map_get(request->map_post_body, "username"), ip_source);
+    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
     response->status = 403;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_user_authorization - error checking credentials");
@@ -297,17 +297,17 @@ int callback_glewlwyd_check_session (const struct _u_request * request, struct _
 
 int callback_glewlwyd_get_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_session, * j_user;
+  json_t * j_session = NULL, * j_user = NULL;
   
   j_session = session_get(config, u_map_get(request->map_cookie, config->session_key));
-  if (!check_result_value(j_session, G_OK)) {
-    response->status = 500;
-  } else {
+  if (check_result_value(j_session, G_OK)) {
     j_user = get_user_profile(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")));
     if (check_result_value(j_user, G_OK)) {
       response->json_body = json_copy(json_object_get(j_user, "user"));
     }
     json_decref(j_user);
+  } else {
+    response->status = 500;
   }
   json_decref(j_session);
   return U_OK;

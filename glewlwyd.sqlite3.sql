@@ -5,9 +5,12 @@ DROP TABLE IF EXISTS `g_code`;
 DROP TABLE IF EXISTS `g_client_user_scope`;
 DROP TABLE IF EXISTS `g_client_authorization_type`;
 DROP TABLE IF EXISTS `g_resource_scope`;
+DROP TABLE IF EXISTS `g_client_scope`;
 DROP TABLE IF EXISTS `g_user_scope`;
+DROP TABLE IF EXISTS `g_client_scope`;
 DROP TABLE IF EXISTS `g_access_token`;
 DROP TABLE IF EXISTS `g_refresh_token`;
+DROP TABLE IF EXISTS `g_session`;
 DROP TABLE IF EXISTS `g_resource`;
 DROP TABLE IF EXISTS `g_redirect_uri`;
 DROP TABLE IF EXISTS `g_client`;
@@ -134,6 +137,16 @@ CREATE TABLE `g_user_scope` (
   FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
 );
 CREATE INDEX `i_g_user_scope` ON `g_user_scope`(`gus_id`);
+
+-- Client scope table, to store scope available for a client on client authentication
+CREATE TABLE `g_client_scope` (
+  `gcs_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `gc_id` INTEGER NOT NULL,
+  `gs_id` INTEGER NOT NULL,
+  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`),
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+);
+CREATE INDEX `i_g_client_scope` ON `g_client_scope`(`gcs_id`);
 
 -- Resource scope table, to store the scopes provided by the resource server
 CREATE TABLE `g_resource_scope` (
