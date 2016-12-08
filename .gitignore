@@ -1,6 +1,11 @@
-glewlwyd
 *.o
 *.key
 *.pem
 valgrind.txt
 glewlwyd.conf
+glewlwyd
+tests/glewlwyd_auth_code
+tests/glewlwyd_client_cred
+tests/glewlwyd_code
+tests/glewlwyd_implicit
+tests/glewlwyd_resource_owner_pwd_cred
