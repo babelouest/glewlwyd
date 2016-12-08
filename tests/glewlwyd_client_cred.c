@@ -14,17 +14,115 @@
 #include "unit-tests.h"
 
 #define SERVER_URI "http://localhost:4593/glewlwyd"
-#define USERNAME "user1"
-#define PASSWORD "MyUser1Password!"
-#define SCOPE_LIST "scope1 scope2"
-#define CLIENT "client1_id"
+#define CLIENT_ID "client3_id"
+#define CLIENT_PASSWORD "client3_password"
+#define SCOPE_LIST "scope2 scope3"
 
 struct _u_request user_req;
 char * code;
 
-START_TEST(test_glwd)
+START_TEST(glewlwyd_client_cred_valid)
 {
-	ck_assert_int_eq(1, 1);
+  char * url = msprintf("%s/auth/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "scope", SCOPE_LIST);
+  
+  int res = run_simple_test(NULL, "POST", url, CLIENT_ID, CLIENT_PASSWORD, NULL, &body, 200, NULL, "access_token", NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(glewlwyd_client_cred_valid_reduced_scope)
+{
+  char * url = msprintf("%s/auth/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "scope", SCOPE_LIST " scope1");
+  
+  int res = run_simple_test(NULL, "POST", url, CLIENT_ID, CLIENT_PASSWORD, NULL, &body, 200, NULL, "scope\":\"scope2 scope3\"", NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(glewlwyd_client_cred_pwd_invalid)
+{
+  char * url = msprintf("%s/auth/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "scope", SCOPE_LIST);
+  
+  int res = run_simple_test(NULL, "POST", url, CLIENT_ID, "invalid", NULL, &body, 403, NULL, NULL, NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(glewlwyd_client_cred_client_unauthorized)
+{
+  char * url = msprintf("%s/auth/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "scope", SCOPE_LIST);
+  
+  int res = run_simple_test(NULL, "POST", url, "client1_id", CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(glewlwyd_client_cred_client_invalid)
+{
+  char * url = msprintf("%s/auth/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "scope", SCOPE_LIST);
+  
+  int res = run_simple_test(NULL, "POST", url, "invalid", CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(glewlwyd_client_cred_scope_invalid)
+{
+  char * url = msprintf("%s/auth/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "scope", "scope4");
+  
+  int res = run_simple_test(NULL, "POST", url, CLIENT_ID, CLIENT_PASSWORD, NULL, &body, 400, NULL, "scope_invalid", NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(glewlwyd_client_cred_empty)
+{
+  char * url = msprintf("%s/auth/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "scope", SCOPE_LIST);
+  
+  int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -34,8 +132,14 @@ static Suite *libjwt_suite(void)
 	TCase *tc_core;
 
 	s = suite_create("Glewlwyd");
-	tc_core = tcase_create("test_glwd");
-	tcase_add_test(tc_core, test_glwd);
+	tc_core = tcase_create("glewlwyd_client_cred");
+	tcase_add_test(tc_core, glewlwyd_client_cred_valid);
+	tcase_add_test(tc_core, glewlwyd_client_cred_valid_reduced_scope);
+	tcase_add_test(tc_core, glewlwyd_client_cred_pwd_invalid);
+	tcase_add_test(tc_core, glewlwyd_client_cred_client_unauthorized);
+	tcase_add_test(tc_core, glewlwyd_client_cred_client_invalid);
+	tcase_add_test(tc_core, glewlwyd_client_cred_scope_invalid);
+	tcase_add_test(tc_core, glewlwyd_client_cred_empty);
 	tcase_set_timeout(tc_core, 30);
 	suite_add_tcase(s, tc_core);
 

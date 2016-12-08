@@ -17,14 +17,88 @@
 #define USERNAME "user1"
 #define PASSWORD "MyUser1Password!"
 #define SCOPE_LIST "scope1 scope2"
-#define CLIENT "client1_id"
 
-struct _u_request user_req;
 char * code;
 
-START_TEST(test_glwd)
+START_TEST(glewlwyd_resource_owner_pwd_cred_valid)
 {
-	ck_assert_int_eq(1, 1);
+  char * url = msprintf("%s/auth/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "response_type", "password");
+  u_map_put(&body, "scope", SCOPE_LIST);
+  u_map_put(&body, "username", USERNAME);
+  u_map_put(&body, "password", PASSWORD);
+  
+  int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 200, NULL, "refresh_token", NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(glewlwyd_resource_owner_pwd_cred_pwd_invalid)
+{
+  char * url = msprintf("%s/auth/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "response_type", "password");
+  u_map_put(&body, "scope", SCOPE_LIST);
+  u_map_put(&body, "username", USERNAME);
+  u_map_put(&body, "password", "invalid");
+  
+  int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(glewlwyd_resource_owner_pwd_cred_user_invalid)
+{
+  char * url = msprintf("%s/auth/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "response_type", "password");
+  u_map_put(&body, "scope", SCOPE_LIST);
+  u_map_put(&body, "username", "invalid");
+  u_map_put(&body, "password", PASSWORD);
+  
+  int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(glewlwyd_resource_owner_pwd_cred_scope_invalid)
+{
+  char * url = msprintf("%s/auth/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "response_type", "password");
+  u_map_put(&body, "scope", "invalid");
+  u_map_put(&body, "username", USERNAME);
+  u_map_put(&body, "password", PASSWORD);
+  
+  int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(glewlwyd_resource_owner_pwd_cred_empty)
+{
+  char * url = msprintf("%s/auth/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "response_type", "password");
+  
+  int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -34,8 +108,12 @@ static Suite *libjwt_suite(void)
 	TCase *tc_core;
 
 	s = suite_create("Glewlwyd");
-	tc_core = tcase_create("test_glwd");
-	tcase_add_test(tc_core, test_glwd);
+	tc_core = tcase_create("glewlwyd_resource_owner_pwd_cred");
+	tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_valid);
+	tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_pwd_invalid);
+	tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_user_invalid);
+	tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_scope_invalid);
+	tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_empty);
 	tcase_set_timeout(tc_core, 30);
 	suite_add_tcase(s, tc_core);
 
@@ -57,7 +135,5 @@ int main(int argc, char *argv[])
 	number_failed = srunner_ntests_failed(sr);
 	srunner_free(sr);
   
-  ulfius_clean_request(&user_req);
-
 	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
