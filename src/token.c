@@ -526,7 +526,7 @@ json_t * session_check(struct config_elements * config, const char * session_val
   json_t * j_query, * j_result, * j_return, * j_grants;
   char * session_hash, * clause_expired_at, * grants;
   int res;
-  jwt_t * jwt;
+  jwt_t * jwt = NULL;
   time_t now;
   long expiration;
   
@@ -574,7 +574,7 @@ json_t * session_check(struct config_elements * config, const char * session_val
             res = h_update(config->conn, j_query, NULL);
             json_decref(j_query);
             if (res == H_OK) {
-							grants = jwt_get_grants_json(jwt, NULL);
+              grants = jwt_get_grants_json(jwt, NULL);
               j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
               free(grants);
               if (j_grants != NULL) {
@@ -599,6 +599,7 @@ json_t * session_check(struct config_elements * config, const char * session_val
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
+    jwt_free(jwt);
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }

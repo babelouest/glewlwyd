@@ -24,7 +24,7 @@ char * code;
 
 START_TEST(test_glwd_implicit_redirect_login)
 {
-  char * url = msprintf("%s/auth?response_type=token&client_id=%s&redirect_uri=../static/index.html?param=client1_cb1&state=xyzabcd&scope=%s&login_validated=true", SERVER_URI, CLIENT, SCOPE_LIST);
+  char * url = msprintf("%s/auth?response_type=token&login_validated=true&client_id=%s&redirect_uri=../app/index.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html");
   free(url);
 	ck_assert_int_eq(res, 1);
@@ -33,7 +33,7 @@ END_TEST
 
 START_TEST(test_glwd_implicit_valid)
 {
-  char * url = msprintf("%s/auth?response_type=token&client_id=%s&redirect_uri=../static/index.html?param=client1_cb1&state=xyzabcd&scope=%s&login_validated=true", SERVER_URI, CLIENT, SCOPE_LIST);
+  char * url = msprintf("%s/auth?response_type=token&login_validated=true&client_id=%s&redirect_uri=../app/index.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "token=");
   free(url);
 	ck_assert_int_eq(res, 1);
@@ -42,7 +42,7 @@ END_TEST
 
 START_TEST(test_glwd_implicit_client_invalid)
 {
-  char * url = msprintf("%s/auth?response_type=token&client_id=%s&redirect_uri=../static/index.html?param=client1_cb1&state=xyzabcd&scope=%s&login_validated=true", SERVER_URI, "invalid", SCOPE_LIST);
+  char * url = msprintf("%s/auth?response_type=token&login_validated=true&client_id=%s&redirect_uri=../app/index.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, "invalid", SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=unauthorized_client");
   free(url);
 	ck_assert_int_eq(res, 1);
@@ -51,7 +51,7 @@ END_TEST
 
 START_TEST(test_glwd_implicit_redirect_uri_invalid)
 {
-  char * url = msprintf("%s/auth?response_type=token&client_id=%s&redirect_uri=invalid&state=xyzabcd&scope=%s&login_validated=true", SERVER_URI, CLIENT, SCOPE_LIST);
+  char * url = msprintf("%s/auth?response_type=token&login_validated=true&client_id=%s&redirect_uri=invalid&state=xyzabcd&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=unauthorized_client");
   free(url);
 	ck_assert_int_eq(res, 1);
@@ -60,7 +60,7 @@ END_TEST
 
 START_TEST(test_glwd_implicit_scope_invalid)
 {
-  char * url = msprintf("%s/auth?response_type=token&client_id=%s&redirect_uri=../static/index.html?param=client1_cb1&state=xyzabcd&scope=%s&login_validated=true", SERVER_URI, CLIENT, "scope4");
+  char * url = msprintf("%s/auth?response_type=token&login_validated=true&client_id=%s&redirect_uri=../app/index.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, CLIENT, "scope4");
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_scope");
   free(url);
 	ck_assert_int_eq(res, 1);
@@ -97,16 +97,16 @@ static Suite *libjwt_suite(void)
 
 int main(int argc, char *argv[])
 {
-	int number_failed;
-	Suite *s;
-	SRunner *sr;
+  int number_failed;
+  Suite *s;
+  SRunner *sr;
   struct _u_request auth_req, scope_req;
   struct _u_response auth_resp, scope_resp;
   int res;
   
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
-    // Getting a valid session id for authenticated http requests
+  // Getting a valid session id for authenticated http requests
   ulfius_init_request(&auth_req);
   ulfius_init_request(&user_req);
   ulfius_init_response(&auth_resp);
@@ -122,6 +122,7 @@ int main(int argc, char *argv[])
       char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
       u_map_put(user_req.map_header, "Cookie", cookie);
       free(cookie);
+      y_log_message(Y_LOG_LEVEL_INFO, "Cookie %s stored", auth_resp.map_cookie[i].key);
     }
     
     ulfius_init_request(&scope_req);

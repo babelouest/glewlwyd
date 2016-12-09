@@ -29,7 +29,7 @@ START_TEST(test_glwd_code_code_invalid)
   u_map_init(&body);
   u_map_put(&body, "response_type", "authorization_code");
   u_map_put(&body, "client_id", CLIENT);
-  u_map_put(&body, "redirect_uri", "../static/index.html?param=client1_cb1");
+  u_map_put(&body, "redirect_uri", "../app/index.html?param=client1_cb1");
   u_map_put(&body, "code", "invalid");
   
   free(user_req.http_verb);
@@ -48,7 +48,7 @@ START_TEST(test_glwd_code_client_invalid)
   u_map_init(&body);
   u_map_put(&body, "response_type", "authorization_code");
   u_map_put(&body, "client_id", "invalid");
-  u_map_put(&body, "redirect_uri", "../static/index.html?param=client1_cb1");
+  u_map_put(&body, "redirect_uri", "../app/index.html?param=client1_cb1");
   u_map_put(&body, "code", code);
   
   free(user_req.http_verb);
@@ -86,7 +86,7 @@ START_TEST(test_glwd_code_ok)
   u_map_init(&body);
   u_map_put(&body, "response_type", "authorization_code");
   u_map_put(&body, "client_id", CLIENT);
-  u_map_put(&body, "redirect_uri", "../static/index.html?param=client1_cb1");
+  u_map_put(&body, "redirect_uri", "../app/index.html?param=client1_cb1");
   u_map_put(&body, "code", code);
   
   free(user_req.http_verb);
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
     } else {
       ulfius_init_response(&code_resp);
       user_req.http_verb = strdup("GET");
-      user_req.http_url = msprintf("%s/auth?response_type=code&client_id=client1_id&redirect_uri=../static/index.html?param=client1_cb1&scope=scope1 scope2&login_validated=true", SERVER_URI);
+      user_req.http_url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/index.html?param=client1_cb1&scope=scope1 scope2", SERVER_URI);
       if (ulfius_send_http_request(&user_req, &code_resp) != U_OK) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "Get code error");
       } else {

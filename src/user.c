@@ -545,7 +545,7 @@ json_t * auth_check_scope_database(struct config_elements * config, const char *
           scope_list_allowed = json_pack("{siss}", "result", G_OK, "scope", scope_list_join);
           free(scope_list_join);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_scope_database - Error user '%s' with scope %s", username, scope_list);
+          y_log_message(Y_LOG_LEVEL_WARNING, "Error user '%s' with scope %s", username, scope_list);
           scope_list_allowed = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
         json_decref(j_result);

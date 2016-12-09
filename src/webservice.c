@@ -138,7 +138,7 @@ int callback_glewlwyd_check_user_authorization (const struct _u_request * reques
     ulfius_add_cookie_to_response(response, config->session_key, session_token, NULL, config->session_expiration, NULL, "/", 0, 0);
     free(session_token);
   } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
+    y_log_message(Y_LOG_LEVEL_WARNING, "Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
     response->status = 403;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_user_authorization - error checking credentials");

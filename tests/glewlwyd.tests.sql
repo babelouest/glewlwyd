@@ -31,10 +31,10 @@ INSERT INTO g_client_scope (gc_id, gs_id) VALUES ((SELECT gc_id from g_client WH
 
 INSERT INTO g_client_authorization_type (gc_id, got_id) VALUES ((SELECT gc_id FROM g_client WHERE gc_client_id='client3_id'), (SELECT got_id FROM g_authorization_type WHERE got_code=4));
 
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', '../static/index.html?param=client1_cb1', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_2', '../static/index.html?param=client1_cb2', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client2', '../static/index.html?param=client2_cb', (SELECT gc_id from g_client WHERE gc_client_id='client2_id'));
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client3', '../static/index.html?param=client3_cb', (SELECT gc_id from g_client WHERE gc_client_id='client3_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', '../app/index.html?param=client1_cb1', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_2', '../app/index.html?param=client1_cb2', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client2', '../app/index.html?param=client2_cb', (SELECT gc_id from g_client WHERE gc_client_id='client2_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client3', '../app/index.html?param=client3_cb', (SELECT gc_id from g_client WHERE gc_client_id='client3_id'));
 
 INSERT INTO g_resource (gr_name, gr_description) VALUES ('resource1', 'Description for resource1');
 INSERT INTO g_resource (gr_name, gr_description) VALUES ('resource2', 'Description for resource2');

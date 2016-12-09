@@ -191,7 +191,7 @@ int check_auth_type_access_token_request (const struct _u_request * request, str
     }
     free(refresh_token);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - code invalid");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error code invalid at IP Address %s", ip_source);
     response->json_body = json_pack("{ss}", "error", json_string_value(json_object_get(j_validate, "error")));
     response->status = 400;
   }
@@ -350,7 +350,7 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
     }
     free(refresh_token);
   } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
+    y_log_message(Y_LOG_LEVEL_WARNING, "Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
     response->status = 403;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error checking credentials");
@@ -410,7 +410,7 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
     }
     json_decref(j_scope_list);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Error client_id/client_password for client_id %s at IP Address %s", request->auth_basic_user, ip_source);
+    y_log_message(Y_LOG_LEVEL_WARNING, "Error client_id/client_password for client_id %s at IP Address %s", request->auth_basic_user, ip_source);
     response->json_body = json_pack("{ss}", "error", "invalid_client");
     response->status = 403;
   }
