@@ -60,7 +60,7 @@ $ cd hoel/
 $ make
 $ sudo make install
 
-# Install glewlwyd
+# Install Glewlwyd
 $ git clone https://github.com/babelouest/glewlwyd.git
 $ cd glewlwyd
 $ make 
@@ -104,7 +104,7 @@ The database authentication is built-in, there's nothing to configure. The LDAP 
 
 ### JWT configuration
 
-You can choose between SHA (HS512) and RSA (RS256) anglorithms to sign the tokens. Note that if you use SHA, you will need to share the `sha_secret` value with the resource providers and keep it safe in all places. If you use RSA algorithm, you will need to share the public key `rsa_pub_file` with resource providers, you will need to keep the private key `rsa_key_file` safe.
+You can choose between SHA (HS512) and RSA (RS512) anglorithms to sign the tokens. Note that if you use SHA, you will need to share the `sha_secret` value with the resource providers and keep it safe in all places. If you use RSA algorithm, you will need to share the public key `rsa_pub_file` with resource providers, and you will need to keep the private key `rsa_key_file` safe.
 
 #### RSA private/public key creation
 
@@ -119,7 +119,7 @@ For more information about generating RSA keys, see [OpenSSL Documentation](http
 
 ### Install service
 
-The files glewlwyd-init (SysV init) and glewlwyd.service (Systemd) can be used to have glewlwyd as a daemon.
+The files `glewlwyd-init` (SysV init) and `glewlwyd.service` (Systemd) can be used to have glewlwyd as a daemon. They are fitted for a Raspbian distrbution, but can easily be changed for other systems.
 
 #### Install as a SysV init daemon and run
 
