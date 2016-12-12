@@ -156,13 +156,14 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
 int check_auth_type_client_credentials_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int callback_glewlwyd_check_session (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_check_bearer (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_token (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_check_user_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_scope_delete (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_options (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_static_file (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -185,6 +186,7 @@ json_t * validate_authorization_code(struct config_elements * config, const char
 json_t * client_check(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
 int client_auth(struct config_elements * config, const char * client_id, const char * client_password);
 int auth_check_client_user_scope(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
+json_t * access_token_check(struct config_elements * config, const char * token_value);
 
 json_t * get_user_profile(struct config_elements * config, const char * username);
 json_t * get_user_profile_database(struct config_elements * config, const char * username);
@@ -207,5 +209,6 @@ int serialize_session_token(struct config_elements * config, const char * userna
 int is_authorization_type_enabled(struct config_elements * config, uint authorization_type);
 
 int grant_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
+int delete_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
 
 #endif

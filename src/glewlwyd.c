@@ -122,11 +122,12 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/token/", NULL, NULL, NULL, &callback_glewlwyd_token, (void*)config);
   
   // User endpoints
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/auth/", &callback_glewlwyd_check_session, (void*)config, NULL, &callback_glewlwyd_get_user_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/auth/", &callback_glewlwyd_check_bearer, (void*)config, NULL, &callback_glewlwyd_get_user_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/auth/", NULL, NULL, NULL, &callback_glewlwyd_check_user_authorization, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/auth/", &callback_glewlwyd_check_session, (void*)config, NULL, &callback_glewlwyd_delete_user_session, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_session, (void*)config, NULL, &callback_glewlwyd_get_user_scope_grant, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_session, (void*)config, NULL, &callback_glewlwyd_user_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/auth/", &callback_glewlwyd_check_bearer, (void*)config, NULL, &callback_glewlwyd_delete_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_bearer, (void*)config, NULL, &callback_glewlwyd_get_user_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_bearer, (void*)config, NULL, &callback_glewlwyd_user_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_bearer, (void*)config, NULL, &callback_glewlwyd_user_scope_delete, (void*)config);
   
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/", NULL, NULL, NULL, NULL, &callback_glewlwyd_root, (void*)config);

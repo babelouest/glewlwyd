@@ -166,6 +166,101 @@ int grant_client_user_scope_access(struct config_elements * config, const char *
 
 /**
  *
+ * Remove access of scope to client_id for username
+ *
+ */
+int delete_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list) {
+  json_t * j_query, * j_result;
+  char * save_scope_list = nstrdup(scope_list), * scope, * saveptr;
+  char * where_clause_scope, * scope_escaped;
+  int res, to_return = G_OK;
+  json_int_t gc_id;
+  
+  if (client_id != NULL && username != NULL && save_scope_list != NULL && strlen(save_scope_list) > 0) {
+    j_query = json_pack("{sss[s]s{ss}}",
+                        "table",
+                        GLEWLWYD_TABLE_CLIENT,
+                        "columns",
+                          "gc_id",
+                        "where",
+                          "gc_client_id",
+                          client_id);
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      gc_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id"));
+      json_decref(j_result);
+      scope = strtok_r(save_scope_list, " ", &saveptr);
+      while (scope != NULL) {
+        // Check if this user hasn't granted access to this client for this scope
+        scope_escaped = h_escape_string(config->conn, scope);
+        where_clause_scope = msprintf("= (SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, scope_escaped);
+        j_query = json_pack("{sss[s]s{sIsss{ssss}}}",
+                            "table",
+                            GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
+                            "columns",
+                              "gcus_id",
+                            "where",
+                              "gc_id",
+                              gc_id,
+                              "gco_username",
+                              username,
+                              "gs_id",
+                                "operator",
+                                "raw",
+                                "value",
+                                where_clause_scope);
+        free(where_clause_scope);
+        res = h_select(config->conn, j_query, &j_result, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          if (json_array_size(j_result) == 0) {
+            // Add grant to this scope
+            where_clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, scope_escaped);
+            j_query = json_pack("{sss{sIsss{ss}}}",
+                                "table",
+                                GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
+                                "where",
+                                  "gc_id",
+                                  gc_id,
+                                  "gco_username",
+                                  username,
+                                  "gs_id",
+                                    "raw",
+                                    where_clause_scope);
+            free(where_clause_scope);
+            res = h_delete(config->conn, j_query, NULL);
+            json_decref(j_query);
+            if (res != H_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_user_scope_access - Error adding scope %s to client_id %s for user %s", scope, client_id, username);
+              to_return = G_ERROR_DB;
+            }
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_user_scope_access - Error getting grant for scope %s to client_id %s for user %s", scope, client_id, username);
+          to_return = G_ERROR_DB;
+        }
+        free(scope_escaped);
+        json_decref(j_result);
+        scope = strtok_r(NULL, " ", &saveptr);
+      }
+    } else {
+      // Error, client_id not found
+      y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_user_scope_access - Error client_id %s not found", client_id);
+      to_return = G_ERROR_DB;
+    }
+  } else {
+    // Error input parameters
+    y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_user_scope_access - Error input parameters");
+    to_return = G_ERROR_PARAM;
+  }
+  free(save_scope_list);
+  
+  return to_return;
+}
+
+/**
+ *
  * Check if code is valid
  * If so, return username, client_id and (if needed) scope list that was used to create that code
  *

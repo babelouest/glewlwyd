@@ -35,30 +35,30 @@ glewlwyd_auth_code: glewlwyd_auth_code.c unit-tests.o
 	$(CC) $(CFLAGS) glewlwyd_auth_code.c unit-tests.o -o glewlwyd_auth_code $(LIBS)
 
 test_glewlwyd_auth_code: glewlwyd_auth_code
-	./glewlwyd_auth_code
+	-./glewlwyd_auth_code
 
 glewlwyd_client_cred: glewlwyd_client_cred.c unit-tests.o
 	$(CC) $(CFLAGS) glewlwyd_client_cred.c unit-tests.o -o glewlwyd_client_cred $(LIBS)
 
 test_glewlwyd_client_cred: glewlwyd_client_cred
-	./glewlwyd_client_cred
+	-./glewlwyd_client_cred
 
 glewlwyd_code: glewlwyd_code.c unit-tests.o
 	$(CC) $(CFLAGS) glewlwyd_code.c unit-tests.o -o glewlwyd_code $(LIBS)
 
 test_glewlwyd_code: glewlwyd_code
-	./glewlwyd_code
+	-./glewlwyd_code
 
 glewlwyd_implicit: glewlwyd_implicit.c unit-tests.o
 	$(CC) $(CFLAGS) glewlwyd_implicit.c unit-tests.o -o glewlwyd_implicit $(LIBS)
 
 test_glewlwyd_implicit: glewlwyd_implicit
-	./glewlwyd_implicit
+	-./glewlwyd_implicit
 
 glewlwyd_resource_owner_pwd_cred: glewlwyd_resource_owner_pwd_cred.c unit-tests.o
 	$(CC) $(CFLAGS) glewlwyd_resource_owner_pwd_cred.c unit-tests.o -o glewlwyd_resource_owner_pwd_cred $(LIBS)
 
 test_glewlwyd_resource_owner_pwd_cred: glewlwyd_resource_owner_pwd_cred
-	./glewlwyd_resource_owner_pwd_cred
+	-./glewlwyd_resource_owner_pwd_cred
 
 test: test_glewlwyd_resource_owner_pwd_cred test_glewlwyd_implicit test_glewlwyd_code test_glewlwyd_client_cred test_glewlwyd_auth_code

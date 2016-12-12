@@ -184,9 +184,9 @@
 	
 	window.onload = function () {
 		params = getQueryParams(location.hash.slice(1));
-    if (params.code) {
-      $("#code").val(params.code);
-    }
+		if (params.code) {
+		  $("#code").val(params.code);
+		}
 	};
 
   function setAuthHeader(xhr){

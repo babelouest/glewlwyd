@@ -25,8 +25,8 @@ DROP TABLE IF EXISTS `g_user`;
 -- User table, contains registered users with their password encrypted
 CREATE TABLE `g_user` (
   `gu_id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `gu_name` TEXT,
-  `gu_email` TEXT,
+  `gu_name` TEXT DEFAULT '',
+  `gu_email` TEXT DEFAULT '',
   `gu_login` TEXT NOT NULL UNIQUE,
   `gu_password` TEXT NOT NULL,
   `gu_enabled` INTEGER DEFAULT 1
@@ -57,7 +57,7 @@ CREATE TABLE `g_client` (
   `gc_name` TEXT NOT NULL,
   `gc_description` TEXT,
   `gc_client_id` TEXT NOT NULL UNIQUE,
-  `gc_client_password` TEXT NOT NULL,
+  `gc_client_password` TEXT,
   `gc_confidential` INTEGER DEFAULT 0,
   `gc_enabled` INTEGER DEFAULT 1
 );
@@ -70,7 +70,7 @@ CREATE TABLE `g_redirect_uri` (
   `gru_name` TEXT NOT NULL,
   `gru_uri` TEXT,
   `gru_enabled` INTEGER DEFAULT 1,
-  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`)
+  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_redirect_uri` ON `g_redirect_uri`(`gru_id`);
 
@@ -107,7 +107,7 @@ CREATE TABLE `g_access_token` (
   `grt_id` INTEGER,
   `gat_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `gat_source_ip` TEXT NOT NULL,
-  FOREIGN KEY(`grt_id`) REFERENCES `g_refresh_token`(`grt_id`)
+  FOREIGN KEY(`grt_id`) REFERENCES `g_refresh_token`(`grt_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_access_token` ON `g_access_token`(`gat_id`);
 
@@ -133,8 +133,8 @@ CREATE TABLE `g_user_scope` (
   `gus_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `gu_id` INTEGER NOT NULL,
   `gs_id` INTEGER NOT NULL,
-  FOREIGN KEY(`gu_id`) REFERENCES `g_user`(`gu_id`),
-  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+  FOREIGN KEY(`gu_id`) REFERENCES `g_user`(`gu_id`) ON DELETE CASCADE,
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_user_scope` ON `g_user_scope`(`gus_id`);
 
@@ -143,8 +143,8 @@ CREATE TABLE `g_client_scope` (
   `gcs_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `gc_id` INTEGER NOT NULL,
   `gs_id` INTEGER NOT NULL,
-  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`),
-  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE,
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_client_scope` ON `g_client_scope`(`gcs_id`);
 
@@ -153,8 +153,8 @@ CREATE TABLE `g_resource_scope` (
   `grs_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `gr_id` INTEGER NOT NULL,
   `gs_id` INTEGER NOT NULL,
-  FOREIGN KEY(`gr_id`) REFERENCES `g_resource`(`gr_id`),
-  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+  FOREIGN KEY(`gr_id`) REFERENCES `g_resource`(`gr_id`) ON DELETE CASCADE,
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_resource_scope` ON `g_resource_scope`(`grs_id`);
 
@@ -163,8 +163,8 @@ CREATE TABLE `g_client_authorization_type` (
   `gcat_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `gc_id` INTEGER NOT NULL,
   `got_id` INTEGER NOT NULL,
-  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`),
-  FOREIGN KEY(`got_id`) REFERENCES `g_authorization_type`(`got_id`)
+  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE,
+  FOREIGN KEY(`got_id`) REFERENCES `g_authorization_type`(`got_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_client_authorization_type` ON `g_client_authorization_type`(`gcat_id`);
 
@@ -174,8 +174,8 @@ CREATE TABLE `g_client_user_scope` (
   `gc_id` INTEGER NOT NULL,
   `gco_username` TEXT NOT NULL,
   `gs_id` INTEGER NOT NULL,
-  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`),
-  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE,
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_client_user_scope` ON `g_client_user_scope`(`gcus_id`);
 
@@ -189,8 +189,8 @@ CREATE TABLE `g_code` (
   `gc_id` INTEGERNOT NULL,
   `gco_username` TEXT NOT NULL,
   `gru_id` INTEGER,
-  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`),
-  FOREIGN KEY(`gru_id`) REFERENCES `g_redirect_uri`(`gru_id`)
+  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE,
+  FOREIGN KEY(`gru_id`) REFERENCES `g_redirect_uri`(`gru_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_code` ON `g_code`(`gco_id`);
 
@@ -199,8 +199,8 @@ CREATE TABLE `g_code_scope` (
   `gcs_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `gco_id` INTEGER NOT NULL,
   `gs_id` INTEGER NOT NULL,
-  FOREIGN KEY(`gco_id`) REFERENCES `g_code`(`gco_id`),
-  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+  FOREIGN KEY(`gco_id`) REFERENCES `g_code`(`gco_id`) ON DELETE CASCADE,
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_code_scope` ON `g_code_scope`(`gcs_id`);
 
@@ -209,8 +209,8 @@ CREATE TABLE `g_refresh_token_scope` (
   `grts_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `grt_id` INTEGER NOT NULL,
   `gs_id` INTEGER NOT NULL,
-  FOREIGN KEY(`grt_id`) REFERENCES `g_refresh_token`(`grt_id`),
-  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`)
+  FOREIGN KEY(`grt_id`) REFERENCES `g_refresh_token`(`grt_id`) ON DELETE CASCADE,
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_refresh_token_scope` ON `g_refresh_token_scope`(`grts_id`);
 
@@ -219,4 +219,3 @@ INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('
 INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('token', 2, 'Implicit Grant: https://tools.ietf.org/html/rfc6749#section-4.2');
 INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('password', 3, 'Resource Owner Password Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.3');
 INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('client_credentials', 4, 'Client Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.4');
-INSERT INTO g_scope (gs_name) VALUES ('g_admin');

@@ -155,9 +155,10 @@ int callback_glewlwyd_check_user_authorization (const struct _u_request * reques
 int callback_glewlwyd_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   int res;
-  json_t * j_scope, * j_session = session_get(config, u_map_get(request->map_cookie, config->session_key));
+  json_t * j_scope, * j_session;
   
   // Check if user has access to scopes
+  j_session = session_get(config, u_map_get(request->map_header, "Authorization"));
   j_scope = auth_check_scope(((struct config_elements *)user_data), json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "scope"));
   if (!check_result_value(j_scope, G_OK)) {
     response->status = 403;
@@ -278,14 +279,20 @@ int callback_glewlwyd_api_description (const struct _u_request * request, struct
 };
 
 /**
- * check if connected user has access to scope
+ * check if bearer token is valid
  */
-int callback_glewlwyd_check_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_check_bearer (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL;
   int res = U_OK;
+  const char * token = nstrstr(u_map_get(request->map_header, "Authorization"), "Bearer ");
+  if (token != NULL) {
+    token = token + strlen("Bearer ");
+  } else {
+    token = u_map_get(request->map_cookie, config->session_key);
+  }
   
-  j_session = session_check(config, u_map_get(request->map_cookie, config->session_key));
+  j_session = access_token_check(config, token);
   if (!check_result_value(j_session, G_OK)) {
     res = U_ERROR_UNAUTHORIZED;
   } else {
@@ -298,8 +305,18 @@ int callback_glewlwyd_check_session (const struct _u_request * request, struct _
 int callback_glewlwyd_get_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL, * j_user = NULL;
+  const char * token;
   
-  j_session = session_get(config, u_map_get(request->map_cookie, config->session_key));
+  if (u_map_get(request->map_url, "bearer") != NULL) {
+    token = nstrstr(u_map_get(request->map_header, "Authorization"), "Bearer ");
+    if (token != NULL) {
+      token = token + strlen("Bearer ");
+    }
+  } else {
+    token = u_map_get(request->map_cookie, config->session_key);
+  }
+
+  j_session = session_get(config, token);
   if (check_result_value(j_session, G_OK)) {
     j_user = get_user_profile(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")));
     if (check_result_value(j_user, G_OK)) {
@@ -338,4 +355,24 @@ int callback_glewlwyd_get_user_scope_grant (const struct _u_request * request, s
   json_decref(j_session);
   
   return U_OK;
+}
+
+int callback_glewlwyd_user_scope_delete (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  int res;
+  json_t * j_scope, * j_session;
+  
+  // Check if user has access to scopes
+  j_session = session_get(config, u_map_get(request->map_cookie, config->session_key));
+  j_scope = auth_check_scope(((struct config_elements *)user_data), json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "scope"));
+  if (!check_result_value(j_scope, G_OK)) {
+    response->status = 403;
+    res = U_OK;
+  } else {
+    res = delete_client_user_scope_access(config, u_map_get(request->map_post_body, "client_id"), json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "scope"));
+  }
+  json_decref(j_scope);
+  json_decref(j_session);
+  
+  return res;
 }

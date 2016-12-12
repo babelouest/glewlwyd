@@ -2,6 +2,17 @@
 -- ----------- --
 -- Test values --
 -- ----------- --
+-- Delete initial values
+DELETE FROM `g_client_user_scope`;
+DELETE FROM `g_client_authorization_type`;
+DELETE FROM `g_resource_scope`;
+DELETE FROM `g_client_scope`;
+DELETE FROM `g_user_scope`;
+DELETE FROM `g_resource`;
+DELETE FROM `g_redirect_uri`;
+DELETE FROM `g_client`;
+DELETE FROM `g_scope`;
+DELETE FROM `g_user`;
 
 -- Mariadb/Mysql user add queries
 INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', PASSWORD('MyAdminPassword2016!'), 1);
@@ -10,11 +21,12 @@ INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES
 INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user3', 'Dave Lopper3', 'user3@glewlwyd.domain', PASSWORD('MyUser3Password!'), 1);
 
 -- SQLite3 user add queries (passwords are md5 encoded, but they are the same as below)
--- INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('admin', '16ae549bfe99ce44c4134d5f6b0f1d97', 1);
--- INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user1', 'e630e606f6188038d23a86c5e9bb2377', 1);
--- INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user2', '4864d80e57cdd46d90900341660cc221', 1);
--- INSERT INTO g_user (gu_login, gu_password, gu_enabled) VALUES ('user3', '312b3efa1cc1e700b08cfa0981dca89f', 1);
+-- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', '16ae549bfe99ce44c4134d5f6b0f1d97', 1);
+-- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user1', 'Dave Lopper1', 'user1@glewlwyd.domain', 'e630e606f6188038d23a86c5e9bb2377', 1);
+-- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user2', 'Dave Lopper2', 'user2@glewlwyd.domain', '4864d80e57cdd46d90900341660cc221', 1);
+-- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user3', 'Dave Lopper3', 'user3@glewlwyd.domain', '312b3efa1cc1e700b08cfa0981dca89f', 1);
 
+INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_admin', 'Glewlwyd admin scope');
 INSERT INTO g_scope (gs_name, gs_description) VALUES ('scope1', 'Description for scope1');
 INSERT INTO g_scope (gs_name, gs_description) VALUES ('scope2', 'Description for scope2');
 INSERT INTO g_scope (gs_name, gs_description) VALUES ('scope3', 'Description for scope3');
@@ -31,6 +43,8 @@ INSERT INTO g_client_scope (gc_id, gs_id) VALUES ((SELECT gc_id from g_client WH
 
 INSERT INTO g_client_authorization_type (gc_id, got_id) VALUES ((SELECT gc_id FROM g_client WHERE gc_client_id='client3_id'), (SELECT got_id FROM g_authorization_type WHERE got_code=4));
 
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', 'http://localhost:3000/', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', 'http://localhost:3000/#/', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
 INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', '../app/index.html?param=client1_cb1', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
 INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_2', '../app/index.html?param=client1_cb2', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
 INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client2', '../app/index.html?param=client2_cb', (SELECT gc_id from g_client WHERE gc_client_id='client2_id'));

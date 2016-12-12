@@ -606,6 +606,39 @@ json_t * session_check(struct config_elements * config, const char * session_val
   return j_return;
 }
 
+json_t * access_token_check(struct config_elements * config, const char * token_value) {
+  json_t * j_return, * j_grants;
+  jwt_t * jwt = NULL;
+  time_t now;
+  long expiration;
+  char  * grants;
+  
+  if (token_value != NULL) {
+    if (!jwt_decode(&jwt, token_value, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
+      time(&now);
+      expiration = jwt_get_grant_int(jwt, "iat") + jwt_get_grant_int(jwt, "expires_in");
+      if (now < expiration) {
+        grants = jwt_get_grants_json(jwt, NULL);
+        j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
+        free(grants);
+        if (j_grants != NULL) {
+          j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+        } else {
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+      } else {
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      }
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    }
+    jwt_free(jwt);
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  }
+  return j_return;
+}
+
 int session_delete(struct config_elements * config, const char * session_value) {
   json_t * j_query;
   char * session_hash;

@@ -123,6 +123,7 @@ int main(int argc, char *argv[])
   struct _u_request auth_req, scope_req;
   struct _u_response auth_resp, code_resp;
   int res;
+  char * url;
   
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
@@ -163,7 +164,6 @@ int main(int argc, char *argv[])
       }
       ulfius_clean_response(&code_resp);
     }
-    ulfius_clean_request(&scope_req);
   }
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
@@ -175,6 +175,17 @@ int main(int argc, char *argv[])
 	number_failed = srunner_ntests_failed(sr);
 	srunner_free(sr);
   
+  free(scope_req.http_verb);
+  scope_req.http_verb = msprintf("DELETE");
+    if (ulfius_send_http_request(&auth_req, NULL) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "Remove grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
+    }
+  
+  url = msprintf("%s/user/auth/", SERVER_URI);
+  run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
+  free(url);
+  
+  ulfius_clean_request(&scope_req);
   ulfius_clean_request(&user_req);
 
 	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;

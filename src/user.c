@@ -49,6 +49,7 @@ json_t * get_user_profile(struct config_elements * config, const char * username
 json_t * get_user_profile_database(struct config_elements * config, const char * username) {
   json_t * j_query, * j_result, * j_return;
   int res;
+  char * query;
   
   j_query = json_pack("{sss[ss]s{ss}}",
                       "table",
@@ -59,7 +60,7 @@ json_t * get_user_profile_database(struct config_elements * config, const char *
                       "where",
                         "gu_login",
                         username);
-  res = h_select(config->conn, j_query, &j_result, NULL);
+  res = h_select(config->conn, j_query, &j_result, &query);
   json_decref(j_query);
   if (res == H_OK) {
     if (json_array_size(j_result) > 0) {
@@ -531,14 +532,13 @@ json_t * auth_check_scope_database(struct config_elements * config, const char *
       json_decref(j_query);
       if (res == H_OK) {
         if (json_array_size(j_result) > 0) {
-          scope_list_join = strdup("");
+          scope_list_join = NULL;
           json_array_foreach(j_result, index, j_value) {
-            if (nstrlen(scope_list_join) > 0) {
+            if (scope_list_join != NULL) {
               tmp = msprintf("%s %s", scope_list_join, json_string_value(json_object_get(j_value, "gs_name")));
               free(scope_list_join);
               scope_list_join = tmp;
             } else {
-              free(scope_list_join);
               scope_list_join = strdup(json_string_value(json_object_get(j_value, "gs_name")));
             }
           }
