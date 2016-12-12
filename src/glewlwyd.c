@@ -121,14 +121,52 @@ int main (int argc, char ** argv) {
   // Token endpoint
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/token/", NULL, NULL, NULL, &callback_glewlwyd_token, (void*)config);
   
-  // User endpoints
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/auth/", &callback_glewlwyd_check_bearer, (void*)config, NULL, &callback_glewlwyd_get_user_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/auth/", NULL, NULL, NULL, &callback_glewlwyd_check_user_authorization, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/auth/", &callback_glewlwyd_check_bearer, (void*)config, NULL, &callback_glewlwyd_delete_user_session, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_bearer, (void*)config, NULL, &callback_glewlwyd_get_user_scope_grant, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_bearer, (void*)config, NULL, &callback_glewlwyd_user_scope_grant, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_bearer, (void*)config, NULL, &callback_glewlwyd_user_scope_delete, (void*)config);
+  // Authentication
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/auth/", &callback_glewlwyd_validate_user_session, (void*)config, NULL, &callback_glewlwyd_get_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/auth/", NULL, NULL, NULL, &callback_glewlwyd_check_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/auth/", &callback_glewlwyd_validate_user_session, (void*)config, NULL, &callback_glewlwyd_delete_user_session, (void*)config);
   
+  // Scope grant endpoints
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_user_session_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_set_user_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_user_scope_delete, (void*)config);
+  
+  // User endpoints
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/profile/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_user_session_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/user/profile/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_set_user_profile, (void*)config);
+  
+  // Client endpoints
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/:client_id", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/client/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/client/:client_id", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/client/:client_id", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_client, (void*)config);
+  
+  // redirect_uri endpoints
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/redirect_uri/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_redirect_uri, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/redirect_uri/:redirect_uri_name", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_redirect_uri, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/redirect_uri/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_redirect_uri, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/redirect_uri/:redirect_uri_name", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_redirect_uri, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/redirect_uri/:redirect_uri_name", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_redirect_uri, (void*)config);
+  
+  // Scope endpoints
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_scope, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/:scope", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_scope, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/scope/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_scope, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/scope/:scope", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_scope, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/scope/:scope", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_scope, (void*)config);
+  
+  // Resource endpoints
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/:resource", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/resource/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/resource/:resource", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/resource/:resource", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_resource, (void*)config);
+
+  // Authorization type callbacks
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/response_type/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_response_type, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/response_type/:authorization_type", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_response_type, (void*)config);
+
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/", NULL, NULL, NULL, NULL, &callback_glewlwyd_root, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", "/api/", NULL, NULL, NULL, NULL, &callback_glewlwyd_api_description, (void*)config);
@@ -136,6 +174,7 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "GET", config->static_files_prefix, "*", NULL, NULL, NULL, &callback_glewlwyd_static_file, (void*)config);
   ulfius_set_default_endpoint(config->instance, NULL, NULL, NULL, &callback_default, (void*)config);
   
+  // Set default headers
   u_map_put(config->instance->default_headers, "Access-Control-Allow-Origin", config->allow_origin);
   u_map_put(config->instance->default_headers, "Access-Control-Allow-Credentials", "true");
   u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
@@ -143,6 +182,7 @@ int main (int argc, char ** argv) {
   
   y_log_message(Y_LOG_LEVEL_INFO, "Start glewlwyd on port %d, prefix: %s", config->instance->port, config->url_prefix);
   if (ulfius_start_framework(config->instance) == U_OK) {
+    // Loop until stop signal is broadcasted
     while (global_handler_variable == GLEWLWYD_RUNNING) {
       sleep(1);
     }
@@ -161,7 +201,6 @@ void exit_server(struct config_elements ** config, int exit_value) {
   
   if (config != NULL && *config != NULL) {
     // Cleaning data
-
     free((*config)->config_file);
     free((*config)->url_prefix);
     free((*config)->log_file);
