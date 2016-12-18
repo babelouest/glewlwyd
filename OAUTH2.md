@@ -24,8 +24,6 @@ This is a multi-method, multi-parameters, versatile endpoint, used to provide au
 
 - Authorization Code Grant (Authorization part)
 - Implicit Grant
-- Resource Owner Password Credentials Grant
-- Client Credentials Grant
 
 #### URL
 
@@ -33,15 +31,17 @@ This is a multi-method, multi-parameters, versatile endpoint, used to provide au
 
 #### Method
 
-`GET` for the following `response_type`: `code`, `token`
-`POST` for the following `response_type`: `client_credentials`, `password`
+`GET`
 
 ### Token endpoint
 
 This endpoint is used to provide tokens to the user. It handles the following authorization schemes as describe in the [OAuth 2 RFC document](https://tools.ietf.org/html/rfc6749):
 
 - Authorization Code Grant (Access Token part)
+- Resource Owner Password Credentials Grant
+- Client Credentials Grant
 - Refreshing a token
+- Deleting a token
 
 #### URL
 
@@ -130,7 +130,7 @@ with `redirect_uri` specified in the request, `unauthorized_client` as error val
 
 #### URL
 
-`/glewlwyd/auth`
+`/glewlwyd/token`
 
 #### Method
 
@@ -172,7 +172,7 @@ Code 400
 
 Error input parameters
 
-The combination code/redirect_uru/client_id is incorrect.
+The combination code/redirect_uri/client_id is incorrect.
 
 ### Implicit Grant
 
@@ -249,7 +249,7 @@ with `redirect_uri` specified in the request, `unauthorized_client` as error val
 
 #### URL
 
-`/glewlwyd/auth`
+`/glewlwyd/token`
 
 #### Method
 
@@ -291,7 +291,7 @@ username or password invalid.
 
 #### URL
 
-`/glewlwyd/auth`
+`/glewlwyd/token`
 
 #### Method
 
