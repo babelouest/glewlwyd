@@ -49,7 +49,6 @@ json_t * get_user_profile(struct config_elements * config, const char * username
 json_t * get_user_profile_database(struct config_elements * config, const char * username) {
   json_t * j_query, * j_result, * j_return;
   int res;
-  char * query;
   
   j_query = json_pack("{sss[ss]s{ss}}",
                       "table",
@@ -60,7 +59,7 @@ json_t * get_user_profile_database(struct config_elements * config, const char *
                       "where",
                         "gu_login",
                         username);
-  res = h_select(config->conn, j_query, &j_result, &query);
+  res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
     if (json_array_size(j_result) > 0) {
@@ -512,7 +511,6 @@ json_t * auth_check_scope_database(struct config_elements * config, const char *
       free(scope_escaped);
       scope = strtok_r(NULL, " ", &saveptr);
     }
-    free(scope_list_save);
     where_clause = msprintf("IN (SELECT gs_id FROM %s WHERE gu_id = (SELECT gu_id FROM %s WHERE gu_login='%s') AND gs_id IN (SELECT gs_id FROM %s WHERE gs_name IN (%s)))", GLEWLWYD_TABLE_USER_SCOPE, GLEWLWYD_TABLE_USER, login_escaped, GLEWLWYD_TABLE_SCOPE, scope_list_escaped);
     j_query = json_pack("{sss[s]s{s{ssss}}}",
               "table",
@@ -561,6 +559,7 @@ json_t * auth_check_scope_database(struct config_elements * config, const char *
     y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_scope_database - Error allocating resources for scope_list_save %s or login_escaped %s or scope_list_escaped %s", scope_list_save, login_escaped, scope_list_escaped);
     scope_list_allowed = json_pack("{si}", "result", G_ERROR);
   }
+  free(scope_list_save);
   free(login_escaped);
   return scope_list_allowed;
 }

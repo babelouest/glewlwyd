@@ -49,6 +49,7 @@
  */
 int main (int argc, char ** argv) {
   struct config_elements * config = malloc(sizeof(struct config_elements));
+  int res;
   
   srand(time(NULL));
   if (config == NULL) {
@@ -56,6 +57,7 @@ int main (int argc, char ** argv) {
     return 1;
   }
   
+  // Init config structure with default values
   config->config_file = NULL;
   config->url_prefix = NULL;
   config->log_mode = Y_LOG_MODE_NONE;
@@ -73,6 +75,10 @@ int main (int argc, char ** argv) {
   config->jwt_decode_key = NULL;
   config->session_key = nstrdup(GLEWLWYD_SESSION_KEY_DEFAULT);
   config->session_expiration = GLEWLWYD_SESSION_EXPIRATION_DEFAULT;
+  config->admin_scope = nstrdup(GLEWLWYD_ADMIN_SCOPE);
+  config->use_secure_connection = 0;
+  config->secure_connection_key_file = NULL;
+  config->secure_connection_pem_file = NULL;
   if (config->instance == NULL) {
     fprintf(stderr, "Memory error - config->instance\n");
     return 1;
@@ -114,58 +120,60 @@ int main (int argc, char ** argv) {
     exit_server(&config, GLEWLWYD_ERROR);
   }
   
+  // At this point, we declare all API endpoints and configure 
+  
   // Authorization endpoint
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/", NULL, NULL, NULL, &callback_glewlwyd_authorization, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/", NULL, NULL, NULL, &callback_glewlwyd_authorization, (void*)config);
-  
+
   // Token endpoint
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/token/", NULL, NULL, NULL, &callback_glewlwyd_token, (void*)config);
-  
+
   // Authentication
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/auth/", &callback_glewlwyd_validate_user_session, (void*)config, NULL, &callback_glewlwyd_get_user_session, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/auth/", NULL, NULL, NULL, &callback_glewlwyd_check_user_session, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/auth/", &callback_glewlwyd_validate_user_session, (void*)config, NULL, &callback_glewlwyd_delete_user_session, (void*)config);
-  
-  // Scope grant endpoints
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/auth/", &callback_glewlwyd_check_user_session, (void*)config, NULL, &callback_glewlwyd_get_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/auth/", NULL, NULL, NULL, &callback_glewlwyd_validate_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/auth/", &callback_glewlwyd_check_user_session, (void*)config, NULL, &callback_glewlwyd_delete_user_session, (void*)config);
+
+  // Current user scope grant endpoints
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_user_session_scope_grant, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_set_user_scope_grant, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/grant/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_user_scope_delete, (void*)config);
-  
-  // User endpoints
+
+  // Current user endpoints
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/profile/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_user_session_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/user/profile/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_set_user_profile, (void*)config);
-  
-  // Client endpoints
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/:client_id", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/client/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/client/:client_id", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/client/:client_id", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_client, (void*)config);
-  
-  // redirect_uri endpoints
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/redirect_uri/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_redirect_uri, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/redirect_uri/:redirect_uri_name", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_redirect_uri, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/redirect_uri/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_redirect_uri, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/redirect_uri/:redirect_uri_name", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_redirect_uri, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/redirect_uri/:redirect_uri_name", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_redirect_uri, (void*)config);
-  
-  // Scope endpoints
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_scope, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/:scope", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_scope, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/scope/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_scope, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/scope/:scope", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_scope, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/scope/:scope", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_scope, (void*)config);
-  
-  // Resource endpoints
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/:resource", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/resource/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/resource/:resource", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/resource/:resource", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_resource, (void*)config);
 
   // Authorization type callbacks
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/response_type/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_response_type, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/response_type/:authorization_type", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_response_type, (void*)config);
+
+  // Scope endpoints
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_list_scope, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/:scope", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_scope, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/scope/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_scope, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/scope/:scope", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_scope, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/scope/:scope", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_scope, (void*)config);
+
+  // User endpoints
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_list_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/user/:username", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_user, (void*)config);
+
+  // Client endpoints
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_list_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/:client_id", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/client/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/client/:client_id", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/client/:client_id", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_client, (void*)config);
+
+  // Resource endpoints
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_list_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/:resource", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/resource/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/resource/:resource", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/resource/:resource", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_resource, (void*)config);
 
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/", NULL, NULL, NULL, NULL, &callback_glewlwyd_root, (void*)config);
@@ -173,15 +181,29 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", NULL, NULL, NULL, &callback_glewlwyd_options, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->static_files_prefix, "*", NULL, NULL, NULL, &callback_glewlwyd_static_file, (void*)config);
   ulfius_set_default_endpoint(config->instance, NULL, NULL, NULL, &callback_default, (void*)config);
-  
+
   // Set default headers
   u_map_put(config->instance->default_headers, "Access-Control-Allow-Origin", config->allow_origin);
   u_map_put(config->instance->default_headers, "Access-Control-Allow-Credentials", "true");
   u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
+
+  y_log_message(Y_LOG_LEVEL_INFO, "Start glewlwyd on port %d, prefix: %s, secure: %s", config->instance->port, config->url_prefix, config->use_secure_connection?"true":"false");
   
-  y_log_message(Y_LOG_LEVEL_INFO, "Start glewlwyd on port %d, prefix: %s", config->instance->port, config->url_prefix);
-  if (ulfius_start_framework(config->instance) == U_OK) {
+  if (config->use_secure_connection) {
+    char * key_file = get_file_content(config->secure_connection_key_file);
+    char * pem_file = get_file_content(config->secure_connection_pem_file);
+    if (key_file != NULL && pem_file != NULL) {
+      res = ulfius_start_secure_framework(config->instance, key_file, pem_file);
+    } else {
+      res = U_ERROR_PARAMS;
+    }
+    free(key_file);
+    free(pem_file);
+  } else {
+    res = ulfius_start_framework(config->instance);
+  }
+  if (res == U_OK) {
     // Loop until stop signal is broadcasted
     while (global_handler_variable == GLEWLWYD_RUNNING) {
       sleep(1);
@@ -209,6 +231,9 @@ void exit_server(struct config_elements ** config, int exit_value) {
     free((*config)->static_files_prefix);
     free((*config)->jwt_decode_key);
     free((*config)->session_key);
+    free((*config)->admin_scope);
+    free((*config)->secure_connection_key_file);
+    free((*config)->secure_connection_pem_file);
     jwt_free((*config)->jwt);
     u_map_clean_full((*config)->mime_types);
     if ((*config)->auth_ldap != NULL) {
@@ -447,12 +472,13 @@ int build_config_from_file(struct config_elements * config) {
   config_t cfg;
   config_setting_t * root, * database, * auth, * jwt, * mime_type_list, * mime_type;
   const char * cur_prefix, * cur_log_mode, * cur_log_level, * cur_log_file = NULL, * one_log_mode, 
-             * db_type, * db_sqlite_path, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL, * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL, * cur_session_key = NULL,
+             * db_type, * db_sqlite_path, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL, * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL, * cur_session_key = NULL, * cur_admin_scope = NULL,
              * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL, * cur_auth_ldap_filter = NULL, * cur_auth_ldap_login_property = NULL, * cur_auth_ldap_scope_property = NULL, * cur_auth_ldap_base_search = NULL, * cur_auth_ldap_name_property = NULL, * cur_auth_ldap_email_property = NULL,
              * cur_rsa_key_file = NULL, * cur_rsa_pub_file = NULL, * cur_sha_secret = NULL,
-             * extension = NULL, * mime_type_value = NULL;
+             * extension = NULL, * mime_type_value = NULL,
+             * cur_secure_connection_key_file = NULL, * cur_secure_connection_pem_file = NULL;
   int db_mariadb_port = 0;
-  int cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa, cur_use_sha, i;
+  int cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_sha = 0, cur_use_secure_connection = 0, i;
   
   config_init(&cfg);
   
@@ -551,6 +577,64 @@ int build_config_from_file(struct config_elements * config) {
     config->session_key = strdup(cur_session_key);
   }
   
+  config_lookup_string(&cfg, "admin_scope", &cur_admin_scope);
+  if (cur_admin_scope != NULL) {
+    free(config->admin_scope);
+    config->admin_scope = strdup(cur_admin_scope);
+  }
+  
+  config_lookup_bool(&cfg, "use_scope", &cur_use_scope);
+  config->use_scope = cur_use_scope;
+  
+  if (config->static_files_path == NULL) {
+    // Get path that serve static files
+    if (config_lookup_string(&cfg, "static_files_path", &cur_static_files_path)) {
+      config->static_files_path = nstrdup(cur_static_files_path);
+      if (config->static_files_path == NULL) {
+        fprintf(stderr, "Error allocating config->static_files_path, exiting\n");
+        config_destroy(&cfg);
+        return 0;
+      }
+    }
+  }
+
+  if (config->static_files_prefix == NULL) {
+    // Get prefix url
+    if (config_lookup_string(&cfg, "static_files_prefix", &cur_static_files_prefix)) {
+      config->static_files_prefix = nstrdup(cur_static_files_prefix);
+      if (config->static_files_prefix == NULL) {
+        fprintf(stderr, "Error allocating config->static_files_prefix, exiting\n");
+        config_destroy(&cfg);
+        return 0;
+      }
+    }
+  }
+  
+  // Populate mime types u_map
+  mime_type_list = config_lookup(&cfg, "static_files_mime_types");
+  if (mime_type_list != NULL) {
+    for (i=0; i<config_setting_length(mime_type_list); i++) {
+      mime_type = config_setting_get_elem(mime_type_list, i);
+      if (mime_type != NULL) {
+        if (config_setting_lookup_string(mime_type, "extension", &extension) && config_setting_lookup_string(mime_type, "type", &mime_type_value)) {
+          u_map_put(config->mime_types, extension, mime_type_value);
+        }
+      }
+    }
+  }
+  
+  if (config_lookup_bool(&cfg, "use_secure_connection", &cur_use_secure_connection)) {
+    if (config_lookup_string(&cfg, "secure_connection_key_file", &cur_secure_connection_key_file) && config_lookup_string(&cfg, "secure_connection_pem_file", &cur_secure_connection_pem_file)) {
+      config->use_secure_connection = cur_use_secure_connection;
+      config->secure_connection_key_file = nstrdup(cur_secure_connection_key_file);
+      config->secure_connection_pem_file = nstrdup(cur_secure_connection_pem_file);
+    } else {
+      fprintf(stderr, "Error secure connection is active but certificate is not valid, exiting\n");
+      config_destroy(&cfg);
+      return 0;
+    }
+  }
+  
   root = config_root_setting(&cfg);
   database = config_setting_get_member(root, "database");
   if (database != NULL) {
@@ -595,9 +679,6 @@ int build_config_from_file(struct config_elements * config) {
     fprintf(stderr, "Error, no database setting found\n");
     return 0;
   }
-  
-  config_lookup_bool(&cfg, "use_scope", &cur_use_scope);
-  config->use_scope = cur_use_scope;
   
   auth = config_setting_get_member(root, "authentication");
   if (auth != NULL) {
@@ -740,43 +821,6 @@ int build_config_from_file(struct config_elements * config) {
     }
   }
   
-  if (config->static_files_path == NULL) {
-    // Get path that serve static files
-    if (config_lookup_string(&cfg, "static_files_path", &cur_static_files_path)) {
-      config->static_files_path = nstrdup(cur_static_files_path);
-      if (config->static_files_path == NULL) {
-        fprintf(stderr, "Error allocating config->static_files_path, exiting\n");
-        config_destroy(&cfg);
-        return 0;
-      }
-    }
-  }
-
-  if (config->static_files_prefix == NULL) {
-    // Get prefix url
-    if (config_lookup_string(&cfg, "static_files_prefix", &cur_static_files_prefix)) {
-      config->static_files_prefix = nstrdup(cur_static_files_prefix);
-      if (config->static_files_prefix == NULL) {
-        fprintf(stderr, "Error allocating config->static_files_prefix, exiting\n");
-        config_destroy(&cfg);
-        return 0;
-      }
-    }
-  }
-  
-  // Populate mime types u_map
-  mime_type_list = config_lookup(&cfg, "static_files_mime_types");
-  if (mime_type_list != NULL) {
-    for (i=0; i<config_setting_length(mime_type_list); i++) {
-      mime_type = config_setting_get_elem(mime_type_list, i);
-      if (mime_type != NULL) {
-        if (config_setting_lookup_string(mime_type, "extension", &extension) && config_setting_lookup_string(mime_type, "type", &mime_type_value)) {
-          u_map_put(config->mime_types, extension, mime_type_value);
-        }
-      }
-    }
-  }
-    
   config_destroy(&cfg);
   return 1;
 }
