@@ -144,3 +144,7 @@ Login and grant access pages example are available in the `webapp` folder to pro
 ## Usage
 
 By default, Glewlwyd is available on TCP port 4593. There's a test page in `webapp/index.html` to validate the behaviour. You can access it using the url: [http://localhost:4593/app/](http://localhost:4593/app/).
+
+## SSL/TLS
+
+OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avoid data and token to be stolen, or Man-In-The-Middle attacks. Glewlwyd supports starting a secure connection with a private/public key certificate, but it also can be with a classic non-secure HTTP connection, and be available to users behind a HTTPS proxy.
