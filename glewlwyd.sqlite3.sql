@@ -79,7 +79,7 @@ CREATE TABLE `g_resource` (
   `gr_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `gr_name` TEXT NOT NULL,
   `gr_description` TEXT,
-  `gr_enabled` INTEGER DEFAULT 1
+  `gr_uri` TEXT
 );
 CREATE INDEX `i_g_resource` ON `g_resource`(`gr_id`);
 
@@ -219,3 +219,4 @@ INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('
 INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('token', 2, 'Implicit Grant: https://tools.ietf.org/html/rfc6749#section-4.2');
 INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('password', 3, 'Resource Owner Password Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.3');
 INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('client_credentials', 4, 'Client Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.4');
+INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_admin', 'Glewlwyd admin scope');
