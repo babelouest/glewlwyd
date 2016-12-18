@@ -205,7 +205,7 @@
         window.location = url;
         break;
       case "authorization_code":
-        $.post("../glewlwyd/token", {response_type: "authorization_code", client_id: $("#client_id").val(), redirect_uri: $("#redirect_uri").val(), code: $("#code").val()},
+        $.post("../glewlwyd/token", {grant_type: "authorization_code", client_id: $("#client_id").val(), redirect_uri: $("#redirect_uri").val(), code: $("#code").val()},
         function (result, status, request) {
           $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
           for (var key in result) {
@@ -222,7 +222,7 @@
         window.location = url;
         break;
       case "password":
-        $.post("../glewlwyd/auth", {response_type: "password", username: $("#username").val(), password: $("#password").val(), state: $("#state").val(), scope: $("#scope").val().join(" ")},
+        $.post("../glewlwyd/token", {grant_type: "password", username: $("#username").val(), password: $("#password").val(), state: $("#state").val(), scope: $("#scope").val().join(" ")},
         function (result, status, request) {
           $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
           for (var key in result) {
@@ -238,12 +238,12 @@
         $.ajax
         ({
           type: "POST",
-          url: "../glewlwyd/auth",
+          url: "../glewlwyd/token",
           async: false,
           headers: {
             "Authorization": "Basic " + btoa($("#client_id").val() + ":" + $("#clientpassword").val())
           },
-          data: {response_type: "client_credentials", scope: $("#scope").val().join(" ")},
+          data: {grant_type: "client_credentials", scope: $("#scope").val().join(" ")},
           success: function (result, status, request) {
             $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
             for (var key in result) {
@@ -257,7 +257,7 @@
         });
         break;
       case "refresh_token":
-        $.post("../glewlwyd/token", {response_type: "refresh_token", refresh_token: $("#refresh_token").val()},
+        $.post("../glewlwyd/token", {grant_type: "refresh_token", refresh_token: $("#refresh_token").val()},
         function (result, status, request) {
           $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
           for (var key in result) {
@@ -270,7 +270,7 @@
         });
         break;
       case "delete_token":
-        $.post("../glewlwyd/token", {response_type: "delete_token", refresh_token: $("#refresh_token").val()},
+        $.post("../glewlwyd/token", {grant_type: "delete_token", refresh_token: $("#refresh_token").val()},
         function (result, status, request) {
           $("#result").append("<div class=\"alert alert-info\">Success</div>");
         })
