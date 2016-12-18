@@ -23,10 +23,10 @@ char * code;
 
 START_TEST(glewlwyd_client_cred_valid)
 {
-  char * url = msprintf("%s/auth/", SERVER_URI);
+  char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "grant_type", "client_credentials");
   u_map_put(&body, "scope", SCOPE_LIST);
   
   int res = run_simple_test(NULL, "POST", url, CLIENT_ID, CLIENT_PASSWORD, NULL, &body, 200, NULL, "access_token", NULL);
@@ -38,10 +38,10 @@ END_TEST
 
 START_TEST(glewlwyd_client_cred_valid_reduced_scope)
 {
-  char * url = msprintf("%s/auth/", SERVER_URI);
+  char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "grant_type", "client_credentials");
   u_map_put(&body, "scope", SCOPE_LIST " scope1");
   
   int res = run_simple_test(NULL, "POST", url, CLIENT_ID, CLIENT_PASSWORD, NULL, &body, 200, NULL, "scope\":\"scope2 scope3\"", NULL);
@@ -53,10 +53,10 @@ END_TEST
 
 START_TEST(glewlwyd_client_cred_pwd_invalid)
 {
-  char * url = msprintf("%s/auth/", SERVER_URI);
+  char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "grant_type", "client_credentials");
   u_map_put(&body, "scope", SCOPE_LIST);
   
   int res = run_simple_test(NULL, "POST", url, CLIENT_ID, "invalid", NULL, &body, 403, NULL, NULL, NULL);
@@ -68,10 +68,10 @@ END_TEST
 
 START_TEST(glewlwyd_client_cred_client_unauthorized)
 {
-  char * url = msprintf("%s/auth/", SERVER_URI);
+  char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "grant_type", "client_credentials");
   u_map_put(&body, "scope", SCOPE_LIST);
   
   int res = run_simple_test(NULL, "POST", url, "client1_id", CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
@@ -83,10 +83,10 @@ END_TEST
 
 START_TEST(glewlwyd_client_cred_client_invalid)
 {
-  char * url = msprintf("%s/auth/", SERVER_URI);
+  char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "grant_type", "client_credentials");
   u_map_put(&body, "scope", SCOPE_LIST);
   
   int res = run_simple_test(NULL, "POST", url, "invalid", CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
@@ -98,10 +98,10 @@ END_TEST
 
 START_TEST(glewlwyd_client_cred_scope_invalid)
 {
-  char * url = msprintf("%s/auth/", SERVER_URI);
+  char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "grant_type", "client_credentials");
   u_map_put(&body, "scope", "scope4");
   
   int res = run_simple_test(NULL, "POST", url, CLIENT_ID, CLIENT_PASSWORD, NULL, &body, 400, NULL, "scope_invalid", NULL);
@@ -113,10 +113,10 @@ END_TEST
 
 START_TEST(glewlwyd_client_cred_empty)
 {
-  char * url = msprintf("%s/auth/", SERVER_URI);
+  char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "client_credentials");
+  u_map_put(&body, "grant_type", "client_credentials");
   u_map_put(&body, "scope", SCOPE_LIST);
   
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);

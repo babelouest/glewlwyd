@@ -34,12 +34,10 @@
  * handles the following response_types:
  *  - code
  *  - token
- *  - password
- *  - client_credentials
  * POST and GET methods only
  */
 int callback_glewlwyd_authorization (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  const char * response_type = (0 == nstrcasecmp("POST", request->http_verb))?u_map_get(request->map_post_body, "response_type"):u_map_get(request->map_url, "response_type");
+  const char * response_type = u_map_get(request->map_url, "response_type");
   int result = U_OK;
   char * redirect_url;
   
@@ -69,18 +67,6 @@ int callback_glewlwyd_authorization (const struct _u_request * request, struct _
         response->status = 403;
       }
     }
-  } else if (0 == nstrcmp("password", response_type)) {
-    if (0 == nstrcasecmp("POST", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS) == G_OK) {
-      result = check_auth_type_resource_owner_pwd_cred(request, response, user_data);
-    } else {
-      response->status = 403;
-    }
-  } else if (0 == nstrcmp("client_credentials", response_type)) {
-    if (0 == nstrcasecmp("POST", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS) == G_OK) {
-      result = check_auth_type_client_credentials_grant(request, response, user_data);
-    } else {
-      response->status = 403;
-    }
   } else {
     if (u_map_get(request->map_url, "redirect_uri") != NULL) {
       response->status = 302;
@@ -104,23 +90,45 @@ int callback_glewlwyd_authorization (const struct _u_request * request, struct _
  * Token endpoint
  * Handles the following response_types:
  *  - authorization_code
+ *  - password
+ *  - client_credentials
  *  - refresh_token
+ *  - delete_token
  * POST method only
  */
 int callback_glewlwyd_token (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  const char * response_type = u_map_get(request->map_post_body, "response_type");
+  const char * grant_type = u_map_get(request->map_post_body, "grant_type");
   int result = U_OK;
   
-  if (0 == nstrcmp("authorization_code", response_type)) {
-    if (0 == nstrcasecmp("POST", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
+  if (0 == nstrcmp("authorization_code", grant_type)) {
+    if (is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
       result = check_auth_type_access_token_request(request, response, user_data);
     } else {
       response->status = 403;
     }
-  } else if (0 == nstrcmp("refresh_token", response_type)) {
+  } else if (0 == nstrcmp("password", grant_type)) {
+    if (0 == nstrcasecmp("POST", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS) == G_OK) {
+      result = check_auth_type_resource_owner_pwd_cred(request, response, user_data);
+    } else {
+      response->status = 403;
+    }
+  } else if (0 == nstrcmp("client_credentials", grant_type)) {
+    if (is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS) == G_OK) {
+      result = check_auth_type_client_credentials_grant(request, response, user_data);
+    } else {
+      response->status = 403;
+    }
+  } else if (0 == nstrcmp("refresh_token", grant_type)) {
     result = get_access_token_from_refresh(request, response, user_data);
-  } else if (0 == nstrcmp("delete_token", response_type)) {
+  } else if (0 == nstrcmp("delete_token", grant_type)) {
     result = delete_refresh_token(request, response, user_data);
+  } else {
+    if (grant_type != NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "grant_type %s unknown", grant_type);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "grant_type is NULL");
+    }
+    response->status = 400;
   }
   return result;
 }

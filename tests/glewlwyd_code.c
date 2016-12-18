@@ -27,7 +27,7 @@ START_TEST(test_glwd_code_code_invalid)
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "authorization_code");
+  u_map_put(&body, "grant_type", "authorization_code");
   u_map_put(&body, "client_id", CLIENT);
   u_map_put(&body, "redirect_uri", "../app/index.html?param=client1_cb1");
   u_map_put(&body, "code", "invalid");
@@ -46,7 +46,7 @@ START_TEST(test_glwd_code_client_invalid)
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "authorization_code");
+  u_map_put(&body, "grant_type", "authorization_code");
   u_map_put(&body, "client_id", "invalid");
   u_map_put(&body, "redirect_uri", "../app/index.html?param=client1_cb1");
   u_map_put(&body, "code", code);
@@ -65,7 +65,7 @@ START_TEST(test_glwd_code_redirect_uri_invalid)
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "authorization_code");
+  u_map_put(&body, "grant_type", "authorization_code");
   u_map_put(&body, "client_id", CLIENT);
   u_map_put(&body, "redirect_uri", "invalid");
   u_map_put(&body, "code", code);
@@ -84,7 +84,7 @@ START_TEST(test_glwd_code_ok)
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "authorization_code");
+  u_map_put(&body, "grant_type", "authorization_code");
   u_map_put(&body, "client_id", CLIENT);
   u_map_put(&body, "redirect_uri", "../app/index.html?param=client1_cb1");
   u_map_put(&body, "code", code);

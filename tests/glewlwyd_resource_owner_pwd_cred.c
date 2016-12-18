@@ -22,10 +22,10 @@ char * code;
 
 START_TEST(glewlwyd_resource_owner_pwd_cred_valid)
 {
-  char * url = msprintf("%s/auth/", SERVER_URI);
+  char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "password");
+  u_map_put(&body, "grant_type", "password");
   u_map_put(&body, "scope", SCOPE_LIST);
   u_map_put(&body, "username", USERNAME);
   u_map_put(&body, "password", PASSWORD);
@@ -39,10 +39,10 @@ END_TEST
 
 START_TEST(glewlwyd_resource_owner_pwd_cred_pwd_invalid)
 {
-  char * url = msprintf("%s/auth/", SERVER_URI);
+  char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "password");
+  u_map_put(&body, "grant_type", "password");
   u_map_put(&body, "scope", SCOPE_LIST);
   u_map_put(&body, "username", USERNAME);
   u_map_put(&body, "password", "invalid");
@@ -56,10 +56,10 @@ END_TEST
 
 START_TEST(glewlwyd_resource_owner_pwd_cred_user_invalid)
 {
-  char * url = msprintf("%s/auth/", SERVER_URI);
+  char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "password");
+  u_map_put(&body, "grant_type", "password");
   u_map_put(&body, "scope", SCOPE_LIST);
   u_map_put(&body, "username", "invalid");
   u_map_put(&body, "password", PASSWORD);
@@ -73,10 +73,10 @@ END_TEST
 
 START_TEST(glewlwyd_resource_owner_pwd_cred_scope_invalid)
 {
-  char * url = msprintf("%s/auth/", SERVER_URI);
+  char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "password");
+  u_map_put(&body, "grant_type", "password");
   u_map_put(&body, "scope", "invalid");
   u_map_put(&body, "username", USERNAME);
   u_map_put(&body, "password", PASSWORD);
@@ -90,10 +90,10 @@ END_TEST
 
 START_TEST(glewlwyd_resource_owner_pwd_cred_empty)
 {
-  char * url = msprintf("%s/auth/", SERVER_URI);
+  char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "password");
+  u_map_put(&body, "grant_type", "password");
 
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);
   free(url);

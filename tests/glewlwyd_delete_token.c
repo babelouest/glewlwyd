@@ -26,7 +26,7 @@ START_TEST(test_glwd_delete_token_token_invalid)
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "delete_token");
+  u_map_put(&body, "grant_type", "delete_token");
   u_map_put(&body, "refresh_token", "invalid");
   
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 400, NULL, NULL, NULL);
@@ -41,7 +41,7 @@ START_TEST(test_glwd_delete_token_ok)
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "delete_token");
+  u_map_put(&body, "grant_type", "delete_token");
   u_map_put(&body, "refresh_token", refresh_token);
   
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 200, NULL, NULL, NULL);
@@ -56,7 +56,7 @@ START_TEST(test_glwd_delete_token_token_already_deleted)
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "response_type", "delete_token");
+  u_map_put(&body, "grant_type", "delete_token");
   u_map_put(&body, "refresh_token", refresh_token);
   
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 400, NULL, NULL, NULL);
@@ -97,8 +97,8 @@ int main(int argc, char *argv[])
   ulfius_init_request(&auth_req);
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
-  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
-  u_map_put(auth_req.map_post_body, "response_type", "password");
+  auth_req.http_url = msprintf("%s/token/", SERVER_URI);
+  u_map_put(auth_req.map_post_body, "grant_type", "password");
   u_map_put(auth_req.map_post_body, "username", USERNAME);
   u_map_put(auth_req.map_post_body, "password", PASSWORD);
   u_map_put(auth_req.map_post_body, "scope", SCOPE_LIST);
