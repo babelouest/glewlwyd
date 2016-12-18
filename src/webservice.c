@@ -88,7 +88,11 @@ int callback_glewlwyd_authorization (const struct _u_request * request, struct _
       ulfius_add_header_to_response(response, "Location", redirect_url);
       free(redirect_url);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "response_type %s unknown", response_type);
+      if (response_type != NULL) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "response_type %s unknown", response_type);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "response_type is NULL");
+      }
       response->status = 400;
     }
   }
@@ -115,6 +119,8 @@ int callback_glewlwyd_token (const struct _u_request * request, struct _u_respon
     }
   } else if (0 == nstrcmp("refresh_token", response_type)) {
     result = get_access_token_from_refresh(request, response, user_data);
+  } else if (0 == nstrcmp("delete_token", response_type)) {
+    result = delete_refresh_token(request, response, user_data);
   }
   return result;
 }

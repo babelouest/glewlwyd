@@ -160,6 +160,7 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
 int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, struct _u_response * response, void * user_data);
 int check_auth_type_client_credentials_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data);
+int delete_refresh_token (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 // Oauth2 callback functions
 int callback_glewlwyd_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);

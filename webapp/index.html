@@ -67,6 +67,7 @@
             <option value="password">password</option>
             <option value="client_credentials">client_credentials</option>
             <option value="refresh_token">refresh_token</option>
+            <option value="delete_token">delete_token</option>
           </select>
         </div>
       </div>
@@ -262,6 +263,16 @@
           for (var key in result) {
             $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
           }
+        })
+        .fail(function (error) {
+          $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+          $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+        });
+        break;
+      case "delete_token":
+        $.post("../glewlwyd/token", {response_type: "delete_token", refresh_token: $("#refresh_token").val()},
+        function (result, status, request) {
+          $("#result").append("<div class=\"alert alert-info\">Success</div>");
         })
         .fail(function (error) {
           $("#result").append("<div class=\"alert alert-danger\">Error</div>");

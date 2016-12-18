@@ -26,7 +26,7 @@ LIBS=-lc -lulfius -lorcania -ljansson -lyder -lcheck -lpthread -lm -lrt -lsubuni
 all: test
 
 clean:
-	rm -f *.o glewlwyd_auth_code glewlwyd_client_cred glewlwyd_code glewlwyd_implicit glewlwyd_resource_owner_pwd_cred
+	rm -f *.o glewlwyd_auth_code glewlwyd_client_cred glewlwyd_code glewlwyd_implicit glewlwyd_resource_owner_pwd_cred glewlwyd_delete_token
 
 unit-tests.o: unit-tests.c unit-tests.h
 	$(CC) $(CFLAGS) -c unit-tests.c
@@ -61,4 +61,10 @@ glewlwyd_resource_owner_pwd_cred: glewlwyd_resource_owner_pwd_cred.c unit-tests.
 test_glewlwyd_resource_owner_pwd_cred: glewlwyd_resource_owner_pwd_cred
 	-./glewlwyd_resource_owner_pwd_cred
 
-test: test_glewlwyd_resource_owner_pwd_cred test_glewlwyd_implicit test_glewlwyd_code test_glewlwyd_client_cred test_glewlwyd_auth_code
+glewlwyd_delete_token: glewlwyd_delete_token.c unit-tests.o
+	$(CC) $(CFLAGS) glewlwyd_delete_token.c unit-tests.o -o glewlwyd_delete_token $(LIBS)
+
+test_glewlwyd_delete_token: glewlwyd_delete_token
+	-./glewlwyd_delete_token
+
+test: test_glewlwyd_resource_owner_pwd_cred test_glewlwyd_implicit test_glewlwyd_code test_glewlwyd_client_cred test_glewlwyd_auth_code test_glewlwyd_delete_token

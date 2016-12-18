@@ -29,11 +29,11 @@ START_TEST(glewlwyd_resource_owner_pwd_cred_valid)
   u_map_put(&body, "scope", SCOPE_LIST);
   u_map_put(&body, "username", USERNAME);
   u_map_put(&body, "password", PASSWORD);
-  
+
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 200, NULL, "refresh_token", NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -46,11 +46,11 @@ START_TEST(glewlwyd_resource_owner_pwd_cred_pwd_invalid)
   u_map_put(&body, "scope", SCOPE_LIST);
   u_map_put(&body, "username", USERNAME);
   u_map_put(&body, "password", "invalid");
-  
+
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -63,11 +63,11 @@ START_TEST(glewlwyd_resource_owner_pwd_cred_user_invalid)
   u_map_put(&body, "scope", SCOPE_LIST);
   u_map_put(&body, "username", "invalid");
   u_map_put(&body, "password", PASSWORD);
-  
+
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -80,11 +80,11 @@ START_TEST(glewlwyd_resource_owner_pwd_cred_scope_invalid)
   u_map_put(&body, "scope", "invalid");
   u_map_put(&body, "username", USERNAME);
   u_map_put(&body, "password", PASSWORD);
-  
+
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -94,46 +94,46 @@ START_TEST(glewlwyd_resource_owner_pwd_cred_empty)
   struct _u_map body;
   u_map_init(&body);
   u_map_put(&body, "response_type", "password");
-  
+
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
 static Suite *libjwt_suite(void)
 {
-	Suite *s;
-	TCase *tc_core;
+  Suite *s;
+  TCase *tc_core;
 
-	s = suite_create("Glewlwyd");
-	tc_core = tcase_create("glewlwyd_resource_owner_pwd_cred");
-	tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_valid);
-	tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_pwd_invalid);
-	tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_user_invalid);
-	tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_scope_invalid);
-	tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_empty);
-	tcase_set_timeout(tc_core, 30);
-	suite_add_tcase(s, tc_core);
+  s = suite_create("Glewlwyd");
+  tc_core = tcase_create("glewlwyd_resource_owner_pwd_cred");
+  tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_valid);
+  tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_pwd_invalid);
+  tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_user_invalid);
+  tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_scope_invalid);
+  tcase_add_test(tc_core, glewlwyd_resource_owner_pwd_cred_empty);
+  tcase_set_timeout(tc_core, 30);
+  suite_add_tcase(s, tc_core);
 
-	return s;
+  return s;
 }
 
 int main(int argc, char *argv[])
 {
-	int number_failed;
-	Suite *s;
-	SRunner *sr;
-  
-  y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
-  
-	s = libjwt_suite();
-	sr = srunner_create(s);
+  int number_failed;
+  Suite *s;
+  SRunner *sr;
 
-	srunner_run_all(sr, CK_VERBOSE);
-	number_failed = srunner_ntests_failed(sr);
-	srunner_free(sr);
-  
-	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
+
+  s = libjwt_suite();
+  sr = srunner_create(s);
+
+  srunner_run_all(sr, CK_VERBOSE);
+  number_failed = srunner_ntests_failed(sr);
+  srunner_free(sr);
+
+  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

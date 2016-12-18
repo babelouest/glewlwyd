@@ -588,3 +588,75 @@ int get_access_token_from_refresh (const struct _u_request * request, struct _u_
   }
   return U_OK;
 }
+
+/**
+ * Invalidate a valid refresh_token
+ */
+int delete_refresh_token (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  char * token_hash, * clause_expired_at, * last_seen_value;
+  json_t * j_query, * j_result;
+  int res;
+  const char * refresh_token = u_map_get(request->map_post_body, "refresh_token");
+  time_t now;
+  json_int_t grt_id;
+  
+  if (refresh_token != NULL) {
+    time(&now);
+    token_hash = str2md5(refresh_token, strlen(refresh_token));
+    
+    if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
+      clause_expired_at = nstrdup("> NOW()");
+    } else {
+      clause_expired_at = nstrdup("> (strftime('%s','now'))");
+    }
+
+    j_query = json_pack("{sss[s]s{sssis{ssss}}}",
+                        "table",
+                        GLEWLWYD_TABLE_REFRESH_TOKEN,
+                        "columns",
+                          "grt_id",
+                        "where",
+                          "grt_hash",
+                          token_hash,
+                          "grt_enabled",
+                          1,
+                          "grt_expired_at",
+                            "operator",
+                            "raw",
+                            "value",
+                            clause_expired_at);
+    free(clause_expired_at);
+    free(token_hash);
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK && json_array_size(j_result) > 0) {
+      last_seen_value = msprintf(config->conn->type==HOEL_DB_TYPE_MARIADB?"FROM_UNIXTIME(%d)":"%d", now);
+      grt_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "grt_id"));
+      j_query = json_pack("{sss{siss}s{sI}}",
+                          "table",
+                          GLEWLWYD_TABLE_REFRESH_TOKEN,
+                          "set",
+                            "grt_enabled",
+                            0,
+                            "grt_last_seen",
+                            last_seen_value,
+                          "where",
+                            "grt_id",
+                            grt_id);
+      free(last_seen_value);
+      res = h_update(config->conn, j_query, NULL);
+      json_decref(j_query);
+      if (res != H_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error database while setting refresh_token enabled to false");
+        response->status = 500;
+      }
+    } else {
+      response->status = 400;
+    }
+    json_decref(j_result);
+  } else {
+    response->status = 400;
+  }
+  return U_OK;
+}
