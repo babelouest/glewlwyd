@@ -99,8 +99,8 @@ code_expiration=600
 
 # TLS/SSL configuration values
 use_secure_connection=false
-secure_connection_key_file=cert.key
-secure_connection_pem_file=cert.pem
+secure_connection_key_file="cert.key"
+secure_connection_pem_file="cert.pem"
 
 # MariaDB/Mysql database connection
 database =
