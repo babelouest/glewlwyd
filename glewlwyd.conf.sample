@@ -85,20 +85,28 @@ refresh_token_expiation=1209600
 # access token expiration in seconds, default is 1 hour
 access_token_expiration=3600
 
-# session expiration, default is 1 month
-session_expiration=604800
+# session expiration, default is 4 weeks
+session_expiration=2419200
 
 # session key
 session_key="GLEWLWYD_SESSION_ID"
 
+# admin scope name
+admin_scope="g_admin"
+
 # code expiration in seconds, default is 10 minutes
 code_expiration=600
+
+# TLS/SSL configuration values
+use_secure_connection=false
+secure_connection_key_file=cert.key
+secure_connection_pem_file=cert.pem
 
 # MariaDB/Mysql database connection
 database =
 {
   type = "mariadb";
-  host = "lohot";
+  host = "localhost";
   user = "glewlwyd";
   password = "glewlwyd";
   dbname = "glewlwyd";
