@@ -63,6 +63,7 @@
 #define G_ERROR_PARAM        3
 #define G_ERROR_DB           4
 #define G_ERROR_MEMORY       5
+#define G_ERROR_NOT_FOUND	 6
 
 // Data tables
 #define GLEWLWYD_TABLE_CLIENT                    "g_client"
@@ -182,6 +183,7 @@ int callback_glewlwyd_user_scope_delete (const struct _u_request * request, stru
 
 int callback_glewlwyd_get_user_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_set_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_user_profile_no_auth (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_list_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_user (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -207,8 +209,8 @@ int callback_glewlwyd_add_resource (const struct _u_request * request, struct _u
 int callback_glewlwyd_set_resource (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_resource (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int callback_glewlwyd_get_response_type (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_set_response_type (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_options (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_static_file (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -240,6 +242,10 @@ json_t * get_user_profile_ldap(struct config_elements * config, const char * use
 json_t * get_user_scope_grant(struct config_elements * config, const char * username);
 json_t * get_user_scope_grant_database(struct config_elements * config, const char * username);
 json_t * get_user_scope_grant_ldap(struct config_elements * config, const char * username);
+
+json_t * get_authorization_type(struct config_elements * config, const char * authorization_type);
+int set_authorization_type(struct config_elements * config, const char * authorization_type, json_t * j_authorization_type);
+json_t * is_authorization_type_valid(struct config_elements * config, json_t * j_authorization_type);
 
 char * generate_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
 char * generate_access_token(struct config_elements * config, const char * refresh_token, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);

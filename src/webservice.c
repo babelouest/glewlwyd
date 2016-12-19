@@ -459,15 +459,59 @@ int callback_glewlwyd_user_scope_delete (const struct _u_request * request, stru
   return res;
 }
 
-int callback_glewlwyd_get_response_type (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_get_authorization (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_result = get_authorization_type(config, u_map_get(request->map_url, "authorization_type"));
+  
+  if (check_result_value(j_result, G_OK)) {
+    if (u_map_get(request->map_url, "authorization_type") != NULL) {
+      response->json_body = json_copy(json_array_get(json_object_get(j_result, "authorization"), 0));
+    } else {
+      response->json_body = json_copy(json_object_get(j_result, "authorization"));
+    }
+  } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_authorization - Error getting authorization list");
+    response->status = 500;
+  }
+  json_decref(j_result);
   return U_OK;
 }
 
-int callback_glewlwyd_set_response_type (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_set_authorization (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_valid, * j_result = get_authorization_type(config, u_map_get(request->map_url, "authorization_type"));
+  
+  if (check_result_value(j_result, G_OK)) {
+    j_valid = is_authorization_type_valid(config, request->json_body);
+    if (j_valid != NULL && json_array_size(j_valid) == 0) {
+      if (set_authorization_type(config, u_map_get(request->map_url, "authorization_type"), request->json_body) != G_OK) {
+        response->status = 500;
+      }
+    } else if (j_valid != NULL && json_array_size(j_valid) > 0) {
+      response->status = 400;
+      response->json_body = json_copy(j_valid);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_authorization - Error is_authorization_type_valid");
+      response->status = 500;
+    }
+    json_decref(j_valid);
+  } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_authorization - Error getting authorization");
+    response->status = 500;
+  }
+  json_decref(j_result);
   return U_OK;
 }
 
 int callback_glewlwyd_set_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_OK;
+}
+
+int callback_glewlwyd_set_user_profile_no_auth (const struct _u_request * request, struct _u_response * response, void * user_data) {
   return U_OK;
 }
 

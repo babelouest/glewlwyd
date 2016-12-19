@@ -142,10 +142,12 @@ int main (int argc, char ** argv) {
   // Current user endpoints
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/profile/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_user_session_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/user/profile/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_set_user_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/user/profile/no_auth", NULL, NULL, NULL, &callback_glewlwyd_set_user_profile_no_auth, (void*)config);
 
   // Authorization type callbacks
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/response_type/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_response_type, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/response_type/:authorization_type", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_response_type, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/authorization/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/authorization/:authorization_type", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/authorization/:authorization_type", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_authorization, (void*)config);
 
   // Scope endpoints
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_list_scope, (void*)config);

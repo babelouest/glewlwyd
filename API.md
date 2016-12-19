@@ -287,13 +287,43 @@ Error input parameters
 
 Content: json array containing all errors
 
-## Response type API
+## authorization type API
 
-### Get all response type status
+### Get all authorization type status
 
 #### URL
 
-`/glewlwyd/response_type/`
+`/glewlwyd/authorization/`
+
+#### Method
+
+`GET`
+
+#### Security
+
+Scope required: `g_admin`
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[
+  {
+    name: text,
+    description: text,
+    enabled: boolean
+  }
+]
+```
+
+### Get a specific authorization type status
+
+#### URL
+
+`/glewlwyd/authorization/:authorization_type`
 
 #### Method
 
@@ -317,11 +347,17 @@ Content
 }
 ```
 
+#### Error Response
+
+Code 404
+
+Resource not found
+
 ### Update one response type status
 
 #### URL
 
-`/glewlwyd/response_type/:authorization_type`
+`/glewlwyd/authorization/:authorization_type`
 
 #### Method
 
