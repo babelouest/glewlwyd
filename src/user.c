@@ -83,7 +83,7 @@ json_t * get_user_profile_ldap(struct config_elements * config, const char * use
   int  ldap_version   = LDAP_VERSION3;
   int  scope          = LDAP_SCOPE_SUBTREE;
   char * filter       = NULL;
-  char * attrs[]      = {"memberOf", config->auth_ldap->name_property, config->auth_ldap->email_property, NULL};
+  char * attrs[]      = {"memberOf", config->auth_ldap->name_property_user, config->auth_ldap->email_property_user, NULL};
   int  attrsonly      = 0;
   json_t * res        = NULL;
   char * ldap_mech    = LDAP_SASL_SIMPLE;
@@ -104,9 +104,9 @@ json_t * get_user_profile_ldap(struct config_elements * config, const char * use
     res = json_pack("{si}", "result", G_ERROR_PARAM);
   } else {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter, config->auth_ldap->login_property, username);
+    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_user, config->auth_ldap->login_property_user, username);
     
-    if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
+    if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
       res = json_pack("{si}", "result", G_ERROR_PARAM);
     } else if (ldap_count_entries(ldap, answer) == 0) {
@@ -121,8 +121,8 @@ json_t * get_user_profile_ldap(struct config_elements * config, const char * use
         y_log_message(Y_LOG_LEVEL_ERROR, "ldap search: error getting first result");
         res = json_pack("{si}", "result", G_ERROR);
       } else {
-        struct berval ** name_value = ldap_get_values_len(ldap, entry, config->auth_ldap->name_property);
-        struct berval ** email_value = ldap_get_values_len(ldap, entry, config->auth_ldap->email_property);
+        struct berval ** name_value = ldap_get_values_len(ldap, entry, config->auth_ldap->name_property_user);
+        struct berval ** email_value = ldap_get_values_len(ldap, entry, config->auth_ldap->email_property_user);
         res = json_pack("{sis{}}",  "result", G_OK,  "user");
         
         if (ldap_count_values_len(name_value) > 0) {
@@ -203,7 +203,7 @@ json_t * get_user_scope_grant_ldap(struct config_elements * config, const char *
   int  ldap_version   = LDAP_VERSION3;
   int  scope          = LDAP_SCOPE_SUBTREE;
   char * filter       = NULL;
-  char * attrs[]      = {"memberOf", config->auth_ldap->scope_property, NULL};
+  char * attrs[]      = {"memberOf", config->auth_ldap->scope_property_user, NULL};
   int  attrsonly      = 0;
   json_t * j_return   = NULL;
   char * ldap_mech    = LDAP_SASL_SIMPLE;
@@ -228,9 +228,9 @@ json_t * get_user_scope_grant_ldap(struct config_elements * config, const char *
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   } else {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter, config->auth_ldap->login_property, username);
+    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_user, config->auth_ldap->login_property_user, username);
     
-    if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
+    if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     } else if (ldap_count_entries(ldap, answer) == 0) {
@@ -245,7 +245,7 @@ json_t * get_user_scope_grant_ldap(struct config_elements * config, const char *
         y_log_message(Y_LOG_LEVEL_ERROR, "ldap search: error getting first result");
         j_return = json_pack("{si}", "result", G_ERROR);
       } else {
-        struct berval ** scope_values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property);
+        struct berval ** scope_values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_user);
         
         for (i=0; i < ldap_count_values_len(scope_values); i++) {
           scope_escaped = h_escape_string(config->conn, scope_values[i]->bv_val);
@@ -294,24 +294,24 @@ json_t * get_user_scope_grant_ldap(struct config_elements * config, const char *
  * All inclusive authentication check for a user
  * 
  */
-json_t * auth_check_credentials_scope(struct config_elements * config, const char * username, const char * password, const char * scope_list) {
+json_t * auth_check_user_credentials_scope(struct config_elements * config, const char * username, const char * password, const char * scope_list) {
   json_t * j_res_auth = NULL, * j_res_scope = NULL, * j_res;
   
   if (scope_list == NULL && config->use_scope) {
     j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   } else if (username != NULL && password != NULL) {
     if (config->has_auth_ldap) {
-      j_res_auth = auth_check_credentials_ldap(config, username, password);
+      j_res_auth = auth_check_user_credentials_ldap(config, username, password);
       if (check_result_value(j_res_auth, G_OK)) {
-        j_res_scope = auth_check_scope_ldap(config, username, scope_list);
+        j_res_scope = auth_check_user_scope_ldap(config, username, scope_list);
       }
     }
     
     if (config->has_auth_database && !check_result_value(j_res_auth, G_OK)) {
       json_decref(j_res_auth);
-      j_res_auth = auth_check_credentials_database(config, username, password);
+      j_res_auth = auth_check_user_credentials_database(config, username, password);
       if (check_result_value(j_res_auth, G_OK)) {
-        j_res_scope = auth_check_scope_database(config, username, scope_list);
+        j_res_scope = auth_check_user_scope_database(config, username, scope_list);
       }
     }
     
@@ -336,16 +336,16 @@ json_t * auth_check_credentials_scope(struct config_elements * config, const cha
   return j_res;
 }
 
-json_t * auth_check_credentials(struct config_elements * config, const char * username, const char * password) {
+json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password) {
   json_t * j_res = NULL;
   
   if (username != NULL && password != NULL) {
     if (config->has_auth_ldap) {
-      j_res = auth_check_credentials_ldap(config, username, password);
+      j_res = auth_check_user_credentials_ldap(config, username, password);
     }
     if (config->has_auth_database && !check_result_value(j_res, G_OK)) {
       json_decref(j_res);
-      j_res = auth_check_credentials_database(config, username, password);
+      j_res = auth_check_user_credentials_database(config, username, password);
     }
   } else {
     j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
@@ -357,7 +357,7 @@ json_t * auth_check_credentials(struct config_elements * config, const char * us
  * Check if the username and password specified are valid as a database user
  * On success, return a json array with all scope values available
  */
-json_t * auth_check_credentials_database(struct config_elements * config, const char * username, const char * password) {
+json_t * auth_check_user_credentials_database(struct config_elements * config, const char * username, const char * password) {
   json_t * j_query, * j_result;
   char * escaped, * str_password;
   int res, res_size;
@@ -412,7 +412,7 @@ json_t * auth_check_credentials_database(struct config_elements * config, const 
 /**
  * Check if the username and password specified are valid as a LDAP user
  */
-json_t * auth_check_credentials_ldap(struct config_elements * config, const char * username, const char * password) {
+json_t * auth_check_user_credentials_ldap(struct config_elements * config, const char * username, const char * password) {
   LDAP * ldap;
   LDAPMessage * answer, * entry;
   
@@ -442,12 +442,12 @@ json_t * auth_check_credentials_ldap(struct config_elements * config, const char
     res = json_pack("{si}", "result", G_ERROR_PARAM);
   } else {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter, config->auth_ldap->login_property, username);
+    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_user, config->auth_ldap->login_property_user, username);
     
     if (config->use_scope) {
-      attrs[1] = config->auth_ldap->scope_property;
+      attrs[1] = config->auth_ldap->scope_property_user;
     }
-    if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
+    if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
       res = json_pack("{si}", "result", G_ERROR_PARAM);
     } else if (ldap_count_entries(ldap, answer) == 0) {
@@ -488,7 +488,7 @@ json_t * auth_check_credentials_ldap(struct config_elements * config, const char
  * Check the scope list specified for the database user and return the filtered scope_list
  *
  */
-json_t * auth_check_scope_database(struct config_elements * config, const char * username, const char * scope_list) {
+json_t * auth_check_user_scope_database(struct config_elements * config, const char * username, const char * scope_list) {
   json_t * j_query, * j_result, * scope_list_allowed, * j_value;
   int res;
   char * scope, * scope_escaped, * saveptr, * scope_list_escaped = NULL, * scope_list_save = nstrdup(scope_list), * login_escaped = h_escape_string(config->conn, username), * scope_list_join;
@@ -548,15 +548,15 @@ json_t * auth_check_scope_database(struct config_elements * config, const char *
         }
         json_decref(j_result);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_scope_database - Error executing sql query");
+        y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_scope_database - Error executing sql query");
         scope_list_allowed = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_scope_database - Error allocating resources for j_query");
+      y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_scope_database - Error allocating resources for j_query");
       scope_list_allowed = json_pack("{si}", "result", G_ERROR);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_scope_database - Error allocating resources for scope_list_save %s or login_escaped %s or scope_list_escaped %s", scope_list_save, login_escaped, scope_list_escaped);
+    y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_scope_database - Error allocating resources for scope_list_save %s or login_escaped %s or scope_list_escaped %s", scope_list_save, login_escaped, scope_list_escaped);
     scope_list_allowed = json_pack("{si}", "result", G_ERROR);
   }
   free(scope_list_save);
@@ -570,15 +570,15 @@ json_t * auth_check_scope_database(struct config_elements * config, const char *
  * Return a refined list of scope
  *
  */
-json_t * auth_check_scope(struct config_elements * config, const char * username, const char * scope_list) {
+json_t * auth_check_user_scope(struct config_elements * config, const char * username, const char * scope_list) {
   json_t * j_res = NULL;
   
   if (config->has_auth_ldap) {
-    j_res = auth_check_scope_ldap(config, username, scope_list);
+    j_res = auth_check_user_scope_ldap(config, username, scope_list);
   }
   if (config->has_auth_database && (j_res == NULL || check_result_value(j_res, G_OK))) {
     json_decref(j_res);
-    j_res = auth_check_scope_database(config, username, scope_list);
+    j_res = auth_check_user_scope_database(config, username, scope_list);
   }
   return j_res;
 }
@@ -589,7 +589,7 @@ json_t * auth_check_scope(struct config_elements * config, const char * username
  * Return a refined list of scope
  *
  */
-json_t * auth_check_scope_ldap(struct config_elements * config, const char * username, const char * scope_list) {
+json_t * auth_check_user_scope_ldap(struct config_elements * config, const char * username, const char * scope_list) {
   LDAP * ldap;
   LDAPMessage * answer, * entry;
   
@@ -618,12 +618,12 @@ json_t * auth_check_scope_ldap(struct config_elements * config, const char * use
     res = json_pack("{si}", "result", G_ERROR_PARAM);
   } else {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter, config->auth_ldap->login_property, username);
+    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_user, config->auth_ldap->login_property_user, username);
     
     if (config->use_scope) {
-      attrs[1] = config->auth_ldap->scope_property;
+      attrs[1] = config->auth_ldap->scope_property_user;
     }
-    if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
+    if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
       res = json_pack("{si}", "result", G_ERROR_PARAM);
     } else if (ldap_count_entries(ldap, answer) == 0) {
@@ -638,7 +638,7 @@ json_t * auth_check_scope_ldap(struct config_elements * config, const char * use
         y_log_message(Y_LOG_LEVEL_ERROR, "ldap search: error getting first result");
         res = json_pack("{si}", "result", G_ERROR);
       } else {
-        struct berval ** values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property);
+        struct berval ** values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_user);
         char * new_scope_list = strdup("");
         int i;
         
