@@ -242,12 +242,17 @@ void exit_server(struct config_elements ** config, int exit_value) {
       free((*config)->auth_ldap->uri);
       free((*config)->auth_ldap->bind_dn);
       free((*config)->auth_ldap->bind_passwd);
-      free((*config)->auth_ldap->filter);
-      free((*config)->auth_ldap->login_property);
-      free((*config)->auth_ldap->scope_property);
-      free((*config)->auth_ldap->base_search);
-      free((*config)->auth_ldap->name_property);
-      free((*config)->auth_ldap->email_property);
+      free((*config)->auth_ldap->filter_user);
+      free((*config)->auth_ldap->login_property_user);
+      free((*config)->auth_ldap->scope_property_user);
+      free((*config)->auth_ldap->base_search_user);
+      free((*config)->auth_ldap->name_property_user);
+      free((*config)->auth_ldap->email_property_user);
+      free((*config)->auth_ldap->filter_client);
+      free((*config)->auth_ldap->login_property_client);
+      free((*config)->auth_ldap->scope_property_client);
+      free((*config)->auth_ldap->base_search_client);
+      free((*config)->auth_ldap->name_property_client);
       free((*config)->auth_ldap);
     }
     h_close_db((*config)->conn);
@@ -475,7 +480,9 @@ int build_config_from_file(struct config_elements * config) {
   config_setting_t * root, * database, * auth, * jwt, * mime_type_list, * mime_type;
   const char * cur_prefix, * cur_log_mode, * cur_log_level, * cur_log_file = NULL, * one_log_mode, 
              * db_type, * db_sqlite_path, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL, * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL, * cur_session_key = NULL, * cur_admin_scope = NULL,
-             * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL, * cur_auth_ldap_filter = NULL, * cur_auth_ldap_login_property = NULL, * cur_auth_ldap_scope_property = NULL, * cur_auth_ldap_base_search = NULL, * cur_auth_ldap_name_property = NULL, * cur_auth_ldap_email_property = NULL,
+             * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL,
+             * cur_auth_ldap_filter_user = NULL, * cur_auth_ldap_login_property_user = NULL, * cur_auth_ldap_scope_property_user = NULL, * cur_auth_ldap_base_search_user = NULL, * cur_auth_ldap_name_property_user = NULL, * cur_auth_ldap_email_property_user = NULL,
+             * cur_auth_ldap_filter_client = NULL, * cur_auth_ldap_login_property_client = NULL, * cur_auth_ldap_scope_property_client = NULL, * cur_auth_ldap_base_search_client = NULL, * cur_auth_ldap_name_property_client = NULL,
              * cur_rsa_key_file = NULL, * cur_rsa_pub_file = NULL, * cur_sha_secret = NULL,
              * extension = NULL, * mime_type_value = NULL,
              * cur_secure_connection_key_file = NULL, * cur_secure_connection_pem_file = NULL;
@@ -693,15 +700,24 @@ int build_config_from_file(struct config_elements * config) {
       config_setting_lookup_string(auth, "uri", &cur_auth_ldap_uri);
       config_setting_lookup_string(auth, "bind_dn", &cur_auth_ldap_bind_dn);
       config_setting_lookup_string(auth, "bind_passwd", &cur_auth_ldap_bind_passwd);
-      config_setting_lookup_string(auth, "filter", &cur_auth_ldap_filter);
-      config_setting_lookup_string(auth, "login_property", &cur_auth_ldap_login_property);
-      config_setting_lookup_string(auth, "name_property", &cur_auth_ldap_name_property);
-      config_setting_lookup_string(auth, "email_property", &cur_auth_ldap_email_property);
+      
+      config_setting_lookup_string(auth, "filter_user", &cur_auth_ldap_filter_user);
+      config_setting_lookup_string(auth, "login_property_user", &cur_auth_ldap_login_property_user);
+      config_setting_lookup_string(auth, "name_property_user", &cur_auth_ldap_name_property_user);
+      config_setting_lookup_string(auth, "email_property_user", &cur_auth_ldap_email_property_user);
       if (config->use_scope) {
-        config_setting_lookup_string(auth, "scope_property", &cur_auth_ldap_scope_property);
+        config_setting_lookup_string(auth, "scope_property_user", &cur_auth_ldap_scope_property_user);
       }
-      config_setting_lookup_string(auth, "base_search", &cur_auth_ldap_base_search);
-      if (cur_auth_ldap_uri != NULL && cur_auth_ldap_bind_dn != NULL && cur_auth_ldap_bind_passwd != NULL && cur_auth_ldap_filter != NULL && cur_auth_ldap_login_property != NULL && (cur_auth_ldap_scope_property != NULL || !config->use_scope) && cur_auth_ldap_base_search != NULL && cur_auth_ldap_name_property != NULL && cur_auth_ldap_email_property != NULL) {
+      config_setting_lookup_string(auth, "base_search_user", &cur_auth_ldap_base_search_user);
+      
+      config_setting_lookup_string(auth, "filter_client", &cur_auth_ldap_filter_client);
+      config_setting_lookup_string(auth, "login_property_client", &cur_auth_ldap_login_property_client);
+      config_setting_lookup_string(auth, "name_property_client", &cur_auth_ldap_name_property_client);
+      if (config->use_scope) {
+        config_setting_lookup_string(auth, "scope_property_client", &cur_auth_ldap_scope_property_client);
+      }
+      config_setting_lookup_string(auth, "base_search_client", &cur_auth_ldap_base_search_client);
+      if (cur_auth_ldap_uri != NULL && cur_auth_ldap_bind_dn != NULL && cur_auth_ldap_bind_passwd != NULL && cur_auth_ldap_filter_user != NULL && cur_auth_ldap_login_property_user != NULL && (cur_auth_ldap_scope_property_user != NULL || !config->use_scope) && cur_auth_ldap_base_search_user != NULL && cur_auth_ldap_name_property_user != NULL && cur_auth_ldap_email_property_user != NULL && cur_auth_ldap_filter_user != NULL && cur_auth_ldap_login_property_user != NULL && (cur_auth_ldap_scope_property_user != NULL || !config->use_scope) && cur_auth_ldap_base_search_user != NULL && cur_auth_ldap_name_property_user != NULL) {
         config->auth_ldap = malloc(sizeof(struct _auth_ldap));
         if (config->auth_ldap == NULL) {
           config_destroy(&cfg);
@@ -726,40 +742,72 @@ int build_config_from_file(struct config_elements * config) {
             fprintf(stderr, "Error allocating resources for config->auth_ldap->bind_passwd\n");
             return 0;
           }
-          config->auth_ldap->filter = nstrdup(cur_auth_ldap_filter);
-          if (config->auth_ldap->filter == NULL) {
+          
+          config->auth_ldap->filter_user = nstrdup(cur_auth_ldap_filter_user);
+          if (config->auth_ldap->filter_user == NULL) {
             config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->filter\n");
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->filter_user\n");
             return 0;
           }
-          config->auth_ldap->login_property = nstrdup(cur_auth_ldap_login_property);
-          if (config->auth_ldap->login_property == NULL) {
+          config->auth_ldap->login_property_user = nstrdup(cur_auth_ldap_login_property_user);
+          if (config->auth_ldap->login_property_user == NULL) {
             config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->login_property\n");
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->login_property_user\n");
             return 0;
           }
-          config->auth_ldap->scope_property = nstrdup(cur_auth_ldap_scope_property);
-          if (config->auth_ldap->scope_property == NULL && config->use_scope) {
+          config->auth_ldap->scope_property_user = nstrdup(cur_auth_ldap_scope_property_user);
+          if (config->auth_ldap->scope_property_user == NULL && config->use_scope) {
             config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property\n");
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_user\n");
             return 0;
           }
-          config->auth_ldap->base_search = nstrdup(cur_auth_ldap_base_search);
-          if (config->auth_ldap->base_search == NULL) {
+          config->auth_ldap->base_search_user = nstrdup(cur_auth_ldap_base_search_user);
+          if (config->auth_ldap->base_search_user == NULL) {
             config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->base_search\n");
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->base_search_user\n");
             return 0;
           }
-          config->auth_ldap->name_property = nstrdup(cur_auth_ldap_name_property);
-          if (config->auth_ldap->name_property == NULL) {
+          config->auth_ldap->name_property_user = nstrdup(cur_auth_ldap_name_property_user);
+          if (config->auth_ldap->name_property_user == NULL) {
             config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->name_property\n");
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->name_property_user\n");
             return 0;
           }
-          config->auth_ldap->email_property = nstrdup(cur_auth_ldap_email_property);
-          if (config->auth_ldap->email_property == NULL) {
+          config->auth_ldap->email_property_user = nstrdup(cur_auth_ldap_email_property_user);
+          if (config->auth_ldap->email_property_user == NULL) {
             config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->email_property\n");
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->email_property_user\n");
+            return 0;
+          }
+          
+          config->auth_ldap->filter_client = nstrdup(cur_auth_ldap_filter_client);
+          if (config->auth_ldap->filter_client == NULL) {
+            config_destroy(&cfg);
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->filter_client\n");
+            return 0;
+          }
+          config->auth_ldap->login_property_client = nstrdup(cur_auth_ldap_login_property_client);
+          if (config->auth_ldap->login_property_client == NULL) {
+            config_destroy(&cfg);
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->login_property_client\n");
+            return 0;
+          }
+          config->auth_ldap->scope_property_client = nstrdup(cur_auth_ldap_scope_property_client);
+          if (config->auth_ldap->scope_property_client == NULL && config->use_scope) {
+            config_destroy(&cfg);
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_client\n");
+            return 0;
+          }
+          config->auth_ldap->base_search_client = nstrdup(cur_auth_ldap_base_search_client);
+          if (config->auth_ldap->base_search_client == NULL) {
+            config_destroy(&cfg);
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->base_search_client\n");
+            return 0;
+          }
+          config->auth_ldap->name_property_client = nstrdup(cur_auth_ldap_name_property_client);
+          if (config->auth_ldap->name_property_client == NULL) {
+            config_destroy(&cfg);
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->name_property_client\n");
             return 0;
           }
         }
