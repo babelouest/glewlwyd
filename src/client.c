@@ -25,7 +25,7 @@
  * License along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
+#include <ldap.h>
 #include <string.h>
 
 #include "glewlwyd.h"
@@ -115,23 +115,36 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
   return j_return;
 }
 
-/**
- *
- * Check if client credentials are valid
- */
-int client_auth(struct config_elements * config, const char * client_id, const char * client_password) {
+json_t * auth_check_client_credentials(struct config_elements * config, const char * client_id, const char * password) {
+  json_t * j_res = NULL;
+  
+  if (client_id != NULL && password != NULL) {
+    if (config->has_auth_ldap) {
+      j_res = auth_check_client_credentials_ldap(config, client_id, password);
+    }
+    if (config->has_auth_database && !check_result_value(j_res, G_OK)) {
+      json_decref(j_res);
+      j_res = auth_check_client_credentials_database(config, client_id, password);
+    }
+  } else {
+    j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  }
+  return j_res;
+}
+
+json_t * auth_check_client_credentials_database(struct config_elements * config, const char * client_id, const char * password) {
   json_t * j_query, * j_result;
   int res, to_return;
   char * client_id_escaped, * client_password_escaped, * clause_client_password, * clause_client_authorization_type;
   
-  if (client_id != NULL && client_password != NULL) {
+  if (client_id != NULL && password != NULL) {
     client_id_escaped = h_escape_string(config->conn, client_id);
     clause_client_authorization_type = msprintf("= (SELECT `gc_id` FROM `%s` WHERE `gc_id` = (SELECT `gc_id` FROM `%s` WHERE `gc_client_id` = '%s') and `got_id` = (SELECT `got_id` FROM `%s` WHERE `got_code` = %d))", GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE, GLEWLWYD_TABLE_CLIENT, client_id_escaped, GLEWLWYD_TABLE_AUTHORIZATION_TYPE, GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS);
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
-      client_password_escaped = h_escape_string(config->conn, client_password);
+      client_password_escaped = h_escape_string(config->conn, password);
       clause_client_password = msprintf("= PASSWORD('%s')", client_password_escaped);
     } else {
-      client_password_escaped = str2md5(client_password, strlen(client_password));
+      client_password_escaped = str2md5(password, strlen(password));
       clause_client_password = msprintf("= '%s'", client_password_escaped);
     }
     
@@ -173,7 +186,78 @@ int client_auth(struct config_elements * config, const char * client_id, const c
   } else {
     to_return = G_ERROR_UNAUTHORIZED;
   }
-  return to_return;
+  return json_pack("{si}", "result", to_return);
+}
+
+json_t * auth_check_client_credentials_ldap(struct config_elements * config, const char * client_id, const char * password) {
+  LDAP * ldap;
+  LDAPMessage * answer, * entry;
+  
+  int  result, result_login;
+  int  ldap_version   = LDAP_VERSION3;
+  int  scope          = LDAP_SCOPE_SUBTREE;
+  char * filter       = NULL;
+  char * attrs[]      = {"memberOf", NULL, NULL};
+  int  attrsonly      = 0;
+  char * user_dn      = NULL;
+  json_t * res        = NULL;
+  char * ldap_mech    = LDAP_SASL_SIMPLE;
+  struct berval cred;
+  struct berval *servcred;
+
+  cred.bv_val = config->auth_ldap->bind_passwd;
+  cred.bv_len = strlen(config->auth_ldap->bind_passwd);
+
+  if (ldap_initialize(&ldap, config->auth_ldap->uri) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing ldap");
+    res = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if (ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error setting ldap protocol version");
+    res = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if ((result = ldap_sasl_bind_s(ldap, config->auth_ldap->bind_dn, ldap_mech, &cred, NULL, NULL, &servcred)) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error binding to ldap server mode %s: %s", ldap_mech, ldap_err2string(result));
+    res = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else {
+    // Connection successful, doing ldap search
+    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_client, config->auth_ldap->login_property_client, client_id);
+    
+    if (config->use_scope) {
+      attrs[1] = config->auth_ldap->scope_property_client;
+    }
+    if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_client, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
+      res = json_pack("{si}", "result", G_ERROR_PARAM);
+    } else if (ldap_count_entries(ldap, answer) == 0) {
+      // No result found for username
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, no entry for this username");
+      res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    } else {
+      // ldap found some results, getting the first one
+      entry = ldap_first_entry(ldap, answer);
+      
+      if (entry == NULL) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "ldap search: error getting first result");
+        res = json_pack("{si}", "result", G_ERROR);
+      } else {
+        // Testing the first result to username with the given password
+        user_dn = ldap_get_dn(ldap, entry);
+        cred.bv_val = (char *)password;
+        cred.bv_len = strlen(password);
+        result_login = ldap_sasl_bind_s(ldap, user_dn, ldap_mech, &cred, NULL, NULL, &servcred);
+        ldap_memfree(user_dn);
+        if (result_login == LDAP_SUCCESS) {
+          res = json_pack("{si}", "result", G_OK);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Client '%s' error log in", client_id);
+          res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        }
+      }
+    }
+    free(filter);
+    ldap_msgfree(answer);
+  }
+  ldap_unbind_ext(ldap, NULL, NULL);
+  return res;
 }
 
 /**
@@ -241,7 +325,26 @@ int auth_check_client_user_scope(struct config_elements * config, const char * c
   }
 }
 
+/**
+ *
+ * Check if user is allowed for the scope_list specified
+ * Return a refined list of scope
+ *
+ */
 json_t * auth_check_client_scope(struct config_elements * config, const char * client_id, const char * scope_list) {
+  json_t * j_res = NULL;
+  
+  if (config->has_auth_ldap) {
+    j_res = auth_check_client_scope_ldap(config, client_id, scope_list);
+  }
+  if (config->has_auth_database && (j_res == NULL || check_result_value(j_res, G_OK))) {
+    json_decref(j_res);
+    j_res = auth_check_client_scope_database(config, client_id, scope_list);
+  }
+  return j_res;
+}
+
+json_t * auth_check_client_scope_database(struct config_elements * config, const char * client_id, const char * scope_list) {
   json_t * j_query, * j_result, * scope_list_allowed, * j_value;
   int res;
   char * scope, * scope_escaped, * saveptr, * scope_list_escaped = NULL, * scope_list_save = nstrdup(scope_list), * client_id_escaped = h_escape_string(config->conn, client_id), * scope_list_join;
@@ -316,4 +419,103 @@ json_t * auth_check_client_scope(struct config_elements * config, const char * c
   }
   free(client_id_escaped);
   return scope_list_allowed;
+}
+
+/**
+ *
+ * Check if ldap user is allowed for the scope_list specified
+ * Return a refined list of scope
+ *
+ */
+json_t * auth_check_client_scope_ldap(struct config_elements * config, const char * client_id, const char * scope_list) {
+  LDAP * ldap;
+  LDAPMessage * answer, * entry;
+  
+  int  result;
+  int  ldap_version   = LDAP_VERSION3;
+  int  scope          = LDAP_SCOPE_SUBTREE;
+  char * filter       = NULL;
+  char * attrs[]      = {"memberOf", NULL, NULL};
+  int  attrsonly      = 0;
+  json_t * res        = NULL;
+  char * ldap_mech    = LDAP_SASL_SIMPLE;
+  struct berval cred;
+  struct berval *servcred;
+
+  cred.bv_val = config->auth_ldap->bind_passwd;
+  cred.bv_len = strlen(config->auth_ldap->bind_passwd);
+
+  if (ldap_initialize(&ldap, config->auth_ldap->uri) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing ldap");
+    res = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if (ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error setting ldap protocol version");
+    res = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if ((result = ldap_sasl_bind_s(ldap, config->auth_ldap->bind_dn, ldap_mech, &cred, NULL, NULL, &servcred)) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error binding to ldap server mode %s: %s", ldap_mech, ldap_err2string(result));
+    res = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else {
+    // Connection successful, doing ldap search
+    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_client, config->auth_ldap->login_property_client, client_id);
+    
+    if (config->use_scope) {
+      attrs[1] = config->auth_ldap->scope_property_client;
+    }
+    if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_client, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
+      res = json_pack("{si}", "result", G_ERROR_PARAM);
+    } else if (ldap_count_entries(ldap, answer) == 0) {
+      // No result found for client_id
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, no entry for this client_id");
+      res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    } else {
+      // ldap found some results, getting the first one
+      entry = ldap_first_entry(ldap, answer);
+      
+      if (entry == NULL) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "ldap search: error getting first result");
+        res = json_pack("{si}", "result", G_ERROR);
+      } else {
+        struct berval ** values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_client);
+        char * new_scope_list = strdup("");
+        int i;
+        
+        for (i=0; i < ldap_count_values_len(values); i++) {
+          char * str_value = malloc(values[i]->bv_len + 1);
+          char * scope_list_dup = strdup(scope_list);
+          char * token, * save_ptr = NULL;
+          
+          snprintf(str_value, values[i]->bv_len + 1, "%s", values[i]->bv_val);
+          token = strtok_r(scope_list_dup, " ", &save_ptr);
+          while (token != NULL) {
+            if (0 == strcmp(token, str_value)) {
+              if (strlen(new_scope_list) > 0) {
+                char * tmp = msprintf("%s %s", new_scope_list, token);
+                free(new_scope_list);
+                new_scope_list = tmp;
+              } else {
+                free(new_scope_list);
+                new_scope_list = strdup(token);
+              }
+            }
+            token = strtok_r(NULL, " ", &save_ptr);
+          }
+          free(scope_list_dup);
+          free(str_value);
+        }
+        ldap_value_free_len(values);
+        if (nstrlen(new_scope_list) > 0) {
+          res = json_pack("{siss}", "result", G_OK, "scope", new_scope_list);
+        } else {
+          // User hasn't all of part of the scope requested, sending unauthorized answer
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, scope incorrect");
+          res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        }
+      }
+    }
+    free(filter);
+    ldap_msgfree(answer);
+  }
+  ldap_unbind_ext(ldap, NULL, NULL);
+  return res;
 }
