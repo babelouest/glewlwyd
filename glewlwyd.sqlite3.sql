@@ -37,7 +37,7 @@ CREATE INDEX `i_g_user` ON `g_user`(`gu_id`);
 CREATE TABLE `g_scope` (
   `gs_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `gs_name` TEXT NOT NULL,
-  `gs_description` TEXT
+  `gs_description` TEXT DEFAULT ''
 );
 CREATE INDEX `i_g_scope` ON `g_scope`(`gs_id`);
 
@@ -46,7 +46,7 @@ CREATE TABLE `g_authorization_type` (
   `got_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `got_code` INTEGER NOT NULL UNIQUE, -- 0: Authorization Code Grant, 1: Code Grant, 2: Implicit Grant, 3: Resource Owner Password Credentials Grant, 4: Client Credentials Grant
   `got_name` TEXT NOT NULL,
-  `got_description` TEXT,
+  `got_description` TEXT DEFAULT '',
   `got_enabled` INTEGER DEFAULT 1
 );
 CREATE INDEX `i_g_authorization_type` ON `g_authorization_type`(`got_id`);
@@ -55,7 +55,7 @@ CREATE INDEX `i_g_authorization_type` ON `g_authorization_type`(`got_id`);
 CREATE TABLE `g_client` (
   `gc_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `gc_name` TEXT NOT NULL,
-  `gc_description` TEXT,
+  `gc_description` TEXT DEFAULT '',
   `gc_client_id` TEXT NOT NULL UNIQUE,
   `gc_client_password` TEXT,
   `gc_confidential` INTEGER DEFAULT 0,
@@ -78,7 +78,7 @@ CREATE INDEX `i_g_redirect_uri` ON `g_redirect_uri`(`gru_id`);
 CREATE TABLE `g_resource` (
   `gr_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `gr_name` TEXT NOT NULL,
-  `gr_description` TEXT,
+  `gr_description` TEXT DEFAULT '',
   `gr_uri` TEXT
 );
 CREATE INDEX `i_g_resource` ON `g_resource`(`gr_id`);

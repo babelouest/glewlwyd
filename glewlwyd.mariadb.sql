@@ -41,7 +41,7 @@ CREATE TABLE `g_user` (
 CREATE TABLE `g_scope` (
   `gs_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `gs_name` VARCHAR(128) NOT NULL,
-  `gs_description` VARCHAR(512)
+  `gs_description` VARCHAR(512) DEFAULT ''
 );
 
 -- Authorization type table, to store authorization type available
@@ -49,7 +49,7 @@ CREATE TABLE `g_authorization_type` (
   `got_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `got_code` INT(2) NOT NULL UNIQUE, -- 0: Authorization Code Grant, 1: Code Grant, 2: Implicit Grant, 3: Resource Owner Password Credentials Grant, 4: Client Credentials Grant
   `got_name` VARCHAR(128) NOT NULL,
-  `got_description` VARCHAR(256),
+  `got_description` VARCHAR(256) DEFAULT '',
   `got_enabled` TINYINT(1) DEFAULT 1
 );
 
@@ -57,7 +57,7 @@ CREATE TABLE `g_authorization_type` (
 CREATE TABLE `g_client` (
   `gc_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `gc_name` VARCHAR(128) NOT NULL,
-  `gc_description` VARCHAR(256),
+  `gc_description` VARCHAR(256) DEFAULT '',
   `gc_client_id` VARCHAR(128) NOT NULL UNIQUE,
   `gc_client_password` VARCHAR(128) NOT NULL,
   `gc_confidential` TINYINT(1) DEFAULT 0,
@@ -68,7 +68,7 @@ CREATE TABLE `g_client` (
 CREATE TABLE `g_resource` (
   `gr_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `gr_name` VARCHAR(128) NOT NULL,
-  `gr_description` VARCHAR(256),
+  `gr_description` VARCHAR(256) DEFAULT '',
   `gr_uri` VARCHAR(256)
 );
 
