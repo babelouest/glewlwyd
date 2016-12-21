@@ -140,7 +140,7 @@ int callback_glewlwyd_token (const struct _u_request * request, struct _u_respon
  */
 int callback_glewlwyd_validate_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_result = auth_check_credentials(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"));
+  json_t * j_result = auth_check_user_credentials(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"));
   char * session_token;
   const char * ip_source = get_ip_source(request);
   time_t now;
@@ -170,10 +170,17 @@ int callback_glewlwyd_set_user_scope_grant (const struct _u_request * request, s
   struct config_elements * config = (struct config_elements *)user_data;
   int res;
   json_t * j_scope, * j_session;
+  const char * token = NULL;
   
   // Check if user has access to scopes
-  j_session = session_get(config, u_map_get(request->map_header, "Authorization"));
-  j_scope = auth_check_scope(((struct config_elements *)user_data), json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "scope"));
+  token = nstrstr(u_map_get(request->map_header, "Authorization"), "Bearer ");
+  if (token != NULL && strlen(token) > strlen("Bearer ")) {
+    token = token + strlen("Bearer ");
+  } else {
+    token = u_map_get(request->map_cookie, config->session_key);
+  }
+  j_session = session_get(config, token);
+  j_scope = auth_check_user_scope(((struct config_elements *)user_data), json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "scope"));
   if (!check_result_value(j_scope, G_OK)) {
     response->status = 403;
     res = U_OK;
@@ -446,7 +453,7 @@ int callback_glewlwyd_user_scope_delete (const struct _u_request * request, stru
   
   // Check if user has access to scopes
   j_session = session_get(config, u_map_get(request->map_cookie, config->session_key));
-  j_scope = auth_check_scope(((struct config_elements *)user_data), json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "scope"));
+  j_scope = auth_check_user_scope(((struct config_elements *)user_data), json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "scope"));
   if (!check_result_value(j_scope, G_OK)) {
     response->status = 403;
     res = U_OK;
@@ -507,11 +514,101 @@ int callback_glewlwyd_set_authorization (const struct _u_request * request, stru
   return U_OK;
 }
 
-int callback_glewlwyd_set_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_get_list_scope (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_result = get_scope_list(config);
+  
+  if (check_result_value(j_result, G_OK)) {
+    response->json_body = json_copy(json_object_get(j_result, "scope"));
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_list_scope - Error getting scope list");
+    response->status = 500;
+  }
+  json_decref(j_result);
   return U_OK;
 }
 
-int callback_glewlwyd_set_user_profile_no_auth (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_get_scope (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_result = get_scope(config, u_map_get(request->map_url, "scope"));
+  
+  if (check_result_value(j_result, G_OK)) {
+    response->json_body = json_copy(json_object_get(j_result, "scope"));
+  } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_list_scope - Error getting scope list");
+    response->status = 500;
+  }
+  json_decref(j_result);
+  return U_OK;
+}
+
+int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_result = is_scope_valid(config, request->json_body, 1);
+  
+  if (j_result != NULL && json_array_size(j_result) == 0) {
+    if (add_scope(config, request->json_body) != G_OK) {
+      response->status = 500;
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_scope - Error adding new scope");
+    }
+  } else if (j_result != NULL && json_array_size(j_result) > 0) {
+    response->status = 400;
+    response->json_body = json_copy(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_scope - Error is_scope_valid");
+    response->status = 500;
+  }
+  json_decref(j_result);
+  return U_OK;
+}
+
+int callback_glewlwyd_set_scope (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_scope = get_scope(config, u_map_get(request->map_url, "scope")), * j_result;
+  
+  if (check_result_value(j_scope, G_OK)) {
+    j_result = is_scope_valid(config, request->json_body, 0);
+    if (j_result != NULL && json_array_size(j_result) == 0) {
+      if (set_scope(config, u_map_get(request->map_url, "scope"), request->json_body) != G_OK) {
+        response->status = 500;
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_scope - Error adding new scope");
+      }
+    } else if (j_result != NULL && json_array_size(j_result) > 0) {
+      response->status = 400;
+      response->json_body = json_copy(j_result);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_scope - Error is_scope_valid");
+      response->status = 500;
+    }
+    json_decref(j_result);
+  } else if (check_result_value(j_scope, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_scope - Error get_scope");
+    response->status = 500;
+  }
+  json_decref(j_scope);
+  return U_OK;
+}
+
+int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_scope = get_scope(config, u_map_get(request->map_url, "scope"));
+  
+  if (check_result_value(j_scope, G_OK)) {
+    if (delete_scope(config, u_map_get(request->map_url, "scope")) != G_OK) {
+      response->status = 500;
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_scope - Error adding new scope");
+    }
+  } else if (check_result_value(j_scope, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_scope - Error get_scope");
+    response->status = 500;
+  }
+  json_decref(j_scope);
   return U_OK;
 }
 
@@ -555,26 +652,6 @@ int callback_glewlwyd_delete_client (const struct _u_request * request, struct _
   return U_OK;
 }
 
-int callback_glewlwyd_get_list_scope (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_OK;
-}
-
-int callback_glewlwyd_get_scope (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_OK;
-}
-
-int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_OK;
-}
-
-int callback_glewlwyd_set_scope (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_OK;
-}
-
-int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_OK;
-}
-
 int callback_glewlwyd_get_list_resource (const struct _u_request * request, struct _u_response * response, void * user_data) {
   return U_OK;
 }
@@ -592,5 +669,13 @@ int callback_glewlwyd_set_resource (const struct _u_request * request, struct _u
 }
 
 int callback_glewlwyd_delete_resource (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_OK;
+}
+
+int callback_glewlwyd_set_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_OK;
+}
+
+int callback_glewlwyd_set_user_profile_no_auth (const struct _u_request * request, struct _u_response * response, void * user_data) {
   return U_OK;
 }

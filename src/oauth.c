@@ -52,7 +52,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
         // User Session is valid and confirmed by the owner
         time(&now);
         if (config->use_scope) {
-          j_scope = auth_check_scope(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "scope"));
+          j_scope = auth_check_user_scope(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "scope"));
           if (check_result_value(j_scope, G_OK)) {
             // User is allowed for this scope
             if (auth_check_client_user_scope(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), json_string_value(json_object_get(j_scope, "scope"))) == G_OK) {
@@ -222,7 +222,7 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
         // User Session is valid
         time(&now);
         if (config->use_scope) {
-          j_scope = auth_check_scope(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "scope"));
+          j_scope = auth_check_user_scope(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "scope"));
           if (check_result_value(j_scope, G_OK)) {
             // User is allowed for this scope
             if (auth_check_client_user_scope(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), json_string_value(json_object_get(j_scope, "scope"))) == G_OK) {
@@ -312,9 +312,9 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
   json_t * j_result;
   
   if (config->use_scope) {
-    j_result = auth_check_credentials_scope(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"), u_map_get(request->map_post_body, "scope"));
+    j_result = auth_check_user_credentials_scope(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"), u_map_get(request->map_post_body, "scope"));
   } else {
-    j_result = auth_check_credentials(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"));
+    j_result = auth_check_user_credentials(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"));
   }
   if (check_result_value(j_result, G_OK)) {
     time(&now);
@@ -368,9 +368,10 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
   char * access_token;
   const char * ip_source = get_ip_source(request);
   time_t now;
-  json_t * j_scope_list;
+  json_t * j_scope_list, * j_auth;
   
-  if (client_auth(config, request->auth_basic_user, request->auth_basic_password) == G_OK) {
+  j_auth = auth_check_client_credentials(config, request->auth_basic_user, request->auth_basic_password);
+  if (check_result_value(j_auth, G_OK)) {
     if (config->use_scope) {
       j_scope_list = auth_check_client_scope(config, request->auth_basic_user, u_map_get(request->map_post_body, "scope"));
       if (check_result_value(j_scope_list, G_OK)) {
@@ -414,6 +415,7 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
     response->json_body = json_pack("{ss}", "error", "invalid_client");
     response->status = 403;
   }
+  json_decref(j_auth);
   return U_OK;
 }
 
