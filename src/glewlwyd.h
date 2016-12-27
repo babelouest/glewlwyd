@@ -52,6 +52,7 @@
 #define GLEWLWYD_SESSION_EXPIRATION_DEFAULT 2419200
 #define GLEWLWYD_SALT_LENGTH                16
 #define GLEWLWYD_ADMIN_SCOPE                "g_admin"
+#define GLEWLWYD_DEFAULT_LIMIT              20
 
 #define GLEWLWYD_RUNNING  0
 #define GLEWLWYD_STOP     1
@@ -106,12 +107,14 @@ struct _auth_ldap {
   char * base_search_user;
   char * name_property_user;
   char * email_property_user;
+  char * password_property_user;
   
   char * filter_client;
   char * login_property_client;
   char * scope_property_client;
   char * base_search_client;
   char * name_property_client;
+  char * password_property_client;
 };
 
 struct config_elements {
@@ -246,10 +249,6 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
 int auth_check_client_user_scope(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
 json_t * access_token_check(struct config_elements * config, const char * token_value);
 
-json_t * get_user_profile(struct config_elements * config, const char * username);
-json_t * get_user_profile_database(struct config_elements * config, const char * username);
-json_t * get_user_profile_ldap(struct config_elements * config, const char * username);
-
 json_t * get_user_scope_grant(struct config_elements * config, const char * username);
 json_t * get_user_scope_grant_database(struct config_elements * config, const char * username);
 json_t * get_user_scope_grant_ldap(struct config_elements * config, const char * username);
@@ -264,6 +263,17 @@ json_t * is_scope_valid(struct config_elements * config, json_t * j_scope, int a
 int add_scope(struct config_elements * config, json_t * j_scope);
 int set_scope(struct config_elements * config, const char * scope, json_t * j_scope);
 int delete_scope(struct config_elements * config, const char * scope);
+
+json_t * get_user_list(struct config_elements * config, const char * source, long int offset, long int limit);
+json_t * get_user_list_ldap(struct config_elements * config, long int offset, long int limit);
+json_t * get_user_list_database(struct config_elements * config, long int offset, long int limit);
+json_t * get_user(struct config_elements * config, const char * username, const char * source);
+json_t * get_user_database(struct config_elements * config, const char * username);
+json_t * get_user_ldap(struct config_elements * config, const char * username);
+json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add);
+int add_user(struct config_elements * config, json_t * j_user);
+int set_user(struct config_elements * config, const char * user, json_t * j_user, const char * source);
+int delete_user(struct config_elements * config, const char * user, const char * source);
 
 char * generate_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
 char * generate_access_token(struct config_elements * config, const char * refresh_token, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);

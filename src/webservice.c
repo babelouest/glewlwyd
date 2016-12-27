@@ -388,8 +388,10 @@ int callback_glewlwyd_get_user_session_profile (const struct _u_request * reques
 
   j_session = session_get(config, token);
   if (check_result_value(j_session, G_OK)) {
-    j_user = get_user_profile(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")));
+    j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), NULL);
     if (check_result_value(j_user, G_OK)) {
+      json_object_del(json_object_get(j_user, "user"), "source");
+      json_object_del(json_object_get(j_user, "user"), "enabled");
       response->json_body = json_copy(json_object_get(j_user, "user"));
     }
     json_decref(j_user);
@@ -407,8 +409,10 @@ int callback_glewlwyd_get_user_session (const struct _u_request * request, struc
 
   j_session = session_get(config, token);
   if (check_result_value(j_session, G_OK)) {
-    j_user = get_user_profile(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")));
+    j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), NULL);
     if (check_result_value(j_user, G_OK)) {
+      json_object_del(json_object_get(j_user, "user"), "source");
+      json_object_del(json_object_get(j_user, "user"), "enabled");
       response->json_body = json_copy(json_object_get(j_user, "user"));
     }
     json_decref(j_user);
@@ -613,22 +617,115 @@ int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u
 }
 
 int callback_glewlwyd_get_list_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  long int offset, limit;
+  json_t * j_result;
+  
+  if (u_map_get(request->map_url, "offset") != NULL) {
+    offset = strtol(u_map_get(request->map_url, "offset"), NULL, 10);
+  } else {
+    offset = 0;
+  }
+  
+  if (u_map_get(request->map_url, "limit") != NULL) {
+    limit = strtol(u_map_get(request->map_url, "limit"), NULL, 10);
+  } else {
+    limit = GLEWLWYD_DEFAULT_LIMIT;
+  }
+  
+  j_result = get_user_list(config, u_map_get(request->map_url, "source"), offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
+  
+  if (check_result_value(j_result, G_OK)) {
+    response->json_body = json_copy(json_object_get(j_result, "user"));
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_list_user - Error getting user list");
+    response->status = 500;
+  }
+  json_decref(j_result);
   return U_OK;
 }
 
 int callback_glewlwyd_get_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_result = get_user(config, u_map_get(request->map_url, "username"), u_map_get(request->map_url, "source"));
+  
+  if (check_result_value(j_result, G_OK)) {
+    response->json_body = json_copy(json_object_get(j_result, "user"));
+  } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user - Error getting user");
+    response->status = 500;
+  }
+  json_decref(j_result);
   return U_OK;
 }
 
 int callback_glewlwyd_add_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_result = is_user_valid(config, request->json_body, 1);
+  
+  if (j_result != NULL && json_array_size(j_result) == 0) {
+    if (add_user(config, request->json_body) != G_OK) {
+      response->status = 500;
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user - Error adding new user");
+    }
+  } else if (j_result != NULL && json_array_size(j_result) > 0) {
+    response->status = 400;
+    response->json_body = json_copy(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user - Error is_user_valid");
+    response->status = 500;
+  }
+  json_decref(j_result);
   return U_OK;
 }
 
 int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_scope = get_user(config, u_map_get(request->map_url, "username"), u_map_get(request->map_url, "source")), * j_result;
+  
+  if (check_result_value(j_scope, G_OK)) {
+    j_result = is_user_valid(config, request->json_body, 0);
+    if (j_result != NULL && json_array_size(j_result) == 0) {
+      if (set_user(config, u_map_get(request->map_url, "username"), request->json_body, u_map_get(request->map_url, "source")) != G_OK) {
+        response->status = 500;
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user - Error adding new user");
+      }
+    } else if (j_result != NULL && json_array_size(j_result) > 0) {
+      response->status = 400;
+      response->json_body = json_copy(j_result);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user - Error is_user_valid");
+      response->status = 500;
+    }
+    json_decref(j_result);
+  } else if (check_result_value(j_scope, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user - Error get_user");
+    response->status = 500;
+  }
+  json_decref(j_scope);
   return U_OK;
 }
 
 int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_scope = get_user(config, u_map_get(request->map_url, "username"), u_map_get(request->map_url, "source"));
+  
+  if (check_result_value(j_scope, G_OK)) {
+    if (delete_user(config, u_map_get(request->map_url, "username"), u_map_get(request->map_url, "source")) != G_OK) {
+      response->status = 500;
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user - Error deleting user");
+    }
+  } else if (check_result_value(j_scope, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user - Error get_scope");
+    response->status = 500;
+  }
+  json_decref(j_scope);
   return U_OK;
 }
 

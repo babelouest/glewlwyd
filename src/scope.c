@@ -28,6 +28,7 @@
  *
  */
 
+#include <string.h>
 #include "glewlwyd.h"
 
 json_t * get_scope_list(struct config_elements * config) {
