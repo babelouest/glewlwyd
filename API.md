@@ -49,7 +49,11 @@ Content
 ```javascript
 {
   name: text,
-  email: text
+  email: text,
+  login: text,
+  enabled: boolean,
+  scope: [ // Array of strings
+  ]
 }
 ```
 
@@ -404,7 +408,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/scope`
+`/glewlwyd/scopes`
 
 #### Method
 
@@ -433,7 +437,7 @@ Content
 
 #### URL
 
-`/glewlwyd/scope/:scope_name`
+`/glewlwyd/scopes/:scope_name`
 
 #### Method
 
@@ -472,7 +476,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/scope`
+`/glewlwyd/scopes`
 
 #### Method
 
@@ -507,7 +511,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/scope/:scope_name`
+`/glewlwyd/scopes/:scope_name`
 
 #### Method
 
@@ -551,7 +555,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/scope/:scope_name`
+`/glewlwyd/scopes/:scope_name`
 
 #### Method
 
@@ -579,13 +583,13 @@ Resource not found
 
 ## User API
 
-The user API allows user CRUD. You can have LDAP or Database backend to store users, or both. If you ose both, then the LDAP backend is checked first, if no user with this credentials exist, then the Database backend is checked. If you use the LDAP backend, make sure that the user specified in `bind_dn` config file parameter has proper credentials to list, create, modify and update entries.
+The user API allows user CRUD. You can have LDAP or Database backend to store users, or both. Once a user is created in a backend, ldap or database, it can be modified, but the login or the backend can't be updated.
 
 ### Get the list of users
 
 #### URL
 
-`/glewlwyd/user`
+`/glewlwyd/users?source&offset&limit`
 
 #### Method
 
@@ -594,6 +598,16 @@ The user API allows user CRUD. You can have LDAP or Database backend to store us
 #### Security
 
 Scope required: `g_admin`
+
+#### URL Parameters
+
+Optional
+
+`source`: source to get the user data: vaues can be `database`, `ldap` or `all` default is `all`
+
+`offset`: offset to start the list result, default is 0
+
+`limit`: number of users to list, default is 20
 
 #### Success response
 
@@ -604,6 +618,7 @@ Content
 ```javascript
 [ // An array of user objects
   {
+    source: text,
     name: text,
     email: text,
     login: text,
@@ -618,7 +633,7 @@ Content
 
 #### URL
 
-`/glewlwyd/user/{login}`
+`/glewlwyd/users/{login}?source`
 
 #### Method
 
@@ -634,6 +649,10 @@ Required
 
 `login`: user login
 
+Optional
+
+`source`: source to get the user data: vaues can be `database`, `ldap` or `all` default is `all`
+
 #### Success response
 
 Code 200
@@ -642,6 +661,7 @@ Content
 
 ```javascript
 {
+  source: text,
   name: text,
   email: text,
   login: text,
@@ -661,7 +681,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/user`
+`/glewlwyd/users`
 
 #### Method
 
@@ -675,6 +695,7 @@ Scope required: `g_admin`
 
 ```javascript
 {
+  source: text, values can be "database" or "ldap", optional, default is "database"
   name: text, maximum 256 characters, optional
   email: text, maximum 256 characters, optional
   login: text, maximum 128 characters, mandatory
@@ -703,7 +724,7 @@ If no password is specified in the request, the password is not changed.
 
 #### URL
 
-`/glewlwyd/user/{login}`
+`/glewlwyd/users/{login}?source`
 
 #### Method
 
@@ -718,6 +739,10 @@ Scope required: `g_admin`
 Required
 
 `login`: user login
+
+Optional
+
+`source`: source to get the user data: vaues can be `database`, `ldap` or `all` default is `all`
 
 #### Data Parameters
 
@@ -752,7 +777,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/user/{login}`
+`/glewlwyd/users/{login}?source`
 
 #### Method
 
@@ -767,6 +792,10 @@ Scope required: `g_admin`
 Required
 
 `login`: user login
+
+Optional
+
+`source`: source to get the user data: vaues can be `database`, `ldap` or `all` default is `all`
 
 #### Success response
 
@@ -786,7 +815,7 @@ The client API allows client CRUD. You can have LDAP or Database backend to stor
 
 #### URL
 
-`/glewlwyd/client`
+`/glewlwyd/clients`
 
 #### Method
 
@@ -827,7 +856,7 @@ Content
 
 #### URL
 
-`/glewlwyd/client/{client_id}`
+`/glewlwyd/clients/{client_id}`
 
 #### Method
 
@@ -878,7 +907,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/client`
+`/glewlwyd/clients`
 
 #### Method
 
@@ -928,7 +957,7 @@ If no password is specified in the request, the password is not changed.
 
 #### URL
 
-`/glewlwyd/client/{client_id}`
+`/glewlwyd/clients/{client_id}`
 
 #### Method
 
@@ -986,7 +1015,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/client/{client_id}`
+`/glewlwyd/clients/{client_id}`
 
 #### Method
 
@@ -1020,7 +1049,7 @@ These endpoints allows resource management, although since tokens are JWT, there
 
 #### URL
 
-`/glewlwyd/resource`
+`/glewlwyd/resources`
 
 #### Method
 
@@ -1050,7 +1079,7 @@ Content
 
 #### URL
 
-`/glewlwyd/resource/:resource_name`
+`/glewlwyd/resources/:resource_name`
 
 #### Method
 
@@ -1090,7 +1119,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/resource`
+`/glewlwyd/resources`
 
 #### Method
 
@@ -1126,7 +1155,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/resource/:resource_name`
+`/glewlwyd/resources/:resource_name`
 
 #### Method
 
@@ -1171,7 +1200,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/resource/:resource_name`
+`/glewlwyd/resources/:resource_name`
 
 #### Method
 
