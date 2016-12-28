@@ -511,6 +511,7 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
           y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, scope incorrect");
           res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
+        free(new_scope_list);
       }
     }
     free(filter);

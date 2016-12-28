@@ -690,7 +690,7 @@ json_t * auth_check_user_scope_ldap(struct config_elements * config, const char 
         
         for (i=0; i < ldap_count_values_len(values); i++) {
           char * str_value = malloc(values[i]->bv_len + 1);
-          char * scope_list_dup = strdup(scope_list);
+          char * scope_list_dup = nstrdup(scope_list);
           char * token, * save_ptr = NULL;
           
           snprintf(str_value, values[i]->bv_len + 1, "%s", values[i]->bv_val);
@@ -719,6 +719,7 @@ json_t * auth_check_user_scope_ldap(struct config_elements * config, const char 
           y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, scope incorrect");
           res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
+        free(new_scope_list);
       }
     }
     free(filter);

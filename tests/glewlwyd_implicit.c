@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
   ulfius_init_request(&user_req);
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
-  auth_req.http_url = msprintf("%s/user/auth", SERVER_URI);
+  auth_req.http_url = msprintf("%s/auth/user", SERVER_URI);
   u_map_put(auth_req.map_post_body, "username", USERNAME);
   u_map_put(auth_req.map_post_body, "password", PASSWORD);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
     ulfius_init_request(&scope_req);
     ulfius_init_response(&scope_resp);
     scope_req.http_verb = strdup("POST");
-    scope_req.http_url = msprintf("%s/user/grant", SERVER_URI);
+    scope_req.http_url = msprintf("%s/auth/grant", SERVER_URI);
     u_map_put(scope_req.map_post_body, "scope", SCOPE_LIST);
     u_map_put(scope_req.map_post_body, "client_id", CLIENT);
     if (ulfius_send_http_request(&auth_req, &auth_resp) != U_OK) {
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
       y_log_message(Y_LOG_LEVEL_DEBUG, "Remove grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
     }
   
-  url = msprintf("%s/user/auth/", SERVER_URI);
+  url = msprintf("%s/auth/user/", SERVER_URI);
   run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
   free(url);
   

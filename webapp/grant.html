@@ -97,7 +97,7 @@
 	}
   
   $("#grantbut").click(function () {
-    $.post("../glewlwyd/user/grant", {client_id: params.client_id, scope: params.scope}, function (data) {
+    $.post("../glewlwyd/auth/grant", {client_id: params.client_id, scope: params.scope}, function (data) {
       var redirect = "../glewlwyd/auth" + location.search;
       window.location = redirect;
     })

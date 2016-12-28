@@ -97,7 +97,7 @@
 	};
   
   function checkUser () {
-    $.get("../glewlwyd/user/auth/", function (user) {
+    $.get("../glewlwyd/auth/user/", function (user) {
       $("#currentUsername").text(user.name);
       $("#loginDiv").hide();
       $("#loginInvalid").hide();
@@ -111,7 +111,7 @@
   }
   
   $("#loginbut").click(function () {
-    $.post("../glewlwyd/user/auth", {username: $("#username").val(), password: $("#password").val()}, function (data) {
+    $.post("../glewlwyd/auth/user", {username: $("#username").val(), password: $("#password").val()}, function (data) {
       checkUser();
     })
     .fail(function (error) {
@@ -121,7 +121,7 @@
   
   $("#logoutbut").click(function () {
     $.ajax({
-        url: "../glewlwyd/user/auth",
+        url: "../glewlwyd/auth/user/",
         type: "DELETE",
         success: function() {
             checkUser();

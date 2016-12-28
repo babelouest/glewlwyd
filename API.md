@@ -61,7 +61,7 @@ Content
 
 #### URL
 
-`/glewlwyd/user/auth/`
+`/glewlwyd/auth/user/`
 
 #### Method
 
@@ -98,7 +98,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/user/auth/`
+`/glewlwyd/auth/user/`
 
 #### Method
 
@@ -128,7 +128,7 @@ Return the list of scope available for the connected user
 
 #### URL
 
-`/glewlwyd/user/grant`
+`/glewlwyd/auth/grant`
 
 #### Method
 
@@ -159,7 +159,7 @@ Content
 
 #### URL
 
-`/glewlwyd/user/grant`
+`/glewlwyd/auth/grant`
 
 #### Method
 
@@ -194,7 +194,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/user/grant`
+`/glewlwyd/auth/grant`
 
 #### Method
 
@@ -231,7 +231,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/user/profile/`
+`/glewlwyd/profile/`
 
 #### Method
 
@@ -258,7 +258,7 @@ Content
 
 #### URL
 
-`/glewlwyd/user/profile/`
+`/glewlwyd/profile/`
 
 #### Method
 
@@ -408,7 +408,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/scopes`
+`/glewlwyd/scope`
 
 #### Method
 
@@ -437,7 +437,7 @@ Content
 
 #### URL
 
-`/glewlwyd/scopes/:scope_name`
+`/glewlwyd/scope/:scope_name`
 
 #### Method
 
@@ -476,7 +476,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/scopes`
+`/glewlwyd/scope`
 
 #### Method
 
@@ -511,7 +511,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/scopes/:scope_name`
+`/glewlwyd/scope/:scope_name`
 
 #### Method
 
@@ -555,7 +555,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/scopes/:scope_name`
+`/glewlwyd/scope/:scope_name`
 
 #### Method
 
@@ -589,7 +589,7 @@ The user API allows user CRUD. You can have LDAP or Database backend to store us
 
 #### URL
 
-`/glewlwyd/users?source&offset&limit`
+`/glewlwyd/user?source&offset&limit`
 
 #### Method
 
@@ -633,7 +633,7 @@ Content
 
 #### URL
 
-`/glewlwyd/users/{login}?source`
+`/glewlwyd/user/{login}?source`
 
 #### Method
 
@@ -681,7 +681,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/users`
+`/glewlwyd/user`
 
 #### Method
 
@@ -724,7 +724,7 @@ If no password is specified in the request, the password is not changed.
 
 #### URL
 
-`/glewlwyd/users/{login}?source`
+`/glewlwyd/user/{login}?source`
 
 #### Method
 
@@ -777,7 +777,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/users/{login}?source`
+`/glewlwyd/user/{login}?source`
 
 #### Method
 
@@ -815,7 +815,7 @@ The client API allows client CRUD. You can have LDAP or Database backend to stor
 
 #### URL
 
-`/glewlwyd/clients`
+`/glewlwyd/client`
 
 #### Method
 
@@ -856,7 +856,7 @@ Content
 
 #### URL
 
-`/glewlwyd/clients/{client_id}`
+`/glewlwyd/client/{client_id}`
 
 #### Method
 
@@ -907,7 +907,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/clients`
+`/glewlwyd/client`
 
 #### Method
 
@@ -957,7 +957,7 @@ If no password is specified in the request, the password is not changed.
 
 #### URL
 
-`/glewlwyd/clients/{client_id}`
+`/glewlwyd/client/{client_id}`
 
 #### Method
 
@@ -1015,7 +1015,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/clients/{client_id}`
+`/glewlwyd/client/{client_id}`
 
 #### Method
 
@@ -1049,7 +1049,7 @@ These endpoints allows resource management, although since tokens are JWT, there
 
 #### URL
 
-`/glewlwyd/resources`
+`/glewlwyd/resource`
 
 #### Method
 
@@ -1079,7 +1079,7 @@ Content
 
 #### URL
 
-`/glewlwyd/resources/:resource_name`
+`/glewlwyd/resource/:resource_name`
 
 #### Method
 
@@ -1119,7 +1119,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/resources`
+`/glewlwyd/resource`
 
 #### Method
 
@@ -1155,7 +1155,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/resources/:resource_name`
+`/glewlwyd/resource/:resource_name`
 
 #### Method
 
@@ -1200,7 +1200,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/resources/:resource_name`
+`/glewlwyd/resourceError binding to ldap server mode/:resource_name`
 
 #### Method
 
