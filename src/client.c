@@ -229,8 +229,7 @@ json_t * auth_check_client_credentials_ldap(struct config_elements * config, con
       res = json_pack("{si}", "result", G_ERROR_PARAM);
     } else if (ldap_count_entries(ldap, answer) == 0) {
       // No result found for username
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, no entry for this username");
-      res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      res = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else {
       // ldap found some results, getting the first one
       entry = ldap_first_entry(ldap, answer);
@@ -337,7 +336,7 @@ json_t * auth_check_client_scope(struct config_elements * config, const char * c
   if (config->has_auth_ldap) {
     j_res = auth_check_client_scope_ldap(config, client_id, scope_list);
   }
-  if (config->has_auth_database && (j_res == NULL || check_result_value(j_res, G_OK))) {
+  if (config->has_auth_database && (j_res == NULL || !check_result_value(j_res, G_OK))) {
     json_decref(j_res);
     j_res = auth_check_client_scope_database(config, client_id, scope_list);
   }
@@ -401,7 +400,6 @@ json_t * auth_check_client_scope_database(struct config_elements * config, const
           scope_list_allowed = json_pack("{siss}", "result", G_OK, "scope", scope_list_join);
           free(scope_list_join);
         } else {
-          y_log_message(Y_LOG_LEVEL_WARNING, "Error client_id '%s' with scope %s", client_id, scope_list);
           scope_list_allowed = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
         json_decref(j_result);
@@ -466,8 +464,7 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
       res = json_pack("{si}", "result", G_ERROR_PARAM);
     } else if (ldap_count_entries(ldap, answer) == 0) {
       // No result found for client_id
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, no entry for this client_id");
-      res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      res = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else {
       // ldap found some results, getting the first one
       entry = ldap_first_entry(ldap, answer);

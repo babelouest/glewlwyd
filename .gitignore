@@ -9,3 +9,8 @@ tests/glewlwyd_client_cred
 tests/glewlwyd_code
 tests/glewlwyd_implicit
 tests/glewlwyd_resource_owner_pwd_cred
+tests/glewlwyd_admin_authorization
+tests/glewlwyd_crud_scope
+tests/glewlwyd_crud_user
+tests/glewlwyd_crud_user.c
+tests/glewlwyd_delete_token

@@ -48,6 +48,7 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
                         "gu_login",
                         username);
   res = h_select(config->conn, j_query, &j_result, NULL);
+  
   json_decref(j_query);
   if (res == H_OK) {
     if (json_array_size(j_result) > 0) {
@@ -85,14 +86,14 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
         j_return = json_pack("{siso}", "result", G_OK, "user", json_copy(json_array_get(j_result, 0)));
       } else {
         j_return = json_pack("{si}", "result", G_ERROR_DB);
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list_database - Error executing j_query for scope");
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_database - Error executing j_query for scope");
       }
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
     json_decref(j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list_database - Error executing j_query");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_user_database - Error executing j_query");
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -281,8 +282,7 @@ json_t * get_user_scope_grant_ldap(struct config_elements * config, const char *
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     } else if (ldap_count_entries(ldap, answer) == 0) {
       // No result found for username
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, no entry for this username");
-      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else {
       // ldap found some results, getting the first one
       entry = ldap_first_entry(ldap, answer);
@@ -498,8 +498,7 @@ json_t * auth_check_user_credentials_ldap(struct config_elements * config, const
       res = json_pack("{si}", "result", G_ERROR_PARAM);
     } else if (ldap_count_entries(ldap, answer) == 0) {
       // No result found for username
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, no entry for this username");
-      res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      res = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else {
       // ldap found some results, getting the first one
       entry = ldap_first_entry(ldap, answer);
@@ -589,7 +588,6 @@ json_t * auth_check_user_scope_database(struct config_elements * config, const c
           scope_list_allowed = json_pack("{siss}", "result", G_OK, "scope", scope_list_join);
           free(scope_list_join);
         } else {
-          y_log_message(Y_LOG_LEVEL_WARNING, "Error user '%s' with scope %s", username, scope_list);
           scope_list_allowed = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
         json_decref(j_result);
@@ -622,7 +620,7 @@ json_t * auth_check_user_scope(struct config_elements * config, const char * use
   if (config->has_auth_ldap) {
     j_res = auth_check_user_scope_ldap(config, username, scope_list);
   }
-  if (config->has_auth_database && (j_res == NULL || check_result_value(j_res, G_OK))) {
+  if (config->has_auth_database && (j_res == NULL || !check_result_value(j_res, G_OK))) {
     json_decref(j_res);
     j_res = auth_check_user_scope_database(config, username, scope_list);
   }
@@ -674,8 +672,7 @@ json_t * auth_check_user_scope_ldap(struct config_elements * config, const char 
       res = json_pack("{si}", "result", G_ERROR_PARAM);
     } else if (ldap_count_entries(ldap, answer) == 0) {
       // No result found for username
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, no entry for this username");
-      res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      res = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else {
       // ldap found some results, getting the first one
       entry = ldap_first_entry(ldap, answer);
@@ -809,47 +806,69 @@ json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add
         json_array_append_new(j_return, json_pack("{ss}", "enabled", "enabled is an optional boolean"));
       }
       
-      if (config->use_scope) {
-        if (json_object_get(j_user, "scope") == NULL || !json_is_array(json_object_get(j_user, "scope"))) {
-          json_array_append_new(j_return, json_pack("{ss}", "scope", "scope is a mandatory array of scope names"));
-        } else {
-          json_array_foreach(json_object_get(j_user, "scope"), index, j_scope) {
-            if (!json_is_string(j_scope)) {
-              json_array_append_new(j_return, json_pack("{ss}", "scope", "scope name must be a string"));
-            } else {
-              j_result = get_scope(config, json_string_value(j_scope));
-              if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
-                char * message = msprintf("scope name '%s' not found", json_string_value(j_scope));
-                json_array_append_new(j_return, json_pack("{ss}", "scope", message));
-                free(message);
-              } else if (!check_result_value(j_result, G_OK)) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error while checking scope name '%s'", json_string_value(j_scope));
-              }
-              json_decref(j_result);
-            }
-          }
-        }
-      }
-      
       if (add) {
         if (json_object_get(j_user, "login") == NULL || !json_is_string(json_object_get(j_user, "login")) || json_string_length(json_object_get(j_user, "login")) > 128) {
           json_array_append_new(j_return, json_pack("{ss}", "login", "login is a mandatory string between 0 and 128 characters"));
+        } else {
+          j_result = get_user(config, json_string_value(json_object_get(j_user, "login")), json_string_value(json_object_get(j_user, "source")));
+          if (check_result_value(j_result, G_OK)) {
+            char * message = msprintf("login '%s' already exist", json_string_value(json_object_get(j_user, "login")));
+            json_array_append_new(j_return, json_pack("{ss}", "login", message));
+            free(message);
+          }
+          json_decref(j_result);
         }
         
-        if (json_object_get(j_user, "password") == NULL || !json_is_string(json_object_get(j_user, "password")) || json_string_length(json_object_get(j_user, "password")) < 8) {
-          json_array_append_new(j_return, json_pack("{ss}", "password", "password is a mandatory string of at least 8 characters"));
+        if (json_object_get(j_user, "password") != NULL && (!json_is_string(json_object_get(j_user, "password")) || json_string_length(json_object_get(j_user, "password")) < 8)) {
+          json_array_append_new(j_return, json_pack("{ss}", "password", "password is a string of at least 8 characters"));
         }
         
-        j_result = get_user(config, json_string_value(json_object_get(j_user, "login")), json_string_value(json_object_get(j_user, "source")));
-        if (check_result_value(j_result, G_OK)) {
-          char * message = msprintf("login '%s' already exist", json_string_value(json_object_get(j_user, "login")));
-          json_array_append_new(j_return, json_pack("{ss}", "login", message));
-          free(message);
+        if (config->use_scope) {
+          if (json_object_get(j_user, "scope") == NULL || !json_is_array(json_object_get(j_user, "scope"))) {
+            json_array_append_new(j_return, json_pack("{ss}", "scope", "scope is a mandatory array of scope names"));
+          } else {
+            json_array_foreach(json_object_get(j_user, "scope"), index, j_scope) {
+              if (!json_is_string(j_scope)) {
+                json_array_append_new(j_return, json_pack("{ss}", "scope", "scope name must be a string"));
+              } else {
+                j_result = get_scope(config, json_string_value(j_scope));
+                if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+                  char * message = msprintf("scope name '%s' not found", json_string_value(j_scope));
+                  json_array_append_new(j_return, json_pack("{ss}", "scope", message));
+                  free(message);
+                } else if (!check_result_value(j_result, G_OK)) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error while checking scope name '%s'", json_string_value(j_scope));
+                }
+                json_decref(j_result);
+              }
+            }
+          }
         }
-        json_decref(j_result);
       } else {
         if (json_object_get(j_user, "password") != NULL && (!json_is_string(json_object_get(j_user, "password")) || json_string_length(json_object_get(j_user, "password")) < 8)) {
           json_array_append_new(j_return, json_pack("{ss}", "password", "password is a string of at least 8 characters"));
+        }
+
+        if (config->use_scope) {
+          if (json_object_get(j_user, "scope") != NULL && !json_is_array(json_object_get(j_user, "scope"))) {
+            json_array_append_new(j_return, json_pack("{ss}", "scope", "scope is a mandatory array of scope names"));
+          } else if (json_object_get(j_user, "scope") != NULL) {
+            json_array_foreach(json_object_get(j_user, "scope"), index, j_scope) {
+              if (!json_is_string(j_scope)) {
+                json_array_append_new(j_return, json_pack("{ss}", "scope", "scope name must be a string"));
+              } else {
+                j_result = get_scope(config, json_string_value(j_scope));
+                if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+                  char * message = msprintf("scope name '%s' not found", json_string_value(j_scope));
+                  json_array_append_new(j_return, json_pack("{ss}", "scope", message));
+                  free(message);
+                } else if (!check_result_value(j_result, G_OK)) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error while checking scope name '%s'", json_string_value(j_scope));
+                }
+                json_decref(j_result);
+              }
+            }
+          }
         }
       }
     } else {
@@ -1061,6 +1080,7 @@ int add_user_database(struct config_elements * config, json_t * j_user) {
           y_log_message(Y_LOG_LEVEL_ERROR, "add_user_database - Error adding scope");
         }
       }
+      free(clause_login);
       json_decref(j_query);
     }
     to_return = G_OK;
