@@ -97,24 +97,39 @@
 int global_handler_variable;
 
 struct _auth_ldap {
-  char * uri;
-  char * bind_dn;
-  char * bind_passwd;
+  char *  uri;
+  char *  bind_dn;
+  char *  bind_passwd;
   
-  char * filter_user;
-  char * login_property_user;
-  char * scope_property_user;
-  char * base_search_user;
-  char * name_property_user;
-  char * email_property_user;
-  char * password_property_user;
+  char *  base_search_user;
+  char *  filter_user_read;
+  char *  login_property_user_read;
+  char *  scope_property_user_read;
+  char *  name_property_user_read;
+  char *  email_property_user_read;
+  int     user_write;
+  char *  rdn_property_user_write;
+  char ** login_property_user_write;
+  char ** scope_property_user_write;
+  char ** name_property_user_write;
+  char ** email_property_user_write;
+  char *  password_property_user_write;
+  char *  password_algorithm_user_write;
+  char ** object_class_user_write;
   
-  char * filter_client;
-  char * login_property_client;
-  char * scope_property_client;
-  char * base_search_client;
-  char * name_property_client;
-  char * password_property_client;
+  char *  base_search_client;
+  char *  filter_client_read;
+  char *  login_property_client_read;
+  char *  scope_property_client_read;
+  char *  name_property_client_read;
+  int     client_write;
+  char *  rdn_property_client_write;
+  char ** login_property_client_write;
+  char ** scope_property_client_write;
+  char ** name_property_client_write;
+  char *  password_property_client_write;
+  char *  password_algorithm_client_write;
+  char ** object_class_client_write;
 };
 
 struct config_elements {
@@ -164,6 +179,9 @@ char *url_encode(char *str);
 char * generate_query_parameters(const struct _u_request * request);
 const char * get_ip_source(const struct _u_request * request);
 char * rand_string(char * str, size_t size);
+
+int Base64Decode(char* b64message, unsigned char** buffer, size_t* length);
+int Base64Encode(const unsigned char* buffer, size_t length, char** b64text);
 
 int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int check_auth_type_access_token_request (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -272,8 +290,14 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
 json_t * get_user_ldap(struct config_elements * config, const char * username);
 json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add);
 int add_user(struct config_elements * config, json_t * j_user);
+int add_user_ldap(struct config_elements * config, json_t * j_user);
+int add_user_database(struct config_elements * config, json_t * j_user);
 int set_user(struct config_elements * config, const char * user, json_t * j_user, const char * source);
+int set_user_ldap(struct config_elements * config, const char * user, json_t * j_user);
+int set_user_database(struct config_elements * config, const char * user, json_t * j_user);
 int delete_user(struct config_elements * config, const char * user, const char * source);
+int delete_user_ldap(struct config_elements * config, const char * user);
+int delete_user_database(struct config_elements * config, const char * user);
 
 char * generate_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
 char * generate_access_token(struct config_elements * config, const char * refresh_token, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);

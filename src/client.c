@@ -219,10 +219,10 @@ json_t * auth_check_client_credentials_ldap(struct config_elements * config, con
     res = json_pack("{si}", "result", G_ERROR_PARAM);
   } else {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_client, config->auth_ldap->login_property_client, client_id);
+    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_client_read, config->auth_ldap->login_property_client_read, client_id);
     
     if (config->use_scope) {
-      attrs[1] = config->auth_ldap->scope_property_client;
+      attrs[1] = config->auth_ldap->scope_property_client_read;
     }
     if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_client, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
@@ -456,10 +456,10 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
     res = json_pack("{si}", "result", G_ERROR_PARAM);
   } else {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_client, config->auth_ldap->login_property_client, client_id);
+    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_client_read, config->auth_ldap->login_property_client_read, client_id);
     
     if (config->use_scope) {
-      attrs[1] = config->auth_ldap->scope_property_client;
+      attrs[1] = config->auth_ldap->scope_property_client_read;
     }
     if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_client, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
@@ -476,7 +476,7 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
         y_log_message(Y_LOG_LEVEL_ERROR, "ldap search: error getting first result");
         res = json_pack("{si}", "result", G_ERROR);
       } else {
-        struct berval ** values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_client);
+        struct berval ** values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_client_read);
         char * new_scope_list = strdup("");
         int i;
         
