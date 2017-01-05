@@ -69,7 +69,6 @@ CREATE TABLE `g_redirect_uri` (
   `gc_id` INTEGER NOT NULL,
   `gru_name` TEXT NOT NULL,
   `gru_uri` TEXT,
-  `gru_enabled` INTEGER DEFAULT 1,
   FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_redirect_uri` ON `g_redirect_uri`(`gru_id`);

@@ -26,7 +26,7 @@ LIBS=-lc -lulfius -lorcania -ljansson -lyder -lcheck -lpthread -lm -lrt -lsubuni
 all: test
 
 clean:
-	rm -f *.o glewlwyd_auth_code glewlwyd_client_cred glewlwyd_code glewlwyd_implicit glewlwyd_resource_owner_pwd_cred glewlwyd_delete_token glewlwyd_admin_authorization glewlwyd_crud_scope glewlwyd_crud_user
+	rm -f *.o glewlwyd_auth_code glewlwyd_client_cred glewlwyd_code glewlwyd_implicit glewlwyd_resource_owner_pwd_cred glewlwyd_delete_token glewlwyd_admin_authorization glewlwyd_crud_scope glewlwyd_crud_user glewlwyd_crud_client
 
 unit-tests.o: unit-tests.c unit-tests.h
 	$(CC) $(CFLAGS) -c unit-tests.c
@@ -85,4 +85,10 @@ glewlwyd_crud_user: glewlwyd_crud_user.c unit-tests.o
 test_glewlwyd_crud_user: glewlwyd_crud_user
 	-./glewlwyd_crud_user
 
-test: test_glewlwyd_resource_owner_pwd_cred test_glewlwyd_implicit test_glewlwyd_code test_glewlwyd_client_cred test_glewlwyd_auth_code test_glewlwyd_delete_token test_glewlwyd_admin_authorization test_glewlwyd_crud_scope test_glewlwyd_crud_user
+glewlwyd_crud_client: glewlwyd_crud_client.c unit-tests.o
+	$(CC) $(CFLAGS) glewlwyd_crud_client.c unit-tests.o -o glewlwyd_crud_client $(LIBS)
+
+test_glewlwyd_crud_client: glewlwyd_crud_client
+	-./glewlwyd_crud_client
+
+test: test_glewlwyd_resource_owner_pwd_cred test_glewlwyd_implicit test_glewlwyd_code test_glewlwyd_client_cred test_glewlwyd_auth_code test_glewlwyd_delete_token test_glewlwyd_admin_authorization test_glewlwyd_crud_scope test_glewlwyd_crud_user test_glewlwyd_crud_client

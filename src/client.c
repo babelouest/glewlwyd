@@ -219,7 +219,7 @@ json_t * auth_check_client_credentials_ldap(struct config_elements * config, con
     res = json_pack("{si}", "result", G_ERROR_PARAM);
   } else {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_client_read, config->auth_ldap->login_property_client_read, client_id);
+    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_client_read, config->auth_ldap->client_id_property_client_read, client_id);
     
     if (config->use_scope) {
       attrs[1] = config->auth_ldap->scope_property_client_read;
@@ -326,7 +326,7 @@ int auth_check_client_user_scope(struct config_elements * config, const char * c
 
 /**
  *
- * Check if user is allowed for the scope_list specified
+ * Check if client is allowed for the scope_list specified
  * Return a refined list of scope
  *
  */
@@ -421,7 +421,7 @@ json_t * auth_check_client_scope_database(struct config_elements * config, const
 
 /**
  *
- * Check if ldap user is allowed for the scope_list specified
+ * Check if ldap client is allowed for the scope_list specified
  * Return a refined list of scope
  *
  */
@@ -454,7 +454,7 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
     res = json_pack("{si}", "result", G_ERROR_PARAM);
   } else {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_client_read, config->auth_ldap->login_property_client_read, client_id);
+    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_client_read, config->auth_ldap->client_id_property_client_read, client_id);
     
     if (config->use_scope) {
       attrs[1] = config->auth_ldap->scope_property_client_read;
@@ -504,7 +504,7 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
         if (nstrlen(new_scope_list) > 0) {
           res = json_pack("{siss}", "result", G_OK, "scope", new_scope_list);
         } else {
-          // User hasn't all of part of the scope requested, sending unauthorized answer
+          // Client hasn't all of part of the scope requested, sending unauthorized answer
           y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, scope incorrect");
           res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
@@ -516,4 +516,1225 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
   }
   ldap_unbind_ext(ldap, NULL, NULL);
   return res;
+}
+
+json_t * get_client_list(struct config_elements * config, const char * source, long int offset, long int limit) {
+  json_t * j_return, * j_source_list = NULL, * j_result_list = json_array();
+  
+  if (j_result_list != NULL) {
+    if ((source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")) && config->has_auth_ldap) {
+      j_source_list = get_client_list_ldap(config, offset, limit);
+      if (check_result_value(j_source_list, G_OK)) {
+        json_array_extend(j_result_list, json_object_get(j_source_list, "client"));
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error getting ldap list");
+      }
+      json_decref(j_source_list);
+      j_source_list = NULL;
+    }
+    
+    if ((source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")) && json_array_size(j_result_list) < limit && config->has_auth_database) {
+      j_source_list = get_client_list_database(config, offset, (limit - json_array_size(j_result_list)));
+      if (check_result_value(j_source_list, G_OK)) {
+        json_array_extend(j_result_list, json_object_get(j_source_list, "client"));
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error getting database list");
+      }
+      json_decref(j_source_list);
+      j_source_list = NULL;
+    }
+    
+    j_return = json_pack("{siso}", "result", G_OK, "client", j_result_list);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error allocating resources for j_result_list");
+    j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+  }
+  return j_return;
+}
+
+json_t * get_client(struct config_elements * config, const char * client_id, const char * source) {
+  json_t * j_return = NULL, * j_client = NULL;
+  int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
+  
+  if (search_ldap) {
+    j_client = get_client_ldap(config, client_id);
+  }
+  if (!check_result_value(j_client, G_OK) && search_database) {
+    json_decref(j_client);
+    j_client = get_client_database(config, client_id);
+  }
+  if (check_result_value(j_client, G_OK)) {
+    j_return = json_pack("{siso}", "result", G_OK, "client", json_copy(json_object_get(j_client, "client")));
+  } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
+    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error getting client");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  json_decref(j_client);
+  
+  return j_return;
+}
+
+json_t * get_client_database(struct config_elements * config, const char * client_id) {
+  json_t * j_query, * j_result, * j_scope, * j_redirect_uri, * j_return, * j_entry, * j_scope_entry;
+  int res;
+  char * scope_clause;
+  size_t i_scope;
+  
+  j_query = json_pack("{sss[ssssss]s{ss}}",
+                      "table",
+                      GLEWLWYD_TABLE_CLIENT,
+                      "columns",
+                        "gc_id",
+                        "gc_name AS name", 
+                        "gc_description AS description",
+                        "gc_client_id AS client_id",
+                        "gc_confidential",
+                        "gc_enabled",
+                      "where",
+                        "gc_client_id",
+                        client_id);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result) > 0) {
+      j_entry = json_array_get(j_result, 0);
+      scope_clause = msprintf("IN (SELECT `gs_id` FROM %s WHERE `gc_id`='%" JSON_INTEGER_FORMAT "')", GLEWLWYD_TABLE_CLIENT_SCOPE, json_integer_value(json_object_get(j_entry, "gc_id")));
+      j_query = json_pack("{sss[s]s{s{ssss}}}",
+                          "table",
+                          GLEWLWYD_TABLE_SCOPE,
+                          "columns",
+                            "gs_name",
+                          "where",
+                            "gs_id",
+                              "operator",
+                              "raw",
+                              "value",
+                              scope_clause);
+      free(scope_clause);
+      res = h_select(config->conn, j_query, &j_scope, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        json_object_set_new(j_entry, "scope", json_array());
+        json_array_foreach(j_scope, i_scope, j_scope_entry) {
+          json_array_append_new(json_object_get(j_entry, "scope"), json_copy(json_object_get(j_scope_entry, "gs_name")));
+        }
+        json_decref(j_scope);
+        
+        j_query = json_pack("{sss[ss]s{sI}}",
+                            "table",
+                            GLEWLWYD_TABLE_REDIRECT_URI,
+                            "columns",
+                              "gru_name AS name",
+                              "gru_uri AS uri",
+                            "where",
+                              "gc_id",
+                              json_integer_value(json_object_get(j_entry, "gc_id")));
+        res = h_select(config->conn, j_query, &j_redirect_uri, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          json_object_set_new(j_entry, "redirect_uri", j_redirect_uri);
+
+          json_object_set_new(j_entry, "source", json_string("database"));
+          
+          if (json_integer_value(json_object_get(j_entry, "gc_enabled")) == 1) {
+            json_object_set_new(j_entry, "enabled", json_true());
+          } else {
+            json_object_set_new(j_entry, "enabled", json_false());
+          }
+          json_object_del(j_entry, "gc_enabled");
+          
+          if (json_integer_value(json_object_get(j_entry, "gc_confidential")) == 1) {
+            json_object_set_new(j_entry, "confidential", json_true());
+          } else {
+            json_object_set_new(j_entry, "confidential", json_false());
+          }
+          json_object_del(j_entry, "gc_confidential");
+          
+          json_object_del(j_entry, "gc_id");
+          
+          j_return = json_pack("{siso}", "result", G_OK, "client", json_copy(j_entry));
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_client_database - Error executing j_query for redirect uri");
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_client_database - Error executing j_query for scope");
+      }
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_client_database - Error executing j_query");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  return j_return;
+}
+
+json_t * get_client_ldap(struct config_elements * config, const char * client_id) {
+  LDAP * ldap;
+  LDAPMessage * answer, * entry;
+  int j;
+  json_t * j_result, * j_scope_list = get_scope_list(config);
+  
+  int  result;
+  int  ldap_version   = LDAP_VERSION3;
+  int  scope          = LDAP_SCOPE_SUBTREE;
+  char * filter       = NULL;
+  char * attrs[]      = {config->auth_ldap->name_property_client_read, config->auth_ldap->description_property_client_read, config->auth_ldap->client_id_property_client_read, config->auth_ldap->scope_property_client_read, config->auth_ldap->redirect_uri_property_client_read, NULL};
+  int  attrsonly      = 0;
+  char * ldap_mech    = LDAP_SASL_SIMPLE;
+  struct berval cred;
+  struct berval *servcred;
+
+  cred.bv_val = config->auth_ldap->bind_passwd;
+  cred.bv_len = strlen(config->auth_ldap->bind_passwd);
+  
+  if (!check_result_value(j_scope_list, G_OK)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error getting scope list");
+    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if (ldap_initialize(&ldap, config->auth_ldap->uri) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing ldap");
+    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if (ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error setting ldap protocol version");
+    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if ((result = ldap_sasl_bind_s(ldap, config->auth_ldap->bind_dn, ldap_mech, &cred, NULL, NULL, &servcred)) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error binding to ldap server mode %s: %s", ldap_mech, ldap_err2string(result));
+    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else {
+    // Connection successful, doing ldap search
+    filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_client_read, config->auth_ldap->client_id_property_client_read, client_id);
+    if ((result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_client, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
+      j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+    } else {
+      // getting first result if exist
+      if (ldap_count_entries(ldap, answer) > 0) {
+        entry = ldap_first_entry(ldap, answer);
+        
+        json_t * j_entry = json_object();
+        
+        if (j_entry != NULL) {
+          struct berval ** name_values = ldap_get_values_len(ldap, entry, config->auth_ldap->name_property_client_read);
+          struct berval ** description_values = ldap_get_values_len(ldap, entry, config->auth_ldap->description_property_client_read);
+          struct berval ** client_id_values = ldap_get_values_len(ldap, entry, config->auth_ldap->client_id_property_client_read);
+          struct berval ** scope_values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_client_read);
+          struct berval ** redirect_uri_values = ldap_get_values_len(ldap, entry, config->auth_ldap->redirect_uri_property_client_read);
+          
+          if (ldap_count_values_len(name_values) > 0) {
+            json_object_set_new(j_entry, "name", json_stringn(name_values[0]->bv_val, name_values[0]->bv_len));
+          }
+          
+          if (ldap_count_values_len(description_values) > 0) {
+            json_object_set_new(j_entry, "description", json_stringn(description_values[0]->bv_val, description_values[0]->bv_len));
+          }
+          
+          if (ldap_count_values_len(client_id_values) > 0) {
+            json_object_set_new(j_entry, "client_id", json_stringn(client_id_values[0]->bv_val, client_id_values[0]->bv_len));
+          }
+          
+          // For now a ldap client is always enabled, until I find a standard way to do it
+          json_object_set_new(j_entry, "enabled", json_true());
+          
+          json_object_set_new(j_entry, "scope", json_array());
+          for (j=0; j < ldap_count_values_len(scope_values); j++) {
+            json_t * j_scope = json_string(scope_values[j]->bv_val);
+            if (json_search(json_object_get(j_scope_list, "scope"), j_scope) != NULL) {
+              json_array_append_new(json_object_get(j_entry, "scope"), j_scope);
+            } else {
+              json_decref(j_scope);
+            }
+          }
+          
+          json_object_set_new(j_entry, "redirect_uri", json_array());
+          for (j=0; j < ldap_count_values_len(redirect_uri_values); j++) {
+            char * space_address = strchr(redirect_uri_values[j]->bv_val, ' ');
+            if (space_address != NULL) {
+              json_t * j_redirect_uri_uri = json_stringn(redirect_uri_values[j]->bv_val, (space_address - redirect_uri_values[j]->bv_val));
+              json_t * j_redirect_uri_name = json_string(space_address+sizeof(char));
+              json_t * j_redirect_uri = json_pack("{soso}", "name", j_redirect_uri_name, "uri", j_redirect_uri_uri);
+              if (j_redirect_uri != NULL) {
+                json_array_append_new(json_object_get(j_entry, "redirect_uri"), j_redirect_uri);
+              }
+            }
+          }
+          
+          json_object_set_new(j_entry, "source", json_string("ldap"));
+          j_result = json_pack("{siso}", "result", G_OK, "client", j_entry);
+          ldap_value_free_len(name_values);
+          ldap_value_free_len(description_values);
+          ldap_value_free_len(client_id_values);
+          ldap_value_free_len(scope_values);
+          ldap_value_free_len(redirect_uri_values);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for j_entry");
+          j_result = json_pack("{si}", "result", G_ERROR_MEMORY);
+        }
+      } else {
+        j_result = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+      }
+    }
+    free(filter);
+    ldap_msgfree(answer);
+  }
+  ldap_unbind_ext(ldap, NULL, NULL);
+  json_decref(j_scope_list);
+  return j_result;
+}
+
+json_t * is_client_valid(struct config_elements * config, json_t * j_client, int add) {
+  json_t * j_return = json_array(), * j_result, * j_scope, * j_redirect_uri;
+  size_t index;
+  
+  if (j_return != NULL) {
+    if (json_is_object(j_client)) {
+      if (json_object_get(j_client, "source") != NULL && (!json_is_string(json_object_get(j_client, "source")) || (0 != strcmp(json_string_value(json_object_get(j_client, "source")), "all") && 0 != strcmp(json_string_value(json_object_get(j_client, "source")), "ldap") && 0 != strcmp(json_string_value(json_object_get(j_client, "source")), "database")))) {
+        json_array_append_new(j_return, json_pack("{ss}", "source", "source is an optional string, values available are 'all', 'ldap' or 'database', default is 'database'"));
+      }
+      
+      if (json_object_get(j_client, "name") == NULL || !json_is_string(json_object_get(j_client, "name")) || json_string_length(json_object_get(j_client, "name")) > 128 || json_string_length(json_object_get(j_client, "name")) == 0) {
+        json_array_append_new(j_return, json_pack("{ss}", "name", "name is a mandatory non null string of maximum 128 characters"));
+      }
+      
+      if (json_object_get(j_client, "description") != NULL && (!json_is_string(json_object_get(j_client, "description")) || json_string_length(json_object_get(j_client, "description")) > 256)) {
+        json_array_append_new(j_return, json_pack("{ss}", "description", "description is an optional string between 0 and 256 characters"));
+      }
+      
+      if (json_object_get(j_client, "enabled") != NULL && !json_is_boolean(json_object_get(j_client, "enabled"))) {
+        json_array_append_new(j_return, json_pack("{ss}", "enabled", "enabled is an optional boolean"));
+      }
+      
+      if (json_object_get(j_client, "confidential") != NULL && !json_is_boolean(json_object_get(j_client, "confidential"))) {
+        json_array_append_new(j_return, json_pack("{ss}", "enabled", "confidential is an optional boolean"));
+      }
+      
+      if (add) {
+        if (json_object_get(j_client, "client_id") == NULL || !json_is_string(json_object_get(j_client, "client_id")) || json_string_length(json_object_get(j_client, "client_id")) > 128 || json_string_length(json_object_get(j_client, "client_id")) == 0) {
+          json_array_append_new(j_return, json_pack("{ss}", "client_id", "client_id is a mandatory non null string of maximum 128 characters"));
+        } else {
+          j_result = get_client(config, json_string_value(json_object_get(j_client, "client_id")), json_string_value(json_object_get(j_client, "source")));
+          if (check_result_value(j_result, G_OK)) {
+            char * message = msprintf("client_id '%s' already exist", json_string_value(json_object_get(j_client, "client_id")));
+            json_array_append_new(j_return, json_pack("{ss}", "client_id", message));
+            free(message);
+          }
+          json_decref(j_result);
+        }
+        
+        if (json_object_get(j_client, "confidential") == json_true() && (json_object_get(j_client, "password") == NULL || !json_is_string(json_object_get(j_client, "password")) || json_string_length(json_object_get(j_client, "password")) < 8)) {
+          json_array_append_new(j_return, json_pack("{ss}", "password", "password is a mandatory string of at least 8 characters if confidential flag is enabled"));
+        }
+        
+        if (config->use_scope) {
+          if (json_object_get(j_client, "scope") == NULL || !json_is_array(json_object_get(j_client, "scope"))) {
+            json_array_append_new(j_return, json_pack("{ss}", "scope", "scope is a mandatory array of scope names"));
+          } else {
+            json_array_foreach(json_object_get(j_client, "scope"), index, j_scope) {
+              if (!json_is_string(j_scope)) {
+                json_array_append_new(j_return, json_pack("{ss}", "scope", "scope name must be a string"));
+              } else {
+                j_result = get_scope(config, json_string_value(j_scope));
+                if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+                  char * message = msprintf("scope name '%s' not found", json_string_value(j_scope));
+                  json_array_append_new(j_return, json_pack("{ss}", "scope", message));
+                  free(message);
+                } else if (!check_result_value(j_result, G_OK)) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error while checking scope name '%s'", json_string_value(j_scope));
+                }
+                json_decref(j_result);
+              }
+            }
+          }
+        }
+        
+        if (json_object_get(j_client, "redirect_uri") == NULL || !json_is_array(json_object_get(j_client, "redirect_uri")) || json_array_size(json_object_get(j_client, "redirect_uri")) < 1) {
+          json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "redirect_uri is a mandatory array of redirect uri objects, at least one redirect uri is required"));
+        } else {
+          json_array_foreach(json_object_get(j_client, "redirect_uri"), index, j_redirect_uri) {
+            if (!json_is_object(j_redirect_uri)) {
+              json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "redirect_uri must be a json object"));
+            } else if (json_object_get(j_redirect_uri, "name") == NULL || !json_is_string(json_object_get(j_redirect_uri, "name")) || json_string_length(json_object_get(j_redirect_uri, "name")) > 128 || json_string_length(json_object_get(j_redirect_uri, "name")) == 0) {
+              json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "name must be a non empty string of maximum 128 characters"));
+            } else if (json_object_get(j_redirect_uri, "uri") == NULL || !json_is_string(json_object_get(j_redirect_uri, "uri")) || json_string_length(json_object_get(j_redirect_uri, "uri")) > 512 || json_string_length(json_object_get(j_redirect_uri, "uri")) == 0) {
+              json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "uri must be a non empty string of maximum 512 characters"));
+            } else if (json_object_get(j_redirect_uri, "enabled") != NULL && !json_is_boolean(json_object_get(j_redirect_uri, "enabled"))) {
+              json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "enabled must be a boolean"));
+            }
+          }
+        }
+      } else {
+        if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && (!json_is_string(json_object_get(j_client, "password")) || json_string_length(json_object_get(j_client, "password")) < 8)) {
+          json_array_append_new(j_return, json_pack("{ss}", "password", "password is a string of at least 8 characters"));
+        }
+
+        if (config->use_scope) {
+          if (json_object_get(j_client, "scope") != NULL && !json_is_array(json_object_get(j_client, "scope"))) {
+            json_array_append_new(j_return, json_pack("{ss}", "scope", "scope is a mandatory array of scope names"));
+          } else if (json_object_get(j_client, "scope") != NULL) {
+            json_array_foreach(json_object_get(j_client, "scope"), index, j_scope) {
+              if (!json_is_string(j_scope)) {
+                json_array_append_new(j_return, json_pack("{ss}", "scope", "scope name must be a string"));
+              } else {
+                j_result = get_scope(config, json_string_value(j_scope));
+                if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+                  char * message = msprintf("scope name '%s' not found", json_string_value(j_scope));
+                  json_array_append_new(j_return, json_pack("{ss}", "scope", message));
+                  free(message);
+                } else if (!check_result_value(j_result, G_OK)) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error while checking scope name '%s'", json_string_value(j_scope));
+                }
+                json_decref(j_result);
+              }
+            }
+          }
+        }
+        
+        if (json_object_get(j_client, "redirect_uri") != NULL && (!json_is_array(json_object_get(j_client, "redirect_uri")) || json_array_size(json_object_get(j_client, "redirect_uri")) < 1)) {
+          json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "redirect_uri is a mandatory array of redirect uri objects, at least one redirect uri is required"));
+        } else if (json_object_get(j_client, "redirect_uri") != NULL) {
+          json_array_foreach(json_object_get(j_client, "redirect_uri"), index, j_redirect_uri) {
+            if (!json_is_object(j_redirect_uri)) {
+              json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "redirect_uri must be a json object"));
+            } else if (json_object_get(j_redirect_uri, "name") == NULL || !json_is_string(json_object_get(j_redirect_uri, "name")) || json_string_length(json_object_get(j_redirect_uri, "name")) > 128 || json_string_length(json_object_get(j_redirect_uri, "name")) == 0) {
+              json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "name must be a non empty string of maximum 128 characters"));
+            } else if (json_object_get(j_redirect_uri, "uri") == NULL || !json_is_string(json_object_get(j_redirect_uri, "uri")) || json_string_length(json_object_get(j_redirect_uri, "uri")) > 512 || json_string_length(json_object_get(j_redirect_uri, "uri")) == 0) {
+              json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "uri must be a non empty string of maximum 512 characters"));
+            }
+          }
+        }
+      }
+    } else {
+      json_array_append_new(j_return, json_pack("{ss}", "client", "client must be a json object"));
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error allocating resources for j_result");
+  }
+  return j_return;
+}
+
+int add_client(struct config_elements * config, json_t * j_client) {
+  if (json_object_get(j_client, "source") != NULL && 0 == strcmp("ldap", json_string_value(json_object_get(j_client, "source")))) {
+    return add_client_ldap(config, j_client);
+  } else {
+    return add_client_database(config, j_client);
+  }
+}
+
+int add_client_ldap(struct config_elements * config, json_t * j_client) {
+  LDAP * ldap;
+  int res;
+  int  result;
+  int  ldap_version   = LDAP_VERSION3;
+  char * ldap_mech    = LDAP_SASL_SIMPLE;
+  struct berval cred, * servcred;
+  
+  LDAPMod ** mods = NULL;
+  char ** scope_values = NULL;
+  int nb_scope = 0, nb_redirect_uri = json_array_size(json_object_get(j_client, "redirect_uri")), nb_attr = 2, i, attr_counter; // Default attributes is objectClass
+  json_t * j_scope, * j_redirect_uri;
+  size_t index;
+  char * new_dn, password[128] = {0};
+  
+  for (i=0; json_object_get(j_client, "client_id") != NULL && config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
+    nb_attr++;
+  }
+  for (i=0; json_object_get(j_client, "name") != NULL && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
+    nb_attr++;
+  }
+  for (i=0; json_object_get(j_client, "description") != NULL && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
+    nb_attr++;
+  }
+  for (i=0; json_object_get(j_client, "redirect_uri") != NULL && config->auth_ldap->redirect_uri_property_client_write[i] != NULL; i++) {
+    nb_attr++;
+  }
+  for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL; i++) {
+    nb_attr++;
+  }
+  if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
+    nb_attr++;
+  }
+  if (config->use_scope && json_object_get(j_client, "scope") != NULL) {
+    nb_scope = json_array_size(json_object_get(j_client, "scope"));
+  }
+  mods = malloc(nb_attr*sizeof(LDAPMod *));
+  
+  cred.bv_val = config->auth_ldap->bind_passwd;
+  cred.bv_len = strlen(config->auth_ldap->bind_passwd);
+
+  if (mods == NULL) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for mods");
+    res = G_ERROR;
+  } else if (ldap_initialize(&ldap, config->auth_ldap->uri) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing ldap");
+    res = G_ERROR;
+  } else if (ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error setting ldap protocol version");
+    res = G_ERROR;
+  } else if ((result = ldap_sasl_bind_s(ldap, config->auth_ldap->bind_dn, ldap_mech, &cred, NULL, NULL, &servcred)) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error binding to ldap server mode %s: %s", ldap_mech, ldap_err2string(result));
+    res = G_ERROR;
+  } else {
+    new_dn = msprintf("%s=%s,%s", config->auth_ldap->rdn_property_client_write, json_string_value(json_object_get(j_client, "client_id")), config->auth_ldap->base_search_client);
+    
+    attr_counter = 0;
+    mods[attr_counter] = malloc(sizeof(LDAPMod));
+    mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
+    mods[attr_counter]->mod_type   = "objectClass";
+    mods[attr_counter]->mod_values = config->auth_ldap->object_class_client_write;
+    attr_counter++;
+    
+    for (i=0; json_object_get(j_client, "client_id") != NULL && config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
+      mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
+      mods[attr_counter]->mod_type   = config->auth_ldap->client_id_property_client_write[i];
+      mods[attr_counter]->mod_values[0] = (char *)json_string_value(json_object_get(j_client, "client_id"));
+      mods[attr_counter]->mod_values[1] = NULL;
+      attr_counter++;
+    }
+    
+    for (i=0; json_object_get(j_client, "name") != NULL && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
+      mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
+      mods[attr_counter]->mod_type   = config->auth_ldap->name_property_client_write[i];
+      mods[attr_counter]->mod_values[0] = (char *)json_string_value(json_object_get(j_client, "name"));
+      mods[attr_counter]->mod_values[1] = NULL;
+      attr_counter++;
+    }
+    
+    for (i=0; json_object_get(j_client, "description") != NULL && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
+      mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
+      mods[attr_counter]->mod_type   = config->auth_ldap->description_property_client_write[i];
+      mods[attr_counter]->mod_values[0] = (char *)json_string_value(json_object_get(j_client, "description"));
+      mods[attr_counter]->mod_values[1] = NULL;
+      attr_counter++;
+    }
+    
+    for (i=0; config->auth_ldap->redirect_uri_property_client_write[i] != NULL && json_object_get(j_client, "redirect_uri") != NULL; i++) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
+      mods[attr_counter]->mod_type   = config->auth_ldap->redirect_uri_property_client_write[i];
+      mods[attr_counter]->mod_values = malloc((nb_redirect_uri+1)*sizeof(char *));
+      json_array_foreach(json_object_get(j_client, "redirect_uri"), index, j_redirect_uri) {
+        char * redirect_uri_concat = msprintf("%s %s", json_string_value(json_object_get(j_redirect_uri, "uri")), json_string_value(json_object_get(j_redirect_uri, "name")));
+        char local_redirect_uri[1025];
+        nstrncpy(local_redirect_uri, redirect_uri_concat, 1024);
+        free(redirect_uri_concat);
+        mods[attr_counter]->mod_values[index] = local_redirect_uri;
+        mods[attr_counter]->mod_values[index+1] = NULL;
+      }
+      attr_counter++;
+    }
+    
+    for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL; i++) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
+      mods[attr_counter]->mod_type   = config->auth_ldap->scope_property_client_write[i];
+      mods[attr_counter]->mod_values = malloc((nb_scope+1)*sizeof(char *));
+      json_array_foreach(json_object_get(j_client, "scope"), index, j_scope) {
+        mods[attr_counter]->mod_values[index] = (char *)json_string_value(j_scope);
+        mods[attr_counter]->mod_values[index+1] = NULL;
+      }
+      attr_counter++;
+    }
+    
+    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && generate_password(config->auth_ldap->password_algorithm_client_write, json_string_value(json_object_get(j_client, "password")), password)) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_values    = malloc(2 * sizeof(char *));
+      mods[attr_counter]->mod_op        = LDAP_MOD_ADD;
+      mods[attr_counter]->mod_type      = config->auth_ldap->password_property_client_write;
+      mods[attr_counter]->mod_values[0] = password;
+      mods[attr_counter]->mod_values[1] = NULL;
+      attr_counter++;
+    }
+    
+    mods[attr_counter] = NULL;
+    
+    if ((result = ldap_add_ext_s(ldap, new_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error adding new client %s in the ldap backend: %s", new_dn, ldap_err2string(result));
+      res = G_ERROR;
+    } else {
+      res = G_OK;
+    }
+    
+    free(scope_values);
+    free(mods[0]);
+    for (i=1; i<attr_counter; i++) {
+      free(mods[i]->mod_values);
+      free(mods[i]);
+    }
+    free(mods);
+    free(new_dn);
+  }
+  ldap_unbind_ext(ldap, NULL, NULL);
+  return res;
+}
+
+int add_client_database(struct config_elements * config, json_t * j_client) {
+  json_t * j_query, * j_scope, * j_redirect_uri;
+  int res, to_return;
+  size_t index;
+  char * clause_login, * clause_scope, * escaped, * password;
+  
+  if (json_object_get(j_client, "confidential") == json_true()) {
+    if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
+      escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_client, "password")));
+      password = msprintf("PASSWORD('%s')", escaped);
+    } else {
+      escaped = str2md5(json_string_value(json_object_get(j_client, "password")), strlen(json_string_value(json_object_get(j_client, "password"))));
+      password = msprintf("'%s'", escaped);
+    }
+  } else {
+    password = strdup("''");
+  }
+  j_query = json_pack("{sss{sssssss{ss}sisi}}",
+                      "table",
+                      GLEWLWYD_TABLE_CLIENT,
+                      "values",
+                        "gc_name",
+                        json_string_value(json_object_get(j_client, "name")),
+                        "gc_description",
+                        json_object_get(j_client, "description")!=NULL?json_string_value(json_object_get(j_client, "description")):"",
+                        "gc_client_id",
+                        json_string_value(json_object_get(j_client, "client_id")),
+                        "gc_client_password",
+                          "raw",
+                          password,
+                        "gc_enabled",
+                        (json_object_get(j_client, "enabled")==json_false()?0:1),
+                        "gc_confidential",
+                        (json_object_get(j_client, "confidential")==json_true()?1:0));
+  res = h_insert(config->conn, j_query, NULL);
+  json_decref(j_query);
+  free(escaped);
+  free(password);
+  if (res == H_OK) {
+    if (json_object_get(j_client, "scope") != NULL && config->use_scope) {
+      escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_client, "client_id")));
+      clause_login = msprintf("(SELECT `gc_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT, escaped);
+      free(escaped);
+      j_query = json_pack("{sss[]}",
+                          "table",
+                          GLEWLWYD_TABLE_CLIENT_SCOPE,
+                          "values");
+      json_array_foreach(json_object_get(j_client, "scope"), index, j_scope) {
+        escaped = h_escape_string(config->conn, json_string_value(j_scope));
+        clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, escaped);
+        free(escaped);
+        json_array_append_new(json_object_get(j_query, "values"), json_pack("{s{ss}s{ss}}", "gc_id", "raw", clause_login, "gs_id", "raw", clause_scope));
+        free(clause_scope);
+      }
+      if (json_array_size(json_object_get(j_query, "values")) > 0) {
+        if (h_insert(config->conn, j_query, NULL) != H_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "add_client_database - Error adding scope");
+        }
+      }
+      free(clause_login);
+      json_decref(j_query);
+    }
+
+    if (json_object_get(j_client, "redirect_uri") != NULL) {
+      escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_client, "client_id")));
+      clause_login = msprintf("(SELECT `gc_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT, escaped);
+      free(escaped);
+      j_query = json_pack("{sss[]}",
+                          "table",
+                          GLEWLWYD_TABLE_REDIRECT_URI,
+                          "values");
+      json_array_foreach(json_object_get(j_client, "redirect_uri"), index, j_redirect_uri) {
+        json_array_append_new(json_object_get(j_query, "values"), 
+                              json_pack("{s{ss}ssss}", 
+                                        "gc_id", 
+                                          "raw", 
+                                          clause_login, 
+                                        "gru_name", 
+                                        json_string_value(json_object_get(j_redirect_uri, "name")),
+                                        "gru_uri",
+                                        json_string_value(json_object_get(j_redirect_uri, "uri"))));
+      }
+      free(clause_login);
+      if (json_array_size(json_object_get(j_query, "values")) > 0) {
+        if (h_insert(config->conn, j_query, NULL) != H_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "add_client_database - Error adding redirect_uri");
+        }
+      }
+      json_decref(j_query);
+    }
+    to_return = G_OK;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "add_client_database - Error adding client");
+    to_return = G_ERROR_DB;
+  }
+  return to_return;
+}
+
+int set_client(struct config_elements * config, const char * client, json_t * j_client, const char * source) {
+  if (source == NULL || 0 == strcmp("ldap", source) || 0 == strcmp("all", source)) {
+    return set_client_ldap(config, client, j_client);
+  } else {
+    return set_client_database(config, client, j_client);
+  }
+}
+
+int set_client_ldap(struct config_elements * config, const char * client_id, json_t * j_client) {
+  LDAP * ldap;
+  int res;
+  int  result;
+  int  ldap_version   = LDAP_VERSION3;
+  char * ldap_mech    = LDAP_SASL_SIMPLE;
+  struct berval cred, * servcred;
+  
+  LDAPMod ** mods = NULL;
+  char ** scope_values = NULL;
+  int nb_scope = 0, nb_redirect_uri = json_array_size(json_object_get(j_client, "redirect_uri")), nb_attr = 2, i, attr_counter;
+  json_t * j_scope, * j_redirect_uri;
+  size_t index;
+  char * cur_dn, password[128] = {0};
+  
+  for (i=0; json_object_get(j_client, "client_id") != NULL && config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
+    nb_attr++;
+  }
+  for (i=0; json_object_get(j_client, "name") != NULL && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
+    nb_attr++;
+  }
+  for (i=0; json_object_get(j_client, "description") != NULL && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
+    nb_attr++;
+  }
+  for (i=0; json_object_get(j_client, "redirect_uri") != NULL && config->auth_ldap->redirect_uri_property_client_write[i] != NULL; i++) {
+    nb_attr++;
+  }
+  for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL; i++) {
+    nb_attr++;
+  }
+  if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
+    nb_attr++;
+  }
+  if (config->use_scope && json_object_get(j_client, "scope") != NULL) {
+    nb_scope = json_array_size(json_object_get(j_client, "scope"));
+  }
+  mods = malloc(nb_attr*sizeof(LDAPMod *));
+  
+  cred.bv_val = config->auth_ldap->bind_passwd;
+  cred.bv_len = strlen(config->auth_ldap->bind_passwd);
+
+  if (mods == NULL) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for mods");
+    res = G_ERROR;
+  } else if (ldap_initialize(&ldap, config->auth_ldap->uri) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing ldap");
+    res = G_ERROR;
+  } else if (ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error setting ldap protocol version");
+    res = G_ERROR;
+  } else if ((result = ldap_sasl_bind_s(ldap, config->auth_ldap->bind_dn, ldap_mech, &cred, NULL, NULL, &servcred)) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error binding to ldap server mode %s: %s", ldap_mech, ldap_err2string(result));
+    res = G_ERROR;
+  } else {
+    cur_dn = msprintf("%s=%s,%s", config->auth_ldap->rdn_property_client_write, client_id, config->auth_ldap->base_search_client);
+    
+    attr_counter=0;
+    for (i=0; json_object_get(j_client, "client_id") != NULL && config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
+      mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
+      mods[attr_counter]->mod_type   = config->auth_ldap->client_id_property_client_write[i];
+      mods[attr_counter]->mod_values[0] = (char *)json_string_value(json_object_get(j_client, "client_id"));
+      mods[attr_counter]->mod_values[1] = NULL;
+      attr_counter++;
+    }
+    
+    for (i=0; json_object_get(j_client, "name") != NULL && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
+      mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
+      mods[attr_counter]->mod_type   = config->auth_ldap->name_property_client_write[i];
+      mods[attr_counter]->mod_values[0] = (char *)json_string_value(json_object_get(j_client, "name"));
+      mods[attr_counter]->mod_values[1] = NULL;
+      attr_counter++;
+    }
+    
+    for (i=0; json_object_get(j_client, "description") != NULL && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
+      mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
+      mods[attr_counter]->mod_type   = config->auth_ldap->description_property_client_write[i];
+      mods[attr_counter]->mod_values[0] = (char *)json_string_value(json_object_get(j_client, "description"));
+      mods[attr_counter]->mod_values[1] = NULL;
+      attr_counter++;
+    }
+    
+    for (i=0; config->auth_ldap->redirect_uri_property_client_write[i] != NULL && json_object_get(j_client, "redirect_uri") != NULL; i++) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
+      mods[attr_counter]->mod_type   = config->auth_ldap->redirect_uri_property_client_write[i];
+      mods[attr_counter]->mod_values = malloc((nb_redirect_uri+1)*sizeof(char *));
+      json_array_foreach(json_object_get(j_client, "redirect_uri"), index, j_redirect_uri) {
+        char * redirect_uri_concat = msprintf("%s %s", json_string_value(json_object_get(j_redirect_uri, "uri")), json_string_value(json_object_get(j_redirect_uri, "name")));
+        char local_redirect_uri[1025];
+        nstrncpy(local_redirect_uri, redirect_uri_concat, 1024);
+        free(redirect_uri_concat);
+        mods[attr_counter]->mod_values[index] = local_redirect_uri;
+        mods[attr_counter]->mod_values[index+1] = NULL;
+      }
+      attr_counter++;
+    }
+    
+    for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL; i++) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
+      mods[attr_counter]->mod_type   = config->auth_ldap->scope_property_client_write[i];
+      mods[attr_counter]->mod_values = malloc((nb_scope+1)*sizeof(char *));
+      json_array_foreach(json_object_get(j_client, "scope"), index, j_scope) {
+        mods[attr_counter]->mod_values[index] = (char *)json_string_value(j_scope);
+        mods[attr_counter]->mod_values[index+1] = NULL;
+      }
+      attr_counter++;
+    }
+    
+    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && generate_password(config->auth_ldap->password_algorithm_client_write, json_string_value(json_object_get(j_client, "password")), password)) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_values    = malloc(2 * sizeof(char *));
+      mods[attr_counter]->mod_op        = LDAP_MOD_REPLACE;
+      mods[attr_counter]->mod_type      = config->auth_ldap->password_property_client_write;
+      mods[attr_counter]->mod_values[0] = password;
+      mods[attr_counter]->mod_values[1] = NULL;
+      attr_counter++;
+    }
+    mods[attr_counter] = NULL;
+    
+    if ((result = ldap_modify_ext_s(ldap, cur_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error setting client %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
+      res = G_ERROR;
+    } else {
+      res = G_OK;
+    }
+    
+    free(scope_values);
+    for (i=0; i<attr_counter; i++) {
+      free(mods[i]->mod_values);
+      free(mods[i]);
+    }
+    free(mods);
+    free(cur_dn);
+  }
+  ldap_unbind_ext(ldap, NULL, NULL);
+  return res;
+}
+
+int set_client_database(struct config_elements * config, const char * client_id, json_t * j_client) {
+  json_t * j_query, * j_scope, * j_redirect_uri;
+  int res, to_return;
+  size_t index;
+  char * clause_login, * clause_scope, * escaped, * password;
+  
+  j_query = json_pack("{sss{}s{ss}}",
+                      "table",
+                      GLEWLWYD_TABLE_CLIENT,
+                      "set",
+                      "where",
+                        "gc_client_id",
+                        client_id);
+  if (json_object_get(j_client, "name") != NULL) {
+    json_object_set_new(json_object_get(j_query, "set"), "gc_name", json_copy(json_object_get(j_client, "name")));
+  }
+  if (json_object_get(j_client, "description") != NULL) {
+    json_object_set_new(json_object_get(j_query, "set"), "gc_description", json_copy(json_object_get(j_client, "description")));
+  }
+  if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
+    json_object_set_new(json_object_get(j_query, "set"), "gc_confidential", json_integer(1));
+    if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
+      escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_client, "password")));
+      password = msprintf("PASSWORD('%s')", escaped);
+    } else {
+      escaped = str2md5(json_string_value(json_object_get(j_client, "password")), strlen(json_string_value(json_object_get(j_client, "password"))));
+      password = msprintf("'%s'", escaped);
+    }
+    json_object_set_new(json_object_get(j_query, "set"), "gu_password", json_string(password));
+    free(password);
+    free(escaped);
+  } else if (json_object_get(j_client, "confidential") == json_false()) {
+    json_object_set_new(json_object_get(j_query, "set"), "gc_confidential", json_integer(0));
+  }
+  res = h_update(config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_object_get(j_client, "scope") != NULL && config->use_scope) {
+      escaped = h_escape_string(config->conn, client_id);
+      clause_login = msprintf("= (SELECT `gc_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT, escaped);
+      free(escaped);
+      j_query = json_pack("{sss{s{ssss}}}",
+                          "table",
+                          GLEWLWYD_TABLE_CLIENT_SCOPE,
+                          "where",
+                            "gc_id",
+                              "operator",
+                              "raw",
+                              "value",
+                              clause_login);
+      free(clause_login);
+      res = h_delete(config->conn, j_query, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+          escaped = h_escape_string(config->conn, client_id);
+          clause_login = msprintf("(SELECT `gc_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT, escaped);
+          free(escaped);
+          j_query = json_pack("{sss[]}",
+                              "table",
+                              GLEWLWYD_TABLE_CLIENT_SCOPE,
+                              "values");
+          json_array_foreach(json_object_get(j_client, "scope"), index, j_scope) {
+            escaped = h_escape_string(config->conn, json_string_value(j_scope));
+            clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, escaped);
+            free(escaped);
+            json_array_append_new(json_object_get(j_query, "values"), json_pack("{s{ss}s{ss}}", "gc_id", "raw", clause_login, "gs_id", "raw", clause_scope));
+            free(clause_scope);
+          }
+          free(clause_login);
+          if (json_array_size(json_object_get(j_query, "values")) > 0) {
+            if (h_insert(config->conn, j_query, NULL) != H_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "add_client_database - Error adding scope");
+            }
+          }
+          json_decref(j_query);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "set_client_database - Error deleting old scope");
+      }
+      
+    }
+    if (json_object_get(j_client, "redirect_uri") != NULL) {
+      escaped = h_escape_string(config->conn, client_id);
+      clause_login = msprintf("= (SELECT `gc_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT, escaped);
+      free(escaped);
+      j_query = json_pack("{sss{s{ssss}}}",
+                          "table",
+                          GLEWLWYD_TABLE_REDIRECT_URI,
+                          "where",
+                            "gc_id",
+                              "operator",
+                              "raw",
+                              "value",
+                              clause_login);
+      free(clause_login);
+      res = h_delete(config->conn, j_query, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+          escaped = h_escape_string(config->conn, client_id);
+          clause_login = msprintf("(SELECT `gc_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT, escaped);
+          free(escaped);
+          j_query = json_pack("{sss[]}",
+                              "table",
+                              GLEWLWYD_TABLE_REDIRECT_URI,
+                              "values");
+          json_array_foreach(json_object_get(j_client, "redirect_uri"), index, j_redirect_uri) {
+            json_array_append_new(json_object_get(j_query, "values"), 
+                                  json_pack("{s{ss}ssss}", 
+                                            "gc_id", 
+                                              "raw", 
+                                              clause_login, 
+                                            "gru_name", 
+                                            json_string_value(json_object_get(j_redirect_uri, "name")),
+                                            "gru_uri",
+                                            json_string_value(json_object_get(j_redirect_uri, "uri"))));
+          }
+          free(clause_login);
+          if (json_array_size(json_object_get(j_query, "values")) > 0) {
+            if (h_insert(config->conn, j_query, NULL) != H_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "add_client_database - Error adding redirect_uri");
+            }
+          }
+          json_decref(j_query);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "set_client_database - Error deleting old redirect_uri");
+      }
+    }
+    to_return = G_OK;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "set_client_database - Error updating client");
+    to_return = G_ERROR_DB;
+  }
+  return to_return;
+}
+
+int delete_client(struct config_elements * config, const char * client, const char * source) {
+  if (source == NULL || 0 == strcmp("ldap", source) || 0 == strcmp("all", source)) {
+    return delete_client_ldap(config, client);
+  } else {
+    return delete_client_database(config, client);
+  }
+}
+
+int delete_client_ldap(struct config_elements * config, const char * client_id) {
+  LDAP * ldap;
+  int res;
+  int  result;
+  int  ldap_version   = LDAP_VERSION3;
+  char * ldap_mech    = LDAP_SASL_SIMPLE;
+  struct berval cred, * servcred;
+  
+  char * cur_dn;
+  
+  cred.bv_val = config->auth_ldap->bind_passwd;
+  cred.bv_len = strlen(config->auth_ldap->bind_passwd);
+
+  if (ldap_initialize(&ldap, config->auth_ldap->uri) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing ldap");
+    res = G_ERROR;
+  } else if (ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error setting ldap protocol version");
+    res = G_ERROR;
+  } else if ((result = ldap_sasl_bind_s(ldap, config->auth_ldap->bind_dn, ldap_mech, &cred, NULL, NULL, &servcred)) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error binding to ldap server mode %s: %s", ldap_mech, ldap_err2string(result));
+    res = G_ERROR;
+  } else {
+    cur_dn = msprintf("%s=%s,%s", config->auth_ldap->rdn_property_client_write, client_id, config->auth_ldap->base_search_client);
+    
+    if ((result = ldap_delete_ext_s(ldap, cur_dn, NULL, NULL)) != LDAP_SUCCESS) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error deleting client %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
+      res = G_ERROR;
+    } else {
+      res = G_OK;
+    }
+    
+    free(cur_dn);
+  }
+  ldap_unbind_ext(ldap, NULL, NULL);
+  return res;
+}
+
+int delete_client_database(struct config_elements * config, const char * client_id) {
+  json_t * j_query;
+  int res;
+  
+  j_query = json_pack("{sss{ss}}",
+                      "table",
+                      GLEWLWYD_TABLE_CLIENT,
+                      "where",
+                        "gc_client_id",
+                        client_id);
+  res = h_delete(config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    return G_OK;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_database - Error deleting client");
+    return G_ERROR_DB;
+  }
+}
+
+json_t * get_client_list_ldap(struct config_elements * config, long int offset, long int limit) {
+  LDAP * ldap;
+  LDAPMessage * answer, * entry;
+  int i, j;
+  json_t * j_result, * j_scope_list = get_scope_list(config);
+  
+  int  result;
+  int  ldap_version   = LDAP_VERSION3;
+  int  scope          = LDAP_SCOPE_SUBTREE;
+  char * filter       = NULL;
+  char * attrs[]      = {config->auth_ldap->name_property_client_read, config->auth_ldap->description_property_client_read, config->auth_ldap->client_id_property_client_read, config->auth_ldap->scope_property_client_read, config->auth_ldap->redirect_uri_property_client_read, NULL};
+  int  attrsonly      = 0;
+  char * ldap_mech    = LDAP_SASL_SIMPLE;
+  struct berval cred;
+  struct berval *servcred;
+
+  cred.bv_val = config->auth_ldap->bind_passwd;
+  cred.bv_len = strlen(config->auth_ldap->bind_passwd);
+  
+  if (!check_result_value(j_scope_list, G_OK)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error getting scope list");
+    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if (ldap_initialize(&ldap, config->auth_ldap->uri) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing ldap");
+    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if (ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error setting ldap protocol version");
+    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if ((result = ldap_sasl_bind_s(ldap, config->auth_ldap->bind_dn, ldap_mech, &cred, NULL, NULL, &servcred)) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error binding to ldap server mode %s: %s", ldap_mech, ldap_err2string(result));
+    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else {
+    // Connection successful, doing ldap search
+    filter = msprintf("(%s)", config->auth_ldap->filter_client_read);
+    if ((result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_client, scope, filter, attrs, attrsonly, NULL, NULL, NULL, (offset+limit), &answer)) != LDAP_SUCCESS) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
+      j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+    } else {
+      // Looping in results, staring at offset, until the end of the list
+      j_result = json_pack("{sis[]}", "result", G_OK, "client");
+      if (ldap_count_entries(ldap, answer) >= offset) {
+        entry = ldap_first_entry(ldap, answer);
+            
+        for (i=0; i<offset && entry != NULL; i++) {
+          entry = ldap_next_entry(ldap, entry);
+        }
+        
+        while (entry != NULL && i<(offset+limit)) {
+          json_t * j_entry = json_object();
+          
+          if (j_entry != NULL) {
+            struct berval ** name_values = ldap_get_values_len(ldap, entry, config->auth_ldap->name_property_client_read);
+            struct berval ** description_values = ldap_get_values_len(ldap, entry, config->auth_ldap->description_property_client_read);
+            struct berval ** client_id_values = ldap_get_values_len(ldap, entry, config->auth_ldap->client_id_property_client_read);
+            struct berval ** scope_values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_client_read);
+            struct berval ** redirect_uri_values = ldap_get_values_len(ldap, entry, config->auth_ldap->redirect_uri_property_client_read);
+            
+            if (ldap_count_values_len(name_values) > 0) {
+              json_object_set_new(j_entry, "name", json_stringn(name_values[0]->bv_val, name_values[0]->bv_len));
+            }
+            
+            if (ldap_count_values_len(description_values) > 0) {
+              json_object_set_new(j_entry, "description", json_stringn(description_values[0]->bv_val, description_values[0]->bv_len));
+            }
+            
+            if (ldap_count_values_len(client_id_values) > 0) {
+              json_object_set_new(j_entry, "client_id", json_stringn(client_id_values[0]->bv_val, client_id_values[0]->bv_len));
+            }
+            
+            // For now a ldap client is always enabled, until I find a standard way to do it
+            json_object_set_new(j_entry, "enabled", json_true());
+            
+            json_object_set_new(j_entry, "scope", json_array());
+            for (j=0; j < ldap_count_values_len(scope_values); j++) {
+              json_t * j_scope = json_string(scope_values[j]->bv_val);
+              if (json_search(json_object_get(j_scope_list, "scope"), j_scope) != NULL) {
+                json_array_append_new(json_object_get(j_entry, "scope"), j_scope);
+              } else {
+                json_decref(j_scope);
+              }
+            }
+            
+            json_object_set_new(j_entry, "redirect_uri", json_array());
+            for (j=0; j < ldap_count_values_len(redirect_uri_values); j++) {
+              char * space_address = strchr(redirect_uri_values[j]->bv_val, ' ');
+              if (space_address != NULL) {
+                json_t * j_redirect_uri_uri = json_stringn(redirect_uri_values[j]->bv_val, (space_address - redirect_uri_values[j]->bv_val));
+                json_t * j_redirect_uri_name = json_string(space_address+sizeof(char));
+                json_t * j_redirect_uri = json_pack("{soso}", "name", j_redirect_uri_name, "uri", j_redirect_uri_uri);
+                if (j_redirect_uri != NULL) {
+                  json_array_append_new(json_object_get(j_entry, "redirect_uri"), j_redirect_uri);
+                }
+              }
+            }
+            
+            json_object_set_new(j_entry, "source", json_string("ldap"));
+            json_array_append_new(json_object_get(j_result, "client"), j_entry);
+            ldap_value_free_len(name_values);
+            ldap_value_free_len(description_values);
+            ldap_value_free_len(client_id_values);
+            ldap_value_free_len(scope_values);
+            ldap_value_free_len(redirect_uri_values);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for j_entry");
+          }
+          entry = ldap_next_entry(ldap, entry);
+          i++;
+        }
+      }
+    }
+    free(filter);
+    ldap_msgfree(answer);
+  }
+  ldap_unbind_ext(ldap, NULL, NULL);
+  json_decref(j_scope_list);
+  return j_result;
+}
+
+json_t * get_client_list_database(struct config_elements * config, long int offset, long int limit) {
+  json_t * j_query, * j_result, * j_scope, * j_redirect_uri, * j_return, * j_entry, * j_scope_entry;
+  int res;
+  char * scope_clause;
+  size_t index, i_scope;
+  
+  j_query = json_pack("{sss[ssssss]sisi}",
+                      "table",
+                      GLEWLWYD_TABLE_CLIENT,
+                      "columns",
+                        "gc_id",
+                        "gc_name AS name", 
+                        "gc_description AS description",
+                        "gc_client_id AS client_id",
+                        "gc_confidential",
+                        "gc_enabled",
+                      "offset",
+                      offset,
+                      "limit",
+                      limit);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    j_return = json_pack("{sis[]}", "result", G_OK, "client");
+    json_array_foreach(j_result, index, j_entry) {
+      scope_clause = msprintf("IN (SELECT `gs_id` FROM %s WHERE `gc_id`='%" JSON_INTEGER_FORMAT "')", GLEWLWYD_TABLE_CLIENT_SCOPE, json_integer_value(json_object_get(j_entry, "gc_id")));
+      j_query = json_pack("{sss[s]s{s{ssss}}}",
+                          "table",
+                          GLEWLWYD_TABLE_SCOPE,
+                          "columns",
+                            "gs_name",
+                          "where",
+                            "gs_id",
+                              "operator",
+                              "raw",
+                              "value",
+                              scope_clause);
+      free(scope_clause);
+      res = h_select(config->conn, j_query, &j_scope, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        json_object_set_new(j_entry, "scope", json_array());
+        json_array_foreach(j_scope, i_scope, j_scope_entry) {
+          json_array_append_new(json_object_get(j_entry, "scope"), json_copy(json_object_get(j_scope_entry, "gs_name")));
+        }
+        json_decref(j_scope);
+        
+        j_query = json_pack("{sss[ss]s{sI}}",
+                            "table",
+                            GLEWLWYD_TABLE_REDIRECT_URI,
+                            "columns",
+                              "gru_name AS name",
+                              "gru_uri AS uri",
+                            "where",
+                              "gc_id",
+                              json_integer_value(json_object_get(j_entry, "gc_id")));
+        res = h_select(config->conn, j_query, &j_redirect_uri, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          json_object_set_new(j_entry, "redirect_uri", j_redirect_uri);
+
+          json_object_set_new(j_entry, "source", json_string("database"));
+          
+          if (json_integer_value(json_object_get(j_entry, "gc_enabled")) == 1) {
+            json_object_set_new(j_entry, "enabled", json_true());
+          } else {
+            json_object_set_new(j_entry, "enabled", json_false());
+          }
+          json_object_del(j_entry, "gc_enabled");
+          
+          if (json_integer_value(json_object_get(j_entry, "gc_confidential")) == 1) {
+            json_object_set_new(j_entry, "confidential", json_true());
+          } else {
+            json_object_set_new(j_entry, "confidential", json_false());
+          }
+          json_object_del(j_entry, "gc_confidential");
+          
+          json_object_del(j_entry, "gc_id");
+          
+          json_array_append_new(json_object_get(j_return, "client"), json_copy(j_entry));
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list_database - Error executing j_query for redirect uri");
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list_database - Error executing j_query for scope");
+      }
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list_database - Error executing j_query");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  return j_return;
 }

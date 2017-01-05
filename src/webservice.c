@@ -281,8 +281,14 @@ int callback_glewlwyd_options (const struct _u_request * request, struct _u_resp
  * redirects to static files address
  */
 int callback_glewlwyd_root (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  response->status = 301;
-  ulfius_add_header_to_response(response, "Location", ((struct config_elements *)user_data)->static_files_prefix);
+  char * url = msprintf("%s/", ((struct config_elements *)user_data)->static_files_prefix);
+  if (url != NULL) {
+    response->status = 301;
+    ulfius_add_header_to_response(response, "Location", url);
+    free(url);
+  } else {
+    response->status = 500;
+  }
   return U_OK;
 };
 
@@ -744,23 +750,133 @@ int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_
   return U_OK;
 }
 
-int callback_glewlwyd_get_list_client (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_get_list_client (const struct _u_request * request, struct _u_response * response, void * client_data) {
+  struct config_elements * config = (struct config_elements *)client_data;
+  long int offset, limit;
+  json_t * j_result;
+  
+  if (u_map_get(request->map_url, "offset") != NULL) {
+    offset = strtol(u_map_get(request->map_url, "offset"), NULL, 10);
+  } else {
+    offset = 0;
+  }
+  
+  if (u_map_get(request->map_url, "limit") != NULL) {
+    limit = strtol(u_map_get(request->map_url, "limit"), NULL, 10);
+  } else {
+    limit = GLEWLWYD_DEFAULT_LIMIT;
+  }
+  
+  j_result = get_client_list(config, u_map_get(request->map_url, "source"), offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
+  
+  if (check_result_value(j_result, G_OK)) {
+    response->json_body = json_copy(json_object_get(j_result, "client"));
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_list_client - Error getting client list");
+    response->status = 500;
+  }
+  //y_log_message(Y_LOG_LEVEL_DEBUG, "grut ? %s", json_dumps(response->json_body, JSON_ENCODE_ANY));
+  json_decref(j_result);
+  //y_log_message(Y_LOG_LEVEL_DEBUG, "grut ! %s", json_dumps(response->json_body, JSON_ENCODE_ANY));
   return U_OK;
 }
 
-int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_response * response, void * client_data) {
+  struct config_elements * config = (struct config_elements *)client_data;
+  json_t * j_client;
+  
+  if (u_map_get(request->map_url, "source") == NULL || 0 == strcmp("all", u_map_get(request->map_url, "source")) || 0 == strcmp("ldap", u_map_get(request->map_url, "source")) || 0 == strcmp("database", u_map_get(request->map_url, "source"))) {
+    j_client = get_client(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "source"));
+    if (check_result_value(j_client, G_OK)) {
+      response->json_body = json_copy(json_object_get(j_client, "client"));
+    } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
+      response->status = 404;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_client - Error getting client");
+      response->status = 500;
+    }
+    json_decref(j_client);
+  } else {
+    response->status = 400;
+  }
   return U_OK;
 }
 
-int callback_glewlwyd_add_client (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_add_client (const struct _u_request * request, struct _u_response * response, void * client_data) {
+  struct config_elements * config = (struct config_elements *)client_data;
+  json_t * j_result = is_client_valid(config, request->json_body, 1);
+  
+  if (j_result != NULL && json_array_size(j_result) == 0) {
+    if (add_client(config, request->json_body) != G_OK) {
+      response->status = 500;
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client - Error adding new client");
+    }
+  } else if (j_result != NULL && json_array_size(j_result) > 0) {
+    response->status = 400;
+    response->json_body = json_copy(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client - Error is_client_valid");
+    response->status = 500;
+  }
+  json_decref(j_result);
   return U_OK;
 }
 
-int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_response * response, void * client_data) {
+  struct config_elements * config = (struct config_elements *)client_data;
+  json_t * j_client, * j_result;
+  
+  if (u_map_get(request->map_url, "source") == NULL || 0 == strcmp("all", u_map_get(request->map_url, "source")) || 0 == strcmp("ldap", u_map_get(request->map_url, "source")) || 0 == strcmp("database", u_map_get(request->map_url, "source"))) {
+    j_client = get_client(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "source"));
+    if (check_result_value(j_client, G_OK)) {
+      j_result = is_client_valid(config, request->json_body, 0);
+      if (j_result != NULL && json_array_size(j_result) == 0) {
+        if (set_client(config, u_map_get(request->map_url, "client_id"), request->json_body, json_string_value(json_object_get(json_object_get(j_client, "client"), "source"))) != G_OK) {
+          response->status = 500;
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client - Error adding new client");
+        }
+      } else if (j_result != NULL && json_array_size(j_result) > 0) {
+        response->status = 400;
+        response->json_body = json_copy(j_result);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client - Error is_client_valid");
+        response->status = 500;
+      }
+      json_decref(j_result);
+    } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
+      response->status = 404;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client - Error getting client");
+      response->status = 500;
+    }
+    json_decref(j_client);
+  } else {
+    response->status = 400;
+  }
   return U_OK;
 }
 
-int callback_glewlwyd_delete_client (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_delete_client (const struct _u_request * request, struct _u_response * response, void * client_data) {
+  struct config_elements * config = (struct config_elements *)client_data;
+  json_t * j_client;
+  
+  if (u_map_get(request->map_url, "source") == NULL || 0 == strcmp("all", u_map_get(request->map_url, "source")) || 0 == strcmp("ldap", u_map_get(request->map_url, "source")) || 0 == strcmp("database", u_map_get(request->map_url, "source"))) {
+    j_client = get_client(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "source"));
+    if (check_result_value(j_client, G_OK)) {
+      if (delete_client(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(j_client, "client"), "source"))) != G_OK) {
+        response->status = 500;
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_client - Error deleting client");
+      }
+    } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
+      response->status = 404;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_client - Error get_scope");
+      response->status = 500;
+    }
+    json_decref(j_client);
+  } else {
+    response->status = 400;
+  }
   return U_OK;
 }
 

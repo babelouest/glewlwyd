@@ -119,14 +119,18 @@ struct _auth_ldap {
   
   char *  base_search_client;
   char *  filter_client_read;
-  char *  login_property_client_read;
+  char *  client_id_property_client_read;
   char *  scope_property_client_read;
   char *  name_property_client_read;
+  char *  description_property_client_read;
+  char *  redirect_uri_property_client_read;
   int     client_write;
   char *  rdn_property_client_write;
-  char ** login_property_client_write;
+  char ** client_id_property_client_write;
   char ** scope_property_client_write;
   char ** name_property_client_write;
+  char ** description_property_client_write;
+  char ** redirect_uri_property_client_write;
   char *  password_property_client_write;
   char *  password_algorithm_client_write;
   char ** object_class_client_write;
@@ -179,9 +183,8 @@ char *url_encode(char *str);
 char * generate_query_parameters(const struct _u_request * request);
 const char * get_ip_source(const struct _u_request * request);
 char * rand_string(char * str, size_t size);
-
-int Base64Decode(char* b64message, unsigned char** buffer, size_t* length);
-int Base64Encode(const unsigned char* buffer, size_t length, char** b64text);
+int generate_password(const char * algorithm, const char * password, char * stored_password);
+char * trimwhitespace(char * str);
 
 int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int check_auth_type_access_token_request (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -298,6 +301,23 @@ int set_user_database(struct config_elements * config, const char * user, json_t
 int delete_user(struct config_elements * config, const char * user, const char * source);
 int delete_user_ldap(struct config_elements * config, const char * user);
 int delete_user_database(struct config_elements * config, const char * user);
+
+json_t * get_client_list(struct config_elements * config, const char * source, long int offset, long int limit);
+json_t * get_client_list_ldap(struct config_elements * config, long int offset, long int limit);
+json_t * get_client_list_database(struct config_elements * config, long int offset, long int limit);
+json_t * get_client(struct config_elements * config, const char * client_id, const char * source);
+json_t * get_client_database(struct config_elements * config, const char * client_id);
+json_t * get_client_ldap(struct config_elements * config, const char * client_id);
+json_t * is_client_valid(struct config_elements * config, json_t * j_client, int add);
+int add_client(struct config_elements * config, json_t * j_client);
+int add_client_ldap(struct config_elements * config, json_t * j_client);
+int add_client_database(struct config_elements * config, json_t * j_client);
+int set_client(struct config_elements * config, const char * client, json_t * j_client, const char * source);
+int set_client_ldap(struct config_elements * config, const char * client, json_t * j_client);
+int set_client_database(struct config_elements * config, const char * client, json_t * j_client);
+int delete_client(struct config_elements * config, const char * client, const char * source);
+int delete_client_ldap(struct config_elements * config, const char * client);
+int delete_client_database(struct config_elements * config, const char * client);
 
 char * generate_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
 char * generate_access_token(struct config_elements * config, const char * refresh_token, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);

@@ -78,7 +78,6 @@ CREATE TABLE `g_redirect_uri` (
   `gc_id` INT(11) NOT NULL,
   `gru_name` VARCHAR(128) NOT NULL,
   `gru_uri` VARCHAR(512),
-  `gru_enabled` TINYINT(1) DEFAULT 1,
   FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE
 );
 
