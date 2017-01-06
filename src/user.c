@@ -1011,16 +1011,34 @@ int add_user_ldap(struct config_elements * config, json_t * j_user) {
     }
     
     free(scope_values);
-    free(mods[0]);
-    for (i=1; i<nb_attr-2; i++) {
-      free(mods[i]->mod_values);
-      free(mods[i]);
+    attr_counter=0;
+    free(mods[attr_counter]);
+    attr_counter++;
+    for (i=0; json_object_get(j_user, "login") != NULL && config->auth_ldap->login_property_user_write[i] != NULL; i++) {
+      free(mods[attr_counter]->mod_values);
+      free(mods[attr_counter]);
+      attr_counter++;
     }
-    i++;
-    free(mods[i]);
-    i++;
-    free(mods[i]);
-    i++;
+    for (i=0; config->auth_ldap->name_property_user_write[i] != NULL; i++) {
+      free(mods[attr_counter]->mod_values);
+      free(mods[attr_counter]);
+      attr_counter++;
+    }
+    for (i=0; json_object_get(j_user, "email") != NULL && config->auth_ldap->email_property_user_write[i] != NULL; i++) {
+      free(mods[attr_counter]->mod_values);
+      free(mods[attr_counter]);
+      attr_counter++;
+    }
+    for (i=0; config->use_scope && config->auth_ldap->scope_property_user_write[i] != NULL && json_object_get(j_user, "scope") != NULL; i++) {
+      free(mods[attr_counter]->mod_values);
+      free(mods[attr_counter]);
+      attr_counter++;
+    }
+    if (json_object_get(j_user, "password") != NULL && generate_password(config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(j_user, "password")), password)) {
+      free(mods[attr_counter]->mod_values);
+      free(mods[attr_counter]);
+      attr_counter++;
+    }
     free(mods);
     free(new_dn);
   }
@@ -1200,15 +1218,27 @@ int set_user_ldap(struct config_elements * config, const char * user, json_t * j
     }
     
     free(scope_values);
-    for (i=0; i<nb_attr-2; i++) {
-      free(mods[i]->mod_values);
-      free(mods[i]);
+    attr_counter = 0;
+    for (i=0; json_object_get(j_user, "name") != NULL && config->auth_ldap->name_property_user_write[i] != NULL; i++) {
+      free(mods[attr_counter]->mod_values);
+      free(mods[attr_counter]);
+      attr_counter++;
     }
-    i++;
-    free(mods[i]);
-    i++;
-    free(mods[i]);
-    i++;
+    for (i=0; json_object_get(j_user, "email") != NULL && config->auth_ldap->email_property_user_write[i] != NULL; i++) {
+      free(mods[attr_counter]->mod_values);
+      free(mods[attr_counter]);
+      attr_counter++;
+    }
+    for (i=0; config->use_scope && config->auth_ldap->scope_property_user_write[i] != NULL && json_object_get(j_user, "scope") != NULL; i++) {
+      free(mods[attr_counter]->mod_values);
+      free(mods[attr_counter]);
+      attr_counter++;
+    }
+    if (json_object_get(j_user, "password") != NULL && generate_password(config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(j_user, "password")), password)) {
+      free(mods[attr_counter]->mod_values);
+      free(mods[attr_counter]);
+      attr_counter++;
+    }
     free(mods);
     free(cur_dn);
   }

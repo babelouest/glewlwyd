@@ -23,7 +23,7 @@ struct _u_request user_req;
 
 START_TEST(test_glwd_auth_invalid_response_type)
 {
-  char * url = msprintf("%s/auth?response_type=invalid&login_validated=true&client_id=client1_id&redirect_uri=../app/index.html&state=xyzabcd&scope=scope1 scope2", SERVER_URI);
+  char * url = msprintf("%s/auth?response_type=invalid&login_validated=true&client_id=client1_id&redirect_uri=../app/index.html&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unsupported_response_type");
   free(url);
 	ck_assert_int_eq(res, 1);
@@ -32,7 +32,7 @@ END_TEST
 
 START_TEST(test_glwd_auth_code_state_ok)
 {
-  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/index.html&state=xyzabcd&scope=scope1 scope2", SERVER_URI);
+  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/index.html&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "state=xyzabcd");
   free(url);
 	ck_assert_int_eq(res, 1);
@@ -41,7 +41,7 @@ END_TEST
 
 START_TEST(test_glwd_auth_code_ok_redirect_login)
 {
-  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/index.html?param=client1_cb1&state=xyz&scope=scope1 scope2", SERVER_URI);
+  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/index.html?param=client1_cb1&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html");
   free(url);
 	ck_assert_int_eq(res, 1);
@@ -50,7 +50,7 @@ END_TEST
 
 START_TEST(test_glwd_auth_code_client_invalid)
 {
-  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client_error&redirect_uri=../app/index.html?param=client1_cb1&state=xyz&scope=scope1 scope2", SERVER_URI);
+  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client_error&redirect_uri=../app/index.html?param=client1_cb1&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unauthorized_client");
   free(url);
 	ck_assert_int_eq(res, 1);
@@ -59,7 +59,7 @@ END_TEST
 
 START_TEST(test_glwd_auth_code_uri_invalid)
 {
-  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client_error&redirect_uri=../app/index.html?param=invalid&state=xyz&scope=scope1 scope2", SERVER_URI);
+  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client_error&redirect_uri=../app/index.html?param=invalid&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unauthorized_client");
   free(url);
 	ck_assert_int_eq(res, 1);
@@ -86,7 +86,7 @@ END_TEST
 
 START_TEST(test_glwd_auth_code_ok_redirect_cb_with_code)
 {
-  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/index.html?param=client1_cb1&state=xyzabcd&scope=scope1 scope2", SERVER_URI);
+  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/index.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code=");
   free(url);
 	ck_assert_int_eq(res, 1);
@@ -146,19 +146,24 @@ int main(int argc, char *argv[])
     
     ulfius_init_request(&scope_req);
     ulfius_init_response(&scope_resp);
+    for (i=0; i<auth_resp.nb_cookies; i++) {
+      char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
+      u_map_put(scope_req.map_header, "Cookie", cookie);
+      free(cookie);
+    }
     scope_req.http_verb = strdup("POST");
     scope_req.http_url = msprintf("%s/auth/grant", SERVER_URI);
     u_map_put(scope_req.map_post_body, "scope", SCOPE_LIST);
     u_map_put(scope_req.map_post_body, "client_id", CLIENT);
-    if (ulfius_send_http_request(&auth_req, &auth_resp) != U_OK) {
+    if (ulfius_send_http_request(&scope_req, &scope_resp) != U_OK) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "Grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
     }
     ulfius_clean_response(&scope_resp);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error sending auth request");
   }
-  ulfius_clean_request(&auth_req);
-  ulfius_clean_response(&auth_resp);
+  ulfius_clean_request(&scope_req);
+  ulfius_clean_response(&scope_resp);
   
 	s = libjwt_suite();
 	sr = srunner_create(s);

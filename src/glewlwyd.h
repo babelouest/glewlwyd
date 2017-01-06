@@ -184,7 +184,6 @@ char * generate_query_parameters(const struct _u_request * request);
 const char * get_ip_source(const struct _u_request * request);
 char * rand_string(char * str, size_t size);
 int generate_password(const char * algorithm, const char * password, char * stored_password);
-char * trimwhitespace(char * str);
 
 int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int check_auth_type_access_token_request (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -318,6 +317,13 @@ int set_client_database(struct config_elements * config, const char * client, js
 int delete_client(struct config_elements * config, const char * client, const char * source);
 int delete_client_ldap(struct config_elements * config, const char * client);
 int delete_client_database(struct config_elements * config, const char * client);
+
+json_t * get_resource_list(struct config_elements * config);
+json_t * get_resource(struct config_elements * config, const char * resource);
+json_t * is_resource_valid(struct config_elements * config, json_t * j_resource, int add);
+int add_resource(struct config_elements * config, json_t * j_resource);
+int set_resource(struct config_elements * config, const char * resource, json_t * j_resource);
+int delete_resource(struct config_elements * config, const char * resource);
 
 char * generate_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
 char * generate_access_token(struct config_elements * config, const char * refresh_token, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);

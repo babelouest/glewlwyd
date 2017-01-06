@@ -46,7 +46,7 @@ json_t * get_scope_list(struct config_elements * config) {
   if (res == H_OK) {
     j_return = json_pack("{siso}", "result", G_OK, "scope", j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_scope_list error getting scoipe list");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_scope_list error getting scope list");
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;

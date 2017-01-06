@@ -160,9 +160,8 @@ CREATE INDEX `i_g_resource_scope` ON `g_resource_scope`(`grs_id`);
 -- Client authorization type table, to store authorization types available for the client
 CREATE TABLE `g_client_authorization_type` (
   `gcat_id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `gc_id` INTEGER NOT NULL,
+  `gc_client_id` TEXT NOT NULL,
   `got_id` INTEGER NOT NULL,
-  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE,
   FOREIGN KEY(`got_id`) REFERENCES `g_authorization_type`(`got_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_client_authorization_type` ON `g_client_authorization_type`(`gcat_id`);
@@ -170,10 +169,9 @@ CREATE INDEX `i_g_client_authorization_type` ON `g_client_authorization_type`(`g
 -- Client user scope table, to store the authorization of the user to use scope for this client
 CREATE TABLE `g_client_user_scope` (
   `gcus_id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `gc_id` INTEGER NOT NULL,
+  `gc_client_id` TEXT NOT NULL,
   `gco_username` TEXT NOT NULL,
   `gs_id` INTEGER NOT NULL,
-  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE,
   FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_client_user_scope` ON `g_client_user_scope`(`gcus_id`);

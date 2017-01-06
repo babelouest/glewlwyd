@@ -123,19 +123,25 @@ int main(int argc, char *argv[])
       char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
       u_map_put(user_req.map_header, "Cookie", cookie);
       free(cookie);
-      y_log_message(Y_LOG_LEVEL_INFO, "Cookie %s stored", auth_resp.map_cookie[i].key);
     }
     
     ulfius_init_request(&scope_req);
     ulfius_init_response(&scope_resp);
+    for (i=0; i<auth_resp.nb_cookies; i++) {
+      char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
+      u_map_put(scope_req.map_header, "Cookie", cookie);
+      free(cookie);
+    }
     scope_req.http_verb = strdup("POST");
     scope_req.http_url = msprintf("%s/auth/grant", SERVER_URI);
     u_map_put(scope_req.map_post_body, "scope", SCOPE_LIST);
     u_map_put(scope_req.map_post_body, "client_id", CLIENT);
-    if (ulfius_send_http_request(&auth_req, &auth_resp) != U_OK) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "Grant scope %s for %s error", CLIENT, SCOPE_LIST);
+    if (ulfius_send_http_request(&scope_req, &scope_resp) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "Grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
     }
     ulfius_clean_response(&scope_resp);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error sending auth request");
   }
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
@@ -149,9 +155,9 @@ int main(int argc, char *argv[])
   
   free(scope_req.http_verb);
   scope_req.http_verb = msprintf("DELETE");
-    if (ulfius_send_http_request(&auth_req, NULL) != U_OK) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "Remove grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
-    }
+  if (ulfius_send_http_request(&auth_req, NULL) != U_OK) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Remove grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
+  }
   
   url = msprintf("%s/auth/user/", SERVER_URI);
   run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);

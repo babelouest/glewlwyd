@@ -775,9 +775,7 @@ int callback_glewlwyd_get_list_client (const struct _u_request * request, struct
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_list_client - Error getting client list");
     response->status = 500;
   }
-  //y_log_message(Y_LOG_LEVEL_DEBUG, "grut ? %s", json_dumps(response->json_body, JSON_ENCODE_ANY));
   json_decref(j_result);
-  //y_log_message(Y_LOG_LEVEL_DEBUG, "grut ! %s", json_dumps(response->json_body, JSON_ENCODE_ANY));
   return U_OK;
 }
 
@@ -881,22 +879,100 @@ int callback_glewlwyd_delete_client (const struct _u_request * request, struct _
 }
 
 int callback_glewlwyd_get_list_resource (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_result = get_resource_list(config);
+  
+  if (check_result_value(j_result, G_OK)) {
+    response->json_body = json_copy(json_object_get(j_result, "resource"));
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_list_resource - Error getting resource list");
+    response->status = 500;
+  }
+  json_decref(j_result);
   return U_OK;
 }
 
 int callback_glewlwyd_get_resource (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_result = get_resource(config, u_map_get(request->map_url, "resource"));
+  
+  if (check_result_value(j_result, G_OK)) {
+    response->json_body = json_copy(json_object_get(j_result, "resource"));
+  } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_list_resource - Error getting resource list");
+    response->status = 500;
+  }
+  json_decref(j_result);
   return U_OK;
 }
 
 int callback_glewlwyd_add_resource (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_result = is_resource_valid(config, request->json_body, 1);
+  
+  if (j_result != NULL && json_array_size(j_result) == 0) {
+    if (add_resource(config, request->json_body) != G_OK) {
+      response->status = 500;
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_resource - Error adding new resource");
+    }
+  } else if (j_result != NULL && json_array_size(j_result) > 0) {
+    response->status = 400;
+    response->json_body = json_copy(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_resource - Error is_resource_valid");
+    response->status = 500;
+  }
+  json_decref(j_result);
   return U_OK;
 }
 
 int callback_glewlwyd_set_resource (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_resource = get_resource(config, u_map_get(request->map_url, "resource")), * j_result;
+  
+  if (check_result_value(j_resource, G_OK)) {
+    j_result = is_resource_valid(config, request->json_body, 0);
+    if (j_result != NULL && json_array_size(j_result) == 0) {
+      if (set_resource(config, u_map_get(request->map_url, "resource"), request->json_body) != G_OK) {
+        response->status = 500;
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_resource - Error adding new resource");
+      }
+    } else if (j_result != NULL && json_array_size(j_result) > 0) {
+      response->status = 400;
+      response->json_body = json_copy(j_result);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_resource - Error is_resource_valid");
+      response->status = 500;
+    }
+    json_decref(j_result);
+  } else if (check_result_value(j_resource, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_resource - Error get_resource");
+    response->status = 500;
+  }
+  json_decref(j_resource);
   return U_OK;
 }
 
 int callback_glewlwyd_delete_resource (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_resource = get_resource(config, u_map_get(request->map_url, "resource"));
+  
+  if (check_result_value(j_resource, G_OK)) {
+    if (delete_resource(config, u_map_get(request->map_url, "resource")) != G_OK) {
+      response->status = 500;
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_resource - Error adding new resource");
+    }
+  } else if (check_result_value(j_resource, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_resource - Error get_resource");
+    response->status = 500;
+  }
+  json_decref(j_resource);
   return U_OK;
 }
 

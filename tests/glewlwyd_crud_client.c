@@ -17,6 +17,7 @@
 #define USERNAME "admin"
 #define PASSWORD "MyAdminPassword2016!"
 #define SCOPE_LIST "g_admin"
+#define NEW_CLIENT_SCOPE_LIST "scope1 scope2"
 
 struct _u_request user_req;
 
@@ -60,7 +61,7 @@ START_TEST(test_glwd_crud_client_add_ok_database)
   char * url = msprintf("%s/client/", SERVER_URI);
   int res;
   
-  json_body = json_pack("{sssssssssssosos[ss]s[{ssss}{ssss}]}", 
+  json_body = json_pack("{sssssssssssosos[ss]s[ss]s[{ssss}{ssss}]}", 
                         "source", "database", 
                         "name", "new_client", 
                         "client_id", "new_client", 
@@ -70,6 +71,9 @@ START_TEST(test_glwd_crud_client_add_ok_database)
                         "confidential", json_true(),
                         "scope", 
                           "scope1", "scope2",
+                        "authorization_type",
+                          "code",
+                          "client_credentials",
                         "redirect_uri",
                           "name", "uri1",
                           "uri", "http://example1.com/",
@@ -114,13 +118,16 @@ START_TEST(test_glwd_crud_client_set_new_database)
 {
   json_t * json_body;
   char * url = msprintf("%s/client/new_client?source=database", SERVER_URI);
-  json_body = json_pack("{sssssosos[ss]s[{ssss}{ssss}]}", 
+  json_body = json_pack("{sssssosos[ss]s[ss]s[{ssss}{ssss}]}", 
                         "name", "new_client", 
                         "description", "New Description", 
                         "enabled", json_true(),
                         "confidential", json_true(),
                         "scope", 
                           "scope1", "scope2",
+                        "authorization_type",
+                          "code",
+                          "client_credentials",
                         "redirect_uri",
                           "name", "uri1",
                           "uri", "http://example1.com/",
@@ -146,6 +153,21 @@ START_TEST(test_glwd_crud_client_get_new_updated_database)
 }
 END_TEST
 
+START_TEST(test_glwd_crud_client_connect_success)
+{
+  char * url = msprintf("%s/token/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", "scope1");
+  
+  int res = run_simple_test(NULL, "POST", url, "new_client", "password", NULL, &body, 200, NULL, "access_token", NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
 START_TEST(test_glwd_crud_client_delete_new_database)
 {
   char * url = msprintf("%s/client/new_client?source=database", SERVER_URI);
@@ -156,13 +178,28 @@ START_TEST(test_glwd_crud_client_delete_new_database)
 }
 END_TEST
 
+START_TEST(test_glwd_crud_client_connect_fail)
+{
+  char * url = msprintf("%s/token/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", NEW_CLIENT_SCOPE_LIST);
+  
+  int res = run_simple_test(NULL, "POST", url, "new_client", "password", NULL, &body, 403, NULL, NULL, NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
 START_TEST(test_glwd_crud_client_add_ok_ldap)
 {
   json_t * json_body;
   char * url = msprintf("%s/client/", SERVER_URI);
   int res;
   
-  json_body = json_pack("{sssssssssssosos[ss]s[{ssss}]}", 
+  json_body = json_pack("{sssssssssssosos[ss]s[ss]s[{ssss}]}", 
                         "source", "ldap", 
                         "name", "New Client", 
                         "client_id", "new_client", 
@@ -172,6 +209,9 @@ START_TEST(test_glwd_crud_client_add_ok_ldap)
                         "confidential", json_true(),
                         "scope", 
                           "scope1", "scope2",
+                        "authorization_type",
+                          "code",
+                          "client_credentials",
                         "redirect_uri",
                           "name", "uri1",
                           "uri", "http://example1.com/",
@@ -216,13 +256,16 @@ START_TEST(test_glwd_crud_client_set_new_ldap)
 {
   json_t * json_body;
   char * url = msprintf("%s/client/new_client?source=ldap", SERVER_URI);
-  json_body = json_pack("{sssssosos[ss]s[{ssss}]}", 
+  json_body = json_pack("{sssssosos[ss]s[ss]s[{ssss}]}", 
                         "name", "New Client", 
                         "description", "New Description", 
                         "enabled", json_true(),
                         "confidential", json_true(),
                         "scope", 
                           "scope1", "scope2",
+                        "authorization_type",
+                          "code",
+                          "client_credentials",
                         "redirect_uri",
                           "name", "uri1",
                           "uri", "http://example1.com/",
@@ -264,7 +307,7 @@ START_TEST(test_glwd_crud_client_add_ok_no_source)
   char * url = msprintf("%s/client/", SERVER_URI);
   int res;
   
-  json_body = json_pack("{sssssssssosos[ss]s[{ssss}{ssss}]}", 
+  json_body = json_pack("{sssssssssosos[ss]s[ss]s[{ssss}{ssss}]}", 
                         "name", "New Client", 
                         "client_id", "new_client", 
                         "description", "New Client", 
@@ -273,6 +316,9 @@ START_TEST(test_glwd_crud_client_add_ok_no_source)
                         "confidential", json_true(),
                         "scope", 
                           "scope1", "scope2",
+                        "authorization_type",
+                          "code",
+                          "client_credentials",
                         "redirect_uri",
                           "name", "uri1",
                           "uri", "http://example1.com/",
@@ -317,13 +363,16 @@ START_TEST(test_glwd_crud_client_set_new_no_source)
 {
   json_t * json_body;
   char * url = msprintf("%s/client/new_client", SERVER_URI);
-  json_body = json_pack("{sssssosos[ss]s[{ssss}{ssss}]}", 
+  json_body = json_pack("{sssssosos[ss]s[ss]s[{ssss}{ssss}]}", 
                         "name", "New Client", 
                         "description", "New Description", 
                         "enabled", json_true(),
                         "confidential", json_true(),
                         "scope", 
                           "scope1", "scope2",
+                        "authorization_type",
+                          "code",
+                          "client_credentials",
                         "redirect_uri",
                           "name", "uri1",
                           "uri", "http://example1.com/",
@@ -374,19 +423,25 @@ static Suite *libjwt_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_client_get_new_database);
   tcase_add_test(tc_core, test_glwd_crud_client_set_new_database);
   tcase_add_test(tc_core, test_glwd_crud_client_get_new_updated_database);
+  tcase_add_test(tc_core, test_glwd_crud_client_connect_success);
   tcase_add_test(tc_core, test_glwd_crud_client_delete_new_database);
+  tcase_add_test(tc_core, test_glwd_crud_client_connect_fail);
   tcase_add_test(tc_core, test_glwd_crud_client_add_ok_ldap);
   tcase_add_test(tc_core, test_glwd_crud_client_add_invalid_ldap);
   tcase_add_test(tc_core, test_glwd_crud_client_get_new_ldap);
   tcase_add_test(tc_core, test_glwd_crud_client_set_new_ldap);
   tcase_add_test(tc_core, test_glwd_crud_client_get_new_updated_ldap);
+  tcase_add_test(tc_core, test_glwd_crud_client_connect_success);
   tcase_add_test(tc_core, test_glwd_crud_client_delete_new_ldap);
+  tcase_add_test(tc_core, test_glwd_crud_client_connect_fail);
   tcase_add_test(tc_core, test_glwd_crud_client_add_ok_no_source);
   tcase_add_test(tc_core, test_glwd_crud_client_add_invalid_no_source);
   tcase_add_test(tc_core, test_glwd_crud_client_get_new_no_source);
   tcase_add_test(tc_core, test_glwd_crud_client_set_new_no_source);
   tcase_add_test(tc_core, test_glwd_crud_client_get_new_updated_no_source);
+  tcase_add_test(tc_core, test_glwd_crud_client_connect_success);
   tcase_add_test(tc_core, test_glwd_crud_client_delete_new_no_source);
+  tcase_add_test(tc_core, test_glwd_crud_client_connect_fail);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
