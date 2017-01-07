@@ -245,7 +245,7 @@ json_t * auth_check_client_credentials_ldap(struct config_elements * config, con
         if (result_login == LDAP_SUCCESS) {
           res = json_pack("{si}", "result", G_OK);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Client '%s' error log in", client_id);
+          y_log_message(Y_LOG_LEVEL_ERROR, "Client '%s' log in error", client_id);
           res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
       }
@@ -973,7 +973,7 @@ json_t * is_client_valid(struct config_elements * config, json_t * j_client, int
 }
 
 int add_client(struct config_elements * config, json_t * j_client) {
-  if (json_object_get(j_client, "source") != NULL && 0 == strcmp("ldap", json_string_value(json_object_get(j_client, "source")))) {
+  if (json_object_get(j_client, "source") == NULL || 0 == strcmp("ldap", json_string_value(json_object_get(j_client, "source")))) {
     return add_client_ldap(config, j_client);
   } else {
     return add_client_database(config, j_client);
@@ -993,7 +993,7 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
   int nb_scope = 0, nb_redirect_uri = json_array_size(json_object_get(j_client, "redirect_uri")), nb_attr = 2, i, attr_counter; // Default attributes is objectClass
   json_t * j_scope, * j_redirect_uri, * j_query;
   size_t index;
-  char * new_dn, password[128] = {0}, ** redirect_uri_array, * escaped, * clause_auth_type;
+  char * new_dn, * password = NULL, ** redirect_uri_array, * escaped, * clause_auth_type;
   
   for (i=0; json_object_get(j_client, "client_id") != NULL && config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
     nb_attr++;
@@ -1102,14 +1102,17 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
       attr_counter++;
     }
     
-    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && generate_password(config->auth_ldap->password_algorithm_client_write, json_string_value(json_object_get(j_client, "password")), password)) {
-      mods[attr_counter] = malloc(sizeof(LDAPMod));
-      mods[attr_counter]->mod_values    = malloc(2 * sizeof(char *));
-      mods[attr_counter]->mod_op        = LDAP_MOD_ADD;
-      mods[attr_counter]->mod_type      = config->auth_ldap->password_property_client_write;
-      mods[attr_counter]->mod_values[0] = password;
-      mods[attr_counter]->mod_values[1] = NULL;
-      attr_counter++;
+    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
+      password = generate_hash(config, config->auth_ldap->password_algorithm_client_write, json_string_value(json_object_get(j_client, "password")));
+      if (password != NULL) {
+        mods[attr_counter] = malloc(sizeof(LDAPMod));
+        mods[attr_counter]->mod_values    = malloc(2 * sizeof(char *));
+        mods[attr_counter]->mod_op        = LDAP_MOD_ADD;
+        mods[attr_counter]->mod_type      = config->auth_ldap->password_property_client_write;
+        mods[attr_counter]->mod_values[0] = password;
+        mods[attr_counter]->mod_values[1] = NULL;
+        attr_counter++;
+      }
     }
     
     mods[attr_counter] = NULL;
@@ -1176,13 +1179,14 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
       free(mods[attr_counter]);
       attr_counter++;
     }
-    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && generate_password(config->auth_ldap->password_algorithm_client_write, json_string_value(json_object_get(j_client, "password")), password)) {
+    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
     }
     free(mods);
     free(new_dn);
+    free(password);
   }
   ldap_unbind_ext(ldap, NULL, NULL);
   return res;
@@ -1333,7 +1337,7 @@ int set_client_ldap(struct config_elements * config, const char * client_id, jso
   int nb_scope = 0, nb_redirect_uri = json_array_size(json_object_get(j_client, "redirect_uri")), nb_attr = 2, i, attr_counter;
   json_t * j_scope, * j_redirect_uri;
   size_t index;
-  char * cur_dn, password[128] = {0}, ** redirect_uri_array;
+  char * cur_dn, * password = NULL, ** redirect_uri_array;
   
   for (i=0; json_object_get(j_client, "client_id") != NULL && config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
     nb_attr++;
@@ -1436,14 +1440,17 @@ int set_client_ldap(struct config_elements * config, const char * client_id, jso
       attr_counter++;
     }
     
-    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && generate_password(config->auth_ldap->password_algorithm_client_write, json_string_value(json_object_get(j_client, "password")), password)) {
-      mods[attr_counter] = malloc(sizeof(LDAPMod));
-      mods[attr_counter]->mod_values    = malloc(2 * sizeof(char *));
-      mods[attr_counter]->mod_op        = LDAP_MOD_REPLACE;
-      mods[attr_counter]->mod_type      = config->auth_ldap->password_property_client_write;
-      mods[attr_counter]->mod_values[0] = password;
-      mods[attr_counter]->mod_values[1] = NULL;
-      attr_counter++;
+    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
+      password = generate_hash(config, config->auth_ldap->password_algorithm_client_write, json_string_value(json_object_get(j_client, "password")));
+      if (password != NULL) {
+        mods[attr_counter] = malloc(sizeof(LDAPMod));
+        mods[attr_counter]->mod_values    = malloc(2 * sizeof(char *));
+        mods[attr_counter]->mod_op        = LDAP_MOD_REPLACE;
+        mods[attr_counter]->mod_type      = config->auth_ldap->password_property_client_write;
+        mods[attr_counter]->mod_values[0] = password;
+        mods[attr_counter]->mod_values[1] = NULL;
+        attr_counter++;
+      }
     }
     mods[attr_counter] = NULL;
     
@@ -1481,13 +1488,14 @@ int set_client_ldap(struct config_elements * config, const char * client_id, jso
       free(mods[attr_counter]);
       attr_counter++;
     }
-    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && generate_password(config->auth_ldap->password_algorithm_client_write, json_string_value(json_object_get(j_client, "password")), password)) {
+    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
     }
     free(mods);
     free(cur_dn);
+    free(password);
   }
   ldap_unbind_ext(ldap, NULL, NULL);
   return res;

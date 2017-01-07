@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include <libconfig.h>
 #include <openssl/md5.h>
+#include <openssl/ssl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -191,6 +192,8 @@ int main (int argc, char ** argv) {
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
 
   y_log_message(Y_LOG_LEVEL_INFO, "Start glewlwyd on port %d, prefix: %s, secure: %s", config->instance->port, config->url_prefix, config->use_secure_connection?"true":"false");
+  
+  OpenSSL_add_all_digests();
   
   if (config->use_secure_connection) {
     char * key_file = get_file_content(config->secure_connection_key_file);
@@ -813,6 +816,7 @@ int build_config_from_file(struct config_elements * config) {
           return 0;
         } else {
           memset(config->auth_ldap, 0, sizeof(struct _auth_ldap));
+          
           config->auth_ldap->uri = nstrdup(cur_auth_ldap_uri);
           if (config->auth_ldap->uri == NULL) {
             config_destroy(&cfg);
@@ -1273,42 +1277,6 @@ char * generate_query_parameters(const struct _u_request * request) {
 }
 
 /**
- *
- * Decode a u_map into a string
- * Returned value must be free'd after use
- *
- */
-char * print_map(const struct _u_map * map) {
-  char * line, * to_return = NULL;
-  const char **keys, * value;
-  int len, i;
-  if (map != NULL) {
-    keys = u_map_enum_keys(map);
-    for (i=0; keys[i] != NULL; i++) {
-      value = u_map_get(map, keys[i]);
-      len = snprintf(NULL, 0, "key is %s, value is %s", keys[i], value);
-      line = malloc((len+1)*sizeof(char));
-      snprintf(line, (len+1), "key is %s, value is %s", keys[i], value);
-      if (to_return != NULL) {
-        len = strlen(to_return) + strlen(line) + 1;
-        to_return = realloc(to_return, (len+1)*sizeof(char));
-        if (strlen(to_return) > 0) {
-          strcat(to_return, "\n");
-        }
-      } else {
-                to_return = malloc((strlen(line) + 1)*sizeof(char));
-                to_return[0] = 0;
-      }
-      strcat(to_return, line);
-      free(line);
-    }
-    return to_return;
-  } else {
-    return NULL;
-  }
-}
-
-/**
  * Generates a random string and store it in str
  */
 char * rand_string(char * str, size_t str_size) {
@@ -1316,7 +1284,6 @@ char * rand_string(char * str, size_t str_size) {
     size_t n;
     
     if (str_size > 0 && str != NULL) {
-        --str_size;
         for (n = 0; n < str_size; n++) {
             int key = rand() % (int) (sizeof charset - 1);
             str[n] = charset[key];
@@ -1328,12 +1295,21 @@ char * rand_string(char * str, size_t str_size) {
     }
 }
 
-// So far this is not really implemented
-int generate_password(const char * algorithm, const char * password, char * stored_password) {
-  if (algorithm == NULL || password == NULL || stored_password == NULL) {
-    return 0;
-  } else {
-    strcpy(stored_password, password);
-    return 1;
-  }
+/**
+ * Generates a random string and store it in str
+ */
+char * rand_crypt_salt(char * str, size_t str_size) {
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
+    size_t n;
+    
+    if (str_size > 0 && str != NULL) {
+        for (n = 0; n < str_size; n++) {
+            int key = rand() % (int) (sizeof charset - 1);
+            str[n] = charset[key];
+        }
+        str[str_size] = '\0';
+        return str;
+    } else {
+      return NULL;
+    }
 }

@@ -32,6 +32,11 @@
 #include <jansson.h>
 #include <jwt.h>
 
+#define _GNU_SOURCE
+#define __USE_GNU
+#include <crypt.h>
+#include <stdio.h>
+
 /** Angharad libraries **/
 #include <ulfius.h>
 #include <yder.h>
@@ -96,10 +101,20 @@
 
 int global_handler_variable;
 
+typedef enum {
+  digest_SHA1,
+  digest_SHA224,
+  digest_SHA256,
+  digest_SHA384,
+  digest_SHA512,
+  digest_MD5,
+} digest_algorithm;
+
 struct _auth_ldap {
-  char *  uri;
-  char *  bind_dn;
-  char *  bind_passwd;
+  char *            uri;
+  char *            bind_dn;
+  char *            bind_passwd;
+  struct crypt_data cur_crypt_data;
   
   char *  base_search_user;
   char *  filter_user_read;
@@ -183,7 +198,9 @@ char *url_encode(char *str);
 char * generate_query_parameters(const struct _u_request * request);
 const char * get_ip_source(const struct _u_request * request);
 char * rand_string(char * str, size_t size);
-int generate_password(const char * algorithm, const char * password, char * stored_password);
+char * rand_crypt_salt(char * str, size_t str_size);
+char * generate_hash(struct config_elements * config, const char * digest, const char * password);
+int generate_digest(digest_algorithm digest, const char * password, int use_salt, char * out_password);
 
 int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int check_auth_type_access_token_request (const struct _u_request * request, struct _u_response * response, void * user_data);

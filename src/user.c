@@ -516,7 +516,7 @@ json_t * auth_check_user_credentials_ldap(struct config_elements * config, const
         if (result_login == LDAP_SUCCESS) {
           res = json_pack("{si}", "result", G_OK);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "User '%s' error log in", username);
+          y_log_message(Y_LOG_LEVEL_ERROR, "User '%s' log in error", username);
           res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
       }
@@ -901,7 +901,7 @@ int add_user_ldap(struct config_elements * config, json_t * j_user) {
   int nb_scope = 0, nb_attr = 3, i, attr_counter; // Default attributes are objectClass and password
   json_t * j_scope;
   size_t index;
-  char * new_dn, password[128];
+  char * new_dn, * password = NULL;
   
   for (i=0; json_object_get(j_user, "login") != NULL && config->auth_ldap->login_property_user_write[i] != NULL; i++) {
     nb_attr++;
@@ -991,14 +991,17 @@ int add_user_ldap(struct config_elements * config, json_t * j_user) {
       attr_counter++;
     }
     
-    if (json_object_get(j_user, "password") != NULL && generate_password(config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(j_user, "password")), password)) {
-      mods[attr_counter] = malloc(sizeof(LDAPMod));
-      mods[attr_counter]->mod_values    = malloc(2 * sizeof(char *));
-      mods[attr_counter]->mod_op        = LDAP_MOD_REPLACE;
-      mods[attr_counter]->mod_type      = config->auth_ldap->password_property_user_write;
-      mods[attr_counter]->mod_values[0] = password;
-      mods[attr_counter]->mod_values[1] = NULL;
-      attr_counter++;
+    if (json_object_get(j_user, "password") != NULL) {
+      password = generate_hash(config, config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(j_user, "password")));
+      if (password != NULL) {
+        mods[attr_counter] = malloc(sizeof(LDAPMod));
+        mods[attr_counter]->mod_values    = malloc(2 * sizeof(char *));
+        mods[attr_counter]->mod_op        = LDAP_MOD_REPLACE;
+        mods[attr_counter]->mod_type      = config->auth_ldap->password_property_user_write;
+        mods[attr_counter]->mod_values[0] = password;
+        mods[attr_counter]->mod_values[1] = NULL;
+        attr_counter++;
+      }
     }
     
     mods[attr_counter] = NULL;
@@ -1034,13 +1037,14 @@ int add_user_ldap(struct config_elements * config, json_t * j_user) {
       free(mods[attr_counter]);
       attr_counter++;
     }
-    if (json_object_get(j_user, "password") != NULL && generate_password(config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(j_user, "password")), password)) {
+    if (json_object_get(j_user, "password") != NULL) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
     }
     free(mods);
     free(new_dn);
+    free(password);
   }
   ldap_unbind_ext(ldap, NULL, NULL);
   return res;
@@ -1131,7 +1135,7 @@ int set_user_ldap(struct config_elements * config, const char * user, json_t * j
   int nb_scope = 0, nb_attr = 2, i, attr_counter;
   json_t * j_scope;
   size_t index;
-  char * cur_dn, password[128];
+  char * cur_dn, * password = NULL;
   
   for (i=0; json_object_get(j_user, "name") != NULL && config->auth_ldap->name_property_user_write[i] != NULL; i++) {
     nb_attr++;
@@ -1198,14 +1202,17 @@ int set_user_ldap(struct config_elements * config, const char * user, json_t * j
       attr_counter++;
     }
     
-    if (json_object_get(j_user, "password") != NULL && generate_password(config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(j_user, "password")), password)) {
-      mods[attr_counter] = malloc(sizeof(LDAPMod));
-      mods[attr_counter]->mod_values    = malloc(2 * sizeof(char *));
-      mods[attr_counter]->mod_op        = LDAP_MOD_REPLACE;
-      mods[attr_counter]->mod_type      = config->auth_ldap->password_property_user_write;
-      mods[attr_counter]->mod_values[0] = password;
-      mods[attr_counter]->mod_values[1] = NULL;
-      attr_counter++;
+    if (json_object_get(j_user, "password") != NULL) {
+      password = generate_hash(config, config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(j_user, "password")));
+      if (password != NULL) {
+        mods[attr_counter] = malloc(sizeof(LDAPMod));
+        mods[attr_counter]->mod_values    = malloc(2 * sizeof(char *));
+        mods[attr_counter]->mod_op        = LDAP_MOD_REPLACE;
+        mods[attr_counter]->mod_type      = config->auth_ldap->password_property_user_write;
+        mods[attr_counter]->mod_values[0] = password;
+        mods[attr_counter]->mod_values[1] = NULL;
+        attr_counter++;
+      }
     }
     
     mods[attr_counter] = NULL;
@@ -1234,13 +1241,14 @@ int set_user_ldap(struct config_elements * config, const char * user, json_t * j
       free(mods[attr_counter]);
       attr_counter++;
     }
-    if (json_object_get(j_user, "password") != NULL && generate_password(config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(j_user, "password")), password)) {
+    if (json_object_get(j_user, "password") != NULL) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
     }
     free(mods);
     free(cur_dn);
+    free(password);
   }
   ldap_unbind_ext(ldap, NULL, NULL);
   return res;
