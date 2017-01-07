@@ -177,6 +177,7 @@ struct config_elements {
   unsigned int           refresh_token_expiration;
   unsigned int           access_token_expiration;
   char *                 admin_scope;
+  char *                 hash_algorithm;
 };
 
 /**
@@ -192,7 +193,6 @@ void exit_server(struct config_elements ** config, int exit_value);
 void print_help(FILE * output);
 const char * get_filename_ext(const char *path);
 char * get_file_content(const char * file_path);
-char * str2md5(const char * str, int length);
 char *url_decode(char *str);
 char *url_encode(char *str);
 char * generate_query_parameters(const struct _u_request * request);
@@ -200,7 +200,6 @@ const char * get_ip_source(const struct _u_request * request);
 char * rand_string(char * str, size_t size);
 char * rand_crypt_salt(char * str, size_t str_size);
 char * generate_hash(struct config_elements * config, const char * digest, const char * password);
-int generate_digest(digest_algorithm digest, const char * password, int use_salt, char * out_password);
 
 int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int check_auth_type_access_token_request (const struct _u_request * request, struct _u_response * response, void * user_data);

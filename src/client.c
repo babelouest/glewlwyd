@@ -86,7 +86,7 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
         password_escaped = h_escape_string(config->conn, client_password_header);
         tmp = msprintf("%s AND `gc_client_password` = PASSWORD('%s')", query, password_escaped);
       } else {
-        password_escaped = str2md5(client_password_header, strlen(client_password_header));
+        password_escaped = generate_hash(config, config->hash_algorithm, client_password_header);
         tmp = msprintf("%s AND `gc_client_password` = '%s'", query, password_escaped);
       }
       free(query);
@@ -142,7 +142,7 @@ json_t * auth_check_client_credentials_database(struct config_elements * config,
       client_password_escaped = h_escape_string(config->conn, password);
       clause_client_password = msprintf("= PASSWORD('%s')", client_password_escaped);
     } else {
-      client_password_escaped = str2md5(password, strlen(password));
+      client_password_escaped = generate_hash(config, config->hash_algorithm, password);
       clause_client_password = msprintf("= '%s'", client_password_escaped);
     }
     
@@ -1203,7 +1203,7 @@ int add_client_database(struct config_elements * config, json_t * j_client) {
       escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_client, "password")));
       password = msprintf("PASSWORD('%s')", escaped);
     } else {
-      escaped = str2md5(json_string_value(json_object_get(j_client, "password")), strlen(json_string_value(json_object_get(j_client, "password"))));
+      escaped = generate_hash(config, config->hash_algorithm, json_string_value(json_object_get(j_client, "password")));
       password = msprintf("'%s'", escaped);
     }
   } else {
@@ -1526,7 +1526,7 @@ int set_client_database(struct config_elements * config, const char * client_id,
       escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_client, "password")));
       password = msprintf("PASSWORD('%s')", escaped);
     } else {
-      escaped = str2md5(json_string_value(json_object_get(j_client, "password")), strlen(json_string_value(json_object_get(j_client, "password"))));
+      escaped = generate_hash(config, config->hash_algorithm, json_string_value(json_object_get(j_client, "password")));
       password = msprintf("'%s'", escaped);
     }
     json_object_set_new(json_object_get(j_query, "set"), "gu_password", json_string(password));

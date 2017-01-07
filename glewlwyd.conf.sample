@@ -102,6 +102,9 @@ use_secure_connection=false
 secure_connection_key_file="cert.key"
 secure_connection_pem_file="cert.pem"
 
+# Algorithms available are SHA1, SHA256, SHA512, MD5
+hash_algorithm = "SHA512"
+
 # MariaDB/Mysql database connection
 database =
 {
@@ -116,8 +119,8 @@ database =
 # SQLite database connection
 # database =
 # {
-#    type = "sqlite3";
-#    path = "/tmp/glewlwyd.db";
+#    type               = "sqlite3";
+#    path               = "/tmp/glewlwyd.db";
 # };
 
 # Authentication configuration
@@ -125,7 +128,6 @@ authentication =
 {
 
    database_auth            = true
-   sqite_password_algorithm = "SHA"
    
    ldap_auth                = true
    uri                      = "ldap://localhost"

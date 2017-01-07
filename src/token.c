@@ -40,7 +40,7 @@ int serialize_refresh_token(struct config_elements * config, const char * userna
   char * token_hash, * last_seen_value, * expired_at_value, * scope, * scope_escape, * scope_clause, * save_scope_list, * saveptr = NULL;
   json_int_t grt_id;
   
-  token_hash = str2md5(refresh_token, strlen(refresh_token));
+  token_hash = generate_hash(config, config->hash_algorithm, refresh_token);
   last_seen_value = msprintf(config->conn->type==HOEL_DB_TYPE_MARIADB?"FROM_UNIXTIME(%d)":"%d", now);
   expired_at_value = msprintf(config->conn->type==HOEL_DB_TYPE_MARIADB?"FROM_UNIXTIME(%d)":"%d", (now+config->refresh_token_expiration));
   
@@ -149,7 +149,7 @@ int serialize_access_token(struct config_elements * config, const uint auth_type
        * refresh_token_hash_escaped = NULL, * grt_id_clause = NULL;
   
   if (refresh_token != NULL) {
-    refresh_token_hash = str2md5(refresh_token, strlen(refresh_token));
+    refresh_token_hash = generate_hash(config, config->hash_algorithm, refresh_token);
     refresh_token_hash_escaped = h_escape_string(config->conn, refresh_token_hash);
     
     j_query = json_pack("{sss{s{ss}}s{ss}}",
@@ -287,7 +287,7 @@ char * generate_session_token(struct config_elements * config, const char * user
 int serialize_session_token(struct config_elements * config, const char * username, const char * ip_source, const char * session_token, time_t now) {
   json_t * j_query;
   int res;
-  char * session_hash = str2md5(session_token, strlen(session_token)), * last_seen_value, * expired_at_value;
+  char * session_hash = generate_hash(config, config->hash_algorithm, session_token), * last_seen_value, * expired_at_value;
   
   if (session_token != NULL) {
     last_seen_value = msprintf(config->conn->type==HOEL_DB_TYPE_MARIADB?"FROM_UNIXTIME(%d)":"%d", now);
@@ -403,7 +403,7 @@ char * generate_authorization_code(struct config_elements * config, const char *
   if (username != NULL && client_id != NULL && redirect_uri != NULL && ip_source != NULL) {
     uuid_generate_random(uuid);
     uuid_unparse_lower(uuid, code_value);
-    code_hash = str2md5(code_value, strlen(code_value));
+    code_hash = generate_hash(config, config->hash_algorithm, code_value);
     
     escape = h_escape_string(config->conn, client_id);
     clause_client_id = msprintf("(SELECT `gc_id` FROM `%s` WHERE `gc_client_id` = '%s')", GLEWLWYD_TABLE_CLIENT, escape);
@@ -535,7 +535,7 @@ json_t * session_check(struct config_elements * config, const char * session_val
       time(&now);
       expiration = jwt_get_grant_int(jwt, "iat") + jwt_get_grant_int(jwt, "expires_in");
       if (now < expiration) {
-        session_hash = str2md5(session_value, strlen(session_value));
+        session_hash = generate_hash(config, config->hash_algorithm, session_value);
         if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
           clause_expired_at = nstrdup("> NOW()");
         } else {
@@ -644,7 +644,7 @@ int session_delete(struct config_elements * config, const char * session_value) 
   char * session_hash;
   int res;
   
-  session_hash = str2md5(session_value, strlen(session_value));
+  session_hash = generate_hash(config, config->hash_algorithm, session_value);
   if (session_hash != NULL) {
     j_query = json_pack("{sss{si}s{ss}}",
                         "table",

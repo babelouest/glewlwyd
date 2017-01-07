@@ -239,6 +239,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     free((*config)->admin_scope);
     free((*config)->secure_connection_key_file);
     free((*config)->secure_connection_pem_file);
+    free((*config)->hash_algorithm);
     jwt_free((*config)->jwt);
     u_map_clean_full((*config)->mime_types);
     if ((*config)->auth_ldap != NULL) {
@@ -503,7 +504,7 @@ int build_config_from_file(struct config_elements * config) {
   
   config_t cfg;
   config_setting_t * root, * database, * auth, * jwt, * mime_type_list, * mime_type;
-  const char * cur_prefix, * cur_log_mode, * cur_log_level, * cur_log_file = NULL, * one_log_mode, 
+  const char * cur_prefix, * cur_log_mode, * cur_log_level, * cur_log_file = NULL, * one_log_mode, * cur_hash_algorithm, 
              * db_type, * db_sqlite_path, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL, * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL, * cur_session_key = NULL, * cur_admin_scope = NULL,
              * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL,
              * cur_auth_ldap_base_search_user = NULL, * cur_auth_ldap_filter_user_read = NULL, * cur_auth_ldap_login_property_user_read = NULL, * cur_auth_ldap_name_property_user_read = NULL, * cur_auth_ldap_email_property_user_read = NULL, * cur_auth_ldap_scope_property_user_read = NULL, * cur_auth_ldap_rdn_property_user_write = NULL, * cur_auth_ldap_login_property_user_write = NULL, * cur_auth_ldap_name_property_user_write = NULL, * cur_auth_ldap_email_property_user_write = NULL, * cur_auth_ldap_scope_property_user_write = NULL, * cur_auth_ldap_password_property_user_write = NULL, * cur_auth_ldap_password_algorithm_user_write = NULL, * cur_auth_ldap_object_class_user_write = NULL,
@@ -665,6 +666,24 @@ int build_config_from_file(struct config_elements * config) {
     } else {
       fprintf(stderr, "Error secure connection is active but certificate is not valid, exiting\n");
       config_destroy(&cfg);
+      return 0;
+    }
+  }
+  
+  // Get token hash algorithm
+  if (config_lookup_string(&cfg, "hash_algorithm", &cur_hash_algorithm)) {
+    config->hash_algorithm = nstrdup(cur_hash_algorithm);
+    if (config->hash_algorithm == NULL) {
+      fprintf(stderr, "Error allocating config->hash_algorithm, exiting\n");
+      config_destroy(&cfg);
+      return 0;
+    } else if (config->hash_algorithm == NULL || 
+              (strcmp("SHA1", config->hash_algorithm) &&
+              strcmp("SHA256", config->hash_algorithm) &&
+              strcmp("SHA512", config->hash_algorithm) &&
+              strcmp("MD5", config->hash_algorithm))) {
+      config_destroy(&cfg);
+      fprintf(stderr, "Error token hash algorithm: %s\n", config->hash_algorithm);
       return 0;
     }
   }
@@ -910,6 +929,22 @@ int build_config_from_file(struct config_elements * config) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->password_algorithm_user_write\n");
             return 0;
+          } else if (strcmp("SHA1", config->auth_ldap->password_algorithm_user_write) &&
+                     strcmp("SSHA", config->auth_ldap->password_algorithm_user_write) &&
+                     strcmp("SHA224", config->auth_ldap->password_algorithm_user_write) &&
+                     strcmp("SSHA224", config->auth_ldap->password_algorithm_user_write) &&
+                     strcmp("SHA256", config->auth_ldap->password_algorithm_user_write) &&
+                     strcmp("SSHA256", config->auth_ldap->password_algorithm_user_write) &&
+                     strcmp("SHA384", config->auth_ldap->password_algorithm_user_write) &&
+                     strcmp("SSHA384", config->auth_ldap->password_algorithm_user_write) &&
+                     strcmp("SHA512", config->auth_ldap->password_algorithm_user_write) &&
+                     strcmp("SSHA512", config->auth_ldap->password_algorithm_user_write) &&
+                     strcmp("MD5", config->auth_ldap->password_algorithm_user_write) &&
+                     strcmp("SMD5", config->auth_ldap->password_algorithm_user_write) &&
+                     strcmp("CRYPT", config->auth_ldap->password_algorithm_user_write)) {
+            config_destroy(&cfg);
+            fprintf(stderr, "Error user algorithm name unknown\n");
+            return 0;
           }
           if (split_string(cur_auth_ldap_object_class_user_write, ",", &config->auth_ldap->object_class_user_write) < 1) {
             config_destroy(&cfg);
@@ -1001,6 +1036,22 @@ int build_config_from_file(struct config_elements * config) {
           if (config->auth_ldap->password_algorithm_client_write == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->password_algorithm_client_write\n");
+            return 0;
+          } else if (strcmp("SHA1", config->auth_ldap->password_algorithm_client_write) &&
+                     strcmp("SSHA", config->auth_ldap->password_algorithm_client_write) &&
+                     strcmp("SHA224", config->auth_ldap->password_algorithm_client_write) &&
+                     strcmp("SSHA224", config->auth_ldap->password_algorithm_client_write) &&
+                     strcmp("SHA256", config->auth_ldap->password_algorithm_client_write) &&
+                     strcmp("SSHA256", config->auth_ldap->password_algorithm_client_write) &&
+                     strcmp("SHA384", config->auth_ldap->password_algorithm_client_write) &&
+                     strcmp("SSHA384", config->auth_ldap->password_algorithm_client_write) &&
+                     strcmp("SHA512", config->auth_ldap->password_algorithm_client_write) &&
+                     strcmp("SSHA512", config->auth_ldap->password_algorithm_client_write) &&
+                     strcmp("MD5", config->auth_ldap->password_algorithm_client_write) &&
+                     strcmp("SMD5", config->auth_ldap->password_algorithm_client_write) &&
+                     strcmp("CRYPT", config->auth_ldap->password_algorithm_client_write)) {
+            config_destroy(&cfg);
+            fprintf(stderr, "Error user algorithm name unknown\n");
             return 0;
           }
           if (split_string(cur_auth_ldap_object_class_client_write, ",", &config->auth_ldap->object_class_client_write) < 1) {
@@ -1203,39 +1254,6 @@ char * url_decode(char * str) {
 
 /**
  *
- * Converts a string into a md5 hash
- * Returned value must be free'd after use
- *
- */
-char * str2md5(const char * str, int length) {
-  int n;
-  MD5_CTX c;
-  unsigned char digest[16];
-  char *out = (char*)malloc(33);
-
-  MD5_Init(&c);
-
-  while (length > 0) {
-    if (length > 512) {
-      MD5_Update(&c, str, 512);
-    } else {
-      MD5_Update(&c, str, length);
-    }
-    length -= 512;
-    str += 512;
-  }
-
-  MD5_Final(digest, &c);
-
-  for (n = 0; n < 16; ++n) {
-    snprintf(&(out[n*2]), 16*2, "%02x", (unsigned int)digest[n]);
-  }
-
-  return out;
-}
-
-/**
- *
  * Generates a query string based on url and post parameters of a request
  * Returned value must be free'd after use
  *
@@ -1274,42 +1292,4 @@ char * generate_query_parameters(const struct _u_request * request) {
   u_map_clean(&params);
   
   return query;
-}
-
-/**
- * Generates a random string and store it in str
- */
-char * rand_string(char * str, size_t str_size) {
-    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.\"!/$%?&*()_-+=<>{}[]'";
-    size_t n;
-    
-    if (str_size > 0 && str != NULL) {
-        for (n = 0; n < str_size; n++) {
-            int key = rand() % (int) (sizeof charset - 1);
-            str[n] = charset[key];
-        }
-        str[str_size] = '\0';
-        return str;
-    } else {
-      return NULL;
-    }
-}
-
-/**
- * Generates a random string and store it in str
- */
-char * rand_crypt_salt(char * str, size_t str_size) {
-    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
-    size_t n;
-    
-    if (str_size > 0 && str != NULL) {
-        for (n = 0; n < str_size; n++) {
-            int key = rand() % (int) (sizeof charset - 1);
-            str[n] = charset[key];
-        }
-        str[str_size] = '\0';
-        return str;
-    } else {
-      return NULL;
-    }
 }

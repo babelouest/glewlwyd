@@ -435,7 +435,7 @@ int get_access_token_from_refresh (const struct _u_request * request, struct _u_
   
   if (refresh_token != NULL) {
     time(&now);
-    token_hash = str2md5(refresh_token, strlen(refresh_token));
+    token_hash = generate_hash(config, config->hash_algorithm, refresh_token);
     
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
       clause_expired_at = nstrdup("> NOW()");
@@ -605,7 +605,7 @@ int delete_refresh_token (const struct _u_request * request, struct _u_response 
   
   if (refresh_token != NULL) {
     time(&now);
-    token_hash = str2md5(refresh_token, strlen(refresh_token));
+    token_hash = generate_hash(config, config->hash_algorithm, refresh_token);
     
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
       clause_expired_at = nstrdup("> NOW()");

@@ -235,7 +235,7 @@ json_t * validate_authorization_code(struct config_elements * config, const char
   char * code_hash, * escape, * escape_ip_source, * clause_redirect_uri, * clause_client_id, * col_gco_date, * clause_gco_date, * clause_scope, * scope_list = NULL, * tmp;
   
   if (authorization_code != NULL && client_id != NULL) {
-    code_hash = str2md5(authorization_code, strlen(authorization_code));
+    code_hash = generate_hash(config, config->hash_algorithm, authorization_code);
     escape_ip_source = h_escape_string(config->conn, ip_source);
     escape = h_escape_string(config->conn, redirect_uri);
     clause_redirect_uri = msprintf("= (SELECT `gru_id` FROM `%s` WHERE `gru_uri`='%s')", GLEWLWYD_TABLE_REDIRECT_URI, escape);

@@ -95,7 +95,7 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
       
       if (use_salt) {
         rand_salt(salt, GLEWLWYD_SALT_LENGTH);
-        strcat(intermediate, salt);
+        strncat(intermediate, salt, GLEWLWYD_SALT_LENGTH);
       }
       
       EVP_MD_CTX_init(&mdctx);
@@ -109,7 +109,7 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
       
       strncpy(buffer, (char *)md_value, md_len);
       if (use_salt) {
-        strcat(buffer, salt);
+        strncat(buffer, salt, GLEWLWYD_SALT_LENGTH);
       }
 
       b64 = BIO_new(BIO_f_base64());
@@ -133,6 +133,44 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
     free(intermediate);
   }
   return res;
+}
+
+/**
+ * Generates a random string and store it in str
+ */
+char * rand_string(char * str, size_t str_size) {
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.\"!/$%?&*()_-+=<>{}[]'";
+    size_t n;
+    
+    if (str_size > 0 && str != NULL) {
+        for (n = 0; n < str_size; n++) {
+            int key = rand() % (int) (sizeof charset - 1);
+            str[n] = charset[key];
+        }
+        str[str_size] = '\0';
+        return str;
+    } else {
+      return NULL;
+    }
+}
+
+/**
+ * Generates a random string and store it in str
+ */
+char * rand_crypt_salt(char * str, size_t str_size) {
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
+    size_t n;
+    
+    if (str_size > 0 && str != NULL) {
+        for (n = 0; n < str_size; n++) {
+            int key = rand() % (int) (sizeof charset - 1);
+            str[n] = charset[key];
+        }
+        str[str_size] = '\0';
+        return str;
+    } else {
+      return NULL;
+    }
 }
 
 char * generate_hash(struct config_elements * config, const char * digest, const char * password) {

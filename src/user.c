@@ -412,7 +412,7 @@ json_t * auth_check_user_credentials_database(struct config_elements * config, c
     return json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   } else {
     if (config->conn->type == HOEL_DB_TYPE_SQLITE) {
-      escaped = str2md5(password, strlen(password));
+      escaped = generate_hash(config, config->hash_algorithm, password);
       str_password = msprintf("= '%s'", escaped);
       free(escaped);
     } else {
@@ -1060,7 +1060,7 @@ int add_user_database(struct config_elements * config, json_t * j_user) {
     escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_user, "password")));
     password = msprintf("PASSWORD('%s')", escaped);
   } else {
-    escaped = str2md5(json_string_value(json_object_get(j_user, "password")), strlen(json_string_value(json_object_get(j_user, "password"))));
+    escaped = generate_hash(config, config->hash_algorithm,json_string_value(json_object_get(j_user, "password")));
     password = msprintf("'%s'", escaped);
   }
   j_query = json_pack("{sss{sssssss{ss}si}}",
@@ -1278,7 +1278,7 @@ int set_user_database(struct config_elements * config, const char * user, json_t
       escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_user, "password")));
       password = msprintf("PASSWORD('%s')", escaped);
     } else {
-      escaped = str2md5(json_string_value(json_object_get(j_user, "password")), strlen(json_string_value(json_object_get(j_user, "password"))));
+      escaped = generate_hash(config, config->hash_algorithm, json_string_value(json_object_get(j_user, "password")));
       password = msprintf("'%s'", escaped);
     }
     json_object_set_new(json_object_get(j_query, "set"), "gu_password", json_string(password));
