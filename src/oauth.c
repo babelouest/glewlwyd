@@ -191,7 +191,7 @@ int check_auth_type_access_token_request (const struct _u_request * request, str
     }
     free(refresh_token);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error code invalid at IP Address %s", ip_source);
+    y_log_message(Y_LOG_LEVEL_WARNING, "Error code invalid at IP Address %s", ip_source);
     response->json_body = json_pack("{ss}", "error", json_string_value(json_object_get(j_validate, "error")));
     response->status = 400;
   }
