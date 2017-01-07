@@ -21,8 +21,8 @@
 
 CC=gcc
 CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
-LIBS=-lc -lulfius -lyder -ljansson -lorcania -lhoel -ljwt -lconfig -lldap -luuid -lcrypto
-OBJECTS=glewlwyd.o authorization.o oauth.o webservice.o token.o user.o client.o admin.o scope.o resource.o
+LIBS=-lc -lulfius -lyder -ljansson -lorcania -lhoel -ljwt -lconfig -lldap -luuid -lcrypto -lcrypt
+OBJECTS=glewlwyd.o authorization.o oauth.o webservice.o token.o user.o client.o admin.o scope.o resource.o password.o
 PREFIX=/usr/local
 CONFIG_FILE=../glewlwyd.conf
 
