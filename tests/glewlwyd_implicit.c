@@ -132,6 +132,7 @@ int main(int argc, char *argv[])
       u_map_put(scope_req.map_header, "Cookie", cookie);
       free(cookie);
     }
+    
     scope_req.http_verb = strdup("POST");
     scope_req.http_url = msprintf("%s/auth/grant", SERVER_URI);
     u_map_put(scope_req.map_post_body, "scope", SCOPE_LIST);
@@ -143,7 +144,6 @@ int main(int argc, char *argv[])
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error sending auth request");
   }
-  ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
 
 	s = libjwt_suite();
@@ -163,8 +163,11 @@ int main(int argc, char *argv[])
   run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
   free(url);
   
+  ulfius_clean_request(&auth_req);
   ulfius_clean_request(&scope_req);
   ulfius_clean_request(&user_req);
+  
+  y_close_logs();
 
 	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

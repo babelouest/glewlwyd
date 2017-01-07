@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
   ulfius_init_request(&user_req);
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
-  auth_req.http_url = msprintf("%s/user/auth", SERVER_URI);
+  auth_req.http_url = msprintf("%s/auth/user", SERVER_URI);
   u_map_put(auth_req.map_post_body, "username", USERNAME);
   u_map_put(auth_req.map_post_body, "password", PASSWORD);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
     
     ulfius_init_request(&scope_req);
     scope_req.http_verb = strdup("POST");
-    scope_req.http_url = msprintf("%s/user/grant", SERVER_URI);
+    scope_req.http_url = msprintf("%s/auth/grant", SERVER_URI);
     u_map_put(scope_req.map_post_body, "scope", SCOPE_LIST);
     u_map_put(scope_req.map_post_body, "client_id", CLIENT);
     if (ulfius_send_http_request(&auth_req, NULL) != U_OK) {
@@ -155,17 +155,20 @@ int main(int argc, char *argv[])
     } else {
       ulfius_init_response(&code_resp);
       user_req.http_verb = strdup("GET");
-      user_req.http_url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/index.html?param=client1_cb1&scope=scope1 scope2", SERVER_URI);
+      user_req.http_url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/index.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
       if (ulfius_send_http_request(&user_req, &code_resp) != U_OK) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "Get code error");
+      } else if (strstr(u_map_get(code_resp.map_header, "Location"), "code=") != NULL) {
+        code = nstrdup(strstr(u_map_get(code_resp.map_header, "Location"), "code=")+strlen("code="));
+        if (strchr(code, '&') != NULL) {
+          *strchr(code, '&') = '\0';
+        }
       } else {
-        const char * redirect = u_map_get(code_resp.map_header, "Location");
-        code = nstrdup(strstr(redirect, "code=")+strlen("code="));
-      }
+        y_log_message(Y_LOG_LEVEL_DEBUG, "Error, no code given");
+		  }
       ulfius_clean_response(&code_resp);
     }
   }
-  ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
   
 	s = libjwt_suite();
@@ -181,10 +184,11 @@ int main(int argc, char *argv[])
       y_log_message(Y_LOG_LEVEL_DEBUG, "Remove grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
     }
   
-  url = msprintf("%s/user/auth/", SERVER_URI);
+  url = msprintf("%s/auth/user/", SERVER_URI);
   run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
   free(url);
   
+  ulfius_clean_request(&auth_req);
   ulfius_clean_request(&scope_req);
   ulfius_clean_request(&user_req);
 
