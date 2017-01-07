@@ -124,12 +124,13 @@ database =
 authentication =
 {
 
-   database_auth  = true
+   database_auth            = true
+   sqite_password_algorithm = "SHA"
    
-   ldap_auth      = true
-   uri            = "ldap://localhost"
-   bind_dn        = "cn=operator,dc=example,dc=org"
-   bind_passwd    = "password"
+   ldap_auth                = true
+   uri                      = "ldap://localhost"
+   bind_dn                  = "cn=operator,dc=example,dc=org"
+   bind_passwd              = "password"
    
    base_search_user             = "ou=user,dc=example,dc=org"
 # Read parameters
@@ -146,7 +147,7 @@ authentication =
    email_property_user_write     = "mail"
    name_property_user_write      = "sn"
    password_property_user_write  = "userPassword"
-   password_algorithm_user_write = "{SSHA}"
+   password_algorithm_user_write = "SSHA" # Values available are SSHA, SHA, SMD5, MD5 or PLAIN
    object_class_user_write       = "top,person,organizationalPerson,inetOrgPerson"
    
    base_search_client             = "ou=client,dc=example,dc=org"
@@ -166,7 +167,7 @@ authentication =
    description_property_client_write  = "description"
    redirect_uri_property_client_write = "labeledURI"
    password_property_client_write     = "userPassword"
-   password_algorithm_client_write    = "{SSHA}"
+   password_algorithm_client_write    = "SSHA" # Values available are SSHA, SHA, SMD5, MD5 or PLAIN
    object_class_client_write          = "top,person,organizationalPerson,inetOrgPerson"
 }
 
