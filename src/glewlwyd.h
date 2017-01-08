@@ -139,6 +139,7 @@ struct _auth_ldap {
   char *  name_property_client_read;
   char *  description_property_client_read;
   char *  redirect_uri_property_client_read;
+  char *  confidential_property_client_read;
   int     client_write;
   char *  rdn_property_client_write;
   char ** client_id_property_client_write;
@@ -146,6 +147,7 @@ struct _auth_ldap {
   char ** name_property_client_write;
   char ** description_property_client_write;
   char ** redirect_uri_property_client_write;
+  char ** confidential_property_client_write;
   char *  password_property_client_write;
   char *  password_algorithm_client_write;
   char ** object_class_client_write;
@@ -282,6 +284,8 @@ json_t * session_get(struct config_elements * config, const char * session_value
 json_t * session_check(struct config_elements * config, const char * session_value);
 json_t * validate_authorization_code(struct config_elements * config, const char * authorization_code, const char * client_id, const char * redirect_uri, const char * ip_source);
 json_t * client_check(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
+json_t * client_check_ldap(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
+json_t * client_check_database(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
 int auth_check_client_user_scope(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
 json_t * access_token_check(struct config_elements * config, const char * token_value);
 
