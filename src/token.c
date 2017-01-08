@@ -394,7 +394,7 @@ char * generate_client_access_token(struct config_elements * config, const char 
  */
 char * generate_authorization_code(struct config_elements * config, const char * username, const char * client_id, const char * scope_list, const char * redirect_uri, const char * ip_source) {
   uuid_t uuid;
-  char * code_value = malloc(37*sizeof(char)), * code_hash, * clause_client_id, * clause_redirect_uri, * clause_scope, * escape;
+  char * code_value = malloc(37*sizeof(char)), * code_hash, * clause_redirect_uri, * clause_scope, * escape;
   char * save_scope_list, * scope, * saveptr;
   json_t * j_query, * j_result;
   int res;
@@ -405,15 +405,11 @@ char * generate_authorization_code(struct config_elements * config, const char *
     uuid_unparse_lower(uuid, code_value);
     code_hash = generate_hash(config, config->hash_algorithm, code_value);
     
-    escape = h_escape_string(config->conn, client_id);
-    clause_client_id = msprintf("(SELECT `gc_id` FROM `%s` WHERE `gc_client_id` = '%s')", GLEWLWYD_TABLE_CLIENT, escape);
-    free(escape);
-    
     escape = h_escape_string(config->conn, redirect_uri);
     clause_redirect_uri = msprintf("(SELECT `gru_id` FROM `%s` WHERE `gru_uri` = '%s')", GLEWLWYD_TABLE_REDIRECT_URI, escape);
     free(escape);
     
-    j_query = json_pack("{sss{sssssss{ss}s{ss}}}",
+    j_query = json_pack("{sss{sssssssss{ss}}}",
                         "table",
                         GLEWLWYD_TABLE_CODE,
                         "values",
@@ -423,13 +419,11 @@ char * generate_authorization_code(struct config_elements * config, const char *
                           ip_source,
                           "gco_username",
                           username,
-                          "gc_id",
-                            "raw",
-                            clause_client_id,
+                          "gc_client_id",
+                          client_id,
                           "gru_id",
                             "raw",
                             clause_redirect_uri);
-    free(clause_client_id);
     free(clause_redirect_uri);
     res = h_insert(config->conn, j_query, NULL);
     json_decref(j_query);

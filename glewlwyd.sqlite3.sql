@@ -183,10 +183,9 @@ CREATE TABLE `g_code` (
   `gco_code_hash` TEXT NOT NULL,
   `gco_ip_source` TEXT NOT NULL,
   `gco_enabled` INTEGER DEFAULT 1,
-  `gc_id` INTEGERNOT NULL,
+  `gc_client_id` TEXT NOT NULL,
   `gco_username` TEXT NOT NULL,
   `gru_id` INTEGER,
-  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE,
   FOREIGN KEY(`gru_id`) REFERENCES `g_redirect_uri`(`gru_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_code` ON `g_code`(`gco_id`);

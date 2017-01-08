@@ -232,16 +232,13 @@ json_t * validate_authorization_code(struct config_elements * config, const char
   size_t index;
   int res;
   json_int_t gco_id;
-  char * code_hash, * escape, * escape_ip_source, * clause_redirect_uri, * clause_client_id, * col_gco_date, * clause_gco_date, * clause_scope, * scope_list = NULL, * tmp;
+  char * code_hash, * escape, * escape_ip_source, * clause_redirect_uri, * col_gco_date, * clause_gco_date, * clause_scope, * scope_list = NULL, * tmp;
   
   if (authorization_code != NULL && client_id != NULL) {
     code_hash = generate_hash(config, config->hash_algorithm, authorization_code);
     escape_ip_source = h_escape_string(config->conn, ip_source);
     escape = h_escape_string(config->conn, redirect_uri);
     clause_redirect_uri = msprintf("= (SELECT `gru_id` FROM `%s` WHERE `gru_uri`='%s')", GLEWLWYD_TABLE_REDIRECT_URI, escape);
-    free(escape);
-    escape = h_escape_string(config->conn, client_id);
-    clause_client_id = msprintf("= (SELECT `gc_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT, escape);
     free(escape);
     
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
@@ -252,7 +249,7 @@ json_t * validate_authorization_code(struct config_elements * config, const char
       clause_gco_date = nstrdup("> (strftime('%s','now') - 600)");
     }
     
-    j_query = json_pack("{sss[ss]s{si ss ss s{ssss} s{ssss} s{ssss}}}",
+    j_query = json_pack("{sss[ss]s{si ss ss s{ssss} ss s{ssss}}}",
                         "table",
                         GLEWLWYD_TABLE_CODE,
                         "columns",
@@ -270,11 +267,8 @@ json_t * validate_authorization_code(struct config_elements * config, const char
                             "raw",
                             "value",
                             clause_redirect_uri,
-                          "gc_id",
-                            "operator",
-                            "raw",
-                            "value",
-                            clause_client_id,
+                          "gc_client_id",
+                          client_id,
                           col_gco_date,
                             "operator",
                             "raw",
@@ -282,7 +276,6 @@ json_t * validate_authorization_code(struct config_elements * config, const char
                             clause_gco_date);
     free(clause_gco_date);
     free(col_gco_date);
-    free(clause_client_id);
     free(clause_redirect_uri);
     free(escape_ip_source);
     free(code_hash);

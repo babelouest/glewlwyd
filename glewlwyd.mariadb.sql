@@ -175,10 +175,9 @@ CREATE TABLE `g_code` (
   `gco_code_hash` VARCHAR(128) NOT NULL,
   `gco_ip_source` VARCHAR(64) NOT NULL,
   `gco_enabled` TINYINT(1) DEFAULT 1,
-  `gc_id` INT(11) NOT NULL,
+  `gc_client_id` VARCHAR(128) NOT NULL,
   `gco_username` VARCHAR(128) NOT NULL,
   `gru_id` INT(11),
-  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE,
   FOREIGN KEY(`gru_id`) REFERENCES `g_redirect_uri`(`gru_id`) ON DELETE CASCADE
 );
 
