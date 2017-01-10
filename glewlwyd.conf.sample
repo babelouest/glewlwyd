@@ -120,11 +120,11 @@ reset_password_config =
 #  smtp_user="user"              # optional, default no value
 #  smtp_password="password"      # optional, default no value
   
-  token_expiration=604800                                                # in seconds, optional, default 604800
-  email_from="glewlwyd@example.org"                                      # mandatory
-  email_subject="Glewlwyd email reset"                                                 # mandatory
-  email_template_path="reset.eml"                                        # mandatory
-  page_url_prefix="https://example.org/glewlwyd/webapp/reset.html?code=" # mandatory
+  token_expiration=604800                                                                     # in seconds, optional, default 604800
+  email_from="glewlwyd@example.org"                                                           # mandatory
+  email_subject="Glewlwyd email reset"                                                        # mandatory
+  email_template_path="reset.eml"                                                             # mandatory
+  page_url_prefix="https://example.org/glewlwyd/webapp/reset.html?user=$USERNAME&code=$TOKEN" # mandatory
 }
 
 # Algorithms available are SHA1, SHA256, SHA512, MD5
