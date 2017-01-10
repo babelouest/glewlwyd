@@ -241,13 +241,12 @@ json_t * validate_authorization_code(struct config_elements * config, const char
     clause_redirect_uri = msprintf("= (SELECT `gru_id` FROM `%s` WHERE `gru_uri`='%s')", GLEWLWYD_TABLE_REDIRECT_URI, escape);
     free(escape);
     
-    // TODO: code expiration time in config file
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
       col_gco_date = nstrdup("UNIX_TIMESTAMP(`gco_date`)");
-      clause_gco_date = nstrdup("> (UNIX_TIMESTAMP(NOW()) - 600)");
+      clause_gco_date = msprintf("> (UNIX_TIMESTAMP(NOW()) - %d)", config->code_expiration);
     } else {
       col_gco_date = nstrdup("gco_date");
-      clause_gco_date = nstrdup("> (strftime('%s','now') - 600)");
+      clause_gco_date = msprintf("> (strftime('S%s','now') - %d)", config->code_expiration);
     }
     
     j_query = json_pack("{sss[ss]s{si ss ss s{ssss} ss s{ssss}}}",

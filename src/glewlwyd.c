@@ -73,6 +73,7 @@ int main (int argc, char ** argv) {
   config->auth_ldap = NULL;
   config->refresh_token_expiration = GLEWLWYD_REFRESH_TOKEN_EXP_DEFAULT;
   config->access_token_expiration = GLEWLWYD_ACCESS_TOKEN_EXP_DEFAULT;
+  config->code_expiration = GLEWLWYD_CODE_EXPIRATION_DEFAULT;
   config->jwt_decode_key = NULL;
   config->session_key = nstrdup(GLEWLWYD_SESSION_KEY_DEFAULT);
   config->session_expiration = GLEWLWYD_SESSION_EXPIRATION_DEFAULT;
@@ -628,6 +629,7 @@ int build_config_from_file(struct config_elements * config) {
   config_lookup_int(&cfg, "refresh_token_expiation", (int *)&config->refresh_token_expiration);
   config_lookup_int(&cfg, "access_token_expiration", (int *)&config->access_token_expiration);
   config_lookup_int(&cfg, "session_expiration", (int *)&config->session_expiration);
+  config_lookup_int(&cfg, "code_expiration", (int *)&config->code_expiration);
   
   config_lookup_string(&cfg, "session_key", &cur_session_key);
   if (cur_session_key != NULL) {

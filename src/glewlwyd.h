@@ -55,6 +55,7 @@
 #define GLEWLWYD_ACCESS_TOKEN_EXP_DEFAULT   3600
 #define GLEWLWYD_SESSION_KEY_DEFAULT        "GLEWLWYD_SESSION_ID"
 #define GLEWLWYD_SESSION_EXPIRATION_DEFAULT 2419200
+#define GLEWLWYD_CODE_EXPIRATION_DEFAULT    600
 #define GLEWLWYD_SALT_LENGTH                16
 #define GLEWLWYD_ADMIN_SCOPE                "g_admin"
 #define GLEWLWYD_DEFAULT_LIMIT              20
@@ -197,6 +198,7 @@ struct config_elements {
   unsigned int                    session_expiration;
   unsigned int                    refresh_token_expiration;
   unsigned int                    access_token_expiration;
+  unsigned int                    code_expiration;
   char *                          admin_scope;
   char *                          hash_algorithm;
   int                             reset_password;
