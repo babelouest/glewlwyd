@@ -1800,11 +1800,13 @@ int send_reset_user_profile_email(struct config_elements * config, const char * 
     
     token = generate_user_reset_password_token(config, username, ip_source);
     if (token != NULL) {
-      tmp = msprintf("%s%s", config->reset_password_config->page_url_prefix, token);
-      mail_body = str_replace(config->reset_password_config->email_template, "$URL", tmp);
-      free(tmp);
+      mail_body = str_replace(config->reset_password_config->email_template, "$URL", config->reset_password_config->page_url_prefix);
       
       tmp = str_replace(mail_body, "$USERNAME", username);
+      free(mail_body);
+      mail_body = tmp;
+      
+      tmp = str_replace(mail_body, "$TOKEN", token);
       free(mail_body);
       mail_body = tmp;
       
