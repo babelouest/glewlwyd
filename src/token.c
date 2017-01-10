@@ -657,3 +657,65 @@ int session_delete(struct config_elements * config, const char * session_value) 
     return G_ERROR_PARAM;
   }
 }
+
+char * generate_user_reset_password_token(struct config_elements * config, const char * username, const char * ip_source) {
+  json_t * j_query;
+  int res;
+  char * token = malloc(37*sizeof(char)), * token_hash;
+  uuid_t uuid;
+  
+  if (token != NULL) {
+    uuid_generate_random(uuid);
+    uuid_unparse_lower(uuid, token);
+    token_hash = generate_hash(config, config->hash_algorithm, token);
+    if (token_hash != NULL) {
+      // Disabling all other reset tokens for the user, just in case
+      j_query = json_pack("{sss{si}s{ss}}",
+                          "table",
+                          GLEWLWYD_TABLE_RESET_PASSWORD,
+                          "set",
+                            "grp_enabled",
+                            0,
+                          "where",
+                            "grp_username",
+                            username);
+      res = h_update(config->conn, j_query, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        j_query = json_pack("{sss{ssssss}}",
+                            "table",
+                            GLEWLWYD_TABLE_RESET_PASSWORD,
+                            "values",
+                              "grp_username",
+                              username,
+                              "grp_token",
+                              token_hash,
+                              "grp_ip_source",
+                              ip_source);
+        res = h_insert(config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res != H_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_user_reset_password_token - Error executing j_query insert");
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_user_reset_password_token - Error executing j_query update");
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_user_reset_password_token - Error allocating resources for token_hash");
+      free(token);
+      token = NULL;
+    }
+    free(token_hash);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_user_reset_password_token - Error allocating resources for token");
+  }
+  return token;
+}
+
+json_t * get_refresh_token_list(struct config_elements * config, const char * username, int valid, long int offset, long int limit) {
+  return NULL;
+}
+
+int revoke_token(struct config_elements * config, const char * username, const char * token_hash) {
+  return G_ERROR;
+}

@@ -241,6 +241,7 @@ json_t * validate_authorization_code(struct config_elements * config, const char
     clause_redirect_uri = msprintf("= (SELECT `gru_id` FROM `%s` WHERE `gru_uri`='%s')", GLEWLWYD_TABLE_REDIRECT_URI, escape);
     free(escape);
     
+    // TODO: code expiration time in config file
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
       col_gco_date = nstrdup("UNIX_TIMESTAMP(`gco_date`)");
       clause_gco_date = nstrdup("> (UNIX_TIMESTAMP(NOW()) - 600)");

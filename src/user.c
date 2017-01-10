@@ -1281,7 +1281,7 @@ int set_user_database(struct config_elements * config, const char * user, json_t
       escaped = generate_hash(config, config->hash_algorithm, json_string_value(json_object_get(j_user, "password")));
       password = msprintf("'%s'", escaped);
     }
-    json_object_set_new(json_object_get(j_query, "set"), "gu_password", json_string(password));
+    json_object_set_new(json_object_get(j_query, "set"), "gu_password", json_pack("{ss}", "raw", password));
     free(password);
     free(escaped);
   }
@@ -1572,4 +1572,360 @@ json_t * get_user_list_database(struct config_elements * config, long int offset
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
+}
+
+json_t * is_user_profile_valid(struct config_elements * config, const char * username, json_t * profile) {
+  json_t * j_return = json_array(), * j_user;
+  
+  if (j_return != NULL) {
+    if (profile == NULL || !json_is_object(profile)) {
+      json_array_append_new(j_return, json_pack("{ss}", "profile", "profile must be a json object"));
+    } else {
+      if (json_object_get(profile, "name") != NULL && (!json_is_string(json_object_get(profile, "name")) || json_string_length(json_object_get(profile, "name")) > 512 || json_string_length(json_object_get(profile, "name")) < 1)) {
+        json_array_append_new(j_return, json_pack("{ss}", "name", "name is an optional string between 1 and 512 characters"));
+      }
+
+      if (json_object_get(profile, "email") != NULL && (!json_is_string(json_object_get(profile, "email")) || json_string_length(json_object_get(profile, "email")) > 512 || json_string_length(json_object_get(profile, "email")) < 1)) {
+        json_array_append_new(j_return, json_pack("{ss}", "email", "email is an optional string between 1 and 512 characters"));
+      }
+      
+      if (json_object_get(profile, "new_password") != NULL && !json_is_string(json_object_get(profile, "new_password"))) {
+        json_array_append_new(j_return, json_pack("{ss}", "new_password", "new_password must be a string"));
+      }
+      if (json_object_get(profile, "old_password") != NULL && !json_is_string(json_object_get(profile, "old_password"))) {
+        json_array_append_new(j_return, json_pack("{ss}", "old_password", "old_password must be a string"));
+      }
+      
+      if (json_object_get(profile, "new_password") != NULL && json_object_get(profile, "old_password") == NULL) {
+        json_array_append_new(j_return, json_pack("{ss}", "new_password", "old_password is mandatory to set a new password"));
+      } else if (json_object_get(profile, "new_password") != NULL && json_object_get(profile, "old_password") != NULL) {
+        j_user = auth_check_user_credentials(config, username, json_string_value(json_object_get(profile, "old_password")));
+        if (check_result_value(j_user, G_ERROR_UNAUTHORIZED)) {
+          json_array_append_new(j_return, json_pack("{ss}", "old_password", "old_password does not match"));
+        }
+        json_decref(j_user);
+        
+        if (json_string_length(json_object_get(profile, "new_password")) < 8) {
+          json_array_append_new(j_return, json_pack("{ss}", "new_password", "new_password must be at least 8 characters"));
+        }
+      }
+      
+      if (json_object_get(profile, "name") == NULL && json_object_get(profile, "email") == NULL && json_object_get(profile, "new_password") == NULL) {
+        json_array_append_new(j_return, json_pack("{ss}", "profile", "you must update at least one value"));
+      }
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "is_user_profile_valid - Error allocating resources for j_return");
+  }
+  
+  return j_return;
+}
+
+int set_user_profile(struct config_elements * config, const char * username, json_t * profile) {
+  json_t * j_user = get_user(config, username, NULL);
+  int res;
+  
+  if (check_result_value(j_user, G_OK)) {
+    if (nstrcmp(json_string_value(json_object_get(json_object_get(j_user, "user"), "source")), "ldap") == 0) {
+      res = set_user_profile_ldap(config, username, profile);
+    } else {
+      res = set_user_profile_database(config, username, profile);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "set_user_profile - Error getting j_user");
+    res = G_ERROR;
+  }
+  json_decref(j_user);
+  return res;
+}
+
+int set_user_profile_ldap(struct config_elements * config, const char * username, json_t * profile) {
+  LDAP * ldap;
+  int res;
+  int  result;
+  int  ldap_version   = LDAP_VERSION3;
+  char * ldap_mech    = LDAP_SASL_SIMPLE;
+  struct berval cred, * servcred;
+  
+  LDAPMod ** mods = NULL;
+  char ** scope_values = NULL;
+  int nb_attr = 2, i, attr_counter;
+  char * cur_dn, * password = NULL;
+  
+  for (i=0; json_object_get(profile, "name") != NULL && config->auth_ldap->name_property_user_write[i] != NULL; i++) {
+    nb_attr++;
+  }
+  for (i=0; json_object_get(profile, "email") != NULL && config->auth_ldap->email_property_user_write[i] != NULL; i++) {
+    nb_attr++;
+  }
+  if (json_object_get(profile, "new_password") != NULL) {
+    nb_attr++;
+  }
+  mods = malloc(nb_attr*sizeof(LDAPMod *));
+  
+  cred.bv_val = config->auth_ldap->bind_passwd;
+  cred.bv_len = strlen(config->auth_ldap->bind_passwd);
+
+  if (mods == NULL) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for mods");
+    res = G_ERROR;
+  } else if (ldap_initialize(&ldap, config->auth_ldap->uri) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing ldap");
+    res = G_ERROR;
+  } else if (ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error setting ldap protocol version");
+    res = G_ERROR;
+  } else if ((result = ldap_sasl_bind_s(ldap, config->auth_ldap->bind_dn, ldap_mech, &cred, NULL, NULL, &servcred)) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error binding to ldap server mode %s: %s", ldap_mech, ldap_err2string(result));
+    res = G_ERROR;
+  } else {
+    cur_dn = msprintf("%s=%s,%s", config->auth_ldap->rdn_property_user_write, username, config->auth_ldap->base_search_user);
+    
+    attr_counter = 0;
+    for (i=0; json_object_get(profile, "name") != NULL && config->auth_ldap->name_property_user_write[i] != NULL; i++) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
+      mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
+      mods[attr_counter]->mod_type   = config->auth_ldap->name_property_user_write[i];
+      mods[attr_counter]->mod_values[0] = (char *)json_string_value(json_object_get(profile, "name"));
+      mods[attr_counter]->mod_values[1] = NULL;
+      attr_counter++;
+    }
+    
+    for (i=0; json_object_get(profile, "email") != NULL && config->auth_ldap->email_property_user_write[i] != NULL; i++) {
+      mods[attr_counter] = malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
+      mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
+      mods[attr_counter]->mod_type   = config->auth_ldap->email_property_user_write[i];
+      mods[attr_counter]->mod_values[0] = (char *)json_string_value(json_object_get(profile, "email"));
+      mods[attr_counter]->mod_values[1] = NULL;
+      attr_counter++;
+    }
+    
+    if (json_object_get(profile, "new_password") != NULL) {
+      password = generate_hash(config, config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(profile, "password")));
+      if (password != NULL) {
+        mods[attr_counter] = malloc(sizeof(LDAPMod));
+        mods[attr_counter]->mod_values    = malloc(2 * sizeof(char *));
+        mods[attr_counter]->mod_op        = LDAP_MOD_REPLACE;
+        mods[attr_counter]->mod_type      = config->auth_ldap->password_property_user_write;
+        mods[attr_counter]->mod_values[0] = password;
+        mods[attr_counter]->mod_values[1] = NULL;
+        attr_counter++;
+      }
+    }
+    
+    mods[attr_counter] = NULL;
+    
+    if ((result = ldap_modify_ext_s(ldap, cur_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error setting user %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
+      res = G_ERROR;
+    } else {
+      res = G_OK;
+    }
+    
+    free(scope_values);
+    attr_counter = 0;
+    for (i=0; json_object_get(profile, "name") != NULL && config->auth_ldap->name_property_user_write[i] != NULL; i++) {
+      free(mods[attr_counter]->mod_values);
+      free(mods[attr_counter]);
+      attr_counter++;
+    }
+    for (i=0; json_object_get(profile, "email") != NULL && config->auth_ldap->email_property_user_write[i] != NULL; i++) {
+      free(mods[attr_counter]->mod_values);
+      free(mods[attr_counter]);
+      attr_counter++;
+    }
+    if (json_object_get(profile, "new_password") != NULL) {
+      free(mods[attr_counter]->mod_values);
+      free(mods[attr_counter]);
+      attr_counter++;
+    }
+    free(mods);
+    free(cur_dn);
+    free(password);
+  }
+  ldap_unbind_ext(ldap, NULL, NULL);
+  return res;
+}
+
+int set_user_profile_database(struct config_elements * config, const char * username, json_t * profile) {
+  json_t * j_query;
+  int res, to_return;
+  char * escaped, * password;
+  
+  j_query = json_pack("{sss{}s{ss}}",
+                      "table",
+                      GLEWLWYD_TABLE_USER,
+                      "set",
+                      "where",
+                        "gu_login",
+                        username);
+  if (json_object_get(profile, "name") != NULL) {
+    json_object_set_new(json_object_get(j_query, "set"), "gu_name", json_copy(json_object_get(profile, "name")));
+  }
+  if (json_object_get(profile, "email") != NULL) {
+    json_object_set_new(json_object_get(j_query, "set"), "gu_email", json_copy(json_object_get(profile, "email")));
+  }
+  if (json_object_get(profile, "password") != NULL) {
+    if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
+      escaped = h_escape_string(config->conn, json_string_value(json_object_get(profile, "password")));
+      password = msprintf("PASSWORD('%s')", escaped);
+    } else {
+      escaped = generate_hash(config, config->hash_algorithm, json_string_value(json_object_get(profile, "password")));
+      password = msprintf("'%s'", escaped);
+    }
+    json_object_set_new(json_object_get(j_query, "set"), "gu_password", json_string(password));
+    free(password);
+    free(escaped);
+  }
+  res = h_update(config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    to_return = G_OK;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "set_user_profile_database - Error updating user");
+    to_return = G_ERROR_DB;
+  }
+  return to_return;
+}
+
+int send_reset_user_profile_email(struct config_elements * config, const char * username, const char * ip_source) {
+  json_t * j_user = get_user(config, username, NULL);
+  char * mail_subject, * mail_body, * tmp, * token = NULL;
+  int res;
+  
+  if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "email") != NULL && json_string_length(json_object_get(json_object_get(j_user, "user"), "email")) > 0) {
+    mail_subject = str_replace(config->reset_password_config->email_subject, "$USERNAME", username);
+    
+    token = generate_user_reset_password_token(config, username, ip_source);
+    if (token != NULL) {
+      tmp = msprintf("%s%s", config->reset_password_config->page_url_prefix, token);
+      mail_body = str_replace(config->reset_password_config->email_template, "$URL", tmp);
+      free(tmp);
+      
+      tmp = str_replace(mail_body, "$USERNAME", username);
+      free(mail_body);
+      mail_body = tmp;
+      
+      if (ulfius_send_smtp_email(config->reset_password_config->smtp_host,
+                                 config->reset_password_config->smtp_port,
+                                 config->reset_password_config->smtp_use_tls,
+                                 config->reset_password_config->smtp_verify_certificate,
+                                 config->reset_password_config->smtp_user,
+                                 config->reset_password_config->smtp_password,
+                                 config->reset_password_config->email_from,
+                                 json_string_value(json_object_get(json_object_get(j_user, "user"), "email")),
+                                 NULL,
+                                 NULL,
+                                 mail_subject,
+                                 mail_body) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "send_reset_user_profile_email - Error sending reset email");
+        res = G_ERROR_PARAM;
+      } else {
+        res = G_OK;
+      }
+      free(mail_body);
+      free(mail_subject);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "send_reset_user_profile_email - Error generating token");
+      res = G_ERROR;
+    }
+    free(token);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "send_reset_user_profile_email - Error getting user");
+    res = G_ERROR;
+  }
+  json_decref(j_user);
+  return res;
+}
+
+int is_reset_user_profile_valid(struct config_elements * config, const char * username, const char * token, const char * password) {
+  json_t * j_query, * j_result;
+  int res, to_return;
+  char * token_hash, * col_grp_issued_at, * clause_grp_issued_at;
+  
+  if (token != NULL && password != NULL && strlen(password) >= 8) {
+    token_hash = generate_hash(config, config->hash_algorithm, token);
+    if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
+      col_grp_issued_at = nstrdup("UNIX_TIMESTAMP(`grp_issued_at`)");
+      clause_grp_issued_at = msprintf("> (UNIX_TIMESTAMP(NOW()) - %d)", config->reset_password_config->token_expiration);
+    } else {
+      col_grp_issued_at = nstrdup("grp_issued_at");
+      clause_grp_issued_at = msprintf("> (strftime('%%s','now') - %d)", config->reset_password_config->token_expiration);
+    }
+    j_query = json_pack("{sss{sssssis{ssss}}}",
+                        "table",
+                        GLEWLWYD_TABLE_RESET_PASSWORD,
+                        "where",
+                          "grp_username",
+                          username,
+                          "grp_token",
+                          token_hash,
+                          "grp_enabled",
+                          1,
+                          col_grp_issued_at,
+                            "operator",
+                            "raw",
+                            "value",
+                            clause_grp_issued_at);
+    free(col_grp_issued_at);
+    free(clause_grp_issued_at);
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      if (json_array_size(j_result) > 0) {
+        to_return = G_OK;
+      } else {
+        to_return = G_ERROR_NOT_FOUND;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "is_reset_user_profile_valid - Error executing j_query");
+      to_return = G_ERROR_DB;
+    }
+    json_decref(j_result);
+  } else {
+    to_return = G_ERROR_PARAM;
+  }
+  return to_return;
+}
+
+int reset_user_profile(struct config_elements * config, const char * username, const char * token, const char * password) {
+  json_t * j_query, * j_user, * j_profile;
+  int res, to_return;
+  char * token_hash = generate_hash(config, config->hash_algorithm, token);
+  
+  j_user = get_user(config, username, NULL);
+  if (token_hash != NULL && check_result_value(j_user, G_OK)) {
+    j_query = json_pack("{sss{sis{ss}}s{ssss}}",
+                        "table",
+                        GLEWLWYD_TABLE_RESET_PASSWORD,
+                        "set",
+                          "grp_enabled",
+                          0,
+                          "grp_reset_at",
+                            "raw",
+                            (config->conn->type==HOEL_DB_TYPE_MARIADB?"NOW()":"strftime('%s','now')"),
+                        "where",
+                          "grp_username",
+                          username,
+                          "grp_token",
+                          token_hash);
+    res = h_update(config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      j_profile = json_pack("{ss}", "password", password);
+      to_return = set_user(config, username, j_profile, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
+      json_decref(j_profile);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "reset_user_profile - Error executing j_query");
+      to_return = G_ERROR_DB;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "reset_user_profile - Error generating token_hash");
+    to_return = G_ERROR;
+  }
+  free(token_hash);
+  json_decref(j_user);
+  return to_return;
 }

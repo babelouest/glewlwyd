@@ -59,6 +59,9 @@
 #define GLEWLWYD_ADMIN_SCOPE                "g_admin"
 #define GLEWLWYD_DEFAULT_LIMIT              20
 
+#define GLEWLWYD_RESET_PASSWORD_DEFAULT_SMTP_PORT        25
+#define GLEWLWYD_RESET_PASSWORD_DEFAULT_TOKEN_EXPIRATION 604800
+
 #define GLEWLWYD_RUNNING  0
 #define GLEWLWYD_STOP     1
 #define GLEWLWYD_ERROR    2
@@ -82,6 +85,7 @@
 #define GLEWLWYD_TABLE_SESSION                   "g_session"
 #define GLEWLWYD_TABLE_CODE                      "g_code"
 #define GLEWLWYD_TABLE_AUTHORIZATION_TYPE        "g_authorization_type"
+#define GLEWLWYD_TABLE_RESET_PASSWORD            "g_reset_password"
 
 // Link tables
 #define GLEWLWYD_TABLE_CLIENT_USER_SCOPE         "g_client_user_scope"
@@ -153,33 +157,50 @@ struct _auth_ldap {
   char ** object_class_client_write;
 };
 
+struct _reset_password_config {
+  char * smtp_host;
+  unsigned int smtp_port;
+  int smtp_use_tls;
+  int smtp_verify_certificate;
+  char * smtp_user;
+  char * smtp_password;
+  
+  unsigned int token_expiration;
+  char * email_from;
+  char * email_subject;
+  char * email_template;
+  char * page_url_prefix;
+};
+
 struct config_elements {
-  char *                 config_file;
-  char *                 url_prefix;
-  unsigned long          log_mode;
-  unsigned long          log_level;
-  char *                 log_file;
-  char *                 allow_origin;
-  char *                 static_files_path;
-  char *                 static_files_prefix;
-  unsigned int           use_scope;
-  unsigned int           use_secure_connection;
-  char *                 secure_connection_key_file;
-  char *                 secure_connection_pem_file;
-  unsigned int           has_auth_database;
-  unsigned int           has_auth_ldap;
-  struct _auth_ldap *    auth_ldap;
-  struct _u_map *        mime_types;
-  struct _h_connection * conn;
-  struct _u_instance   * instance;
-  jwt_t *                jwt;
-  char *                 jwt_decode_key;
-  char *                 session_key;
-  unsigned int           session_expiration;
-  unsigned int           refresh_token_expiration;
-  unsigned int           access_token_expiration;
-  char *                 admin_scope;
-  char *                 hash_algorithm;
+  char *                          config_file;
+  char *                          url_prefix;
+  unsigned long                   log_mode;
+  unsigned long                   log_level;
+  char *                          log_file;
+  char *                          allow_origin;
+  char *                          static_files_path;
+  char *                          static_files_prefix;
+  unsigned int                    use_scope;
+  unsigned int                    use_secure_connection;
+  char *                          secure_connection_key_file;
+  char *                          secure_connection_pem_file;
+  unsigned int                    has_auth_database;
+  unsigned int                    has_auth_ldap;
+  struct _auth_ldap *             auth_ldap;
+  struct _u_map *                 mime_types;
+  struct _h_connection *          conn;
+  struct _u_instance *            instance;
+  jwt_t *                         jwt;
+  char *                          jwt_decode_key;
+  char *                          session_key;
+  unsigned int                    session_expiration;
+  unsigned int                    refresh_token_expiration;
+  unsigned int                    access_token_expiration;
+  char *                          admin_scope;
+  char *                          hash_algorithm;
+  int                             reset_password;
+  struct _reset_password_config * reset_password_config;
 };
 
 /**
@@ -195,8 +216,8 @@ void exit_server(struct config_elements ** config, int exit_value);
 void print_help(FILE * output);
 const char * get_filename_ext(const char *path);
 char * get_file_content(const char * file_path);
-char *url_decode(char *str);
-char *url_encode(char *str);
+char * url_decode(char *str);
+char * url_encode(char *str);
 char * generate_query_parameters(const struct _u_request * request);
 const char * get_ip_source(const struct _u_request * request);
 char * rand_string(char * str, size_t size);
@@ -231,13 +252,18 @@ int callback_glewlwyd_user_scope_delete (const struct _u_request * request, stru
 
 int callback_glewlwyd_get_user_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_set_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_set_user_profile_no_auth (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_send_reset_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_reset_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_refresh_token_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_refresh_token_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_list_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_add_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_refresh_token_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_refresh_token_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_list_client (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -320,6 +346,13 @@ int set_user_database(struct config_elements * config, const char * user, json_t
 int delete_user(struct config_elements * config, const char * user, const char * source);
 int delete_user_ldap(struct config_elements * config, const char * user);
 int delete_user_database(struct config_elements * config, const char * user);
+json_t * is_user_profile_valid(struct config_elements * config, const char * username, json_t * profile);
+int is_reset_user_profile_valid(struct config_elements * config, const char * username, const char * token, const char * password);
+int set_user_profile(struct config_elements * config, const char * username, json_t * profile);
+int set_user_profile_ldap(struct config_elements * config, const char * username, json_t * profile);
+int set_user_profile_database(struct config_elements * config, const char * username, json_t * profile);
+int send_reset_user_profile_email(struct config_elements * config, const char * username, const char * ip_source);
+int reset_user_profile(struct config_elements * config, const char * username, const char * token, const char * password);
 
 json_t * get_client_list(struct config_elements * config, const char * source, long int offset, long int limit);
 json_t * get_client_list_ldap(struct config_elements * config, long int offset, long int limit);
@@ -350,6 +383,7 @@ char * generate_access_token(struct config_elements * config, const char * refre
 char * generate_session_token(struct config_elements * config, const char * username, const char * ip_source, time_t now);
 char * generate_authorization_code(struct config_elements * config, const char * username, const char * client_id, const char * scope_list, const char * redirect_uri, const char * ip_source);
 char * generate_client_access_token(struct config_elements * config, const char * client_id, const char * ip_source, time_t now);
+char * generate_user_reset_password_token(struct config_elements * config, const char * username, const char * ip_source);
 
 int serialize_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * refresh_token, const char * scope_list, time_t now);
 int serialize_access_token(struct config_elements * config, const uint auth_type, const char * ip_source, const char * refresh_token, const char * scope_list);
@@ -359,5 +393,8 @@ int is_authorization_type_enabled(struct config_elements * config, uint authoriz
 
 int grant_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
 int delete_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
+
+json_t * get_refresh_token_list(struct config_elements * config, const char * username, int valid, long int offset, long int limit);
+int revoke_token(struct config_elements * config, const char * username, const char * token_hash);
 
 #endif

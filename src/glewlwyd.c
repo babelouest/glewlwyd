@@ -80,6 +80,9 @@ int main (int argc, char ** argv) {
   config->use_secure_connection = 0;
   config->secure_connection_key_file = NULL;
   config->secure_connection_pem_file = NULL;
+  config->hash_algorithm = NULL;
+  config->reset_password = 0;
+  config->reset_password_config = NULL;
   if (config->instance == NULL) {
     fprintf(stderr, "Memory error - config->instance\n");
     return 1;
@@ -143,7 +146,12 @@ int main (int argc, char ** argv) {
   // Current user endpoints
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_user_session_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_set_user_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/no_auth", NULL, NULL, NULL, &callback_glewlwyd_set_user_profile_no_auth, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/refresh_token", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_refresh_token_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/refresh_token/:token_hash", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_delete_refresh_token_profile, (void*)config);
+  if (config->reset_password) {
+    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/profile/reset_password/:username", NULL, NULL, NULL, &callback_glewlwyd_send_reset_user_profile, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/reset_password/:username", NULL, NULL, NULL, &callback_glewlwyd_reset_user_profile, (void*)config);
+  }
 
   // Authorization type callbacks
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/authorization/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_authorization, (void*)config);
@@ -163,6 +171,8 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_user, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/user/:username", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_user, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/refresh_token", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_refresh_token_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/refresh_token/:token_hash", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_refresh_token_user, (void*)config);
 
   // Client endpoints
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_list_client, (void*)config);
@@ -240,6 +250,16 @@ void exit_server(struct config_elements ** config, int exit_value) {
     free((*config)->secure_connection_key_file);
     free((*config)->secure_connection_pem_file);
     free((*config)->hash_algorithm);
+    if ((*config)->reset_password_config != NULL) {
+      free((*config)->reset_password_config->smtp_host);
+      free((*config)->reset_password_config->smtp_user);
+      free((*config)->reset_password_config->smtp_password);
+      free((*config)->reset_password_config->email_from);
+      free((*config)->reset_password_config->email_subject);
+      free((*config)->reset_password_config->email_template);
+      free((*config)->reset_password_config->page_url_prefix);
+      free((*config)->reset_password_config);
+    }
     jwt_free((*config)->jwt);
     u_map_clean_full((*config)->mime_types);
     if ((*config)->auth_ldap != NULL) {
@@ -505,7 +525,7 @@ char * get_file_content(const char * file_path) {
 int build_config_from_file(struct config_elements * config) {
   
   config_t cfg;
-  config_setting_t * root, * database, * auth, * jwt, * mime_type_list, * mime_type;
+  config_setting_t * root, * database, * auth, * jwt, * mime_type_list, * mime_type, * reset_password_config;
   const char * cur_prefix, * cur_log_mode, * cur_log_level, * cur_log_file = NULL, * one_log_mode, * cur_hash_algorithm, 
              * db_type, * db_sqlite_path, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL, * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL, * cur_session_key = NULL, * cur_admin_scope = NULL,
              * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL,
@@ -513,7 +533,8 @@ int build_config_from_file(struct config_elements * config) {
              * cur_auth_ldap_base_search_client = NULL, * cur_auth_ldap_filter_client_read = NULL, * cur_auth_ldap_client_id_property_client_read = NULL, * cur_auth_ldap_name_property_client_read = NULL, * cur_auth_ldap_scope_property_client_read = NULL, * cur_auth_ldap_description_property_client_read = NULL, * cur_auth_ldap_redirect_uri_property_client_read = NULL, * cur_auth_ldap_confidential_property_client_read = NULL, * cur_auth_ldap_client_id_property_client_write = NULL, * cur_auth_ldap_rdn_property_client_write = NULL, * cur_auth_ldap_name_property_client_write = NULL, * cur_auth_ldap_scope_property_client_write = NULL, * cur_auth_ldap_description_property_client_write = NULL, * cur_auth_ldap_redirect_uri_property_client_write = NULL, * cur_auth_ldap_confidential_property_client_write = NULL, * cur_auth_ldap_password_property_client_write = NULL, * cur_auth_ldap_password_algorithm_client_write = NULL, * cur_auth_ldap_object_class_client_write = NULL,
              * cur_rsa_key_file = NULL, * cur_rsa_pub_file = NULL, * cur_sha_secret = NULL,
              * extension = NULL, * mime_type_value = NULL,
-             * cur_secure_connection_key_file = NULL, * cur_secure_connection_pem_file = NULL;
+             * cur_secure_connection_key_file = NULL, * cur_secure_connection_pem_file = NULL,
+             * cur_reset_password_smtp_host = NULL, * cur_reset_password_smtp_user = NULL, * cur_reset_password_smtp_password = NULL, * cur_reset_password_email_from = NULL, * cur_reset_password_email_subject = NULL, * cur_reset_password_email_template_path = NULL, * cur_reset_password_page_url_prefix = NULL;
   int db_mariadb_port = 0;
   int cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_sha = 0, cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, i;
   
@@ -623,6 +644,97 @@ int build_config_from_file(struct config_elements * config) {
   config_lookup_bool(&cfg, "use_scope", &cur_use_scope);
   config->use_scope = cur_use_scope;
   
+  root = config_root_setting(&cfg);
+  config_lookup_bool(&cfg, "reset_password", &config->reset_password);
+  if (config->reset_password) {
+    reset_password_config = config_setting_get_member(root, "reset_password_config");
+    if (reset_password_config != NULL) {
+      config->reset_password_config = malloc(sizeof(struct _reset_password_config));
+      if (config->reset_password_config != NULL) {
+        config->reset_password_config->smtp_host = NULL;
+        config->reset_password_config->smtp_port = GLEWLWYD_RESET_PASSWORD_DEFAULT_SMTP_PORT;
+        config->reset_password_config->smtp_use_tls = 0;
+        config->reset_password_config->smtp_verify_certificate = 0;
+        config->reset_password_config->smtp_user = NULL;
+        config->reset_password_config->smtp_password = NULL;
+        
+        config->reset_password_config->token_expiration = GLEWLWYD_RESET_PASSWORD_DEFAULT_TOKEN_EXPIRATION;
+        config->reset_password_config->email_from = NULL;
+        config->reset_password_config->email_subject = NULL;
+        config->reset_password_config->email_template = NULL;
+        config->reset_password_config->page_url_prefix = NULL;
+        
+        if (config_setting_lookup_string(reset_password_config, "smtp_host", &cur_reset_password_smtp_host) == CONFIG_TRUE) {
+          if ((config->reset_password_config->smtp_host = nstrdup(cur_reset_password_smtp_host)) == NULL) {
+            fprintf(stderr, "Error allocating config->reset_password_config->smtp_host, exiting\n");
+            config_destroy(&cfg);
+            return 0;
+          }
+        }
+        config_setting_lookup_int(reset_password_config, "smtp_port", (int *)&config->reset_password_config->smtp_port);
+        config_setting_lookup_bool(reset_password_config, "smtp_use_tls", &config->reset_password_config->smtp_use_tls);
+        config_setting_lookup_bool(reset_password_config, "smtp_verify_certificate", &config->reset_password_config->smtp_verify_certificate);
+        if (config_setting_lookup_string(reset_password_config, "smtp_user", &cur_reset_password_smtp_user) == CONFIG_TRUE) {
+          if ((config->reset_password_config->smtp_user = nstrdup(cur_reset_password_smtp_user)) == NULL) {
+            fprintf(stderr, "Error allocating config->reset_password_config->smtp_user, exiting\n");
+            config_destroy(&cfg);
+            return 0;
+          }
+        }
+        if (config_setting_lookup_string(reset_password_config, "smtp_password", &cur_reset_password_smtp_password) == CONFIG_TRUE) {
+          if ((config->reset_password_config->smtp_password = nstrdup(cur_reset_password_smtp_password)) == NULL) {
+            fprintf(stderr, "Error allocating config->reset_password_config->smtp_password, exiting\n");
+            config_destroy(&cfg);
+            return 0;
+          }
+        }
+        config_setting_lookup_int(reset_password_config, "token_expiration", (int *)&config->reset_password_config->token_expiration);
+        if (config_setting_lookup_string(reset_password_config, "email_from", &cur_reset_password_email_from) == CONFIG_TRUE) {
+          if ((config->reset_password_config->email_from = nstrdup(cur_reset_password_email_from)) == NULL) {
+            fprintf(stderr, "Error allocating config->reset_password_config->email_from, exiting\n");
+            config_destroy(&cfg);
+            return 0;
+          }
+        }
+        if (config_setting_lookup_string(reset_password_config, "email_subject", &cur_reset_password_email_subject) == CONFIG_TRUE) {
+          if ((config->reset_password_config->email_subject = nstrdup(cur_reset_password_email_subject)) == NULL) {
+            fprintf(stderr, "Error allocating config->reset_password_config->email_subject, exiting\n");
+            config_destroy(&cfg);
+            return 0;
+          }
+        }
+        if (config_setting_lookup_string(reset_password_config, "email_template", &cur_reset_password_email_template_path) == CONFIG_TRUE) {
+          if ((config->reset_password_config->email_template = get_file_content(cur_reset_password_email_template_path)) == NULL) {
+            fprintf(stderr, "Error email_template, exiting\n");
+            config_destroy(&cfg);
+            return 0;
+          }
+        }
+        if (config_setting_lookup_string(reset_password_config, "page_url_prefix", &cur_reset_password_page_url_prefix) == CONFIG_TRUE) {
+          if ((config->reset_password_config->page_url_prefix = nstrdup(cur_reset_password_page_url_prefix)) == NULL) {
+            fprintf(stderr, "Error allocating config->reset_password_config->page_url_prefix, exiting\n");
+            config_destroy(&cfg);
+            return 0;
+          }
+        }
+        
+        if (config->reset_password_config->smtp_host == NULL || config->reset_password_config->email_from == NULL || config->reset_password_config->email_subject == NULL || config->reset_password_config->email_template == NULL || config->reset_password_config->page_url_prefix == NULL) {
+          fprintf(stderr, "Error reset_password, mandatory parameters are missing, exiting %s %s %s %s %s\n", config->reset_password_config->smtp_host, config->reset_password_config->email_from, config->reset_password_config->email_subject, config->reset_password_config->email_template, config->reset_password_config->page_url_prefix);
+          config_destroy(&cfg);
+          return 0;
+        }
+      } else {
+        fprintf(stderr, "Error allocating config->reset_password_config, exiting\n");
+        config_destroy(&cfg);
+        return 0;
+      }
+    } else {
+      fprintf(stderr, "Error no reset_password_config values, exiting\n");
+      config_destroy(&cfg);
+      return 0;
+    }
+  }
+  
   if (config->static_files_path == NULL) {
     // Get path that serve static files
     if (config_lookup_string(&cfg, "static_files_path", &cur_static_files_path)) {
@@ -690,7 +802,6 @@ int build_config_from_file(struct config_elements * config) {
     }
   }
   
-  root = config_root_setting(&cfg);
   database = config_setting_get_member(root, "database");
   if (database != NULL) {
     if (config_setting_lookup_string(database, "type", &db_type) == CONFIG_TRUE) {
