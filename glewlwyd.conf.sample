@@ -102,6 +102,31 @@ use_secure_connection=false
 secure_connection_key_file="cert.key"
 secure_connection_pem_file="cert.pem"
 
+# Reset password configuration
+reset_password_token_expiration=604800
+reset_password_email_from="glewlwyd@example.org"
+reset_password_email_template_path="reset.eml"
+reset_password_page_url_prefix="https://example.org/glewlwyd/webapp/reset.html?code="
+
+# Reset password configuration
+reset_password=true # optional, default false
+reset_password_config = 
+{
+  # SMTP parameters
+  smtp_host="localhost"         # mandatory
+  smtp_port=25                  # optional, default 25
+  smtp_use_tls=false            # optional, default false
+  smtp_verify_certificate=false # optional, default false
+#  smtp_user="user"              # optional, default no value
+#  smtp_password="password"      # optional, default no value
+  
+  token_expiration=604800                                                # in seconds, optional, default 604800
+  email_from="glewlwyd@example.org"                                      # mandatory
+  email_subject="Glewlwyd email reset"                                                 # mandatory
+  email_template_path="reset.eml"                                        # mandatory
+  page_url_prefix="https://example.org/glewlwyd/webapp/reset.html?code=" # mandatory
+}
+
 # Algorithms available are SHA1, SHA256, SHA512, MD5
 hash_algorithm = "SHA512"
 
