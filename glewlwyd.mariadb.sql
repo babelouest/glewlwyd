@@ -81,6 +81,17 @@ CREATE TABLE `g_redirect_uri` (
   FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE
 );
 
+-- Reset a user password
+CREATE TABLE `g_reset_password` (
+  `grp_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `grp_username` VARCHAR(128) NOT NULL,
+  `grp_ip_source` VARCHAR(64) NOT NULL,
+  `grp_token` VARCHAR(512) NOT NULL,
+  `grp_enabled` TINYINT(1) DEFAULT 1,
+  `grp_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `grp_reset_at` TIMESTAMP
+);
+
 -- ------------ --
 -- Token tables --
 -- ------------ --

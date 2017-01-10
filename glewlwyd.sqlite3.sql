@@ -82,6 +82,17 @@ CREATE TABLE `g_resource` (
 );
 CREATE INDEX `i_g_resource` ON `g_resource`(`gr_id`);
 
+-- Reset a user password
+CREATE TABLE `g_reset_password` (
+  `grp_id` INTEGER PRIMARY KEY AUTOINCREMENT,
+  `grp_username` TEXT NOT NULL,
+  `grp_ip_source` TEXT NOT NULL,
+  `grp_token` TEXT NOT NULL,
+  `grp_enabled` INTEGER DEFAULT 1,
+  `grp_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `grp_reset_at` TIMESTAMP
+);
+
 -- ------------ --
 -- Token tables --
 -- ------------ --
