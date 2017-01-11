@@ -329,6 +329,7 @@ static Suite *libjwt_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_get);
   tcase_add_test(tc_core, test_glwd_crud_user_get_not_found);
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_database);
+  tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_invalid_database);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_database);
   tcase_add_test(tc_core, test_glwd_crud_user_set_new_database);
@@ -337,6 +338,7 @@ static Suite *libjwt_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_delete_new_database);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_ldap);
+  tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_invalid_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_set_new_ldap);
@@ -345,6 +347,7 @@ static Suite *libjwt_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_delete_new_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_no_source);
+  tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_invalid_no_source);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_no_source);
   tcase_add_test(tc_core, test_glwd_crud_user_set_new_no_source);

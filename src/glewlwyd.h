@@ -59,6 +59,7 @@
 #define GLEWLWYD_SALT_LENGTH                16
 #define GLEWLWYD_ADMIN_SCOPE                "g_admin"
 #define GLEWLWYD_DEFAULT_LIMIT              20
+#define GLEWLWYD_PREFIX_BEARER              "Bearer "
 
 #define GLEWLWYD_RESET_PASSWORD_DEFAULT_SMTP_PORT        25
 #define GLEWLWYD_RESET_PASSWORD_DEFAULT_TOKEN_EXPIRATION 604800
@@ -258,6 +259,8 @@ int callback_glewlwyd_send_reset_user_profile (const struct _u_request * request
 int callback_glewlwyd_reset_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_refresh_token_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_refresh_token_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_list_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_user (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -266,6 +269,8 @@ int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_res
 int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_refresh_token_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_refresh_token_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_session_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_session_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_list_client (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -398,5 +403,9 @@ int delete_client_user_scope_access(struct config_elements * config, const char 
 
 json_t * get_refresh_token_list(struct config_elements * config, const char * username, int valid, long int offset, long int limit);
 int revoke_token(struct config_elements * config, const char * username, const char * token_hash);
+
+json_t * get_session_list(struct config_elements * config, const char * username, int valid, long int offset, long int limit);
+int get_session(struct config_elements * config, const char * username, const char * session_hash);
+int revoke_session(struct config_elements * config, const char * username, const char * session_hash);
 
 #endif

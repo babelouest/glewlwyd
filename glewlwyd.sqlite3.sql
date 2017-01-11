@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS `g_access_token`;
 DROP TABLE IF EXISTS `g_refresh_token`;
 DROP TABLE IF EXISTS `g_session`;
 DROP TABLE IF EXISTS `g_resource`;
+DROP TABLE IF EXISTS `g_reset_password`;
 DROP TABLE IF EXISTS `g_redirect_uri`;
 DROP TABLE IF EXISTS `g_client`;
 DROP TABLE IF EXISTS `g_authorization_type`;

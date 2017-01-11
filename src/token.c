@@ -494,6 +494,8 @@ char * generate_authorization_code(struct config_elements * config, const char *
 json_t * session_get(struct config_elements * config, const char * session_value) {
   json_t * j_result, * j_grants;
   jwt_t * jwt;
+  char * session_hash;
+  int res;
   
   if (session_value != NULL) {
     if (!jwt_decode(&jwt, session_value, NULL, 0)) {
@@ -501,10 +503,20 @@ json_t * session_get(struct config_elements * config, const char * session_value
       j_grants = json_loads(grant_str, JSON_DECODE_ANY, NULL);
       free(grant_str);
       if (j_grants != NULL) {
-        j_result = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+        session_hash = generate_hash(config, config->hash_algorithm, session_value);
+        res = get_session(config, json_string_value(json_object_get(j_grants, "username")), session_hash);
+        if (res == G_OK) {
+          j_result = json_pack("{siso}", "result", G_OK, "grants", json_copy(j_grants));
+        } else if (res == G_ERROR_NOT_FOUND) {
+          j_result = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+        } else {
+          j_result = json_pack("{si}", "result", G_ERROR);
+        }
+        free(session_hash);
       } else {
         j_result = json_pack("{si}", "result", G_ERROR);
       }
+      json_decref(j_grants);
     } else {
       j_result = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
@@ -713,9 +725,255 @@ char * generate_user_reset_password_token(struct config_elements * config, const
 }
 
 json_t * get_refresh_token_list(struct config_elements * config, const char * username, int valid, long int offset, long int limit) {
-  return NULL;
+  json_t * j_query, * j_result, * j_return, * j_element;
+  size_t index;
+  int res;
+  
+  j_query = json_pack("{sss[sssssss]s{ss}sisiss}",
+                      "table",
+                      GLEWLWYD_TABLE_REFRESH_TOKEN,
+                      "columns",
+                        "grt_hash AS token_hash",
+                        "grt_authorization_type",
+                        config->conn->type==HOEL_DB_TYPE_MARIADB?"UNIX_TIMESTAMP(grt_issued_at) AS issued_at":"grt_issued_at AS issued_at",
+                        config->conn->type==HOEL_DB_TYPE_MARIADB?"UNIX_TIMESTAMP(grt_last_seen) AS last_seen":"grt_last_seen AS last_seen",
+                        config->conn->type==HOEL_DB_TYPE_MARIADB?"UNIX_TIMESTAMP(grt_expired_at) AS expired_at":"grt_expired_at AS expired_at",
+                        "grt_ip_source AS ip_source",
+                        "grt_enabled",
+                      "where",
+                        "grt_username",
+                        username,
+                      "offset",
+                      offset,
+                      "limit",
+                      limit,
+                      "order_by",
+                      "issued_at desc");
+  if (valid > -1) {
+    json_object_set_new(json_object_get(j_query, "where"), "grt_enabled", json_integer(valid));
+  }
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    json_array_foreach(j_result, index, j_element) {
+      if (json_integer_value(json_object_get(j_element, "grt_enabled")) == 1) {
+        json_object_set_new(j_element, "enabled", json_true());
+      } else {
+        json_object_set_new(j_element, "enabled", json_false());
+      }
+      json_object_del(j_element, "grt_enabled");
+      
+      switch(json_integer_value(json_object_get(j_element, "grt_authorization_type"))) {
+        case GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE:
+          json_object_set_new(j_element, "authorization_type", json_string("authorization_code"));
+          break;
+        case GLEWLWYD_AUHORIZATION_TYPE_CODE:
+          json_object_set_new(j_element, "authorization_type", json_string("code"));
+          break;
+        case GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT:
+          json_object_set_new(j_element, "authorization_type", json_string("implicit"));
+          break;
+        case GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS:
+          json_object_set_new(j_element, "authorization_type", json_string("password"));
+          break;
+        case GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS:
+          json_object_set_new(j_element, "authorization_type", json_string("celient_credentials"));
+          break;
+        case GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN:
+          json_object_set_new(j_element, "authorization_type", json_string("refresh"));
+          break;
+      }
+      json_object_del(j_element, "grt_authorization_type");
+    }
+    j_return = json_pack("{siso}", "result", G_OK, "token", j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_refresh_token_list - Error getting token list");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  return j_return;
 }
 
 int revoke_token(struct config_elements * config, const char * username, const char * token_hash) {
-  return G_ERROR;
+  json_t * j_query, * j_result;
+  int res, to_return;
+  
+  if (username != NULL && token_hash != NULL) {
+    j_query = json_pack("{sss[s]s{sssssi}}",
+                        "table",
+                        GLEWLWYD_TABLE_REFRESH_TOKEN,
+                        "columns",
+                          "grt_id",
+                        "where",
+                          "grt_username",
+                          username,
+                          "grt_hash",
+                          token_hash,
+                          "grt_enabled",
+                          1);
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      if (json_array_size(j_result) > 0) {
+        j_query = json_pack("{sss{si}s{sI}}",
+                            "table",
+                            GLEWLWYD_TABLE_REFRESH_TOKEN,
+                            "set",
+                              "grt_enabled",
+                              0,
+                            "where",
+                              "grt_id",
+                              json_integer_value(json_object_get(json_array_get(j_result, 0), "grt_id")));
+        res = h_update(config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          to_return = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "revoke_token - Error revoking token");
+          to_return = G_ERROR_DB;
+        }
+      } else {
+        to_return = G_ERROR_NOT_FOUND;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "revoke_token - Error getting token");
+      to_return = G_ERROR_DB;
+    }
+    json_decref(j_result);
+  } else {
+    to_return = G_ERROR_PARAM;
+  }
+  
+  return to_return;
+}
+
+json_t * get_session_list(struct config_elements * config, const char * username, int valid, long int offset, long int limit) {
+  json_t * j_query, * j_result, * j_return, * j_element;
+  size_t index;
+  int res;
+  
+  j_query = json_pack("{sss[ssssss]s{ss}sisiss}",
+                      "table",
+                      GLEWLWYD_TABLE_SESSION,
+                      "columns",
+                        "gss_hash AS session_hash",
+                        config->conn->type==HOEL_DB_TYPE_MARIADB?"UNIX_TIMESTAMP(gss_issued_at) AS issued_at":"gss_issued_at AS issued_at",
+                        config->conn->type==HOEL_DB_TYPE_MARIADB?"UNIX_TIMESTAMP(gss_last_seen) AS last_seen":"gss_last_seen AS last_seen",
+                        config->conn->type==HOEL_DB_TYPE_MARIADB?"UNIX_TIMESTAMP(gss_expired_at) AS expired_at":"gss_expired_at AS expired_at",
+                        "gss_ip_source AS ip_source",
+                        "gss_enabled",
+                      "where",
+                        "gss_username",
+                        username,
+                      "offset",
+                      offset,
+                      "limit",
+                      limit,
+                      "order_by",
+                      "issued_at desc");
+  if (valid > -1) {
+    json_object_set_new(json_object_get(j_query, "where"), "gss_enabled", json_integer(valid));
+  }
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    json_array_foreach(j_result, index, j_element) {
+      if (json_integer_value(json_object_get(j_element, "gss_enabled")) == 1) {
+        json_object_set_new(j_element, "enabled", json_true());
+      } else {
+        json_object_set_new(j_element, "enabled", json_false());
+      }
+      json_object_del(j_element, "gss_enabled");
+    }
+    j_return = json_pack("{siso}", "result", G_OK, "session", j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_refresh_token_list - Error getting session list");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  return j_return;
+}
+
+int get_session(struct config_elements * config, const char * username, const char * session_hash) {
+  json_t * j_query, * j_result;
+  int res, to_return;
+  
+  j_query = json_pack("{sss[s]s{sssssi}}",
+                      "table",
+                      GLEWLWYD_TABLE_SESSION,
+                      "columns",
+                        "gss_id",
+                      "where",
+                        "gss_username",
+                        username,
+                        "gss_hash",
+                        session_hash,
+                        "gss_enabled",
+                        1);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result) > 0) {
+      to_return = G_OK;
+    } else {
+      to_return = G_ERROR_NOT_FOUND;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_session - Error getting session");
+    to_return = G_ERROR_DB;
+  }
+  json_decref(j_result);
+  
+  return to_return;
+}
+
+int revoke_session(struct config_elements * config, const char * username, const char * session_hash) {
+  json_t * j_query, * j_result;
+  int res, to_return;
+  
+  if (username != NULL && session_hash != NULL) {
+    j_query = json_pack("{sss[s]s{sssssi}}",
+                        "table",
+                        GLEWLWYD_TABLE_SESSION,
+                        "columns",
+                          "gss_id",
+                        "where",
+                          "gss_username",
+                          username,
+                          "gss_hash",
+                          session_hash,
+                          "gss_enabled",
+                          1);
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      if (json_array_size(j_result) > 0) {
+        j_query = json_pack("{sss{si}s{sI}}",
+                            "table",
+                            GLEWLWYD_TABLE_SESSION,
+                            "set",
+                              "gss_enabled",
+                              0,
+                            "where",
+                              "gss_id",
+                              json_integer_value(json_object_get(json_array_get(j_result, 0), "gss_id")));
+        res = h_update(config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          to_return = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "revoke_session - Error revoking session");
+          to_return = G_ERROR_DB;
+        }
+      } else {
+        to_return = G_ERROR_NOT_FOUND;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "revoke_session - Error getting session");
+      to_return = G_ERROR_DB;
+    }
+    json_decref(j_result);
+  } else {
+    to_return = G_ERROR_PARAM;
+  }
+  
+  return to_return;
 }

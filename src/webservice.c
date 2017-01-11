@@ -173,9 +173,9 @@ int callback_glewlwyd_set_user_scope_grant (const struct _u_request * request, s
   const char * token = NULL;
   
   // Check if user has access to scopes
-  token = nstrstr(u_map_get(request->map_header, "Authorization"), "Bearer ");
-  if (token != NULL && strlen(token) > strlen("Bearer ")) {
-    token = token + strlen("Bearer ");
+  token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
+  if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
+    token = token + strlen(GLEWLWYD_PREFIX_BEARER);
   } else {
     token = u_map_get(request->map_cookie, config->session_key);
   }
@@ -312,9 +312,9 @@ int callback_glewlwyd_check_user (const struct _u_request * request, struct _u_r
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL;
   int res = U_OK;
-  const char * token = nstrstr(u_map_get(request->map_header, "Authorization"), "Bearer ");
-  if (token != NULL && strlen(token) > strlen("Bearer ")) {
-    token = token + strlen("Bearer ");
+  const char * token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
+  if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
+    token = token + strlen(GLEWLWYD_PREFIX_BEARER);
   } else {
     token = u_map_get(request->map_cookie, config->session_key);
   }
@@ -352,10 +352,10 @@ int callback_glewlwyd_check_scope_admin (const struct _u_request * request, stru
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL;
   int res = U_ERROR_UNAUTHORIZED;
-  const char * token = nstrstr(u_map_get(request->map_header, "Authorization"), "Bearer ");
+  const char * token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
   char * scope_list_save, * saveptr, * scope;
-  if (token != NULL && strlen(token) > strlen("Bearer ")) {
-    token = token + strlen("Bearer ");
+  if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
+    token = token + strlen(GLEWLWYD_PREFIX_BEARER);
   } else {
     token = NULL;
   }
@@ -381,10 +381,10 @@ int callback_glewlwyd_get_user_session_profile (const struct _u_request * reques
   json_t * j_session = NULL, * j_user = NULL;
   const char * token;
   
-  if (u_map_get(request->map_url, "bearer") != NULL) {
-    token = nstrstr(u_map_get(request->map_header, "Authorization"), "Bearer ");
-    if (token != NULL && strlen(token) > strlen("Bearer ")) {
-      token = token + strlen("Bearer ");
+  if (u_map_get(request->map_header, "Authorization") != NULL) {
+    token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
+    if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
+      token = token + strlen(GLEWLWYD_PREFIX_BEARER);
     } else {
       token = NULL;
     }
@@ -431,6 +431,19 @@ int callback_glewlwyd_get_user_session (const struct _u_request * request, struc
 
 int callback_glewlwyd_delete_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
+  char * session_hash;
+  json_t * j_session;
+  
+  if (u_map_get(request->map_cookie, config->session_key) != NULL && strlen(u_map_get(request->map_cookie, config->session_key)) > 0) {
+    j_session = session_get(config, u_map_get(request->map_cookie, config->session_key));
+    if (check_result_value(j_session, G_OK)) {
+      session_hash = generate_hash(config, config->hash_algorithm, u_map_get(request->map_cookie, config->session_key));
+      if (revoke_session(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), session_hash) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user_session - Error revoking session in database");
+        response->status = 500;
+      }
+    }
+  }
   ulfius_add_cookie_to_response(response, config->session_key, "", NULL, 0, NULL, "/", 0, 0);
   return U_OK;
 }
@@ -753,6 +766,14 @@ int callback_glewlwyd_get_refresh_token_user (const struct _u_request * request,
   struct config_elements * config = (struct config_elements *)user_data;
   long int offset, limit;
   json_t * j_result;
+  int valid = -1;
+  if (u_map_get(request->map_url, "valid") != NULL) {
+    if (strcmp("true", u_map_get(request->map_url, "valid")) == 0) {
+      valid=1;
+    } else {
+      valid=0;
+    }
+  }
   
   if (u_map_get(request->map_url, "offset") != NULL) {
     offset = strtol(u_map_get(request->map_url, "offset"), NULL, 10);
@@ -766,7 +787,7 @@ int callback_glewlwyd_get_refresh_token_user (const struct _u_request * request,
     limit = GLEWLWYD_DEFAULT_LIMIT;
   }
   
-  j_result = get_refresh_token_list(config, u_map_get(request->map_url, "username"), (nstrcmp("true", u_map_get(request->map_url, "valid"))==0?1:0), offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
+  j_result = get_refresh_token_list(config, u_map_get(request->map_url, "username"), valid, offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
   
   if (check_result_value(j_result, G_OK)) {
     response->json_body = json_copy(json_object_get(j_result, "token"));
@@ -782,11 +803,66 @@ int callback_glewlwyd_delete_refresh_token_user (const struct _u_request * reque
   struct config_elements * config = (struct config_elements *)user_data;
   int res;
   
-  res = revoke_token(config, u_map_get(request->map_url, "username"), u_map_get(request->map_url, "token_hash"));
+  res = revoke_token(config, u_map_get(request->map_url, "username"), u_map_get(request->map_post_body, "token_hash"));
   if (res == G_ERROR_NOT_FOUND) {
     response->status = 404;
+  } else if (res == G_ERROR_PARAM) {
+    response->status = 400;
   } else if (res != G_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_refresh_token_user - Error revoking token list");
+    response->status = 500;
+  }
+  return U_OK;
+}
+
+int callback_glewlwyd_get_session_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  long int offset, limit;
+  json_t * j_result;
+  int valid = -1;
+  if (u_map_get(request->map_url, "valid") != NULL) {
+    if (strcmp("true", u_map_get(request->map_url, "valid")) == 0) {
+      valid=1;
+    } else {
+      valid=0;
+    }
+  }
+  
+  if (u_map_get(request->map_url, "offset") != NULL) {
+    offset = strtol(u_map_get(request->map_url, "offset"), NULL, 10);
+  } else {
+    offset = 0;
+  }
+  
+  if (u_map_get(request->map_url, "limit") != NULL) {
+    limit = strtol(u_map_get(request->map_url, "limit"), NULL, 10);
+  } else {
+    limit = GLEWLWYD_DEFAULT_LIMIT;
+  }
+  
+  j_result = get_session_list(config, u_map_get(request->map_url, "username"), valid, offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
+  
+  if (check_result_value(j_result, G_OK)) {
+    response->json_body = json_copy(json_object_get(j_result, "session"));
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_session_user - Error getting session list");
+    response->status = 500;
+  }
+  json_decref(j_result);
+  return U_OK;
+}
+
+int callback_glewlwyd_delete_session_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  int res;
+  
+  res = revoke_session(config, u_map_get(request->map_url, "username"), u_map_get(request->map_post_body, "session_hash"));
+  if (res == G_ERROR_NOT_FOUND) {
+    response->status = 404;
+  } else if (res == G_ERROR_PARAM) {
+    response->status = 400;
+  } else if (res != G_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_session_user - Error revoking session");
     response->status = 500;
   }
   return U_OK;
@@ -1023,10 +1099,10 @@ int callback_glewlwyd_set_user_profile (const struct _u_request * request, struc
   json_t * j_session = NULL, * j_user_valid = NULL;
   const char * token;
   
-  if (u_map_get(request->map_url, "bearer") != NULL) {
-    token = nstrstr(u_map_get(request->map_header, "Authorization"), "Bearer ");
-    if (token != NULL && strlen(token) > strlen("Bearer ")) {
-      token = token + strlen("Bearer ");
+  if (u_map_get(request->map_header, "Authorization") != NULL) {
+    token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
+    if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
+      token = token + strlen(GLEWLWYD_PREFIX_BEARER);
     } else {
       token = NULL;
     }
@@ -1111,11 +1187,19 @@ int callback_glewlwyd_get_refresh_token_profile (const struct _u_request * reque
   long int offset, limit;
   json_t * j_result, * j_session;
   const char * token;
+  int valid = -1;
+  if (u_map_get(request->map_url, "valid") != NULL) {
+    if (strcmp("true", u_map_get(request->map_url, "valid")) == 0) {
+      valid=1;
+    } else {
+      valid=0;
+    }
+  }
   
-  if (u_map_get(request->map_url, "bearer") != NULL) {
-    token = nstrstr(u_map_get(request->map_header, "Authorization"), "Bearer ");
-    if (token != NULL && strlen(token) > strlen("Bearer ")) {
-      token = token + strlen("Bearer ");
+  if (u_map_get(request->map_header, "Authorization") != NULL) {
+    token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
+    if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
+      token = token + strlen(GLEWLWYD_PREFIX_BEARER);
     } else {
       token = NULL;
     }
@@ -1137,7 +1221,7 @@ int callback_glewlwyd_get_refresh_token_profile (const struct _u_request * reque
       limit = GLEWLWYD_DEFAULT_LIMIT;
     }
     
-    j_result = get_refresh_token_list(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), (nstrcmp("true", u_map_get(request->map_url, "valid"))==0?1:0), offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
+    j_result = get_refresh_token_list(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), valid, offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
     
     if (check_result_value(j_result, G_OK)) {
       response->json_body = json_copy(json_object_get(j_result, "token"));
@@ -1147,7 +1231,7 @@ int callback_glewlwyd_get_refresh_token_profile (const struct _u_request * reque
     }
     json_decref(j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_profile - Error get session");
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_refresh_token_user - Error get session");
     response->status = 500;
   }
   json_decref(j_session);
@@ -1160,10 +1244,10 @@ int callback_glewlwyd_delete_refresh_token_profile (const struct _u_request * re
   const char * token;
   int res;
   
-  if (u_map_get(request->map_url, "bearer") != NULL) {
-    token = nstrstr(u_map_get(request->map_header, "Authorization"), "Bearer ");
-    if (token != NULL && strlen(token) > strlen("Bearer ")) {
-      token = token + strlen("Bearer ");
+  if (u_map_get(request->map_header, "Authorization") != NULL) {
+    token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
+    if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
+      token = token + strlen(GLEWLWYD_PREFIX_BEARER);
     } else {
       token = NULL;
     }
@@ -1173,15 +1257,112 @@ int callback_glewlwyd_delete_refresh_token_profile (const struct _u_request * re
 
   j_session = session_get(config, token);
   if (check_result_value(j_session, G_OK)) {
-  res = revoke_token(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_url, "token_hash"));
-  if (res == G_ERROR_NOT_FOUND) {
-    response->status = 404;
-  } else if (res != G_OK) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_refresh_token_user - Error revoking token list");
+    res = revoke_token(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "token_hash"));
+    if (res == G_ERROR_NOT_FOUND) {
+      response->status = 404;
+    } else if (res == G_ERROR_PARAM) {
+      response->status = 400;
+    } else if (res != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_refresh_token_user - Error revoking token list");
+      response->status = 500;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_refresh_token_user - Error get session");
     response->status = 500;
   }
+  json_decref(j_session);
+  return U_OK;
+}
+
+int callback_glewlwyd_get_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  long int offset, limit;
+  json_t * j_result, * j_session;
+  const char * token;
+  int valid = -1;
+
+  if (u_map_get(request->map_url, "valid") != NULL) {
+    if (strcmp("true", u_map_get(request->map_url, "valid")) == 0) {
+      valid=1;
+    } else {
+      valid=0;
+    }
+  }
+  
+  if (u_map_get(request->map_header, "Authorization") != NULL) {
+    token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
+    if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
+      token = token + strlen(GLEWLWYD_PREFIX_BEARER);
+    } else {
+      token = NULL;
+    }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_profile - Error get session");
+    token = u_map_get(request->map_cookie, config->session_key);
+  }
+
+  j_session = session_get(config, token);
+  if (check_result_value(j_session, G_OK)) {
+    if (u_map_get(request->map_url, "offset") != NULL) {
+      offset = strtol(u_map_get(request->map_url, "offset"), NULL, 10);
+    } else {
+      offset = 0;
+    }
+    
+    if (u_map_get(request->map_url, "limit") != NULL) {
+      limit = strtol(u_map_get(request->map_url, "limit"), NULL, 10);
+    } else {
+      limit = GLEWLWYD_DEFAULT_LIMIT;
+    }
+    
+    j_result = get_session_list(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), valid, offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
+    
+    if (check_result_value(j_result, G_OK)) {
+      response->json_body = json_copy(json_object_get(j_result, "session"));
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_session_user - Error getting session list");
+      response->status = 500;
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_session_user - Error get session");
+    response->status = 500;
+  }
+  json_decref(j_session);
+  return U_OK;
+}
+
+int callback_glewlwyd_delete_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_session;
+  const char * token;
+  int res;
+  
+  if (u_map_get(request->map_header, "Authorization") != NULL) {
+    token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
+    if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
+      token = token + strlen(GLEWLWYD_PREFIX_BEARER);
+    } else {
+      token = NULL;
+    }
+  } else {
+    token = u_map_get(request->map_cookie, config->session_key);
+  }
+
+  j_session = session_get(config, token);
+  if (check_result_value(j_session, G_OK)) {
+    res = revoke_session(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "session_hash"));
+    if (res == G_ERROR_NOT_FOUND) {
+      response->status = 404;
+    } else if (res == G_ERROR_PARAM) {
+      response->status = 400;
+    } else if (res != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_session_user - Error revoking session");
+      response->status = 500;
+    } else {
+      response->status = 200;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_session_user - Error get session");
     response->status = 500;
   }
   json_decref(j_session);

@@ -15,3 +15,8 @@ tests/glewlwyd_crud_user
 tests/glewlwyd_crud_client
 tests/glewlwyd_crud_resource
 tests/glewlwyd_delete_token
+tests/glewlwyd_update_user_profile
+tests/glewlwyd_user_session_user
+tests/glewlwyd_user_session_admin
+tests/glewlwyd_user_refresh_token_user
+tests/glewlwyd_user_refresh_token_admin

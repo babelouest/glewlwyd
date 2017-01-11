@@ -1703,7 +1703,7 @@ int set_user_profile_ldap(struct config_elements * config, const char * username
     }
     
     if (json_object_get(profile, "new_password") != NULL) {
-      password = generate_hash(config, config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(profile, "password")));
+      password = generate_hash(config, config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(profile, "new_password")));
       if (password != NULL) {
         mods[attr_counter] = malloc(sizeof(LDAPMod));
         mods[attr_counter]->mod_values    = malloc(2 * sizeof(char *));
@@ -1767,18 +1767,23 @@ int set_user_profile_database(struct config_elements * config, const char * user
   if (json_object_get(profile, "email") != NULL) {
     json_object_set_new(json_object_get(j_query, "set"), "gu_email", json_copy(json_object_get(profile, "email")));
   }
-  if (json_object_get(profile, "password") != NULL) {
+  if (json_object_get(profile, "new_password") != NULL) {
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
-      escaped = h_escape_string(config->conn, json_string_value(json_object_get(profile, "password")));
+      escaped = h_escape_string(config->conn, json_string_value(json_object_get(profile, "new_password")));
       password = msprintf("PASSWORD('%s')", escaped);
     } else {
-      escaped = generate_hash(config, config->hash_algorithm, json_string_value(json_object_get(profile, "password")));
+      escaped = generate_hash(config, config->hash_algorithm, json_string_value(json_object_get(profile, "new_password")));
       password = msprintf("'%s'", escaped);
     }
-    json_object_set_new(json_object_get(j_query, "set"), "gu_password", json_string(password));
+    if (password != NULL) {
+      json_object_set_new(json_object_get(j_query, "set"), "gu_password", json_pack("{ss}", "raw", password));
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "set_user_profile_database - Error generating password hash");
+    }
     free(password);
     free(escaped);
   }
+  y_log_message(Y_LOG_LEVEL_DEBUG,"j_query is %s", json_dumps(j_query, JSON_ENCODE_ANY));
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -1873,6 +1878,7 @@ int is_reset_user_profile_valid(struct config_elements * config, const char * us
                             clause_grp_issued_at);
     free(col_grp_issued_at);
     free(clause_grp_issued_at);
+    free(token_hash);
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {

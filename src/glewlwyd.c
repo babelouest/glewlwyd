@@ -148,7 +148,9 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_user_session_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_set_user_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/refresh_token", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_refresh_token_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/refresh_token/:token_hash", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_delete_refresh_token_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/refresh_token", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_delete_refresh_token_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/session", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_session_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/session", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_delete_session_profile, (void*)config);
   if (config->reset_password) {
     ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/profile/reset_password/:username", NULL, NULL, NULL, &callback_glewlwyd_send_reset_user_profile, (void*)config);
     ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/reset_password/:username", NULL, NULL, NULL, &callback_glewlwyd_reset_user_profile, (void*)config);
@@ -173,7 +175,9 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/user/:username", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_user, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_user, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/refresh_token", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_refresh_token_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/refresh_token/:token_hash", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_refresh_token_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/refresh_token", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_refresh_token_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/session", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_session_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/session", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_session_user, (void*)config);
 
   // Client endpoints
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_list_client, (void*)config);

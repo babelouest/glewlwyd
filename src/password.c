@@ -52,7 +52,7 @@ char * rand_salt(char * str, size_t str_size) {
 int generate_digest(digest_algorithm digest, const char * password, int use_salt, char * out_password) {
   EVP_MD_CTX mdctx;
   const EVP_MD *md;
-  unsigned char md_value[1024];
+  unsigned char md_value[1024] = {0};
   unsigned int md_len, res;
   
 	BIO *bio, *b64;
@@ -99,34 +99,42 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
       }
       
       EVP_MD_CTX_init(&mdctx);
-      EVP_DigestInit_ex(&mdctx, md, NULL);
-      EVP_DigestUpdate(&mdctx,
-                       intermediate,
-                       (unsigned int) strlen(intermediate));
-      EVP_DigestFinal_ex(&mdctx,
-                         md_value,
-                         &md_len);
       
-      strncpy(buffer, (char *)md_value, md_len);
-      if (use_salt) {
-        strncat(buffer, salt, GLEWLWYD_SALT_LENGTH);
+      if (EVP_DigestInit_ex(&mdctx, md, NULL) && 
+          EVP_DigestUpdate(&mdctx,
+                           intermediate,
+                           (unsigned int) strlen(intermediate)) &&
+          EVP_DigestFinal_ex(&mdctx,
+                             md_value,
+                             &md_len)) {
+        memcpy(buffer, (char *)md_value, md_len);
+        if (use_salt) {
+          memcpy(buffer+md_len, salt, GLEWLWYD_SALT_LENGTH);
+          md_len += GLEWLWYD_SALT_LENGTH;
+        }
+
+        b64 = BIO_new(BIO_f_base64());
+        bio = BIO_new(BIO_s_mem());
+        bio = BIO_push(b64, bio);
+
+        BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+        if (BIO_write(bio, buffer, md_len) > 0) {
+          BIO_flush(bio);
+          BIO_get_mem_ptr(bio, &bufferPtr);
+
+          strncpy(out_password, (*bufferPtr).data, (*bufferPtr).length);
+          
+          BIO_set_close(bio, BIO_CLOSE);
+          BIO_free_all(bio);
+          EVP_MD_CTX_cleanup(&mdctx);
+          res = 1;
+        } else {
+          res = 0;
+        }
+      } else {
+        res = 0;
       }
-
-      b64 = BIO_new(BIO_f_base64());
-      bio = BIO_new(BIO_s_mem());
-      bio = BIO_push(b64, bio);
-
-      BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-      BIO_write(bio, buffer, strlen(buffer));
-      BIO_flush(bio);
-      BIO_get_mem_ptr(bio, &bufferPtr);
-
-      strncpy(out_password, (*bufferPtr).data, (*bufferPtr).length);
       
-      BIO_set_close(bio, BIO_CLOSE);
-      BIO_free_all(bio);
-      EVP_MD_CTX_cleanup(&mdctx);
-      res = 1;
     } else {
       res = 0;
     }
@@ -179,41 +187,77 @@ char * generate_hash(struct config_elements * config, const char * digest, const
   
   if (digest != NULL && password != NULL) {
     if (!strcmp(digest, "SSHA")) {
-      generate_digest(digest_SHA1, password, 1, buffer);
-      to_return = msprintf("{SSHA}%s", buffer, strlen(buffer));
+      if (generate_digest(digest_SHA1, password, 1, buffer)) {
+        to_return = msprintf("{SSHA}%s", buffer, strlen(buffer));
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA");
+      }
     } else if (!strcmp(digest, "SHA1")) {
-      generate_digest(digest_SHA1, password, 0, buffer);
-      to_return = msprintf("{SHA}%s", buffer);
+      if (generate_digest(digest_SHA1, password, 0, buffer)) {
+        to_return = msprintf("{SHA}%s", buffer);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
+      }
     } else if (!strcmp(digest, "SHA224")) {
-      generate_digest(digest_SHA224, password, 0, buffer);
-      to_return = msprintf("{SHA224}%s", buffer);
+      if (generate_digest(digest_SHA224, password, 0, buffer)) {
+        to_return = msprintf("{SHA224}%s", buffer);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA224");
+      }
     } else if (!strcmp(digest, "SSHA224")) {
-      generate_digest(digest_SHA224, password, 1, buffer);
-      to_return = msprintf("{SSHA224}%s", buffer);
+      if (generate_digest(digest_SHA224, password, 1, buffer)) {
+        to_return = msprintf("{SSHA224}%s", buffer);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA224");
+      }
     } else if (!strcmp(digest, "SHA256")) {
-      generate_digest(digest_SHA256, password, 0, buffer);
-      to_return = msprintf("{SHA256}%s", buffer);
+      if (generate_digest(digest_SHA256, password, 0, buffer)) {
+        to_return = msprintf("{SHA256}%s", buffer);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA256");
+      }
     } else if (!strcmp(digest, "SSHA256")) {
-      generate_digest(digest_SHA256, password, 1, buffer);
-      to_return = msprintf("{SSHA256}%s", buffer);
+      if (generate_digest(digest_SHA256, password, 1, buffer)) {
+        to_return = msprintf("{SSHA256}%s", buffer);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA256");
+      }
     } else if (!strcmp(digest, "SHA384")) {
-      generate_digest(digest_SHA384, password, 0, buffer);
-      to_return = msprintf("{SHA384}%s", buffer);
+      if (generate_digest(digest_SHA384, password, 0, buffer)) {
+        to_return = msprintf("{SHA384}%s", buffer);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA384");
+      }
     } else if (!strcmp(digest, "SSHA384")) {
-      generate_digest(digest_SHA384, password, 1, buffer);
-      to_return = msprintf("{SSHA384}%s", buffer);
+      if (generate_digest(digest_SHA384, password, 1, buffer)) {
+        to_return = msprintf("{SSHA384}%s", buffer);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA384");
+      }
     } else if (!strcmp(digest, "SHA512")) {
-      generate_digest(digest_SHA512, password, 0, buffer);
-      to_return = msprintf("{SHA512}%s", buffer);
+      if (generate_digest(digest_SHA512, password, 0, buffer)) {
+        to_return = msprintf("{SHA512}%s", buffer);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA512");
+      }
     } else if (!strcmp(digest, "SSHA512")) {
-      generate_digest(digest_SHA512, password, 1, buffer);
-      to_return = msprintf("{SSHA512}%s", buffer);
+      if (generate_digest(digest_SHA512, password, 1, buffer)) {
+        to_return = msprintf("{SSHA512}%s", buffer);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA512");
+      }
     } else if (!strcmp(digest, "SMD5")) {
-      generate_digest(digest_MD5, password, 1, buffer);
-      to_return = msprintf("{SMD5}%s", buffer);
+      if (generate_digest(digest_MD5, password, 1, buffer)) {
+        to_return = msprintf("{SMD5}%s", buffer);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SMD5");
+      }
     } else if (!strcmp(digest, "MD5")) {
-      generate_digest(digest_MD5, password, 0, buffer);
-      to_return = msprintf("{MD5}%s", buffer);
+      if (generate_digest(digest_MD5, password, 0, buffer)) {
+        to_return = msprintf("{MD5}%s", buffer);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest MD5");
+      }
     } else if (!strcmp(digest, "CRYPT")) {
       rand_crypt_salt(salt, GLEWLWYD_SALT_LENGTH);
       to_return = msprintf("{CRYPT}%s", crypt_r(password, salt, &config->auth_ldap->cur_crypt_data));
