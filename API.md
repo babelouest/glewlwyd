@@ -51,7 +51,6 @@ Content
   name: text,
   email: text,
   login: text,
-  enabled: boolean,
   scope: [ // Array of strings
   ]
 }
@@ -250,7 +249,10 @@ Content
 ```javascript
 {
   name: text,
-  email: text
+  email: text,
+  login: text,
+  scope: [ // Array of strings
+  ]
 }
 ```
 
@@ -274,9 +276,10 @@ Session token or header bearer token
 {
   name: text, maximum 256 characters, optional
   email: text, maximum 256 characters, optional
-  oldPassword: text, optional
-  password: text, optional
+  old_password: text, optional
+  new_password: text, mandatory if old_password is set
 }
+// At least one optional value must be set
 ```
 
 #### Success response
@@ -847,6 +850,8 @@ Content
         uri: text,
         enabled: true
       }
+    ],
+    authorization_type: [ // Array of strings
     ]
   }
 ]
@@ -893,6 +898,8 @@ Content
       uri: text,
       enabled: true
     }
+  ],
+  authorization_type: [ // Array of strings
   ]
 }
 ```
@@ -935,6 +942,8 @@ Scope required: `g_admin`
       uri: text, maximum 512 characters, mandatory
       enabled: boolean, optional, default true
     }
+  ],
+  authorization_type: [ // Array of strings, must be valid authorization_type
   ]
 }
 ```
@@ -991,6 +1000,8 @@ Required
       uri: text, maximum 512 characters, mandatory
       enabled: boolean, optional, default true
     }
+  ],
+  authorization_type: [ // Array of strings, must be valid authorization_type
   ]
 }
 ```
