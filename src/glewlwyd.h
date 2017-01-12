@@ -234,6 +234,7 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
 int check_auth_type_client_credentials_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data);
 int delete_refresh_token (const struct _u_request * request, struct _u_response * response, void * user_data);
+json_t * validate_authorization_code(struct config_elements * config, const char * authorization_code, const char * client_id, const char * redirect_uri, const char * ip_source);
 
 // Oauth2 callback functions
 int callback_glewlwyd_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -241,7 +242,6 @@ int callback_glewlwyd_token (const struct _u_request * request, struct _u_respon
 
 // Authorization callbacks functions
 int callback_glewlwyd_check_user (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_check_scope_admin (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 // Callback functions
@@ -300,27 +300,37 @@ int callback_glewlwyd_api_description (const struct _u_request * request, struct
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 
+// Validate user login/password credentials
 json_t * auth_check_user_credentials_scope(struct config_elements * config, const char * username, const char * password, const char * scope_list);
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password);
 json_t * auth_check_user_credentials_database(struct config_elements * config, const char * username, const char * password);
 json_t * auth_check_user_credentials_ldap(struct config_elements * config, const char * username, const char * password);
+
+// Validate user scope
 json_t * auth_check_user_scope(struct config_elements * config, const char * username, const char * scope_list);
 json_t * auth_check_user_scope_database(struct config_elements * config, const char * username, const char * scope_list);
 json_t * auth_check_user_scope_ldap(struct config_elements * config, const char * username, const char * scope_list);
+
+// Validate client login/password credentials
 json_t * auth_check_client_credentials(struct config_elements * config, const char * client_id, const char * password);
 json_t * auth_check_client_credentials_database(struct config_elements * config, const char * client_id, const char * password);
 json_t * auth_check_client_credentials_ldap(struct config_elements * config, const char * client_id, const char * password);
+
+// Validate client scope
 json_t * auth_check_client_scope(struct config_elements * config, const char * client_id, const char * scope_list);
 json_t * auth_check_client_scope_database(struct config_elements * config, const char * client_id, const char * scope_list);
 json_t * auth_check_client_scope_ldap(struct config_elements * config, const char * client_id, const char * scope_list);
-json_t * session_get(struct config_elements * config, const char * session_value);
-json_t * session_check(struct config_elements * config, const char * session_value);
-json_t * validate_authorization_code(struct config_elements * config, const char * authorization_code, const char * client_id, const char * redirect_uri, const char * ip_source);
+
+// Validate client on a user oauth2 request
 json_t * client_check(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
 json_t * client_check_ldap(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
 json_t * client_check_database(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
 int auth_check_client_user_scope(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
-json_t * access_token_check(struct config_elements * config, const char * token_value);
+
+// Validate authorization
+json_t * session_check(struct config_elements * config, const char * session_value);
+json_t * access_token_check(struct config_elements * config, const char * header_value);
+json_t * session_or_access_token_check(struct config_elements * config, const char * session_value, const char * header_value);
 
 json_t * get_user_scope_grant(struct config_elements * config, const char * username);
 json_t * get_user_scope_grant_database(struct config_elements * config, const char * username);
@@ -330,6 +340,7 @@ json_t * get_authorization_type(struct config_elements * config, const char * au
 int set_authorization_type(struct config_elements * config, const char * authorization_type, json_t * j_authorization_type);
 json_t * is_authorization_type_valid(struct config_elements * config, json_t * j_authorization_type);
 
+// Scope crud
 json_t * get_scope_list(struct config_elements * config);
 json_t * get_scope(struct config_elements * config, const char * scope);
 json_t * is_scope_valid(struct config_elements * config, json_t * j_scope, int add);
@@ -337,6 +348,7 @@ int add_scope(struct config_elements * config, json_t * j_scope);
 int set_scope(struct config_elements * config, const char * scope, json_t * j_scope);
 int delete_scope(struct config_elements * config, const char * scope);
 
+// User CRUD
 json_t * get_user_list(struct config_elements * config, const char * source, long int offset, long int limit);
 json_t * get_user_list_ldap(struct config_elements * config, long int offset, long int limit);
 json_t * get_user_list_database(struct config_elements * config, long int offset, long int limit);
@@ -361,6 +373,7 @@ int set_user_profile_database(struct config_elements * config, const char * user
 int send_reset_user_profile_email(struct config_elements * config, const char * username, const char * ip_source);
 int reset_user_profile(struct config_elements * config, const char * username, const char * token, const char * password);
 
+// Client CRUD
 json_t * get_client_list(struct config_elements * config, const char * source, long int offset, long int limit);
 json_t * get_client_list_ldap(struct config_elements * config, long int offset, long int limit);
 json_t * get_client_list_database(struct config_elements * config, long int offset, long int limit);
@@ -378,6 +391,7 @@ int delete_client(struct config_elements * config, const char * client, const ch
 int delete_client_ldap(struct config_elements * config, const char * client);
 int delete_client_database(struct config_elements * config, const char * client);
 
+// Resource CRUD
 json_t * get_resource_list(struct config_elements * config);
 json_t * get_resource(struct config_elements * config, const char * resource);
 json_t * is_resource_valid(struct config_elements * config, json_t * j_resource, int add);
@@ -385,6 +399,16 @@ int add_resource(struct config_elements * config, json_t * j_resource);
 int set_resource(struct config_elements * config, const char * resource, json_t * j_resource);
 int delete_resource(struct config_elements * config, const char * resource);
 
+// Refesh token CRUD
+json_t * get_refresh_token_list(struct config_elements * config, const char * username, int valid, long int offset, long int limit);
+int revoke_token(struct config_elements * config, const char * username, const char * token_hash);
+
+// Session CRUD
+json_t * get_session_list(struct config_elements * config, const char * username, int valid, long int offset, long int limit);
+int get_session(struct config_elements * config, const char * username, const char * session_hash);
+int revoke_session(struct config_elements * config, const char * username, const char * session_hash);
+
+// Tokens generation and store digest
 char * generate_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
 char * generate_access_token(struct config_elements * config, const char * refresh_token, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
 char * generate_session_token(struct config_elements * config, const char * username, const char * ip_source, time_t now);
@@ -400,12 +424,5 @@ int is_authorization_type_enabled(struct config_elements * config, uint authoriz
 
 int grant_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
 int delete_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
-
-json_t * get_refresh_token_list(struct config_elements * config, const char * username, int valid, long int offset, long int limit);
-int revoke_token(struct config_elements * config, const char * username, const char * token_hash);
-
-json_t * get_session_list(struct config_elements * config, const char * username, int valid, long int offset, long int limit);
-int get_session(struct config_elements * config, const char * username, const char * session_hash);
-int revoke_session(struct config_elements * config, const char * username, const char * session_hash);
 
 #endif

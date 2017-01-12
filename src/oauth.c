@@ -46,7 +46,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
   j_client_check = client_check(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_CODE);
   if (check_result_value(j_client_check, G_OK)) {
     // Client is allowed to use implicit grant with this redirection_uri
-    session_payload = session_get(config, u_map_get(request->map_cookie, config->session_key));
+    session_payload = session_check(config, u_map_get(request->map_cookie, config->session_key));
     if (check_result_value(session_payload, G_OK)) {
       if (u_map_get(request->map_url, "login_validated") != NULL) {
         // User Session is valid and confirmed by the owner
@@ -191,7 +191,7 @@ int check_auth_type_access_token_request (const struct _u_request * request, str
     }
     free(refresh_token);
   } else {
-    y_log_message(Y_LOG_LEVEL_WARNING, "Error code invalid at IP Address %s", ip_source);
+    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid from IP Address %s", ip_source);
     response->json_body = json_pack("{ss}", "error", json_string_value(json_object_get(j_validate, "error")));
     response->status = 400;
   }
@@ -350,7 +350,7 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
     }
     free(refresh_token);
   } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
-    y_log_message(Y_LOG_LEVEL_WARNING, "Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
+    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
     response->status = 403;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error checking credentials");
@@ -411,7 +411,7 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
     }
     json_decref(j_scope_list);
   } else {
-    y_log_message(Y_LOG_LEVEL_WARNING, "Error client_id/client_password for client_id %s at IP Address %s", request->auth_basic_user, ip_source);
+    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Error client_id/client_password for client_id %s at IP Address %s", request->auth_basic_user, ip_source);
     response->json_body = json_pack("{ss}", "error", "invalid_client");
     response->status = 403;
   }

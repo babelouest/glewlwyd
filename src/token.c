@@ -485,52 +485,10 @@ char * generate_authorization_code(struct config_elements * config, const char *
   return code_value;
 }
 
-/**
- *
- * Session is checked by validating the cookie named after config->session_key
- * The cookie value is a jwt itself
- *
- */
-json_t * session_get(struct config_elements * config, const char * session_value) {
-  json_t * j_result, * j_grants;
-  jwt_t * jwt;
-  char * session_hash;
-  int res;
-  
-  if (session_value != NULL) {
-    if (!jwt_decode(&jwt, session_value, NULL, 0)) {
-			char * grant_str = jwt_get_grants_json(jwt, NULL);
-      j_grants = json_loads(grant_str, JSON_DECODE_ANY, NULL);
-      free(grant_str);
-      if (j_grants != NULL) {
-        session_hash = generate_hash(config, config->hash_algorithm, session_value);
-        res = get_session(config, json_string_value(json_object_get(j_grants, "username")), session_hash);
-        if (res == G_OK) {
-          j_result = json_pack("{siso}", "result", G_OK, "grants", json_copy(j_grants));
-        } else if (res == G_ERROR_NOT_FOUND) {
-          j_result = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
-        } else {
-          j_result = json_pack("{si}", "result", G_ERROR);
-        }
-        free(session_hash);
-      } else {
-        j_result = json_pack("{si}", "result", G_ERROR);
-      }
-      json_decref(j_grants);
-    } else {
-      j_result = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-    }
-    jwt_free(jwt);
-  } else {
-    j_result = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-  }
-  
-  return j_result;
-}
-
 json_t * session_check(struct config_elements * config, const char * session_value) {
   json_t * j_query, * j_result, * j_return, * j_grants;
   char * session_hash, * clause_expired_at, * grants;
+  const char * type;
   int res;
   jwt_t * jwt = NULL;
   time_t now;
@@ -540,7 +498,8 @@ json_t * session_check(struct config_elements * config, const char * session_val
     if (!jwt_decode(&jwt, session_value, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
       time(&now);
       expiration = jwt_get_grant_int(jwt, "iat") + jwt_get_grant_int(jwt, "expires_in");
-      if (now < expiration) {
+      type = jwt_get_grant(jwt, "type");
+      if (now < expiration && 0 == nstrcmp(type, "session_token")) {
         session_hash = generate_hash(config, config->hash_algorithm, session_value);
         if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
           clause_expired_at = nstrdup("> NOW()");
@@ -612,37 +571,56 @@ json_t * session_check(struct config_elements * config, const char * session_val
   return j_return;
 }
 
-json_t * access_token_check(struct config_elements * config, const char * token_value) {
+json_t * access_token_check(struct config_elements * config, const char * header_value) {
   json_t * j_return, * j_grants;
   jwt_t * jwt = NULL;
   time_t now;
   long expiration;
   char  * grants;
+  const char * type, * token_value;
   
-  if (token_value != NULL) {
-    if (!jwt_decode(&jwt, token_value, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
-      time(&now);
-      expiration = jwt_get_grant_int(jwt, "iat") + jwt_get_grant_int(jwt, "expires_in");
-      if (now < expiration) {
-        grants = jwt_get_grants_json(jwt, NULL);
-        j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
-        free(grants);
-        if (j_grants != NULL) {
-          j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+  if (header_value != NULL) {
+    if (strstr(header_value, GLEWLWYD_PREFIX_BEARER) == header_value) {
+      token_value = header_value + strlen(GLEWLWYD_PREFIX_BEARER);
+      if (!jwt_decode(&jwt, token_value, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
+        time(&now);
+        expiration = jwt_get_grant_int(jwt, "iat") + jwt_get_grant_int(jwt, "expires_in");
+        type = jwt_get_grant(jwt, "type");
+        if (now < expiration && 0 == nstrcmp(type, "access_token")) {
+          grants = jwt_get_grants_json(jwt, NULL);
+          j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
+          if (j_grants != NULL) {
+            j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "access_token_check - Error encoding token grants '%s'", grants);
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
+          free(grants);
         } else {
-          j_return = json_pack("{si}", "result", G_ERROR);
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
       } else {
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       }
+      jwt_free(jwt);
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
-    jwt_free(jwt);
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   return j_return;
+}
+
+json_t * session_or_access_token_check(struct config_elements * config, const char * session_value, const char * header_value) {
+  json_t * j_valid = session_check(config, session_value);
+  
+  if (check_result_value(j_valid, G_OK)) {
+    return j_valid;
+  } else {
+    json_decref(j_valid);
+    return access_token_check(config, header_value);
+  }
 }
 
 int session_delete(struct config_elements * config, const char * session_value) {

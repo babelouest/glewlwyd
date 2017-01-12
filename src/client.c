@@ -328,7 +328,6 @@ json_t * auth_check_client_credentials_ldap(struct config_elements * config, con
         if (result_login == LDAP_SUCCESS) {
           res = json_pack("{si}", "result", G_OK);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Client '%s' log in error", client_id);
           res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
       }
@@ -948,7 +947,7 @@ json_t * is_client_valid(struct config_elements * config, json_t * j_client, int
       }
       
       if (json_object_get(j_client, "authorization_type") != NULL && !json_is_array(json_object_get(j_client, "authorization_type"))) {
-        json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "redirect_uri is a mandatory array of redirect uri objects, at least one redirect uri is required"));
+        json_array_append_new(j_return, json_pack("{ss}", "authorization_type", "authorization_type is a mandatory array of redirect uri objects, at least one redirect uri is required"));
       } else {
         j_authorization_type_list = get_authorization_type(config, NULL);
         if (check_result_value(j_authorization_type_list, G_OK)) {
@@ -1020,8 +1019,8 @@ json_t * is_client_valid(struct config_elements * config, json_t * j_client, int
               json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "redirect_uri must be a json object"));
             } else if (json_object_get(j_redirect_uri, "name") == NULL || !json_is_string(json_object_get(j_redirect_uri, "name")) || json_string_length(json_object_get(j_redirect_uri, "name")) > 128 || json_string_length(json_object_get(j_redirect_uri, "name")) == 0) {
               json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "name must be a non empty string of maximum 128 characters"));
-            } else if (json_object_get(j_redirect_uri, "uri") == NULL || !json_is_string(json_object_get(j_redirect_uri, "uri")) || json_string_length(json_object_get(j_redirect_uri, "uri")) > 512 || json_string_length(json_object_get(j_redirect_uri, "uri")) == 0) {
-              json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "uri must be a non empty string of maximum 512 characters"));
+            } else if (json_object_get(j_redirect_uri, "uri") == NULL || !json_is_string(json_object_get(j_redirect_uri, "uri")) || json_string_length(json_object_get(j_redirect_uri, "uri")) > 512 || json_string_length(json_object_get(j_redirect_uri, "uri")) == 0 || (strstr("http://", json_string_value(json_object_get(j_redirect_uri, "uri"))) != json_string_value(json_object_get(j_redirect_uri, "uri")) && strstr("https://", json_string_value(json_object_get(j_redirect_uri, "uri"))) != json_string_value(json_object_get(j_redirect_uri, "uri")))) {
+              json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "uri must be a non empty string of maximum 512 characters and must start with 'http://' or 'https://'"));
             } else if (json_object_get(j_redirect_uri, "enabled") != NULL && !json_is_boolean(json_object_get(j_redirect_uri, "enabled"))) {
               json_array_append_new(j_return, json_pack("{ss}", "redirect_uri", "enabled must be a boolean"));
             }

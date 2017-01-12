@@ -516,7 +516,6 @@ json_t * auth_check_user_credentials_ldap(struct config_elements * config, const
         if (result_login == LDAP_SUCCESS) {
           res = json_pack("{si}", "result", G_OK);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "User '%s' log in error", username);
           res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
       }

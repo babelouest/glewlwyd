@@ -152,10 +152,10 @@ int callback_glewlwyd_validate_user_session (const struct _u_request * request, 
     ulfius_add_cookie_to_response(response, config->session_key, session_token, NULL, config->session_expiration, NULL, "/", 0, 0);
     free(session_token);
   } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
-    y_log_message(Y_LOG_LEVEL_WARNING, "Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
+    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
     response->status = 403;
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_user - error checking credentials");
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_validate_user_session - error checking credentials");
     response->status = 500;
   }
   json_decref(j_result);
@@ -170,16 +170,8 @@ int callback_glewlwyd_set_user_scope_grant (const struct _u_request * request, s
   struct config_elements * config = (struct config_elements *)user_data;
   int res;
   json_t * j_scope, * j_session;
-  const char * token = NULL;
   
-  // Check if user has access to scopes
-  token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
-  if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
-    token = token + strlen(GLEWLWYD_PREFIX_BEARER);
-  } else {
-    token = u_map_get(request->map_cookie, config->session_key);
-  }
-  j_session = session_get(config, token);
+  j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   j_scope = auth_check_user_scope(((struct config_elements *)user_data), json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "scope"));
   if (!check_result_value(j_scope, G_OK)) {
     response->status = 403;
@@ -312,33 +304,8 @@ int callback_glewlwyd_check_user (const struct _u_request * request, struct _u_r
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL;
   int res = U_OK;
-  const char * token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
-  if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
-    token = token + strlen(GLEWLWYD_PREFIX_BEARER);
-  } else {
-    token = u_map_get(request->map_cookie, config->session_key);
-  }
   
-  j_session = access_token_check(config, token);
-  if (!check_result_value(j_session, G_OK)) {
-    res = U_ERROR_UNAUTHORIZED;
-  } else {
-    res = U_OK;
-  }
-  json_decref(j_session);
-  return res;
-}
-
-/**
- * check if session is valid
- */
-int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_session = NULL;
-  int res = U_OK;
-  const char * token = u_map_get(request->map_cookie, config->session_key);
-  
-  j_session = access_token_check(config, token);
+  j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   if (!check_result_value(j_session, G_OK)) {
     res = U_ERROR_UNAUTHORIZED;
   } else {
@@ -351,26 +318,19 @@ int callback_glewlwyd_check_user_session (const struct _u_request * request, str
 int callback_glewlwyd_check_scope_admin (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL;
-  int res = U_ERROR_UNAUTHORIZED;
-  const char * token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
-  char * scope_list_save, * saveptr, * scope;
-  if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
-    token = token + strlen(GLEWLWYD_PREFIX_BEARER);
-  } else {
-    token = NULL;
-  }
+  int res = U_ERROR_UNAUTHORIZED, i, count;
+  char ** scope_list;
   
-  j_session = access_token_check(config, token);
+  j_session = access_token_check(config, u_map_get(request->map_header, "Authorization"));
   if (check_result_value(j_session, G_OK)) {
-    scope_list_save = nstrdup(json_string_value(json_object_get(json_object_get(j_session, "grants"), "scope")));
-    scope = strtok_r(scope_list_save, " ", &saveptr);
-    while (scope != NULL) {
-      if (strcmp(scope, config->admin_scope) == 0) {
+    count = split_string(json_string_value(json_object_get(json_object_get(j_session, "grants"), "scope")), " ", &scope_list);
+    for (i=0; count > 0 && scope_list[i] != NULL; i++) {
+      if (strcmp(scope_list[i], config->admin_scope) == 0) {
         res = U_OK;
+        break;
       }
-      scope = strtok_r(NULL, " ", &saveptr);
     }
-    free(scope_list_save);
+    free_string_array(scope_list);
   }
   json_decref(j_session);
   return res;
@@ -379,20 +339,8 @@ int callback_glewlwyd_check_scope_admin (const struct _u_request * request, stru
 int callback_glewlwyd_get_user_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL, * j_user = NULL;
-  const char * token;
   
-  if (u_map_get(request->map_header, "Authorization") != NULL) {
-    token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
-    if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
-      token = token + strlen(GLEWLWYD_PREFIX_BEARER);
-    } else {
-      token = NULL;
-    }
-  } else {
-    token = u_map_get(request->map_cookie, config->session_key);
-  }
-
-  j_session = session_get(config, token);
+  j_session = session_check(config, u_map_get(request->map_cookie, config->session_key));
   if (check_result_value(j_session, G_OK)) {
     j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), NULL);
     if (check_result_value(j_user, G_OK)) {
@@ -411,9 +359,8 @@ int callback_glewlwyd_get_user_session_profile (const struct _u_request * reques
 int callback_glewlwyd_get_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL, * j_user = NULL;
-  const char * token = u_map_get(request->map_cookie, config->session_key);
 
-  j_session = session_get(config, token);
+  j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   if (check_result_value(j_session, G_OK)) {
     j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), NULL);
     if (check_result_value(j_user, G_OK)) {
@@ -435,7 +382,7 @@ int callback_glewlwyd_delete_user_session (const struct _u_request * request, st
   json_t * j_session;
   
   if (u_map_get(request->map_cookie, config->session_key) != NULL && strlen(u_map_get(request->map_cookie, config->session_key)) > 0) {
-    j_session = session_get(config, u_map_get(request->map_cookie, config->session_key));
+    j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
     if (check_result_value(j_session, G_OK)) {
       session_hash = generate_hash(config, config->hash_algorithm, u_map_get(request->map_cookie, config->session_key));
       if (revoke_session(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), session_hash) != G_OK) {
@@ -452,7 +399,7 @@ int callback_glewlwyd_delete_user_session (const struct _u_request * request, st
 
 int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_session = session_get(config, u_map_get(request->map_cookie, config->session_key));
+  json_t * j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   json_t * j_scope_grant;
   
   if (!check_result_value(j_session, G_OK)) {
@@ -477,7 +424,7 @@ int callback_glewlwyd_user_scope_delete (const struct _u_request * request, stru
   json_t * j_scope, * j_session;
   
   // Check if user has access to scopes
-  j_session = session_get(config, u_map_get(request->map_cookie, config->session_key));
+  j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   j_scope = auth_check_user_scope(((struct config_elements *)user_data), json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "scope"));
   if (!check_result_value(j_scope, G_OK)) {
     response->status = 403;
@@ -1099,20 +1046,8 @@ int callback_glewlwyd_delete_resource (const struct _u_request * request, struct
 int callback_glewlwyd_set_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL, * j_user_valid = NULL;
-  const char * token;
-  
-  if (u_map_get(request->map_header, "Authorization") != NULL) {
-    token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
-    if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
-      token = token + strlen(GLEWLWYD_PREFIX_BEARER);
-    } else {
-      token = NULL;
-    }
-  } else {
-    token = u_map_get(request->map_cookie, config->session_key);
-  }
 
-  j_session = session_get(config, token);
+  j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   if (check_result_value(j_session, G_OK)) {
     j_user_valid = is_user_profile_valid(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), request->json_body);
     if (j_user_valid != NULL && json_array_size(j_user_valid) == 0) {
@@ -1188,7 +1123,6 @@ int callback_glewlwyd_get_refresh_token_profile (const struct _u_request * reque
   struct config_elements * config = (struct config_elements *)user_data;
   long int offset, limit;
   json_t * j_result, * j_session;
-  const char * token;
   int valid = -1;
   if (u_map_get(request->map_url, "valid") != NULL) {
     if (strcmp("true", u_map_get(request->map_url, "valid")) == 0) {
@@ -1198,18 +1132,7 @@ int callback_glewlwyd_get_refresh_token_profile (const struct _u_request * reque
     }
   }
   
-  if (u_map_get(request->map_header, "Authorization") != NULL) {
-    token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
-    if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
-      token = token + strlen(GLEWLWYD_PREFIX_BEARER);
-    } else {
-      token = NULL;
-    }
-  } else {
-    token = u_map_get(request->map_cookie, config->session_key);
-  }
-
-  j_session = session_get(config, token);
+  j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   if (check_result_value(j_session, G_OK)) {
     if (u_map_get(request->map_url, "offset") != NULL) {
       offset = strtol(u_map_get(request->map_url, "offset"), NULL, 10);
@@ -1243,21 +1166,9 @@ int callback_glewlwyd_get_refresh_token_profile (const struct _u_request * reque
 int callback_glewlwyd_delete_refresh_token_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session;
-  const char * token;
   int res;
   
-  if (u_map_get(request->map_header, "Authorization") != NULL) {
-    token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
-    if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
-      token = token + strlen(GLEWLWYD_PREFIX_BEARER);
-    } else {
-      token = NULL;
-    }
-  } else {
-    token = u_map_get(request->map_cookie, config->session_key);
-  }
-
-  j_session = session_get(config, token);
+  j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   if (check_result_value(j_session, G_OK)) {
     res = revoke_token(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "token_hash"));
     if (res == G_ERROR_NOT_FOUND) {
@@ -1280,7 +1191,6 @@ int callback_glewlwyd_get_session_profile (const struct _u_request * request, st
   struct config_elements * config = (struct config_elements *)user_data;
   long int offset, limit;
   json_t * j_result, * j_session;
-  const char * token;
   int valid = -1;
 
   if (u_map_get(request->map_url, "valid") != NULL) {
@@ -1291,18 +1201,7 @@ int callback_glewlwyd_get_session_profile (const struct _u_request * request, st
     }
   }
   
-  if (u_map_get(request->map_header, "Authorization") != NULL) {
-    token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
-    if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
-      token = token + strlen(GLEWLWYD_PREFIX_BEARER);
-    } else {
-      token = NULL;
-    }
-  } else {
-    token = u_map_get(request->map_cookie, config->session_key);
-  }
-
-  j_session = session_get(config, token);
+  j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   if (check_result_value(j_session, G_OK)) {
     if (u_map_get(request->map_url, "offset") != NULL) {
       offset = strtol(u_map_get(request->map_url, "offset"), NULL, 10);
@@ -1336,21 +1235,9 @@ int callback_glewlwyd_get_session_profile (const struct _u_request * request, st
 int callback_glewlwyd_delete_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session;
-  const char * token;
   int res;
   
-  if (u_map_get(request->map_header, "Authorization") != NULL) {
-    token = nstrstr(u_map_get(request->map_header, "Authorization"), GLEWLWYD_PREFIX_BEARER);
-    if (token != NULL && strlen(token) > strlen(GLEWLWYD_PREFIX_BEARER)) {
-      token = token + strlen(GLEWLWYD_PREFIX_BEARER);
-    } else {
-      token = NULL;
-    }
-  } else {
-    token = u_map_get(request->map_cookie, config->session_key);
-  }
-
-  j_session = session_get(config, token);
+  j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   if (check_result_value(j_session, G_OK)) {
     res = revoke_session(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "session_hash"));
     if (res == G_ERROR_NOT_FOUND) {
