@@ -1783,7 +1783,6 @@ int set_user_profile_database(struct config_elements * config, const char * user
     free(password);
     free(escaped);
   }
-  y_log_message(Y_LOG_LEVEL_DEBUG,"j_query is %s", json_dumps(j_query, JSON_ENCODE_ANY));
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {

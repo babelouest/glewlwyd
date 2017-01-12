@@ -122,7 +122,7 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
           BIO_flush(bio);
           BIO_get_mem_ptr(bio, &bufferPtr);
 
-          strncpy(out_password, (*bufferPtr).data, (*bufferPtr).length);
+          memcpy(out_password, (*bufferPtr).data, (*bufferPtr).length);
           
           BIO_set_close(bio, BIO_CLOSE);
           BIO_free_all(bio);

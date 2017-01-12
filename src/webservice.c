@@ -442,7 +442,9 @@ int callback_glewlwyd_delete_user_session (const struct _u_request * request, st
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user_session - Error revoking session in database");
         response->status = 500;
       }
+      free(session_hash);
     }
+    json_decref(j_session);
   }
   ulfius_add_cookie_to_response(response, config->session_key, "", NULL, 0, NULL, "/", 0, 0);
   return U_OK;
