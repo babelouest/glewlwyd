@@ -794,12 +794,12 @@ json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add
         json_array_append_new(j_return, json_pack("{ss}", "source", "source is an optional string, values available are 'all', 'ldap' or 'database', default is 'database'"));
       }
       
-      if (json_object_get(j_user, "name") != NULL && (!json_is_string(json_object_get(j_user, "name")) || json_string_length(json_object_get(j_user, "name")) > 256)) {
-        json_array_append_new(j_return, json_pack("{ss}", "name", "name is an optional string between 0 and 256 characters"));
+      if (json_object_get(j_user, "name") != NULL && (!json_is_string(json_object_get(j_user, "name")) || json_string_length(json_object_get(j_user, "name")) > 128)) {
+        json_array_append_new(j_return, json_pack("{ss}", "name", "name is an optional string between 0 and 128 characters"));
       }
       
-      if (json_object_get(j_user, "email") != NULL && (!json_is_string(json_object_get(j_user, "email")) || json_string_length(json_object_get(j_user, "email")) > 256)) {
-        json_array_append_new(j_return, json_pack("{ss}", "email", "email is an optional string between 0 and 256 characters"));
+      if (json_object_get(j_user, "email") != NULL && (!json_is_string(json_object_get(j_user, "email")) || json_string_length(json_object_get(j_user, "email")) > 128)) {
+        json_array_append_new(j_return, json_pack("{ss}", "email", "email is an optional string between 0 and 128 characters"));
       }
       
       if (json_object_get(j_user, "enabled") != NULL && !json_is_boolean(json_object_get(j_user, "enabled"))) {

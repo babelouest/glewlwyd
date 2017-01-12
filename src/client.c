@@ -935,8 +935,8 @@ json_t * is_client_valid(struct config_elements * config, json_t * j_client, int
         json_array_append_new(j_return, json_pack("{ss}", "name", "name is a mandatory non null string of maximum 128 characters"));
       }
       
-      if (json_object_get(j_client, "description") != NULL && (!json_is_string(json_object_get(j_client, "description")) || json_string_length(json_object_get(j_client, "description")) > 256)) {
-        json_array_append_new(j_return, json_pack("{ss}", "description", "description is an optional string between 0 and 256 characters"));
+      if (json_object_get(j_client, "description") != NULL && (!json_is_string(json_object_get(j_client, "description")) || json_string_length(json_object_get(j_client, "description")) > 512)) {
+        json_array_append_new(j_return, json_pack("{ss}", "description", "description is an optional string between 0 and 512 characters"));
       }
       
       if (json_object_get(j_client, "enabled") != NULL && !json_is_boolean(json_object_get(j_client, "enabled"))) {

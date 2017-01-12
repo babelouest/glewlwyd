@@ -73,8 +73,8 @@ json_t * is_authorization_type_valid(struct config_elements * config, json_t * j
       json_array_append_new(j_result, json_pack("{ss}", "authorization_type", "structure must be a json object"));
     } else {
       
-      if (json_object_get(j_authorization_type, "description") != NULL && (!json_is_string(json_object_get(j_authorization_type, "description")) || json_string_length(json_object_get(j_authorization_type, "description")) > 256)) {
-        json_array_append_new(j_result, json_pack("{ss}", "description", "description must be a string up to 256 characters"));
+      if (json_object_get(j_authorization_type, "description") != NULL && (!json_is_string(json_object_get(j_authorization_type, "description")) || json_string_length(json_object_get(j_authorization_type, "description")) > 512)) {
+        json_array_append_new(j_result, json_pack("{ss}", "description", "description must be a string up to 512 characters"));
       }
       
       if (json_object_get(j_authorization_type, "enabled") != NULL && !json_is_boolean(json_object_get(j_authorization_type, "enabled"))) {
