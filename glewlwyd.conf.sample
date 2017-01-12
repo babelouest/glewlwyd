@@ -102,11 +102,15 @@ use_secure_connection=false
 secure_connection_key_file="cert.key"
 secure_connection_pem_file="cert.pem"
 
+# login and grant urls
+login_url="https://example.org/glewlwyd/app/login.html?"
+grant_url="https://example.org/glewlwyd/app/grant.html?"
+
 # Reset password configuration
 reset_password_token_expiration=604800
 reset_password_email_from="glewlwyd@example.org"
 reset_password_email_template_path="reset.eml"
-reset_password_page_url_prefix="https://example.org/glewlwyd/webapp/reset.html?code="
+reset_password_page_url_prefix="https://example.org/glewlwyd/app/reset.html?code="
 
 # Reset password configuration
 reset_password=true # optional, default false
@@ -124,7 +128,7 @@ reset_password_config =
   email_from="glewlwyd@example.org"                                                           # mandatory
   email_subject="Glewlwyd email reset"                                                        # mandatory
   email_template_path="reset.eml"                                                             # mandatory
-  page_url_prefix="https://example.org/glewlwyd/webapp/reset.html?user=$USERNAME&code=$TOKEN" # mandatory
+  page_url_prefix="https://example.org/glewlwyd/app/reset.html?user=$USERNAME&code=$TOKEN"    # mandatory
 }
 
 # Algorithms available are SHA1, SHA256, SHA512, MD5
@@ -168,14 +172,14 @@ authentication =
    name_property_user_read      = "sn"
 # Write parameters
    ldap_user_write               = true
-   rdn_property_user_write       = "cn"
-   login_property_user_write     = "cn"
-   scope_property_user_write     = "o"
-   email_property_user_write     = "mail"
-   name_property_user_write      = "sn"
-   password_property_user_write  = "userPassword"
-   password_algorithm_user_write = "SSHA" # Values available are SSHA, SHA, SMD5, MD5 or PLAIN
-   object_class_user_write       = "top,person,organizationalPerson,inetOrgPerson"
+   rdn_property_user_write       = "cn"           # Single value
+   login_property_user_write     = "cn"           # Multiple values separated by a comma
+   scope_property_user_write     = "o"            # Multiple values separated by a comma
+   email_property_user_write     = "mail"         # Multiple values separated by a comma
+   name_property_user_write      = "sn"           # Multiple values separated by a comma
+   password_property_user_write  = "userPassword" # Single value
+   password_algorithm_user_write = "SSHA"         # Single value, values available are SSHA, SHA, SMD5, MD5 or PLAIN
+   object_class_user_write       = "top,person,organizationalPerson,inetOrgPerson" # Multiple values separated by a comma
    
    base_search_client             = "ou=client,dc=example,dc=org"
 # Read parameters
@@ -187,15 +191,15 @@ authentication =
    redirect_uri_property_client_read = "labeledURI"
 # Write parameters
    ldap_client_write                  = true
-   rdn_property_client_write          = "cn"
-   client_id_property_client_write    = "cn"
-   scope_property_client_write        = "o"
-   name_property_client_write         = "sn"
-   description_property_client_write  = "description"
-   redirect_uri_property_client_write = "labeledURI"
-   password_property_client_write     = "userPassword"
-   password_algorithm_client_write    = "SSHA" # Values available are SSHA, SHA, SMD5, MD5 or PLAIN
-   object_class_client_write          = "top,person,organizationalPerson,inetOrgPerson"
+   rdn_property_client_write          = "cn"          # Single value
+   client_id_property_client_write    = "cn"          # Multiple values separated by a comma
+   scope_property_client_write        = "o"           # Multiple values separated by a comma
+   name_property_client_write         = "sn"          # Multiple values separated by a comma
+   description_property_client_write  = "description" # Multiple values separated by a comma
+   redirect_uri_property_client_write = "labeledURI"  # Multiple values separated by a comma
+   password_property_client_write     = "userPassword"# Single value
+   password_algorithm_client_write    = "SSHA"        # Single value, values available are SSHA, SHA, SMD5, MD5 or PLAIN
+   object_class_client_write          = "top,person,organizationalPerson,inetOrgPerson" # Multiple values separated by a comma
 }
 
 # jwt parameters

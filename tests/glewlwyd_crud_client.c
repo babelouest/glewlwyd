@@ -78,7 +78,7 @@ START_TEST(test_glwd_crud_client_add_ok_database)
                           "name", "uri1",
                           "uri", "http://example1.com/",
                           "name", "uri2",
-                          "uri", "http://example2.com/");
+                          "uri", "https://example2.com/");
   res = run_simple_test(&user_req, "POST", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   json_decref(json_body);
   ck_assert_int_eq(res, 1);
@@ -132,7 +132,7 @@ START_TEST(test_glwd_crud_client_set_new_database)
                           "name", "uri1",
                           "uri", "http://example1.com/",
                           "name", "uri2",
-                          "uri", "http://example2.com/");
+                          "uri", "https://example2.com/");
   
   int res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   free(url);
@@ -216,7 +216,7 @@ START_TEST(test_glwd_crud_client_add_ok_ldap)
                           "name", "uri1",
                           "uri", "http://example1.com/",
                           "name", "uri2",
-                          "uri", "http://example2.com/");
+                          "uri", "https://example2.com/");
   res = run_simple_test(&user_req, "POST", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   json_decref(json_body);
   ck_assert_int_eq(res, 1);
@@ -270,7 +270,7 @@ START_TEST(test_glwd_crud_client_set_new_ldap)
                           "name", "uri1",
                           "uri", "http://example1.com/",
                           "name", "uri2",
-                          "uri", "http://example2.com/");
+                          "uri", "https://example2.com/");
   
   int res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   free(url);
@@ -323,7 +323,7 @@ START_TEST(test_glwd_crud_client_add_ok_no_source)
                           "name", "uri1",
                           "uri", "http://example1.com/",
                           "name", "uri2",
-                          "uri", "http://example2.com/");
+                          "uri", "https://example2.com/");
   res = run_simple_test(&user_req, "POST", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   json_decref(json_body);
   ck_assert_int_eq(res, 1);
@@ -377,7 +377,7 @@ START_TEST(test_glwd_crud_client_set_new_no_source)
                           "name", "uri1",
                           "uri", "http://example1.com/",
                           "name", "uri2",
-                          "uri", "http://example2.com/");
+                          "uri", "https://example2.com/");
   
   int res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   free(url);

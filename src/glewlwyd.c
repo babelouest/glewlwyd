@@ -84,6 +84,8 @@ int main (int argc, char ** argv) {
   config->hash_algorithm = NULL;
   config->reset_password = 0;
   config->reset_password_config = NULL;
+  config->login_url = NULL;
+  config->grant_url = NULL;
   if (config->instance == NULL) {
     fprintf(stderr, "Memory error - config->instance\n");
     return 1;
@@ -541,6 +543,7 @@ int build_config_from_file(struct config_elements * config) {
              * cur_rsa_key_file = NULL, * cur_rsa_pub_file = NULL, * cur_sha_secret = NULL,
              * extension = NULL, * mime_type_value = NULL,
              * cur_secure_connection_key_file = NULL, * cur_secure_connection_pem_file = NULL,
+             * cur_grant_url = NULL, * cur_login_url = NULL,
              * cur_reset_password_smtp_host = NULL, * cur_reset_password_smtp_user = NULL, * cur_reset_password_smtp_password = NULL, * cur_reset_password_email_from = NULL, * cur_reset_password_email_subject = NULL, * cur_reset_password_email_template_path = NULL, * cur_reset_password_page_url_prefix = NULL;
   int db_mariadb_port = 0;
   int cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_sha = 0, cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, i;
@@ -651,6 +654,34 @@ int build_config_from_file(struct config_elements * config) {
   
   config_lookup_bool(&cfg, "use_scope", &cur_use_scope);
   config->use_scope = cur_use_scope;
+  
+  config_lookup_string(&cfg, "login_url", &cur_login_url);
+  if (cur_login_url == NULL) {
+    fprintf(stderr, "login_url is mandatory, exiting\n");
+    config_destroy(&cfg);
+    return 0;
+  } else {
+    config->login_url = strdup(cur_login_url);
+    if (config->login_url == NULL) {
+      fprintf(stderr, "Error allocating resources for config->login_url, exiting\n");
+      config_destroy(&cfg);
+      return 0;
+    }
+  }
+  
+  config_lookup_string(&cfg, "grant_url", &cur_grant_url);
+  if (cur_grant_url == NULL) {
+    fprintf(stderr, "grant_url is mandatory, exiting\n");
+    config_destroy(&cfg);
+    return 0;
+  } else {
+    config->grant_url = strdup(cur_grant_url);
+    if (config->grant_url == NULL) {
+      fprintf(stderr, "Error allocating resources for config->grant_url, exiting\n");
+      config_destroy(&cfg);
+      return 0;
+    }
+  }
   
   root = config_root_setting(&cfg);
   config_lookup_bool(&cfg, "reset_password", &config->reset_password);
@@ -1395,7 +1426,7 @@ char * url_decode(char * str) {
  *
  */
 char * generate_query_parameters(const struct _u_request * request) {
-  char * query = NULL, * param, * tmp;
+  char * query = NULL, * param, * tmp, * value;
   const char ** keys;
   struct _u_map params;
   int i;
@@ -1414,7 +1445,9 @@ char * generate_query_parameters(const struct _u_request * request) {
   
   keys = u_map_enum_keys(&params);
   for (i=0; keys[i] != NULL; i++) {
-    param = msprintf("%s=%s", keys[i], u_map_get(&params, keys[i]));
+    value = url_encode((char *)u_map_get(request->map_url, keys[i]));
+    param = msprintf("%s=%s", keys[i], value);
+    free(value);
     if (query == NULL) {
       query = nstrdup(param);
     } else {

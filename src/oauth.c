@@ -68,7 +68,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
               // User has not granted access to the cleaned scope list for this client, redirect to grant access page
               cb_encoded = url_encode(request->http_url);
               query = generate_query_parameters(request);
-              redirect_url = msprintf("../%s/grant.html?%s", config->static_files_prefix, query);
+              redirect_url = msprintf("%s%s", config->grant_url, query);
               ulfius_add_header_to_response(response, "Location", redirect_url);
               free(redirect_url);
               free(cb_encoded);
@@ -96,7 +96,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
         // Redirect to login page
         cb_encoded = url_encode(request->http_url);
         query = generate_query_parameters(request);
-        redirect_url = msprintf("../%s/login.html?%s", config->static_files_prefix, query);
+        redirect_url = msprintf("%s%s", config->login_url, query);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         free(redirect_url);
         free(cb_encoded);
@@ -107,7 +107,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
       // Redirect to login page
       cb_encoded = url_encode(request->http_url);
       query = generate_query_parameters(request);
-      redirect_url = msprintf("../%s/login.html?%s", config->static_files_prefix, query);
+      redirect_url = msprintf("%s%s", config->login_url, query);
       ulfius_add_header_to_response(response, "Location", redirect_url);
       free(redirect_url);
       free(cb_encoded);
@@ -241,7 +241,7 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
               // User has not granted access to the cleaned scope list for this client, redirect to grant access page
               cb_encoded = url_encode(request->http_url);
               query = generate_query_parameters(request);
-              redirect_url = msprintf("../%s/grant.html?%s", config->static_files_prefix, query);
+              redirect_url = msprintf("%s%s", config->grant_url, query);
               ulfius_add_header_to_response(response, "Location", redirect_url);
               free(redirect_url);
               free(cb_encoded);
@@ -269,7 +269,7 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
         // Redirect to login page
         cb_encoded = url_encode(request->http_url);
         query = generate_query_parameters(request);
-        redirect_url = msprintf("../%s/login.html?%s", config->static_files_prefix, query);
+        redirect_url = msprintf("%s%s", config->login_url, query);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         free(redirect_url);
         free(cb_encoded);
@@ -280,7 +280,7 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
       // Redirect to login page
       cb_encoded = url_encode(request->http_url);
       query = generate_query_parameters(request);
-      redirect_url = msprintf("../%s/login.html?%s", config->static_files_prefix, query);
+      redirect_url = msprintf("%s%s", config->login_url, query);
       ulfius_add_header_to_response(response, "Location", redirect_url);
       free(redirect_url);
       free(cb_encoded);

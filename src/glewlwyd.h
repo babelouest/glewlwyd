@@ -204,6 +204,8 @@ struct config_elements {
   char *                          hash_algorithm;
   int                             reset_password;
   struct _reset_password_config * reset_password_config;
+  char *                          login_url;
+  char *                          grant_url;
 };
 
 /**
