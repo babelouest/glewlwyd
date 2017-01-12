@@ -102,6 +102,7 @@ CREATE TABLE `g_reset_password` (
 CREATE TABLE `g_refresh_token` (
   `grt_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `grt_hash` TEXT NOT NULL,
+  `grt_authorization_type` INTEGER NOT NULL, -- 0: Authorization Code Grant, 1: Implicit Grant, 2: Resource Owner Password Credentials Grant, 3: Client Credentials Grant
   `grt_username` TEXT NOT NULL,
   `grt_scope` TEXT,
   `grt_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

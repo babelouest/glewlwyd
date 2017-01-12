@@ -246,7 +246,7 @@ json_t * validate_authorization_code(struct config_elements * config, const char
       clause_gco_date = msprintf("> (UNIX_TIMESTAMP(NOW()) - %d)", config->code_expiration);
     } else {
       col_gco_date = nstrdup("gco_date");
-      clause_gco_date = msprintf("> (strftime('S%s','now') - %d)", config->code_expiration);
+      clause_gco_date = msprintf("> (strftime('%%s','now') - %d)", config->code_expiration);
     }
     
     j_query = json_pack("{sss[ss]s{si ss ss s{ssss} ss s{ssss}}}",
