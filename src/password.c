@@ -107,7 +107,7 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
           EVP_DigestFinal_ex(&mdctx,
                              md_value,
                              &md_len)) {
-        memcpy(buffer, (char *)md_value, md_len);
+        memcpy(buffer, md_value, md_len);
         if (use_salt) {
           memcpy(buffer+md_len, salt, GLEWLWYD_SALT_LENGTH);
           md_len += GLEWLWYD_SALT_LENGTH;
