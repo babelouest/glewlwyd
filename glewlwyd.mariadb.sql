@@ -1,8 +1,9 @@
+-- Mysql/MariaDB init script
 -- Create database and user
--- CREATE DATABASE `glewlwyd_dev`;
--- GRANT ALL PRIVILEGES ON glewlwyd_dev.* TO 'glewlwyd'@'%' identified BY 'glewlwyd';
+-- CREATE DATABASE `glewlwyd`;
+-- GRANT ALL PRIVILEGES ON glewlwyd.* TO 'glewlwyd'@'%' identified BY 'glewlwyd';
 -- FLUSH PRIVILEGES;
--- USE `glewlwyd_dev`;
+-- USE `glewlwyd`;
 
 DROP TABLE IF EXISTS `g_refresh_token_scope`;
 DROP TABLE IF EXISTS `g_code_scope`;
