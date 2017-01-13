@@ -366,7 +366,7 @@ char * generate_access_token(struct config_elements * config, const char * refre
 /**
  * Generates a client_access_token from the specified parameters that are considered valid
  */
-char * generate_client_access_token(struct config_elements * config, const char * client_id, const char * ip_source, time_t now) {
+char * generate_client_access_token(struct config_elements * config, const char * client_id, const char * ip_source, const char * scope_list, time_t now) {
   jwt_t * jwt;
   char * token = NULL;
   char salt[GLEWLWYD_SALT_LENGTH + 1] = {0};
@@ -378,6 +378,9 @@ char * generate_client_access_token(struct config_elements * config, const char 
     jwt_add_grant(jwt, "salt", salt);
     jwt_add_grant(jwt, "client_id", client_id);
     jwt_add_grant(jwt, "type", "client_token");
+    if (config->use_scope && scope_list != NULL) {
+      jwt_add_grant(jwt, "scope", scope_list);
+    }
     jwt_add_grant_int(jwt, "iat", now);
     jwt_add_grant_int(jwt, "expires_in", config->access_token_expiration);
     token = jwt_encode_str(jwt);
