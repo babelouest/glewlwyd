@@ -1,3 +1,4 @@
+-- SQlite3 init script
 
 DROP TABLE IF EXISTS `g_refresh_token_scope`;
 DROP TABLE IF EXISTS `g_code_scope`;
@@ -117,8 +118,9 @@ CREATE INDEX `i_g_refresh_token` ON `g_refresh_token`(`grt_id`);
 CREATE TABLE `g_access_token` (
   `gat_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `grt_id` INTEGER,
+  `gat_authorization_type` INTEGER NOT NULL, -- 0: Authorization Code Grant, 1: Implicit Grant, 2: Resource Owner Password Credentials Grant, 3: Client Credentials Grant
   `gat_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `gat_source_ip` TEXT NOT NULL,
+  `gat_ip_source` TEXT NOT NULL,
   FOREIGN KEY(`grt_id`) REFERENCES `g_refresh_token`(`grt_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_access_token` ON `g_access_token`(`gat_id`);
