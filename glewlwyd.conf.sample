@@ -2,7 +2,7 @@
 #
 # Glewlwyd OAuth2 Authorization Server
 #
-# Copyright 2016 Nicolas Mora <mail@babelouest.org>
+# Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
 # Gnu Public License V3 <http://fsf.org/>
 #
 #
@@ -131,8 +131,8 @@ reset_password_config =
   page_url_prefix="https://example.org/glewlwyd/app/reset.html?user=$USERNAME&code=$TOKEN"    # mandatory
 }
 
-# Algorithms available are SHA1, SHA256, SHA512, MD5
-hash_algorithm = "SHA512"
+# Algorithms available are SHA1, SHA256, SHA512, MD5, default is MD5
+hash_algorithm = "MD5"
 
 # MariaDB/Mysql database connection
 database =
