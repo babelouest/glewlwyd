@@ -219,8 +219,8 @@ OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avo
 
 ## Resource server authorization usage and access tokens
 
-Glewlwyd provides [Java Web Tokens](https://jwt.io/) which is a standard way to validate a token without asking the authorization server.
-A Java Web Token (JWT) comes with a signature that authenticates itself.
+Glewlwyd provides [JSON Web Tokens](https://jwt.io/) which is a standard way to validate a token without asking the authorization server.
+A JSON Web Token (JWT) comes with a signature that authenticates itself.
 
 There are 2 ways to sign a token:
 - SHA symetric encryption
