@@ -216,3 +216,53 @@ By default, Glewlwyd is available on TCP port 4593. There's a test page in `weba
 ## SSL/TLS
 
 OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avoid data and token to be stolen, or Man-In-The-Middle attacks. Glewlwyd supports starting a secure connection with a private/public key certificate, but it also can be with a classic non-secure HTTP connection, and be available to users behind a HTTPS proxy.
+
+## Resource server authorization usage and access tokens
+
+Glewlwyd provides [Java Web Tokens](https://jwt.io/) which is a standard way to validate a token without asking the authorization server.
+A Java Web Token (JWT) comes with a signature that authenticates itself.
+
+There are 2 ways to sign a token:
+- SHA symetric encryption
+- RSA asymetric encryption
+
+The token parameters are located in the `jwt` block in the configuration file:
+```
+jwt =
+{
+   use_rsa = true
+   rsa_key_file = "/usr/local/etc/glewlwyd/private.key"
+   rsa_pub_file = "/usr/local/etc/glewlwyd/public.pem"
+
+   use_sha = false
+   sha_secret = "secret"
+
+}
+```
+
+Depending on the algorithm you choose, you will need to share information with the resource services.
+- With RSA encryption, the resource service will have to authenticate the tokens using the `rsa_pub_file` file content, you will have to keep secret the `rsa_key_file` file content to prevent token forgery.
+- With SHA encryption, the resource service will have to authenticate the tokens using the `sha_secret` value, you must share the `sha_secret` value between the authentication server and the resource services, and keep it private between them to prevent token forgery.
+
+In your resource server, you must validate all API call with the token given in the `Authorization` header as described in [RFC6750](https://tools.ietf.org/html/rfc6750). You can use a jwt library available for the language and architecture of your choice, to validate the token signature and content. If the token signature is verified, you MUST manually validate the token time validity using the values `iat` and `expires_in` in the token payload.
+
+Every `access_token` has the following header and payload format:
+
+```javascript
+// Header
+{
+  "typ": "JWT",
+  "alg": "RS512" // for RSA signatures, HS512 for SHA signatures
+}
+// Payload
+{
+  "expires_in": 3600,       // Token expiration in seconds, default is 1 hour
+  "iat": 1484278795,        // Issued at, time in UNIX epoch format
+  "salt": "abcd1234",       // A random string
+  "scope": "scope1 scope2", // The scope values
+  "type": "access_token",   // The token type
+  "username": "admin"       // The username who was granted access for this scope
+}
+```
+
+Refresh and session tokens are also JWTs, but their payload have slightly different values. A session token doesn't have a scope value, and the `type` values are respectively `refresh_token` and `session_token`. Although these tokens are validated by the Glewlwyd server directly.
