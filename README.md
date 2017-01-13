@@ -32,9 +32,9 @@ On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install
 $ sudo apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev uuid-dev libldap2-dev libmysqlclient-dev libsqlite3-dev libconfig-dev libssl-dev
 ```
 
-### Debian stable distributions libmicrohttpd bug
+### Debian Jessie libmicrohttpd bug
 
-I've noticed that on a Debian stable, libmicrohttpd has a bug when it parses `application/x-www-form-urlencoded` parameters. This is fixed in later version, so I suggest using the latest stable version of [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/).
+I've noticed that on a Debian Jessie and previous, libmicrohttpd has a bug when it parses `application/x-www-form-urlencoded` parameters. This is fixed in later version, so I suggest using the latest stable version of [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/).
 
 Then, download Glewlwyd and its dependendencies hosted in github, compile and install.
 
@@ -71,10 +71,26 @@ $ sudo make install
 
 Copy `glewlwyd.conf.sample` to `glewlwyd.conf`, edit the file `glewlwyd.conf` with your own settings.
 
+### Digtest algorithm
+
+Specify in the config file the parameter `hash_algorithm` to store passwords with sqlite3 backend, and token digests.
+
+Algorithms available are SHA1, SHA256, SHA512, MD5.
+
 ### Data storage backend initialisation
 
 You can use a MySql/MariaDB database or a SQLite3 database file.
-You can use the dedicated script to initialize your database.
+Use the dedicated script, `glewlwyd.mariadb.sql` or `glewlwyd.sqlite3.sql` to initialize your database.
+
+#### Admin scope value
+
+If you want to use a different name for admin scope (default is `g_admin`), you must update the init script before running it, chenge the last line which reads:
+
+```sql
+INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_admin', 'Glewlwyd admin scope');
+```
+
+With your own `gs_name` value.
 
 #### MySql/MariaDB database initialization
 
@@ -98,9 +114,49 @@ $ sqlite3 /var/cache/glewlwyd/glewlwyd.db < glewlwyd.sqlite3.sql
 
 ### Authentication backend configuration
 
-For the authentication backend, you can use a LDAP server or your database, or both. If you use both backends, then on an authentication process, the user will be tested in the LDAP first, then in the database.
+For the authentication backend, you can use a LDAP server or your database, or both. If you use both backends, then on an authentication process, the user or the client will be tested in the LDAP first, then in the database if not found.
 
-The database authentication is built-in, there's nothing to configure. The LDAP authentication must be properly set though.
+### Add an administrator user before first use
+
+An administrator must be present in the backend to use the application (manage scopes, users, clients, resources, authorization types).
+
+An administrator in the LDAP backend is a user who has the `admin_scope` (default `g_admin`) in its scope list.
+
+The following examples will add an admin with the login `admin` and the password `password`.
+
+#### LDAP Backend administrator
+
+Scope list is stored in the parameter `scope_property_user_read` (`o` by default).
+
+#### Database Backend administrator (MySql/MariaDB)
+
+To add an administrator in the MySql/MariaDB database, connect to the databse and use the following command (update with your own e-mail and password values):
+
+```sql
+$ mysql
+mysql> INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', PASSWORD('password'), 1);
+mysql> INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_admin'));
+```
+
+#### Database Backend administrator (SQLite3)
+
+Since SQLite3 uses the `hash_algorithm` value to store its password, you must store the password with the correct hashed value. Use the following list for the initial password (don't forget the prefix):
+
+```
+value 'password' hashed using different algorithms:
+- MD5:    {MD5}X03MO1qnZdYdgyfeuILPmQ==
+- SHA1:   {SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=
+- SHA256: {SHA256}XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=
+- SHA512: {SHA512}sQnzu7wkTrgkQZF+0G1hi5AI3Qmzvv0bXgc5THBqi7mAsdd4Xll27ASbRt9fEyavWi6m0QP9B8lThf+rDKy8hg==
+```
+
+To add an administrator in the SQLite3 database, connect to the databse and use the following command (update with your own e-mail and password values):
+
+```sql
+$ sqlite <path_to_sqlite3_database>
+sqlite> INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', '{MD5}X03MO1qnZdYdgyfeuILPmQ==', 1);
+sqlite> INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_admin'));
+```
 
 ### JWT configuration
 
@@ -142,6 +198,18 @@ $ sudo sudo systemctl start glewlwyd
 Login and grant access pages example are available in the `webapp` folder to properly use Glewlwyd.
 
 ## Usage
+
+Run the application using the service command if you installed the init file:
+
+```shell
+$ sudo service glewlwyd start
+```
+
+You can also manually start the application like this:
+
+```shell
+$ ./glewlwyd --config-file=glewlwyd.conf
+```
 
 By default, Glewlwyd is available on TCP port 4593. There's a test page in `webapp/index.html` to validate the behaviour. You can access it using the url: [http://localhost:4593/app/](http://localhost:4593/app/).
 
