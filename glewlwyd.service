@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-EnvironmentFile=-/etc/glewlwyd.conf
-ExecStart=/usr/local/bin/glewlwyd --config-file=/etc/glewlwyd.conf
+EnvironmentFile=-/usr/local/etc/glewlwyd/glewlwyd.conf
+ExecStart=/usr/local/bin/glewlwyd --config-file=/usr/local/etc/glewlwyd/glewlwyd.conf
 User=pi
 KillMode=process
 Restart=on-failure
