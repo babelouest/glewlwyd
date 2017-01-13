@@ -9,7 +9,7 @@
  * 
  * user CRUD services
  *
- * Copyright 2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -29,6 +29,9 @@
 
 #include "glewlwyd.h"
 
+/**
+ * Get a specific user in the database backend
+ */
 json_t * get_user_database(struct config_elements * config, const char * username) {
   json_t * j_query, * j_result, * j_scope, * j_return, * j_scope_entry;
   int res;
@@ -99,6 +102,9 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
   return j_return;
 }
 
+/**
+ * Get a specific user in the ldap backend
+ */
 json_t * get_user_ldap(struct config_elements * config, const char * username) {
   LDAP * ldap;
   LDAPMessage * answer, * entry;
@@ -195,6 +201,9 @@ json_t * get_user_ldap(struct config_elements * config, const char * username) {
   return j_result;
 }
 
+/**
+ * Get the list of available scopes for a specific user
+ */
 json_t * get_user_scope_grant(struct config_elements * config, const char * username) {
   json_t * j_res = NULL;
   
@@ -212,6 +221,9 @@ json_t * get_user_scope_grant(struct config_elements * config, const char * user
   return j_res;
 }
 
+/**
+ * Get the list of available scopes for a specific user in the database backend
+ */
 json_t * get_user_scope_grant_database(struct config_elements * config, const char * username) {
   json_t * j_query, * j_result, * j_return;
   int res;
@@ -242,6 +254,9 @@ json_t * get_user_scope_grant_database(struct config_elements * config, const ch
   return j_return;
 }
 
+/**
+ * Get the list of available scopes for a specific user in the ldap backend
+ */
 json_t * get_user_scope_grant_ldap(struct config_elements * config, const char * username) {
   LDAP * ldap;
   LDAPMessage * answer, * entry;
@@ -336,9 +351,7 @@ json_t * get_user_scope_grant_ldap(struct config_elements * config, const char *
 }
 
 /**
- *
  * All inclusive authentication check for a user
- * 
  */
 json_t * auth_check_user_credentials_scope(struct config_elements * config, const char * username, const char * password, const char * scope_list) {
   json_t * j_res_auth = NULL, * j_res_scope = NULL, * j_res;
@@ -382,6 +395,9 @@ json_t * auth_check_user_credentials_scope(struct config_elements * config, cons
   return j_res;
 }
 
+/**
+ * Check if a user has valid credentials
+ */
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password) {
   json_t * j_res = NULL;
   
@@ -528,9 +544,7 @@ json_t * auth_check_user_credentials_ldap(struct config_elements * config, const
 }
 
 /**
- *
  * Check the scope list specified for the database user and return the filtered scope_list
- *
  */
 json_t * auth_check_user_scope_database(struct config_elements * config, const char * username, const char * scope_list) {
   json_t * j_query, * j_result, * scope_list_allowed, * j_value;
@@ -608,10 +622,8 @@ json_t * auth_check_user_scope_database(struct config_elements * config, const c
 }
 
 /**
- *
  * Check if user is allowed for the scope_list specified
  * Return a refined list of scope
- *
  */
 json_t * auth_check_user_scope(struct config_elements * config, const char * username, const char * scope_list) {
   json_t * j_res = NULL;
@@ -627,10 +639,8 @@ json_t * auth_check_user_scope(struct config_elements * config, const char * use
 }
 
 /**
- *
  * Check if ldap user is allowed for the scope_list specified
  * Return a refined list of scope
- *
  */
 json_t * auth_check_user_scope_ldap(struct config_elements * config, const char * username, const char * scope_list) {
   LDAP * ldap;
@@ -725,6 +735,9 @@ json_t * auth_check_user_scope_ldap(struct config_elements * config, const char 
   return res;
 }
 
+/**
+ * Return the list of users
+ */
 json_t * get_user_list(struct config_elements * config, const char * source, long int offset, long int limit) {
   json_t * j_return, * j_source_list = NULL, * j_result_list = json_array();
   
@@ -759,6 +772,186 @@ json_t * get_user_list(struct config_elements * config, const char * source, lon
   return j_return;
 }
 
+/**
+ * Return the list of users in the ldap backend
+ */
+json_t * get_user_list_ldap(struct config_elements * config, long int offset, long int limit) {
+  LDAP * ldap;
+  LDAPMessage * answer, * entry;
+  int i, j;
+  json_t * j_result, * j_scope_list = get_scope_list(config);
+  
+  int  result;
+  int  ldap_version   = LDAP_VERSION3;
+  int  scope          = LDAP_SCOPE_SUBTREE;
+  char * filter       = NULL;
+  char * attrs[]      = {config->auth_ldap->name_property_user_read, config->auth_ldap->email_property_user_read, config->auth_ldap->login_property_user_read, config->auth_ldap->scope_property_user_read, NULL};
+  int  attrsonly      = 0;
+  char * ldap_mech    = LDAP_SASL_SIMPLE;
+  struct berval cred;
+  struct berval *servcred;
+
+  cred.bv_val = config->auth_ldap->bind_passwd;
+  cred.bv_len = strlen(config->auth_ldap->bind_passwd);
+  
+  if (!check_result_value(j_scope_list, G_OK)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error getting scope list");
+    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if (ldap_initialize(&ldap, config->auth_ldap->uri) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing ldap");
+    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if (ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error setting ldap protocol version");
+    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if ((result = ldap_sasl_bind_s(ldap, config->auth_ldap->bind_dn, ldap_mech, &cred, NULL, NULL, &servcred)) != LDAP_SUCCESS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error binding to ldap server mode %s: %s", ldap_mech, ldap_err2string(result));
+    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else {
+    // Connection successful, doing ldap search
+    filter = msprintf("(%s)", config->auth_ldap->filter_user_read);
+    if ((result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, (offset+limit), &answer)) != LDAP_SUCCESS) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
+      j_result = json_pack("{si}", "result", G_ERROR_PARAM);
+    } else {
+      // Looping in results, staring at offset, until the end of the list
+      j_result = json_pack("{sis[]}", "result", G_OK, "user");
+      if (ldap_count_entries(ldap, answer) >= offset) {
+        entry = ldap_first_entry(ldap, answer);
+            
+        for (i=0; i<offset && entry != NULL; i++) {
+          entry = ldap_next_entry(ldap, entry);
+        }
+        
+        while (entry != NULL && i<(offset+limit)) {
+          json_t * j_entry = json_object();
+          
+          if (j_entry != NULL) {
+            struct berval ** name_values = ldap_get_values_len(ldap, entry, config->auth_ldap->name_property_user_read);
+            struct berval ** email_values = ldap_get_values_len(ldap, entry, config->auth_ldap->email_property_user_read);
+            struct berval ** login_values = ldap_get_values_len(ldap, entry, config->auth_ldap->login_property_user_read);
+            struct berval ** scope_values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_user_read);
+            
+            if (ldap_count_values_len(name_values) > 0) {
+              json_object_set_new(j_entry, "name", json_stringn(name_values[0]->bv_val, name_values[0]->bv_len));
+            }
+            
+            if (ldap_count_values_len(email_values) > 0) {
+              json_object_set_new(j_entry, "email", json_stringn(email_values[0]->bv_val, email_values[0]->bv_len));
+            }
+            
+            if (ldap_count_values_len(login_values) > 0) {
+              json_object_set_new(j_entry, "login", json_stringn(login_values[0]->bv_val, login_values[0]->bv_len));
+            }
+            
+            // For now a ldap user is always enabled, until I find a standard way to do it
+            json_object_set_new(j_entry, "enabled", json_true());
+            
+            json_object_set_new(j_entry, "scope", json_array());
+            for (j=0; j < ldap_count_values_len(scope_values); j++) {
+              json_t * j_scope = json_string(scope_values[j]->bv_val);
+              if (json_search(json_object_get(j_scope_list, "scope"), j_scope) != NULL) {
+                json_array_append_new(json_object_get(j_entry, "scope"), j_scope);
+              } else {
+                json_decref(j_scope);
+              }
+            }
+            
+            json_object_set_new(j_entry, "source", json_string("ldap"));
+            json_array_append_new(json_object_get(j_result, "user"), j_entry);
+            ldap_value_free_len(name_values);
+            ldap_value_free_len(email_values);
+            ldap_value_free_len(login_values);
+            ldap_value_free_len(scope_values);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for j_entry");
+          }
+          entry = ldap_next_entry(ldap, entry);
+          i++;
+        }
+      }
+    }
+    free(filter);
+    ldap_msgfree(answer);
+  }
+  ldap_unbind_ext(ldap, NULL, NULL);
+  json_decref(j_scope_list);
+  return j_result;
+}
+
+/**
+ * Return the list of users in the database backend
+ */
+json_t * get_user_list_database(struct config_elements * config, long int offset, long int limit) {
+  json_t * j_query, * j_result, * j_scope, * j_return, * j_entry, * j_scope_entry;
+  int res;
+  char * scope_clause;
+  size_t index, i_scope;
+  
+  j_query = json_pack("{sss[sssss]sisi}",
+                      "table",
+                      GLEWLWYD_TABLE_USER,
+                      "columns",
+                        "gu_id",
+                        "gu_name AS name", 
+                        "gu_email AS email",
+                        "gu_login AS login",
+                        "gu_enabled",
+                      "offset",
+                      offset,
+                      "limit",
+                      limit);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    j_return = json_pack("{sis[]}", "result", G_OK, "user");
+    json_array_foreach(j_result, index, j_entry) {
+      scope_clause = msprintf("IN (SELECT `gs_id` FROM %s WHERE `gu_id`='%" JSON_INTEGER_FORMAT "')", GLEWLWYD_TABLE_USER_SCOPE, json_integer_value(json_object_get(j_entry, "gu_id")));
+      j_query = json_pack("{sss[s]s{s{ssss}}}",
+                          "table",
+                          GLEWLWYD_TABLE_SCOPE,
+                          "columns",
+                            "gs_name",
+                          "where",
+                            "gs_id",
+                              "operator",
+                              "raw",
+                              "value",
+                              scope_clause);
+      free(scope_clause);
+      res = h_select(config->conn, j_query, &j_scope, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        if (json_integer_value(json_object_get(j_entry, "gu_enabled")) == 1) {
+          json_object_set_new(j_entry, "enabled", json_true());
+        } else {
+          json_object_set_new(j_entry, "enabled", json_false());
+        }
+        json_object_del(j_entry, "gu_id");
+        json_object_del(j_entry, "gu_enabled");
+        
+        json_object_set_new(j_entry, "scope", json_array());
+        json_array_foreach(j_scope, i_scope, j_scope_entry) {
+          json_array_append_new(json_object_get(j_entry, "scope"), json_copy(json_object_get(j_scope_entry, "gs_name")));
+        }
+        json_decref(j_scope);
+        json_object_set_new(j_entry, "source", json_string("database"));
+        
+        json_array_append_new(json_object_get(j_return, "user"), json_copy(j_entry));
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list_database - Error executing j_query for scope");
+      }
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list_database - Error executing j_query");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  return j_return;
+}
+
+/**
+ * Return a specific user
+ */
 json_t * get_user(struct config_elements * config, const char * login, const char * source) {
   json_t * j_return = NULL, * j_user = NULL;
   int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
@@ -783,6 +976,9 @@ json_t * get_user(struct config_elements * config, const char * login, const cha
   return j_return;
 }
 
+/**
+ * Checks if the user parameters are valid
+ */
 json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add) {
   json_t * j_return = json_array(), * j_result, * j_scope;
   size_t index;
@@ -879,6 +1075,9 @@ json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add
   return j_return;
 }
 
+/**
+ * Add a new user
+ */
 int add_user(struct config_elements * config, json_t * j_user) {
   if (json_object_get(j_user, "source") != NULL && 0 == strcmp("ldap", json_string_value(json_object_get(j_user, "source")))) {
     return add_user_ldap(config, j_user);
@@ -887,6 +1086,9 @@ int add_user(struct config_elements * config, json_t * j_user) {
   }
 }
 
+/**
+ * Add a new user in the ldap backend
+ */
 int add_user_ldap(struct config_elements * config, json_t * j_user) {
   LDAP * ldap;
   int res;
@@ -1049,6 +1251,9 @@ int add_user_ldap(struct config_elements * config, json_t * j_user) {
   return res;
 }
 
+/**
+ * Add a new user in the database backend
+ */
 int add_user_database(struct config_elements * config, json_t * j_user) {
   json_t * j_query, * j_scope;
   int res, to_return;
@@ -1113,6 +1318,9 @@ int add_user_database(struct config_elements * config, json_t * j_user) {
   return to_return;
 }
 
+/**
+ * Update an existing user
+ */
 int set_user(struct config_elements * config, const char * user, json_t * j_user, const char * source) {
   if (source == NULL || 0 == strcmp("ldap", source) || 0 == strcmp("all", source)) {
     return set_user_ldap(config, user, j_user);
@@ -1121,6 +1329,9 @@ int set_user(struct config_elements * config, const char * user, json_t * j_user
   }
 }
 
+/**
+ * Update an existing user in the ldap backend
+ */
 int set_user_ldap(struct config_elements * config, const char * user, json_t * j_user) {
   LDAP * ldap;
   int res;
@@ -1253,6 +1464,9 @@ int set_user_ldap(struct config_elements * config, const char * user, json_t * j
   return res;
 }
 
+/**
+ * Update an existing user in the database backend
+ */
 int set_user_database(struct config_elements * config, const char * user, json_t * j_user) {
   json_t * j_query, * j_scope;
   int res, to_return;
@@ -1336,6 +1550,9 @@ int set_user_database(struct config_elements * config, const char * user, json_t
   return to_return;
 }
 
+/**
+ * Delete an existing user
+ */
 int delete_user(struct config_elements * config, const char * user, const char * source) {
   if (source == NULL || 0 == strcmp("ldap", source) || 0 == strcmp("all", source)) {
     return delete_user_ldap(config, user);
@@ -1344,6 +1561,9 @@ int delete_user(struct config_elements * config, const char * user, const char *
   }
 }
 
+/**
+ * Delete an existing user in the ldap backend
+ */
 int delete_user_ldap(struct config_elements * config, const char * user) {
   LDAP * ldap;
   int res;
@@ -1382,6 +1602,9 @@ int delete_user_ldap(struct config_elements * config, const char * user) {
   return res;
 }
 
+/**
+ * Delete an existing user in the database backend
+ */
 int delete_user_database(struct config_elements * config, const char * user) {
   json_t * j_query;
   int res;
@@ -1402,177 +1625,9 @@ int delete_user_database(struct config_elements * config, const char * user) {
   }
 }
 
-json_t * get_user_list_ldap(struct config_elements * config, long int offset, long int limit) {
-  LDAP * ldap;
-  LDAPMessage * answer, * entry;
-  int i, j;
-  json_t * j_result, * j_scope_list = get_scope_list(config);
-  
-  int  result;
-  int  ldap_version   = LDAP_VERSION3;
-  int  scope          = LDAP_SCOPE_SUBTREE;
-  char * filter       = NULL;
-  char * attrs[]      = {config->auth_ldap->name_property_user_read, config->auth_ldap->email_property_user_read, config->auth_ldap->login_property_user_read, config->auth_ldap->scope_property_user_read, NULL};
-  int  attrsonly      = 0;
-  char * ldap_mech    = LDAP_SASL_SIMPLE;
-  struct berval cred;
-  struct berval *servcred;
-
-  cred.bv_val = config->auth_ldap->bind_passwd;
-  cred.bv_len = strlen(config->auth_ldap->bind_passwd);
-  
-  if (!check_result_value(j_scope_list, G_OK)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error getting scope list");
-    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
-  } else if (ldap_initialize(&ldap, config->auth_ldap->uri) != LDAP_SUCCESS) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing ldap");
-    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
-  } else if (ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error setting ldap protocol version");
-    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
-  } else if ((result = ldap_sasl_bind_s(ldap, config->auth_ldap->bind_dn, ldap_mech, &cred, NULL, NULL, &servcred)) != LDAP_SUCCESS) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error binding to ldap server mode %s: %s", ldap_mech, ldap_err2string(result));
-    j_result = json_pack("{si}", "result", G_ERROR_PARAM);
-  } else {
-    // Connection successful, doing ldap search
-    filter = msprintf("(%s)", config->auth_ldap->filter_user_read);
-    if ((result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, (offset+limit), &answer)) != LDAP_SUCCESS) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
-      j_result = json_pack("{si}", "result", G_ERROR_PARAM);
-    } else {
-      // Looping in results, staring at offset, until the end of the list
-      j_result = json_pack("{sis[]}", "result", G_OK, "user");
-      if (ldap_count_entries(ldap, answer) >= offset) {
-        entry = ldap_first_entry(ldap, answer);
-            
-        for (i=0; i<offset && entry != NULL; i++) {
-          entry = ldap_next_entry(ldap, entry);
-        }
-        
-        while (entry != NULL && i<(offset+limit)) {
-          json_t * j_entry = json_object();
-          
-          if (j_entry != NULL) {
-            struct berval ** name_values = ldap_get_values_len(ldap, entry, config->auth_ldap->name_property_user_read);
-            struct berval ** email_values = ldap_get_values_len(ldap, entry, config->auth_ldap->email_property_user_read);
-            struct berval ** login_values = ldap_get_values_len(ldap, entry, config->auth_ldap->login_property_user_read);
-            struct berval ** scope_values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_user_read);
-            
-            if (ldap_count_values_len(name_values) > 0) {
-              json_object_set_new(j_entry, "name", json_stringn(name_values[0]->bv_val, name_values[0]->bv_len));
-            }
-            
-            if (ldap_count_values_len(email_values) > 0) {
-              json_object_set_new(j_entry, "email", json_stringn(email_values[0]->bv_val, email_values[0]->bv_len));
-            }
-            
-            if (ldap_count_values_len(login_values) > 0) {
-              json_object_set_new(j_entry, "login", json_stringn(login_values[0]->bv_val, login_values[0]->bv_len));
-            }
-            
-            // For now a ldap user is always enabled, until I find a standard way to do it
-            json_object_set_new(j_entry, "enabled", json_true());
-            
-            json_object_set_new(j_entry, "scope", json_array());
-            for (j=0; j < ldap_count_values_len(scope_values); j++) {
-              json_t * j_scope = json_string(scope_values[j]->bv_val);
-              if (json_search(json_object_get(j_scope_list, "scope"), j_scope) != NULL) {
-                json_array_append_new(json_object_get(j_entry, "scope"), j_scope);
-              } else {
-                json_decref(j_scope);
-              }
-            }
-            
-            json_object_set_new(j_entry, "source", json_string("ldap"));
-            json_array_append_new(json_object_get(j_result, "user"), j_entry);
-            ldap_value_free_len(name_values);
-            ldap_value_free_len(email_values);
-            ldap_value_free_len(login_values);
-            ldap_value_free_len(scope_values);
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for j_entry");
-          }
-          entry = ldap_next_entry(ldap, entry);
-          i++;
-        }
-      }
-    }
-    free(filter);
-    ldap_msgfree(answer);
-  }
-  ldap_unbind_ext(ldap, NULL, NULL);
-  json_decref(j_scope_list);
-  return j_result;
-}
-
-json_t * get_user_list_database(struct config_elements * config, long int offset, long int limit) {
-  json_t * j_query, * j_result, * j_scope, * j_return, * j_entry, * j_scope_entry;
-  int res;
-  char * scope_clause;
-  size_t index, i_scope;
-  
-  j_query = json_pack("{sss[sssss]sisi}",
-                      "table",
-                      GLEWLWYD_TABLE_USER,
-                      "columns",
-                        "gu_id",
-                        "gu_name AS name", 
-                        "gu_email AS email",
-                        "gu_login AS login",
-                        "gu_enabled",
-                      "offset",
-                      offset,
-                      "limit",
-                      limit);
-  res = h_select(config->conn, j_query, &j_result, NULL);
-  json_decref(j_query);
-  if (res == H_OK) {
-    j_return = json_pack("{sis[]}", "result", G_OK, "user");
-    json_array_foreach(j_result, index, j_entry) {
-      scope_clause = msprintf("IN (SELECT `gs_id` FROM %s WHERE `gu_id`='%" JSON_INTEGER_FORMAT "')", GLEWLWYD_TABLE_USER_SCOPE, json_integer_value(json_object_get(j_entry, "gu_id")));
-      j_query = json_pack("{sss[s]s{s{ssss}}}",
-                          "table",
-                          GLEWLWYD_TABLE_SCOPE,
-                          "columns",
-                            "gs_name",
-                          "where",
-                            "gs_id",
-                              "operator",
-                              "raw",
-                              "value",
-                              scope_clause);
-      free(scope_clause);
-      res = h_select(config->conn, j_query, &j_scope, NULL);
-      json_decref(j_query);
-      if (res == H_OK) {
-        if (json_integer_value(json_object_get(j_entry, "gu_enabled")) == 1) {
-          json_object_set_new(j_entry, "enabled", json_true());
-        } else {
-          json_object_set_new(j_entry, "enabled", json_false());
-        }
-        json_object_del(j_entry, "gu_id");
-        json_object_del(j_entry, "gu_enabled");
-        
-        json_object_set_new(j_entry, "scope", json_array());
-        json_array_foreach(j_scope, i_scope, j_scope_entry) {
-          json_array_append_new(json_object_get(j_entry, "scope"), json_copy(json_object_get(j_scope_entry, "gs_name")));
-        }
-        json_decref(j_scope);
-        json_object_set_new(j_entry, "source", json_string("database"));
-        
-        json_array_append_new(json_object_get(j_return, "user"), json_copy(j_entry));
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list_database - Error executing j_query for scope");
-      }
-    }
-    json_decref(j_result);
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list_database - Error executing j_query");
-    j_return = json_pack("{si}", "result", G_ERROR_DB);
-  }
-  return j_return;
-}
-
+/**
+ * Check if the user profile parameters are valid
+ */
 json_t * is_user_profile_valid(struct config_elements * config, const char * username, json_t * profile) {
   json_t * j_return = json_array(), * j_user;
   
@@ -1620,6 +1675,9 @@ json_t * is_user_profile_valid(struct config_elements * config, const char * use
   return j_return;
 }
 
+/**
+ * Updates a user profile
+ */
 int set_user_profile(struct config_elements * config, const char * username, json_t * profile) {
   json_t * j_user = get_user(config, username, NULL);
   int res;
@@ -1638,6 +1696,9 @@ int set_user_profile(struct config_elements * config, const char * username, jso
   return res;
 }
 
+/**
+ * Updates a user profile in the ldap backend
+ */
 int set_user_profile_ldap(struct config_elements * config, const char * username, json_t * profile) {
   LDAP * ldap;
   int res;
@@ -1748,6 +1809,9 @@ int set_user_profile_ldap(struct config_elements * config, const char * username
   return res;
 }
 
+/**
+ * Updates a user profile in the database backend
+ */
 int set_user_profile_database(struct config_elements * config, const char * username, json_t * profile) {
   json_t * j_query;
   int res, to_return;
@@ -1793,6 +1857,9 @@ int set_user_profile_database(struct config_elements * config, const char * user
   return to_return;
 }
 
+/**
+ * Sends a reset password email to the specified user
+ */
 int send_reset_user_profile_email(struct config_elements * config, const char * username, const char * ip_source) {
   json_t * j_user = get_user(config, username, NULL);
   char * mail_subject, * mail_body, * tmp, * token = NULL;
@@ -1845,6 +1912,9 @@ int send_reset_user_profile_email(struct config_elements * config, const char * 
   return res;
 }
 
+/**
+ * Check if the reset token is valid for the specified user
+ */
 int is_reset_user_profile_valid(struct config_elements * config, const char * username, const char * token, const char * password) {
   json_t * j_query, * j_result;
   int res, to_return;
@@ -1896,6 +1966,9 @@ int is_reset_user_profile_valid(struct config_elements * config, const char * us
   return to_return;
 }
 
+/**
+ * Updates the user password
+ */
 int reset_user_profile(struct config_elements * config, const char * username, const char * token, const char * password) {
   json_t * j_query, * j_user, * j_profile;
   int res, to_return;

@@ -7,10 +7,11 @@
  * or users stored in the database 
  * Provides Json Web Tokens (jwt)
  * 
- * password manager functions, most of this code is inspired by Barry Steyn,
+ * password generate_digest, most of this code is inspired by Barry Steyn,
  * under the MIT licence, thanks to him
  *
- * Copyright 2016 Nicolas Mora <mail@babelouest.org>
+ * For the rest,
+ * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -49,7 +50,10 @@ char * rand_salt(char * str, size_t str_size) {
     }
 }
 
-int generate_digest(digest_algorithm digest, const char * password, int use_salt, char * out_password) {
+/**
+ * Generates a digest using the digest_algorithm specified from password and add a salt if specified, stores it in out_digest
+ */
+int generate_digest(digest_algorithm digest, const char * password, int use_salt, char * out_digest) {
   EVP_MD_CTX mdctx;
   const EVP_MD *md;
   unsigned char md_value[1024] = {0};
@@ -59,7 +63,7 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
 	BUF_MEM *bufferPtr;
 
   char * intermediate, buffer[1024 + GLEWLWYD_SALT_LENGTH + 1] = {0}, salt[GLEWLWYD_SALT_LENGTH + 1] = {0};
-  if (password == NULL || out_password == NULL) {
+  if (password == NULL || out_digest == NULL) {
     res = 0;
   } else {
     intermediate = malloc(strlen(password)+((GLEWLWYD_SALT_LENGTH+1)*sizeof(char)));
@@ -122,7 +126,7 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
           BIO_flush(bio);
           BIO_get_mem_ptr(bio, &bufferPtr);
 
-          memcpy(out_password, (*bufferPtr).data, (*bufferPtr).length);
+          memcpy(out_digest, (*bufferPtr).data, (*bufferPtr).length);
           
           BIO_set_close(bio, BIO_CLOSE);
           BIO_free_all(bio);
@@ -181,6 +185,10 @@ char * rand_crypt_salt(char * str, size_t str_size) {
     }
 }
 
+/**
+ * Generates a hash from the specified password, using the digest method specified
+ * returned value must be free'd after user
+ */
 char * generate_hash(struct config_elements * config, const char * digest, const char * password) {
   char * to_return = NULL, buffer[1024] = {0};
   char salt[GLEWLWYD_SALT_LENGTH + 1] = {0};

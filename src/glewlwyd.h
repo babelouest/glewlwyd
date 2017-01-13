@@ -9,7 +9,7 @@
  * 
  * Declarations for constants and prototypes
  *
- * Copyright 2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -45,10 +45,10 @@
 #define _HOEL_SQLITE
 #include <hoel.h>
 
-#define _GLEWLWYD_VERSION 0.8
+#define _GLEWLWYD_VERSION 0.9
 #define GLEWLWYD_LOG_NAME "Glewlwyd"
 
-// Configuration management
+// Configuration default values
 #define GLEWLWYD_DEFAULT_PREFIX             "glewlwyd"
 #define GLEWLWYD_DEFAULT_PORT               4593
 #define GLEWLWYD_REFRESH_TOKEN_EXP_DEFAULT  1209600
@@ -60,6 +60,7 @@
 #define GLEWLWYD_ADMIN_SCOPE                "g_admin"
 #define GLEWLWYD_DEFAULT_LIMIT              20
 #define GLEWLWYD_PREFIX_BEARER              "Bearer "
+#define GLEWLWYD_DEFAULT_HASH_ALGORITHM     "MD5"
 
 #define GLEWLWYD_RESET_PASSWORD_DEFAULT_SMTP_PORT        25
 #define GLEWLWYD_RESET_PASSWORD_DEFAULT_TOKEN_EXPIRATION 604800
@@ -98,6 +99,7 @@
 #define GLEWLWYD_TABLE_CODE_SCOPE                "g_code_scope"
 #define GLEWLWYD_TABLE_REFRESH_TOKEN_SCOPE       "g_refresh_token_scope"
 
+// Authorization types available
 #define GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE                  0
 #define GLEWLWYD_AUHORIZATION_TYPE_CODE                                1
 #define GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT                            2
@@ -208,11 +210,7 @@ struct config_elements {
   char *                          grant_url;
 };
 
-/**
- * decode a u_map into a string
- */
-char * print_map(const struct _u_map * map);
-
+// Main functions and misc functions
 int  build_config_from_args(int argc, char ** argv, struct config_elements * config);
 int  build_config_from_file(struct config_elements * config);
 int  check_config(struct config_elements * config);
@@ -229,6 +227,7 @@ char * rand_string(char * str, size_t size);
 char * rand_crypt_salt(char * str, size_t str_size);
 char * generate_hash(struct config_elements * config, const char * digest, const char * password);
 
+// OAuth2 for input parameters validation
 int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int check_auth_type_access_token_request (const struct _u_request * request, struct _u_response * response, void * user_data);
 int check_auth_type_implicit_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -238,69 +237,13 @@ int get_access_token_from_refresh (const struct _u_request * request, struct _u_
 int delete_refresh_token (const struct _u_request * request, struct _u_response * response, void * user_data);
 json_t * validate_authorization_code(struct config_elements * config, const char * authorization_code, const char * client_id, const char * redirect_uri, const char * ip_source);
 
-// Oauth2 callback functions
+// OAuth2 callback functions
 int callback_glewlwyd_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_token (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 // Authorization callbacks functions
 int callback_glewlwyd_check_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_check_scope_admin (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-// Callback functions
-int callback_glewlwyd_get_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_validate_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_delete_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_set_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_user_scope_delete (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-int callback_glewlwyd_get_user_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_set_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_send_reset_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_reset_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_get_refresh_token_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_delete_refresh_token_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_get_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_delete_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-int callback_glewlwyd_get_list_user (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_get_user (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_add_user (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_get_refresh_token_user (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_delete_refresh_token_user (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_get_session_user (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_delete_session_user (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-int callback_glewlwyd_get_list_client (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_add_client (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_delete_client (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-int callback_glewlwyd_get_list_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_get_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_set_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-int callback_glewlwyd_get_list_resource (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_get_resource (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_add_resource (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_set_resource (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_delete_resource (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-int callback_glewlwyd_get_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_set_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-int callback_glewlwyd_options (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_static_file (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_root (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_api_description (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 // Validate user login/password credentials
 json_t * auth_check_user_credentials_scope(struct config_elements * config, const char * username, const char * password, const char * scope_list);
@@ -341,6 +284,10 @@ json_t * get_user_scope_grant_ldap(struct config_elements * config, const char *
 json_t * get_authorization_type(struct config_elements * config, const char * authorization_type);
 int set_authorization_type(struct config_elements * config, const char * authorization_type, json_t * j_authorization_type);
 json_t * is_authorization_type_valid(struct config_elements * config, json_t * j_authorization_type);
+int is_authorization_type_enabled(struct config_elements * config, uint authorization_type);
+
+int grant_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
+int delete_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
 
 // Scope crud
 json_t * get_scope_list(struct config_elements * config);
@@ -418,13 +365,65 @@ char * generate_authorization_code(struct config_elements * config, const char *
 char * generate_client_access_token(struct config_elements * config, const char * client_id, const char * ip_source, time_t now);
 char * generate_user_reset_password_token(struct config_elements * config, const char * username, const char * ip_source);
 
+// Token serialization functions
 int serialize_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * refresh_token, const char * scope_list, time_t now);
 int serialize_access_token(struct config_elements * config, const uint auth_type, const char * ip_source, const char * refresh_token, const char * scope_list);
 int serialize_session_token(struct config_elements * config, const char * username, const char * ip_source, const char * session_token, time_t now);
 
-int is_authorization_type_enabled(struct config_elements * config, uint authorization_type);
+// Callback functions
+int callback_glewlwyd_get_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_validate_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int grant_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
-int delete_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
+int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_scope_delete (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_glewlwyd_get_user_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_send_reset_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_reset_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_refresh_token_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_refresh_token_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_glewlwyd_get_list_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_add_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_refresh_token_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_refresh_token_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_session_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_session_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_glewlwyd_get_list_client (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_add_client (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_client (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_glewlwyd_get_list_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_glewlwyd_get_list_resource (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_resource (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_add_resource (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_resource (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_resource (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_glewlwyd_get_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_authorization (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_glewlwyd_options (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_static_file (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_root (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_api_description (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 #endif

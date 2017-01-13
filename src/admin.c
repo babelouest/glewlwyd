@@ -8,10 +8,8 @@
  * Provides Json Web Tokens (jwt)
  * 
  * admin services
- * enable/disable authorizations
- * scope CRUD services
  *
- * Copyright 2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -30,6 +28,11 @@
 
 #include "glewlwyd.h"
 
+/**
+ *
+ * Get a list of authorization_type or a specific one
+ *
+ */
 json_t * get_authorization_type(struct config_elements * config, const char * authorization_type) {
   json_t * j_query, * j_result, * j_return, * j_element;
   int res;
@@ -65,6 +68,11 @@ json_t * get_authorization_type(struct config_elements * config, const char * au
   return j_return;
 }
 
+/**
+ *
+ * Check if authorization_type has valid parameters
+ *
+ */
 json_t * is_authorization_type_valid(struct config_elements * config, json_t * j_authorization_type) {
   json_t * j_result = json_array();
   
@@ -91,6 +99,11 @@ json_t * is_authorization_type_valid(struct config_elements * config, json_t * j
   return j_result;
 }
 
+/**
+ *
+ * Update an authorization_type
+ *
+ */
 int set_authorization_type(struct config_elements * config, const char * authorization_type, json_t * j_authorization_type) {
   json_t * j_query;
   int res;

@@ -7,9 +7,9 @@
  * or users stored in the database 
  * Provides Json Web Tokens (jwt)
  * 
- * token services
+ * Token services
  *
- * Copyright 2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -158,7 +158,7 @@ int serialize_access_token(struct config_elements * config, const uint auth_type
               "set",
                 "grt_last_seen",
                   "raw",
-                  (config->conn->type==HOEL_DB_TYPE_MARIADB?"NOW()":"(strftime('%s','now')"),
+                  (config->conn->type==HOEL_DB_TYPE_MARIADB?"NOW()":"strftime('%s','now')"),
               "where",
                 "grt_hash",
                 refresh_token_hash_escaped);
@@ -185,9 +185,11 @@ int serialize_access_token(struct config_elements * config, const uint auth_type
         if (res == H_OK) {
           ret = G_OK;
         } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error executing j_query (insert 1)");
           ret = G_ERROR_DB;
         }
       } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error executing j_query (update)");
         ret = G_ERROR_DB;
       }
     } else {
@@ -211,6 +213,7 @@ int serialize_access_token(struct config_elements * config, const uint auth_type
     if (res == H_OK) {
       ret = G_OK;
     } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error executing j_query (insert 2)");
       ret = G_ERROR_DB;
     }
   }
@@ -284,6 +287,9 @@ char * generate_session_token(struct config_elements * config, const char * user
   return token;
 }
 
+/**
+ * Serialize in the database a print of a session_token
+ */
 int serialize_session_token(struct config_elements * config, const char * username, const char * ip_source, const char * session_token, time_t now) {
   json_t * j_query;
   int res;
@@ -485,6 +491,9 @@ char * generate_authorization_code(struct config_elements * config, const char *
   return code_value;
 }
 
+/**
+ * Validates if a session token is valid
+ */
 json_t * session_check(struct config_elements * config, const char * session_value) {
   json_t * j_query, * j_result, * j_return, * j_grants;
   char * session_hash, * clause_expired_at, * grants;
@@ -571,6 +580,9 @@ json_t * session_check(struct config_elements * config, const char * session_val
   return j_return;
 }
 
+/**
+ * Validates if an access_token is valid
+ */
 json_t * access_token_check(struct config_elements * config, const char * header_value) {
   json_t * j_return, * j_grants;
   jwt_t * jwt = NULL;
@@ -612,6 +624,9 @@ json_t * access_token_check(struct config_elements * config, const char * header
   return j_return;
 }
 
+/**
+ * Validates if a session or an access_token is valid
+ */
 json_t * session_or_access_token_check(struct config_elements * config, const char * session_value, const char * header_value) {
   json_t * j_valid = session_check(config, session_value);
   
@@ -623,6 +638,9 @@ json_t * session_or_access_token_check(struct config_elements * config, const ch
   }
 }
 
+/**
+ * Invalidates a session
+ */
 int session_delete(struct config_elements * config, const char * session_value) {
   json_t * j_query;
   char * session_hash;
@@ -648,6 +666,9 @@ int session_delete(struct config_elements * config, const char * session_value) 
   }
 }
 
+/**
+ * Generates a reset password token, invalidate all other reset password tokens for the same user
+ */
 char * generate_user_reset_password_token(struct config_elements * config, const char * username, const char * ip_source) {
   json_t * j_query;
   int res;
@@ -702,6 +723,9 @@ char * generate_user_reset_password_token(struct config_elements * config, const
   return token;
 }
 
+/**
+ * Return the list of refresh_token for the specified user
+ */
 json_t * get_refresh_token_list(struct config_elements * config, const char * username, int valid, long int offset, long int limit) {
   json_t * j_query, * j_result, * j_return, * j_element;
   size_t index;
@@ -771,6 +795,9 @@ json_t * get_refresh_token_list(struct config_elements * config, const char * us
   return j_return;
 }
 
+/**
+ * Revoke a refresh_token
+ */
 int revoke_token(struct config_elements * config, const char * username, const char * token_hash) {
   json_t * j_query, * j_result;
   int res, to_return;
@@ -824,6 +851,9 @@ int revoke_token(struct config_elements * config, const char * username, const c
   return to_return;
 }
 
+/**
+ * Return the list of sessions for the specified user
+ */
 json_t * get_session_list(struct config_elements * config, const char * username, int valid, long int offset, long int limit) {
   json_t * j_query, * j_result, * j_return, * j_element;
   size_t index;
@@ -870,6 +900,9 @@ json_t * get_session_list(struct config_elements * config, const char * username
   return j_return;
 }
 
+/**
+ * Get a specific session
+ */
 int get_session(struct config_elements * config, const char * username, const char * session_hash) {
   json_t * j_query, * j_result;
   int res, to_return;
@@ -903,6 +936,9 @@ int get_session(struct config_elements * config, const char * username, const ch
   return to_return;
 }
 
+/**
+ * Revokes a session
+ */
 int revoke_session(struct config_elements * config, const char * username, const char * session_hash) {
   json_t * j_query, * j_result;
   int res, to_return;

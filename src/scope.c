@@ -7,11 +7,9 @@
  * or users stored in the database 
  * Provides Json Web Tokens (jwt)
  * 
- * admin services
- * enable/disable authorizations
  * scope CRUD services
  *
- * Copyright 2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -31,6 +29,9 @@
 #include <string.h>
 #include "glewlwyd.h"
 
+/**
+ * Get the list of all scopes
+ */
 json_t * get_scope_list(struct config_elements * config) {
   json_t * j_query, * j_result, * j_return;
   int res;
@@ -52,6 +53,9 @@ json_t * get_scope_list(struct config_elements * config) {
   return j_return;
 }
 
+/**
+ * Get a specific scope
+ */
 json_t * get_scope(struct config_elements * config, const char * scope) {
   json_t * j_query, * j_result, * j_return;
   int res;
@@ -81,6 +85,9 @@ json_t * get_scope(struct config_elements * config, const char * scope) {
   return j_return;
 }
 
+/**
+ * Check if the scope has valid parameters
+ */
 json_t * is_scope_valid(struct config_elements * config, json_t * j_scope, int add) {
   json_t * j_return = json_array(), * j_query, * j_result;
   int res;
@@ -127,6 +134,9 @@ json_t * is_scope_valid(struct config_elements * config, json_t * j_scope, int a
   return j_return;
 }
 
+/**
+ * Add a new scope
+ */
 int add_scope(struct config_elements * config, json_t * j_scope) {
   json_t * j_query;
   int res;
@@ -151,6 +161,9 @@ int add_scope(struct config_elements * config, json_t * j_scope) {
   }
 }
 
+/**
+ * Updates an exising scope
+ */
 int set_scope(struct config_elements * config, const char * scope, json_t * j_scope) {
   json_t * j_query;
   int res;
@@ -175,6 +188,9 @@ int set_scope(struct config_elements * config, const char * scope, json_t * j_sc
   }
 }
 
+/**
+ * Delete an existing scope
+ */
 int delete_scope(struct config_elements * config, const char * scope) {
   json_t * j_query;
   int res;

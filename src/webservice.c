@@ -7,9 +7,9 @@
  * or users stored in the database 
  * Provides Json Web Tokens (jwt)
  * 
- * main functions definitions
+ * Callback functions definition
  *
- * Copyright 2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -315,6 +315,9 @@ int callback_glewlwyd_check_user (const struct _u_request * request, struct _u_r
   return res;
 }
 
+/**
+ * check if bearer token has g_admin scope
+ */
 int callback_glewlwyd_check_scope_admin (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL;
@@ -336,6 +339,9 @@ int callback_glewlwyd_check_scope_admin (const struct _u_request * request, stru
   return res;
 }
 
+/**
+ * User session endpoints
+ */
 int callback_glewlwyd_get_user_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL, * j_user = NULL;
@@ -397,6 +403,9 @@ int callback_glewlwyd_delete_user_session (const struct _u_request * request, st
   return U_OK;
 }
 
+/**
+ * User scope grant endpoints
+ */
 int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
@@ -438,6 +447,9 @@ int callback_glewlwyd_user_scope_delete (const struct _u_request * request, stru
   return res;
 }
 
+/**
+ * Authorization type endpoints
+ */
 int callback_glewlwyd_get_authorization (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_result = get_authorization_type(config, u_map_get(request->map_url, "authorization_type"));
@@ -486,6 +498,9 @@ int callback_glewlwyd_set_authorization (const struct _u_request * request, stru
   return U_OK;
 }
 
+/**
+ * Scope CRUD endpoints
+ */
 int callback_glewlwyd_get_list_scope (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_result = get_scope_list(config);
@@ -584,6 +599,9 @@ int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u
   return U_OK;
 }
 
+/**
+ * User CRUD endpoints
+ */
 int callback_glewlwyd_get_list_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   long int offset, limit;
@@ -711,6 +729,10 @@ int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_
   }
   return U_OK;
 }
+
+/**
+ * User refresh_token endpoints
+ */
 int callback_glewlwyd_get_refresh_token_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   long int offset, limit;
@@ -764,6 +786,9 @@ int callback_glewlwyd_delete_refresh_token_user (const struct _u_request * reque
   return U_OK;
 }
 
+/**
+ * User session endpoints
+ */
 int callback_glewlwyd_get_session_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   long int offset, limit;
@@ -817,6 +842,9 @@ int callback_glewlwyd_delete_session_user (const struct _u_request * request, st
   return U_OK;
 }
 
+/**
+ * Client CRUD endpoints
+ */
 int callback_glewlwyd_get_list_client (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   long int offset, limit;
@@ -945,6 +973,9 @@ int callback_glewlwyd_delete_client (const struct _u_request * request, struct _
   return U_OK;
 }
 
+/**
+ * Resource CRUD endpoints
+ */
 int callback_glewlwyd_get_list_resource (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_result = get_resource_list(config);
@@ -1043,6 +1074,9 @@ int callback_glewlwyd_delete_resource (const struct _u_request * request, struct
   return U_OK;
 }
 
+/**
+ * User profile endpoints
+ */
 int callback_glewlwyd_set_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL, * j_user_valid = NULL;
@@ -1076,7 +1110,7 @@ int callback_glewlwyd_send_reset_user_profile (const struct _u_request * request
   json_t * j_user = get_user(config, u_map_get(request->map_url, "username"), NULL);
   const char * ip_source = get_ip_source(request);
   
-  y_log_message(Y_LOG_LEVEL_WARNING, "Requesting reset password for user %s at IP Address %s", u_map_get(request->map_url, "username"), ip_source);
+  y_log_message(Y_LOG_LEVEL_WARNING, "Security - Requesting reset password for user %s at IP Address %s", u_map_get(request->map_url, "username"), ip_source);
   
   if (check_result_value(j_user, G_OK)) {
     if (json_object_get(json_object_get(j_user, "user"), "email") != NULL && json_string_length(json_object_get(json_object_get(j_user, "user"), "email")) > 0) {
@@ -1119,6 +1153,9 @@ int callback_glewlwyd_reset_user_profile (const struct _u_request * request, str
   return U_OK;
 }
 
+/**
+ * User profile refresh_token endpoints
+ */
 int callback_glewlwyd_get_refresh_token_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   long int offset, limit;
@@ -1187,6 +1224,9 @@ int callback_glewlwyd_delete_refresh_token_profile (const struct _u_request * re
   return U_OK;
 }
 
+/**
+ * User profile session endpoints
+ */
 int callback_glewlwyd_get_session_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   long int offset, limit;

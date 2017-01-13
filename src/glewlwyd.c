@@ -10,7 +10,7 @@
  * main functions definitions
  * and main process start
  *
- * Copyright 2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -81,7 +81,7 @@ int main (int argc, char ** argv) {
   config->use_secure_connection = 0;
   config->secure_connection_key_file = NULL;
   config->secure_connection_pem_file = NULL;
-  config->hash_algorithm = NULL;
+  config->hash_algorithm = nstrdup(GLEWLWYD_DEFAULT_HASH_ALGORITHM);
   config->reset_password = 0;
   config->reset_password_config = NULL;
   config->login_url = NULL;
@@ -259,6 +259,8 @@ void exit_server(struct config_elements ** config, int exit_value) {
     free((*config)->secure_connection_key_file);
     free((*config)->secure_connection_pem_file);
     free((*config)->hash_algorithm);
+    free((*config)->login_url);
+    free((*config)->grant_url);
     if ((*config)->reset_password_config != NULL) {
       free((*config)->reset_password_config->smtp_host);
       free((*config)->reset_password_config->smtp_user);
@@ -825,6 +827,7 @@ int build_config_from_file(struct config_elements * config) {
   
   // Get token hash algorithm
   if (config_lookup_string(&cfg, "hash_algorithm", &cur_hash_algorithm)) {
+    free(config->hash_algorithm);
     config->hash_algorithm = nstrdup(cur_hash_algorithm);
     if (config->hash_algorithm == NULL) {
       fprintf(stderr, "Error allocating config->hash_algorithm, exiting\n");

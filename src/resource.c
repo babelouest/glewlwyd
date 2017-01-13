@@ -7,11 +7,9 @@
  * or users stored in the database 
  * Provides Json Web Tokens (jwt)
  * 
- * admin services
- * enable/disable authorizations
- * scope CRUD services
+ * Resource CRUD
  *
- * Copyright 2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -31,6 +29,9 @@
 #include <string.h>
 #include "glewlwyd.h"
 
+/**
+ * Get the list of all resources
+ */
 json_t * get_resource_list(struct config_elements * config) {
   json_t * j_query, * j_result, * j_return;
   int res;
@@ -53,6 +54,9 @@ json_t * get_resource_list(struct config_elements * config) {
   return j_return;
 }
 
+/**
+ * Get a specifric resource
+ */
 json_t * get_resource(struct config_elements * config, const char * resource) {
   json_t * j_query, * j_result, * j_return;
   int res;
@@ -83,6 +87,9 @@ json_t * get_resource(struct config_elements * config, const char * resource) {
   return j_return;
 }
 
+/**
+ * Check if the resource parameters are valid
+ */
 json_t * is_resource_valid(struct config_elements * config, json_t * j_resource, int add) {
   json_t * j_return = json_array(), * j_query, * j_result;
   int res;
@@ -128,6 +135,9 @@ json_t * is_resource_valid(struct config_elements * config, json_t * j_resource,
   return j_return;
 }
 
+/**
+ * Add a new resource
+ */
 int add_resource(struct config_elements * config, json_t * j_resource) {
   json_t * j_query;
   int res;
@@ -154,6 +164,9 @@ int add_resource(struct config_elements * config, json_t * j_resource) {
   }
 }
 
+/**
+ * Updates an existing resource
+ */
 int set_resource(struct config_elements * config, const char * resource, json_t * j_resource) {
   json_t * j_query;
   int res;
@@ -181,6 +194,9 @@ int set_resource(struct config_elements * config, const char * resource, json_t 
   }
 }
 
+/**
+ * Deletes an existing resource
+ */
 int delete_resource(struct config_elements * config, const char * resource) {
   json_t * j_query;
   int res;
