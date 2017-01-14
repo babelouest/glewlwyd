@@ -69,7 +69,7 @@ CREATE TABLE `g_client` (
 -- Resource table, contains all registered resource server
 CREATE TABLE `g_resource` (
   `gr_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
-  `gr_name` VARCHAR(128) NOT NULL,
+  `gr_name` VARCHAR(128) NOT NULL UNIQUE,
   `gr_description` VARCHAR(512) DEFAULT '',
   `gr_uri` VARCHAR(512)
 );
@@ -155,7 +155,7 @@ CREATE TABLE `g_client_scope` (
   FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
 );
 
--- Resource scope table, to store the scopes provided by the resource server
+-- Resource scope table, to store scope required for a resource service
 CREATE TABLE `g_resource_scope` (
   `grs_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `gr_id` INT(11) NOT NULL,

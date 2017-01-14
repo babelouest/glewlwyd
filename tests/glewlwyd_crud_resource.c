@@ -60,7 +60,7 @@ START_TEST(test_glwd_crud_resource_add_ok)
   char * url = msprintf("%s/resource/", SERVER_URI);
   int res;
   
-  json_body = json_pack("{ssssss}", "description", "New resource description", "name", "new_resource", "uri", "http://new_resource.domain");
+  json_body = json_pack("{sssssss[ss]}", "description", "New resource description", "name", "new_resource", "uri", "http://new_resource.domain", "scope", "scope1", "scope2");
   res = run_simple_test(&user_req, "POST", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   json_decref(json_body);
 	ck_assert_int_eq(res, 1);
@@ -99,7 +99,7 @@ END_TEST
 START_TEST(test_glwd_crud_resource_set_new)
 {
   char * url = msprintf("%s/resource/new_resource", SERVER_URI);
-  json_t * json_body = json_pack("{ssss}", "description", "New new resource description", "uri", "http://new_resource.domain");
+  json_t * json_body = json_pack("{sssss[ss]}", "description", "New new resource description", "uri", "http://new_resource.domain", "scope", "scope1", "scope2");
   
   int res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   free(url);

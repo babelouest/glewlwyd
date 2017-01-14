@@ -78,7 +78,7 @@ CREATE INDEX `i_g_redirect_uri` ON `g_redirect_uri`(`gru_id`);
 -- Resource table, contains all registered resource server
 CREATE TABLE `g_resource` (
   `gr_id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `gr_name` TEXT NOT NULL,
+  `gr_name` TEXT NOT NULL UNIQUE,
   `gr_description` TEXT DEFAULT '',
   `gr_uri` TEXT
 );
@@ -162,7 +162,7 @@ CREATE TABLE `g_client_scope` (
 );
 CREATE INDEX `i_g_client_scope` ON `g_client_scope`(`gcs_id`);
 
--- Resource scope table, to store the scopes provided by the resource server
+-- Resource scope table, to store scope required for a resource service
 CREATE TABLE `g_resource_scope` (
   `grs_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `gr_id` INTEGER NOT NULL,
