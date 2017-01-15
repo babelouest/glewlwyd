@@ -133,9 +133,19 @@
 						<div class="tab-pane container" id="user">
 							<h2>Users</h2>
 							<div class="row well">
-								<button type="button" name="userAdd" id="userAdd" data-toggle="modal" data-target="#userModal">
-									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-								</button>
+								<div class="input-group">
+									<div class="input-group-btn">
+										<button class="btn btn-default" type="button" name="userAdd" id="userAdd" data-toggle="modal" data-target="#userModal">
+											<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
+										</button>
+										<button class="btn btn-default" type="button"><i class="icon-resize-small fa fa-chevron-left"></i></button>
+										<button class="btn btn-default" type="button"><i class="icon-resize-small fa fa-chevron-right"></i></button>
+									</div>
+									<input type="text" class="form-control" placeholder="Search" name="srch-term" id="srch-term">
+									<div class="input-group-btn">
+										<button class="btn btn-default" type="button"><i class="glyphicon glyphicon-search"></i></button>
+									</div>
+								</div>
 								<table class="table table-hover table-responsive">
 									<thead>
 										<tr>
@@ -155,10 +165,10 @@
 											<td><span class="gl-table-title">Scopes: </span><span>g_admin</span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
 											<td>
-												<button type="button" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
+												<button type="button" class="btn" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -170,10 +180,10 @@
 											<td><span class="gl-table-title">Scopes: </span><span>scope1, scope2</span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
 											<td>
-												<button type="button" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
+												<button type="button" class="btn" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -185,10 +195,10 @@
 											<td><span class="gl-table-title">Scopes: </span><span>scope1</span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
 											<td>
-												<button type="button" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
+												<button type="button" class="btn" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -200,10 +210,10 @@
 											<td><span class="gl-table-title">Scopes: </span><span>scope2</span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
 											<td>
-												<button type="button" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
+												<button type="button" class="btn" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -215,10 +225,10 @@
 											<td><span class="gl-table-title">Scopes: </span><span>scope1, scope2</span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>false</span></td>
 											<td>
-												<button type="button" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
+												<button type="button" class="btn" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -230,10 +240,10 @@
 											<td><span class="gl-table-title">Scopes: </span><span>scope1, scope2</span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
 											<td>
-												<button type="button" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
+												<button type="button" class="btn" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -245,10 +255,10 @@
 											<td><span class="gl-table-title">Scopes: </span><span>scope2</span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
 											<td>
-												<button type="button" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
+												<button type="button" class="btn" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -259,8 +269,46 @@
 						</div>
 						<div class="tab-pane container" id="userDetail">
 							<h2>Dave Lopper 1</h2>
+							<div class="well">
+								<div class="row">
+									<div class="col-md-3">
+										<label>Name</label>
+									</div>
+									<div class="col-md-3">
+										Dave Lopper 1
+									</div>
+									<div class="col-md-3">
+										<label>Email</label>
+									</div>
+									<div class="col-md-3">
+										user1@glewlwyd.domain
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-3">
+										<label>Login</label>
+									</div>
+									<div class="col-md-3">
+										user1
+									</div>
+									<div class="col-md-3">
+										<label>Scopes</label>
+									</div>
+									<div class="col-md-3">
+										scope1, scope2
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-3">
+										<label>Enabled</label>
+									</div>
+									<div class="col-md-3">
+										true
+									</div>
+								</div>
+							</div>
 							<div class="row well">
-								<h3>Sessions&nbsp;<small><button type="button" name="userDetailsRefresh" id="userDetailsRefresh"><i class="fa fa-refresh" aria-hidden="true"></i></button></small></h3>
+								<h3>Sessions&nbsp;<small><button type="button" class="btn" name="userDetailsRefresh" id="userDetailsRefresh"><i class="fa fa-refresh" aria-hidden="true"></i></button></small></h3>
 								<table class="table table-hover table-responsive">
 									<thead>
 										<tr>
@@ -280,7 +328,7 @@
 											<td><span class="gl-table-title">Expired at: </span><span></span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
 											<td>
-												<button type="button" name="sessionDelete" id="sessionDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="sessionDelete" id="sessionDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -292,7 +340,7 @@
 											<td><span class="gl-table-title">Expired at: </span><span>Sat, 14 Jan 2017 16:59:59 EST</span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>false</span></td>
 											<td>
-												<button type="button" name="sessionDelete" id="sessionDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="sessionDelete" id="sessionDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -301,7 +349,7 @@
 								</table>
 							</div>
 							<div class="row well">
-								<h3>Refresh tokens&nbsp;<small><button type="button" name="userDetailsRefresh" id="userDetailsRefresh"><i class="fa fa-refresh" aria-hidden="true"></i></button></small></h3>
+								<h3>Refresh tokens&nbsp;<small><button type="button" class="btn" name="userDetailsRefresh" id="userDetailsRefresh"><i class="fa fa-refresh" aria-hidden="true"></i></button></small></h3>
 								<table class="table table-hover table-responsive">
 									<thead>
 										<tr>
@@ -323,7 +371,7 @@
 											<td><span class="gl-table-title">Expired at: </span><span></span></td>
 											<td><span class="gl-table-title">Enabled: </span><span></span>true</td>
 											<td>
-												<button type="button" name="refreshTokenDelete" id="refreshTokenDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="refreshTokenDelete" id="refreshTokenDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -336,7 +384,7 @@
 											<td><span class="gl-table-title">Expired at: </span><span></span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
 											<td>
-												<button type="button" name="refreshTokenDelete" id="refreshTokenDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="refreshTokenDelete" id="refreshTokenDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -349,7 +397,7 @@
 											<td><span class="gl-table-title">Expired at: </span><span>Sat, 14 Jan 2017 16:59:59 EST</span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>false</span></td>
 											<td>
-												<button type="button" name="refreshTokenDelete" id="refreshTokenDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="refreshTokenDelete" id="refreshTokenDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -362,7 +410,7 @@
 											<td><span class="gl-table-title">Expired at: </span><span></span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
 											<td>
-												<button type="button" name="refreshTokenDelete" id="refreshTokenDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="refreshTokenDelete" id="refreshTokenDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -374,9 +422,19 @@
 						<div class="tab-pane container" id="client">
 							<h2>Clients</h2>
 							<div class="row well">
-								<button type="button" name="clientAdd" id="clientAdd" data-toggle="modal" data-target="#clientModal">
-									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-								</button>
+								<div class="input-group">
+									<div class="input-group-btn">
+										<button class="btn btn-default" type="button" name="clientAdd" id="clientAdd" data-toggle="modal" data-target="#clientModal">
+											<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
+										</button>
+										<button class="btn btn-default" type="button"><i class="icon-resize-small fa fa-chevron-left"></i></button>
+										<button class="btn btn-default" type="button"><i class="icon-resize-small fa fa-chevron-right"></i></button>
+									</div>
+									<input type="text" class="form-control" placeholder="Search" name="srch-term" id="srch-term">
+									<div class="input-group-btn">
+										<button class="btn btn-default" type="button"><i class="glyphicon glyphicon-search"></i></button>
+									</div>
+								</div>
 								<table class="table table-hover table-responsive">
 									<thead>
 										<tr>
@@ -396,10 +454,10 @@
 											<td><span class="gl-table-title">Confidential: </span><span>false</span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
 											<td>
-												<button type="button" name="clientEdit" id="clientEdit" data-toggle="modal" data-target="#clientModal">
+												<button type="button" class="btn" name="clientEdit" id="clientEdit" data-toggle="modal" data-target="#clientModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="clientDelete" id="clientDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="clientDelete" id="clientDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -411,10 +469,10 @@
 											<td><span class="gl-table-title">Confidential: </span><span>true</span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
 											<td>
-												<button type="button" name="clientEdit" id="clientEdit" data-toggle="modal" data-target="#clientModal">
+												<button type="button" class="btn" name="clientEdit" id="clientEdit" data-toggle="modal" data-target="#clientModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="clientDelete" id="clientDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="clientDelete" id="clientDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -426,10 +484,10 @@
 											<td><span class="gl-table-title">Confidential: </span><span>false</span></td>
 											<td><span class="gl-table-title">Enabled: </span><span>false</span></td>
 											<td>
-												<button type="button" name="clientEdit" id="clientEdit" data-toggle="modal" data-target="#clientModal">
+												<button type="button" class="btn" name="clientEdit" id="clientEdit" data-toggle="modal" data-target="#clientModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="clientDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="clientDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -441,7 +499,7 @@
 						<div class="tab-pane container" id="scope">
 							<h2>Scopes</h2>
 							<div class="row well">
-								<button type="button" name="scopeAdd" id="userAdd" data-toggle="modal" data-target="#scopeModal">
+								<button type="button" class="btn" name="scopeAdd" id="userAdd" data-toggle="modal" data-target="#scopeModal">
 									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
 								</button>
 								<table class="table table-hover table-responsive">
@@ -457,10 +515,10 @@
 											<td><span class="gl-table-title">Name: </span><span>scope1</span></td>
 											<td><span class="gl-table-title">Description: </span><span>First scope</span></td>
 											<td>
-												<button type="button" name="scopeEdit" id="userEdit" data-toggle="modal" data-target="#scopeModal">
+												<button type="button" class="btn" name="scopeEdit" id="userEdit" data-toggle="modal" data-target="#scopeModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="scopeDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="scopeDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -469,10 +527,10 @@
 											<td><span class="gl-table-title">Name: </span><span>scope2</span></td>
 											<td><span class="gl-table-title">Description: </span><span>Second scope</span></td>
 											<td>
-												<button type="button" name="scopeEdit" id="userEdit" data-toggle="modal" data-target="#scopeModal">
+												<button type="button" class="btn" name="scopeEdit" id="userEdit" data-toggle="modal" data-target="#scopeModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="scopeDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="scopeDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -481,10 +539,10 @@
 											<td><span class="gl-table-title">Name: </span><span>g_admin</span></td>
 											<td><span class="gl-table-title">Description: </span><span>Admin scope</span></td>
 											<td>
-												<button type="button" name="scopeEdit" id="userEdit" data-toggle="modal" data-target="#scopeModal">
+												<button type="button" class="btn" name="scopeEdit" id="userEdit" data-toggle="modal" data-target="#scopeModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="scopeDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="scopeDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -496,7 +554,7 @@
 						<div class="tab-pane container" id="resource">
 							<h2>Resources</h2>
 							<div class="row well">
-								<button type="button" name="userAdd" id="resourceAdd" data-toggle="modal" data-target="#resourceModal">
+								<button type="button" class="btn" name="userAdd" id="resourceAdd" data-toggle="modal" data-target="#resourceModal">
 									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
 								</button>
 								<table class="table table-hover table-responsive">
@@ -516,10 +574,10 @@
 											<td><span class="gl-table-title">URI: </span><span>http://resource1.domain/</span></td>
 											<td><span class="gl-table-title">Scope required: </span><span>scope1</span></td>
 											<td>
-												<button type="button" name="resourceEdit" id="userEdit" data-toggle="modal" data-target="#resourceModal">
+												<button type="button" class="btn" name="resourceEdit" id="userEdit" data-toggle="modal" data-target="#resourceModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="resourceDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="resourceDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -530,10 +588,10 @@
 											<td><span class="gl-table-title">URI: </span><span>http://resource2.domain/</span></td>
 											<td><span class="gl-table-title">Scope required: </span><span>scope2</span></td>
 											<td>
-												<button type="button" name="resourceEdit" id="userEdit" data-toggle="modal" data-target="#resourceModal">
+												<button type="button" class="btn" name="resourceEdit" id="userEdit" data-toggle="modal" data-target="#resourceModal">
 													<i class="fa fa-pencil" aria-hidden="true"></i>
 												</button>
-												<button type="button" name="resourceDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
+												<button type="button" class="btn" name="resourceDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
 													<i class="fa fa-trash" aria-hidden="true"></i>
 												</button>
 											</td>
@@ -580,7 +638,7 @@
 						<label for="userLogin">Login</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="text" name="userLogin" id="userLogin">
+						<input class="form-control" type="text" name="userLogin" id="userLogin" placeholder="User Login">
 					</div>
         </div>
         <div class="row top-buffer">
@@ -588,7 +646,7 @@
 						<label for="userPassword">Password</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="password" name="userPassword" id="userPassword">
+						<input class="form-control" type="password" name="userPassword" id="userPassword" placeholder="User password">
 					</div>
         </div>
         <div class="row top-buffer">
@@ -596,7 +654,7 @@
 						<label for="userPasswordConfirm">Confirm password</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="password" name="userPasswordConfirm" id="userPasswordConfirm">
+						<input class="form-control" type="password" name="userPasswordConfirm" id="userPasswordConfirm" placeholder="Confirm User password">
 					</div>
         </div>
         <div class="row top-buffer">
@@ -604,7 +662,7 @@
 						<label for="userName">Name</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="text" name="userName" id="userName">
+						<input class="form-control" type="text" name="userName" id="userName" placeholder="Fullname">
 					</div>
         </div>
         <div class="row top-buffer">
@@ -612,7 +670,7 @@
 						<label for="userEmail">Email</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="text" name="userEmail" id="userEmail">
+						<input class="form-control" type="text" name="userEmail" id="userEmail" placeholder="User e-mail">
 					</div>
         </div>
         <div class="row top-buffer">
@@ -682,7 +740,7 @@
 						<label for="clientName">Name</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="text" name="clientName" id="clientName">
+						<input class="form-control" type="text" name="clientName" id="clientName" placeholder="Client name">
 					</div>
         </div>
         <div class="row top-buffer">
@@ -690,7 +748,7 @@
 						<label for="clientDescription">Description</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="text" name="clientDescription" id="clientDescription">
+						<input class="form-control" type="text" name="clientDescription" id="clientDescription" placeholder="Client description">
 					</div>
         </div>
         <div class="row top-buffer">
@@ -698,7 +756,7 @@
 						<label for="clientClientId">Client Id</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="text" name="clientClientId" id="clientClientId">
+						<input class="form-control" type="text" name="clientClientId" id="clientClientId" placeholder="Client Id (login)">
 					</div>
         </div>
         <div class="row top-buffer">
@@ -714,7 +772,7 @@
 						<label for="clientPassword">Password</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="password" name="clientPassword" id="clientPassword">
+						<input class="form-control" type="password" name="clientPassword" id="clientPassword" placeholder="Client password">
 					</div>
         </div>
         <div class="row top-buffer">
@@ -722,7 +780,7 @@
 						<label for="clientPasswordConfirm">Confirm password</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="password" name="clientPasswordConfirm" id="clientPasswordConfirm">
+						<input class="form-control" type="password" name="clientPasswordConfirm" id="clientPasswordConfirm" placeholder="Client password confirm">
 					</div>
         </div>
         <div class="row top-buffer">
@@ -768,7 +826,7 @@
 					</div>
 					<div class="col-md-6">
 						<div class="input-group">
-							<input class="form-control" type="text" name="clientRedirectUri" id="clientRedirectUri">
+							<input class="form-control" type="text" name="clientRedirectUri" id="clientRedirectUri" placeholder="New redirect URI">
 							<div class="input-group-btn ">
 								<button type="button" name="addScope" id="addScope" class="btn">
 									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
@@ -829,7 +887,7 @@
 						<label for="scopeName">Name</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="text" name="scopeName" id="scopeName">
+						<input class="form-control" type="text" name="scopeName" id="scopeName" placeholder="Name">
 					</div>
         </div>
         <div class="row top-buffer">
@@ -837,7 +895,7 @@
 						<label for="scopeDescription">Description</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="text" name="scopeDescription" id="scopeDescription">
+						<input class="form-control" type="text" name="scopeDescription" id="scopeDescription" placeholder="Description">
 					</div>
         </div>
       </div>
@@ -862,7 +920,7 @@
 						<label for="resourceName">Name</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="text" name="resourceName" id="resourceName">
+						<input class="form-control" type="text" name="resourceName" id="resourceName" placeholder="Name">
 					</div>
         </div>
         <div class="row top-buffer">
@@ -870,7 +928,7 @@
 						<label for="resourceDescription">Description</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="text" name="resourceDescription" id="resourceDescription">
+						<input class="form-control" type="text" name="resourceDescription" id="resourceDescription" placeholder="Description">
 					</div>
         </div>
         <div class="row top-buffer">
@@ -878,7 +936,7 @@
 						<label for="resourceUri">URI</label>
 					</div>
 					<div class="col-md-6">
-						<input class="form-control" type="text" name="resourceUri" id="resourceUri">
+						<input class="form-control" type="text" name="resourceUri" id="resourceUri" placeholder="Resource URI">
 					</div>
         </div>
         <div class="row top-buffer">
