@@ -294,6 +294,125 @@ Error input parameters
 
 Content: json array containing all errors
 
+### Get current profile's refresh token list
+
+#### URL
+
+`/glewlwyd/profile/refresh_token/`
+
+#### Method
+
+`GET`
+
+#### Security
+
+Session token or header bearer token
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[
+  {
+    token_hash: text,
+    authorization_type: text,
+    ip_source: text,
+    enabled: boolean,
+    issued_at: numeric,
+    last_seen: numeric,
+    expired_at: numeric
+  }
+]
+```
+
+### Revoke a refresh token from current profile's list
+
+#### URL
+
+`/glewlwyd/profile/refresh_token/`
+
+#### Method
+
+`DELETE`
+
+#### Security
+
+Session token or header bearer token
+
+#### Data Parameters
+
+Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+
+```
+token_hash: text, required
+```
+
+#### Success response
+
+Code 200
+
+### Get current profile's session list
+
+#### URL
+
+`/glewlwyd/profile/session/`
+
+#### Method
+
+`GET`
+
+#### Security
+
+Session token or header bearer token
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[
+  {
+    session_hash: text,
+    ip_source: text,
+    enabled: boolean,
+    issued_at: numeric,
+    last_seen: numeric,
+    expired_at: numeric
+  }
+]
+```
+
+### Revoke a session from current profile's list
+
+#### URL
+
+`/glewlwyd/profile/session/`
+
+#### Method
+
+`DELETE`
+
+#### Security
+
+Session token or header bearer token
+
+#### Data Parameters
+
+Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+
+```
+session_hash: text, required
+```
+
+#### Success response
+
+Code 200
+
 ## authorization type API
 
 ### Get all authorization type status
@@ -809,6 +928,125 @@ Code 200
 Code 404
 
 Resource not found
+
+### Get an existing user's refresh token list
+
+#### URL
+
+`/glewlwyd/user/{login}/refresh_token/`
+
+#### Method
+
+`GET`
+
+#### Security
+
+Scope required: `g_admin`
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[
+  {
+    token_hash: text,
+    authorization_type: text,
+    ip_source: text,
+    enabled: boolean,
+    issued_at: numeric,
+    last_seen: numeric,
+    expired_at: numeric
+  }
+]
+```
+
+### Revoke a refresh token from an existing user's list
+
+#### URL
+
+`/glewlwyd/user/{login}/refresh_token/`
+
+#### Method
+
+`DELETE`
+
+#### Security
+
+Scope required: `g_admin`
+
+#### Data Parameters
+
+Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+
+```
+token_hash: text, required
+```
+
+#### Success response
+
+Code 200
+
+### Get an existing user's session list
+
+#### URL
+
+`/glewlwyd/user/{login}/session/`
+
+#### Method
+
+`GET`
+
+#### Security
+
+Scope required: `g_admin`
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[
+  {
+    session_hash: text,
+    ip_source: text,
+    enabled: boolean,
+    issued_at: numeric,
+    last_seen: numeric,
+    expired_at: numeric
+  }
+]
+```
+
+### Revoke a session from an existing user's list
+
+#### URL
+
+`/glewlwyd/user/{login}/session/`
+
+#### Method
+
+`DELETE`
+
+#### Security
+
+Scope required: `g_admin`
+
+#### Data Parameters
+
+Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+
+```
+session_hash: text, required
+```
+
+#### Success response
+
+Code 200
 
 ## Client API
 
