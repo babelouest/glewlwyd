@@ -32,6 +32,18 @@ START_TEST(test_glwd_crud_user_list)
 }
 END_TEST
 
+START_TEST(test_glwd_crud_user_search_success)
+{
+  char * url = msprintf("%s/user/?search=new_user", SERVER_URI);
+  json_t * j_user1 = json_string("new_user");
+  
+  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_user1, NULL, NULL);
+  free(url);
+  json_decref(j_user1);
+  ck_assert_int_eq(res, 1);
+}
+END_TEST
+
 START_TEST(test_glwd_crud_user_get)
 {
   char * url = msprintf("%s/user/user1", SERVER_URI);
@@ -329,6 +341,7 @@ static Suite *libjwt_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_get);
   tcase_add_test(tc_core, test_glwd_crud_user_get_not_found);
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_database);
+  tcase_add_test(tc_core, test_glwd_crud_user_search_success);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_invalid_database);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_database);
@@ -338,6 +351,7 @@ static Suite *libjwt_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_delete_new_database);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_ldap);
+  tcase_add_test(tc_core, test_glwd_crud_user_search_success);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_invalid_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_ldap);
@@ -347,6 +361,7 @@ static Suite *libjwt_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_delete_new_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_no_source);
+  tcase_add_test(tc_core, test_glwd_crud_user_search_success);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_invalid_no_source);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_no_source);

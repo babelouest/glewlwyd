@@ -1465,3 +1465,66 @@ char * generate_query_parameters(const struct _u_request * request) {
   
   return query;
 }
+
+/**
+ * 
+ * Escapes any special chars (RFC 4515) from a string representing a
+ * a search filter assertion value.
+ * 
+ * You must free the returned value after use
+ *
+ */
+char * escape_ldap(const char * input) {
+  char * tmp, * to_return = NULL;
+  size_t len, i;
+  
+  if (input != NULL) {
+    to_return = strdup("");
+    len = strlen(input);
+    for (i=0; i < len && to_return != NULL; i++) {
+      char c = input[i];
+      if (c == '*') {
+        // escape asterisk
+        tmp = msprintf("%s\\2a", to_return);
+        free(to_return);
+        to_return = tmp;
+      } else if (c == '(') {
+        // escape left parenthesis
+        tmp = msprintf("%s\\28", to_return);
+        free(to_return);
+        to_return = tmp;
+      } else if (c == ')') {
+        // escape right parenthesis
+        tmp = msprintf("%s\\29", to_return);
+        free(to_return);
+        to_return = tmp;
+      } else if (c == '\\') {
+        // escape backslash
+        tmp = msprintf("%s\\5c", to_return);
+        free(to_return);
+        to_return = tmp;
+      } else if (c <= 0x7f) {
+        // regular 1-byte UTF-8 char
+        tmp = msprintf("%s%c", to_return, c);
+        free(to_return);
+        to_return = tmp;
+      } else if (c >= 0x080 && c < 0x800 && i < (len-2)) { 
+        // higher-order 2-byte UTF-8 chars
+        tmp = msprintf("%s\\%02x\\%02x", to_return, input[i], input[i+1]);
+        free(to_return);
+        to_return = tmp;
+      } else if (c >= 0x800 && c < 0x10000 && i < (len-3)) { 
+        // higher-order 3-byte UTF-8 chars
+        tmp = msprintf("%s\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2]);
+        free(to_return);
+        to_return = tmp;
+      } else if (c >= 0x10000 && c <= 0x1FFFFF && i < (len-4)) { 
+        // higher-order 4-byte UTF-8 chars
+        tmp = msprintf("%s\\%02x\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2], input[i+3]);
+        free(to_return);
+        to_return = tmp;
+      }
+    }
+  }
+  return to_return;
+}

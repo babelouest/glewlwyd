@@ -226,6 +226,7 @@ const char * get_ip_source(const struct _u_request * request);
 char * rand_string(char * str, size_t size);
 char * rand_crypt_salt(char * str, size_t str_size);
 char * generate_hash(struct config_elements * config, const char * digest, const char * password);
+char * escape_ldap(const char * input);
 
 // OAuth2 for input parameters validation
 int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -298,9 +299,9 @@ int set_scope(struct config_elements * config, const char * scope, json_t * j_sc
 int delete_scope(struct config_elements * config, const char * scope);
 
 // User CRUD
-json_t * get_user_list(struct config_elements * config, const char * source, long int offset, long int limit);
-json_t * get_user_list_ldap(struct config_elements * config, long int offset, long int limit);
-json_t * get_user_list_database(struct config_elements * config, long int offset, long int limit);
+json_t * get_user_list(struct config_elements * config, const char * source, const char * search, long int offset, long int limit);
+json_t * get_user_list_ldap(struct config_elements * config, const char * search, long int offset, long int limit);
+json_t * get_user_list_database(struct config_elements * config, const char * search, long int offset, long int limit);
 json_t * get_user(struct config_elements * config, const char * username, const char * source);
 json_t * get_user_database(struct config_elements * config, const char * username);
 json_t * get_user_ldap(struct config_elements * config, const char * username);
@@ -323,9 +324,9 @@ int send_reset_user_profile_email(struct config_elements * config, const char * 
 int reset_user_profile(struct config_elements * config, const char * username, const char * token, const char * password);
 
 // Client CRUD
-json_t * get_client_list(struct config_elements * config, const char * source, long int offset, long int limit);
-json_t * get_client_list_ldap(struct config_elements * config, long int offset, long int limit);
-json_t * get_client_list_database(struct config_elements * config, long int offset, long int limit);
+json_t * get_client_list(struct config_elements * config, const char * source, const char * search, long int offset, long int limit);
+json_t * get_client_list_ldap(struct config_elements * config, const char * search, long int offset, long int limit);
+json_t * get_client_list_database(struct config_elements * config, const char * search, long int offset, long int limit);
 json_t * get_client(struct config_elements * config, const char * client_id, const char * source);
 json_t * get_client_database(struct config_elements * config, const char * client_id);
 json_t * get_client_ldap(struct config_elements * config, const char * client_id);

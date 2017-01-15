@@ -711,7 +711,7 @@ The user API allows user CRUD. You can have LDAP or Database backend to store us
 
 #### URL
 
-`/glewlwyd/user?source&offset&limit`
+`/glewlwyd/user?source&search&offset&limit`
 
 #### Method
 
@@ -726,6 +726,8 @@ Scope required: `g_admin`
 Optional
 
 `source`: source to get the user data: vaues can be `database`, `ldap` or `all` default is `all`
+
+`search`: search pattern for name, login or email. API will return any user that match the corresponding pattern.
 
 `offset`: offset to start the list result, default is 0
 
@@ -1056,7 +1058,7 @@ The client API allows client CRUD. You can have LDAP or Database backend to stor
 
 #### URL
 
-`/glewlwyd/client`
+`/glewlwyd/client?source&search&offset&limit`
 
 #### Method
 
@@ -1065,6 +1067,18 @@ The client API allows client CRUD. You can have LDAP or Database backend to stor
 #### Security
 
 Scope required: `g_admin`
+
+#### URL Parameters
+
+Optional
+
+`source`: source to get the user data: vaues can be `database`, `ldap` or `all` default is `all`
+
+`search`: search pattern for name, description or client_id. API will return any user that match the corresponding pattern.
+
+`offset`: offset to start the list result, default is 0
+
+`limit`: number of users to list, default is 20
 
 #### Success response
 

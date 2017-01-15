@@ -619,7 +619,7 @@ int callback_glewlwyd_get_list_user (const struct _u_request * request, struct _
     limit = GLEWLWYD_DEFAULT_LIMIT;
   }
   
-  j_result = get_user_list(config, u_map_get(request->map_url, "source"), offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
+  j_result = get_user_list(config, u_map_get(request->map_url, "source"), u_map_get(request->map_url, "search"), offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
   
   if (check_result_value(j_result, G_OK)) {
     response->json_body = json_copy(json_object_get(j_result, "user"));
@@ -862,7 +862,7 @@ int callback_glewlwyd_get_list_client (const struct _u_request * request, struct
     limit = GLEWLWYD_DEFAULT_LIMIT;
   }
   
-  j_result = get_client_list(config, u_map_get(request->map_url, "source"), offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
+  j_result = get_client_list(config, u_map_get(request->map_url, "source"), u_map_get(request->map_url, "search"), offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
   
   if (check_result_value(j_result, G_OK)) {
     response->json_body = json_copy(json_object_get(j_result, "client"));

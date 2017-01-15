@@ -738,12 +738,12 @@ json_t * auth_check_user_scope_ldap(struct config_elements * config, const char 
 /**
  * Return the list of users
  */
-json_t * get_user_list(struct config_elements * config, const char * source, long int offset, long int limit) {
+json_t * get_user_list(struct config_elements * config, const char * source, const char * search, long int offset, long int limit) {
   json_t * j_return, * j_source_list = NULL, * j_result_list = json_array();
   
   if (j_result_list != NULL) {
     if ((source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")) && config->has_auth_ldap) {
-      j_source_list = get_user_list_ldap(config, offset, limit);
+      j_source_list = get_user_list_ldap(config, search, offset, limit);
       if (check_result_value(j_source_list, G_OK)) {
         json_array_extend(j_result_list, json_object_get(j_source_list, "user"));
       } else {
@@ -754,7 +754,7 @@ json_t * get_user_list(struct config_elements * config, const char * source, lon
     }
     
     if ((source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")) && json_array_size(j_result_list) < limit && config->has_auth_database) {
-      j_source_list = get_user_list_database(config, offset, (limit - json_array_size(j_result_list)));
+      j_source_list = get_user_list_database(config, search, offset, (limit - json_array_size(j_result_list)));
       if (check_result_value(j_source_list, G_OK)) {
         json_array_extend(j_result_list, json_object_get(j_source_list, "user"));
       } else {
@@ -775,7 +775,7 @@ json_t * get_user_list(struct config_elements * config, const char * source, lon
 /**
  * Return the list of users in the ldap backend
  */
-json_t * get_user_list_ldap(struct config_elements * config, long int offset, long int limit) {
+json_t * get_user_list_ldap(struct config_elements * config, const char * search, long int offset, long int limit) {
   LDAP * ldap;
   LDAPMessage * answer, * entry;
   int i, j;
@@ -808,7 +808,20 @@ json_t * get_user_list_ldap(struct config_elements * config, long int offset, lo
     j_result = json_pack("{si}", "result", G_ERROR_PARAM);
   } else {
     // Connection successful, doing ldap search
-    filter = msprintf("(%s)", config->auth_ldap->filter_user_read);
+    if (search != NULL && strcmp("", search) != 0) {
+      char * search_escaped = escape_ldap(search);
+      filter = msprintf("(&(%s)(|(%s=*%s*)(%s=*%s*)(%s=*%s*)))", 
+                        config->auth_ldap->filter_user_read, 
+                        config->auth_ldap->login_property_user_read, 
+                        search_escaped,
+                        config->auth_ldap->name_property_user_read, 
+                        search_escaped,
+                        config->auth_ldap->email_property_user_read, 
+                        search_escaped);
+      free(search_escaped);
+    } else {
+      filter = msprintf("(%s)", config->auth_ldap->filter_user_read);
+    }
     if ((result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, (offset+limit), &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
       j_result = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -881,7 +894,7 @@ json_t * get_user_list_ldap(struct config_elements * config, long int offset, lo
 /**
  * Return the list of users in the database backend
  */
-json_t * get_user_list_database(struct config_elements * config, long int offset, long int limit) {
+json_t * get_user_list_database(struct config_elements * config, const char * search, long int offset, long int limit) {
   json_t * j_query, * j_result, * j_scope, * j_return, * j_entry, * j_scope_entry;
   int res;
   char * scope_clause;
@@ -900,6 +913,14 @@ json_t * get_user_list_database(struct config_elements * config, long int offset
                       offset,
                       "limit",
                       limit);
+  if (search != NULL && strcmp("", search) != 0) {
+    char * search_escaped = h_escape_string(config->conn, search);
+    char * clause_search = msprintf("IN (SELECT `gu_id` FROM `%s` WHERE `gu_name` LIKE '%%%s%%' OR `gu_email` LIKE '%%%s%%' OR `gu_login` LIKE '%%%s%%')",
+                                    GLEWLWYD_TABLE_USER, search_escaped, search_escaped, search_escaped);
+    json_object_set_new(j_query, "where", json_pack("{s{ssss}}", "gu_id", "operator", "raw", "value", clause_search));
+    free(search_escaped);
+    free(clause_search);
+  }
   res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
