@@ -12,10 +12,10 @@ DELETE FROM `g_resource`;
 DELETE FROM `g_redirect_uri`;
 DELETE FROM `g_client`;
 DELETE FROM `g_scope`;
-DELETE FROM `g_user`;
+DELETE FROM `g_user` WHERE gu_login LIKE 'user%';
 
 -- Mariadb/Mysql user add queries
-INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', PASSWORD('MyAdminPassword2016!'), 1);
+-- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', PASSWORD('MyAdminPassword2016!'), 1);
 INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user1', 'Dave Lopper1', 'user1@glewlwyd.domain', PASSWORD('MyUser1Password!'), 1);
 INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user2', 'Dave Lopper2', 'user2@glewlwyd.domain', PASSWORD('MyUser2Password!'), 1);
 INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user3', 'Dave Lopper3', 'user3@glewlwyd.domain', PASSWORD('MyUser3Password!'), 1);
@@ -43,10 +43,10 @@ INSERT INTO g_client_scope (gc_id, gs_id) VALUES ((SELECT gc_id from g_client WH
 
 INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', 'http://localhost:3000/', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
 INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', 'http://localhost:3000/#/', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', '../app/index.html?param=client1_cb1', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_2', '../app/index.html?param=client1_cb2', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client2', '../app/index.html?param=client2_cb', (SELECT gc_id from g_client WHERE gc_client_id='client2_id'));
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client3', '../app/index.html?param=client3_cb', (SELECT gc_id from g_client WHERE gc_client_id='client3_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', '../app/test-token.html?param=client1_cb1', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_2', '../app/test-token.html?param=client1_cb2', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client2', '../app/test-token.html?param=client2_cb', (SELECT gc_id from g_client WHERE gc_client_id='client2_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client3', '../app/test-token.html?param=client3_cb', (SELECT gc_id from g_client WHERE gc_client_id='client3_id'));
 
 INSERT INTO g_resource (gr_name, gr_description, gr_uri) VALUES ('resource1', 'Description for resource1', 'http://resource1.domain');
 INSERT INTO g_resource (gr_name, gr_description, gr_uri) VALUES ('resource2', 'Description for resource2', 'http://resource1.domain');

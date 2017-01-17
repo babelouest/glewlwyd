@@ -98,10 +98,10 @@
         </div>
         <div class="col-md-2">
           <select id="redirect_uri" class="form-control">
-            <option value="../app/index.html?param=client1_cb1">uri_client1_1</option>
-            <option value="../app/index.html?param=client1_cb2">uri_client1_2</option>
-            <option value="../app/index.html?param=client2_cb">uri_client2</option>
-            <option value="../app/index.html?param=client3_cb">uri_client3</option>
+            <option value="../app/test-token.html?param=client1_cb1">uri_client1_1</option>
+            <option value="../app/test-token.html?param=client1_cb2">uri_client1_2</option>
+            <option value="../app/test-token.html?param=client2_cb">uri_client2</option>
+            <option value="../app/test-token.html?param=client3_cb">uri_client3</option>
           </select>
         </div>
       </div>
@@ -190,6 +190,9 @@
 		if (params.code) {
 		  $("#code").val(params.code);
 		}
+    if (params.access_token) {
+      $("#result").append("<div><strong>access_token</strong>: <code>" + params.access_token + "</code></div>");
+    }
 	};
 
   function setAuthHeader(xhr){
