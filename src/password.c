@@ -66,83 +66,86 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
   if (password == NULL || out_digest == NULL) {
     res = 0;
   } else {
-    intermediate = malloc(strlen(password)+((GLEWLWYD_SALT_LENGTH+1)*sizeof(char)));
-    if (intermediate != NULL) {
-      switch (digest) {
-        case digest_SHA1:
-          md = EVP_sha1();
-          break;
-        case digest_SHA224:
-          md = EVP_sha224();
-          break;
-        case digest_SHA256:
-          md = EVP_sha256();
-          break;
-        case digest_SHA384:
-          md = EVP_sha384();
-          break;
-        case digest_SHA512:
-          md = EVP_sha512();
-          break;
-        case digest_MD5:
-          md = EVP_md5();
-          break;
-        default:
-          md = NULL;
-          break;
-      }
-      //md = EVP_get_digestbyname(digest);
-      if(md == NULL) {
-        res = 0;
-      }
-      sprintf(intermediate, "%s", password);
-      
-      if (use_salt) {
-        rand_salt(salt, GLEWLWYD_SALT_LENGTH);
-        strncat(intermediate, salt, GLEWLWYD_SALT_LENGTH);
-      }
-      
-      EVP_MD_CTX_init(&mdctx);
-      
-      if (EVP_DigestInit_ex(&mdctx, md, NULL) && 
-          EVP_DigestUpdate(&mdctx,
-                           intermediate,
-                           (unsigned int) strlen(intermediate)) &&
-          EVP_DigestFinal_ex(&mdctx,
-                             md_value,
-                             &md_len)) {
-        memcpy(buffer, md_value, md_len);
-        if (use_salt) {
-          memcpy(buffer+md_len, salt, GLEWLWYD_SALT_LENGTH);
-          md_len += GLEWLWYD_SALT_LENGTH;
-        }
-
-        b64 = BIO_new(BIO_f_base64());
-        bio = BIO_new(BIO_s_mem());
-        bio = BIO_push(b64, bio);
-
-        BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-        if (BIO_write(bio, buffer, md_len) > 0) {
-          BIO_flush(bio);
-          BIO_get_mem_ptr(bio, &bufferPtr);
-
-          memcpy(out_digest, (*bufferPtr).data, (*bufferPtr).length);
+    switch (digest) {
+      case digest_SHA1:
+        md = EVP_sha1();
+        break;
+      case digest_SHA224:
+        md = EVP_sha224();
+        break;
+      case digest_SHA256:
+        md = EVP_sha256();
+        break;
+      case digest_SHA384:
+        md = EVP_sha384();
+        break;
+      case digest_SHA512:
+        md = EVP_sha512();
+        break;
+      case digest_MD5:
+        md = EVP_md5();
+        break;
+      default:
+        md = NULL;
+        break;
+    }
+    
+    if(md == NULL) {
+      res = 0;
+    } else {
+      if (strlen(password) > 0) {
+        intermediate = malloc(strlen(password)+((GLEWLWYD_SALT_LENGTH+1)*sizeof(char)));
+        if (intermediate != NULL) {
+          sprintf(intermediate, "%s", password);
           
-          BIO_set_close(bio, BIO_CLOSE);
-          BIO_free_all(bio);
-          EVP_MD_CTX_cleanup(&mdctx);
-          res = 1;
+          if (use_salt) {
+            rand_salt(salt, GLEWLWYD_SALT_LENGTH);
+            strncat(intermediate, salt, GLEWLWYD_SALT_LENGTH);
+          }
+          
+          EVP_MD_CTX_init(&mdctx);
+          
+          if (EVP_DigestInit_ex(&mdctx, md, NULL) && 
+              EVP_DigestUpdate(&mdctx,
+                               intermediate,
+                               (unsigned int) strlen(intermediate)) &&
+              EVP_DigestFinal_ex(&mdctx,
+                                 md_value,
+                                 &md_len)) {
+            memcpy(buffer, md_value, md_len);
+            if (use_salt) {
+              memcpy(buffer+md_len, salt, GLEWLWYD_SALT_LENGTH);
+              md_len += GLEWLWYD_SALT_LENGTH;
+            }
+
+            b64 = BIO_new(BIO_f_base64());
+            bio = BIO_new(BIO_s_mem());
+            bio = BIO_push(b64, bio);
+
+            BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+            if (BIO_write(bio, buffer, md_len) > 0) {
+              BIO_flush(bio);
+              BIO_get_mem_ptr(bio, &bufferPtr);
+
+              memcpy(out_digest, (*bufferPtr).data, (*bufferPtr).length);
+              
+              BIO_set_close(bio, BIO_CLOSE);
+              BIO_free_all(bio);
+              EVP_MD_CTX_cleanup(&mdctx);
+              res = 1;
+            } else {
+              res = 0;
+            }
+          }
+          free(intermediate);
         } else {
           res = 0;
         }
       } else {
-        res = 0;
+        // No password, then out_digest becomes an empty string
+        out_digest[0] = '\0';
       }
-      
-    } else {
-      res = 0;
     }
-    free(intermediate);
   }
   return res;
 }

@@ -398,6 +398,7 @@ int callback_glewlwyd_get_refresh_token_user (const struct _u_request * request,
 int callback_glewlwyd_delete_refresh_token_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_session_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_session_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_send_reset_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_list_client (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_response * response, void * user_data);

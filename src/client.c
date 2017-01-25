@@ -38,7 +38,10 @@
 json_t * client_check(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type) {
   json_t * j_res = NULL;
   
-  if (client_id != NULL && redirect_uri != NULL) {
+  if (client_id_header != NULL && client_password_header != NULL && strlen(client_password_header) == 0) {
+    // Client empty password unauthorized
+    j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  } else if (client_id != NULL && redirect_uri != NULL) {
     if (config->has_auth_ldap) {
       j_res = client_check_ldap(config, client_id, client_id_header, client_password_header, redirect_uri, auth_type);
     }

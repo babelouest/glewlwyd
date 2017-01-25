@@ -401,7 +401,7 @@ json_t * auth_check_user_credentials_scope(struct config_elements * config, cons
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password) {
   json_t * j_res = NULL;
   
-  if (username != NULL && password != NULL) {
+  if (username != NULL && password != NULL && strlen(password) > 0) {
     if (config->has_auth_ldap) {
       j_res = auth_check_user_credentials_ldap(config, username, password);
     }
@@ -1035,7 +1035,7 @@ json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add
           json_decref(j_result);
         }
         
-        if (json_object_get(j_user, "password") != NULL && (!json_is_string(json_object_get(j_user, "password")) || json_string_length(json_object_get(j_user, "password")) < 8)) {
+        if (json_object_get(j_user, "password") != NULL && (!json_is_string(json_object_get(j_user, "password")) || (json_string_length(json_object_get(j_user, "password")) > 0 && json_string_length(json_object_get(j_user, "password")) < 8))) {
           json_array_append_new(j_return, json_pack("{ss}", "password", "password is a string of at least 8 characters"));
         }
         
@@ -1061,7 +1061,7 @@ json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add
           }
         }
       } else {
-        if (json_object_get(j_user, "password") != NULL && (!json_is_string(json_object_get(j_user, "password")) || json_string_length(json_object_get(j_user, "password")) < 8)) {
+        if (json_object_get(j_user, "password") != NULL && (!json_is_string(json_object_get(j_user, "password")) || (json_string_length(json_object_get(j_user, "password")) > 0 && json_string_length(json_object_get(j_user, "password")) < 8))) {
           json_array_append_new(j_return, json_pack("{ss}", "password", "password is a string of at least 8 characters"));
         }
 
@@ -1664,11 +1664,11 @@ json_t * is_user_profile_valid(struct config_elements * config, const char * use
         json_array_append_new(j_return, json_pack("{ss}", "email", "email is an optional string between 1 and 512 characters"));
       }
       
-      if (json_object_get(profile, "new_password") != NULL && !json_is_string(json_object_get(profile, "new_password"))) {
-        json_array_append_new(j_return, json_pack("{ss}", "new_password", "new_password must be a string"));
+      if (json_object_get(profile, "new_password") != NULL && !json_is_string(json_object_get(profile, "new_password")) && json_string_length(json_object_get(profile, "new_password")) > 0) {
+        json_array_append_new(j_return, json_pack("{ss}", "new_password", "new_password must be a non empty string"));
       }
-      if (json_object_get(profile, "old_password") != NULL && !json_is_string(json_object_get(profile, "old_password"))) {
-        json_array_append_new(j_return, json_pack("{ss}", "old_password", "old_password must be a string"));
+      if (json_object_get(profile, "old_password") != NULL && !json_is_string(json_object_get(profile, "old_password")) && json_string_length(json_object_get(profile, "old_password")) > 0) {
+        json_array_append_new(j_return, json_pack("{ss}", "old_password", "old_password must be a non empty string"));
       }
       
       if (json_object_get(profile, "new_password") != NULL && json_object_get(profile, "old_password") == NULL) {

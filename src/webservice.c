@@ -1105,6 +1105,31 @@ int callback_glewlwyd_set_user_profile (const struct _u_request * request, struc
   return U_OK;
 }
 
+int callback_glewlwyd_send_reset_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_user = get_user(config, u_map_get(request->map_url, "username"), NULL);
+  const char * ip_source = get_ip_source(request);
+  
+  if (check_result_value(j_user, G_OK)) {
+    if (json_object_get(json_object_get(j_user, "user"), "email") != NULL && json_string_length(json_object_get(json_object_get(j_user, "user"), "email")) > 0) {
+      if (send_reset_user_profile_email(config, u_map_get(request->map_url, "username"), ip_source) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_send_reset_user_profile - Error sending reset profile email");
+        response->status = 500;
+      }
+    } else {
+      response->status = 400;
+      response->json_body = json_pack("{ss}", "error", "no email specified for user");
+    }
+  } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_send_reset_user_profile - Error getting user profile");
+    response->status = 500;
+  }
+  json_decref(j_user);
+  return U_OK;
+}
+
 int callback_glewlwyd_send_reset_user_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_user = get_user(config, u_map_get(request->map_url, "username"), NULL);

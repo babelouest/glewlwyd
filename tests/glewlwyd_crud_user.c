@@ -120,6 +120,18 @@ START_TEST(test_glwd_crud_user_set_new_database)
 }
 END_TEST
 
+START_TEST(test_glwd_crud_user_disable_password_new_database)
+{
+  char * url = msprintf("%s/user/new_user?source=database", SERVER_URI);
+  json_t * json_body = json_pack("{ss}", "password", "");
+  
+  int res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
+  free(url);
+  json_decref(json_body);
+  ck_assert_int_eq(res, 1);
+}
+END_TEST
+
 START_TEST(test_glwd_crud_user_get_new_updated_database)
 {
   char * url = msprintf("%s/user/new_user?source=database", SERVER_URI);
@@ -178,6 +190,24 @@ START_TEST(test_glwd_crud_user_connect_fail_new)
 }
 END_TEST
 
+START_TEST(test_glwd_crud_user_connect_fail_empty_password_new)
+{
+  struct _u_request auth_req;
+  struct _u_response auth_resp;
+  
+  ulfius_init_request(&auth_req);
+  ulfius_init_response(&auth_resp);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/user", SERVER_URI);
+  u_map_put(auth_req.map_post_body, "username", "new_user");
+  u_map_put(auth_req.map_post_body, "password", "");
+  ulfius_send_http_request(&auth_req, &auth_resp);
+  ck_assert_int_eq(auth_resp.status, 403);
+  ulfius_clean_request(&auth_req);
+  ulfius_clean_response(&auth_resp);
+}
+END_TEST
+
 START_TEST(test_glwd_crud_user_add_ok_ldap)
 {
   json_t * json_body;
@@ -224,6 +254,18 @@ START_TEST(test_glwd_crud_user_set_new_ldap)
 {
   char * url = msprintf("%s/user/new_user?source=ldap", SERVER_URI);
   json_t * json_body = json_pack("{ss}", "email", "test_new@glewlwyd.domain");
+  
+  int res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
+  free(url);
+  json_decref(json_body);
+  ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(test_glwd_crud_user_disable_password_new_ldap)
+{
+  char * url = msprintf("%s/user/new_user?source=ldap", SERVER_URI);
+  json_t * json_body = json_pack("{ss}", "password", "");
   
   int res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   free(url);
@@ -308,6 +350,18 @@ START_TEST(test_glwd_crud_user_set_new_no_source)
 }
 END_TEST
 
+START_TEST(test_glwd_crud_user_disable_password_new_no_source)
+{
+  char * url = msprintf("%s/user/new_user", SERVER_URI);
+  json_t * json_body = json_pack("{ss}", "password", "");
+  
+  int res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
+  free(url);
+  json_decref(json_body);
+  ck_assert_int_eq(res, 1);
+}
+END_TEST
+
 START_TEST(test_glwd_crud_user_get_new_updated_no_source)
 {
   char * url = msprintf("%s/user/new_user", SERVER_URI);
@@ -348,6 +402,9 @@ static Suite *libjwt_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_set_new_database);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_updated_database);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
+  tcase_add_test(tc_core, test_glwd_crud_user_disable_password_new_database);
+  tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
+  tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_empty_password_new);
   tcase_add_test(tc_core, test_glwd_crud_user_delete_new_database);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_ldap);
@@ -358,6 +415,9 @@ static Suite *libjwt_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_set_new_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_updated_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
+  tcase_add_test(tc_core, test_glwd_crud_user_disable_password_new_ldap);
+  tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
+  tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_empty_password_new);
   tcase_add_test(tc_core, test_glwd_crud_user_delete_new_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_no_source);
@@ -368,6 +428,9 @@ static Suite *libjwt_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_set_new_no_source);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_updated_no_source);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
+  tcase_add_test(tc_core, test_glwd_crud_user_disable_password_new_no_source);
+  tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
+  tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_empty_password_new);
   tcase_add_test(tc_core, test_glwd_crud_user_delete_new_no_source);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_set_timeout(tc_core, 30);

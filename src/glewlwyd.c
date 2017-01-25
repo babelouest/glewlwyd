@@ -182,6 +182,7 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/refresh_token", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_refresh_token_user, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/session", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_session_user, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/session", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_session_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/:username/reset_password", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_send_reset_user, (void*)config);
 
   // Client endpoints
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_list_client, (void*)config);
