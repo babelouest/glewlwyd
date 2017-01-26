@@ -368,7 +368,7 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
   char * access_token;
   const char * ip_source = get_ip_source(request);
   time_t now;
-  json_t * j_scope_list, * j_auth;
+  json_t * j_scope_list = NULL, * j_auth;
   
   j_auth = auth_check_client_credentials(config, request->auth_basic_user, request->auth_basic_password);
   if (check_result_value(j_auth, G_OK)) {

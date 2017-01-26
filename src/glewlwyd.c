@@ -1485,7 +1485,7 @@ char * escape_ldap(const char * input) {
     to_return = strdup("");
     len = strlen(input);
     for (i=0; i < len && to_return != NULL; i++) {
-      char c = input[i];
+      unsigned char c = input[i];
       if (c == '*') {
         // escape asterisk
         tmp = msprintf("%s\\2a", to_return);
@@ -1506,22 +1506,22 @@ char * escape_ldap(const char * input) {
         tmp = msprintf("%s\\5c", to_return);
         free(to_return);
         to_return = tmp;
-      } else if (c <= 0x7f) {
+      } else if ((c & 0x80) == 0) {
         // regular 1-byte UTF-8 char
         tmp = msprintf("%s%c", to_return, c);
         free(to_return);
         to_return = tmp;
-      } else if (c >= 0x080 && c < 0x800 && i < (len-2)) { 
+      } else if (((c & 0xE0) == 0xC0) && i < (len-2)) { 
         // higher-order 2-byte UTF-8 chars
         tmp = msprintf("%s\\%02x\\%02x", to_return, input[i], input[i+1]);
         free(to_return);
         to_return = tmp;
-      } else if (c >= 0x800 && c < 0x10000 && i < (len-3)) { 
+      } else if (((c & 0xF0) == 0xE0) && i < (len-3)) { 
         // higher-order 3-byte UTF-8 chars
         tmp = msprintf("%s\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2]);
         free(to_return);
         to_return = tmp;
-      } else if (c >= 0x10000 && c <= 0x1FFFFF && i < (len-4)) { 
+      } else if (((c & 0xF8) == 0xF0) && i < (len-4)) { 
         // higher-order 4-byte UTF-8 chars
         tmp = msprintf("%s\\%02x\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2], input[i+3]);
         free(to_return);

@@ -12,10 +12,10 @@ DELETE FROM `g_resource`;
 DELETE FROM `g_redirect_uri`;
 DELETE FROM `g_client`;
 DELETE FROM `g_scope`;
-DELETE FROM `g_user` WHERE gu_login LIKE 'user%';
+DELETE FROM `g_user`;
 
 -- Mariadb/Mysql user add queries
--- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', PASSWORD('MyAdminPassword2016!'), 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', PASSWORD('MyAdminPassword2016!'), 1);
 INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user1', 'Dave Lopper1', 'user1@glewlwyd.domain', PASSWORD('MyUser1Password!'), 1);
 INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user2', 'Dave Lopper2', 'user2@glewlwyd.domain', PASSWORD('MyUser2Password!'), 1);
 INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user3', 'Dave Lopper3', 'user3@glewlwyd.domain', PASSWORD('MyUser3Password!'), 1);

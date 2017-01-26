@@ -57,7 +57,7 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
   EVP_MD_CTX mdctx;
   const EVP_MD *md;
   unsigned char md_value[1024] = {0};
-  unsigned int md_len, res;
+  unsigned int md_len, res = 0;
   
 	BIO *bio, *b64;
 	BUF_MEM *bufferPtr;
@@ -144,6 +144,7 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
       } else {
         // No password, then out_digest becomes an empty string
         out_digest[0] = '\0';
+        res = 1;
       }
     }
   }

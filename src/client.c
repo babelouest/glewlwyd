@@ -289,8 +289,8 @@ json_t * auth_check_client_credentials_database(struct config_elements * config,
  * Check client credentials in ldap backend
  */
 json_t * auth_check_client_credentials_ldap(struct config_elements * config, const char * client_id, const char * password) {
-  LDAP * ldap;
-  LDAPMessage * answer, * entry;
+  LDAP * ldap = NULL;
+  LDAPMessage * answer = NULL, * entry;
   
   int  result, result_login;
   int  ldap_version   = LDAP_VERSION3;
@@ -521,8 +521,8 @@ json_t * auth_check_client_scope_database(struct config_elements * config, const
  *
  */
 json_t * auth_check_client_scope_ldap(struct config_elements * config, const char * client_id, const char * scope_list) {
-  LDAP * ldap;
-  LDAPMessage * answer, * entry;
+  LDAP * ldap = NULL;
+  LDAPMessage * answer = NULL, * entry;
   
   int  result;
   int  ldap_version   = LDAP_VERSION3;
@@ -654,8 +654,8 @@ json_t * get_client_list(struct config_elements * config, const char * source, c
  * Get a list of clients in the ldap backend
  */
 json_t * get_client_list_ldap(struct config_elements * config, const char * search, long int offset, long int limit) {
-  LDAP * ldap;
-  LDAPMessage * answer, * entry;
+  LDAP * ldap = NULL;
+  LDAPMessage * answer = NULL, * entry;
   int i, j, res;
   json_t * j_result, * j_scope_list = get_scope_list(config), * j_query, * j_auth_type, * j_cur_auth_type;
   char * client_clause;
@@ -985,7 +985,7 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
  * Get a specific client in database backend
  */
 json_t * get_client_database(struct config_elements * config, const char * client_id) {
-  json_t * j_query, * j_result, * j_scope, * j_redirect_uri, * j_return, * j_entry, * j_scope_entry, * j_auth_type , * j_cur_auth_type;
+  json_t * j_query, * j_result = NULL, * j_scope, * j_redirect_uri, * j_return = NULL, * j_entry, * j_scope_entry, * j_auth_type , * j_cur_auth_type;
   int res;
   char * scope_clause, * client_clause;
   size_t i_scope, i_auth_type;
@@ -1111,8 +1111,8 @@ json_t * get_client_database(struct config_elements * config, const char * clien
  * Get a specific client in ldap backend
  */
 json_t * get_client_ldap(struct config_elements * config, const char * client_id) {
-  LDAP * ldap;
-  LDAPMessage * answer, * entry;
+  LDAP * ldap = NULL;
+  LDAPMessage * answer = NULL, * entry;
   int j, res;
   json_t * j_result, * j_scope_list = get_scope_list(config), * j_query, * j_auth_type, * j_cur_auth_type;
   char * client_clause;
@@ -1418,7 +1418,7 @@ int add_client(struct config_elements * config, json_t * j_client) {
  * Add a new client in the ldap backend
  */
 int add_client_ldap(struct config_elements * config, json_t * j_client) {
-  LDAP * ldap;
+  LDAP * ldap = NULL;
   int res;
   int  result;
   int  ldap_version   = LDAP_VERSION3;
@@ -1430,7 +1430,7 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
   int nb_scope = 0, nb_redirect_uri = json_array_size(json_object_get(j_client, "redirect_uri")), nb_attr = 2, i, attr_counter; // Default attribute is objectClass
   json_t * j_scope, * j_redirect_uri, * j_query;
   size_t index;
-  char * new_dn, * password = NULL, ** redirect_uri_array, * escaped, * clause_auth_type;
+  char * new_dn, * password = NULL, ** redirect_uri_array, * escaped = NULL, * clause_auth_type;
   
   for (i=0; json_object_get(j_client, "client_id") != NULL && config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
     nb_attr++;
@@ -1654,7 +1654,7 @@ int add_client_database(struct config_elements * config, json_t * j_client) {
   json_t * j_query, * j_scope, * j_redirect_uri;
   int res, to_return;
   size_t index;
-  char * clause_login, * clause_scope, * escaped, * password, * clause_auth_type;
+  char * clause_login, * clause_scope, * escaped = NULL, * password, * clause_auth_type;
   
   if (json_object_get(j_client, "confidential") == json_true()) {
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
@@ -1789,7 +1789,7 @@ int set_client(struct config_elements * config, const char * client, json_t * j_
  * Update an existing client in the ldap backend
  */
 int set_client_ldap(struct config_elements * config, const char * client_id, json_t * j_client) {
-  LDAP * ldap;
+  LDAP * ldap = NULL;
   int res;
   int  result;
   int  ldap_version   = LDAP_VERSION3;
@@ -1990,7 +1990,7 @@ int set_client_database(struct config_elements * config, const char * client_id,
   json_t * j_query, * j_scope, * j_redirect_uri;
   int res, to_return;
   size_t index;
-  char * clause_login, * clause_scope, * escaped, * password, * clause_auth_type;
+  char * clause_login, * clause_scope, * escaped = NULL, * password, * clause_auth_type;
   
   j_query = json_pack("{sss{}s{ss}}",
                       "table",
@@ -2173,7 +2173,7 @@ int delete_client(struct config_elements * config, const char * client, const ch
  * Delete a specific client in the ldap backend
  */
 int delete_client_ldap(struct config_elements * config, const char * client_id) {
-  LDAP * ldap;
+  LDAP * ldap = NULL;
   int res;
   int  result;
   int  ldap_version   = LDAP_VERSION3;

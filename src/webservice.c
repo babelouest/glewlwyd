@@ -42,7 +42,7 @@ int callback_glewlwyd_authorization (const struct _u_request * request, struct _
   char * redirect_url;
   
   if (0 == nstrcmp("code", response_type)) {
-    if (0 == nstrcasecmp("GET", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_CODE) == G_OK) {
+    if (0 == nstrcasecmp("GET", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_CODE) == G_OK && u_map_get(request->map_url, "redirect_uri") != NULL) {
       result = check_auth_type_auth_code_grant(request, response, user_data);
     } else {
       if (u_map_get(request->map_url, "redirect_uri") != NULL) {
@@ -55,7 +55,7 @@ int callback_glewlwyd_authorization (const struct _u_request * request, struct _
       }
     }
   } else if (0 == nstrcmp("token", response_type)) {
-    if (0 == nstrcasecmp("GET", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT) == G_OK) {
+    if (0 == nstrcasecmp("GET", request->http_verb) && is_authorization_type_enabled((struct config_elements *)user_data, GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT) == G_OK && u_map_get(request->map_url, "redirect_uri") != NULL) {
       result = check_auth_type_implicit_grant(request, response, user_data);
     } else {
       if (u_map_get(request->map_url, "redirect_uri") != NULL) {

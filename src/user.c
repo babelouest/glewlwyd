@@ -106,10 +106,10 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
  * Get a specific user in the ldap backend
  */
 json_t * get_user_ldap(struct config_elements * config, const char * username) {
-  LDAP * ldap;
-  LDAPMessage * answer, * entry;
+  LDAP * ldap = NULL;
+  LDAPMessage * answer = NULL, * entry;
   int j;
-  json_t * j_result, * j_scope_list = get_scope_list(config);
+  json_t * j_result = NULL, * j_scope_list = get_scope_list(config);
   
   int  result;
   int  ldap_version   = LDAP_VERSION3;
@@ -258,8 +258,8 @@ json_t * get_user_scope_grant_database(struct config_elements * config, const ch
  * Get the list of available scopes for a specific user in the ldap backend
  */
 json_t * get_user_scope_grant_ldap(struct config_elements * config, const char * username) {
-  LDAP * ldap;
-  LDAPMessage * answer, * entry;
+  LDAP * ldap = NULL;
+  LDAPMessage * answer = NULL, * entry;
   
   int  result;
   int  ldap_version   = LDAP_VERSION3;
@@ -475,8 +475,8 @@ json_t * auth_check_user_credentials_database(struct config_elements * config, c
  * Check if the username and password specified are valid as a LDAP user
  */
 json_t * auth_check_user_credentials_ldap(struct config_elements * config, const char * username, const char * password) {
-  LDAP * ldap;
-  LDAPMessage * answer, * entry;
+  LDAP * ldap = NULL;
+  LDAPMessage * answer = NULL, * entry;
   
   int  result, result_login;
   int  ldap_version   = LDAP_VERSION3;
@@ -643,8 +643,8 @@ json_t * auth_check_user_scope(struct config_elements * config, const char * use
  * Return a refined list of scope
  */
 json_t * auth_check_user_scope_ldap(struct config_elements * config, const char * username, const char * scope_list) {
-  LDAP * ldap;
-  LDAPMessage * answer, * entry;
+  LDAP * ldap = NULL;
+  LDAPMessage * answer = NULL, * entry;
   
   int  result;
   int  ldap_version   = LDAP_VERSION3;
@@ -776,8 +776,8 @@ json_t * get_user_list(struct config_elements * config, const char * source, con
  * Return the list of users in the ldap backend
  */
 json_t * get_user_list_ldap(struct config_elements * config, const char * search, long int offset, long int limit) {
-  LDAP * ldap;
-  LDAPMessage * answer, * entry;
+  LDAP * ldap = NULL;
+  LDAPMessage * answer = NULL, * entry;
   int i, j;
   json_t * j_result, * j_scope_list = get_scope_list(config);
   
@@ -1111,7 +1111,7 @@ int add_user(struct config_elements * config, json_t * j_user) {
  * Add a new user in the ldap backend
  */
 int add_user_ldap(struct config_elements * config, json_t * j_user) {
-  LDAP * ldap;
+  LDAP * ldap = NULL;
   int res;
   int  result;
   int  ldap_version   = LDAP_VERSION3;
@@ -1354,7 +1354,7 @@ int set_user(struct config_elements * config, const char * user, json_t * j_user
  * Update an existing user in the ldap backend
  */
 int set_user_ldap(struct config_elements * config, const char * user, json_t * j_user) {
-  LDAP * ldap;
+  LDAP * ldap = NULL;
   int res;
   int  result;
   int  ldap_version   = LDAP_VERSION3;
@@ -1586,7 +1586,7 @@ int delete_user(struct config_elements * config, const char * user, const char *
  * Delete an existing user in the ldap backend
  */
 int delete_user_ldap(struct config_elements * config, const char * user) {
-  LDAP * ldap;
+  LDAP * ldap = NULL;
   int res;
   int  result;
   int  ldap_version   = LDAP_VERSION3;
@@ -1721,7 +1721,7 @@ int set_user_profile(struct config_elements * config, const char * username, jso
  * Updates a user profile in the ldap backend
  */
 int set_user_profile_ldap(struct config_elements * config, const char * username, json_t * profile) {
-  LDAP * ldap;
+  LDAP * ldap = NULL;
   int res;
   int  result;
   int  ldap_version   = LDAP_VERSION3;
