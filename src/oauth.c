@@ -59,7 +59,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
               // User has granted access to the cleaned scope list for this client
               // Generate code, generate the url and redirect to it
               authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(j_scope, "scope")), u_map_get(request->map_url, "redirect_uri"), ip_source);
-              redirect_url = msprintf("%s%scode=%s%s%s", u_map_get(request->map_url, "redirect_uri"), (strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), authorization_code, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+              redirect_url = msprintf("%s%scode=%s%s%s", u_map_get(request->map_url, "redirect_uri"), (nstrchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), authorization_code, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
               ulfius_add_header_to_response(response, "Location", redirect_url);
               free(redirect_url);
               free(authorization_code);
@@ -78,7 +78,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
           } else {
             // Scope is not allowed for this user
             response->status = 302;
-            redirect_url = msprintf("%s%serror=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+            redirect_url = msprintf("%s%serror=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (nstrchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
             ulfius_add_header_to_response(response, "Location", redirect_url);
             free(redirect_url);
           }
@@ -86,7 +86,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
         } else {
           // Generate code, generate the url and redirect to it
           authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "client_id"), NULL, u_map_get(request->map_url, "redirect_uri"), ip_source);
-          redirect_url = msprintf("%s%scode=%s%s%s", u_map_get(request->map_url, "redirect_uri"), (strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), authorization_code, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+          redirect_url = msprintf("%s%scode=%s%s%s", u_map_get(request->map_url, "redirect_uri"), (nstrchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), authorization_code, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
           ulfius_add_header_to_response(response, "Location", redirect_url);
           free(redirect_url);
           free(authorization_code);
@@ -118,7 +118,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
   } else {
     // client is not authorized with this redirect_uri
     response->status = 302;
-    redirect_url = msprintf("%s%serror=unauthorized_client%s%s", u_map_get(request->map_url, "redirect_uri"), (strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+    redirect_url = msprintf("%s%serror=unauthorized_client%s%s", u_map_get(request->map_url, "redirect_uri"), (nstrchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
     ulfius_add_header_to_response(response, "Location", redirect_url);
     free(redirect_url);
   }
@@ -229,9 +229,9 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
               // User has granted access to the cleaned scope list for this client
               access_token = generate_access_token(config, NULL, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_scope, "scope")), now);
               if (u_map_get(request->map_url, "state") != NULL) {
-                redirect_url = msprintf("%s%saccess_token=%s&token_type=bearer&expires_in=%d&state=%s", u_map_get(request->map_url, "redirect_uri"), (strchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), access_token, config->access_token_expiration, u_map_get(request->map_url, "state"));
+                redirect_url = msprintf("%s%saccess_token=%s&token_type=bearer&expires_in=%d&state=%s", u_map_get(request->map_url, "redirect_uri"), (nstrchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), access_token, config->access_token_expiration, u_map_get(request->map_url, "state"));
               } else {
-                redirect_url = msprintf("%s%saccess_token=%s&token_type=bearer&expires_in=%d", u_map_get(request->map_url, "redirect_uri"), (strchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), access_token, config->access_token_expiration);
+                redirect_url = msprintf("%s%saccess_token=%s&token_type=bearer&expires_in=%d", u_map_get(request->map_url, "redirect_uri"), (nstrchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), access_token, config->access_token_expiration);
               }
               ulfius_add_header_to_response(response, "Location", redirect_url);
               free(redirect_url);
@@ -251,7 +251,7 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
           } else {
             // Scope is not allowed for this user
             response->status = 302;
-            redirect_url = msprintf("%s%serror=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (strchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+            redirect_url = msprintf("%s%serror=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (nstrchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
             ulfius_add_header_to_response(response, "Location", redirect_url);
             free(redirect_url);
           }
@@ -259,7 +259,7 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
         } else {
           // Generate access_token, generate the url and redirect to it
           access_token = generate_access_token(config, NULL, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, NULL, now);
-          redirect_url = msprintf("%s%saccess_token=%s&token_type=bearer&expires_in=%d%s", u_map_get(request->map_url, "redirect_uri"), (strchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), access_token, config->access_token_expiration, (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+          redirect_url = msprintf("%s%saccess_token=%s&token_type=bearer&expires_in=%d%s", u_map_get(request->map_url, "redirect_uri"), (nstrchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), access_token, config->access_token_expiration, (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
           ulfius_add_header_to_response(response, "Location", redirect_url);
           free(redirect_url);
           response->status = 302;
@@ -291,7 +291,7 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
   } else {
     // client is not authorized with this redirect_uri
     response->status = 302;
-    redirect_url = msprintf("%s%serror=unauthorized_client%s%s", u_map_get(request->map_url, "redirect_uri"), (strchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+    redirect_url = msprintf("%s%serror=unauthorized_client%s%s", u_map_get(request->map_url, "redirect_uri"), (nstrchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
     ulfius_add_header_to_response(response, "Location", redirect_url);
     free(redirect_url);
   }

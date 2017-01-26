@@ -210,10 +210,6 @@ int callback_glewlwyd_static_file (const struct _u_request * request, struct _u_
   
   if (file_requested == NULL || strlen(file_requested) == 0 || 0 == nstrcmp("/", file_requested)) {
     file_requested = "/index.html";
-  } else {
-    if (strchr(file_requested, '?') != NULL) {
-      *strchr(file_requested, '?') = '\0';
-    }
   }
   
   file_path = msprintf("%s%s", ((struct config_elements *)user_data)->static_files_path, file_requested);
