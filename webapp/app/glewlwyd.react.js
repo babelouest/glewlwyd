@@ -3,13 +3,16 @@ var Button = ReactBootstrap.Button;
 var Modal = ReactBootstrap.Modal;
 
 $(function() {
+  // Global lists
   var scopeList = [];
   var resourceList = [];
   var authorizationTypeList = [];
   
+  // Config variables
   var access_token = "access_token";
   var access_token_expires = 3600;
   
+  // tab menu
   $('#nav li a').click(function() {
     $('#nav li').removeClass();
     $(this).parent().addClass('active');
@@ -17,6 +20,7 @@ $(function() {
       $(".navbar-collapse").collapse('hide');
   });
 
+  // Parse query parameters
   function getQueryParams(qs) {
     qs = qs.split('+').join(' ');
 
@@ -38,8 +42,10 @@ $(function() {
     redirect_uri: "../app/index.html",
     scope: "g_admin"
   }
+  
   var currentUser = {loggedIn: false, name: "", email: ""};
 
+  // Function that will be used on every API call
   function APIRequest (method, url, data) {
     return $.ajax({
       method: method,
@@ -60,6 +66,7 @@ $(function() {
     });
   }
 
+  // Load all lists at startup
   function loadLists () {
     var promises = [
       APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/"),
@@ -101,6 +108,9 @@ $(function() {
     });
   }
   
+  /**
+   * User table management component
+   */
   class UserTable extends React.Component {
     constructor(props) {
       super(props);
@@ -201,7 +211,9 @@ $(function() {
               <input type="text" className="form-control" placeholder="Search" value={this.state.search} onChange={this.handleChangeSearch}/>
               <div className="input-group-btn">
                 <button className="btn btn-default" type="button" onClick={this.handleSearch}><i className="glyphicon glyphicon-search"></i></button>
-                <UserModal add={true} scopeList={scopeList}/>
+                <Button className="btn btn-default" onClick={this.open}>
+                  {this.state.icon}
+                </Button>
               </div>
             </div>
           </form>
@@ -242,6 +254,7 @@ $(function() {
             </thead>
             <tbody>{rows}</tbody>
           </table>
+          <UserModal add={this.state.addUser} scopeList={this.state.scopeList} user={this.state.currentUser}/>
         </div>
       );
     }
@@ -276,6 +289,133 @@ $(function() {
     }
   }
 
+  class UserModal extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = {user: this.props.user, showModal: false, icon: this.props.add?(<i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>):(<i className="icon-resize-small fa fa-pencil" aria-hidden="true"></i>), scopeList: this.props.scopeList};
+      this.close = this.close.bind(this);
+      this.open = this.open.bind(this);
+      this.save = this.save.bind(this);
+    }
+    
+    close() {
+      this.setState({ showModal: false });
+    }
+
+    open() {
+      this.setState({ showModal: true });
+    }
+    
+    save() {
+    }
+
+    render() {
+      var userScopeList = [];
+      this.state.scopeList.forEach(function (scope) {
+        console.log(scope);
+        userScopeList.push(<option value={scope.name}>{scope.name}</option>)
+      });
+      return (
+        <Modal show={this.state.showModal} onHide={this.close}>
+          <Modal.Header closeButton>
+            <Modal.Title>User</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="row">
+              <div className="col-md-6">
+                <label htmlFor="userSource">Source</label>
+              </div>
+              <div className="col-md-6">
+                <select className="form-control" name="userSource" id="userSource">
+                  <option value="ldap">LDAP</option>
+                  <option value="database">Database</option>
+                </select>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-md-6">
+                <label htmlFor="userLogin">Login</label>
+              </div>
+              <div className="col-md-6">
+                <input className="form-control" type="text" name="userLogin" id="userLogin" placeholder="User Login"></input>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="userPassword">Password</label>
+              </div>
+              <div className="col-md-6">
+                <input className="form-control" type="password" name="userPassword" id="userPassword" placeholder="User password"></input>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="userPasswordConfirm">Confirm password</label>
+              </div>
+              <div className="col-md-6">
+                <input className="form-control" type="password" name="userPasswordConfirm" id="userPasswordConfirm" placeholder="Confirm User password"></input>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="userName">Name</label>
+              </div>
+              <div className="col-md-6">
+                <input className="form-control" type="text" name="userName" id="userName" placeholder="Fullname"></input>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="userEmail">Email</label>
+              </div>
+              <div className="col-md-6">
+                <input className="form-control" type="text" name="userEmail" id="userEmail" placeholder="User e-mail"></input>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="userScope">Scopes</label>
+              </div>
+              <div className="col-md-6">
+                <div className="input-group">
+                  <select id="userScope" name="userScope" className="form-control">
+                    {userScopeList}
+                  </select>
+                  <div className="input-group-btn ">
+                    <button type="button" name="addScope" id="addScope" className="btn btn-default">
+                      <i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+              </div>
+              <div className="col-md-6" id="userScopeValue">
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label>Enabled</label>
+              </div>
+              <div className="col-md-6">
+                <input type="checkbox" name="userEnabled" id="userEnabled"/>
+              </div>
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={this.save}>Save</Button>
+            <Button onClick={this.close}>Cancel</Button>
+          </Modal.Footer>
+        </Modal>
+      );
+    }
+  };
+  
+  /**
+   * Login/Logout button component
+   */
   function LoginInformation (props) {
     return (
       <span>Hello {props.user.name}&nbsp;</span>
@@ -350,6 +490,9 @@ $(function() {
     }
   }
 
+  /**
+   * Authentication type table management component
+   */
   class AuthTypeEnableButton extends React.Component {
     constructor(props) {
       super(props);
@@ -426,141 +569,14 @@ $(function() {
     );
   }
   
-  class UserModal extends React.Component {
-    constructor(props) {
-      super(props);
-      this.state = {user: this.props.user, showModal: false, icon: this.props.add?(<i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>):(<i className="icon-resize-small fa fa-pencil" aria-hidden="true"></i>), scopeList: this.props.scopeList};
-      this.close = this.close.bind(this);
-      this.open = this.open.bind(this);
-      this.save = this.save.bind(this);
-    }
-    
-    close() {
-      this.setState({ showModal: false });
-    }
-
-    open() {
-      this.setState({ showModal: true });
-    }
-    
-    save() {
-    }
-
-    render() {
-      var userScopeList = [];
-      this.state.scopeList.forEach(function (scope) {
-        console.log(scope);
-        userScopeList.push(<option value={scope.name}>{scope.name}</option>)
-      });
-      return (
-        <div>
-          <Button className="btn btn-default" onClick={this.open}>
-            {this.state.icon}
-          </Button>
-
-          <Modal show={this.state.showModal} onHide={this.close}>
-            <Modal.Header closeButton>
-              <Modal.Title>User</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <div className="row">
-                <div className="col-md-6">
-                  <label htmlFor="userSource">Source</label>
-                </div>
-                <div className="col-md-6">
-                  <select className="form-control" name="userSource" id="userSource">
-                    <option value="ldap">LDAP</option>
-                    <option value="database">Database</option>
-                  </select>
-                </div>
-              </div>
-              <div className="row">
-                <div className="col-md-6">
-                  <label htmlFor="userLogin">Login</label>
-                </div>
-                <div className="col-md-6">
-                  <input className="form-control" type="text" name="userLogin" id="userLogin" placeholder="User Login"></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="userPassword">Password</label>
-                </div>
-                <div className="col-md-6">
-                  <input className="form-control" type="password" name="userPassword" id="userPassword" placeholder="User password"></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="userPasswordConfirm">Confirm password</label>
-                </div>
-                <div className="col-md-6">
-                  <input className="form-control" type="password" name="userPasswordConfirm" id="userPasswordConfirm" placeholder="Confirm User password"></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="userName">Name</label>
-                </div>
-                <div className="col-md-6">
-                  <input className="form-control" type="text" name="userName" id="userName" placeholder="Fullname"></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="userEmail">Email</label>
-                </div>
-                <div className="col-md-6">
-                  <input className="form-control" type="text" name="userEmail" id="userEmail" placeholder="User e-mail"></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="userScope">Scopes</label>
-                </div>
-                <div className="col-md-6">
-                  <div className="input-group">
-                    <select id="userScope" name="userScope" className="form-control">
-                      {userScopeList}
-                    </select>
-                    <div className="input-group-btn ">
-                      <button type="button" name="addScope" id="addScope" className="btn btn-default">
-                        <i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                </div>
-                <div className="col-md-6" id="userScopeValue">
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label>Enabled</label>
-                </div>
-                <div className="col-md-6">
-                  <input type="checkbox" name="userEnabled" id="userEnabled"/>
-                </div>
-              </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button onClick={this.save}>Save</Button>
-              <Button onClick={this.close}>Cancel</Button>
-            </Modal.Footer>
-          </Modal>
-        </div>
-      );
-    }
-  };
-  
   /**
    * javscript core code
    */
   var params = getQueryParams(location.hash);
 
+  /**
+   * get access_token from url, or from cookie
+   */
   if (params.access_token) {
     oauth.access_token = params.access_token;
     var expires = new Date();
@@ -571,6 +587,10 @@ $(function() {
     oauth.access_token = $.cookie(access_token);
   }
 
+  /**
+   * If an acces_token is present, use it to get all lists
+   * if no access_token, display the login button
+   */
   if (oauth.access_token) {
     APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/auth/user/")
     .then(function (result) {
