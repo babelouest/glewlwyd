@@ -9,17 +9,24 @@
 		<link rel="stylesheet" href="css/bootstrap.vertical-tabs.min.css"></link>
 		<link rel="stylesheet" href="css/font-awesome.min.css"></link>
 		<link rel="stylesheet" href="css/glewlwyd.css"></link>
-		<script src="js/jquery-3.1.1.min.js"></script>
-		<script src="js/react.min.js"></script>
-		<script src="js/react-dom.min.js"></script>
-		<script src="js/bootstrap.min.js"></script>
-		<script src="js/bootstrap-checkbox.min.js"></script>
-		<script src="js/glewlwyd.js"></script>
+
+		<script src="js/jquery-3.1.1.min.js" type="text/javascript"></script>
+		<script src="js/jquery.cookie.js" type="text/javascript"></script>
+		<script src="js/react.js" type="text/javascript"></script>
+		<script src="js/react-dom.js" type="text/javascript"></script>
+		<script src="js/react-bootstrap.js"></script>
+    <script src="js/browser.min.js" type="text/javascript"></script>
+		<script src="js/bootstrap.min.js" type="text/javascript"></script>
+		<script src="app/glewlwyd.react.js" type="text/babel"></script>
 	</head>
 	<body>
 		<div class="container" style="width:90%">
-			<div class="page-header">
-				<h1>Manage Glewlwyd</h1>
+			<div class="page-header row">
+				<div class="col-md-6">
+          <h1>Glewlwyd OAuth2 Server</h1>
+        </div>
+				<div class="col-md-6 text-right" id="LoginComponent">
+        </div>
 			</div>
 			<div class="row">
 				<div class="col-xs-3">
@@ -36,7 +43,7 @@
 				<div class="col-xs-9">
 					<div class="tab-content">
 						<div class="tab-pane active container" id="home">
-							<h2>Dashboard</h2>
+							<!--<h2>Dashboard</h2>
 							<div class="well">
 								<div class="row">
 									<div class="col-md-2">
@@ -70,230 +77,13 @@
 										<h3><span class="label label-info">2 resource services</span></h3>
 									</div>
 								</div>
-							</div>
+							</div>-->
 							<h2>Authorization types</h2>
-							<div class="well">
-								<div class="row top-buffer">
-									<div class="col-md-2">
-										<label>Authorization code</label>
-									</div>
-									<div class="col-md-4">
-										Authorization Code Grant - Access token: https://tools.ietf.org/html/rfc6749#section-4.1
-									</div>
-									<div class="col-md-2">
-										<input type="checkbox" name="AuthType0Enabled" id="AuthType0Enabled"/>
-									</div>
-								</div>
-								<div class="row top-buffer">
-									<div class="col-md-2">
-										<label>Code</label>
-									</div>
-									<div class="col-md-4">
-										Authorization Code Grant - Authorization: https://tools.ietf.org/html/rfc6749#section-4.1
-									</div>
-									<div class="col-md-2">
-										<input type="checkbox" name="AuthType1Enabled" id="AuthType1Enabled"/>
-									</div>
-								</div>
-								<div class="row top-buffer">
-									<div class="col-md-2">
-										<label>Implicit</label>
-									</div>
-									<div class="col-md-4">
-										Implicit Grant: https://tools.ietf.org/html/rfc6749#section-4.2
-									</div>
-									<div class="col-md-2">
-										<input type="checkbox" name="AuthType2Enabled" id="AuthType2Enabled"/>
-									</div>
-								</div>
-								<div class="row top-buffer">
-									<div class="col-md-2">
-										<label>Password</label>
-									</div>
-									<div class="col-md-4">
-										Resource Owner Password Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.3
-									</div>
-									<div class="col-md-2">
-										<input type="checkbox" name="AuthType3Enabled" id="AuthType3Enabled"/>
-									</div>
-								</div>
-								<div class="row top-buffer">
-									<div class="col-md-2">
-										<label>Client credentials</label>
-									</div>
-									<div class="col-md-4">
-										Client Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.4
-									</div>
-									<div class="col-md-2">
-										<input type="checkbox" name="AuthType4Enabled" id="AuthType4Enabled"/>
-									</div>
-								</div>
-							</div>
+              <div id="authType"></div>
 						</div>
 						<div class="tab-pane container" id="user">
 							<h2>Users</h2>
-							<div class="row well">
-								<div class="input-group">
-									<div class="input-group-btn">
-										<button class="btn btn-default" type="button"><i class="icon-resize-small fa fa-chevron-left"></i></button>
-										<button class="btn btn-default" type="button"><i class="icon-resize-small fa fa-chevron-right"></i></button>
-									</div>
-									<input type="text" class="form-control" placeholder="Search" name="srch-term" id="srch-term">
-									<div class="input-group-btn">
-										<button class="btn btn-default" type="button"><i class="glyphicon glyphicon-search"></i></button>
-										<button class="btn btn-default" type="button" name="userAdd" id="userAdd" data-toggle="modal" data-target="#userModal">
-											<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-										</button>
-									</div>
-								</div>
-								<table class="table table-hover table-responsive">
-									<thead>
-										<tr>
-											<th>Login</th>
-											<th>Name</th>
-											<th>Email</th>
-											<th>Scopes</th>
-											<th>Enabled</th>
-											<th></th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr>
-											<td><span class="gl-table-title">Login: </span><span>admin</span></td>
-											<td><span class="gl-table-title">Name: </span><span>The boss</span></td>
-											<td><span class="gl-table-title">Email: </span><span>admin@glewlwyd.domain</span></td>
-											<td><span class="gl-table-title">Scopes: </span><span>g_admin</span></td>
-											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
-											<td>
-                        <div class="input-group">
-                          <div class="input-group-btn">
-                            <button type="button" class="btn btn-default" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
-                              <i class="fa fa-pencil" aria-hidden="true"></i>
-                            </button>
-                            <button type="button" class="btn btn-default" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
-                              <i class="fa fa-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        </div>
-											</td>
-										</tr>
-										<tr>
-											<td><span class="gl-table-title">Login: </span><span>user1</span></td>
-											<td><span class="gl-table-title">Name: </span><span>Dave Lopper 1</span></td>
-											<td><span class="gl-table-title">Email: </span><span>user1@glewlwyd.domain</span></td>
-											<td><span class="gl-table-title">Scopes: </span><span>scope1, scope2</span></td>
-											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
-											<td>
-                        <div class="input-group">
-                          <div class="input-group-btn">
-                            <button type="button" class="btn btn-default" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
-                              <i class="fa fa-pencil" aria-hidden="true"></i>
-                            </button>
-                            <button type="button" class="btn btn-default" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
-                              <i class="fa fa-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        </div>
-											</td>
-										</tr>
-										<tr>
-											<td><span class="gl-table-title">Login: </span><span>user2</span></td>
-											<td><span class="gl-table-title">Name: </span><span>Dave Lopper 2</span></td>
-											<td><span class="gl-table-title">Email: </span><span>user2@glewlwyd.domain</span></td>
-											<td><span class="gl-table-title">Scopes: </span><span>scope1</span></td>
-											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
-											<td>
-                        <div class="input-group">
-                          <div class="input-group-btn">
-                            <button type="button" class="btn btn-default" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
-                              <i class="fa fa-pencil" aria-hidden="true"></i>
-                            </button>
-                            <button type="button" class="btn btn-default" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
-                              <i class="fa fa-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        </div>
-											</td>
-										</tr>
-										<tr>
-											<td><span class="gl-table-title">Login: </span><span>user3</span></td>
-											<td><span class="gl-table-title">Name: </span><span>Dave Lopper 3</span></td>
-											<td><span class="gl-table-title">Email: </span><span>user3@glewlwyd.domain</span></td>
-											<td><span class="gl-table-title">Scopes: </span><span>scope2</span></td>
-											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
-											<td>
-                        <div class="input-group">
-                          <div class="input-group-btn">
-                            <button type="button" class="btn btn-default" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
-                              <i class="fa fa-pencil" aria-hidden="true"></i>
-                            </button>
-                            <button type="button" class="btn btn-default" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
-                              <i class="fa fa-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        </div>
-											</td>
-										</tr>
-										<tr class="warning">
-											<td><span class="gl-table-title">Login: </span><span>user4</span></td>
-											<td><span class="gl-table-title">Name: </span><span>Dave Lopper 4</span></td>
-											<td><span class="gl-table-title">Email: </span><span>user4@glewlwyd.domain</span></td>
-											<td><span class="gl-table-title">Scopes: </span><span>scope1, scope2</span></td>
-											<td><span class="gl-table-title">Enabled: </span><span>false</span></td>
-											<td>
-                        <div class="input-group">
-                          <div class="input-group-btn">
-                            <button type="button" class="btn btn-default" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
-                              <i class="fa fa-pencil" aria-hidden="true"></i>
-                            </button>
-                            <button type="button" class="btn btn-default" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
-                              <i class="fa fa-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        </div>
-											</td>
-										</tr>
-										<tr>
-											<td><span class="gl-table-title">Login: </span><span>user5</span></td>
-											<td><span class="gl-table-title">Name: </span><span>Dave Lopper 5</span></td>
-											<td><span class="gl-table-title">Email: </span><span>user5@glewlwyd.domain</span></td>
-											<td><span class="gl-table-title">Scopes: </span><span>scope1, scope2</span></td>
-											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
-											<td>
-                        <div class="input-group">
-                          <div class="input-group-btn">
-                            <button type="button" class="btn btn-default" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
-                              <i class="fa fa-pencil" aria-hidden="true"></i>
-                            </button>
-                            <button type="button" class="btn btn-default" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
-                              <i class="fa fa-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        </div>
-											</td>
-										</tr>
-										<tr>
-											<td><span class="gl-table-title">Login: </span><span>user6</span></td>
-											<td><span class="gl-table-title">Name: </span><span>Dave Lopper 6</span></td>
-											<td><span class="gl-table-title">Email: </span><span>user6@glewlwyd.domain</span></td>
-											<td><span class="gl-table-title">Scopes: </span><span>scope2</span></td>
-											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
-											<td>
-                        <div class="input-group">
-                          <div class="input-group-btn">
-                            <button type="button" class="btn btn-default" name="userEdit" id="userEdit" data-toggle="modal" data-target="#userModal">
-                              <i class="fa fa-pencil" aria-hidden="true"></i>
-                            </button>
-                            <button type="button" class="btn btn-default" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
-                              <i class="fa fa-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        </div>
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
+              <div class="row well" id="users"></div>
 						</div>
 						<div class="tab-pane container" id="userDetail">
 							<h2>Dave Lopper 1</h2>
@@ -563,7 +353,7 @@
 						<div class="tab-pane container" id="scope">
 							<h2>Scopes</h2>
 							<div class="row well">
-								<button type="button" class="btn" name="scopeAdd" id="userAdd" data-toggle="modal" data-target="#scopeModal">
+								<button type="button" class="btn btn-default" name="scopeAdd" id="userAdd" data-toggle="modal" data-target="#scopeModal">
 									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
 								</button>
 								<table class="table table-hover table-responsive">
@@ -630,7 +420,7 @@
 						<div class="tab-pane container" id="resource">
 							<h2>Resources</h2>
 							<div class="row well">
-								<button type="button" class="btn" name="userAdd" id="resourceAdd" data-toggle="modal" data-target="#resourceModal">
+								<button type="button" class="btn btn-default" name="userAdd" id="resourceAdd" data-toggle="modal" data-target="#resourceModal">
 									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
 								</button>
 								<table class="table table-hover table-responsive">
@@ -695,12 +485,9 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Confirm</h4>
+        <h4 class="modal-title" id="confirmTitle"></h4>
       </div>
-      <div class="modal-body container-fluid">
-				Are you sure?
-      </div>
+      <div class="modal-body container-fluid" id="confirmBody"></div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">OK</button>
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
@@ -709,103 +496,16 @@
   </div>
 </div>
 
-<div id="userModal" class="modal fade" role="dialog">
+<div id="alertModal" class="modal fade" role="dialog">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">User</h4>
+        <h4 class="modal-title" id="alertTitle"></h4>
       </div>
-      <div class="modal-body container-fluid">
-        <div class="row">
-					<div class="col-md-6">
-						<label for="userLogin">Login</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="text" name="userLogin" id="userLogin" placeholder="User Login">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="userPassword">Password</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="password" name="userPassword" id="userPassword" placeholder="User password">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="userPasswordConfirm">Confirm password</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="password" name="userPasswordConfirm" id="userPasswordConfirm" placeholder="Confirm User password">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="userName">Name</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="text" name="userName" id="userName" placeholder="Fullname">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="userEmail">Email</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="text" name="userEmail" id="userEmail" placeholder="User e-mail">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="userScope">Scopes</label>
-					</div>
-					<div class="col-md-6">
-						<div class="input-group">
-							<select id="userScope" name="userScope" class="form-control">
-								<option value="scope1">scope1</option>
-								<option value="scope2">scope2</option>
-								<option value="g_admin">g_admin</option>
-							</select>
-							<div class="input-group-btn ">
-								<button type="button" name="addScope" id="addScope" class="btn">
-									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-								</button>
-							</div>
-						</div>
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-					</div>
-					<div class="col-md-6">
-						<span class="tag label label-info">
-							<span>scope1</span>
-							<a href="">
-								<i class="icon-resize-small fa fa-trash" aria-hidden="true"></i>
-							</a>
-						</span>
-						<span class="tag label label-info">
-							<span>scope2</span>
-							<a href="">
-								<i class="icon-resize-small fa fa-trash" aria-hidden="true"></i>
-							</a>
-						</span>
-					</div>
-				</div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label>Enabled</label>
-					</div>
-					<div class="col-md-6">
-						<input type="checkbox" name="userEnabled" id="userEnabled"/>
-					</div>
-        </div>
+      <div class="modal-body container-fluid" id="alertBody">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">Save</button>
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -819,6 +519,17 @@
         <h4 class="modal-title">Client</h4>
       </div>
       <div class="modal-body container-fluid">
+        <div class="row">
+					<div class="col-md-6">
+						<label for="userSource">Source</label>
+					</div>
+					<div class="col-md-6">
+						<select class="form-control" name="userSource" id="userSource">
+              <option value="ldap">LDAP</option>
+              <option value="database">Database</option>
+            </select>
+					</div>
+        </div>
         <div class="row">
 					<div class="col-md-6">
 						<label for="clientName">Name</label>
@@ -879,7 +590,7 @@
 								<option value="g_admin">g_admin</option>
 							</select>
 							<div class="input-group-btn ">
-								<button type="button" name="addScope" id="addScope" class="btn">
+								<button type="button" name="addScope" id="addScope" class="btn btn-default">
 									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
 								</button>
 							</div>
@@ -889,19 +600,7 @@
         <div class="row top-buffer">
 					<div class="col-md-6">
 					</div>
-					<div class="col-md-6">
-						<span class="tag label label-info">
-							<span>scope1</span>
-							<a href="">
-								<i class="icon-resize-small fa fa-trash" aria-hidden="true"></i>
-							</a>
-						</span>
-						<span class="tag label label-info">
-							<span>scope2</span>
-							<a href="">
-								<i class="icon-resize-small fa fa-trash" aria-hidden="true"></i>
-							</a>
-						</span>
+					<div class="col-md-6" id="clientScopeValues">
 					</div>
 				</div>
         <div class="row top-buffer">
@@ -912,7 +611,7 @@
 						<div class="input-group">
 							<input class="form-control" type="text" name="clientRedirectUri" id="clientRedirectUri" placeholder="New redirect URI">
 							<div class="input-group-btn ">
-								<button type="button" name="addScope" id="addScope" class="btn">
+								<button type="button" name="addScope" id="addScope" class="btn btn-default">
 									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
 								</button>
 							</div>
@@ -922,23 +621,7 @@
         <div class="row top-buffer">
 					<div class="col-md-6">
 					</div>
-					<div class="col-md-6">
-						<div class="redirect-uri">
-							<span class="tag label label-info">
-								<span>http://redirect1.domain/</span>
-								<a href="">
-									<i class="icon-resize-small fa fa-trash" aria-hidden="true"></i>
-								</a>
-							</span>
-						</div>
-						<div class="redirect-uri">
-							<span class="tag label label-info">
-								<span>http://redirect2.domain/</span>
-								<a href="">
-									<i class="icon-resize-small fa fa-trash" aria-hidden="true"></i>
-								</a>
-							</span>
-						</div>
+					<div class="col-md-6" id="clientRedirectUriValues">
 					</div>
 				</div>
         <div class="row top-buffer">
@@ -1035,7 +718,7 @@
 								<option value="g_admin">g_admin</option>
 							</select>
 							<div class="input-group-btn ">
-								<button type="button" name="addScope" id="addScope" class="btn">
+								<button type="button" name="addScope" id="addScope" class="btn btn-default">
 									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
 								</button>
 							</div>
