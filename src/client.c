@@ -1593,7 +1593,7 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
         }
         if (json_array_size(json_object_get(j_query, "values")) > 0) {
           if (h_insert(config->conn, j_query, NULL) != H_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "add_client_database - Error adding authorization_type");
+            y_log_message(Y_LOG_LEVEL_ERROR, "add_client_ldap - Error adding authorization_type");
           }
         }
         json_decref(j_query);
@@ -2014,7 +2014,7 @@ int set_client_database(struct config_elements * config, const char * client_id,
       escaped = generate_hash(config, config->hash_algorithm, json_string_value(json_object_get(j_client, "password")));
       password = msprintf("'%s'", escaped);
     }
-    json_object_set_new(json_object_get(j_query, "set"), "gu_password", json_string(password));
+    json_object_set_new(json_object_get(j_query, "set"), "gc_client_password", json_pack("{ss}", "raw", password));
     free(password);
     free(escaped);
   } else if (json_object_get(j_client, "confidential") == json_false()) {
@@ -2057,7 +2057,7 @@ int set_client_database(struct config_elements * config, const char * client_id,
           free(clause_login);
           if (json_array_size(json_object_get(j_query, "values")) > 0) {
             if (h_insert(config->conn, j_query, NULL) != H_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "add_client_database - Error adding scope");
+              y_log_message(Y_LOG_LEVEL_ERROR, "set_client_database - Error adding scope");
             }
           }
           json_decref(j_query);
@@ -2104,7 +2104,7 @@ int set_client_database(struct config_elements * config, const char * client_id,
           free(clause_login);
           if (json_array_size(json_object_get(j_query, "values")) > 0) {
             if (h_insert(config->conn, j_query, NULL) != H_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "add_client_database - Error adding redirect_uri");
+              y_log_message(Y_LOG_LEVEL_ERROR, "set_client_database - Error adding redirect_uri");
             }
           }
           json_decref(j_query);
@@ -2142,7 +2142,7 @@ int set_client_database(struct config_elements * config, const char * client_id,
         }
         if (json_array_size(json_object_get(j_query, "values")) > 0) {
           if (h_insert(config->conn, j_query, NULL) != H_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "add_client_database - Error adding authorization_type");
+            y_log_message(Y_LOG_LEVEL_ERROR, "set_client_database - Error adding authorization_type");
           }
         }
         json_decref(j_query);
