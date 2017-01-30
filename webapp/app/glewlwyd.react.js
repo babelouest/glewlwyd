@@ -95,10 +95,18 @@ $(function() {
       
       results[2].done(function (result) {
         scopeList = result;
+        ReactDOM.render(
+          <ScopeTable scopes={scopeList} />,
+          document.getElementById('scopes')
+        );
       });
       
       results[3].done(function (result) {
         resourceList = result;
+        ReactDOM.render(
+          <ResourceTable resources={resourceList} />,
+          document.getElementById('resources')
+        );
       });
       
       results[4].done(function (result) {
@@ -353,6 +361,7 @@ $(function() {
     }
     
     removeScope (scope, event) {
+      event.preventDefault();
       var newUser = $.extend({}, this.state.editUser);
       newUser.scope.splice(newUser.scope.indexOf(scope), 1);
       this.setState({editUser: newUser});
@@ -910,6 +919,7 @@ $(function() {
     }
     
     removeScope (scope, event) {
+      event.preventDefault();
       var newClient = $.extend({}, this.state.editClient);
       newClient.scope.splice(newClient.scope.indexOf(scope), 1);
       this.setState({editClient: newClient});
@@ -1243,6 +1253,589 @@ $(function() {
     }
   }
   
+  /**
+   * Scope table management component
+   */
+  class ScopeTable extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        scopes: this.props.scopes, 
+        showModal: false, 
+        editScope: { name: "", description: "" }, 
+        add: false, 
+        nameInvalid: false,
+        showConfirmModal: false,
+        messageConfirmModal: "",
+        showAlertModal: false,
+        messageAlertModal: ""
+      };
+      
+      // Modal functions
+      this.openModalAdd = this.openModalAdd.bind(this);
+      this.closeScopeModal = this.closeScopeModal.bind(this);
+      this.saveScopeModal = this.saveScopeModal.bind(this);
+      this.openModalEdit = this.openModalEdit.bind(this);
+      this.handleChangeName = this.handleChangeName.bind(this);
+      this.handleChangeDescription = this.handleChangeDescription.bind(this);
+      
+      this.openModalDelete = this.openModalDelete.bind(this);
+      this.okConfirmModal = this.okConfirmModal.bind(this);
+      this.cancelConfirmModal = this.cancelConfirmModal.bind(this);
+      
+      this.openAlertModal = this.openAlertModal.bind(this);
+      this.closeAlertModal = this.closeAlertModal.bind(this);
+    }
+    
+    // Modal functions
+    openModalAdd (event) {
+      event.preventDefault();
+      this.setState({showModal: true, editScope: {name: "", description: ""}, add: true, nameInvalid: true});
+    }
+    
+    openModalEdit (scope) {
+      var cloneScope = $.extend({}, scope);
+      this.setState({showModal: true, editScope: cloneScope, add: false, nameInvalid: false});
+    }
+    
+    openModalDelete (scope) {
+      var message = "Are your sure you want to delete scope '" + scope.name + "'";
+      this.setState({showConfirmModal: true, messageConfirmModal: message, editScope: scope});
+    }
+    
+    okConfirmModal (event) {
+      event.preventDefault();
+      var self = this;
+      APIRequest("DELETE", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/scope/" + this.state.editScope.name)
+      .then(function (result) {
+          var scopes = self.state.scopes;
+          for (var key in scopes) {
+            if (scopes[key].name === self.state.editScope.name) {
+              scopes.splice(key, 1);
+              break;
+            }
+          };
+          self.setState({scopes: scopes});
+      })
+      .done(function (result) {
+        self.setState({showConfirmModal: false});
+      });
+    }
+    
+    cancelConfirmModal () {
+      this.setState({showConfirmModal: false});
+    }
+    
+    openAlertModal (message) {
+      this.setState({showAlertModal: true, messageAlertModal: message});
+    }
+    
+    closeAlertModal () {
+      this.setState({showAlertModal: false});
+    }
+    
+    closeScopeModal(result, value) {
+      this.setState({showModal: false});
+    }
+    
+    saveScopeModal (event) {
+      event.preventDefault();
+      var self = this;
+      if (this.state.add) {
+        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/scope/" + self.state.editScope.name)
+        .then(function (result) {
+          self.openAlertModal("Error, scope '" + self.state.editScope.name + "' already exist");
+        })
+        .fail(function () {
+          APIRequest("POST", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/scope/", self.state.editScope)
+          .then(function (result) {
+            var scopes = self.state.scopes;
+            scopes.push(self.state.editScope);
+            self.setState({scopes: scopes});
+          })
+          .fail(function (error) {
+            self.openAlertModal("Error adding scope");
+          })
+          .done(function (result) {
+            self.setState({showModal: false});
+          });
+        })
+        
+      } else {
+        APIRequest("PUT", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/scope/" + this.state.editScope.name, this.state.editScope)
+        .then(function () {
+          var scopes = self.state.scopes;
+          for (var key in scopes) {
+            if (scopes[key].name === self.state.editScope.name) {
+              scopes[key] = self.state.editScope;
+            }
+          };
+          self.setState({scopes: scopes});
+        })
+        .done(function (result) {
+          self.setState({showModal: false});
+        });
+      }
+    }
+    
+    handleChangeName (event) {
+      var isInvalid = !event.target.value;
+      var newScope = $.extend({}, this.state.editScope);
+      newScope.name = event.target.value || "";
+      this.setState({editScope: newScope, nameInvalid: isInvalid});
+    }
+    
+    handleChangeDescription (event) {
+      var newScope = $.extend({}, this.state.editScope);
+      newScope.description = event.target.value || "";
+      this.setState({editScope: newScope});
+    }
+    
+    render() {
+      var self = this;
+      var rows = [];
+      this.state.scopes.forEach(function(scope) {
+        rows.push(
+        <tr key={scope.name}>
+          <td>{scope.name}</td>
+          <td>{scope.description}</td>
+          <td>
+            <div className="input-group">
+              <div className="input-group-btn">
+                <Button className="btn btn-default" onClick={() => self.openModalEdit(scope)}>
+                  <i className="glyphicon glyphicon-pencil"></i>
+                </Button>
+                <Button className="btn btn-default" onClick={() => self.openModalDelete(scope)}>
+                  <i className="glyphicon glyphicon-trash"></i>
+                </Button>
+              </div>
+            </div>
+          </td>
+        </tr>);
+      });
+      
+      return (
+        <div>
+          <Button className="btn btn-default" onClick={this.openModalAdd}>
+            <i className="glyphicon glyphicon-plus"></i>
+          </Button>
+          <table className="table table-hover table-responsive">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows}
+            </tbody>
+          </table>
+          <Modal show={this.state.showModal} onHide={this.closeScopeModal}>
+            <Modal.Header closeButton>
+              <Modal.Title>Scope</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="row">
+                <div className="col-md-6">
+                  <label htmlFor="scopeName">Name</label>
+                </div>
+                <div className={this.state.nameInvalid?"col-md-6 has-error":"col-md-6"}>
+                  <input className="form-control" 
+                         type="text" 
+                         name="scopeName" 
+                         id="scopeName" 
+                         disabled={!this.state.add?"disabled":""} 
+                         placeholder="Name" 
+                         value={this.state.editScope.name} 
+                         onChange={this.handleChangeName}></input>
+                </div>
+              </div>
+              <div className="row top-buffer">
+                <div className="col-md-6">
+                  <label htmlFor="scopeDescription">Description</label>
+                </div>
+                <div className="col-md-6">
+                  <input className="form-control" 
+                         type="text" 
+                         name="scopeDescription" 
+                         id="scopeDescription" 
+                         placeholder="Description" 
+                         value={this.state.editScope.description} 
+                         onChange={this.handleChangeDescription}></input>
+                </div>
+              </div>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button onClick={this.saveScopeModal} disabled={this.state.nameInvalid?true:false}>Save</Button>
+              <Button onClick={this.closeUserModal}>Cancel</Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal show={this.state.showConfirmModal} onHide={this.cancelConfirmModal}>
+            <Modal.Header closeButton>
+              <Modal.Title>Delete scope</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {this.state.messageConfirmModal}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button onClick={this.okConfirmModal}>OK</Button>
+              <Button onClick={this.cancelConfirmModal}>Cancel</Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal show={this.state.showAlertModal} onHide={this.closeAlertModal}>
+            <Modal.Header closeButton>
+              <Modal.Title>Users</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {this.state.messageAlertModal}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button onClick={this.closeAlertModal}>Close</Button>
+            </Modal.Footer>
+          </Modal>
+        </div>
+      );
+    }
+  }
+
+  /**
+   * Resource table management component
+   */
+  class ResourceTable extends React.Component {
+    constructor(props) {
+      super(props);
+      var selectedScope = "";
+      if (scopeList.length > 0) {
+        selectedScope = scopeList[0].name;
+      }
+      this.state = {
+        resources: this.props.resources, 
+        showModal: false, 
+        editResource: { name: "", description: "", scope: [] },
+        add: false, 
+        nameInvalid: false,
+        selectedScope: selectedScope,
+        showConfirmModal: false,
+        messageConfirmModal: "",
+        showAlertModal: false,
+        messageAlertModal: ""
+      };
+      
+      // Modal functions
+      this.openModalAdd = this.openModalAdd.bind(this);
+      this.closeResourceModal = this.closeResourceModal.bind(this);
+      this.saveResourceModal = this.saveResourceModal.bind(this);
+      this.openModalEdit = this.openModalEdit.bind(this);
+      this.handleChangeName = this.handleChangeName.bind(this);
+      this.handleChangeDescription = this.handleChangeDescription.bind(this);
+      this.handleChangeUri = this.handleChangeUri.bind(this);
+      this.handleChangeScopeSelected = this.handleChangeScopeSelected.bind(this);
+      this.addScope = this.addScope.bind(this);
+      this.removeScope = this.removeScope.bind(this);
+      
+      this.openModalDelete = this.openModalDelete.bind(this);
+      this.okConfirmModal = this.okConfirmModal.bind(this);
+      this.cancelConfirmModal = this.cancelConfirmModal.bind(this);
+      
+      this.openAlertModal = this.openAlertModal.bind(this);
+      this.closeAlertModal = this.closeAlertModal.bind(this);
+    }
+    
+    // Modal functions
+    openModalAdd (event) {
+      event.preventDefault();
+      this.setState({showModal: true, editResource: {name: "", description: "", uri: "", scope: []}, add: true, nameInvalid: true});
+    }
+    
+    openModalEdit (resource) {
+      var cloneResource = $.extend({}, resource);
+      this.setState({showModal: true, editResource: cloneResource, add: false, nameInvalid: false});
+    }
+    
+    openModalDelete (resource) {
+      var message = "Are your sure you want to delete resource '" + resource.name + "'";
+      this.setState({showConfirmModal: true, messageConfirmModal: message, editResource: resource});
+    }
+    
+    okConfirmModal (event) {
+      event.preventDefault();
+      var self = this;
+      APIRequest("DELETE", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/resource/" + this.state.editResource.name)
+      .then(function (result) {
+          var resources = self.state.resources;
+          for (var key in resources) {
+            if (resources[key].name === self.state.editResource.name) {
+              resources.splice(key, 1);
+              break;
+            }
+          };
+          self.setState({resources: resources});
+      })
+      .done(function (result) {
+        self.setState({showConfirmModal: false});
+      });
+    }
+    
+    cancelConfirmModal () {
+      this.setState({showConfirmModal: false});
+    }
+    
+    openAlertModal (message) {
+      this.setState({showAlertModal: true, messageAlertModal: message});
+    }
+    
+    closeAlertModal () {
+      this.setState({showAlertModal: false});
+    }
+    
+    closeResourceModal(result, value) {
+      this.setState({showModal: false});
+    }
+    
+    saveResourceModal (event) {
+      event.preventDefault();
+      var self = this;
+      if (this.state.add) {
+        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/resource/" + self.state.editResource.name)
+        .then(function (result) {
+          self.openAlertModal("Error, resource '" + self.state.editResource.name + "' already exist");
+        })
+        .fail(function () {
+          APIRequest("POST", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/resource/", self.state.editResource)
+          .then(function (result) {
+            var resources = self.state.resources;
+            resources.push(self.state.editResource);
+            self.setState({resources: resources});
+          })
+          .fail(function (error) {
+            self.openAlertModal("Error adding resource");
+          })
+          .done(function (result) {
+            self.setState({showModal: false});
+          });
+        })
+        
+      } else {
+        APIRequest("PUT", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/resource/" + this.state.editResource.name, this.state.editResource)
+        .then(function () {
+          var resources = self.state.resources;
+          for (var key in resources) {
+            if (resources[key].name === self.state.editResource.name) {
+              resources[key] = self.state.editResource;
+            }
+          };
+          self.setState({resources: resources});
+        })
+        .done(function (result) {
+          self.setState({showModal: false});
+        });
+      }
+    }
+    
+    handleChangeName (event) {
+      var isInvalid = !event.target.value;
+      var newResource = $.extend({}, this.state.editResource);
+      newResource.name = event.target.value || "";
+      this.setState({editResource: newResource, nameInvalid: isInvalid});
+    }
+    
+    handleChangeDescription (event) {
+      var newResource = $.extend({}, this.state.editResource);
+      newResource.description = event.target.value || "";
+      this.setState({editResource: newResource});
+    }
+    
+    handleChangeUri (event) {
+      var newResource = $.extend({}, this.state.editResource);
+      newResource.uri = event.target.value || "";
+      this.setState({editResource: newResource});
+    }
+    
+    handleChangeScopeSelected (event) {
+      this.setState({selectedScope: event.target.value});
+    }
+    
+    removeScope (scope, event) {
+      event.preventDefault();
+      var newResource = $.extend({}, this.state.editResource);
+      newResource.scope.splice(newResource.scope.indexOf(scope), 1);
+      this.setState({editResource: newResource});
+    }
+    
+    addScope (event) {
+      var newResource = $.extend({}, this.state.editResource);
+      if (this.state.editResource.scope.indexOf(this.state.selectedScope) == -1) {
+        newResource.scope.push(this.state.selectedScope);
+        this.setState({editResource: newResource});
+      }
+    }
+    
+    render() {
+      var self = this;
+      var allScopeList = [];
+      scopeList.forEach(function (scope) {
+        allScopeList.push(<option value={scope.name} key={scope.name}>{scope.name}</option>)
+      });
+      var resourceScopeList = [];
+      this.state.editResource.scope.forEach(function (scope) {
+        resourceScopeList.push(
+          <span className="tag label label-info" key={scope}>
+            <span>{scope}&nbsp;</span>
+            <a href="" onClick={(evt) => self.removeScope(scope, evt)}>
+              <i className="remove glyphicon glyphicon-remove-sign glyphicon-white"></i>
+            </a>
+          </span>
+        );
+      });
+      var rows = [];
+      this.state.resources.forEach(function(resource) {
+        rows.push(
+        <tr key={resource.name}>
+          <td>{resource.name}</td>
+          <td>{resource.description}</td>
+          <td>{resource.uri}</td>
+          <td>{resource.scope.join(", ")}</td>
+          <td>
+            <div className="input-group">
+              <div className="input-group-btn">
+                <Button className="btn btn-default" onClick={() => self.openModalEdit(resource)}>
+                  <i className="glyphicon glyphicon-pencil"></i>
+                </Button>
+                <Button className="btn btn-default" onClick={() => self.openModalDelete(resource)}>
+                  <i className="glyphicon glyphicon-trash"></i>
+                </Button>
+              </div>
+            </div>
+          </td>
+        </tr>);
+      });
+      
+      return (
+        <div>
+          <Button className="btn btn-default" onClick={this.openModalAdd}>
+            <i className="glyphicon glyphicon-plus"></i>
+          </Button>
+          <table className="table table-hover table-responsive">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>URI</th>
+                <th>Scopes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows}
+            </tbody>
+          </table>
+          <Modal show={this.state.showModal} onHide={this.closeResourceModal}>
+            <Modal.Header closeButton>
+              <Modal.Title>Scope</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="row">
+                <div className="col-md-6">
+                  <label htmlFor="resourceName">Name</label>
+                </div>
+                <div className={this.state.nameInvalid?"col-md-6 has-error":"col-md-6"}>
+                  <input className="form-control" 
+                         type="text" 
+                         name="resourceName" 
+                         id="resourceName" 
+                         disabled={!this.state.add?"disabled":""} 
+                         placeholder="Name" 
+                         value={this.state.editResource.name} 
+                         onChange={this.handleChangeName}></input>
+                </div>
+              </div>
+              <div className="row top-buffer">
+                <div className="col-md-6">
+                  <label htmlFor="resourceDescription">Description</label>
+                </div>
+                <div className="col-md-6">
+                  <input className="form-control" 
+                         type="text" 
+                         name="resourceDescription" 
+                         id="resourceDescription" 
+                         placeholder="Description" 
+                         value={this.state.editResource.description} 
+                         onChange={this.handleChangeDescription}></input>
+                </div>
+              </div>
+              <div className="row top-buffer">
+                <div className="col-md-6">
+                  <label htmlFor="resourceUri">URI</label>
+                </div>
+                <div className="col-md-6">
+                  <input className="form-control" 
+                         type="text" 
+                         name="resourceUri" 
+                         id="resourceUri" 
+                         placeholder="resource URI" 
+                         value={this.state.editResource.uri} 
+                         onChange={this.handleChangeUri}></input>
+                </div>
+              </div>
+              <div className="row top-buffer">
+                <div className="col-md-6">
+                  <label htmlFor="userScope">Scopes</label>
+                </div>
+                <div className="col-md-6">
+                  <div className="input-group">
+                    <select id="userScope" name="userScope" className="form-control" value={this.state.scopeSelected} onChange={this.handleChangeScopeSelected}>
+                      {allScopeList}
+                    </select>
+                    <div className="input-group-btn ">
+                      <button type="button" name="addScope" id="addScope" className="btn btn-default" onClick={this.addScope}>
+                        <i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="row top-buffer">
+                <div className="col-md-6">
+                </div>
+                <div className="col-md-6" id="userScopeValue">
+                {resourceScopeList}
+                </div>
+              </div>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button onClick={this.saveResourceModal} disabled={this.state.nameInvalid?true:false}>Save</Button>
+              <Button onClick={this.closeResourceModal}>Cancel</Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal show={this.state.showConfirmModal} onHide={this.cancelConfirmModal}>
+            <Modal.Header closeButton>
+              <Modal.Title>Delete resource</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {this.state.messageConfirmModal}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button onClick={this.okConfirmModal}>OK</Button>
+              <Button onClick={this.cancelConfirmModal}>Cancel</Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal show={this.state.showAlertModal} onHide={this.closeAlertModal}>
+            <Modal.Header closeButton>
+              <Modal.Title>Resources</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {this.state.messageAlertModal}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button onClick={this.closeAlertModal}>Close</Button>
+            </Modal.Footer>
+          </Modal>
+        </div>
+      );
+    }
+  }
+
   /**
    * Login/Logout button component
    */
