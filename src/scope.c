@@ -173,7 +173,7 @@ int set_scope(struct config_elements * config, const char * scope, json_t * j_sc
                       GLEWLWYD_TABLE_SCOPE,
                       "set",
                         "gs_description",
-                        json_string_value(json_object_get(j_scope, "description")),
+                        json_object_get(j_scope, "description")!=NULL?json_string_value(json_object_get(j_scope, "description")):"",
                       "where",
                         "gs_name",
                         scope);

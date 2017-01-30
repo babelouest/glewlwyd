@@ -224,14 +224,16 @@ int add_resource(struct config_elements * config, json_t * j_resource) {
   char * clause_login;
   size_t index;
   
-  j_query = json_pack("{sss{ssss}}",
+  j_query = json_pack("{sss{ssssss}}",
                       "table",
                       GLEWLWYD_TABLE_RESOURCE,
                       "values",
                         "gr_name",
                         json_string_value(json_object_get(j_resource, "name")),
+                        "gr_description",
+                        json_object_get(j_resource, "description")!=NULL?json_string_value(json_object_get(j_resource, "description")):"",
                         "gr_uri",
-                        json_string_value(json_object_get(j_resource, "uri")));
+                        json_object_get(j_resource, "uri")!=NULL?json_string_value(json_object_get(j_resource, "uri")):"");
   if (json_object_get(j_resource, "description") != NULL) {
     json_object_set_new(json_object_get(j_query, "values"), "gr_description", json_copy(json_object_get(j_resource, "description")));
   }
@@ -281,12 +283,14 @@ int set_resource(struct config_elements * config, const char * resource, json_t 
   size_t index;
   char * clause_login;
   
-  j_query = json_pack("{sss{ss}s{ss}}",
+  j_query = json_pack("{sss{ssss}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_RESOURCE,
                       "set",
                         "gr_uri",
                         json_string_value(json_object_get(j_resource, "uri")),
+                        "gr_description",
+                        json_object_get(j_resource, "description")!=NULL?json_string_value(json_object_get(j_resource, "description")):"",
                       "where",
                         "gr_name",
                         resource);
