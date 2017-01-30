@@ -1,5 +1,6 @@
 var Alert = ReactBootstrap.Alert;
 var Button = ReactBootstrap.Button;
+var Checkbox = ReactBootstrap.Checkbox;
 var Modal = ReactBootstrap.Modal;
 
 $(function() {
@@ -50,7 +51,7 @@ $(function() {
     return $.ajax({
       method: method,
       url: url,
-      data: data,
+      data: JSON.stringify(data),
       contentType: data?"application/json; charset=utf-8":null,
       headers: {"Authorization": "Bearer " + oauth.access_token}
     })
@@ -114,13 +115,56 @@ $(function() {
   class UserTable extends React.Component {
     constructor(props) {
       super(props);
-      this.state = {search: "", offset: 0, limit: 10, users: this.props.users};
+      var selectedScope = "";
+      if (scopeList.length > 0) {
+        selectedScope = scopeList[0].name;
+      }
+      this.state = {
+        search: "", 
+        offset: 0, 
+        limit: 10, 
+        users: this.props.users, 
+        showModal: false, 
+        editUser: { scope: [] }, 
+        add: false, 
+        userScopeList: [], 
+        selectedScope: selectedScope,
+        passwordInvalid: false,
+        loginInvalid: true,
+        showConfirmModal: false,
+        messageConfirmModal: "",
+        showAlertModal: false,
+        messageAlertModal: ""
+      };
       
       this.handleSearch = this.handleSearch.bind(this);
       this.handleChangeSearch = this.handleChangeSearch.bind(this);
       this.handleChangeLimit = this.handleChangeLimit.bind(this);
       this.handlePreviousPage = this.handlePreviousPage.bind(this);
       this.handleNextPage = this.handleNextPage.bind(this);
+      
+      // Modal functions
+      this.openModalAdd = this.openModalAdd.bind(this);
+      this.closeUserModal = this.closeUserModal.bind(this);
+      this.saveUserModal = this.saveUserModal.bind(this);
+      this.openModalEdit = this.openModalEdit.bind(this);
+      this.handleChangeSource = this.handleChangeSource.bind(this);
+      this.handleChangeLogin = this.handleChangeLogin.bind(this);
+      this.handleChangeName = this.handleChangeName.bind(this);
+      this.handleChangeEmail = this.handleChangeEmail.bind(this);
+      this.handleChangePassword = this.handleChangePassword.bind(this);
+      this.handleChangeConfirmPassword = this.handleChangeConfirmPassword.bind(this);
+      this.handleChangeScopeSelected = this.handleChangeScopeSelected.bind(this);
+      this.handleChangeEnabled = this.handleChangeEnabled.bind(this);
+      this.addScope = this.addScope.bind(this);
+      this.removeScope = this.removeScope.bind(this);
+      
+      this.openModalDelete = this.openModalDelete.bind(this);
+      this.okConfirmModal = this.okConfirmModal.bind(this);
+      this.cancelConfirmModal = this.cancelConfirmModal.bind(this);
+      
+      this.openAlertModal = this.openAlertModal.bind(this);
+      this.closeAlertModal = this.closeAlertModal.bind(this);
     }
     
     handleChangeSearch (event) {
@@ -165,44 +209,232 @@ $(function() {
       event.preventDefault();
     }
     
+    // Modal functions
+    openModalAdd (event) {
+      event.preventDefault();
+      this.setState({showModal: true, editUser: {enabled: true,  scope: [], source: "database"}, add: true, userScopeList: [], loginInvalid: true});
+    }
+    
+    openModalEdit (user) {
+      var cloneUser = $.extend({}, user);
+      this.setState({showModal: true, editUser: cloneUser, add: false, loginInvalid: false});
+    }
+    
+    openModalDelete (user) {
+      var message = "Are your sure you want to delete user '" + user.login + "'";
+      this.setState({showConfirmModal: true, messageConfirmModal: message, editUser: user});
+    }
+    
+    okConfirmModal (event) {
+      event.preventDefault();
+      var self = this;
+      APIRequest("DELETE", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + this.state.editUser.login)
+      .then(function (result) {
+          var users = self.state.users;
+          for (var key in users) {
+            if (users[key].login === self.state.editUser.login) {
+              users.splice(key, 1);
+              break;
+            }
+          };
+          self.setState({users: users});
+      })
+      .done(function (result) {
+        self.setState({showConfirmModal: false});
+      });
+    }
+    
+    cancelConfirmModal () {
+      this.setState({showConfirmModal: false});
+    }
+    
+    openAlertModal (message) {
+      this.setState({showAlertModal: true, messageAlertModal: message});
+    }
+    
+    closeAlertModal () {
+      this.setState({showAlertModal: false});
+    }
+    
+    closeUserModal(result, value) {
+      this.setState({showModal: false});
+    }
+    
+    saveUserModal (event) {
+      event.preventDefault();
+      var self = this;
+      if (this.state.add) {
+        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + self.state.editUser.login)
+        .then(function (result) {
+          self.openAlertModal("Error, login '" + self.state.editUser.login + "' already exist");
+        })
+        .fail(function () {
+          APIRequest("POST", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/", self.state.editUser)
+          .then(function (result) {
+            var users = self.state.users;
+            self.state.editUser.password = "";
+            self.state.editUser.confirmPassword = "";
+            users.push(self.state.editUser);
+            self.setState({users: users});
+          })
+          .fail(function (error) {
+            self.openAlertModal("Error adding user");
+          })
+          .done(function (result) {
+            self.setState({showModal: false});
+          });
+        })
+        
+      } else {
+        APIRequest("PUT", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + this.state.editUser.login, this.state.editUser)
+        .then(function () {
+          var users = self.state.users;
+          for (var key in users) {
+            if (users[key].login === self.state.editUser.login) {
+              users[key] = self.state.editUser;
+            }
+          };
+          self.setState({users: users});
+        })
+        .done(function (result) {
+          self.setState({showModal: false});
+        });
+      }
+    }
+    
+    handleChangeSource (event) {
+      var newUser = $.extend({}, this.state.editUser);
+      newUser.source = event.target.value;
+      this.setState({editUser: newUser});
+    }
+    
+    handleChangeLogin (event) {
+      var isInvalid = !event.target.value;
+      var newUser = $.extend({}, this.state.editUser);
+      newUser.login = event.target.value || "";
+      this.setState({editUser: newUser, loginInvalid: isInvalid});
+    }
+    
+    handleChangeName (event) {
+      var newUser = $.extend({}, this.state.editUser);
+      newUser.name = event.target.value || "";
+      this.setState({editUser: newUser});
+    }
+    
+    handleChangeEmail (event) {
+      var newUser = $.extend({}, this.state.editUser);
+      newUser.email = event.target.value || "";
+      this.setState({editUser: newUser});
+    }
+    
+    handleChangePassword (event) {
+      var isInvalid = (!!event.target.value || !!this.state.editUser.confirmPassword) && (event.target.value !== this.state.editUser.confirmPassword || event.target.value.length < 8);
+      var newUser = $.extend({}, this.state.editUser);
+      newUser.password = event.target.value || "";
+      this.setState({editUser: newUser, passwordInvalid: isInvalid});
+    }
+    
+    handleChangeConfirmPassword (event) {
+      var isInvalid = (!!this.state.editUser.password || !!event.target.value) && (this.state.editUser.password !== event.target.value || event.target.value.length < 8);
+      var newUser = $.extend({}, this.state.editUser);
+      newUser.confirmPassword = event.target.value || "";
+      this.setState({editUser: newUser, passwordInvalid: isInvalid});
+    }
+    
+    handleChangeScopeSelected (event) {
+      this.setState({selectedScope: event.target.value});
+    }
+    
+    removeScope (scope, event) {
+      var newUser = $.extend({}, this.state.editUser);
+      newUser.scope.splice(newUser.scope.indexOf(scope), 1);
+      this.setState({editUser: newUser});
+    }
+    
+    addScope (event) {
+      var newUser = $.extend({}, this.state.editUser);
+      if (this.state.editUser.scope.indexOf(this.state.selectedScope) == -1) {
+        newUser.scope.push(this.state.selectedScope);
+        this.setState({editUser: newUser});
+      }
+    }
+    
+    handleChangeEnabled (event) {
+      var newUser = $.extend({}, this.state.editUser);
+      newUser.enabled = !newUser.enabled;
+      this.setState({editUser: newUser});
+    }
+    
     runSearch (search, offset, limit) {
       var self = this;
       if (search) {
         APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/?search=" + search + "&limit=" + limit + "&offset=" + offset)
-        .done(function (result) {
+        .then(function (result) {
           self.setState({
             users: result
           });
         })
         .fail(function (error) {
-          $("#alertTitle").text("Search users");
-          $("#alertBody").text("Error while searching users");
-          $("#alertModal").modal();
+          self.openAlertModal("Error while searching users");
         });
       } else {
         APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + "?limit=" + limit + "&offset=" + offset)
-        .done(function (result) {
+        .then(function (result) {
           self.setState({
             users: result
           });
         })
         .fail(function (error) {
-          $("#alertTitle").text("Search users");
-          $("#alertBody").text("Error while searching users");
-          $("#alertModal").modal();
+          self.openAlertModal("Error while searching users");
         });
       }
     }
 
     render() {
+      var self = this;
+      var allScopeList = [];
+      scopeList.forEach(function (scope) {
+        allScopeList.push(<option value={scope.name} key={scope.name}>{scope.name}</option>)
+      });
       var rows = [];
       this.state.users.forEach(function(user) {
-        rows.push(<UserRow user={user} key={user.login} />);
+        rows.push(
+        <tr key={user.login}>
+          <td>{user.source}</td>
+          <td>{user.login}</td>
+          <td>{user.name}</td>
+          <td>{user.email}</td>
+          <td>{user.scope.join(", ")}</td>
+          <td>{user.enabled?"true":"false"}</td>
+          <td>
+            <div className="input-group">
+              <div className="input-group-btn">
+                <Button className="btn btn-default" onClick={() => self.openModalEdit(user)}>
+                  <i className="glyphicon glyphicon-pencil"></i>
+                </Button>
+                <Button className="btn btn-default" onClick={() => self.openModalDelete(user)}>
+                  <i className="glyphicon glyphicon-trash"></i>
+                </Button>
+              </div>
+            </div>
+          </td>
+        </tr>);
       });
       var previousOpts = {};
       if (this.state.offset === 0) {
         previousOpts["disabled"] = "disabled";
       }
+      var userScopeList = [];
+      this.state.editUser.scope.forEach(function (scope) {
+        userScopeList.push(
+          <span className="tag label label-info" key={scope}>
+            <span>{scope}&nbsp;</span>
+            <a href="" onClick={(evt) => self.removeScope(scope, evt)}>
+              <i className="remove glyphicon glyphicon-remove-sign glyphicon-white"></i>
+            </a>
+          </span>
+        );
+      });
       
       return (
         <div>
@@ -210,9 +442,11 @@ $(function() {
             <div className="input-group row">
               <input type="text" className="form-control" placeholder="Search" value={this.state.search} onChange={this.handleChangeSearch}/>
               <div className="input-group-btn">
-                <button className="btn btn-default" type="button" onClick={this.handleSearch}><i className="glyphicon glyphicon-search"></i></button>
-                <Button className="btn btn-default" onClick={this.open}>
-                  {this.state.icon}
+                <Button className="btn btn-default" onClick={this.handleSearch}>
+                  <i className="glyphicon glyphicon-search"></i>
+                </Button>
+                <Button className="btn btn-default" onClick={this.openModalAdd}>
+                  <i className="glyphicon glyphicon-plus"></i>
                 </Button>
               </div>
             </div>
@@ -232,7 +466,7 @@ $(function() {
                   </select>
                 </div>
                 <div className="input-group-btn">
-                  <button className="btn btn-default" type="button" onClick={this.handleNextPage}><i className="icon-resize-small fa fa-chevron-right"></i></button>
+                  <Button className="btn btn-default" type="button" onClick={this.handleNextPage}><i className="icon-resize-small fa fa-chevron-right"></i></Button>
                 </div>
               </div>
             </div>
@@ -252,167 +486,132 @@ $(function() {
                 <th></th>
               </tr>
             </thead>
-            <tbody>{rows}</tbody>
+            <tbody>
+              {rows}
+            </tbody>
           </table>
-          <UserModal add={this.state.addUser} scopeList={this.state.scopeList} user={this.state.currentUser}/>
+          <Modal show={this.state.showModal} onHide={this.closeUserModal}>
+            <Modal.Header closeButton>
+              <Modal.Title>User</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="row">
+                <div className="col-md-6">
+                  <label htmlFor="userSource">Source</label>
+                </div>
+                <div className="col-md-6">
+                  <select className="form-control" name="userSource" id="userSource" value={this.state.editUser.source} onChange={this.handleChangeSource}>
+                    <option value="ldap">LDAP</option>
+                    <option value="database">Database</option>
+                  </select>
+                </div>
+              </div>
+              <div className="row">
+                <div className="col-md-6">
+                  <label htmlFor="userLogin">Login</label>
+                </div>
+                <div className={this.state.loginInvalid?"col-md-6 has-error":"col-md-6"}>
+                  <input className="form-control" type="text" name="userLogin" id="userLogin" disabled={!this.state.add?"disabled":""} placeholder="User Login" value={this.state.editUser.login} onChange={this.handleChangeLogin}></input>
+                </div>
+              </div>
+              <div className="row top-buffer">
+                <div className="col-md-6">
+                  <label htmlFor="userPassword">Password</label>
+                </div>
+                <div className={this.state.passwordInvalid?"col-md-6 has-error":"col-md-6"}>
+                  <input className="form-control" type="password" name="userPassword" id="userPassword" placeholder="User password" onChange={this.handleChangePassword} value={this.state.editUser.password}></input>
+                </div>
+              </div>
+              <div className="row top-buffer">
+                <div className="col-md-6">
+                  <label htmlFor="userPasswordConfirm">Confirm password</label>
+                </div>
+                <div className={this.state.passwordInvalid?"col-md-6 has-error":"col-md-6"}>
+                  <input className="form-control" type="password" name="userPasswordConfirm" id="userPasswordConfirm" placeholder="Confirm User password" onChange={this.handleChangeConfirmPassword} value={this.state.editUser.confirmPassword}></input>
+                </div>
+              </div>
+              <div className="row top-buffer">
+                <div className="col-md-6">
+                  <label htmlFor="userName">Name</label>
+                </div>
+                <div className="col-md-6">
+                  <input className="form-control" type="text" name="userName" id="userName" placeholder="Fullname" value={this.state.editUser.name} onChange={this.handleChangeName}></input>
+                </div>
+              </div>
+              <div className="row top-buffer">
+                <div className="col-md-6">
+                  <label htmlFor="userEmail">Email</label>
+                </div>
+                <div className="col-md-6">
+                  <input className="form-control" type="text" name="userEmail" id="userEmail" placeholder="User e-mail" value={this.state.editUser.email} onChange={this.handleChangeEmail}></input>
+                </div>
+              </div>
+              <div className="row top-buffer">
+                <div className="col-md-6">
+                  <label htmlFor="userScope">Scopes</label>
+                </div>
+                <div className="col-md-6">
+                  <div className="input-group">
+                    <select id="userScope" name="userScope" className="form-control" value={this.state.scopeSelected} onChange={this.handleChangeScopeSelected}>
+                      {allScopeList}
+                    </select>
+                    <div className="input-group-btn ">
+                      <button type="button" name="addScope" id="addScope" className="btn btn-default" onClick={this.addScope}>
+                        <i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="row top-buffer">
+                <div className="col-md-6">
+                </div>
+                <div className="col-md-6" id="userScopeValue">
+                {userScopeList}
+                </div>
+              </div>
+              <div className="row top-buffer">
+                <div className="col-md-6">
+                  <label>Enabled</label>
+                </div>
+                <div className="col-md-6">
+                  <Checkbox validationState="success" checked={this.state.editUser.enabled?"true":null} onChange={this.handleChangeEnabled}></Checkbox>
+                </div>
+              </div>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button onClick={this.saveUserModal} disabled={this.state.passwordInvalid||this.state.loginInvalid?true:false}>Save</Button>
+              <Button onClick={this.closeUserModal}>Cancel</Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal show={this.state.showConfirmModal} onHide={this.cancelConfirmModal}>
+            <Modal.Header closeButton>
+              <Modal.Title>Delete user</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {this.state.messageConfirmModal}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button onClick={this.okConfirmModal}>OK</Button>
+              <Button onClick={this.cancelConfirmModal}>Cancel</Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal show={this.state.showAlertModal} onHide={this.closeAlertModal}>
+            <Modal.Header closeButton>
+              <Modal.Title>Users</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {this.state.messageAlertModal}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button onClick={this.closeAlertModal}>Close</Button>
+            </Modal.Footer>
+          </Modal>
         </div>
       );
     }
   }
 
-  class UserRow extends React.Component {
-    constructor(props) {
-      super(props);
-    }
-    
-    render() {
-      return (
-        <tr>
-          <td>{this.props.user.source}</td>
-          <td>{this.props.user.login}</td>
-          <td>{this.props.user.name}</td>
-          <td>{this.props.user.email}</td>
-          <td>{this.props.user.scope.join(", ")}</td>
-          <td>{this.props.user.enabled?"true":"false"}</td>
-          <td>
-            <div className="input-group">
-              <div className="input-group-btn">
-                <UserModal user={this.props.user} add={false} scopeList={scopeList} />
-                <button type="button" className="btn btn-default" name="userDelete" id="userDelete" data-toggle="modal" data-target="#confirmModal">
-                  <i className="fa fa-trash" aria-hidden="true"></i>
-                </button>
-              </div>
-            </div>
-          </td>
-        </tr>
-      );
-    }
-  }
-
-  class UserModal extends React.Component {
-    constructor(props) {
-      super(props);
-      this.state = {user: this.props.user, showModal: false, icon: this.props.add?(<i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>):(<i className="icon-resize-small fa fa-pencil" aria-hidden="true"></i>), scopeList: this.props.scopeList};
-      this.close = this.close.bind(this);
-      this.open = this.open.bind(this);
-      this.save = this.save.bind(this);
-    }
-    
-    close() {
-      this.setState({ showModal: false });
-    }
-
-    open() {
-      this.setState({ showModal: true });
-    }
-    
-    save() {
-    }
-
-    render() {
-      var userScopeList = [];
-      this.state.scopeList.forEach(function (scope) {
-        console.log(scope);
-        userScopeList.push(<option value={scope.name}>{scope.name}</option>)
-      });
-      return (
-        <Modal show={this.state.showModal} onHide={this.close}>
-          <Modal.Header closeButton>
-            <Modal.Title>User</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <div className="row">
-              <div className="col-md-6">
-                <label htmlFor="userSource">Source</label>
-              </div>
-              <div className="col-md-6">
-                <select className="form-control" name="userSource" id="userSource">
-                  <option value="ldap">LDAP</option>
-                  <option value="database">Database</option>
-                </select>
-              </div>
-            </div>
-            <div className="row">
-              <div className="col-md-6">
-                <label htmlFor="userLogin">Login</label>
-              </div>
-              <div className="col-md-6">
-                <input className="form-control" type="text" name="userLogin" id="userLogin" placeholder="User Login"></input>
-              </div>
-            </div>
-            <div className="row top-buffer">
-              <div className="col-md-6">
-                <label htmlFor="userPassword">Password</label>
-              </div>
-              <div className="col-md-6">
-                <input className="form-control" type="password" name="userPassword" id="userPassword" placeholder="User password"></input>
-              </div>
-            </div>
-            <div className="row top-buffer">
-              <div className="col-md-6">
-                <label htmlFor="userPasswordConfirm">Confirm password</label>
-              </div>
-              <div className="col-md-6">
-                <input className="form-control" type="password" name="userPasswordConfirm" id="userPasswordConfirm" placeholder="Confirm User password"></input>
-              </div>
-            </div>
-            <div className="row top-buffer">
-              <div className="col-md-6">
-                <label htmlFor="userName">Name</label>
-              </div>
-              <div className="col-md-6">
-                <input className="form-control" type="text" name="userName" id="userName" placeholder="Fullname"></input>
-              </div>
-            </div>
-            <div className="row top-buffer">
-              <div className="col-md-6">
-                <label htmlFor="userEmail">Email</label>
-              </div>
-              <div className="col-md-6">
-                <input className="form-control" type="text" name="userEmail" id="userEmail" placeholder="User e-mail"></input>
-              </div>
-            </div>
-            <div className="row top-buffer">
-              <div className="col-md-6">
-                <label htmlFor="userScope">Scopes</label>
-              </div>
-              <div className="col-md-6">
-                <div className="input-group">
-                  <select id="userScope" name="userScope" className="form-control">
-                    {userScopeList}
-                  </select>
-                  <div className="input-group-btn ">
-                    <button type="button" name="addScope" id="addScope" className="btn btn-default">
-                      <i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="row top-buffer">
-              <div className="col-md-6">
-              </div>
-              <div className="col-md-6" id="userScopeValue">
-              </div>
-            </div>
-            <div className="row top-buffer">
-              <div className="col-md-6">
-                <label>Enabled</label>
-              </div>
-              <div className="col-md-6">
-                <input type="checkbox" name="userEnabled" id="userEnabled"/>
-              </div>
-            </div>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={this.save}>Save</Button>
-            <Button onClick={this.close}>Cancel</Button>
-          </Modal.Footer>
-        </Modal>
-      );
-    }
-  };
-  
   /**
    * Login/Logout button component
    */
