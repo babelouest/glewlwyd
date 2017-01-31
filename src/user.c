@@ -1100,10 +1100,10 @@ json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add
  * Add a new user
  */
 int add_user(struct config_elements * config, json_t * j_user) {
-  if (json_object_get(j_user, "source") != NULL && 0 == strcmp("ldap", json_string_value(json_object_get(j_user, "source")))) {
-    return add_user_ldap(config, j_user);
-  } else {
+  if (json_object_get(j_user, "source") != NULL && 0 == strcmp("database", json_string_value(json_object_get(j_user, "source")))) {
     return add_user_database(config, j_user);
+  } else if (0 == strcmp("ldap", json_string_value(json_object_get(j_user, "source")))) {
+    return add_user_ldap(config, j_user);
   }
 }
 
@@ -1660,10 +1660,6 @@ json_t * is_user_profile_valid(struct config_elements * config, const char * use
         json_array_append_new(j_return, json_pack("{ss}", "name", "name is an optional string between 1 and 512 characters"));
       }
 
-      if (json_object_get(profile, "email") != NULL && (!json_is_string(json_object_get(profile, "email")) || json_string_length(json_object_get(profile, "email")) > 512 || json_string_length(json_object_get(profile, "email")) < 1)) {
-        json_array_append_new(j_return, json_pack("{ss}", "email", "email is an optional string between 1 and 512 characters"));
-      }
-      
       if (json_object_get(profile, "new_password") != NULL && !json_is_string(json_object_get(profile, "new_password")) && json_string_length(json_object_get(profile, "new_password")) > 0) {
         json_array_append_new(j_return, json_pack("{ss}", "new_password", "new_password must be a non empty string"));
       }
@@ -1685,7 +1681,7 @@ json_t * is_user_profile_valid(struct config_elements * config, const char * use
         }
       }
       
-      if (json_object_get(profile, "name") == NULL && json_object_get(profile, "email") == NULL && json_object_get(profile, "new_password") == NULL) {
+      if (json_object_get(profile, "name") == NULL && json_object_get(profile, "new_password") == NULL) {
         json_array_append_new(j_return, json_pack("{ss}", "profile", "you must update at least one value"));
       }
     }
@@ -1736,9 +1732,6 @@ int set_user_profile_ldap(struct config_elements * config, const char * username
   for (i=0; json_object_get(profile, "name") != NULL && config->auth_ldap->name_property_user_write[i] != NULL; i++) {
     nb_attr++;
   }
-  for (i=0; json_object_get(profile, "email") != NULL && config->auth_ldap->email_property_user_write[i] != NULL; i++) {
-    nb_attr++;
-  }
   if (json_object_get(profile, "new_password") != NULL) {
     nb_attr++;
   }
@@ -1773,16 +1766,6 @@ int set_user_profile_ldap(struct config_elements * config, const char * username
       attr_counter++;
     }
     
-    for (i=0; json_object_get(profile, "email") != NULL && config->auth_ldap->email_property_user_write[i] != NULL; i++) {
-      mods[attr_counter] = malloc(sizeof(LDAPMod));
-      mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
-      mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
-      mods[attr_counter]->mod_type   = config->auth_ldap->email_property_user_write[i];
-      mods[attr_counter]->mod_values[0] = (char *)json_string_value(json_object_get(profile, "email"));
-      mods[attr_counter]->mod_values[1] = NULL;
-      attr_counter++;
-    }
-    
     if (json_object_get(profile, "new_password") != NULL) {
       password = generate_hash(config, config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(profile, "new_password")));
       if (password != NULL) {
@@ -1808,11 +1791,6 @@ int set_user_profile_ldap(struct config_elements * config, const char * username
     free(scope_values);
     attr_counter = 0;
     for (i=0; json_object_get(profile, "name") != NULL && config->auth_ldap->name_property_user_write[i] != NULL; i++) {
-      free(mods[attr_counter]->mod_values);
-      free(mods[attr_counter]);
-      attr_counter++;
-    }
-    for (i=0; json_object_get(profile, "email") != NULL && config->auth_ldap->email_property_user_write[i] != NULL; i++) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
@@ -1847,9 +1825,6 @@ int set_user_profile_database(struct config_elements * config, const char * user
                         username);
   if (json_object_get(profile, "name") != NULL) {
     json_object_set_new(json_object_get(j_query, "set"), "gu_name", json_copy(json_object_get(profile, "name")));
-  }
-  if (json_object_get(profile, "email") != NULL) {
-    json_object_set_new(json_object_get(j_query, "set"), "gu_email", json_copy(json_object_get(profile, "email")));
   }
   if (json_object_get(profile, "new_password") != NULL) {
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {

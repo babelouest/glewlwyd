@@ -1407,10 +1407,10 @@ json_t * is_client_valid(struct config_elements * config, json_t * j_client, int
  * Add a new client
  */
 int add_client(struct config_elements * config, json_t * j_client) {
-  if (json_object_get(j_client, "source") == NULL || 0 == strcmp("ldap", json_string_value(json_object_get(j_client, "source")))) {
-    return add_client_ldap(config, j_client);
-  } else {
+  if (json_object_get(j_client, "source") == NULL || 0 == strcmp("database", json_string_value(json_object_get(j_client, "source")))) {
     return add_client_database(config, j_client);
+  } else if (0 == strcmp("ldap", json_string_value(json_object_get(j_client, "source")))) {
+    return add_client_ldap(config, j_client);
   }
 }
 

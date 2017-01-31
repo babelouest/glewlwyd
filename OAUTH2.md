@@ -10,7 +10,11 @@ Authentication has different faces, and differs with the authorization scheme.
 
 ## Prefix
 
-All urls are based on the prefix you will setup. In this document, all API endpoints will assume they use the prefix `/glewlwyd`, and all static file endpoints will assume they use the prefix `/app`.
+All URIs are based on the prefix you will setup. In this document, all API endpoints will assume they use the prefix `/glewlwyd`, and all static file endpoints will assume they use the prefix `/app`.
+
+## Login and grant URIs
+
+In this document, the login URI will be displayed as `http://login.html` and the grant URI will be displayed as `http://grant.html`, this will be replaced by the values from your environment that you can define in the config file.
 
 ## Scope
 
@@ -86,7 +90,7 @@ Code 302
 
 Resource owner is not authenticated with a valid session token.
 
-Redirect to `/app/login.html?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}&additional_parameters` for authentication.
+Redirect to `http://login.html?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}&additional_parameters` for authentication.
 
 See login paragraph for details.
 
@@ -94,7 +98,7 @@ See login paragraph for details.
 
 Code 302
 
-Redirect to `/app/grant.html?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}&additional_parameters` for grant access.
+Redirect to `http://grant.html?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}&additional_parameters` for grant access.
 
 See grant paragraph for details.
 
@@ -205,7 +209,7 @@ Code 302
 
 Resource owner is not authenticated with a valid session token.
 
-Redirect to `/app/login.html?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}&additional_parameters` for authentication.
+Redirect to `http://login.html?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}&additional_parameters` for authentication.
 
 See login paragraph for details.
 
@@ -213,7 +217,7 @@ See login paragraph for details.
 
 Code 302
 
-Redirect to `/app/grant.html?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}&additional_parameters` for grant access.
+Redirect to `http://grant.html?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}&additional_parameters` for grant access.
 
 See grant paragraph for details.
 
@@ -221,7 +225,7 @@ See grant paragraph for details.
 
 Code 302
 
-Redirect to `redirect_uri`#code=`code`&state=`state`
+Redirect to `redirect_uri`#token=`token`&state=`state`
 
 with `redirect_uri` specified in the request, a `code` generated for the access, and the state specified in the request if any.
 
