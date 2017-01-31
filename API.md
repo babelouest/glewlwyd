@@ -275,7 +275,6 @@ Session token or header bearer token
 ```javascript
 {
   name: text, maximum 256 characters, optional
-  email: text, maximum 256 characters, optional
   old_password: text, optional
   new_password: text, mandatory if old_password is set
 }
@@ -344,10 +343,70 @@ Session token or header bearer token
 
 #### Data Parameters
 
-Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
-
+```json
+{
+  token_hash: text, required
+}
 ```
-token_hash: text, required
+
+#### Success response
+
+Code 200
+
+### Get current profile's refresh token list
+
+#### URL
+
+`/glewlwyd/profile/refresh_token/`
+
+#### Method
+
+`GET`
+
+#### Security
+
+Session token or header bearer token
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[
+  {
+    token_hash: text,
+    authorization_type: text,
+    ip_source: text,
+    enabled: boolean,
+    issued_at: numeric,
+    last_seen: numeric,
+    expired_at: numeric
+  }
+]
+```
+
+### Revoke a refresh token from current profile's list
+
+#### URL
+
+`/glewlwyd/profile/refresh_token/`
+
+#### Method
+
+`DELETE`
+
+#### Security
+
+Session token or header bearer token
+
+#### Data Parameters
+
+```javascript
+{
+  token_hash: text, required
+}
 ```
 
 #### Success response
@@ -403,17 +462,74 @@ Session token or header bearer token
 
 #### Data Parameters
 
-Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
-
-```
-session_hash: text, required
+```javascript
+{
+  session_hash: text, required
+}
 ```
 
 #### Success response
 
 Code 200
 
-## authorization type API
+### Send an email to reset a user's password
+
+#### URL
+
+`/profile/reset_password/{username}`
+
+#### Method
+
+`POST`
+
+#### URL Parameters
+
+`username`: a valid username that has en email registered
+
+#### Success response
+
+Code 200
+
+#### Error response
+
+Code 400
+
+Username specified has no e-mail.
+
+### Reset a user profile' password
+
+#### URL
+
+`/profile/reset_password/{username}`
+
+#### Method
+
+`PUT`
+
+#### URL Parameters
+
+`username`: a valid username that has en email registered
+
+#### Data parameters
+
+Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+
+```
+token: text, token sent to the user via e-mail, mandatory
+password: text, at least 8 characters, mandatory
+```
+
+#### Success response
+
+Code 200
+
+#### Error response
+
+Code 400
+
+Token or password invalid.
+
+## Authorization type API
 
 ### Get all authorization type status
 
@@ -449,7 +565,7 @@ Content
 
 #### URL
 
-`/glewlwyd/authorization/:authorization_type`
+`/glewlwyd/authorization/{authorization_type}`
 
 #### Method
 
@@ -483,7 +599,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/authorization/:authorization_type`
+`/glewlwyd/authorization/{authorization_type}`
 
 #### Method
 
@@ -559,7 +675,7 @@ Content
 
 #### URL
 
-`/glewlwyd/scope/:scope_name`
+`/glewlwyd/scope/{scope_name}`
 
 #### Method
 
@@ -633,7 +749,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/scope/:scope_name`
+`/glewlwyd/scope/{scope_name}`
 
 #### Method
 
@@ -677,7 +793,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/scope/:scope_name`
+`/glewlwyd/scope/{scope_name}`
 
 #### Method
 
@@ -981,10 +1097,10 @@ Scope required: `g_admin`
 
 #### Data Parameters
 
-Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
-
-```
-token_hash: text, required
+```javascript
+{
+  token_hash: text, required
+}
 ```
 
 #### Success response
@@ -1040,15 +1156,43 @@ Scope required: `g_admin`
 
 #### Data Parameters
 
-Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
-
-```
-session_hash: text, required
+```javascript
+{
+  session_hash: text, required
+}
 ```
 
 #### Success response
 
 Code 200
+
+### Send an email to reset a user's password
+
+#### URL
+
+`/user/{username}/reset_password`
+
+#### Method
+
+`POST`
+
+#### Security
+
+Scope required: `g_admin`
+
+#### URL Parameters
+
+`username`: a valid username that has en email registered
+
+#### Success response
+
+Code 200
+
+#### Error response
+
+Code 400
+
+Username specified has no e-mail.
 
 ## Client API
 
@@ -1072,9 +1216,9 @@ Scope required: `g_admin`
 
 Optional
 
-`source`: source to get the user data: vaues can be `database`, `ldap` or `all` default is `all`
+`source`: source to get the client data: vaues can be `database`, `ldap` or `all` default is `all`
 
-`search`: search pattern for name, description or client_id. API will return any user that match the corresponding pattern.
+`search`: search pattern for name, description or client_id. API will return any client that match the corresponding pattern.
 
 `offset`: offset to start the list result, default is 0
 
@@ -1089,6 +1233,7 @@ Content
 ```javascript
 [ // An array of client objects
   {
+    source: text,
     name: text,
     description: text,
     client_id: text,
@@ -1113,7 +1258,7 @@ Content
 
 #### URL
 
-`/glewlwyd/client/{client_id}`
+`/glewlwyd/client/{client_id}?source`
 
 #### Method
 
@@ -1129,6 +1274,10 @@ Required
 
 `client_id`: client_id
 
+Optional
+
+`source`: source to get the client data: vaues can be `database`, `ldap` or `all` default is `all`
+
 #### Success response
 
 Code 200
@@ -1137,6 +1286,7 @@ Content
 
 ```javascript
 {
+  source: text,
   name: text,
   description: text,
   client_id: text,
@@ -1180,6 +1330,7 @@ Scope required: `g_admin`
 
 ```javascript
 {
+  source: text, optional, values can be "ldap" or "database", default is "database"
   name: text, maximum 128 characters, mandatory
   description: text, maximum 256 characters, optional
   client_id: text, maximum 128 characters, must be unique, mandatory
@@ -1218,7 +1369,7 @@ If no password is specified in the request, the password is not changed.
 
 #### URL
 
-`/glewlwyd/client/{client_id}`
+`/glewlwyd/client/{client_id}?source`
 
 #### Method
 
@@ -1233,6 +1384,10 @@ Scope required: `g_admin`
 Required
 
 `client_id`: client client_id
+
+Optional
+
+`source`: source to get the client data: vaues can be `database`, `ldap` or `all` default is `all`
 
 #### Data Parameters
 
@@ -1278,7 +1433,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/client/{client_id}`
+`/glewlwyd/client/{client_id}?source`
 
 #### Method
 
@@ -1293,6 +1448,10 @@ Scope required: `g_admin`
 Required
 
 `client_id`: client client_id
+
+Optional
+
+`source`: source to get the client data: vaues can be `database`, `ldap` or `all` default is `all`
 
 #### Success response
 
@@ -1342,7 +1501,7 @@ Content
 
 #### URL
 
-`/glewlwyd/resource/:resource_name`
+`/glewlwyd/resource/{resource_name}`
 
 #### Method
 
@@ -1418,7 +1577,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/resource/:resource_name`
+`/glewlwyd/resource/{resource_name}`
 
 #### Method
 
