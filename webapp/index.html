@@ -1,3 +1,34 @@
+<!--
+ * 
+ * Glewlwyd OAuth2 Authorization Server
+ *
+ * Web application for server resource management
+ *
+ * Copyright 2017 Nicolas Mora <mail@babelouest.org>
+ * 
+ * The front-end application is under MIT Licence (MIT)
+ * 
+ * The MIT License (MIT)
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * 
+ -->
 <!doctype html>
 <html lang="en">
 	<head>
@@ -51,179 +82,10 @@
               <div class="row well" id="users"></div>
 						</div>
 						<div class="tab-pane container" id="userDetail">
-							<h2>Dave Lopper 1</h2>
-							<div class="well">
-								<div class="row">
-									<div class="col-md-3">
-										<label>Name</label>
-									</div>
-									<div class="col-md-3">
-										Dave Lopper 1
-									</div>
-									<div class="col-md-3">
-										<label>Email</label>
-									</div>
-									<div class="col-md-3">
-										user1@glewlwyd.domain
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-md-3">
-										<label>Login</label>
-									</div>
-									<div class="col-md-3">
-										user1
-									</div>
-									<div class="col-md-3">
-										<label>Scopes</label>
-									</div>
-									<div class="col-md-3">
-										scope1, scope2
-									</div>
-								</div>
-								<div class="row">
-									<div class="col-md-3">
-										<label>Enabled</label>
-									</div>
-									<div class="col-md-3">
-										true
-									</div>
-								</div>
+              <div id="userDetails"></div>
+							<div class="row well" id="userSessionTable">
 							</div>
-							<div class="row well">
-								<h3>Sessions&nbsp;<small><button type="button" class="btn" name="userDetailsRefresh" id="userDetailsRefresh"><i class="fa fa-refresh" aria-hidden="true"></i></button></small></h3>
-								<table class="table table-hover table-responsive">
-									<thead>
-										<tr>
-											<th>IP Source</th>
-											<th>Issued at</th>
-											<th>Last seen</th>
-											<th>Expired at</th>
-											<th>Enabled</th>
-											<th></th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr>
-											<td><span class="gl-table-title">IP Source: </span><span>1.2.3.4</span></td>
-											<td><span class="gl-table-title">Issued at: </span><span>Sun, 15 Jan 2017 10:23:25 EST</span></td>
-											<td><span class="gl-table-title">Last seen: </span><span>Sun, 15 Jan 2017 15:14:08 EST</span></td>
-											<td><span class="gl-table-title">Expired at: </span><span></span></td>
-											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
-											<td>
-                        <div class="input-group">
-                          <div class="input-group-btn">
-                            <button type="button" class="btn btn-default" name="sessionDelete" id="sessionDelete" data-toggle="modal" data-target="#confirmModal">
-                              <i class="fa fa-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        </div>
-											</td>
-										</tr>
-										<tr class="warning">
-											<td><span class="gl-table-title">IP Source: </span><span>1.2.3.4</span></td>
-											<td><span class="gl-table-title">Issued at: </span><span>Wed, 11 Jan 2017 07:11:22 EST</span></td>
-											<td><span class="gl-table-title">Last seen: </span><span>Sat, 14 Jan 2017 16:59:59 EST</span></td>
-											<td><span class="gl-table-title">Expired at: </span><span>Sat, 14 Jan 2017 16:59:59 EST</span></td>
-											<td><span class="gl-table-title">Enabled: </span><span>false</span></td>
-											<td>
-                        <div class="input-group">
-                          <div class="input-group-btn">
-                            <button type="button" class="btn btn-default" name="sessionDelete" id="sessionDelete" data-toggle="modal" data-target="#confirmModal">
-                              <i class="fa fa-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        </div>
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-							<div class="row well">
-								<h3>Refresh tokens&nbsp;<small><button type="button" class="btn" name="userDetailsRefresh" id="userDetailsRefresh"><i class="fa fa-refresh" aria-hidden="true"></i></button></small></h3>
-								<table class="table table-hover table-responsive">
-									<thead>
-										<tr>
-											<th>IP Source</th>
-											<th>Authorization type</th>
-											<th>Issued at</th>
-											<th>Last seen</th>
-											<th>Expired at</th>
-											<th>Enabled</th>
-											<th></th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr>
-											<td><span class="gl-table-title">IP Source: </span><span></span>1.2.3.4</td>
-											<td><span class="gl-table-title">Authorization type: </span><span></span>authorization_code</td>
-											<td><span class="gl-table-title">Issued at: </span><span></span>Sun, 15 Jan 2017 10:23:25 EST</td>
-											<td><span class="gl-table-title">Last seen: </span><span></span>Sun, 15 Jan 2017 10:23:30 EST</td>
-											<td><span class="gl-table-title">Expired at: </span><span></span></td>
-											<td><span class="gl-table-title">Enabled: </span><span></span>true</td>
-											<td>
-                        <div class="input-group">
-                          <div class="input-group-btn">
-                            <button type="button" class="btn btn-default" name="refreshTokenDelete" id="refreshTokenDelete" data-toggle="modal" data-target="#confirmModal">
-                              <i class="fa fa-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        </div>
-											</td>
-										</tr>
-										<tr>
-											<td><span class="gl-table-title">IP Source: </span><span>1.2.3.4</span></td>
-											<td><span class="gl-table-title">Authorization type: </span><span>code</span></td>
-											<td><span class="gl-table-title">Issued at: </span><span>Sun, 15 Jan 2017 10:23:30 EST</span></td>
-											<td><span class="gl-table-title">Last seen: </span><span>Sun, 15 Jan 2017 10:23:30 EST</span></td>
-											<td><span class="gl-table-title">Expired at: </span><span></span></td>
-											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
-											<td>
-                        <div class="input-group">
-                          <div class="input-group-btn">
-                            <button type="button" class="btn btn-default" name="refreshTokenDelete" id="refreshTokenDelete" data-toggle="modal" data-target="#confirmModal">
-                              <i class="fa fa-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        </div>
-											</td>
-										</tr>
-										<tr class="warning">
-											<td><span class="gl-table-title">IP Source: </span><span>1.2.3.4</span></td>
-											<td><span class="gl-table-title">Authorization type: </span><span>password</span></td>
-											<td><span class="gl-table-title">Issued at: </span><span>Wed, 11 Jan 2017 07:11:22 EST</span></td>
-											<td><span class="gl-table-title">Last seen: </span><span>Sat, 14 Jan 2017 16:59:59 EST</span></td>
-											<td><span class="gl-table-title">Expired at: </span><span>Sat, 14 Jan 2017 16:59:59 EST</span></td>
-											<td><span class="gl-table-title">Enabled: </span><span>false</span></td>
-											<td>
-                        <div class="input-group">
-                          <div class="input-group-btn">
-                            <button type="button" class="btn btn-default" name="refreshTokenDelete" id="refreshTokenDelete" data-toggle="modal" data-target="#confirmModal">
-                              <i class="fa fa-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        </div>
-											</td>
-										</tr>
-										<tr>
-											<td><span class="gl-table-title">IP Source: </span><span>1.2.3.4</span></td>
-											<td><span class="gl-table-title">Authorization type: </span><span>password</span></td>
-											<td><span class="gl-table-title">Issued at: </span><span>Sun, 15 Jan 2017 10:26:30 EST</span></td>
-											<td><span class="gl-table-title">Last seen: </span><span>Sun, 15 Jan 2017 10:26:30 EST</span></td>
-											<td><span class="gl-table-title">Expired at: </span><span></span></td>
-											<td><span class="gl-table-title">Enabled: </span><span>true</span></td>
-											<td>
-                        <div class="input-group">
-                          <div class="input-group-btn">
-                            <button type="button" class="btn btn-default" name="refreshTokenDelete" id="refreshTokenDelete" data-toggle="modal" data-target="#confirmModal">
-                              <i class="fa fa-trash" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        </div>
-											</td>
-										</tr>
-									</tbody>
-								</table>
+							<div class="row well" id="userTokenTable">
 							</div>
 						</div>
 						<div class="tab-pane container" id="client">
@@ -247,259 +109,3 @@
 </html>
 
 <div id="modal"></div>
-
-<div id="confirmModal" class="modal fade" role="dialog">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title" id="confirmTitle"></h4>
-      </div>
-      <div class="modal-body container-fluid" id="confirmBody"></div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">OK</button>
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="clientModal" class="modal fade" role="dialog">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Client</h4>
-      </div>
-      <div class="modal-body container-fluid">
-        <div class="row">
-					<div class="col-md-6">
-						<label for="userSource">Source</label>
-					</div>
-					<div class="col-md-6">
-						<select class="form-control" name="userSource" id="userSource">
-              <option value="ldap">LDAP</option>
-              <option value="database">Database</option>
-            </select>
-					</div>
-        </div>
-        <div class="row">
-					<div class="col-md-6">
-						<label for="clientName">Name</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="text" name="clientName" id="clientName" placeholder="Client name">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="clientDescription">Description</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="text" name="clientDescription" id="clientDescription" placeholder="Client description">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="clientClientId">Client Id</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="text" name="clientClientId" id="clientClientId" placeholder="Client Id (login)">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label>Confidential</label>
-					</div>
-					<div class="col-md-6">
-						<input type="checkbox" name="clientConfidential" id="clientConfidential"/>
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="clientPassword">Password</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="password" name="clientPassword" id="clientPassword" placeholder="Client password">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="clientPasswordConfirm">Confirm password</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="password" name="clientPasswordConfirm" id="clientPasswordConfirm" placeholder="Client password confirm">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="clientScope">Scopes</label>
-					</div>
-					<div class="col-md-6">
-						<div class="input-group">
-							<select id="clientScope" name="clientScope" class="form-control">
-								<option value="scope1">scope1</option>
-								<option value="scope2">scope2</option>
-								<option value="g_admin">g_admin</option>
-							</select>
-							<div class="input-group-btn ">
-								<button type="button" name="addScope" id="addScope" class="btn btn-default">
-									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-								</button>
-							</div>
-						</div>
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-					</div>
-					<div class="col-md-6" id="clientScopeValues">
-					</div>
-				</div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="clientRedirectUri">Redirect URIs</label>
-					</div>
-					<div class="col-md-6">
-						<div class="input-group">
-							<input class="form-control" type="text" name="clientRedirectUri" id="clientRedirectUri" placeholder="New redirect URI">
-							<div class="input-group-btn ">
-								<button type="button" name="addScope" id="addScope" class="btn btn-default">
-									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-								</button>
-							</div>
-						</div>
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-					</div>
-					<div class="col-md-6" id="clientRedirectUriValues">
-					</div>
-				</div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label>Enabled</label>
-					</div>
-					<div class="col-md-6">
-						<input type="checkbox" name="clientEnabled" id="clientEnabled"/>
-					</div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">Save</button>
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="scopeModal" class="modal fade" role="dialog">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Scope</h4>
-      </div>
-      <div class="modal-body container-fluid">
-        <div class="row">
-					<div class="col-md-6">
-						<label for="scopeName">Name</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="text" name="scopeName" id="scopeName" placeholder="Name">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="scopeDescription">Description</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="text" name="scopeDescription" id="scopeDescription" placeholder="Description">
-					</div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">Save</button>
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="resourceModal" class="modal fade" role="dialog">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Resource</h4>
-      </div>
-      <div class="modal-body container-fluid">
-        <div class="row">
-					<div class="col-md-6">
-						<label for="resourceName">Name</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="text" name="resourceName" id="resourceName" placeholder="Name">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="resourceDescription">Description</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="text" name="resourceDescription" id="resourceDescription" placeholder="Description">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="resourceUri">URI</label>
-					</div>
-					<div class="col-md-6">
-						<input class="form-control" type="text" name="resourceUri" id="resourceUri" placeholder="Resource URI">
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-						<label for="clientScope">Scopes</label>
-					</div>
-					<div class="col-md-6">
-						<div class="input-group">
-							<select id="clientScope" name="clientScope" class="form-control">
-								<option value="scope1">scope1</option>
-								<option value="scope2">scope2</option>
-								<option value="g_admin">g_admin</option>
-							</select>
-							<div class="input-group-btn ">
-								<button type="button" name="addScope" id="addScope" class="btn btn-default">
-									<i class="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-								</button>
-							</div>
-						</div>
-					</div>
-        </div>
-        <div class="row top-buffer">
-					<div class="col-md-6">
-					</div>
-					<div class="col-md-6">
-						<span class="tag label label-info">
-							<span>scope1</span>
-							<a href="">
-								<i class="icon-resize-small fa fa-trash" aria-hidden="true"></i>
-							</a>
-						</span>
-						<span class="tag label label-info">
-							<span>scope2</span>
-							<a href="">
-								<i class="icon-resize-small fa fa-trash" aria-hidden="true"></i>
-							</a>
-						</span>
-					</div>
-				</div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default btn-primary" data-dismiss="modal">Save</button>
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
