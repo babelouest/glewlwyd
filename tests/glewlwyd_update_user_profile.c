@@ -77,7 +77,7 @@ END_TEST
   
 START_TEST(test_glwd_update_user_profile_update_fail)
 {
-  json_t * json_body = json_pack("{sisi}", "name", 1, "email", 2);
+  json_t * json_body = json_pack("{si}", "name", 1);
   char * url = msprintf("%s/profile/", SERVER_URI);
   int res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 400, NULL, NULL, NULL);
   json_decref(json_body);
