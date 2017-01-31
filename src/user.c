@@ -1293,7 +1293,7 @@ int add_user_database(struct config_elements * config, json_t * j_user) {
                       GLEWLWYD_TABLE_USER,
                       "values",
                         "gu_name",
-                        json_string_value(json_object_get(j_user, "name")),
+                        json_object_get(j_user, "name")!=NULL?json_string_value(json_object_get(j_user, "name")):"",
                         "gu_email",
                         json_object_get(j_user, "email")!=NULL?json_string_value(json_object_get(j_user, "email")):"",
                         "gu_login",
