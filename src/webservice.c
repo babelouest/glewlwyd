@@ -774,7 +774,7 @@ int callback_glewlwyd_delete_refresh_token_user (const struct _u_request * reque
   struct config_elements * config = (struct config_elements *)user_data;
   int res;
   
-  res = revoke_token(config, u_map_get(request->map_url, "username"), u_map_get(request->map_post_body, "token_hash"));
+  res = revoke_token(config, u_map_get(request->map_url, "username"), json_string_value(json_object_get(request->json_body, "token_hash")));
   if (res == G_ERROR_NOT_FOUND) {
     response->status = 404;
   } else if (res == G_ERROR_PARAM) {
@@ -830,7 +830,7 @@ int callback_glewlwyd_delete_session_user (const struct _u_request * request, st
   struct config_elements * config = (struct config_elements *)user_data;
   int res;
   
-  res = revoke_session(config, u_map_get(request->map_url, "username"), u_map_get(request->map_post_body, "session_hash"));
+  res = revoke_session(config, u_map_get(request->map_url, "username"), json_string_value(json_object_get(request->json_body, "session_hash")));
   if (res == G_ERROR_NOT_FOUND) {
     response->status = 404;
   } else if (res == G_ERROR_PARAM) {
@@ -1113,7 +1113,7 @@ int callback_glewlwyd_send_reset_user (const struct _u_request * request, struct
   if (check_result_value(j_user, G_OK)) {
     if (json_object_get(json_object_get(j_user, "user"), "email") != NULL && json_string_length(json_object_get(json_object_get(j_user, "user"), "email")) > 0) {
       if (send_reset_user_profile_email(config, u_map_get(request->map_url, "username"), ip_source) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_send_reset_user_profile - Error sending reset profile email");
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_send_reset_user - Error sending reset profile email");
         response->status = 500;
       }
     } else {
@@ -1123,7 +1123,7 @@ int callback_glewlwyd_send_reset_user (const struct _u_request * request, struct
   } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
     response->status = 404;
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_send_reset_user_profile - Error getting user profile");
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_send_reset_user - Error getting user profile");
     response->status = 500;
   }
   json_decref(j_user);
@@ -1232,7 +1232,7 @@ int callback_glewlwyd_delete_refresh_token_profile (const struct _u_request * re
   
   j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   if (check_result_value(j_session, G_OK)) {
-    res = revoke_token(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "token_hash"));
+    res = revoke_token(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), json_string_value(json_object_get(request->json_body, "token_hash")));
     if (res == G_ERROR_NOT_FOUND) {
       response->status = 404;
     } else if (res == G_ERROR_PARAM) {
@@ -1304,7 +1304,7 @@ int callback_glewlwyd_delete_session_profile (const struct _u_request * request,
   
   j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   if (check_result_value(j_session, G_OK)) {
-    res = revoke_session(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), u_map_get(request->map_post_body, "session_hash"));
+    res = revoke_session(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), json_string_value(json_object_get(request->json_body, "session_hash")));
     if (res == G_ERROR_NOT_FOUND) {
       response->status = 404;
     } else if (res == G_ERROR_PARAM) {
