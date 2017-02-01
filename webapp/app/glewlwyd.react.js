@@ -697,120 +697,17 @@ $(function() {
         selectedScope = scopeList[0].name;
       }
       this.state = {
-        search: "", 
-        offset: 0, 
-        limit: 10, 
         clients: this.props.clients, 
-        showModal: false, 
-        editClient: { scope: [], redirect_uri: [] }, 
-        add: false, 
-        redirectUri: "",
-        redirectUriName: "",
-        selectedScope: selectedScope,
-        passwordInvalid: false,
-        clientIdInvalid: true,
-        redirectUriNameInvalid: false,
-        redirectUriInvalid: false,
-        showConfirmModal: false,
-        messageConfirmModal: "",
-        showAlertModal: false,
-        messageAlertModal: ""
+        editClient: null
       };
       
-      this.handleSearch = this.handleSearch.bind(this);
-      this.handleChangeSearch = this.handleChangeSearch.bind(this);
-      this.handleChangeLimit = this.handleChangeLimit.bind(this);
-      this.handlePreviousPage = this.handlePreviousPage.bind(this);
-      this.handleNextPage = this.handleNextPage.bind(this);
-      
-      // Modal functions
+      this.runSearch = this.runSearch.bind(this);
       this.openModalAdd = this.openModalAdd.bind(this);
-      this.closeClientModal = this.closeClientModal.bind(this);
-      this.saveClientModal = this.saveClientModal.bind(this);
+      this.saveClient = this.saveClient.bind(this);
       this.openModalEdit = this.openModalEdit.bind(this);
-      this.handleChangeSource = this.handleChangeSource.bind(this);
-      this.handleChangeClientId = this.handleChangeClientId.bind(this);
-      this.handleChangeName = this.handleChangeName.bind(this);
-      this.handleChangeDescription = this.handleChangeDescription.bind(this);
-      this.handleChangeConfidential = this.handleChangeConfidential.bind(this);
-      this.handleChangePassword = this.handleChangePassword.bind(this);
-      this.handleChangeConfirmPassword = this.handleChangeConfirmPassword.bind(this);
-      this.handleChangeScopeSelected = this.handleChangeScopeSelected.bind(this);
-      this.handleChangeRedirectUriName = this.handleChangeRedirectUriName.bind(this);
-      this.handleChangeRedirectUri = this.handleChangeRedirectUri.bind(this);
-      this.addRedirectUri = this.addRedirectUri.bind(this);
-      this.handleChangeEnabled = this.handleChangeEnabled.bind(this);
-      this.addScope = this.addScope.bind(this);
-      this.removeScope = this.removeScope.bind(this);
-      
       this.openModalDelete = this.openModalDelete.bind(this);
       this.deleteClient = this.deleteClient.bind(this);
-      
       this.openAlertModal = this.openAlertModal.bind(this);
-    }
-    
-    handleChangeSearch (event) {
-      this.setState({search: event.target.value});
-    }
-    
-    handleChangeLimit (event) {
-      var limit = parseInt(event.target.value);
-      var offset = this.state.offset;
-      var search = this.state.search;
-      var self = this;
-      this.setState(function (prevState) {
-        self.runSearch(search, offset, limit);
-        return {limit: limit};
-      });
-    }
-    
-    handlePreviousPage (event) {
-      var limit = this.state.limit;
-      var offset = this.state.offset-limit;
-      var search = this.state.search;
-      var self = this;
-      this.setState(function (prevState) {
-        self.runSearch(search, offset, limit);
-        return {offset: offset};
-      });
-    }
-    
-    handleNextPage (event) {
-      var limit = this.state.limit;
-      var offset = this.state.offset+limit;
-      var search = this.state.search;
-      var self = this;
-      this.setState(function (prevState) {
-        self.runSearch(search, offset, limit);
-        return {offset: offset};
-      });
-    }
-    
-    handleSearch (event) {
-      this.runSearch(this.state.search, this.state.offset, this.state.limit);
-      event.preventDefault();
-    }
-    
-    // Modal functions
-    openModalAdd (event) {
-      event.preventDefault();
-      this.setState({
-        showModal: true, 
-        editClient: {
-          enabled: true,
-          scope: [], 
-          redirect_uri: [], 
-          source: "database", 
-          confidential: false, 
-          password: "", 
-          confirmPassword: ""
-        }, 
-        add: true, 
-        clientScopeList: [], 
-        clientIdInvalid: true,
-        redirectUriNameInvalid: true,
-        redirectUriInvalid: true
-      });
     }
     
     openModalEdit (client) {
@@ -818,8 +715,24 @@ $(function() {
       this.setState({showModal: true, editClient: cloneClient, add: false, clientIdInvalid: false});
     }
     
+    openModalAdd (event) {
+      event.preventDefault();
+      ReactDOM.render(
+        <ClientEditModal show={true} add={true} closeModal={this.saveClient} />,
+        document.getElementById('modal')
+      );
+    }
+    
+    openModalEdit (client) {
+      var cloneClient = $.extend({}, client);
+      ReactDOM.render(
+        <ClientEditModal show={true} add={false} client={cloneClient} closeModal={this.saveClient} />,
+        document.getElementById('modal')
+      );
+    }
+    
     openModalDelete (client) {
-      var message = "Are your sure you want to delete client '" + client.client_id + "'";
+      var message = "Are your sure you want to delete client '" + client.name + "'";
       ReactDOM.render(
         <ConfirmModal show={true} title={"Client"} message={message} onClose={this.deleteClient} />,
         document.getElementById('modal')
@@ -829,20 +742,23 @@ $(function() {
     
     deleteClient (result) {
       var self = this;
-      result && APIRequest("DELETE", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/" + this.state.editClient.client_id)
-      .then(function (result) {
-          var clients = self.state.clients;
-          for (var key in clients) {
-            if (clients[key].client_id === self.state.editClient.client_id) {
-              clients.splice(key, 1);
-              break;
-            }
-          };
-          self.setState({clients: clients});
-      })
-      .done(function (result) {
-        self.setState({showConfirmModal: false});
-      });
+      if (result) {
+        APIRequest("DELETE", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/" + this.state.editClient.client_id)
+        .then(function (result) {
+            var clients = self.state.clients;
+            for (var key in clients) {
+              if (clients[key].client_id === self.state.editClient.client_id) {
+                clients.splice(key, 1);
+                break;
+              }
+            };
+            self.setState({clients: clients});
+            self.openAlertModal("Client deleted");
+        })
+        .fail(function (error) {
+          self.openAlertModal("Error deleting client");
+        });
+      }
     }
     
     openAlertModal (message) {
@@ -852,139 +768,42 @@ $(function() {
       );
     }
     
-    closeClientModal(result, value) {
-      this.setState({showModal: false});
-    }
-    
-    saveClientModal (event) {
-      event.preventDefault();
+    saveClient (add, client) {
       var self = this;
-      if (this.state.add) {
-        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/" + self.state.editClient.client_id)
+      if (add) {
+        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/" + client.client_id)
         .then(function (result) {
-          self.openAlertModal("Error, client_id '" + self.state.editClient.client_id + "' already exist");
+          self.openAlertModal("Error, client_id '" + client.client_id + "' already exist");
         })
         .fail(function () {
-          APIRequest("POST", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/", self.state.editClient)
+          APIRequest("POST", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/", client)
           .then(function (result) {
             var clients = self.state.clients;
-            self.state.editClient.password = "";
-            self.state.editClient.confirmPassword = "";
-            clients.push(self.state.editClient);
+            clients.push(client);
             self.setState({clients: clients});
+            self.openAlertModal("Client created");
           })
           .fail(function (error) {
             self.openAlertModal("Error adding client");
-          })
-          .done(function (result) {
-            self.setState({showModal: false});
           });
         });
         
       } else {
-        APIRequest("PUT", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/" + this.state.editClient.client_id, this.state.editClient)
+        APIRequest("PUT", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/" + client.client_id, client)
         .then(function () {
           var clients = self.state.clients;
           for (var key in clients) {
-            if (clients[key].client_id === self.state.editClient.client_id) {
-              clients[key] = self.state.editClient;
+            if (clients[key].client_id === client.client_id) {
+              clients[key] = client;
             }
           };
           self.setState({clients: clients});
-        })
-        .done(function (result) {
-          self.setState({showModal: false});
+          self.openAlertModal("Client updated");
+          })
+          .fail(function (error) {
+            self.openAlertModal("Error updating client");
         });
       }
-    }
-    
-    handleChangeSource (event) {
-      var newClient = $.extend({}, this.state.editClient);
-      newClient.source = event.target.value;
-      this.setState({editClient: newClient});
-    }
-    
-    handleChangeClientId (event) {
-      var isInvalid = !event.target.value;
-      var newClient = $.extend({}, this.state.editClient);
-      newClient.client_id = event.target.value || "";
-      this.setState({editClient: newClient, clientIdInvalid: isInvalid});
-    }
-    
-    handleChangeName (event) {
-      var newClient = $.extend({}, this.state.editClient);
-      newClient.name = event.target.value || "";
-      this.setState({editClient: newClient});
-    }
-    
-    handleChangeDescription (event) {
-      var newClient = $.extend({}, this.state.editClient);
-      newClient.description = event.target.value || "";
-      this.setState({editClient: newClient});
-    }
-    
-    handleChangeRedirectUriName (event) {
-      var isInvalid = !event.target.value.length > 0;
-      this.setState({redirectUriName: event.target.value || "", redirectUriNameInvalid: isInvalid});
-    }
-    
-    handleChangeRedirectUri (event) {
-      var isInvalid = !event.target.value.startsWith("http://") && !event.target.value.startsWith("https://");
-      this.setState({redirectUri: event.target.value || "", redirectUriInvalid: isInvalid});
-    }
-    
-    addRedirectUri (event) {
-      if (this.state.redirectUriName.length > 0 && (this.state.redirectUri.startsWith("http://") || this.state.redirectUri.startsWith("https://"))) {
-        var newClient = $.extend({}, this.state.editClient);
-        newClient.redirect_uri.push({name: this.state.redirectUriName, uri: this.state.redirectUri});
-        this.setState({editClient: newClient});
-      }
-    }
-    
-    handleChangeConfidential (event) {
-      var newClient = $.extend({}, this.state.editClient);
-      newClient.confidential = !newClient.confidential;
-      var isInvalid = newClient.confidential && (this.state.editClient.password !== this.state.editClient.confirmPassword || !this.state.editClient.password || this.state.editClient.password.length < 8);
-      this.setState({editClient: newClient, passwordInvalid: isInvalid});
-    }
-    
-    handleChangePassword (event) {
-      var isInvalid = this.state.editClient.confidential && (event.target.value !== this.state.editClient.confirmPassword || event.target.value.length < 8);
-      var newClient = $.extend({}, this.state.editClient);
-      newClient.password = event.target.value || "";
-      this.setState({editClient: newClient, passwordInvalid: isInvalid});
-    }
-    
-    handleChangeConfirmPassword (event) {
-      var isInvalid = this.state.editClient.confidential && (event.target.value !== this.state.editClient.password || !this.state.editClient.password || this.state.editClient.password.length < 8);
-      var newClient = $.extend({}, this.state.editClient);
-      newClient.confirmPassword = event.target.value || "";
-      this.setState({editClient: newClient, passwordInvalid: isInvalid});
-    }
-    
-    handleChangeScopeSelected (event) {
-      this.setState({selectedScope: event.target.value});
-    }
-    
-    removeScope (scope, event) {
-      event.preventDefault();
-      var newClient = $.extend({}, this.state.editClient);
-      newClient.scope.splice(newClient.scope.indexOf(scope), 1);
-      this.setState({editClient: newClient});
-    }
-    
-    addScope (event) {
-      var newClient = $.extend({}, this.state.editClient);
-      if (this.state.editClient.scope.indexOf(this.state.selectedScope) == -1) {
-        newClient.scope.push(this.state.selectedScope);
-        this.setState({editClient: newClient});
-      }
-    }
-    
-    handleChangeEnabled (event) {
-      var newClient = $.extend({}, this.state.editClient);
-      newClient.enabled = !newClient.enabled;
-      this.setState({editClient: newClient});
     }
     
     runSearch (search, offset, limit) {
@@ -992,9 +811,7 @@ $(function() {
       if (search) {
         APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/?search=" + search + "&limit=" + limit + "&offset=" + offset)
         .then(function (result) {
-          self.setState({
-            clients: result
-          });
+          self.setState({clients: result});
         })
         .fail(function (error) {
           self.openAlertModal("Error while searching clients");
@@ -1002,9 +819,7 @@ $(function() {
       } else {
         APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/" + "?limit=" + limit + "&offset=" + offset)
         .then(function (result) {
-          self.setState({
-            clients: result
-          });
+          self.setState({clients: result});
         })
         .fail(function (error) {
           self.openAlertModal("Error while searching clients");
@@ -1014,81 +829,19 @@ $(function() {
 
     render() {
       var self = this;
-      var allScopeList = [];
-      scopeList.forEach(function (scope) {
-        allScopeList.push(<option value={scope.name} key={scope.name}>{scope.name}</option>)
-      });
       var rows = [];
-      this.state.clients.forEach(function(client) {
+      this.state.clients.forEach(function(client, index) {
         rows.push(
-          <ClientRow client={client} openModalEdit={this.openModalEdit} openModalDelete={this.openModalDelete} />
-        );
-      });
-      var previousOpts = {};
-      if (this.state.offset === 0) {
-        previousOpts["disabled"] = "disabled";
-      }
-      var clientScopeList = [];
-      this.state.editClient.scope.forEach(function (scope) {
-        clientScopeList.push(
-          <span className="tag label label-info" key={scope}>
-            <span>{scope}&nbsp;</span>
-            <a href="" onClick={(evt) => self.removeScope(scope, evt)}>
-              <i className="remove glyphicon glyphicon-remove-sign glyphicon-white"></i>
-            </a>
-          </span>
-        );
-      });
-      var clientRedirectUriList = [];
-      this.state.editClient.redirect_uri.forEach(function (redirect_uri, index) {
-        clientRedirectUriList.push(
-          <span className="tag label label-info hide-overflow" key={index} data-toggle="tooltip" title={redirect_uri.uri}>
-            <a href="" onClick={(evt) => self.removeRedirectUri(redirect_uri.name, evt)}>
-              <i className="remove glyphicon glyphicon-remove-sign glyphicon-white"></i>
-            </a>
-            <span>&nbsp;{redirect_uri.name + " (" + redirect_uri.uri + ")"}</span>
-          </span>
+          <ClientRow client={client} openModalEdit={self.openModalEdit} openModalDelete={self.openModalDelete} key={index} />
         );
       });
       
       return (
         <div>
-          <form onSubmit={this.handleSearch}>
-            <div className="input-group row">
-              <input type="text" className="form-control" placeholder="Search" value={this.state.search} onChange={this.handleChangeSearch}/>
-              <div className="input-group-btn">
-                <Button className="btn btn-default" onClick={this.handleSearch}>
-                  <i className="glyphicon glyphicon-search"></i>
-                </Button>
-                <Button className="btn btn-default" onClick={this.openModalAdd}>
-                  <i className="glyphicon glyphicon-plus"></i>
-                </Button>
-              </div>
-            </div>
-          </form>
-          <div className="row">
-            <div className="col-md-3">
-              <div className="input-group">
-                <div className="input-group-btn">
-                  <button className="btn btn-default" {...previousOpts} type="button" onClick={this.handlePreviousPage}><i className="icon-resize-small fa fa-chevron-left"></i></button>
-                </div>
-                <div>
-                  <select className="form-control" onChange={this.handleChangeLimit} value={this.state.limit}>
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                  </select>
-                </div>
-                <div className="input-group-btn">
-                  <Button className="btn btn-default" type="button" onClick={this.handleNextPage}><i className="icon-resize-small fa fa-chevron-right"></i></Button>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-9 text-right">
-              <span className="text-center">{this.state.limit} results maximum, starting at result: {this.state.offset}</span>
-            </div>
-          </div>
+          <ListNavigation updateNavigation={this.runSearch} />
+          <Button className="btn btn-default" onClick={this.openModalAdd}>
+            <i className="glyphicon glyphicon-plus"></i>
+          </Button>
           <table className="table table-hover table-responsive">
             <thead>
               <tr>
@@ -1106,154 +859,6 @@ $(function() {
               {rows}
             </tbody>
           </table>
-          <Modal show={this.state.showModal} onHide={this.closeClientModal}>
-            <Modal.Header closeButton>
-              <Modal.Title>Client</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <div className="row">
-                <div className="col-md-6">
-                  <label htmlFor="clientSource">Source</label>
-                </div>
-                <div className="col-md-6">
-                  <select className="form-control" name="clientSource" id="clientSource" value={this.state.editClient.source} onChange={this.handleChangeSource}>
-                    <option value="ldap">LDAP</option>
-                    <option value="database">Database</option>
-                  </select>
-                </div>
-              </div>
-              <div className="row">
-                <div className="col-md-6">
-                  <label htmlFor="clientId">Client Id</label>
-                </div>
-                <div className={this.state.clientIdInvalid?"col-md-6 has-error":"col-md-6"}>
-                  <input className="form-control" type="text" name="clientId" id="clientId" disabled={!this.state.add?"disabled":""} placeholder="Client Id" value={this.state.editClient.client_id} onChange={this.handleChangeClientId}></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="clientName">Name</label>
-                </div>
-                <div className="col-md-6">
-                  <input className="form-control" type="text" name="clientName" id="clientName" placeholder="Fullname" value={this.state.editClient.name} onChange={this.handleChangeName}></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="clientDescription">Description</label>
-                </div>
-                <div className="col-md-6">
-                  <input className="form-control" type="text" name="clientDescription" id="clientDescription" placeholder="Client description" value={this.state.editClient.description} onChange={this.handleChangeDescription}></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label>Confidential</label>
-                </div>
-                <div className="col-md-6">
-                  <Checkbox validationState="success" checked={this.state.editClient.confidential?true:false} onChange={this.handleChangeConfidential}></Checkbox>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="clientPassword">Password</label>
-                </div>
-                <div className={this.state.passwordInvalid?"col-md-6 has-error":"col-md-6"}>
-                  <input className="form-control" 
-                         type="password" 
-                         name="clientPassword" 
-                         id="clientPassword" 
-                         placeholder="User password" 
-                         disabled={this.state.editClient.confidential?false:true}
-                         onChange={this.handleChangePassword} 
-                         value={this.state.editClient.password}></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="clientPasswordConfirm">Confirm password</label>
-                </div>
-                <div className={this.state.passwordInvalid?"col-md-6 has-error":"col-md-6"}>
-                  <input className="form-control" 
-                         type="password" 
-                         name="clientPasswordConfirm" 
-                         id="clientPasswordConfirm" 
-                         placeholder="Confirm User password" 
-                         disabled={this.state.editClient.confidential?false:true}
-                         onChange={this.handleChangeConfirmPassword} 
-                         value={this.state.editClient.confirmPassword}></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="clientScope">Scopes</label>
-                </div>
-                <div className="col-md-6">
-                  <div className="input-group">
-                    <select id="clientScope" name="clientScope" className="form-control" value={this.state.scopeSelected} onChange={this.handleChangeScopeSelected}>
-                      {allScopeList}
-                    </select>
-                    <div className="input-group-btn ">
-                      <button type="button" name="addScope" id="addScope" className="btn btn-default" onClick={this.addScope}>
-                        <i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                </div>
-                <div className="col-md-6" id="clientScopeValue">
-                {clientScopeList}
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="clientScope">Redirect URIs</label>
-                </div>
-                <div className="col-md-6">
-                  <div className={this.state.redirectUriInvalid?"has-error":""}>
-                    <input className="form-control" type="text" placeholder="URI" data-toggle="tooltip" title="Redirect uri must start with http:// or https://" value={this.state.redirectUri} onChange={this.handleChangeRedirectUri}></input>
-                  </div>
-                  <div>
-                    <div className={this.state.redirectUriNameInvalid?"input-group has-error":"input-group"}>
-                      <input className="form-control" type="text" placeholder="Name" value={this.state.redirectUriName} onChange={this.handleChangeRedirectUriName}></input>
-                      <div className="input-group-btn ">
-                        <button type="button" 
-                                name="addScope" 
-                                id="addScope" 
-                                className="btn btn-default" 
-                                disabled={this.state.redirectUriNameInvalid||this.state.redirectUriInvalid?true:false}
-                                onClick={this.addRedirectUri}>
-                          <i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                </div>
-                <div className="col-md-6" id="clientScopeValue">
-                {clientRedirectUriList}
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label>Enabled</label>
-                </div>
-                <div className="col-md-6">
-                  <Checkbox validationState="success" checked={this.state.editClient.enabled?true:false} onChange={this.handleChangeEnabled}></Checkbox>
-                </div>
-              </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button onClick={this.saveClientModal} disabled={this.state.passwordInvalid||this.state.clientIdInvalid||this.state.editClient.redirect_uri.length===0?true:false}>Save</Button>
-              <Button onClick={this.closeClientModal}>Cancel</Button>
-            </Modal.Footer>
-          </Modal>
         </div>
       );
     }
@@ -1283,6 +888,329 @@ $(function() {
         </td>
       </tr>
     );
+  }
+  
+  class ClientEditModal extends React.Component {
+    constructor(props) {
+      super(props);
+      var client = props.client;
+      if (props.add) {
+        client = {
+          source: "database",
+          name: "",
+          description: "",
+          client_id: "",
+          confidential: false,
+          enabled: true,
+          redirect_uri: [],
+          scope: []
+        }
+      }
+      client.password = "";
+      client.confirmPassword = "";
+      this.state = {
+        show: props.show, 
+        add: this.props.add, 
+        client: client, 
+        closeModal: this.props.closeModal, 
+        nameInvalid: this.props.add, 
+        clientIdInvalid: this.props.add,
+        redirectUriNameInvalid: true,
+        redirectUriInvalid: true
+      };
+
+      this.handleChangeSource = this.handleChangeSource.bind(this);
+      this.handleChangeClientId = this.handleChangeClientId.bind(this);
+      this.handleChangeName = this.handleChangeName.bind(this);
+      this.handleChangeDescription = this.handleChangeDescription.bind(this);
+      this.handleChangeConfidential = this.handleChangeConfidential.bind(this);
+      this.handleChangePassword = this.handleChangePassword.bind(this);
+      this.handleChangeConfirmPassword = this.handleChangeConfirmPassword.bind(this);
+      this.handleChangeRedirectUriName = this.handleChangeRedirectUriName.bind(this);
+      this.handleChangeRedirectUri = this.handleChangeRedirectUri.bind(this);
+      this.addRedirectUri = this.addRedirectUri.bind(this);
+      this.handleChangeEnabled = this.handleChangeEnabled.bind(this);
+      this.updateScopes = this.updateScopes.bind(this);
+      this.closeModal = this.closeModal.bind(this);
+    }
+    
+    componentWillReceiveProps(nextProps) {
+      var client = nextProps.client;
+      if (nextProps.add) {
+        client = {
+          source: "database",
+          name: "",
+          description: "",
+          client_id: "",
+          confidential: false,
+          enabled: true,
+          redirect_uri: [],
+          scope: []
+        }
+      }
+      client.password = "";
+      client.confirmPassword = "";
+      this.setState({
+        show: nextProps.show, 
+        add: nextProps.add, 
+        client: client, 
+        closeModal: nextProps.closeModal, 
+        nameInvalid: nextProps.add, 
+        clientIdInvalid: nextProps.add,
+        redirectUriNameInvalid: true,
+        redirectUriInvalid: true
+      });
+    }
+    
+    closeModal (result) {
+      if (result) {
+        this.state.closeModal(this.state.add, this.state.client);
+      }
+      this.setState({show: false});
+    }
+    
+    handleChangeSource (event) {
+      var newClient = $.extend({}, this.state.client);
+      newClient.source = event.target.value;
+      this.setState({client: newClient});
+    }
+    
+    handleChangeClientId (event) {
+      var isInvalid = !event.target.value;
+      var newClient = $.extend({}, this.state.client);
+      newClient.client_id = event.target.value || "";
+      this.setState({client: newClient, clientIdInvalid: isInvalid});
+    }
+    
+    handleChangeName (event) {
+      var isInvalid = !event.target.value;
+      var newClient = $.extend({}, this.state.client);
+      newClient.name = event.target.value || "";
+      this.setState({client: newClient, nameInvalid: isInvalid});
+    }
+    
+    handleChangeDescription (event) {
+      var newClient = $.extend({}, this.state.client);
+      newClient.description = event.target.value || "";
+      this.setState({client: newClient});
+    }
+    
+    handleChangeRedirectUriName (event) {
+      var isInvalid = !event.target.value.length > 0;
+      this.setState({redirectUriName: event.target.value || "", redirectUriNameInvalid: isInvalid});
+    }
+    
+    handleChangeRedirectUri (event) {
+      var isInvalid = !event.target.value.startsWith("http://") && !event.target.value.startsWith("https://");
+      this.setState({redirectUri: event.target.value || "", redirectUriInvalid: isInvalid});
+    }
+    
+    addRedirectUri (event) {
+      if (this.state.redirectUriName.length > 0 && (this.state.redirectUri.startsWith("http://") || this.state.redirectUri.startsWith("https://"))) {
+        var newClient = $.extend({}, this.state.client);
+        newClient.redirect_uri.push({name: this.state.redirectUriName, uri: this.state.redirectUri});
+        this.setState({client: newClient});
+      }
+    }
+    
+    handleChangeConfidential (event) {
+      var newClient = $.extend({}, this.state.client);
+      newClient.confidential = !newClient.confidential;
+      var isInvalid = newClient.confidential && (this.state.client.password !== this.state.client.confirmPassword || !this.state.client.password || this.state.client.password.length < 8);
+      this.setState({client: newClient, passwordInvalid: isInvalid});
+    }
+    
+    handleChangePassword (event) {
+      var isInvalid = this.state.client.confidential && (event.target.value !== this.state.client.confirmPassword || event.target.value.length < 8);
+      var newClient = $.extend({}, this.state.client);
+      newClient.password = event.target.value || "";
+      this.setState({client: newClient, passwordInvalid: isInvalid});
+    }
+    
+    handleChangeConfirmPassword (event) {
+      var isInvalid = this.state.client.confidential && (event.target.value !== this.state.client.password || !this.state.client.password || this.state.client.password.length < 8);
+      var newClient = $.extend({}, this.state.client);
+      newClient.confirmPassword = event.target.value || "";
+      this.setState({client: newClient, passwordInvalid: isInvalid});
+    }
+    
+    handleChangeEnabled (event) {
+      var newClient = $.extend({}, this.state.client);
+      newClient.enabled = !newClient.enabled;
+      this.setState({client: newClient});
+    }
+    
+    updateScopes (scopes) {
+      var newClient = $.extend({}, this.state.resource);
+      newClient.scope = scopes;
+      this.setState({resource: newClient});
+    }
+    
+    render () {
+      var clientRedirectUriList = [];
+      this.state.client.redirect_uri.forEach(function (redirect_uri, index) {
+        clientRedirectUriList.push(
+          <span className="tag label label-info hide-overflow" key={index} data-toggle="tooltip" title={redirect_uri.uri}>
+            <a href="" onClick={(evt) => self.removeRedirectUri(redirect_uri.name, evt)}>
+              <i className="remove glyphicon glyphicon-remove-sign glyphicon-white"></i>
+            </a>
+            <span>&nbsp;{redirect_uri.name + " (" + redirect_uri.uri + ")"}</span>
+          </span>
+        );
+      });
+      return (
+        <Modal show={this.state.show} onHide={() => this.closeModal(false)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Client</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="row">
+              <div className="col-md-6">
+                <label htmlFor="clientSource">Source</label>
+              </div>
+              <div className="col-md-6">
+                <select className="form-control" name="clientSource" id="clientSource" value={this.state.client.source} onChange={this.handleChangeSource}>
+                  <option value="ldap">LDAP</option>
+                  <option value="database">Database</option>
+                </select>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-md-6">
+                <label htmlFor="clientId">Client Id</label>
+              </div>
+              <div className={this.state.clientIdInvalid?"col-md-6 has-error":"col-md-6"}>
+                <input className="form-control" 
+                       type="text" 
+                       name="clientId" 
+                       id="clientId" 
+                       disabled={!this.state.add?"disabled":""} 
+                       placeholder="Client Id" 
+                       value={this.state.client.client_id} 
+                       onChange={this.handleChangeClientId}></input>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="clientName">Name</label>
+              </div>
+              <div className={this.state.nameInvalid?"col-md-6 has-error":"col-md-6"}>
+                <input className="form-control" 
+                       type="text"
+                       name="clientName" 
+                       id="clientName" 
+                       placeholder="Fullname" 
+                       value={this.state.client.name} 
+                       onChange={this.handleChangeName}></input>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="clientDescription">Description</label>
+              </div>
+              <div className="col-md-6">
+                <input className="form-control" 
+                       type="text" 
+                       name="clientDescription" 
+                       id="clientDescription" 
+                       placeholder="Client description" 
+                       value={this.state.client.description} 
+                       onChange={this.handleChangeDescription}></input>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label>Confidential</label>
+              </div>
+              <div className="col-md-6">
+                <Checkbox validationState="success" checked={this.state.client.confidential?true:false} onChange={this.handleChangeConfidential}></Checkbox>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="clientPassword">Password</label>
+              </div>
+              <div className={this.state.passwordInvalid?"col-md-6 has-error":"col-md-6"}>
+                <input className="form-control" 
+                       type="password" 
+                       name="clientPassword" 
+                       id="clientPassword" 
+                       placeholder="User password" 
+                       disabled={this.state.client.confidential?false:true}
+                       onChange={this.handleChangePassword} 
+                       value={this.state.client.password}></input>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="clientPasswordConfirm">Confirm password</label>
+              </div>
+              <div className={this.state.passwordInvalid?"col-md-6 has-error":"col-md-6"}>
+                <input className="form-control" 
+                       type="password" 
+                       name="clientPasswordConfirm" 
+                       id="clientPasswordConfirm" 
+                       placeholder="Confirm User password" 
+                       disabled={this.state.client.confidential?false:true}
+                       onChange={this.handleChangeConfirmPassword} 
+                       value={this.state.client.confirmPassword}></input>
+              </div>
+            </div>
+            <ScopeManagement scopes={this.state.client.scope} updateScopes={this.updateScopes} />
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="clientScope">Redirect URIs</label>
+              </div>
+              <div className="col-md-6">
+                <div className={this.state.redirectUriInvalid?"has-error":""}>
+                  <input className="form-control" 
+                         type="text" 
+                         placeholder="URI" 
+                         data-toggle="tooltip" 
+                         title="Redirect uri must start with http:// or https://" 
+                         value={this.state.redirectUri} 
+                         onChange={this.handleChangeRedirectUri}></input>
+                </div>
+                <div>
+                  <div className={this.state.redirectUriNameInvalid?"input-group has-error":"input-group"}>
+                    <input className="form-control" type="text" placeholder="Name" value={this.state.redirectUriName} onChange={this.handleChangeRedirectUriName}></input>
+                    <div className="input-group-btn ">
+                      <button type="button" 
+                              name="addScope" 
+                              id="addScope" 
+                              className="btn btn-default" 
+                              disabled={this.state.redirectUriNameInvalid||this.state.redirectUriInvalid?true:false}
+                              onClick={this.addRedirectUri}>
+                        <i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+              </div>
+              <div className="col-md-6" id="clientScopeValue">
+              {clientRedirectUriList}
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label>Enabled</label>
+              </div>
+              <div className="col-md-6">
+                <Checkbox validationState="success" checked={this.state.client.enabled?true:false} onChange={this.handleChangeEnabled}></Checkbox>
+              </div>
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={() => this.closeModal(true, this.state.client)} disabled={this.state.passwordInvalid||this.state.clientIdInvalid||this.state.nameInvalid||this.state.client.redirect_uri.length===0?true:false}>Save</Button>
+            <Button onClick={() => this.closeModal(false)}>Cancel</Button>
+          </Modal.Footer>
+        </Modal>
+      );
+    }
   }
   
   /**
@@ -1363,9 +1291,10 @@ $(function() {
               }
             };
             self.setState({scopes: scopes});
+            self.openAlertModal("Scope deleted");
         })
-        .done(function (result) {
-          self.setState({showConfirmModal: false});
+        .fail(function (error) {
+          self.openAlertModal("Error deleting scope");
         });
       }
     }
@@ -1387,15 +1316,12 @@ $(function() {
             var scopes = self.state.scopes;
             scopes.push(scope);
             self.setState({scopes: scopes});
+            self.openAlertModal("Scope created");
           })
           .fail(function (error) {
             self.openAlertModal("Error adding scope");
-          })
-          .done(function (result) {
-            self.setState({showModal: false});
           });
-        })
-        
+        });
       } else {
         APIRequest("PUT", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/scope/" + scope.name, scope)
         .then(function () {
@@ -1406,9 +1332,10 @@ $(function() {
             }
           };
           self.setState({scopes: scopes});
-        })
-        .done(function (result) {
-          self.setState({showModal: false});
+          self.openAlertModal("Scope updated");
+          })
+          .fail(function (error) {
+            self.openAlertModal("Error updating scope");
         });
       }
     }
@@ -1479,10 +1406,6 @@ $(function() {
   class ScopeEditModal extends React.Component {
     constructor(props) {
       super(props);
-      var selectedScope = "";
-      if (scopeList.length > 0) {
-        selectedScope = scopeList[0].name;
-      }
       this.state = {show: props.show, add: this.props.add, scope: this.props.scope, closeModal: this.props.closeModal, nameInvalid: this.props.add};
       
       this.handleChangeName = this.handleChangeName.bind(this);
@@ -1629,9 +1552,10 @@ $(function() {
               }
             };
             self.setState({resources: resources});
+            self.openAlertModal("Resource deleted");
         })
-        .done(function (result) {
-          self.setState({showConfirmModal: false});
+        .fail(function (error) {
+          self.openAlertModal("Error deleting resource");
         });
       }
     }
@@ -1649,12 +1573,10 @@ $(function() {
             var resources = self.state.resources;
             resources.push(resource);
             self.setState({resources: resources});
+            self.openAlertModal("Resource created");
           })
           .fail(function (error) {
             self.openAlertModal("Error adding resource");
-          })
-          .done(function (result) {
-            self.setState({showModal: false});
           });
         })
         
@@ -1668,9 +1590,10 @@ $(function() {
             }
           };
           self.setState({resources: resources});
-        })
-        .done(function (result) {
-          self.setState({showModal: false});
+          self.openAlertModal("Resource updated");
+          })
+          .fail(function (error) {
+            self.openAlertModal("Error updating resource");
         });
       }
     }
@@ -2185,7 +2108,7 @@ $(function() {
   }
 
   /**
-   * Scope management
+   * Scope modal management
    */
   class ScopeManagement extends React.Component {
     constructor(props) {
@@ -2264,6 +2187,93 @@ $(function() {
             </div>
             <div className="col-md-6" id="userScopeValue">
             {curScopeList}
+            </div>
+          </div>
+        </div>
+      );
+    }
+  }
+  
+  /**
+   * List navigation management
+   */
+  class ListNavigation extends React.Component {
+    constructor(props) {
+      super(props);
+      
+      this.state = {search: "", limit: 10, offset: 0, updateNavigation: props.updateNavigation};
+
+      this.handleChangeSearch = this.handleChangeSearch.bind(this);
+      this.handlePreviousPage = this.handlePreviousPage.bind(this);
+      this.handleChangeLimit = this.handleChangeLimit.bind(this);
+      this.handleNextPage = this.handleNextPage.bind(this);
+      this.handleSearch = this.handleSearch.bind(this);
+    }
+
+    handleChangeSearch (event) {
+      this.setState({search: event.target.value});
+    }
+    
+    handleChangeLimit (event) {
+      var limit = parseInt(event.target.value);
+      this.setState({limit: limit});
+      this.state.updateNavigation(this.state.search, this.state.offset, limit);
+    }
+    
+    handlePreviousPage (event) {
+      var offset = this.state.offset-this.state.limit;
+      this.setState({offset: offset});
+      this.state.updateNavigation(this.state.search, offset, this.state.limit);
+    }
+    
+    handleNextPage (event) {
+      var offset = this.state.offset+this.state.limit;
+      this.setState({offset: offset});
+      this.state.updateNavigation(this.state.search, offset, this.state.limit);
+    }
+    
+    handleSearch (event) {
+      event.preventDefault();
+      this.state.updateNavigation(this.state.search, this.state.offset, this.state.limit);
+    }
+    
+    render () {
+      return (
+        <div className="col-md-12 container">
+          <div className="row">
+            <div className="col-md-12 input-group">
+              <span className="input-group-btn">
+                <Button className="btn btn-default" 
+                        disabled={(this.state.offset===0)} 
+                        type="button" 
+                        onClick={this.handlePreviousPage}>
+                  <i className="icon-resize-small fa fa-chevron-left"></i>
+                </Button>
+              </span>
+              <select className="form-control input-small" onChange={this.handleChangeLimit} value={this.state.limit}>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span className="input-group-btn paddingRight">
+                <Button className="btn btn-default" type="button" onClick={this.handleNextPage}>
+                  <i className="icon-resize-small fa fa-chevron-right"></i>
+                </Button>
+              </span>
+              <form onSubmit={this.handleSearch}>
+                <input type="text" className="form-control input-medium" placeholder="Search" value={this.state.search} onChange={this.handleChangeSearch}/>
+              </form>
+              <span className="input-group-btn">
+                <Button className="btn btn-default" onClick={this.handleSearch}>
+                  <i className="glyphicon glyphicon-search"></i>
+                </Button>
+              </span>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-md-12 text-right">
+              <span className="text-center">{this.state.limit} results maximum, starting at result: {this.state.offset}</span>
             </div>
           </div>
         </div>
@@ -2418,6 +2428,7 @@ $(function() {
         self.setState(prevState => ({
           enabled: !prevState.enabled
         }));
+        self.openAlertModal("Authorization type updated");
       })
       .fail(function (error) {
         self.openAlertModal("Error while changing authorization type");
