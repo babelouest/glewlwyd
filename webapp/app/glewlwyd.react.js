@@ -100,6 +100,12 @@ $(function() {
 
   // Load all lists at startup
   function loadLists () {
+    var message="Loading data...";
+    ReactDOM.render(
+      <SpinnerModal show={true} message={message} />,
+      document.getElementById('spinner')
+    );
+    
     var promises = [
       APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/"),
       APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/"),
@@ -152,6 +158,12 @@ $(function() {
       if (error.status === 401) {
         currentUser.loggedIn = false;
       }
+    })
+    .done(function () {
+      ReactDOM.render(
+        <SpinnerModal show={false} />,
+        document.getElementById('spinner')
+      );
     });
   }
   
@@ -2415,6 +2427,28 @@ $(function() {
           <Modal.Footer>
             <Button onClick={this.closeModal}>Close</Button>
           </Modal.Footer>
+        </Modal>
+      );
+    }
+  }
+
+  class SpinnerModal extends React.Component {
+    constructor(props) {
+      super(props);
+
+      this.state = {show: this.props.show, message: this.props.message};
+    }
+    
+    componentWillReceiveProps(nextProps) {
+      this.setState({show: nextProps.show, message: nextProps.message});
+    }
+    
+    render () {
+      return (
+        <Modal show={this.state.show}>
+          <Modal.Body>
+          <h3><i className="fa fa-cog fa-spin"></i>{this.state.message}</h3>
+          </Modal.Body>
         </Modal>
       );
     }
