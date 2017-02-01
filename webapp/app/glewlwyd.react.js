@@ -43,7 +43,6 @@ $(function() {
   
   // Config variables
   var access_token = "access_token";
-  var access_token_expires = 3600;
   
   // tab menu
   $('#nav li a').click(function() {
@@ -162,99 +161,18 @@ $(function() {
   class UserTable extends React.Component {
     constructor(props) {
       super(props);
-      var selectedScope = "";
-      if (scopeList.length > 0) {
-        selectedScope = scopeList[0].name;
-      }
       this.state = {
-        search: "", 
-        offset: 0, 
-        limit: 10, 
         users: this.props.users, 
-        showModal: false, 
-        editUser: { scope: [] }, 
-        add: false, 
-        userScopeList: [], 
-        selectedScope: selectedScope,
-        passwordInvalid: false,
-        loginInvalid: true,
-        showConfirmModal: false,
-        messageConfirmModal: "",
-        showAlertModal: false,
-        messageAlertModal: ""
       };
       
-      this.handleSearch = this.handleSearch.bind(this);
-      this.handleChangeSearch = this.handleChangeSearch.bind(this);
-      this.handleChangeLimit = this.handleChangeLimit.bind(this);
-      this.handlePreviousPage = this.handlePreviousPage.bind(this);
-      this.handleNextPage = this.handleNextPage.bind(this);
-      this.userDetails = this.userDetails.bind(this);
+      this.runSearch = this.runSearch.bind(this);
       
-      // Modal functions
       this.openModalAdd = this.openModalAdd.bind(this);
-      this.closeUserModal = this.closeUserModal.bind(this);
-      this.saveUserModal = this.saveUserModal.bind(this);
+      this.saveUser = this.saveUser.bind(this);
       this.openModalEdit = this.openModalEdit.bind(this);
-      this.handleChangeSource = this.handleChangeSource.bind(this);
-      this.handleChangeLogin = this.handleChangeLogin.bind(this);
-      this.handleChangeName = this.handleChangeName.bind(this);
-      this.handleChangeEmail = this.handleChangeEmail.bind(this);
-      this.handleChangePassword = this.handleChangePassword.bind(this);
-      this.handleChangeConfirmPassword = this.handleChangeConfirmPassword.bind(this);
-      this.handleChangeScopeSelected = this.handleChangeScopeSelected.bind(this);
-      this.handleChangeEnabled = this.handleChangeEnabled.bind(this);
-      this.addScope = this.addScope.bind(this);
-      this.removeScope = this.removeScope.bind(this);
-      
       this.openModalDelete = this.openModalDelete.bind(this);
-      this.okConfirmModal = this.okConfirmModal.bind(this);
-      this.cancelConfirmModal = this.cancelConfirmModal.bind(this);
-      
+      this.deleteUser = this.deleteUser.bind(this);
       this.openAlertModal = this.openAlertModal.bind(this);
-      this.closeAlertModal = this.closeAlertModal.bind(this);
-    }
-    
-    handleChangeSearch (event) {
-      this.setState({search: event.target.value});
-    }
-    
-    handleChangeLimit (event) {
-      var limit = parseInt(event.target.value);
-      var offset = this.state.offset;
-      var search = this.state.search;
-      var self = this;
-      this.setState(function (prevState) {
-        self.runSearch(search, offset, limit);
-        return {limit: limit};
-      });
-    }
-    
-    handlePreviousPage (event) {
-      var limit = this.state.limit;
-      var offset = this.state.offset-limit;
-      var search = this.state.search;
-      var self = this;
-      this.setState(function (prevState) {
-        self.runSearch(search, offset, limit);
-        return {offset: offset};
-      });
-    }
-    
-    handleNextPage (event) {
-      var limit = this.state.limit;
-      var offset = this.state.offset+limit;
-      var search = this.state.search;
-      var self = this;
-      this.setState(function (prevState) {
-        self.runSearch(search, offset, limit);
-        return {offset: offset};
-      });
-    }
-    
-    handleSearch (event) {
-      this.runSearch(this.state.search, this.state.offset, this.state.limit);
-      event.preventDefault();
     }
     
     userDetails (user) {
@@ -279,161 +197,95 @@ $(function() {
       $('.nav-tabs a[href="#userDetail"]').tab('show');
     }
     
-    // Modal functions
     openModalAdd (event) {
       event.preventDefault();
-      this.setState({showModal: true, editUser: {enabled: true,  scope: [], source: "database"}, add: true, userScopeList: [], loginInvalid: true});
+      ReactDOM.render(
+        <UserEditModal show={true} add={true} closeModal={this.saveUser} />,
+        document.getElementById('modal')
+      );
     }
     
     openModalEdit (user) {
       var cloneUser = $.extend({}, user);
-      this.setState({showModal: true, editUser: cloneUser, add: false, loginInvalid: false});
+      ReactDOM.render(
+        <UserEditModal show={true} add={false} user={cloneUser} closeModal={this.saveUser} />,
+        document.getElementById('modal')
+      );
     }
     
     openModalDelete (user) {
       var message = "Are your sure you want to delete user '" + user.login + "'";
-      this.setState({showConfirmModal: true, messageConfirmModal: message, editUser: user});
-    }
-    
-    okConfirmModal (event) {
-      event.preventDefault();
-      var self = this;
-      APIRequest("DELETE", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + this.state.editUser.login)
-      .then(function (result) {
-          var users = self.state.users;
-          for (var key in users) {
-            if (users[key].login === self.state.editUser.login) {
-              users.splice(key, 1);
-              break;
-            }
-          };
-          self.setState({users: users});
-      })
-      .done(function (result) {
-        self.setState({showConfirmModal: false});
-      });
-    }
-    
-    cancelConfirmModal () {
-      this.setState({showConfirmModal: false});
+      ReactDOM.render(
+        <ConfirmModal show={true} title={"User"} message={message} onClose={this.deleteUser} />,
+        document.getElementById('modal')
+      );
+      this.setState({editUser: user});
     }
     
     openAlertModal (message) {
-      this.setState({showAlertModal: true, messageAlertModal: message});
+      ReactDOM.render(
+        <MessageModal show={true} title={"User"} message={message} />,
+        document.getElementById('modal')
+      );
     }
     
-    closeAlertModal () {
-      this.setState({showAlertModal: false});
-    }
-    
-    closeUserModal(result, value) {
-      this.setState({showModal: false});
-    }
-    
-    saveUserModal (event) {
-      event.preventDefault();
-      var self = this;
-      if (this.state.add) {
-        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + self.state.editUser.login)
+    deleteUser (result) {
+      if (result) {
+        var self = this;
+        APIRequest("DELETE", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + this.state.editUser.login)
         .then(function (result) {
-          self.openAlertModal("Error, login '" + self.state.editUser.login + "' already exist");
-        })
-        .fail(function () {
-          APIRequest("POST", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/", self.state.editUser)
-          .then(function (result) {
             var users = self.state.users;
-            self.state.editUser.password = "";
-            self.state.editUser.confirmPassword = "";
-            users.push(self.state.editUser);
+            for (var key in users) {
+              if (users[key].login === self.state.editUser.login) {
+                users.splice(key, 1);
+                break;
+              }
+            };
             self.setState({users: users});
-          })
-          .fail(function (error) {
-            self.openAlertModal("Error adding user");
-          })
-          .done(function (result) {
-            self.setState({showModal: false});
-          });
+            self.openAlertModal("User deleted");
         })
-        
-      } else {
-        APIRequest("PUT", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + this.state.editUser.login, this.state.editUser)
-        .then(function () {
-          var users = self.state.users;
-          for (var key in users) {
-            if (users[key].login === self.state.editUser.login) {
-              users[key] = self.state.editUser;
-            }
-          };
-          self.setState({users: users});
-        })
-        .done(function (result) {
-          self.setState({showModal: false});
+        .fail(function (result) {
+          self.openAlertModal("Error deleting user");
         });
       }
     }
     
-    handleChangeSource (event) {
-      var newUser = $.extend({}, this.state.editUser);
-      newUser.source = event.target.value;
-      this.setState({editUser: newUser});
-    }
-    
-    handleChangeLogin (event) {
-      var isInvalid = !event.target.value;
-      var newUser = $.extend({}, this.state.editUser);
-      newUser.login = event.target.value || "";
-      this.setState({editUser: newUser, loginInvalid: isInvalid});
-    }
-    
-    handleChangeName (event) {
-      var newUser = $.extend({}, this.state.editUser);
-      newUser.name = event.target.value || "";
-      this.setState({editUser: newUser});
-    }
-    
-    handleChangeEmail (event) {
-      var newUser = $.extend({}, this.state.editUser);
-      newUser.email = event.target.value || "";
-      this.setState({editUser: newUser});
-    }
-    
-    handleChangePassword (event) {
-      var isInvalid = (!!event.target.value || !!this.state.editUser.confirmPassword) && (event.target.value !== this.state.editUser.confirmPassword || event.target.value.length < 8);
-      var newUser = $.extend({}, this.state.editUser);
-      newUser.password = event.target.value || "";
-      this.setState({editUser: newUser, passwordInvalid: isInvalid});
-    }
-    
-    handleChangeConfirmPassword (event) {
-      var isInvalid = (!!this.state.editUser.password || !!event.target.value) && (this.state.editUser.password !== event.target.value || event.target.value.length < 8);
-      var newUser = $.extend({}, this.state.editUser);
-      newUser.confirmPassword = event.target.value || "";
-      this.setState({editUser: newUser, passwordInvalid: isInvalid});
-    }
-    
-    handleChangeScopeSelected (event) {
-      this.setState({selectedScope: event.target.value});
-    }
-    
-    removeScope (scope, event) {
-      event.preventDefault();
-      var newUser = $.extend({}, this.state.editUser);
-      newUser.scope.splice(newUser.scope.indexOf(scope), 1);
-      this.setState({editUser: newUser});
-    }
-    
-    addScope (event) {
-      var newUser = $.extend({}, this.state.editUser);
-      if (this.state.editUser.scope.indexOf(this.state.selectedScope) == -1) {
-        newUser.scope.push(this.state.selectedScope);
-        this.setState({editUser: newUser});
+    saveUser (add, user) {
+      var self = this;
+      if (add) {
+        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + user.login)
+        .then(function (result) {
+          self.openAlertModal("Error, login '" + user.login + "' already exist");
+        })
+        .fail(function () {
+          APIRequest("POST", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/", user)
+          .then(function (result) {
+            var users = self.state.users;
+            users.push(user);
+            self.setState({users: users});
+            self.openAlertModal("User created");
+          })
+          .fail(function (error) {
+            self.openAlertModal("Error adding user");
+          });
+        })
+        
+      } else {
+        APIRequest("PUT", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + user.login, user)
+        .then(function () {
+          var users = self.state.users;
+          for (var key in users) {
+            if (users[key].login === user.login) {
+              users[key] = user;
+            }
+          };
+          self.setState({users: users});
+            self.openAlertModal("User updated");
+          })
+          .fail(function (error) {
+            self.openAlertModal("Error updating user");
+        });
       }
-    }
-    
-    handleChangeEnabled (event) {
-      var newUser = $.extend({}, this.state.editUser);
-      newUser.enabled = !newUser.enabled;
-      this.setState({editUser: newUser});
     }
     
     runSearch (search, offset, limit) {
@@ -463,91 +315,19 @@ $(function() {
 
     render() {
       var self = this;
-      var allScopeList = [];
-      scopeList.forEach(function (scope) {
-        allScopeList.push(<option value={scope.name} key={scope.name}>{scope.name}</option>)
-      });
       var rows = [];
-      this.state.users.forEach(function(user) {
+      this.state.users.forEach(function(user, index) {
         rows.push(
-        <tr key={user.login}>
-          <td>{user.source}</td>
-          <td>{user.login}</td>
-          <td>{user.name}</td>
-          <td>{user.email}</td>
-          <td>{user.scope.join(", ")}</td>
-          <td>{user.enabled?"true":"false"}</td>
-          <td>
-            <div className="input-group">
-              <div className="input-group-btn">
-                <Button className="btn btn-default" onClick={() => self.userDetails(user)}>
-                  <i className="glyphicon glyphicon-eye-open"></i>
-                </Button>
-                <Button className="btn btn-default" onClick={() => self.openModalEdit(user)}>
-                  <i className="glyphicon glyphicon-pencil"></i>
-                </Button>
-                <Button className="btn btn-default" onClick={() => self.openModalDelete(user)}>
-                  <i className="glyphicon glyphicon-trash"></i>
-                </Button>
-              </div>
-            </div>
-          </td>
-        </tr>);
-      });
-      var previousOpts = {};
-      if (this.state.offset === 0) {
-        previousOpts["disabled"] = "disabled";
-      }
-      var userScopeList = [];
-      this.state.editUser.scope.forEach(function (scope) {
-        userScopeList.push(
-          <span className="tag label label-info" key={scope}>
-            <span>{scope}&nbsp;</span>
-            <a href="" onClick={(evt) => self.removeScope(scope, evt)}>
-              <i className="remove glyphicon glyphicon-remove-sign glyphicon-white"></i>
-            </a>
-          </span>
+          <UserRow user={user} key={index} userDetails={self.userDetails} openModalEdit={self.openModalEdit} openModalDelete={self.openModalDelete} />
         );
       });
       
       return (
         <div>
-          <form onSubmit={this.handleSearch}>
-            <div className="input-group row">
-              <input type="text" className="form-control" placeholder="Search" value={this.state.search} onChange={this.handleChangeSearch}/>
-              <div className="input-group-btn">
-                <Button className="btn btn-default" onClick={this.handleSearch}>
-                  <i className="glyphicon glyphicon-search"></i>
-                </Button>
-                <Button className="btn btn-default" onClick={this.openModalAdd}>
-                  <i className="glyphicon glyphicon-plus"></i>
-                </Button>
-              </div>
-            </div>
-          </form>
-          <div className="row">
-            <div className="col-md-3">
-              <div className="input-group">
-                <div className="input-group-btn">
-                  <button className="btn btn-default" {...previousOpts} type="button" onClick={this.handlePreviousPage}><i className="icon-resize-small fa fa-chevron-left"></i></button>
-                </div>
-                <div>
-                  <select className="form-control" onChange={this.handleChangeLimit} value={this.state.limit}>
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                  </select>
-                </div>
-                <div className="input-group-btn">
-                  <Button className="btn btn-default" type="button" onClick={this.handleNextPage}><i className="icon-resize-small fa fa-chevron-right"></i></Button>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-9 text-right">
-              <span className="text-center">{this.state.limit} results maximum, starting at result: {this.state.offset}</span>
-            </div>
-          </div>
+          <ListNavigation updateNavigation={this.runSearch} />
+          <Button className="btn btn-default" onClick={this.openModalAdd}>
+            <i className="glyphicon glyphicon-plus"></i>
+          </Button>
           <table className="table table-hover table-responsive">
             <thead>
               <tr>
@@ -564,128 +344,234 @@ $(function() {
               {rows}
             </tbody>
           </table>
-          <Modal show={this.state.showModal} onHide={this.closeUserModal}>
-            <Modal.Header closeButton>
-              <Modal.Title>User</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <div className="row">
-                <div className="col-md-6">
-                  <label htmlFor="userSource">Source</label>
-                </div>
-                <div className="col-md-6">
-                  <select className="form-control" name="userSource" id="userSource" value={this.state.editUser.source} onChange={this.handleChangeSource}>
-                    <option value="ldap">LDAP</option>
-                    <option value="database">Database</option>
-                  </select>
-                </div>
-              </div>
-              <div className="row">
-                <div className="col-md-6">
-                  <label htmlFor="userLogin">Login</label>
-                </div>
-                <div className={this.state.loginInvalid?"col-md-6 has-error":"col-md-6"}>
-                  <input className="form-control" type="text" name="userLogin" id="userLogin" disabled={!this.state.add?"disabled":""} placeholder="User Login" value={this.state.editUser.login} onChange={this.handleChangeLogin}></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="userPassword">Password</label>
-                </div>
-                <div className={this.state.passwordInvalid?"col-md-6 has-error":"col-md-6"}>
-                  <input className="form-control" type="password" name="userPassword" id="userPassword" placeholder="User password" onChange={this.handleChangePassword} value={this.state.editUser.password}></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="userPasswordConfirm">Confirm password</label>
-                </div>
-                <div className={this.state.passwordInvalid?"col-md-6 has-error":"col-md-6"}>
-                  <input className="form-control" type="password" name="userPasswordConfirm" id="userPasswordConfirm" placeholder="Confirm User password" onChange={this.handleChangeConfirmPassword} value={this.state.editUser.confirmPassword}></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="userName">Name</label>
-                </div>
-                <div className="col-md-6">
-                  <input className="form-control" type="text" name="userName" id="userName" placeholder="Fullname" value={this.state.editUser.name} onChange={this.handleChangeName}></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="userEmail">Email</label>
-                </div>
-                <div className="col-md-6">
-                  <input className="form-control" type="text" name="userEmail" id="userEmail" placeholder="User e-mail" value={this.state.editUser.email} onChange={this.handleChangeEmail}></input>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label htmlFor="userScope">Scopes</label>
-                </div>
-                <div className="col-md-6">
-                  <div className="input-group">
-                    <select id="userScope" name="userScope" className="form-control" value={this.state.scopeSelected} onChange={this.handleChangeScopeSelected}>
-                      {allScopeList}
-                    </select>
-                    <div className="input-group-btn ">
-                      <button type="button" name="addScope" id="addScope" className="btn btn-default" onClick={this.addScope}>
-                        <i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                </div>
-                <div className="col-md-6" id="userScopeValue">
-                {userScopeList}
-                </div>
-              </div>
-              <div className="row top-buffer">
-                <div className="col-md-6">
-                  <label>Enabled</label>
-                </div>
-                <div className="col-md-6">
-                  <Checkbox validationState="success" checked={this.state.editUser.enabled?true:false} onChange={this.handleChangeEnabled}></Checkbox>
-                </div>
-              </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button onClick={this.saveUserModal} disabled={this.state.passwordInvalid||this.state.loginInvalid?true:false}>Save</Button>
-              <Button onClick={this.closeUserModal}>Cancel</Button>
-            </Modal.Footer>
-          </Modal>
-          <Modal show={this.state.showConfirmModal} onHide={this.cancelConfirmModal}>
-            <Modal.Header closeButton>
-              <Modal.Title>Delete user</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              {this.state.messageConfirmModal}
-            </Modal.Body>
-            <Modal.Footer>
-              <Button onClick={this.okConfirmModal}>OK</Button>
-              <Button onClick={this.cancelConfirmModal}>Cancel</Button>
-            </Modal.Footer>
-          </Modal>
-          <Modal show={this.state.showAlertModal} onHide={this.closeAlertModal}>
-            <Modal.Header closeButton>
-              <Modal.Title>Users</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              {this.state.messageAlertModal}
-            </Modal.Body>
-            <Modal.Footer>
-              <Button onClick={this.closeAlertModal}>Close</Button>
-            </Modal.Footer>
-          </Modal>
         </div>
       );
     }
   }
 
+  function UserRow (props) {
+    return (
+      <tr className={!props.user.enabled?"danger":""}>
+        <td>{props.user.source}</td>
+        <td>{props.user.login}</td>
+        <td>{props.user.name}</td>
+        <td>{props.user.email}</td>
+        <td>{props.user.scope.join(", ")}</td>
+        <td>{String(props.user.enabled)}</td>
+        <td>
+          <div className="input-group">
+            <div className="input-group-btn">
+              <Button className="btn btn-default" onClick={() => props.userDetails(props.user)}>
+                <i className="glyphicon glyphicon-eye-open"></i>
+              </Button>
+              <Button className="btn btn-default" onClick={() => props.openModalEdit(props.user)}>
+                <i className="glyphicon glyphicon-pencil"></i>
+              </Button>
+              <Button className="btn btn-default" onClick={() => props.openModalDelete(props.user)}>
+                <i className="glyphicon glyphicon-trash"></i>
+              </Button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+  
+  class UserEditModal extends React.Component {
+    constructor(props) {
+      super(props);
+      var user = props.user;
+      if (props.add) {
+        user = {
+          source: "database",
+          name: "",
+          login: "",
+          email: "",
+          enabled: true,
+          scope: []
+        }
+      }
+      user.password = "";
+      user.confirmPassword = "";
+      this.state = {
+        show: props.show, 
+        add: this.props.add, 
+        user: user, 
+        closeModal: this.props.closeModal, 
+        loginInvalid: this.props.add,
+        passwordInvalid: false
+      };
+
+      this.handleChangeSource = this.handleChangeSource.bind(this);
+      this.handleChangeLogin = this.handleChangeLogin.bind(this);
+      this.handleChangeName = this.handleChangeName.bind(this);
+      this.handleChangeEmail = this.handleChangeEmail.bind(this);
+      this.handleChangePassword = this.handleChangePassword.bind(this);
+      this.handleChangeConfirmPassword = this.handleChangeConfirmPassword.bind(this);
+      this.handleChangeEnabled = this.handleChangeEnabled.bind(this);
+      this.updateScopes = this.updateScopes.bind(this);
+      this.closeModal = this.closeModal.bind(this);
+    }
+    
+    componentWillReceiveProps(nextProps) {
+      var user = nextProps.user;
+      if (nextProps.add) {
+        user = {
+          source: "database",
+          name: "",
+          login: "",
+          email: "",
+          enabled: true,
+          scope: []
+        }
+      }
+      user.password = "";
+      user.confirmPassword = "";
+      this.setState({
+        show: nextProps.show, 
+        add: nextProps.add, 
+        user: user, 
+        closeModal: nextProps.closeModal, 
+        loginInvalid: nextProps.add,
+        passwordInvalid: false
+      });
+    }
+    
+    closeModal (result) {
+      if (result) {
+        this.state.closeModal(this.state.add, this.state.user);
+      }
+      this.setState({show: false});
+    }
+    
+    handleChangeSource (event) {
+      var newUser = $.extend({}, this.state.user);
+      newUser.source = event.target.value;
+      this.setState({user: newUser});
+    }
+    
+    handleChangeLogin (event) {
+      var isInvalid = !event.target.value;
+      var newUser = $.extend({}, this.state.user);
+      newUser.login = event.target.value || "";
+      this.setState({user: newUser, loginInvalid: isInvalid});
+    }
+    
+    handleChangeName (event) {
+      var newUser = $.extend({}, this.state.user);
+      newUser.name = event.target.value || "";
+      this.setState({user: newUser});
+    }
+    
+    handleChangeEmail (event) {
+      var newUser = $.extend({}, this.state.user);
+      newUser.email = event.target.value || "";
+      this.setState({user: newUser});
+    }
+    
+    handleChangePassword (event) {
+      var isInvalid = (!!event.target.value || !!this.state.user.confirmPassword) && (event.target.value !== this.state.user.confirmPassword || event.target.value.length < 8);
+      var newUser = $.extend({}, this.state.user);
+      newUser.password = event.target.value || "";
+      this.setState({user: newUser, passwordInvalid: isInvalid});
+    }
+    
+    handleChangeConfirmPassword (event) {
+      var isInvalid = (!!this.state.user.password || !!event.target.value) && (this.state.user.password !== event.target.value || event.target.value.length < 8);
+      var newUser = $.extend({}, this.state.user);
+      newUser.confirmPassword = event.target.value || "";
+      this.setState({user: newUser, passwordInvalid: isInvalid});
+    }
+    
+    handleChangeEnabled (event) {
+      var newUser = $.extend({}, this.state.user);
+      newUser.enabled = !newUser.enabled;
+      this.setState({user: newUser});
+    }
+    
+    updateScopes (scopes) {
+      var newUser = $.extend({}, this.state.user);
+      newUser.scope = scopes;
+      this.setState({user: newUser});
+    }
+    
+    render () {
+      return (
+        <Modal show={this.state.show} onHide={() => this.closeModal(false)}>
+          <Modal.Header closeButton>
+            <Modal.Title>User</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="row">
+              <div className="col-md-6">
+                <label htmlFor="userSource">Source</label>
+              </div>
+              <div className="col-md-6">
+                <select className="form-control" name="userSource" id="userSource" value={this.state.user.source} onChange={this.handleChangeSource}>
+                  <option value="database">Database</option>
+                  <option value="ldap">LDAP</option>
+                </select>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-md-6">
+                <label htmlFor="userLogin">Login</label>
+              </div>
+              <div className={this.state.loginInvalid?"col-md-6 has-error":"col-md-6"}>
+                <input className="form-control" type="text" name="userLogin" id="userLogin" disabled={!this.state.add?"disabled":""} placeholder="User Login" value={this.state.user.login} onChange={this.handleChangeLogin}></input>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="userPassword">Password</label>
+              </div>
+              <div className={this.state.passwordInvalid?"col-md-6 has-error":"col-md-6"}>
+                <input className="form-control" type="password" name="userPassword" id="userPassword" placeholder="User password" onChange={this.handleChangePassword} value={this.state.user.password}></input>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="userPasswordConfirm">Confirm password</label>
+              </div>
+              <div className={this.state.passwordInvalid?"col-md-6 has-error":"col-md-6"}>
+                <input className="form-control" type="password" name="userPasswordConfirm" id="userPasswordConfirm" placeholder="Confirm User password" onChange={this.handleChangeConfirmPassword} value={this.state.user.confirmPassword}></input>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="userName">Name</label>
+              </div>
+              <div className="col-md-6">
+                <input className="form-control" type="text" name="userName" id="userName" placeholder="Fullname" value={this.state.user.name} onChange={this.handleChangeName}></input>
+              </div>
+            </div>
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label htmlFor="userEmail">Email</label>
+              </div>
+              <div className="col-md-6">
+                <input className="form-control" type="text" name="userEmail" id="userEmail" placeholder="User e-mail" value={this.state.user.email} onChange={this.handleChangeEmail}></input>
+              </div>
+            </div>
+            <ScopeManagement scopes={this.state.user.scope} updateScopes={this.updateScopes} />
+            <div className="row top-buffer">
+              <div className="col-md-6">
+                <label>Enabled</label>
+              </div>
+              <div className="col-md-6">
+                <Checkbox validationState="success" checked={this.state.user.enabled?true:false} onChange={this.handleChangeEnabled}></Checkbox>
+              </div>
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={() => this.closeModal(true)} disabled={this.state.passwordInvalid||this.state.loginInvalid?true:false}>Save</Button>
+            <Button onClick={() => this.closeModal(false)}>Cancel</Button>
+          </Modal.Footer>
+        </Modal>
+      );
+    }
+  }
+  
   /**
    * Client table management component
    */
@@ -710,13 +596,7 @@ $(function() {
       this.openAlertModal = this.openAlertModal.bind(this);
     }
     
-    openModalEdit (client) {
-      var cloneClient = $.extend({}, client);
-      this.setState({showModal: true, editClient: cloneClient, add: false, clientIdInvalid: false});
-    }
-    
-    openModalAdd (event) {
-      event.preventDefault();
+    openModalAdd () {
       ReactDOM.render(
         <ClientEditModal show={true} add={true} closeModal={this.saveClient} />,
         document.getElementById('modal')
@@ -740,6 +620,13 @@ $(function() {
       this.setState({editClient: client});
     }
     
+    openAlertModal (message) {
+      ReactDOM.render(
+        <MessageModal show={true} title={"Client"} message={message} />,
+        document.getElementById('modal')
+      );
+    }
+    
     deleteClient (result) {
       var self = this;
       if (result) {
@@ -759,13 +646,6 @@ $(function() {
           self.openAlertModal("Error deleting client");
         });
       }
-    }
-    
-    openAlertModal (message) {
-      ReactDOM.render(
-        <MessageModal show={true} title={"Client"} message={message} />,
-        document.getElementById('modal')
-      );
     }
     
     saveClient (add, client) {
@@ -850,8 +730,9 @@ $(function() {
                 <th>Name</th>
                 <th>Description</th>
                 <th>Confidential</th>
-                <th>Enabled</th>
                 <th>Scopes</th>
+                <th>Authorization Types</th>
+                <th>Enabled</th>
                 <th></th>
               </tr>
             </thead>
@@ -866,14 +747,15 @@ $(function() {
   
   function ClientRow (props) {
     return (
-      <tr>
+      <tr className={!props.client.enabled?"danger":""}>
         <td>{props.client.source}</td>
         <td>{props.client.name}</td>
         <td>{props.client.client_id}</td>
         <td>{props.client.description}</td>
         <td>{String(props.client.confidential)}</td>
-        <td>{String(props.client.enabled)}</td>
         <td>{props.client.scope.join(", ")}</td>
+        <td>{props.client.authorization_type.join(", ")}</td>
+        <td>{String(props.client.enabled)}</td>
         <td>
           <div className="input-group">
             <div className="input-group-btn">
@@ -931,6 +813,7 @@ $(function() {
       this.addRedirectUri = this.addRedirectUri.bind(this);
       this.handleChangeEnabled = this.handleChangeEnabled.bind(this);
       this.updateScopes = this.updateScopes.bind(this);
+      this.updateAuthTypes = this.updateAuthTypes.bind(this);
       this.closeModal = this.closeModal.bind(this);
     }
     
@@ -1046,6 +929,12 @@ $(function() {
       this.setState({resource: newClient});
     }
     
+    updateAuthTypes (authTypes) {
+      var newClient = $.extend({}, this.state.resource);
+      newClient.authorization_type = authTypes;
+      this.setState({resource: newClient});
+    }
+    
     render () {
       var clientRedirectUriList = [];
       this.state.client.redirect_uri.forEach(function (redirect_uri, index) {
@@ -1156,6 +1045,7 @@ $(function() {
                        value={this.state.client.confirmPassword}></input>
               </div>
             </div>
+            <ClientAuthTypeManagement authorizationTypes={this.state.client.authorization_type} updateAuthTypes={this.updateAuthTypes} />
             <ScopeManagement scopes={this.state.client.scope} updateScopes={this.updateScopes} />
             <div className="row top-buffer">
               <div className="col-md-6">
@@ -1213,6 +1103,90 @@ $(function() {
     }
   }
   
+  class ClientAuthTypeManagement extends React.Component {
+    constructor(props) {
+      super(props);
+      
+      var authTypeSelected = "";
+      if (authorizationTypeList.length > 0) {
+        authTypeSelected = authorizationTypeList[0].name;
+      }
+      this.state = {authorizationTypes: props.authorizationTypes, authTypeSelected: authTypeSelected, updateAuthTypes: props.updateAuthTypes};
+
+      this.handleChangeAuthTypeSelected = this.handleChangeAuthTypeSelected.bind(this);
+      this.addAuthType = this.addAuthType.bind(this);
+      this.removeAuthType = this.removeAuthType.bind(this);
+    }
+    
+    handleChangeAuthTypeSelected (event) {
+      this.setState({authTypeSelected: event.target.value});
+    }
+    
+    removeAuthType (authType, event) {
+      event.preventDefault();
+      var authorizationTypes = this.state.authorizationTypes;
+      authorizationTypes.splice(authorizationTypes.indexOf(authType), 1);
+      this.setState({authorizationTypes: authorizationTypes});
+      this.state.updateAuthTypes(authorizationTypes);
+    }
+    
+    addAuthType () {
+      var authorizationTypes = this.state.authorizationTypes;
+      if (authorizationTypes.indexOf(this.state.authTypeSelected) == -1) {
+        this.setState({authorizationTypes: authorizationTypes});
+        authorizationTypes.push(this.state.authTypeSelected);
+      }
+      this.state.updateAuthTypes(authorizationTypes);
+    }
+    
+    render () {
+      var self = this;
+      var allAuthTypeList = [];
+      authorizationTypeList.forEach(function (authType, index) {
+        allAuthTypeList.push(<option value={authType.name} key={index}>{authType.name}</option>)
+      });
+      var curAuthTypeList = [];
+      this.state.authorizationTypes.forEach(function (authType, index) {
+        curAuthTypeList.push(
+          <span className="tag label label-info" key={index}>
+            <span>{authType}&nbsp;</span>
+            <a href="" onClick={(evt) => self.removeAuthType(authType, evt)}>
+              <i className="remove glyphicon glyphicon-remove-sign glyphicon-white"></i>
+            </a>
+          </span>
+        );
+      });
+      return (
+        <div>
+          <div className="row top-buffer">
+            <div className="col-md-6">
+              <label htmlFor="userAuthType">Authorization types</label>
+            </div>
+            <div className="col-md-6">
+              <div className="input-group">
+                <select id="userAuthType" name="userAuthType" className="form-control" value={this.state.authTypeSelected} onChange={this.handleChangeAuthTypeSelected}>
+                  {allAuthTypeList}
+                </select>
+                <div className="input-group-btn ">
+                  <button type="button" name="addAuthType" id="addAuthType" className="btn btn-default" onClick={this.addAuthType}>
+                    <i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="row top-buffer">
+            <div className="col-md-6">
+            </div>
+            <div className="col-md-6" id="userAuthTypeValue">
+            {curAuthTypeList}
+            </div>
+          </div>
+        </div>
+      );
+    }
+  }
+
   /**
    * Scope table management component
    */
@@ -2282,77 +2256,6 @@ $(function() {
   }
   
   /**
-   * Modals
-   */
-  class MessageModal extends React.Component {
-    constructor(props) {
-      super(props);
-
-      this.state = {show: this.props.show, title: this.props.title, message: this.props.message};
-      this.closeModal = this.closeModal.bind(this);
-    }
-    
-    componentWillReceiveProps(nextProps) {
-      this.setState({show: nextProps.show, title: nextProps.title, message: nextProps.message});
-    }
-    
-    closeModal () {
-      this.setState({show: false});
-    }
-    
-    render () {
-      return (
-        <Modal show={this.state.show} onHide={this.closeModal}>
-          <Modal.Header closeButton>
-            <Modal.Title>{this.state.title}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-          {this.state.message}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={this.closeModal}>Close</Button>
-          </Modal.Footer>
-        </Modal>
-      );
-    }
-  }
-  
-  class ConfirmModal extends React.Component {
-    constructor(props) {
-      super(props);
-
-      this.state = {show: this.props.show, title: this.props.title, message: this.props.message, onClose: this.props.onClose};
-      this.closeModal = this.closeModal.bind(this);
-    }
-    
-    componentWillReceiveProps(nextProps) {
-      this.setState({show: nextProps.show, title: nextProps.title, message: nextProps.message, onClose: nextProps.onClose});
-    }
-    
-    closeModal (result) {
-      this.setState({show: false});
-      this.state.onClose(result);
-    }
-    
-    render () {
-      return (
-        <Modal show={this.state.show} onHide={() => this.closeModal(false)}>
-          <Modal.Header closeButton>
-            <Modal.Title>{this.state.title}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-          {this.state.message}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button onClick={() => this.closeModal(true)}>OK</Button>
-            <Button onClick={() => this.closeModal(false)}>Cancel</Button>
-          </Modal.Footer>
-        </Modal>
-      );
-    }
-  }
-  
-  /**
    * Authentication type table management component
    */
   class AuthTypeEnableButton extends React.Component {
@@ -2482,6 +2385,77 @@ $(function() {
   }
   
   /**
+   * Modals
+   */
+  class MessageModal extends React.Component {
+    constructor(props) {
+      super(props);
+
+      this.state = {show: this.props.show, title: this.props.title, message: this.props.message};
+      this.closeModal = this.closeModal.bind(this);
+    }
+    
+    componentWillReceiveProps(nextProps) {
+      this.setState({show: nextProps.show, title: nextProps.title, message: nextProps.message});
+    }
+    
+    closeModal () {
+      this.setState({show: false});
+    }
+    
+    render () {
+      return (
+        <Modal show={this.state.show} onHide={this.closeModal}>
+          <Modal.Header closeButton>
+            <Modal.Title>{this.state.title}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+          {this.state.message}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={this.closeModal}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      );
+    }
+  }
+  
+  class ConfirmModal extends React.Component {
+    constructor(props) {
+      super(props);
+
+      this.state = {show: this.props.show, title: this.props.title, message: this.props.message, onClose: this.props.onClose};
+      this.closeModal = this.closeModal.bind(this);
+    }
+    
+    componentWillReceiveProps(nextProps) {
+      this.setState({show: nextProps.show, title: nextProps.title, message: nextProps.message, onClose: nextProps.onClose});
+    }
+    
+    closeModal (result) {
+      this.setState({show: false});
+      this.state.onClose(result);
+    }
+    
+    render () {
+      return (
+        <Modal show={this.state.show} onHide={() => this.closeModal(false)}>
+          <Modal.Header closeButton>
+            <Modal.Title>{this.state.title}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+          {this.state.message}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button onClick={() => this.closeModal(true)}>OK</Button>
+            <Button onClick={() => this.closeModal(false)}>Cancel</Button>
+          </Modal.Footer>
+        </Modal>
+      );
+    }
+  }
+  
+  /**
    * javscript core code
    */
   var params = getQueryParams(location.hash);
@@ -2492,7 +2466,7 @@ $(function() {
   if (params.access_token) {
     oauth.access_token = params.access_token;
     var expires = new Date();
-    expires.setSeconds(expires.getSeconds() + access_token_expires);
+    expires.setTime(expires.getTime() + (params.expires_in * 1000));
     $.cookie(access_token, params.access_token, {expires: expires});
     document.location = "#";
   } else if (params.error) {
