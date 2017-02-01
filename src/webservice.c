@@ -212,6 +212,10 @@ int callback_glewlwyd_static_file (const struct _u_request * request, struct _u_
     file_requested = "/index.html";
   }
   
+  if (strchr(file_requested, '?') != NULL) {
+    *strchr(file_requested, '?') = '\0';
+  }
+  
   file_path = msprintf("%s%s", ((struct config_elements *)user_data)->static_files_path, file_requested);
 
   if (access(file_path, F_OK) != -1) {
@@ -245,8 +249,7 @@ int callback_glewlwyd_static_file (const struct _u_request * request, struct _u_
       response->status = 500;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Static File Server - File %s not found", request->http_url);
-    response->json_body = json_pack("{ss}", "not found", request->http_url);
+    response->json_body = json_pack("{ss}", "resource not found", request->http_url);
     response->status = 404;
   }
   free(file_path);
