@@ -1104,6 +1104,8 @@ int add_user(struct config_elements * config, json_t * j_user) {
     return add_user_database(config, j_user);
   } else if (0 == strcmp("ldap", json_string_value(json_object_get(j_user, "source")))) {
     return add_user_ldap(config, j_user);
+  } else {
+    return G_ERROR_PARAM;
   }
 }
 
