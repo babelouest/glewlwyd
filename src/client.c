@@ -1326,7 +1326,7 @@ json_t * is_client_valid(struct config_elements * config, json_t * j_client, int
           json_decref(j_result);
         }
         
-        if (json_object_get(j_client, "confidential") == json_true() && (json_object_get(j_client, "password") == NULL || !json_is_string(json_object_get(j_client, "password")) || json_string_length(json_object_get(j_client, "password")) < 8)) {
+        if (json_object_get(j_client, "confidential") == json_true() && (json_object_get(j_client, "password") == NULL || !json_is_string(json_object_get(j_client, "password")) || (json_string_length(json_object_get(j_client, "password")) > 0 && json_string_length(json_object_get(j_client, "password")) < 8))) {
           json_array_append_new(j_return, json_pack("{ss}", "password", "password is a mandatory string of at least 8 characters if confidential flag is enabled"));
         }
         
@@ -1368,7 +1368,7 @@ json_t * is_client_valid(struct config_elements * config, json_t * j_client, int
           }
         }
       } else {
-        if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && (!json_is_string(json_object_get(j_client, "password")) || json_string_length(json_object_get(j_client, "password")) < 8)) {
+        if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && (!json_is_string(json_object_get(j_client, "password")) || (json_string_length(json_object_get(j_client, "password")) > 0 && json_string_length(json_object_get(j_client, "password")) < 8))) {
           json_array_append_new(j_return, json_pack("{ss}", "password", "password is a string of at least 8 characters"));
         }
 
@@ -1411,6 +1411,8 @@ int add_client(struct config_elements * config, json_t * j_client) {
     return add_client_database(config, j_client);
   } else if (0 == strcmp("ldap", json_string_value(json_object_get(j_client, "source")))) {
     return add_client_ldap(config, j_client);
+  } else {
+    return G_ERROR_PARAM;
   }
 }
 
