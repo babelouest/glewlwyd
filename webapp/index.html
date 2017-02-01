@@ -33,7 +33,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>Glewlwyd administration</title>
+		<title>Glewlwyd</title>
 		<meta name="description" content="Glewlwyd OAuth2 Authorization Server">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="stylesheet" href="css/bootstrap.min.css"></link>
@@ -62,22 +62,18 @@
 			<div class="row">
 				<div class="col-xs-3">
 					<ul class="nav nav-tabs tabs-left">
-						<li class="active"><a href="#home" data-toggle="tab"><i class="icon-resize-small fa fa-home" aria-hidden="true"></i><span class="gwd-menu-title">Home</span></a></li>
-						<li><a href="#user" data-toggle="tab"><i class="icon-resize-small fa fa-users" aria-hidden="true"></i><span class="gwd-menu-title">Users</span></a></li>
+						<li class="active"><a href="#user" data-toggle="tab"><i class="icon-resize-small fa fa-users" aria-hidden="true"></i><span class="gwd-menu-title">Users</span></a></li>
 						<li><a href="#userDetail" data-toggle="tab"><i class="icon-resize-small fa fa-user" aria-hidden="true"></i><span class="gwd-menu-title">User details</span></a></li>
 						<li><a href="#client" data-toggle="tab"><i class="icon-resize-small fa fa-cloud" aria-hidden="true"></i><span class="gwd-menu-title">Clients</span></a></li>
 						<li><a href="#scope" data-toggle="tab"><i class="icon-resize-small fa fa-thumb-tack" aria-hidden="true"></i><span class="gwd-menu-title">Scopes</span></a></li>
 						<li><a href="#resource" data-toggle="tab"><i class="icon-resize-small fa fa-folder-open" aria-hidden="true"></i><span class="gwd-menu-title">Resources</span></a></li>
+						<li><a href="#authorizationType" data-toggle="tab"><i class="icon-resize-small fa fa-gear" aria-hidden="true"></i><span class="gwd-menu-title">Authorization types</span></a></li>
 					</ul>
 				</div>
 
 				<div class="col-xs-9">
 					<div class="tab-content">
-						<div class="tab-pane active container" id="home">
-							<h2>Authorization types</h2>
-              <div id="authType">You are not connected</div>
-						</div>
-						<div class="tab-pane container" id="user">
+						<div class="tab-pane active container" id="user">
 							<h2>Users</h2>
               <div class="row well" id="users"></div>
 						</div>
@@ -100,6 +96,10 @@
 							<h2>Resources</h2>
 							<div class="row well" id="resources">
 							</div>
+						</div>
+						<div class="tab-pane container" id="authorizationType">
+							<h2>Authorization types</h2>
+              <div id="authType">You are not connected</div>
 						</div>
 					</div>
 				</div>
