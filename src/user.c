@@ -1521,6 +1521,9 @@ int set_user_database(struct config_elements * config, const char * user, json_t
     free(password);
     free(escaped);
   }
+  if (json_object_get(j_user, "enabled") != NULL) {
+    json_object_set_new(json_object_get(j_query, "set"), "gu_enabled", json_object_get(j_user, "enabled")==json_false()?json_integer(0):json_integer(1));
+  }
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
