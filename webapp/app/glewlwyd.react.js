@@ -797,7 +797,8 @@ $(function() {
           confidential: false,
           enabled: true,
           redirect_uri: [],
-          scope: []
+          scope: [],
+          authorization_type: []
         }
       }
       client.password = "";
@@ -810,7 +811,7 @@ $(function() {
         nameInvalid: this.props.add, 
         clientIdInvalid: this.props.add,
         redirectUriNameInvalid: true,
-        redirectUriInvalid: true
+        redirectUriInvalid: true,
       };
 
       this.handleChangeSource = this.handleChangeSource.bind(this);
@@ -840,7 +841,8 @@ $(function() {
           confidential: false,
           enabled: true,
           redirect_uri: [],
-          scope: []
+          scope: [],
+          authorization_type: []
         }
       }
       client.password = "";
