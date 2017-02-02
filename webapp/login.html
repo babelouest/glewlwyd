@@ -55,7 +55,7 @@
 	</head>
 	<body>
 		<div class="container" id="loginDiv" style="display: none;">
-			<form class="form-signin" id="loginForm" action="/glewlwyd/authorization/" method="POST" enctype="application/x-www-form-urlencoded">
+			<form class="form-signin" action="#" id="loginForm">
 				<h2 class="form-signin-heading">Please sign in</h2>
 				<label class="sr-only" for="inputLogin">Login</label>
 				<input type="text" class="form-control" name="username" id="username" autofocus="" required="" placeholder="user name">
@@ -71,6 +71,7 @@
         <h2>You are connected as <span id="currentUsername"></span></h2>
         <label>What do you wish for?</label>
         <button type="button" name="currentUsernameValid" id="currentUsernameValid" class="btn btn-lg btn-primary btn-block">Continue</button>
+        <button type="button" name="profile" id="profile" class="btn btn-lg btn-primary btn-block">Update profile</button>
         <button type="button" name="logoutbut" id="logoutbut" class="btn btn-lg btn-primary btn-block">Log out</button>
       </div>
     </div>
@@ -103,6 +104,14 @@
       $("#loginDiv").hide();
       $("#loginInvalid").hide();
       $("#userDiv").show();
+      if (params.redirect_uri) {
+        $("#currentUsernameValid").click(function () {
+          var redirect = "../glewlwyd/auth" + location.search + "&login_validated=true";
+          window.location = redirect;
+        });
+      } else {
+        $("#currentUsernameValid").hide();
+      }
     })
     .fail(function (error) {
       $("#loginDiv").show();
@@ -111,13 +120,22 @@
     });
   }
   
-  $("#loginbut").click(function () {
+  function loginAction() {
     $.post("../glewlwyd/auth/user", {username: $("#username").val(), password: $("#password").val()}, function (data) {
       checkUser();
     })
     .fail(function (error) {
       $("#loginInvalid").show();
     });
+  }
+  
+  $("#loginForm").submit(function (e) {
+    e.preventDefault();
+    loginAction();
+  });
+  
+  $("#loginbut").click(function () {
+    loginAction();
   });
   
   $("#logoutbut").click(function () {
@@ -130,10 +148,13 @@
     });
   });
   
-  $("#currentUsernameValid").click(function () {
-    var redirect = "../glewlwyd/auth" + location.search + "&login_validated=true";
-    window.location = redirect;
+  $("#profile").click(function () {
+    if (window.location.search) {
+      document.location = "profile.html" + window.location.search;
+    } else {
+      document.location = "profile.html";
+    }
   });
-	
+
 </script>
 </html>

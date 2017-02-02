@@ -30,7 +30,6 @@
  * 
  */
 
-var Alert = ReactBootstrap.Alert;
 var Button = ReactBootstrap.Button;
 var Checkbox = ReactBootstrap.Checkbox;
 var Modal = ReactBootstrap.Modal;
@@ -67,7 +66,7 @@ $(function() {
     return params;
   }
   
-  // Get OAuth2 token
+  // OAuth2 parameters
   var oauth = {
     access_token: false,
     client_id: "g_admin",
@@ -91,7 +90,7 @@ $(function() {
         oauth.access_token = false;
         currentUser.loggedIn = false;
         ReactDOM.render(
-          <LoginComponent user={currentUser} oauth={oauth} />,
+          <LoginComponent user={currentUser} />,
           document.getElementById('LoginComponent')
         );
       }
@@ -107,11 +106,11 @@ $(function() {
     );
     
     var promises = [
-      APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/"),
-      APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/"),
-      APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/scope/"),
-      APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/resource/"),
-      APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/authorization/")
+      APIRequest("GET", "../glewlwyd/user/"),
+      APIRequest("GET", "../glewlwyd/client/"),
+      APIRequest("GET", "../glewlwyd/scope/"),
+      APIRequest("GET", "../glewlwyd/resource/"),
+      APIRequest("GET", "../glewlwyd/authorization/")
     ];
     
     $.when(promises)
@@ -192,14 +191,14 @@ $(function() {
         <UserDetails user={user} />,
         document.getElementById('userDetails')
       );
-      APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + user.login + "/session/")
+      APIRequest("GET", "../glewlwyd/user/" + user.login + "/session/")
       .then(function (result) {
         ReactDOM.render(
           <UserSessionTable sessionList={result} login={user.login}/>,
           document.getElementById('userSessionTable')
         );
       });
-      APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + user.login + "/refresh_token/")
+      APIRequest("GET", "../glewlwyd/user/" + user.login + "/refresh_token/")
       .then(function (result) {
         ReactDOM.render(
           <UserTokenTable tokenList={result} login={user.login}/>,
@@ -244,7 +243,7 @@ $(function() {
     deleteUser (result) {
       if (result) {
         var self = this;
-        APIRequest("DELETE", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + this.state.editUser.login)
+        APIRequest("DELETE", "../glewlwyd/user/" + this.state.editUser.login)
         .then(function (result) {
             var users = self.state.users;
             for (var key in users) {
@@ -265,12 +264,12 @@ $(function() {
     saveUser (add, user) {
       var self = this;
       if (add) {
-        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + user.login)
+        APIRequest("GET", "../glewlwyd/user/" + user.login)
         .then(function (result) {
           self.openAlertModal("Error, login '" + user.login + "' already exist");
         })
         .fail(function () {
-          APIRequest("POST", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/", user)
+          APIRequest("POST", "../glewlwyd/user/", user)
           .then(function (result) {
             var users = self.state.users;
             users.push(user);
@@ -283,7 +282,7 @@ $(function() {
         })
         
       } else {
-        APIRequest("PUT", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + user.login, user)
+        APIRequest("PUT", "../glewlwyd/user/" + user.login, user)
         .then(function () {
           var users = self.state.users;
           for (var key in users) {
@@ -303,7 +302,7 @@ $(function() {
     runSearch (search, offset, limit) {
       var self = this;
       if (search) {
-        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/?search=" + search + "&limit=" + limit + "&offset=" + offset)
+        APIRequest("GET", "../glewlwyd/user/?search=" + search + "&limit=" + limit + "&offset=" + offset)
         .then(function (result) {
           self.setState({
             users: result
@@ -313,7 +312,7 @@ $(function() {
           self.openAlertModal("Error while searching users");
         });
       } else {
-        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + "?limit=" + limit + "&offset=" + offset)
+        APIRequest("GET", "../glewlwyd/user/" + "?limit=" + limit + "&offset=" + offset)
         .then(function (result) {
           self.setState({
             users: result
@@ -642,7 +641,7 @@ $(function() {
     deleteClient (result) {
       var self = this;
       if (result) {
-        APIRequest("DELETE", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/" + this.state.editClient.client_id)
+        APIRequest("DELETE", "../glewlwyd/client/" + this.state.editClient.client_id)
         .then(function (result) {
             var clients = self.state.clients;
             for (var key in clients) {
@@ -663,12 +662,12 @@ $(function() {
     saveClient (add, client) {
       var self = this;
       if (add) {
-        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/" + client.client_id)
+        APIRequest("GET", "../glewlwyd/client/" + client.client_id)
         .then(function (result) {
           self.openAlertModal("Error, client_id '" + client.client_id + "' already exist");
         })
         .fail(function () {
-          APIRequest("POST", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/", client)
+          APIRequest("POST", "../glewlwyd/client/", client)
           .then(function (result) {
             var clients = self.state.clients;
             clients.push(client);
@@ -681,7 +680,7 @@ $(function() {
         });
         
       } else {
-        APIRequest("PUT", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/" + client.client_id, client)
+        APIRequest("PUT", "../glewlwyd/client/" + client.client_id, client)
         .then(function () {
           var clients = self.state.clients;
           for (var key in clients) {
@@ -701,7 +700,7 @@ $(function() {
     runSearch (search, offset, limit) {
       var self = this;
       if (search) {
-        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/?search=" + search + "&limit=" + limit + "&offset=" + offset)
+        APIRequest("GET", "../glewlwyd/client/?search=" + search + "&limit=" + limit + "&offset=" + offset)
         .then(function (result) {
           self.setState({clients: result});
         })
@@ -709,7 +708,7 @@ $(function() {
           self.openAlertModal("Error while searching clients");
         });
       } else {
-        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/client/" + "?limit=" + limit + "&offset=" + offset)
+        APIRequest("GET", "../glewlwyd/client/" + "?limit=" + limit + "&offset=" + offset)
         .then(function (result) {
           self.setState({clients: result});
         })
@@ -1269,7 +1268,7 @@ $(function() {
     confirmDelete (result) {
       if (result) {
         var self = this;
-        APIRequest("DELETE", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/scope/" + this.state.editScope.name)
+        APIRequest("DELETE", "../glewlwyd/scope/" + this.state.editScope.name)
         .then(function (result) {
             var scopes = self.state.scopes;
             for (var key in scopes) {
@@ -1294,12 +1293,12 @@ $(function() {
     saveScope (add, scope) {
       var self = this;
       if (add) {
-        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/scope/" + scope.name)
+        APIRequest("GET", "../glewlwyd/scope/" + scope.name)
         .then(function (result) {
           self.openAlertModal("Error, scope '" + scope.name + "' already exist");
         })
         .fail(function () {
-          APIRequest("POST", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/scope/", scope)
+          APIRequest("POST", "../glewlwyd/scope/", scope)
           .then(function (result) {
             var scopes = self.state.scopes;
             scopes.push(scope);
@@ -1311,7 +1310,7 @@ $(function() {
           });
         });
       } else {
-        APIRequest("PUT", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/scope/" + scope.name, scope)
+        APIRequest("PUT", "../glewlwyd/scope/" + scope.name, scope)
         .then(function () {
           var scopes = self.state.scopes;
           for (var key in scopes) {
@@ -1530,7 +1529,7 @@ $(function() {
     confirmDelete (result) {
       if (result) {
         var self = this;
-        APIRequest("DELETE", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/resource/" + this.state.editResource.name)
+        APIRequest("DELETE", "../glewlwyd/resource/" + this.state.editResource.name)
         .then(function (result) {
             var resources = self.state.resources;
             for (var key in resources) {
@@ -1551,12 +1550,12 @@ $(function() {
     saveResource (add, resource) {
       var self = this;
       if (add) {
-        APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/resource/" + resource.name)
+        APIRequest("GET", "../glewlwyd/resource/" + resource.name)
         .then(function (result) {
           self.openAlertModal("Error, resource '" + resource.name + "' already exist");
         })
         .fail(function () {
-          APIRequest("POST", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/resource/", resource)
+          APIRequest("POST", "../glewlwyd/resource/", resource)
           .then(function (result) {
             var resources = self.state.resources;
             resources.push(resource);
@@ -1569,7 +1568,7 @@ $(function() {
         })
         
       } else {
-        APIRequest("PUT", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/resource/" + resource.name, resource)
+        APIRequest("PUT", "../glewlwyd/resource/" + resource.name, resource)
         .then(function () {
           var resources = self.state.resources;
           for (var key in resources) {
@@ -1836,10 +1835,9 @@ $(function() {
       this.setState({sessionList: nextProps.sessionList});
     }
     
-    refreshSessionList (event) {
-      event.preventDefault();
+    refreshSessionList (valid, offset, limit) {
       var self = this;
-      APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + this.props.login + "/session/")
+      APIRequest("GET", "../glewlwyd/user/" + this.props.login + "/session/?valid=" + (valid?valid:"") + "&offset=" + (offset?offset:"") + "&limit=" + (limit?limit:""))
       .then(function (result) {
         self.setState({sessionList: result});
       });
@@ -1856,7 +1854,7 @@ $(function() {
     closeConfirmModal (result, evt) {
       var self = this;
       if (result) {
-        APIRequest("DELETE", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + this.props.login + "/session/", {session_hash: this.state.currentSession.session_hash})
+        APIRequest("DELETE", "../glewlwyd/user/" + this.props.login + "/session/", {session_hash: this.state.currentSession.session_hash})
         .then(function (result) {
           var currentSession = self.state.currentSession;
           currentSession.enabled = false;
@@ -1883,13 +1881,8 @@ $(function() {
       });
       return (
         <div>
-          <h3>Sessions&nbsp;
-            <small>
-              <Button className="btn" onClick={(event) => this.refreshSessionList(event)}>
-                <i className="fa fa-refresh" aria-hidden="true"></i>
-              </Button>
-            </small>
-          </h3>
+          <h3>Sessions&nbsp;</h3>
+          <TokenNavigation updateNavigation={this.refreshSessionList} />
           <table className="table table-hover table-responsive">
             <thead>
               <tr>
@@ -1943,10 +1936,9 @@ $(function() {
       this.setState({tokenList: nextProps.tokenList});
     }
     
-    refreshTokenList (event) {
-      event.preventDefault();
+    refreshTokenList (valid, offset, limit) {
       var self = this;
-      APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + this.props.login + "/refresh_token/")
+      APIRequest("GET", "../glewlwyd/user/" + this.props.login + "/refresh_token/?valid=" + (valid?valid:"") + "&offset=" + (offset?offset:"") + "&limit=" + (limit?limit:""))
       .then(function (result) {
         self.setState({tokenList: result});
       });
@@ -1963,7 +1955,7 @@ $(function() {
     closeConfirmModal (result, evt) {
       var self = this;
       if (result) {
-        APIRequest("DELETE", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/user/" + this.props.login + "/refresh_token/", {token_hash: this.state.currentToken.token_hash})
+        APIRequest("DELETE", "../glewlwyd/user/" + this.props.login + "/refresh_token/", {token_hash: this.state.currentToken.token_hash})
         .then(function (result) {
           var currentToken = self.state.currentToken;
           currentToken.enabled = false;
@@ -1992,11 +1984,12 @@ $(function() {
         <div>
           <h3>Refresh tokens&nbsp;
             <small>
-              <Button className="btn" onClick={(event) => this.refreshTokenList(event)}>
+              <Button className="btn" onClick={this.refreshTokenList}>
                 <i className="fa fa-refresh" aria-hidden="true"></i>
               </Button>
             </small>
           </h3>
+          <TokenNavigation updateNavigation={this.refreshTokenList} />
           <table className="table table-hover table-responsive">
             <thead>
               <tr>
@@ -2023,13 +2016,13 @@ $(function() {
    */
   function LoginInformation (props) {
     return (
-      <span>Hello {props.user.name}&nbsp;</span>
+      <h3><label className="label label-info">Hello {props.user.name}&nbsp;</label></h3>
     );
   }
 
   function ConnectMessage (props) {
     return (
-      <span>Please log in to the application&nbsp;</span>
+      <h3><label className="label label-warning">Please log in to the application&nbsp;</label></h3>
     );
   }
 
@@ -2041,20 +2034,34 @@ $(function() {
     }
     
     render() {
-      return (<button type="button" className="btn btn-primary" onClick={this.handleLogout}>
+      return (<button className="btn btn-primary btn-block" onClick={this.handleLogout}>
         <i className="fa fa-sign-out" aria-hidden="true"></i>
         &nbsp;Log out
       </button>);
     }
     
     handleLogout() {
-      this.props.oauth.access_token = false;
       $.removeCookie(access_token);
-      this.props.user.loggedIn = false;
-      ReactDOM.render(
-        <LoginComponent user={this.props.user} oauth={this.props.oauth} />,
-        document.getElementById('LoginComponent')
-      );
+      location.reload();
+    }
+  }
+
+  class ProfileButton extends React.Component {
+    constructor(props) {
+      super(props);
+
+      this.handleProfile = this.handleProfile.bind(this);
+    }
+    
+    render() {
+      return (<button type="button" className="btn btn-primary btn-block" onClick={this.handleProfile}>
+        <i className="fa fa-user" aria-hidden="true"></i>
+        &nbsp;My profile
+      </button>);
+    }
+    
+    handleProfile() {
+      window.location = "profile.html";
     }
   }
 
@@ -2066,14 +2073,14 @@ $(function() {
     }
     
     render() {
-      return (<button type="button" className="btn btn-primary" onClick={this.handleLogin}>
+      return (<button type="button" className="btn btn-primary btn-block" onClick={this.handleLogin}>
         <i className="fa fa-sign-in" aria-hidden="true"></i>
         &nbsp;Log in
       </button>);
     }
     
     handleLogin() {
-      document.location = "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/auth?response_type=token&client_id="+this.props.oauth.client_id+"&redirect_uri="+this.props.oauth.redirect_uri+"&scope="+this.props.oauth.scope;
+      document.location = "../glewlwyd/auth?response_type=token&client_id="+oauth.client_id+"&redirect_uri="+oauth.redirect_uri+"&scope="+oauth.scope;
     }
   }
 
@@ -2081,15 +2088,18 @@ $(function() {
     if (props.user.loggedIn) {
       return (
         <div>
-          <LoginInformation user={props.user} oauth={props.oauth} />
-          <LogoutButton user={props.user} oauth={props.oauth} />
+          <div className="row">
+            <LogoutButton user={props.user} />
+          </div>
+          <div className="row">
+            <ProfileButton user={props.user} />
+          </div>
         </div>
       );
     } else {
       return (
         <div>
-          <ConnectMessage />
-          <LoginButton oauth={props.oauth} />
+          <LoginButton />
         </div>
       );
     }
@@ -2269,6 +2279,93 @@ $(function() {
     }
   }
   
+  class TokenNavigation extends React.Component {
+    constructor(props) {
+      super(props);
+      
+      this.state = {valid: "", limit: 10, offset: 0, updateNavigation: props.updateNavigation};
+
+      this.handleChangeValid = this.handleChangeValid.bind(this);
+      this.handlePreviousPage = this.handlePreviousPage.bind(this);
+      this.handleChangeLimit = this.handleChangeLimit.bind(this);
+      this.handleNextPage = this.handleNextPage.bind(this);
+      this.handleRefresh = this.handleRefresh.bind(this);
+    }
+
+    handleChangeValid (event) {
+      this.setState({valid: event.target.value});
+      this.state.updateNavigation(event.target.value, this.state.offset, this.state.limit);
+    }
+    
+    handleChangeLimit (event) {
+      var limit = parseInt(event.target.value);
+      this.setState({limit: limit});
+      this.state.updateNavigation(this.state.valid, this.state.offset, limit);
+    }
+    
+    handlePreviousPage (event) {
+      var offset = this.state.offset-this.state.limit;
+      this.setState({offset: offset});
+      this.state.updateNavigation(this.state.valid, offset, this.state.limit);
+    }
+    
+    handleNextPage (event) {
+      var offset = this.state.offset+this.state.limit;
+      this.setState({offset: offset});
+      this.state.updateNavigation(this.state.valid, offset, this.state.limit);
+    }
+    
+    handleRefresh (event) {
+      event.preventDefault();
+      this.state.updateNavigation(this.state.valid, this.state.offset, this.state.limit);
+    }
+    
+    render () {
+      return (
+        <div className="col-md-12 container">
+          <div className="row">
+            <div className="col-md-12 input-group">
+              <span className="input-group-btn">
+                <Button className="btn btn-default" 
+                        disabled={(this.state.offset===0)} 
+                        type="button" 
+                        onClick={this.handlePreviousPage}>
+                  <i className="icon-resize-small fa fa-chevron-left"></i>
+                </Button>
+              </span>
+              <select className="form-control input-small" onChange={this.handleChangeLimit} value={this.state.limit}>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+              <span className="input-group-btn paddingRight">
+                <Button className="btn btn-default" type="button" onClick={this.handleNextPage}>
+                  <i className="icon-resize-small fa fa-chevron-right"></i>
+                </Button>
+              </span>
+              <select className="form-control input-small" onChange={this.handleChangeValid} value={this.state.valid}>
+                <option value="">Enabled and disabled</option>
+                <option value="true">Enabled only</option>
+                <option value="false">Disabled only</option>
+              </select>
+              <span className="input-group-btn paddingLeft">
+                <Button className="btn btn-default" onClick={this.handleRefresh}>
+                  <i className="icon-resize-small fa fa-refresh"></i>
+                </Button>
+              </span>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-md-12 text-right">
+              <span className="text-center">{this.state.limit} results maximum, starting at result: {this.state.offset}</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+  }
+
   /**
    * Authentication type table management component
    */
@@ -2340,7 +2437,7 @@ $(function() {
     
     handleToggleAuthType () {
       var self = this;
-      APIRequest("PUT","https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/authorization/" + this.props.authType.name, {description: this.props.authType.description, enabled: !this.state.enabled})
+      APIRequest("PUT","../glewlwyd/authorization/" + this.props.authType.name, {description: this.props.authType.description, enabled: !this.state.enabled})
       .done(function (result) {
         self.setState(prevState => ({
           enabled: !prevState.enabled
@@ -2368,7 +2465,7 @@ $(function() {
             {this.props.authType.description}
           </td>
           <td>
-            <AuthTypeEnableButton authType={this.props.authType} oauth={this.props.oauth} />
+            <AuthTypeEnableButton authType={this.props.authType} />
           </td>
         </tr>
       );
@@ -2378,7 +2475,7 @@ $(function() {
   function AuthorizationTypeList (props) {
     var rows = [];
     props.authTypeList.forEach(function(authType) {
-      rows.push(<AuthorizationType authType={authType} key={authType.name} oauth={props.oauth} />);
+      rows.push(<AuthorizationType authType={authType} key={authType.name} />);
     });
     return (
       <div className="well">
@@ -2519,7 +2616,7 @@ $(function() {
    * if no access_token, display the login button
    */
   if (oauth.access_token) {
-    APIRequest("GET", "https://hunbaut.babelouest.org/glewlwyddev/glewlwyd/auth/user/")
+    APIRequest("GET", "../glewlwyd/auth/user/")
     .then(function (result) {
       currentUser.loggedIn = true;
       currentUser.name = result.name;
@@ -2533,13 +2630,21 @@ $(function() {
     })
     .always(function () {
       ReactDOM.render(
-        <LoginComponent user={currentUser} oauth={oauth} />,
+        <LoginInformation user={currentUser} />,
+        document.getElementById('connectMessage')
+      );
+      ReactDOM.render(
+        <LoginComponent user={currentUser} />,
         document.getElementById('LoginComponent')
       );
     });
   } else {
     ReactDOM.render(
-      <LoginComponent user={currentUser} oauth={oauth} />,
+      <ConnectMessage />,
+      document.getElementById('connectMessage')
+    );
+    ReactDOM.render(
+      <LoginComponent user={currentUser} />,
       document.getElementById('LoginComponent')
     );
   }

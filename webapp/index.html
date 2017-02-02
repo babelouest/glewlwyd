@@ -39,24 +39,26 @@
 		<link rel="stylesheet" href="css/bootstrap.min.css"></link>
 		<link rel="stylesheet" href="css/bootstrap.vertical-tabs.min.css"></link>
 		<link rel="stylesheet" href="css/font-awesome.min.css"></link>
-		<link rel="stylesheet" href="css/glewlwyd.css"></link>
 
 		<script src="js/jquery-3.1.1.min.js" type="text/javascript"></script>
+		<script src="js/bootstrap.min.js" type="text/javascript"></script>
 		<script src="js/jquery.cookie.js" type="text/javascript"></script>
 		<script src="js/react.js" type="text/javascript"></script>
 		<script src="js/react-dom.js" type="text/javascript"></script>
 		<script src="js/react-bootstrap.js"></script>
     <script src="js/browser.min.js" type="text/javascript"></script>
-		<script src="js/bootstrap.min.js" type="text/javascript"></script>
+    
+		<link rel="stylesheet" href="css/glewlwyd.css"></link>
 		<script src="app/glewlwyd.react.js" type="text/babel"></script>
 	</head>
 	<body>
 		<div class="container" style="width:90%">
 			<div class="page-header row">
-				<div class="col-md-6">
+				<div class="col-md-10">
           <h1>Glewlwyd OAuth2 Server</h1>
+          <div id="connectMessage"></div>
         </div>
-				<div class="col-md-6 text-right" id="LoginComponent">
+				<div class="col-md-2 text-right" id="LoginComponent">
         </div>
 			</div>
 			<div class="row">

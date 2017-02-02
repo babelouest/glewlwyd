@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="en">
 	<head>
-		
 		<meta charset="utf-8">
 		<title>Glewlwyd reset password</title>
 		<meta name="description" content="Glewlwyd OAuth2 Authorization Server">
@@ -16,7 +15,6 @@
 		  padding-bottom: 40px;
 		  background-color: #eee;
 		}
-
 		.form-signin {
 		  max-width: 330px;
 		  padding: 15px;
@@ -33,8 +31,8 @@
 		  position: relative;
 		  height: auto;
 		  -webkit-box-sizing: border-box;
-			 -moz-box-sizing: border-box;
-				  box-sizing: border-box;
+			-moz-box-sizing: border-box;
+			box-sizing: border-box;
 		  padding: 10px;
 		  font-size: 16px;
 		}
@@ -51,22 +49,28 @@
 		  border-top-left-radius: 0;
 		  border-top-right-radius: 0;
 		}
+    label {
+      white-space: normal !important;
+    }
 		</style>
   </head>
   <body>
 		<div class="container form-signin" id="sendResetDiv" style="display: none;">
-      <center><h2 class="form-signin-heading">Forgot password</h2></center>
-      <h3 class="form-signin-heading">Please enter your login</h3>
-      <label class="sr-only" for="inputLogin">Login</label>
-      <div class="input-group">
-        <span class="input-group-addon">
-          <i class="glyphicon glyphicon-user color-blue"></i>
-        </span>
-        <input type="text" class="form-control" name="username" id="username" autofocus="" required="" placeholder="user name">
-      </div>
-      <button type="button" name="sendresetbut" id="sendresetbut" class="btn btn-lg btn-primary btn-block">Send reset password email</button>
-      <center><h4><label class="label label-info" id="emailSentOk" style="display: none;">Email sent</label></h4></center>
-      <center><h4><label class="label label-warning" id="emailSentError" style="display: none;">Error while sending reset email</label></h4></center>
+      <form action="" id="forgotPasswordForm">
+        <center><h2 class="form-signin-heading">Forgot password</h2></center>
+        <h3 class="form-signin-heading">Please enter your login</h3>
+        <label class="sr-only" for="inputLogin">Login</label>
+        <div class="input-group">
+          <span class="input-group-addon">
+            <i class="glyphicon glyphicon-user color-blue"></i>
+          </span>
+          <input type="text" class="form-control" name="username" id="username" autofocus="" required="" placeholder="user name">
+        </div>
+        <button type="button" name="sendresetbut" id="sendresetbut" class="btn btn-lg btn-primary btn-block">Send reset password email</button>
+        <center><strong><a href="reset.html" class="">Go to log in page</a></strong></center>
+        <center><h4><label class="label label-info" id="emailSentOk" style="display: none;">Email sent</label></h4></center>
+        <center><h4><label class="label label-warning" id="emailSentError" style="display: none;">Error while sending reset email</label></h4></center>
+      </form>
 		</div>
 		<div class="container form-signin" id="resetDiv" style="display: none;">
       <h2 class="form-signin-heading">Please enter your new password</h2>
@@ -99,11 +103,11 @@
 	window.onload = function () {
 		params = getQueryParams(location.search);
     
-    if (params["code"]) {
+    if (params.code) {
       $("#sendResetDiv").hide();
       $("#resetDiv").show();
-      $("#code").val(params["code"]);
-      $("#user").val(params["user"]);
+      $("#code").val(params.code);
+      $("#user").val(params.user);
     } else {
       $("#sendResetDiv").show();
       $("#resetDiv").hide();
@@ -111,7 +115,21 @@
   }
   
   $("#sendresetbut").click(function () {
-    $.post("../glewlwyd/profile/reset_password/" + $("#username").val(), null, 
+    sendReset();
+  });
+  
+  $("#resetbut").click(function () {
+    resetPassword();
+  });
+  
+  $("#forgotPasswordForm").submit(function(event) {
+    event.preventDefault();
+    sendReset();
+  });
+  
+  function sendReset () {
+    if ($("#username").val()) {
+      $.post("../glewlwyd/profile/reset_password/" + $("#username").val(), null, 
         function (result, status, request) {
           $("#emailSentOk").show();
           $("#emailSentError").hide();
@@ -120,9 +138,10 @@
           $("#emailSentOk").hide();
           $("#emailSentError").show();
         });
-  });
+    }
+  }
   
-  $("#resetbut").click(function () {
+  function resetPassword () {;
     $("#resetOk").hide();
     $("#resetError").hide();
     if ($("#new_password").text() === $("#confirm_password").val()) {
@@ -132,20 +151,20 @@
       $("#resetError").show();
       $("#resetError").text("Error, password must be at least 8 characters");
     } else {
-        $.ajax
-        ({
-          type: "PUT",
-          url: "../glewlwyd/profile/reset_password/" + $("#user").val(),
-          async: false,
-          data: {token: $("#code").val(), password: $("#new_password").val()},
-          success: function (result, status, request) {
-            $("#resetOk").show();
-          },
-          error: function (error) {
-            $("#resetError").show();
-            $("#resetError").text("Error while changing password");
-          }
-        });
+      $.ajax
+      ({
+        type: "PUT",
+        url: "../glewlwyd/profile/reset_password/" + $("#user").val(),
+        async: false,
+        data: {token: $("#code").val(), password: $("#new_password").val()},
+        success: function (result, status, request) {
+          $("#resetOk").show();
+        },
+        error: function (error) {
+          $("#resetError").show();
+          $("#resetError").text("Error while changing password");
+        }
+      });
     }
-  });
+  }
 </script>
