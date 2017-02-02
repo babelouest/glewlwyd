@@ -26,36 +26,6 @@ The HTTP status codes used are the following:
 
 ## Authentication API
 
-### Get current user authentication profile data
-
-#### URL
-
-`/glewlwyd/user/auth/`
-
-#### Method
-
-`GET`
-
-#### Security
-
-Session token or header bearer token
-
-#### Success response
-
-Code 200
-
-Content
-
-```javascript
-{
-  name: text,
-  email: text,
-  login: text,
-  scope: [ // Array of strings
-  ]
-}
-```
-
 ### Authenticate a user with its login and password
 
 #### URL
