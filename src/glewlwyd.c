@@ -1238,10 +1238,14 @@ int build_config_from_file(struct config_elements * config) {
         return 0;
       }
     }
+  } else {
+    config_destroy(&cfg);
+    fprintf(stderr, "Error, no auth parameters\n");
+    return 0;
   }
 
   jwt = config_setting_get_member(root, "jwt");
-  if (auth != NULL) {
+  if (jwt != NULL) {
     config_setting_lookup_bool(jwt, "use_rsa", &cur_use_rsa);
     config_setting_lookup_bool(jwt, "use_sha", &cur_use_sha);
     if (cur_use_rsa) {
@@ -1290,6 +1294,10 @@ int build_config_from_file(struct config_elements * config) {
       fprintf(stderr, "Error, no jwt algorithm selected\n");
       return 0;
     }
+  } else {
+    config_destroy(&cfg);
+    fprintf(stderr, "Error, no jwt parameters\n");
+    return 0;
   }
   
   config_destroy(&cfg);
