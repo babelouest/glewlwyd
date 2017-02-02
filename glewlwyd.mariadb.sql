@@ -38,6 +38,8 @@ CREATE TABLE `g_user` (
   `gu_password` VARCHAR(128) NOT NULL,
   `gu_enabled` TINYINT(1) DEFAULT 1
 );
+CREATE INDEX `i_g_user_name` ON `g_user`(`gu_name`);
+CREATE INDEX `i_g_user_login` ON `g_user`(`gu_login`);
 
 -- Scope table, contain all scope values available
 CREATE TABLE `g_scope` (
@@ -45,6 +47,7 @@ CREATE TABLE `g_scope` (
   `gs_name` VARCHAR(128) NOT NULL,
   `gs_description` VARCHAR(512) DEFAULT ''
 );
+CREATE INDEX `i_g_scope_name` ON `g_scope`(`gs_name`);
 
 -- Authorization type table, to store authorization type available
 CREATE TABLE `g_authorization_type` (
@@ -54,6 +57,8 @@ CREATE TABLE `g_authorization_type` (
   `got_description` VARCHAR(512) DEFAULT '',
   `got_enabled` TINYINT(1) DEFAULT 1
 );
+CREATE INDEX `i_g_authorization_name` ON `g_authorization_type`(`got_name`);
+CREATE INDEX `i_g_authorization_code` ON `g_authorization_type`(`got_code`);
 
 -- Client table, contains all registered clients with their client_id
 CREATE TABLE `g_client` (
@@ -65,6 +70,8 @@ CREATE TABLE `g_client` (
   `gc_confidential` TINYINT(1) DEFAULT 0,
   `gc_enabled` TINYINT(1) DEFAULT 1
 );
+CREATE INDEX `i_g_client_name` ON `g_client`(`gc_name`);
+CREATE INDEX `i_g_client_id` ON `g_client`(`gc_client_id`);
 
 -- Resource table, contains all registered resource server
 CREATE TABLE `g_resource` (
@@ -73,6 +80,7 @@ CREATE TABLE `g_resource` (
   `gr_description` VARCHAR(512) DEFAULT '',
   `gr_uri` VARCHAR(512)
 );
+CREATE INDEX `i_g_resource_name` ON `g_resource`(`gr_name`);
 
 -- Redirect URI, contains all registered redirect_uti values for the clients
 CREATE TABLE `g_redirect_uri` (
@@ -93,6 +101,7 @@ CREATE TABLE `g_reset_password` (
   `grp_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `grp_reset_at` TIMESTAMP
 );
+CREATE INDEX `i_g_reset_password_username` ON `g_reset_password`(`grp_username`);
 
 -- ------------ --
 -- Token tables --
@@ -120,6 +129,7 @@ CREATE TABLE `g_access_token` (
   `gat_ip_source` VARCHAR(64) NOT NULL,
   FOREIGN KEY(`grt_id`) REFERENCES `g_refresh_token`(`grt_id`) ON DELETE CASCADE
 );
+CREATE INDEX `i_g_refresh_token_username` ON `g_refresh_token`(`grt_username`);
 
 -- Session table, to store signature and meta information on session tokens sent
 CREATE TABLE `g_session` (
@@ -132,6 +142,7 @@ CREATE TABLE `g_session` (
   `gss_ip_source` VARCHAR(64) NOT NULL,
   `gss_enabled` TINYINT(1) DEFAULT 1
 );
+CREATE INDEX `i_g_session_username` ON `g_session`(`gss_username`);
 
 -- -------------- --
 -- Linking tables --
@@ -180,6 +191,7 @@ CREATE TABLE `g_client_user_scope` (
   `gs_id` INT(11) NOT NULL,
   FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
 );
+CREATE INDEX `i_g_client_user_scope_username` ON `g_client_user_scope`(`gco_username`);
 
 -- Code table, used to store auth code sent with response_type code and validate it with response_type authorization_code
 CREATE TABLE `g_code` (
@@ -193,6 +205,7 @@ CREATE TABLE `g_code` (
   `gru_id` INT(11),
   FOREIGN KEY(`gru_id`) REFERENCES `g_redirect_uri`(`gru_id`) ON DELETE CASCADE
 );
+CREATE INDEX `i_g_code_username` ON `g_code`(`gco_username`);
 
 -- Code scope table, used to link a generated code to a list of scopes
 CREATE TABLE `g_code_scope` (
