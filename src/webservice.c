@@ -737,7 +737,7 @@ int callback_glewlwyd_get_refresh_token_user (const struct _u_request * request,
   long int offset, limit;
   json_t * j_result;
   int valid = -1;
-  if (u_map_get(request->map_url, "valid") != NULL) {
+  if (u_map_get(request->map_url, "valid") != NULL && strlen(u_map_get(request->map_url, "valid")) > 0) {
     if (strcmp("true", u_map_get(request->map_url, "valid")) == 0) {
       valid=1;
     } else {
@@ -793,7 +793,7 @@ int callback_glewlwyd_get_session_user (const struct _u_request * request, struc
   long int offset, limit;
   json_t * j_result;
   int valid = -1;
-  if (u_map_get(request->map_url, "valid") != NULL) {
+  if (u_map_get(request->map_url, "valid") != NULL && strlen(u_map_get(request->map_url, "valid")) > 0) {
     if (strcmp("true", u_map_get(request->map_url, "valid")) == 0) {
       valid=1;
     } else {
@@ -1185,7 +1185,7 @@ int callback_glewlwyd_get_refresh_token_profile (const struct _u_request * reque
   long int offset, limit;
   json_t * j_result, * j_session;
   int valid = -1;
-  if (u_map_get(request->map_url, "valid") != NULL) {
+  if (u_map_get(request->map_url, "valid") != NULL && strlen(u_map_get(request->map_url, "valid")) > 0) {
     if (strcmp("true", u_map_get(request->map_url, "valid")) == 0) {
       valid=1;
     } else {
@@ -1257,7 +1257,7 @@ int callback_glewlwyd_get_session_profile (const struct _u_request * request, st
   json_t * j_result, * j_session;
   int valid = -1;
 
-  if (u_map_get(request->map_url, "valid") != NULL) {
+  if (u_map_get(request->map_url, "valid") != NULL && strlen(u_map_get(request->map_url, "valid")) > 0) {
     if (strcmp("true", u_map_get(request->map_url, "valid")) == 0) {
       valid=1;
     } else {
