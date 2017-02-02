@@ -2616,7 +2616,7 @@ $(function() {
    * if no access_token, display the login button
    */
   if (oauth.access_token) {
-    APIRequest("GET", "../glewlwyd/auth/user/")
+    APIRequest("GET", "../glewlwyd/profile/")
     .then(function (result) {
       currentUser.loggedIn = true;
       currentUser.name = result.name;

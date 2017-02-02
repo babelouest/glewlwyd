@@ -99,7 +99,7 @@
 	};
   
   function checkUser () {
-    $.get("../glewlwyd/auth/user/", function (user) {
+    $.get("../glewlwyd/profile/", function (user) {
       $("#currentUsername").text(user.name);
       $("#loginDiv").hide();
       $("#loginInvalid").hide();
