@@ -361,26 +361,6 @@ int callback_glewlwyd_get_user_session_profile (const struct _u_request * reques
   return U_OK;
 }
 
-int callback_glewlwyd_get_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_session = NULL, * j_user = NULL;
-
-  j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
-  if (check_result_value(j_session, G_OK)) {
-    j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), NULL);
-    if (check_result_value(j_user, G_OK)) {
-      json_object_del(json_object_get(j_user, "user"), "source");
-      json_object_del(json_object_get(j_user, "user"), "enabled");
-      response->json_body = json_copy(json_object_get(j_user, "user"));
-    }
-    json_decref(j_user);
-  } else {
-    response->status = 500;
-  }
-  json_decref(j_session);
-  return U_OK;
-}
-
 int callback_glewlwyd_delete_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   char * session_hash;

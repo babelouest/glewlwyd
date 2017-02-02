@@ -137,7 +137,6 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/token/", NULL, NULL, NULL, &callback_glewlwyd_token, (void*)config);
 
   // Authentication
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/user/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_user_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/user/", NULL, NULL, NULL, &callback_glewlwyd_validate_user_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/user/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_delete_user_session, (void*)config);
 

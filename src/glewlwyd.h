@@ -45,7 +45,7 @@
 #define _HOEL_SQLITE
 #include <hoel.h>
 
-#define _GLEWLWYD_VERSION 0.9
+#define _GLEWLWYD_VERSION 0.9.9
 #define GLEWLWYD_LOG_NAME "Glewlwyd"
 
 // Configuration default values
@@ -372,7 +372,6 @@ int serialize_access_token(struct config_elements * config, const uint auth_type
 int serialize_session_token(struct config_elements * config, const char * username, const char * ip_source, const char * session_token, time_t now);
 
 // Callback functions
-int callback_glewlwyd_get_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_validate_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 
