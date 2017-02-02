@@ -45,13 +45,10 @@ END_TEST
 START_TEST(test_glwd_user_session_revoke_not_found_admin)
 {
   char * url = msprintf("%s/user/%s/session/", SERVER_URI, USER_LOGIN);
-  struct _u_map body;
   
-  u_map_init(&body);
-  u_map_put(&body, "session_hash", "not_found");
-  int res = run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, &body, 404, NULL, NULL, NULL);
+  admin_req.json_body = json_pack("{ss}", "session_hash", "not_found");
+  int res = run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL);
   free(url);
-  u_map_clean(&body);
 	ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -69,7 +66,7 @@ START_TEST(test_glwd_user_session_revoke_ok_admin)
   res = ulfius_send_http_request(&admin_req, &list_resp);
   if (res == U_OK) {
     u_map_put(admin_req.map_header, "Content-Type", "application/x-www-form-urlencoded");
-    u_map_put(&body, "session_hash", json_string_value(json_object_get(json_array_get(list_resp.json_body, 0), "session_hash")));
+    admin_req.json_body = json_pack("{ss}", "session_hash", json_string_value(json_object_get(json_array_get(list_resp.json_body, 0), "session_hash")));
   }
   
   url = msprintf("%s/user/%s/session/", SERVER_URI, USER_LOGIN);
