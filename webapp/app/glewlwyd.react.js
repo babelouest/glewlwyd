@@ -1698,7 +1698,7 @@ $(function() {
       return (
         <Modal show={this.state.show} onHide={() => this.closeModal(false)}>
           <Modal.Header closeButton>
-            <Modal.Title>Scope</Modal.Title>
+            <Modal.Title>Resource</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <div className="row">
