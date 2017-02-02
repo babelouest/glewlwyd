@@ -1100,7 +1100,7 @@ json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add
  * Add a new user
  */
 int add_user(struct config_elements * config, json_t * j_user) {
-  if (json_object_get(j_user, "source") != NULL && 0 == strcmp("database", json_string_value(json_object_get(j_user, "source")))) {
+  if (json_object_get(j_user, "source") == NULL || 0 == strcmp("database", json_string_value(json_object_get(j_user, "source")))) {
     return add_user_database(config, j_user);
   } else if (0 == strcmp("ldap", json_string_value(json_object_get(j_user, "source")))) {
     return add_user_ldap(config, j_user);
