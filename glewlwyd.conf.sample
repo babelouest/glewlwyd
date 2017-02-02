@@ -219,5 +219,4 @@ jwt =
    
    # characters used to generate and validate the token
    sha_secret = "secret"
-   
 }
