@@ -6,10 +6,6 @@ Lightweight, fast and easy to install on small systems. Requires a MySql or SQLi
 
 Fully written in C language, based on [Ulfius](https://github.com/babelouest/ulfius) HTTP framework, [Hoel](https://github.com/babelouest/hoel) database framework and [Libjwt](https://github.com/benmcollins/libjwt.git) JSON Web Tokens library.
 
-Beware! It's still a work in progress, not fully completed yet, and with probably a lot of bugs.
-
-The authentication part is available, which means that the OAuth2 RFC is implemented, but not (yet) the users/clients/scope administration pages and APIs.
-
 ## Installation
 
 You must install the following libraries including their header files:
