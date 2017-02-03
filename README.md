@@ -189,10 +189,6 @@ $ sudo systemctl enable glewlwyd
 $ sudo sudo systemctl start glewlwyd
 ```
 
-### Login and grant pages
-
-Login and grant access pages example are available in the `webapp` folder to properly use Glewlwyd.
-
 ## Usage
 
 Run the application using the service command if you installed the init file:
@@ -262,3 +258,31 @@ Every `access_token` has the following header and payload format:
 ```
 
 Refresh and session tokens are also JWTs, but their payload have slightly different values. A session token doesn't have a scope value, and the `type` values are respectively `refresh_token` and `session_token`. Although these tokens are validated by the Glewlwyd server directly.
+
+## Front-end application
+
+All front-end pages have a minimal design, feel free to modify them for your own need, or create your own application.
+
+### Glewlwyd manager
+
+Glewlwyd comes with a small front-end that uses the backend API to manage profile, users, clients, scopes, resources and authorization types.
+
+To connect to the management application, you must use a user that have `g_admin` scope.
+
+The front-end management application is a tiny single page app (SPA) written in ReactJS/JQuery, responsive as much as I can, not the best design in the world, but useful anyway.
+
+### Current user
+
+All users can also update their own profile with the dedicated page `profile.html`.
+
+The pages `login.html`, `grant.html` and `reset.html` are tiny pages used to login, logout, grant scope access or reset a password.
+
+If a user uses the reset password functionnality, he or she will receive the content of the file `reset.eml`. The email uses two patterns that will be replaced by values: `$USERNAME` for the username and `$URL` for the url to the reset.html page.
+
+`$URL` must be set in the configuration file properly so the emails will lead to the correct page.
+
+### tests/test-token.html
+
+This page is here only for oauth2 tests and behaviour validation. If you want to use it, you need to update the `glewlwyd_api` value and all parameters provided, such as `redirect_uri`, `scope` and `client`.
+
+Beware, all password inputs are of type `text`, so a typed password is not hidden from a hidden third-party dangerous predator.
