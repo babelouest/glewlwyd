@@ -538,13 +538,13 @@ json_t * session_check(struct config_elements * config, const char * session_val
         json_decref(j_query);
         if (res == H_OK) {
           if (json_array_size(j_result) > 0) {
-            j_query = json_pack("{sss{ss}s{ss}}",
+            j_query = json_pack("{sss{s{ss}}s{ss}}",
                                 "table",
                                 GLEWLWYD_TABLE_SESSION,
                                 "set",
-                                "gss_last_seen",
-                                  "raw",
-                                  (config->conn->type==HOEL_DB_TYPE_MARIADB?"NOW()":"(strftime('%s','now')"),
+                                  "gss_last_seen",
+                                    "raw",
+                                    (config->conn->type==HOEL_DB_TYPE_MARIADB?"NOW()":"(strftime('%s','now')"),
                                 "where",
                                   "gss_hash",
                                   session_hash);
