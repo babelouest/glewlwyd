@@ -67,7 +67,7 @@ $ sudo make install
 
 Copy `glewlwyd.conf.sample` to `glewlwyd.conf`, edit the file `glewlwyd.conf` with your own settings.
 
-### Digtest algorithm
+### Digest algorithm
 
 Specify in the config file the parameter `hash_algorithm` to store passwords with sqlite3 backend, and token digests.
 
