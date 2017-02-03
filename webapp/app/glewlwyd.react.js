@@ -118,15 +118,15 @@ $(function() {
       oauth.access_token = params.access_token;
       var expires = new Date();
       expires.setTime(expires.getTime() + (params.expires_in * 1000));
-      $.cookie(oauth.access_token_cookie, params.access_token, {expires: expires});
+      Cookies.set(oauth.access_token_cookie, params.access_token, {expires: expires});
       document.location = "#";
     } else if (params.error) {
       ReactDOM.render(
         <MessageModal show={true} title={"Error"} message={"You are not authorized to connect to this application"} />,
         document.getElementById('modal')
       );
-    } else if ($.cookie(oauth.access_token_cookie)) {
-      oauth.access_token = $.cookie(oauth.access_token_cookie);
+    } else if (Cookies.get(oauth.access_token_cookie)) {
+      oauth.access_token = Cookies.get(oauth.access_token_cookie);
     }
     
     /**
@@ -2175,7 +2175,7 @@ $(function() {
     }
     
     handleLogout() {
-      $.removeCookie(oauth.access_token_cookie);
+      Cookies.remove(oauth.access_token_cookie);
       location.reload();
     }
   }
