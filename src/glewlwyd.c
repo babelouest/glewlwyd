@@ -201,7 +201,7 @@ int main (int argc, char ** argv) {
 
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/", NULL, NULL, NULL, NULL, &callback_glewlwyd_root, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", "/api/", NULL, NULL, NULL, NULL, &callback_glewlwyd_api_description, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", "/config/", NULL, NULL, NULL, NULL, &callback_glewlwyd_server_configuration, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", NULL, NULL, NULL, &callback_glewlwyd_options, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->static_files_prefix, "*", NULL, NULL, NULL, &callback_glewlwyd_static_file, (void*)config);
   ulfius_set_default_endpoint(config->instance, NULL, NULL, NULL, &callback_default, (void*)config);

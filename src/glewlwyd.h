@@ -423,7 +423,7 @@ int callback_glewlwyd_set_authorization (const struct _u_request * request, stru
 int callback_glewlwyd_options (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_static_file (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_root (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_api_description (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_server_configuration (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 

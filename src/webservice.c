@@ -287,12 +287,14 @@ int callback_glewlwyd_root (const struct _u_request * request, struct _u_respons
  * api description endpoint
  * send the location of prefixes
  */
-int callback_glewlwyd_api_description (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  response->json_body = json_pack("{ssss}", 
+int callback_glewlwyd_server_configuration (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  response->json_body = json_pack("{ssssss}", 
                         "api_prefix", 
                         ((struct config_elements *)user_data)->url_prefix,
                         "app_prefix",
-                        ((struct config_elements *)user_data)->static_files_prefix);
+                        ((struct config_elements *)user_data)->static_files_prefix,
+                        "admin_scope",
+                        ((struct config_elements *)user_data)->admin_scope);
   return U_OK;
 };
 
