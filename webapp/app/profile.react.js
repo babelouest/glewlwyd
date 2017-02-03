@@ -35,12 +35,32 @@ var Checkbox = ReactBootstrap.Checkbox;
 var Modal = ReactBootstrap.Modal;
 
 $(function() {
+
+  /**
+   * Web application parameters
+   * Except for glewlwyd_server_url which I recommend to update, 
+   * the other values are not to be modified if you didn't change
+   * the default parameters values during the installation
+   */
+  var oauth = {
+    glewlwyd_server_url: "../", /* Default value if the web app is hosted by the API server. For security, I recommend to put the absolute url, e.g. https://auth.domain.com/ */
+
+    /**
+     *
+     * This will contain server config variables, do not modify it. 
+     * Anyway, if you do modify it, it will be overwritten
+     * 
+     */
+    api_prefix: ""
+  };
+  
   var profile = {};
   
+  // Function that will be used on every API call
   function APIRequest (method, url, data) {
     return $.ajax({
       method: method,
-      url: url,
+      url: oauth.glewlwyd_server_url + oauth.api_prefix + url,
       data: JSON.stringify(data),
       contentType: data?"application/json; charset=utf-8":null
     });
@@ -96,8 +116,8 @@ $(function() {
         <td>{(new Date(props.session.expired_at*1000)).toLocaleString()}</td>
         <td>{String(props.session.enabled)}</td>
         <td>
-        {props.session.enabled?<Button className="btn btn-default" onClick={(event) => props.openModal(props.session, event)}>
-            <i className="glyphicon glyphicon-trash"></i>
+        {props.session.enabled?<Button className="btn btn-default" onClick={(event) => props.openModal(props.session, event)} data-toggle="tooltip" title="Revoke session">
+            <i className="fa fa-trash"></i>
           </Button>:''}
         </td>
       </tr>
@@ -121,7 +141,7 @@ $(function() {
     
     refreshSessionList (valid, offset, limit) {
       var self = this;
-      APIRequest("GET", "../glewlwyd/profile/session/?valid=" + (valid?valid:"") + "&offset=" + (offset?offset:"") + "&limit=" + (limit?limit:""))
+      APIRequest("GET", "/profile/session/?valid=" + (valid?valid:"") + "&offset=" + (offset?offset:"") + "&limit=" + (limit?limit:""))
       .then(function (result) {
         self.setState({sessionList: result});
       });
@@ -138,7 +158,7 @@ $(function() {
     closeConfirmModal (result, evt) {
       var self = this;
       if (result) {
-        APIRequest("DELETE", "../glewlwyd/profile/session/", {session_hash: this.state.currentSession.session_hash})
+        APIRequest("DELETE", "/profile/session/", {session_hash: this.state.currentSession.session_hash})
         .then(function (result) {
           var currentSession = self.state.currentSession;
           currentSession.enabled = false;
@@ -197,8 +217,8 @@ $(function() {
         <td>{(new Date(props.token.expired_at*1000)).toLocaleString()}</td>
         <td>{String(props.token.enabled)}</td>
         <td>
-        {props.token.enabled?<Button className="btn btn-default" onClick={(event) => props.openModal(props.token, event)}>
-            <i className="glyphicon glyphicon-trash"></i>
+        {props.token.enabled?<Button className="btn btn-default" onClick={(event) => props.openModal(props.token, event)} data-toggle="tooltip" title="Revoke token">
+            <i className="fa fa-trash"></i>
           </Button>:''}
         </td>
       </tr>
@@ -222,7 +242,7 @@ $(function() {
     
     refreshTokenList (valid, offset, limit) {
       var self = this;
-      APIRequest("GET", "../glewlwyd/profile/refresh_token/?valid=" + (valid?valid:"") + "&offset=" + (offset?offset:"") + "&limit=" + (limit?limit:""))
+      APIRequest("GET", "/profile/refresh_token/?valid=" + (valid?valid:"") + "&offset=" + (offset?offset:"") + "&limit=" + (limit?limit:""))
       .then(function (result) {
         self.setState({tokenList: result});
       });
@@ -239,7 +259,7 @@ $(function() {
     closeConfirmModal (result, evt) {
       var self = this;
       if (result) {
-        APIRequest("DELETE", "../glewlwyd/profile/refresh_token/", {token_hash: this.state.currentToken.token_hash})
+        APIRequest("DELETE", "/profile/refresh_token/", {token_hash: this.state.currentToken.token_hash})
         .then(function (result) {
           var currentToken = self.state.currentToken;
           currentToken.enabled = false;
@@ -268,7 +288,7 @@ $(function() {
         <div>
           <h3>Refresh tokens&nbsp;
             <small>
-              <Button className="btn" onClick={this.refreshTokenList}>
+              <Button className="btn" onClick={this.refreshTokenList} data-toggle="tooltip" title="Refresh table">
                 <i className="fa fa-refresh" aria-hidden="true"></i>
               </Button>
             </small>
@@ -343,7 +363,7 @@ $(function() {
     }
     
     saveProfile (profile) {
-      APIRequest("PUT", "../glewlwyd/profile/", profile)
+      APIRequest("PUT", "/profile/", profile)
       .then(function (result) {
         profile = profile;
         ReactDOM.render(
@@ -365,7 +385,7 @@ $(function() {
     
     render() {
       return (
-        <Button className="btn btn-primary btn-block" onClick={(event) => this.handleOpenModal()}>
+        <Button className="btn btn-primary btn-block" onClick={(event) => this.handleOpenModal()} data-toggle="tooltip" title="Update my profile">
           <i className="fa fa-user" aria-hidden="true"></i>
           &nbsp;Update profile
         </Button>
@@ -388,7 +408,7 @@ $(function() {
     }
     
     saveProfile (profile) {
-      APIRequest("PUT", "../glewlwyd/profile/", profile)
+      APIRequest("PUT", "/profile/", profile)
       .then(function (result) {
         ReactDOM.render(
           <MessageModal show={true} title={"Password"} message={"Password updated"} />,
@@ -418,7 +438,7 @@ $(function() {
     
     render() {
       return (
-        <Button className="btn btn-primary btn-block" onClick={(event) => this.handleOpenModal()}>
+        <Button className="btn btn-primary btn-block" onClick={(event) => this.handleOpenModal()} data-toggle="tooltip" title="Update my password">
           <i className="fa fa-key" aria-hidden="true"></i>
           &nbsp;Update password
         </Button>
@@ -434,14 +454,14 @@ $(function() {
     }
     
     render() {
-      return (<Button className="btn btn-primary btn-block" onClick={this.handleLogout}>
+      return (<Button className="btn btn-primary btn-block" onClick={this.handleLogout} data-toggle="tooltip" title="Log out">
         <i className="fa fa-sign-out" aria-hidden="true"></i>
         &nbsp;Log out
       </Button>);
     }
     
     handleLogout() {
-      APIRequest("DELETE", "../glewlwyd/auth/user/")
+      APIRequest("DELETE", "/auth/user/")
       .then(function (){
         if (document.search) {
           document.location = "login.html?" + document.search;
@@ -466,9 +486,9 @@ $(function() {
     }
     
     render() {
-      return (<button type="button" className="btn btn-primary btn-block" onClick={this.handleContinue}>
+      return (<Button type="button" className="btn btn-primary btn-block" onClick={this.handleContinue} data-toggle="tooltip" title="Continue to application">
         Continue to application
-      </button>);
+      </Button>);
     }
     
     handleContinue() {
@@ -485,7 +505,7 @@ $(function() {
     }
     
     render() {
-      return (<Button className="btn btn-primary btn-block" onClick={this.handleAdmin}>
+      return (<Button className="btn btn-primary btn-block" onClick={this.handleAdmin} data-toggle="tooltip" title="Glewlwyd administration">
         <i className="fa fa-users" aria-hidden="true"></i>
         &nbsp;Manage Glewlwyd
       </Button>);
@@ -504,10 +524,10 @@ $(function() {
     }
     
     render() {
-      return (<button type="button" className="btn btn-primary" onClick={this.handleLogin}>
+      return (<Button type="button" className="btn btn-primary" onClick={this.handleLogin} data-toggle="tooltip" title="Log in">
         <i className="fa fa-sign-in" aria-hidden="true"></i>
         &nbsp;Log in
-      </button>);
+      </Button>);
     }
     
     handleLogin() {
@@ -559,14 +579,14 @@ $(function() {
       <UserDetails user={user} />,
       document.getElementById('userDetails')
     );
-    APIRequest("GET", "../glewlwyd/profile/session/")
+    APIRequest("GET", "/profile/session/")
     .then(function (result) {
       ReactDOM.render(
         <UserSessionTable sessionList={result} login={user.login}/>,
         document.getElementById('userSessionTable')
       );
     });
-    APIRequest("GET", "../glewlwyd/profile/refresh_token/")
+    APIRequest("GET", "/profile/refresh_token/")
     .then(function (result) {
       ReactDOM.render(
         <UserTokenTable tokenList={result} login={user.login}/>,
@@ -626,7 +646,9 @@ $(function() {
                        id="profileName" 
                        placeholder="Name" 
                        value={this.state.profile.name} 
-                       onChange={this.handleChangeName}></input>
+                       onChange={this.handleChangeName}
+                       data-toggle="tooltip" 
+                       title="Your new name"></input>
               </div>
             </div>
           </Modal.Body>
@@ -695,9 +717,11 @@ $(function() {
                        type="password" 
                        name="oldPassword" 
                        id="oldPassword" 
-                       placeholder="password" 
+                       placeholder="current password" 
                        value={this.state.profile.old_password} 
-                       onChange={this.handleChangeCurPassword}></input>
+                       onChange={this.handleChangeCurPassword}
+                       data-toggle="tooltip" 
+                       title="Enter your current password"></input>
               </div>
             </div>
             <div className="row">
@@ -711,7 +735,9 @@ $(function() {
                        id="newPassword" 
                        placeholder="new password" 
                        value={this.state.profile.new_password} 
-                       onChange={this.handleChangeNewPassword}></input>
+                       onChange={this.handleChangeNewPassword}
+                       data-toggle="tooltip" 
+                       title="New password must be at least 8 characters"></input>
               </div>
             </div>
             <div className="row">
@@ -723,9 +749,11 @@ $(function() {
                        type="password" 
                        name="confirmNewPassword" 
                        id="confirmNewPassword" 
-                       placeholder="new password" 
+                       placeholder="confirm new password" 
                        value={this.state.confirmPassword} 
-                       onChange={this.handleChangeConfirmNewPassword}></input>
+                       onChange={this.handleChangeConfirmNewPassword}
+                       data-toggle="tooltip" 
+                       title="Must exactly match new password"></input>
               </div>
             </div>
           </Modal.Body>
@@ -823,28 +851,30 @@ $(function() {
                 <Button className="btn btn-default" 
                         disabled={(this.state.offset===0)} 
                         type="button" 
-                        onClick={this.handlePreviousPage}>
+                        onClick={this.handlePreviousPage}
+                        data-toggle="tooltip" 
+                        title="Previous page">
                   <i className="icon-resize-small fa fa-chevron-left"></i>
                 </Button>
               </span>
-              <select className="form-control input-small" onChange={this.handleChangeLimit} value={this.state.limit}>
+              <select className="form-control input-small" onChange={this.handleChangeLimit} value={this.state.limit} data-toggle="tooltip" title="Page size">
                 <option value="10">10</option>
                 <option value="25">25</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
               </select>
               <span className="input-group-btn paddingRight">
-                <Button className="btn btn-default" type="button" onClick={this.handleNextPage}>
+                <Button className="btn btn-default" type="button" onClick={this.handleNextPage} data-toggle="tooltip" title="Next page">
                   <i className="icon-resize-small fa fa-chevron-right"></i>
                 </Button>
               </span>
-              <select className="form-control input-small" onChange={this.handleChangeValid} value={this.state.valid}>
+              <select className="form-control input-small" onChange={this.handleChangeValid} value={this.state.valid} data-toggle="tooltip" title="Status">
                 <option value="">Enabled and disabled</option>
                 <option value="true">Enabled only</option>
                 <option value="false">Disabled only</option>
               </select>
               <span className="input-group-btn paddingLeft">
-                <Button className="btn btn-default" onClick={this.handleRefresh}>
+                <Button className="btn btn-default" onClick={this.handleRefresh} data-toggle="tooltip" title="Refresh table">
                   <i className="icon-resize-small fa fa-refresh"></i>
                 </Button>
               </span>
@@ -859,20 +889,44 @@ $(function() {
       );
     }
   }
-
-  APIRequest("GET", "../glewlwyd/profile/")
-  .then(function (result) {
-    userDetails(result);
-    ReactDOM.render(
-      <LoginComponent loggedIn={true} user={result} />,
-      document.getElementById('profileActions')
-    );
+  /**
+   * Get server parameters
+   * And initialize application
+   */
+  $.ajax({
+    method: "GET",
+    url: oauth.glewlwyd_server_url + "/config"
   })
-  .fail(function () {
-    ReactDOM.render(
-      <LoginComponent loggedIn={false} user={result} />,
-      document.getElementById('profileActions')
-    );
+  .done(function (result) {
+    oauth.api_prefix = result.api_prefix;
+    APIRequest("GET", "/profile/")
+    .then(function (result) {
+      userDetails(result);
+      ReactDOM.render(
+        <LoginComponent loggedIn={true} user={result} />,
+        document.getElementById('profileActions')
+      );
+      APIRequest("GET", "/profile/")
+      .then(function (result) {
+        userDetails(result);
+        ReactDOM.render(
+          <LoginComponent loggedIn={true} user={result} />,
+          document.getElementById('profileActions')
+        );
+      })
+      .fail(function () {
+        ReactDOM.render(
+          <LoginComponent loggedIn={false} user={result} />,
+          document.getElementById('profileActions')
+        );
+      });
+    })
+    .fail(function () {
+      ReactDOM.render(
+        <LoginComponent loggedIn={false} user={result} />,
+        document.getElementById('profileActions')
+      );
+    });
   });
 
 });

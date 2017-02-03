@@ -35,13 +35,34 @@ var Checkbox = ReactBootstrap.Checkbox;
 var Modal = ReactBootstrap.Modal;
 
 $(function() {
+  
+  /**
+   * Web application parameters
+   * Except for glewlwyd_server_url which I recommend to update, 
+   * the other values are not to be modified if you didn't change
+   * the default parameters values during the installation
+   */
+  var oauth = {
+    client_id: "g_admin",                  /* client_id used for the glewlwyd manager app, default value is "g_admin", update this value if you have changed it in your installation */
+    glewlwyd_server_url: "../",            /* Default value if the web app is hosted by the API server. For security, I recommend to put the absolute url, e.g. https://auth.domain.com/ */
+    redirect_uri: "index.html",            /* Path to Glewlwyd manager index.html page */
+    access_token_cookie: "g_access_token", /* Name of the cookie to store the access_token */
+    redirect_uri: "../app/index.html",     /* Redirect uri for the glewlwyd manager application */
+    /**
+     *
+     * This will contain server config variables, do not modify them. 
+     * Anyway, if you do modify them, they will be overwritten
+     * 
+     */
+    access_token: false,
+    admin_scope: "",
+    api_prefix: ""
+  };
+  
   // Global lists
   var scopeList = [];
   var resourceList = [];
   var authorizationTypeList = [];
-  
-  // Config variables
-  var access_token = "access_token";
   
   // tab menu
   $('#nav li a').click(function() {
@@ -66,21 +87,13 @@ $(function() {
     return params;
   }
   
-  // OAuth2 parameters
-  var oauth = {
-    access_token: false,
-    client_id: "g_admin",
-    redirect_uri: "../app/index.html",
-    scope: "g_admin"
-  }
-  
   var currentUser = {loggedIn: false, name: "", email: ""};
 
   // Function that will be used on every API call
   function APIRequest (method, url, data) {
     return $.ajax({
       method: method,
-      url: url,
+      url: oauth.glewlwyd_server_url + oauth.api_prefix + url,
       data: JSON.stringify(data),
       contentType: data?"application/json; charset=utf-8":null,
       headers: {"Authorization": "Bearer " + oauth.access_token}
@@ -97,20 +110,80 @@ $(function() {
     });
   }
 
+  /**
+   * get access_token from url, or from cookie
+   */
+  function init() {
+    if (params.access_token) {
+      oauth.access_token = params.access_token;
+      var expires = new Date();
+      expires.setTime(expires.getTime() + (params.expires_in * 1000));
+      $.cookie(oauth.access_token_cookie, params.access_token, {expires: expires});
+      document.location = "#";
+    } else if (params.error) {
+      ReactDOM.render(
+        <MessageModal show={true} title={"Error"} message={"You are not authorized to connect to this application"} />,
+        document.getElementById('modal')
+      );
+    } else if ($.cookie(oauth.access_token_cookie)) {
+      oauth.access_token = $.cookie(oauth.access_token_cookie);
+    }
+    
+    /**
+     * If an acces_token is present, use it to get all lists
+     * if no access_token, display the login button
+     */
+    if (oauth.access_token) {
+      APIRequest("GET", "/profile/")
+      .then(function (result) {
+        currentUser.loggedIn = true;
+        currentUser.name = result.name;
+        currentUser.email = result.email;
+        loadLists();
+      })
+      .fail(function (error) {
+        if (error.status === 401) {
+          currentUser.loggedIn = false;
+        }
+      })
+      .always(function () {
+        ReactDOM.render(
+          <LoginInformation user={currentUser} />,
+          document.getElementById('connectMessage')
+        );
+        ReactDOM.render(
+          <LoginComponent user={currentUser} />,
+          document.getElementById('LoginComponent')
+        );
+        ReactDOM.render(
+          <SpinnerModal show={false} />,
+          document.getElementById('spinner')
+        );
+      });
+    } else {
+      ReactDOM.render(
+        <ConnectMessage />,
+        document.getElementById('connectMessage')
+      );
+      ReactDOM.render(
+        <LoginComponent user={currentUser} />,
+        document.getElementById('LoginComponent')
+      );
+      ReactDOM.render(
+        <SpinnerModal show={false} />,
+        document.getElementById('spinner')
+      );
+    }
+  }
+
   // Load all lists at startup
   function loadLists () {
-    var message="Loading data...";
-    ReactDOM.render(
-      <SpinnerModal show={true} message={message} />,
-      document.getElementById('spinner')
-    );
-    
     var promises = [
-      APIRequest("GET", "../glewlwyd/user/"),
-      APIRequest("GET", "../glewlwyd/client/"),
-      APIRequest("GET", "../glewlwyd/scope/"),
-      APIRequest("GET", "../glewlwyd/resource/"),
-      APIRequest("GET", "../glewlwyd/authorization/")
+      APIRequest("GET", "/user/"),
+      APIRequest("GET", "/client/"),
+      APIRequest("GET", "/scope/"),
+      APIRequest("GET", "/resource/"),
+      APIRequest("GET", "/authorization/")
     ];
     
     $.when(promises)
@@ -157,12 +230,6 @@ $(function() {
       if (error.status === 401) {
         currentUser.loggedIn = false;
       }
-    })
-    .done(function () {
-      ReactDOM.render(
-        <SpinnerModal show={false} />,
-        document.getElementById('spinner')
-      );
     });
   }
   
@@ -184,6 +251,7 @@ $(function() {
       this.openModalDelete = this.openModalDelete.bind(this);
       this.deleteUser = this.deleteUser.bind(this);
       this.openAlertModal = this.openAlertModal.bind(this);
+      this.sendEmailPassword = this.sendEmailPassword.bind(this);
     }
     
     userDetails (user) {
@@ -191,14 +259,14 @@ $(function() {
         <UserDetails user={user} />,
         document.getElementById('userDetails')
       );
-      APIRequest("GET", "../glewlwyd/user/" + user.login + "/session/")
+      APIRequest("GET", "/user/" + user.login + "/session/")
       .then(function (result) {
         ReactDOM.render(
           <UserSessionTable sessionList={result} login={user.login}/>,
           document.getElementById('userSessionTable')
         );
       });
-      APIRequest("GET", "../glewlwyd/user/" + user.login + "/refresh_token/")
+      APIRequest("GET", "/user/" + user.login + "/refresh_token/")
       .then(function (result) {
         ReactDOM.render(
           <UserTokenTable tokenList={result} login={user.login}/>,
@@ -243,7 +311,7 @@ $(function() {
     deleteUser (result) {
       if (result) {
         var self = this;
-        APIRequest("DELETE", "../glewlwyd/user/" + this.state.editUser.login)
+        APIRequest("DELETE", "/user/" + this.state.editUser.login)
         .then(function (result) {
             var users = self.state.users;
             for (var key in users) {
@@ -264,12 +332,12 @@ $(function() {
     saveUser (add, user) {
       var self = this;
       if (add) {
-        APIRequest("GET", "../glewlwyd/user/" + user.login)
+        APIRequest("GET", "/user/" + user.login)
         .then(function (result) {
           self.openAlertModal("Error, login '" + user.login + "' already exist");
         })
         .fail(function () {
-          APIRequest("POST", "../glewlwyd/user/", user)
+          APIRequest("POST", "/user/", user)
           .then(function (result) {
             var users = self.state.users;
             users.push(user);
@@ -282,7 +350,7 @@ $(function() {
         })
         
       } else {
-        APIRequest("PUT", "../glewlwyd/user/" + user.login, user)
+        APIRequest("PUT", "/user/" + user.login, user)
         .then(function () {
           var users = self.state.users;
           for (var key in users) {
@@ -302,7 +370,7 @@ $(function() {
     runSearch (search, offset, limit) {
       var self = this;
       if (search) {
-        APIRequest("GET", "../glewlwyd/user/?search=" + search + "&limit=" + limit + "&offset=" + offset)
+        APIRequest("GET", "/user/?search=" + search + "&limit=" + limit + "&offset=" + offset)
         .then(function (result) {
           self.setState({
             users: result
@@ -312,7 +380,7 @@ $(function() {
           self.openAlertModal("Error while searching users");
         });
       } else {
-        APIRequest("GET", "../glewlwyd/user/" + "?limit=" + limit + "&offset=" + offset)
+        APIRequest("GET", "/user/" + "?limit=" + limit + "&offset=" + offset)
         .then(function (result) {
           self.setState({
             users: result
@@ -323,31 +391,43 @@ $(function() {
         });
       }
     }
+    
+    sendEmailPassword (user) {
+      var self = this;
+      APIRequest("POST", "/user/" + user.login + "/reset_password")
+      .then(function (result) {
+        self.openAlertModal("Email sent to user");
+      })
+      .fail(function (error) {
+        self.openAlertModal("Error sending email");
+      });
+    }
 
     render() {
       var self = this;
       var rows = [];
       this.state.users.forEach(function(user, index) {
         rows.push(
-          <UserRow user={user} key={index} userDetails={self.userDetails} openModalEdit={self.openModalEdit} openModalDelete={self.openModalDelete} />
+          <UserRow user={user} key={index} userDetails={self.userDetails} openModalEdit={self.openModalEdit} openModalDelete={self.openModalDelete} sendEmailPassword={self.sendEmailPassword} />
         );
       });
       
       return (
         <div>
           <ListNavigation updateNavigation={this.runSearch} />
-          <Button className="btn btn-default" onClick={this.openModalAdd}>
-            <i className="glyphicon glyphicon-plus"></i>
+          <Button className="btn btn-default" onClick={this.openModalAdd} data-toggle="tooltip" title="Add a new user">
+            <i className="fa fa-plus"></i>
           </Button>
           <table className="table table-hover table-responsive">
             <thead>
               <tr>
-                <th>Source</th>
+                <th>Backend</th>
                 <th>Login</th>
                 <th>Name</th>
                 <th>E-mail</th>
                 <th>Scopes</th>
                 <th>Enabled</th>
+                <th></th>
                 <th></th>
               </tr>
             </thead>
@@ -372,14 +452,23 @@ $(function() {
         <td>
           <div className="input-group">
             <div className="input-group-btn">
-              <Button className="btn btn-default" onClick={() => props.userDetails(props.user)}>
-                <i className="glyphicon glyphicon-eye-open"></i>
+              <Button className="btn btn-default" onClick={() => props.userDetails(props.user)} data-toggle="tooltip" title="Display user details">
+                <i className="fa fa-eye"></i>
               </Button>
-              <Button className="btn btn-default" onClick={() => props.openModalEdit(props.user)}>
-                <i className="glyphicon glyphicon-pencil"></i>
+              <Button className="btn btn-default" onClick={() => props.sendEmailPassword(props.user)} data-toggle="tooltip" title="Send an email to change the password" disabled={!props.user.email}>
+                <i className="fa fa-envelope"></i>
               </Button>
-              <Button className="btn btn-default" onClick={() => props.openModalDelete(props.user)}>
-                <i className="glyphicon glyphicon-trash"></i>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div className="input-group">
+            <div className="input-group-btn">
+              <Button className="btn btn-default" onClick={() => props.openModalEdit(props.user)} data-toggle="tooltip" title="Edit user profile">
+                <i className="fa fa-pencil"></i>
+              </Button>
+              <Button className="btn btn-default" onClick={() => props.openModalDelete(props.user)} data-toggle="tooltip" title="Delete user">
+                <i className="fa fa-trash"></i>
               </Button>
             </div>
           </div>
@@ -515,10 +604,10 @@ $(function() {
           <Modal.Body>
             <div className="row">
               <div className="col-md-6">
-                <label htmlFor="userSource">Source</label>
+                <label htmlFor="userSource">Backend</label>
               </div>
               <div className="col-md-6">
-                <select className="form-control" name="userSource" id="userSource" value={this.state.user.source} onChange={this.handleChangeSource}>
+                <select className="form-control" name="userSource" id="userSource" value={this.state.user.source} onChange={this.handleChangeSource} data-toggle="tooltip" title="Backend to store the user">
                   <option value="database">Database</option>
                   <option value="ldap">LDAP</option>
                 </select>
@@ -529,7 +618,7 @@ $(function() {
                 <label htmlFor="userLogin">Login</label>
               </div>
               <div className={this.state.loginInvalid?"col-md-6 has-error":"col-md-6"}>
-                <input className="form-control" type="text" name="userLogin" id="userLogin" disabled={!this.state.add?"disabled":""} placeholder="User Login" value={this.state.user.login} onChange={this.handleChangeLogin}></input>
+                <input className="form-control" type="text" name="userLogin" id="userLogin" disabled={!this.state.add?"disabled":""} placeholder="User Login" value={this.state.user.login} onChange={this.handleChangeLogin} data-toggle="tooltip" title="User login must be unique and can't be changed after creation"></input>
               </div>
             </div>
             <div className="row top-buffer">
@@ -537,7 +626,16 @@ $(function() {
                 <label htmlFor="userPassword">Password</label>
               </div>
               <div className={this.state.passwordInvalid?"col-md-6 has-error":"col-md-6"}>
-                <input className="form-control" type="password" name="userPassword" id="userPassword" placeholder="User password" onChange={this.handleChangePassword} value={this.state.user.password}></input>
+                <input className="form-control" 
+                       type="password" 
+                       name="userPassword" 
+                       id="userPassword" 
+                       placeholder="User password" 
+                       onChange={this.handleChangePassword} 
+                       value={this.state.user.password} 
+                       data-toggle="tooltip" 
+                       title="Password must be at least 8 characters, leave empty if you don't want to set or change the password">
+                 </input>
               </div>
             </div>
             <div className="row top-buffer">
@@ -545,7 +643,15 @@ $(function() {
                 <label htmlFor="userPasswordConfirm">Confirm password</label>
               </div>
               <div className={this.state.passwordInvalid?"col-md-6 has-error":"col-md-6"}>
-                <input className="form-control" type="password" name="userPasswordConfirm" id="userPasswordConfirm" placeholder="Confirm User password" onChange={this.handleChangeConfirmPassword} value={this.state.user.confirmPassword}></input>
+                <input className="form-control" 
+                       type="password" 
+                       name="userPasswordConfirm" 
+                       id="userPasswordConfirm" 
+                       placeholder="Confirm User password" 
+                       onChange={this.handleChangeConfirmPassword} 
+                       value={this.state.user.confirmPassword} 
+                       data-toggle="tooltip" 
+                       title="must exactly match password"></input>
               </div>
             </div>
             <div className="row top-buffer">
@@ -553,24 +659,33 @@ $(function() {
                 <label htmlFor="userName">Name</label>
               </div>
               <div className="col-md-6">
-                <input className="form-control" type="text" name="userName" id="userName" placeholder="Fullname" value={this.state.user.name} onChange={this.handleChangeName}></input>
+                <input className="form-control" type="text" name="userName" id="userName" placeholder="Fullname" value={this.state.user.name} onChange={this.handleChangeName} data-toggle="tooltip" title="User full name"></input>
               </div>
             </div>
             <div className="row top-buffer">
               <div className="col-md-6">
-                <label htmlFor="userEmail">Email</label>
+                <label htmlFor="userEmail">E-mail</label>
               </div>
               <div className="col-md-6">
-                <input className="form-control" type="text" name="userEmail" id="userEmail" placeholder="User e-mail" value={this.state.user.email} onChange={this.handleChangeEmail}></input>
+                <input className="form-control" 
+                       type="text" 
+                       name="userEmail" 
+                       id="userEmail" 
+                       placeholder="User e-mail" 
+                       value={this.state.user.email} 
+                       onChange={this.handleChangeEmail} 
+                       data-toggle="tooltip" 
+                       title="User e-mail address, used to send password reset">
+                 </input>
               </div>
             </div>
             <ScopeManagement scopes={this.state.user.scope} updateScopes={this.updateScopes} />
             <div className="row top-buffer">
               <div className="col-md-6">
-                <label>Enabled</label>
+                <label for="userEnabled">Enabled</label>
               </div>
               <div className="col-md-6">
-                <Checkbox validationState="success" checked={this.state.user.enabled?true:false} onChange={this.handleChangeEnabled}></Checkbox>
+                <Checkbox id="userEnabled" validationState="success" checked={this.state.user.enabled?true:false} onChange={this.handleChangeEnabled} data-toggle="tooltip" title="A disabled user can't log in or access its profile"></Checkbox>
               </div>
             </div>
           </Modal.Body>
@@ -641,7 +756,7 @@ $(function() {
     deleteClient (result) {
       var self = this;
       if (result) {
-        APIRequest("DELETE", "../glewlwyd/client/" + this.state.editClient.client_id)
+        APIRequest("DELETE", "/client/" + this.state.editClient.client_id)
         .then(function (result) {
             var clients = self.state.clients;
             for (var key in clients) {
@@ -662,12 +777,12 @@ $(function() {
     saveClient (add, client) {
       var self = this;
       if (add) {
-        APIRequest("GET", "../glewlwyd/client/" + client.client_id)
+        APIRequest("GET", "/client/" + client.client_id)
         .then(function (result) {
           self.openAlertModal("Error, client_id '" + client.client_id + "' already exist");
         })
         .fail(function () {
-          APIRequest("POST", "../glewlwyd/client/", client)
+          APIRequest("POST", "/client/", client)
           .then(function (result) {
             var clients = self.state.clients;
             clients.push(client);
@@ -680,7 +795,7 @@ $(function() {
         });
         
       } else {
-        APIRequest("PUT", "../glewlwyd/client/" + client.client_id, client)
+        APIRequest("PUT", "/client/" + client.client_id, client)
         .then(function () {
           var clients = self.state.clients;
           for (var key in clients) {
@@ -700,7 +815,7 @@ $(function() {
     runSearch (search, offset, limit) {
       var self = this;
       if (search) {
-        APIRequest("GET", "../glewlwyd/client/?search=" + search + "&limit=" + limit + "&offset=" + offset)
+        APIRequest("GET", "/client/?search=" + search + "&limit=" + limit + "&offset=" + offset)
         .then(function (result) {
           self.setState({clients: result});
         })
@@ -708,7 +823,7 @@ $(function() {
           self.openAlertModal("Error while searching clients");
         });
       } else {
-        APIRequest("GET", "../glewlwyd/client/" + "?limit=" + limit + "&offset=" + offset)
+        APIRequest("GET", "/client/" + "?limit=" + limit + "&offset=" + offset)
         .then(function (result) {
           self.setState({clients: result});
         })
@@ -730,8 +845,8 @@ $(function() {
       return (
         <div>
           <ListNavigation updateNavigation={this.runSearch} />
-          <Button className="btn btn-default" onClick={this.openModalAdd}>
-            <i className="glyphicon glyphicon-plus"></i>
+          <Button className="btn btn-default" onClick={this.openModalAdd} data-toggle="tooltip" title="Add a new client">
+            <i className="fa fa-plus"></i>
           </Button>
           <table className="table table-hover table-responsive">
             <thead>
@@ -770,11 +885,11 @@ $(function() {
         <td>
           <div className="input-group">
             <div className="input-group-btn">
-              <Button className="btn btn-default" onClick={() => props.openModalEdit(props.client)}>
-                <i className="glyphicon glyphicon-pencil"></i>
+              <Button className="btn btn-default" onClick={() => props.openModalEdit(props.client)} data-toggle="tooltip" title="Edit client">
+                <i className="fa fa-pencil"></i>
               </Button>
-              <Button className="btn btn-default" onClick={() => props.openModalDelete(props.client)}>
-                <i className="glyphicon glyphicon-trash"></i>
+              <Button className="btn btn-default" onClick={() => props.openModalDelete(props.client)} data-toggle="tooltip" title="Delete client">
+                <i className="fa fa-trash"></i>
               </Button>
             </div>
           </div>
@@ -954,7 +1069,7 @@ $(function() {
         clientRedirectUriList.push(
           <span className="tag label label-info hide-overflow" key={index} data-toggle="tooltip" title={redirect_uri.uri}>
             <a href="" onClick={(evt) => self.removeRedirectUri(redirect_uri.name, evt)}>
-              <i className="remove glyphicon glyphicon-remove-sign glyphicon-white"></i>
+              <i className="remove fa fa-trash fa-white"></i>
             </a>
             <span>&nbsp;{redirect_uri.name + " (" + redirect_uri.uri + ")"}</span>
           </span>
@@ -968,10 +1083,10 @@ $(function() {
           <Modal.Body>
             <div className="row">
               <div className="col-md-6">
-                <label htmlFor="clientSource">Source</label>
+                <label htmlFor="clientSource">Backend</label>
               </div>
               <div className="col-md-6">
-                <select className="form-control" name="clientSource" id="clientSource" value={this.state.client.source} onChange={this.handleChangeSource}>
+                <select className="form-control" name="clientSource" id="clientSource" value={this.state.client.source} onChange={this.handleChangeSource} data-toggle="tooltip" title="Backend used to store client">
                   <option value="ldap">LDAP</option>
                   <option value="database">Database</option>
                 </select>
@@ -989,7 +1104,9 @@ $(function() {
                        disabled={!this.state.add?"disabled":""} 
                        placeholder="Client Id" 
                        value={this.state.client.client_id} 
-                       onChange={this.handleChangeClientId}></input>
+                       onChange={this.handleChangeClientId}
+                       data-toggle="tooltip" 
+                       title="client_id must be unique and can't be changed after creation"></input>
               </div>
             </div>
             <div className="row top-buffer">
@@ -1003,7 +1120,9 @@ $(function() {
                        id="clientName" 
                        placeholder="Fullname" 
                        value={this.state.client.name} 
-                       onChange={this.handleChangeName}></input>
+                       onChange={this.handleChangeName}
+                       data-toggle="tooltip" 
+                       title="name can't be changed after creation"></input>
               </div>
             </div>
             <div className="row top-buffer">
@@ -1017,7 +1136,9 @@ $(function() {
                        id="clientDescription" 
                        placeholder="Client description" 
                        value={this.state.client.description} 
-                       onChange={this.handleChangeDescription}></input>
+                       onChange={this.handleChangeDescription}
+                       data-toggle="tooltip" 
+                       title="Client description"></input>
               </div>
             </div>
             <div className="row top-buffer">
@@ -1040,7 +1161,9 @@ $(function() {
                        placeholder="User password" 
                        disabled={this.state.client.confidential?false:true}
                        onChange={this.handleChangePassword} 
-                       value={this.state.client.password}></input>
+                       value={this.state.client.password}
+                       data-toggle="tooltip" 
+                       title="Password must be at least 8 characters, leave empty if you don't want to set or change the password"></input>
               </div>
             </div>
             <div className="row top-buffer">
@@ -1055,7 +1178,9 @@ $(function() {
                        placeholder="Confirm User password" 
                        disabled={this.state.client.confidential?false:true}
                        onChange={this.handleChangeConfirmPassword} 
-                       value={this.state.client.confirmPassword}></input>
+                       value={this.state.client.confirmPassword}
+                       data-toggle="tooltip" 
+                       title="must exactly match password"></input>
               </div>
             </div>
             <ClientAuthTypeManagement authorizationTypes={this.state.client.authorization_type} updateAuthTypes={this.updateAuthTypes} />
@@ -1076,16 +1201,21 @@ $(function() {
                 </div>
                 <div>
                   <div className={this.state.redirectUriNameInvalid?"input-group has-error":"input-group"}>
-                    <input className="form-control" type="text" placeholder="Name" value={this.state.redirectUriName} onChange={this.handleChangeRedirectUriName}></input>
+                    <input className="form-control" 
+                           type="text" 
+                           placeholder="Name" 
+                           value={this.state.redirectUriName} 
+                           onChange={this.handleChangeRedirectUriName}
+                           data-toggle="tooltip" 
+                           title="Name you use for this redirect_uri"></input>
                     <div className="input-group-btn ">
-                      <button type="button" 
-                              name="addScope" 
+                      <Button name="addScope" 
                               id="addScope" 
                               className="btn btn-default" 
                               disabled={this.state.redirectUriNameInvalid||this.state.redirectUriInvalid?true:false}
                               onClick={this.addRedirectUri}>
                         <i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -1094,7 +1224,7 @@ $(function() {
             <div className="row top-buffer">
               <div className="col-md-6">
               </div>
-              <div className="col-md-6" id="clientScopeValue">
+              <div className="col-md-6" id="clientRedirectUriList">
               {clientRedirectUriList}
               </div>
             </div>
@@ -1164,7 +1294,7 @@ $(function() {
           <span className="tag label label-info" key={index}>
             <span>{authType}&nbsp;</span>
             <a href="" onClick={(evt) => self.removeAuthType(authType, evt)}>
-              <i className="remove glyphicon glyphicon-remove-sign glyphicon-white"></i>
+              <i className="remove fa fa-trash fa-white"></i>
             </a>
           </span>
         );
@@ -1177,13 +1307,13 @@ $(function() {
             </div>
             <div className="col-md-6">
               <div className="input-group">
-                <select id="userAuthType" name="userAuthType" className="form-control" value={this.state.authTypeSelected} onChange={this.handleChangeAuthTypeSelected}>
+                <select id="userAuthType" name="userAuthType" className="form-control" value={this.state.authTypeSelected} onChange={this.handleChangeAuthTypeSelected} data-toggle="tooltip" title="Authorization types to allow for this client">
                   {allAuthTypeList}
                 </select>
                 <div className="input-group-btn ">
-                  <button type="button" name="addAuthType" id="addAuthType" className="btn btn-default" onClick={this.addAuthType}>
+                  <Button name="addAuthType" id="addAuthType" className="btn btn-default" onClick={this.addAuthType}>
                     <i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -1268,7 +1398,7 @@ $(function() {
     confirmDelete (result) {
       if (result) {
         var self = this;
-        APIRequest("DELETE", "../glewlwyd/scope/" + this.state.editScope.name)
+        APIRequest("DELETE", "/scope/" + this.state.editScope.name)
         .then(function (result) {
             var scopes = self.state.scopes;
             for (var key in scopes) {
@@ -1293,12 +1423,12 @@ $(function() {
     saveScope (add, scope) {
       var self = this;
       if (add) {
-        APIRequest("GET", "../glewlwyd/scope/" + scope.name)
+        APIRequest("GET", "/scope/" + scope.name)
         .then(function (result) {
           self.openAlertModal("Error, scope '" + scope.name + "' already exist");
         })
         .fail(function () {
-          APIRequest("POST", "../glewlwyd/scope/", scope)
+          APIRequest("POST", "/scope/", scope)
           .then(function (result) {
             var scopes = self.state.scopes;
             scopes.push(scope);
@@ -1310,7 +1440,7 @@ $(function() {
           });
         });
       } else {
-        APIRequest("PUT", "../glewlwyd/scope/" + scope.name, scope)
+        APIRequest("PUT", "/scope/" + scope.name, scope)
         .then(function () {
           var scopes = self.state.scopes;
           for (var key in scopes) {
@@ -1349,8 +1479,8 @@ $(function() {
       
       return (
         <div>
-          <Button className="btn btn-default" onClick={this.openModalAdd}>
-            <i className="glyphicon glyphicon-plus"></i>
+          <Button className="btn btn-default" onClick={this.openModalAdd} data-toggle="tooltip" title="Add a new scope">
+            <i className="fa fa-plus"></i>
           </Button>
           <table className="table table-hover table-responsive">
             <thead>
@@ -1377,11 +1507,11 @@ $(function() {
         <td>
           <div className="input-group">
             <div className="input-group-btn">
-              <Button className="btn btn-default" onClick={() => props.openModalEdit(props.scope)}>
-                <i className="glyphicon glyphicon-pencil"></i>
+              <Button className="btn btn-default" onClick={() => props.openModalEdit(props.scope)} data-toggle="tooltip" title="Edit scope">
+                <i className="fa fa-pencil"></i>
               </Button>
-              <Button className="btn btn-default" onClick={() => props.openModalDelete(props.scope)}>
-                <i className="glyphicon glyphicon-trash"></i>
+              <Button className="btn btn-default" onClick={() => props.openModalDelete(props.scope)} data-toggle="tooltip" title="Remove scope">
+                <i className="fa fa-trash"></i>
               </Button>
             </div>
           </div>
@@ -1442,7 +1572,9 @@ $(function() {
                        disabled={!this.state.add?"disabled":""} 
                        placeholder="Name" 
                        value={this.state.scope.name} 
-                       onChange={this.handleChangeName}></input>
+                       onChange={this.handleChangeName}
+                       data-toggle="tooltip" 
+                       title="Scope name must be unique and can't be changed after creation"></input>
               </div>
             </div>
             <div className="row top-buffer">
@@ -1456,7 +1588,9 @@ $(function() {
                        id="scopeDescription" 
                        placeholder="Description" 
                        value={this.state.scope.description} 
-                       onChange={this.handleChangeDescription}></input>
+                       onChange={this.handleChangeDescription}
+                       data-toggle="tooltip" 
+                       title="Scope description"></input>
               </div>
             </div>
           </Modal.Body>
@@ -1529,7 +1663,7 @@ $(function() {
     confirmDelete (result) {
       if (result) {
         var self = this;
-        APIRequest("DELETE", "../glewlwyd/resource/" + this.state.editResource.name)
+        APIRequest("DELETE", "/resource/" + this.state.editResource.name)
         .then(function (result) {
             var resources = self.state.resources;
             for (var key in resources) {
@@ -1550,12 +1684,12 @@ $(function() {
     saveResource (add, resource) {
       var self = this;
       if (add) {
-        APIRequest("GET", "../glewlwyd/resource/" + resource.name)
+        APIRequest("GET", "/resource/" + resource.name)
         .then(function (result) {
           self.openAlertModal("Error, resource '" + resource.name + "' already exist");
         })
         .fail(function () {
-          APIRequest("POST", "../glewlwyd/resource/", resource)
+          APIRequest("POST", "/resource/", resource)
           .then(function (result) {
             var resources = self.state.resources;
             resources.push(resource);
@@ -1568,7 +1702,7 @@ $(function() {
         })
         
       } else {
-        APIRequest("PUT", "../glewlwyd/resource/" + resource.name, resource)
+        APIRequest("PUT", "/resource/" + resource.name, resource)
         .then(function () {
           var resources = self.state.resources;
           for (var key in resources) {
@@ -1596,8 +1730,8 @@ $(function() {
       
       return (
         <div>
-          <Button className="btn btn-default" onClick={this.openModalAdd}>
-            <i className="glyphicon glyphicon-plus"></i>
+          <Button className="btn btn-default" onClick={this.openModalAdd} data-toggle="tooltip" title="Add a new resource">
+            <i className="fa fa-plus"></i>
           </Button>
           <table className="table table-hover table-responsive">
             <thead>
@@ -1623,16 +1757,16 @@ $(function() {
       <tr>
         <td>{props.resource.name}</td>
         <td>{props.resource.description}</td>
-        <td>{props.resource.uri}</td>
+        <td><a href="{props.resource.uri}" title={props.resource.description}>{props.resource.uri}</a></td>
         <td>{props.resource.scope.join(", ")}</td>
         <td>
           <div className="input-group">
             <div className="input-group-btn">
-              <Button className="btn btn-default" onClick={() => props.openModalEdit(props.resource)}>
-                <i className="glyphicon glyphicon-pencil"></i>
+              <Button className="btn btn-default" onClick={() => props.openModalEdit(props.resource)} data-toggle="tooltip" title="Edit resource">
+                <i className="fa fa-pencil"></i>
               </Button>
-              <Button className="btn btn-default" onClick={() => props.openModalDelete(props.resource)}>
-                <i className="glyphicon glyphicon-trash"></i>
+              <Button className="btn btn-default" onClick={() => props.openModalDelete(props.resource)} data-toggle="tooltip" title="Remove resource">
+                <i className="fa fa-trash"></i>
               </Button>
             </div>
           </div>
@@ -1712,7 +1846,9 @@ $(function() {
                        disabled={!this.state.add} 
                        placeholder="Name" 
                        value={this.state.resource.name} 
-                       onChange={this.handleChangeName}></input>
+                       onChange={this.handleChangeName}
+                       data-toggle="tooltip" 
+                       title="Resource name can't be changed after creation"></input>
               </div>
             </div>
             <div className="row top-buffer">
@@ -1726,7 +1862,9 @@ $(function() {
                        id="resourceDescription" 
                        placeholder="Description" 
                        value={this.state.resource.description} 
-                       onChange={this.handleChangeDescription}></input>
+                       onChange={this.handleChangeDescription}
+                       data-toggle="tooltip" 
+                       title="Resource description"></input>
               </div>
             </div>
             <div className="row top-buffer">
@@ -1740,7 +1878,9 @@ $(function() {
                        id="resourceUri" 
                        placeholder="resource URI" 
                        value={this.state.resource.uri} 
-                       onChange={this.handleChangeUri}></input>
+                       onChange={this.handleChangeUri}
+                       data-toggle="tooltip" 
+                       title="URI to access resource"></input>
               </div>
             </div>
             <ScopeManagement scopes={this.state.resource.scope} updateScopes={this.updateScopes} />
@@ -1812,8 +1952,8 @@ $(function() {
         <td>{(new Date(props.session.expired_at*1000)).toLocaleString()}</td>
         <td>{String(props.session.enabled)}</td>
         <td>
-        {props.session.enabled?<Button className="btn btn-default" onClick={(event) => props.openModal(props.session, event)}>
-            <i className="glyphicon glyphicon-trash"></i>
+        {props.session.enabled?<Button className="btn btn-default" onClick={(event) => props.openModal(props.session, event)} data-toggle="tooltip" title="Revoke session">
+            <i className="fa fa-trash"></i>
           </Button>:''}
         </td>
       </tr>
@@ -1837,7 +1977,7 @@ $(function() {
     
     refreshSessionList (valid, offset, limit) {
       var self = this;
-      APIRequest("GET", "../glewlwyd/user/" + this.props.login + "/session/?valid=" + (valid?valid:"") + "&offset=" + (offset?offset:"") + "&limit=" + (limit?limit:""))
+      APIRequest("GET", "/user/" + this.props.login + "/session/?valid=" + (valid?valid:"") + "&offset=" + (offset?offset:"") + "&limit=" + (limit?limit:""))
       .then(function (result) {
         self.setState({sessionList: result});
       });
@@ -1854,7 +1994,7 @@ $(function() {
     closeConfirmModal (result, evt) {
       var self = this;
       if (result) {
-        APIRequest("DELETE", "../glewlwyd/user/" + this.props.login + "/session/", {session_hash: this.state.currentSession.session_hash})
+        APIRequest("DELETE", "/user/" + this.props.login + "/session/", {session_hash: this.state.currentSession.session_hash})
         .then(function (result) {
           var currentSession = self.state.currentSession;
           currentSession.enabled = false;
@@ -1913,8 +2053,8 @@ $(function() {
         <td>{(new Date(props.token.expired_at*1000)).toLocaleString()}</td>
         <td>{String(props.token.enabled)}</td>
         <td>
-        {props.token.enabled?<Button className="btn btn-default" onClick={(event) => props.openModal(props.token, event)}>
-            <i className="glyphicon glyphicon-trash"></i>
+        {props.token.enabled?<Button className="btn btn-default" onClick={(event) => props.openModal(props.token, event)} data-toggle="tooltip" title="Revoke token">
+            <i className="fa fa-trash"></i>
           </Button>:''}
         </td>
       </tr>
@@ -1938,7 +2078,7 @@ $(function() {
     
     refreshTokenList (valid, offset, limit) {
       var self = this;
-      APIRequest("GET", "../glewlwyd/user/" + this.props.login + "/refresh_token/?valid=" + (valid?valid:"") + "&offset=" + (offset?offset:"") + "&limit=" + (limit?limit:""))
+      APIRequest("GET", "/user/" + this.props.login + "/refresh_token/?valid=" + (valid?valid:"") + "&offset=" + (offset?offset:"") + "&limit=" + (limit?limit:""))
       .then(function (result) {
         self.setState({tokenList: result});
       });
@@ -1955,7 +2095,7 @@ $(function() {
     closeConfirmModal (result, evt) {
       var self = this;
       if (result) {
-        APIRequest("DELETE", "../glewlwyd/user/" + this.props.login + "/refresh_token/", {token_hash: this.state.currentToken.token_hash})
+        APIRequest("DELETE", "/user/" + this.props.login + "/refresh_token/", {token_hash: this.state.currentToken.token_hash})
         .then(function (result) {
           var currentToken = self.state.currentToken;
           currentToken.enabled = false;
@@ -1982,13 +2122,7 @@ $(function() {
       });
       return (
         <div>
-          <h3>Refresh tokens&nbsp;
-            <small>
-              <Button className="btn" onClick={this.refreshTokenList}>
-                <i className="fa fa-refresh" aria-hidden="true"></i>
-              </Button>
-            </small>
-          </h3>
+          <h3>Refresh tokens&nbsp;</h3>
           <TokenNavigation updateNavigation={this.refreshTokenList} />
           <table className="table table-hover table-responsive">
             <thead>
@@ -2034,14 +2168,14 @@ $(function() {
     }
     
     render() {
-      return (<button className="btn btn-primary btn-block" onClick={this.handleLogout}>
+      return (<Button className="btn btn-primary btn-block" onClick={this.handleLogout} data-toggle="tooltip" title="log out">
         <i className="fa fa-sign-out" aria-hidden="true"></i>
         &nbsp;Log out
-      </button>);
+      </Button>);
     }
     
     handleLogout() {
-      $.removeCookie(access_token);
+      $.removeCookie(oauth.access_token_cookie);
       location.reload();
     }
   }
@@ -2054,10 +2188,10 @@ $(function() {
     }
     
     render() {
-      return (<button type="button" className="btn btn-primary btn-block" onClick={this.handleProfile}>
+      return (<Button type="button" className="btn btn-primary btn-block" onClick={this.handleProfile} data-toggle="tooltip" title="Edit my profile">
         <i className="fa fa-user" aria-hidden="true"></i>
         &nbsp;My profile
-      </button>);
+      </Button>);
     }
     
     handleProfile() {
@@ -2073,14 +2207,14 @@ $(function() {
     }
     
     render() {
-      return (<button type="button" className="btn btn-primary btn-block" onClick={this.handleLogin}>
+      return (<Button type="button" className="btn btn-primary btn-block" onClick={this.handleLogin} data-toggle="tooltip" title="Log in">
         <i className="fa fa-sign-in" aria-hidden="true"></i>
         &nbsp;Log in
-      </button>);
+      </Button>);
     }
     
     handleLogin() {
-      document.location = "../glewlwyd/auth?response_type=token&client_id="+oauth.client_id+"&redirect_uri="+oauth.redirect_uri+"&scope="+oauth.scope;
+      document.location = oauth.glewlwyd_server_url + oauth.api_prefix + "/auth?response_type=token&client_id="+oauth.client_id+"&redirect_uri="+oauth.redirect_uri+"&scope="+oauth.admin_scope;
     }
   }
 
@@ -2156,7 +2290,7 @@ $(function() {
           <span className="tag label label-info" key={index}>
             <span>{scope}&nbsp;</span>
             <a href="" onClick={(evt) => self.removeScope(scope, evt)}>
-              <i className="remove glyphicon glyphicon-remove-sign glyphicon-white"></i>
+              <i className="remove fa fa-trash fa-white"></i>
             </a>
           </span>
         );
@@ -2173,9 +2307,9 @@ $(function() {
                   {allScopeList}
                 </select>
                 <div className="input-group-btn ">
-                  <button type="button" name="addScope" id="addScope" className="btn btn-default" onClick={this.addScope}>
+                  <Button name="addScope" id="addScope" className="btn btn-default" onClick={this.addScope} data-toggle="tooltip" title="Add scope">
                     <i className="icon-resize-small fa fa-plus" aria-hidden="true"></i>
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -2244,27 +2378,29 @@ $(function() {
                 <Button className="btn btn-default" 
                         disabled={(this.state.offset===0)} 
                         type="button" 
-                        onClick={this.handlePreviousPage}>
+                        onClick={this.handlePreviousPage}
+                        data-toggle="tooltip" 
+                        title="Previous page">
                   <i className="icon-resize-small fa fa-chevron-left"></i>
                 </Button>
               </span>
-              <select className="form-control input-small" onChange={this.handleChangeLimit} value={this.state.limit}>
+              <select className="form-control input-small" onChange={this.handleChangeLimit} value={this.state.limit} data-toggle="tooltip" title="Select page size">
                 <option value="10">10</option>
                 <option value="25">25</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
               </select>
               <span className="input-group-btn paddingRight">
-                <Button className="btn btn-default" type="button" onClick={this.handleNextPage}>
+                <Button className="btn btn-default" type="button" onClick={this.handleNextPage} data-toggle="tooltip" title="Next page">
                   <i className="icon-resize-small fa fa-chevron-right"></i>
                 </Button>
               </span>
               <form onSubmit={this.handleSearch}>
-                <input type="text" className="form-control input-medium" placeholder="Search" value={this.state.search} onChange={this.handleChangeSearch}/>
+                <input type="text" className="form-control input-medium" placeholder="Search" value={this.state.search} onChange={this.handleChangeSearch} data-toggle="tooltip" title="Search value"/>
               </form>
               <span className="input-group-btn">
-                <Button className="btn btn-default" onClick={this.handleSearch}>
-                  <i className="glyphicon glyphicon-search"></i>
+                <Button className="btn btn-default" onClick={this.handleSearch} data-toggle="tooltip" title="Run search">
+                  <i className="fa fa-search"></i>
                 </Button>
               </span>
             </div>
@@ -2329,28 +2465,30 @@ $(function() {
                 <Button className="btn btn-default" 
                         disabled={(this.state.offset===0)} 
                         type="button" 
-                        onClick={this.handlePreviousPage}>
+                        onClick={this.handlePreviousPage}
+                        data-toggle="tooltip" 
+                        title="Previous page">
                   <i className="icon-resize-small fa fa-chevron-left"></i>
                 </Button>
               </span>
-              <select className="form-control input-small" onChange={this.handleChangeLimit} value={this.state.limit}>
+              <select className="form-control input-small" onChange={this.handleChangeLimit} value={this.state.limit} data-toggle="tooltip" title="Select page size">
                 <option value="10">10</option>
                 <option value="25">25</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
               </select>
               <span className="input-group-btn paddingRight">
-                <Button className="btn btn-default" type="button" onClick={this.handleNextPage}>
+                <Button className="btn btn-default" type="button" onClick={this.handleNextPage} data-toggle="tooltip" title="Next page">
                   <i className="icon-resize-small fa fa-chevron-right"></i>
                 </Button>
               </span>
-              <select className="form-control input-small" onChange={this.handleChangeValid} value={this.state.valid}>
+              <select className="form-control input-small" onChange={this.handleChangeValid} value={this.state.valid} data-toggle="tooltip" title="Status">
                 <option value="">Enabled and disabled</option>
                 <option value="true">Enabled only</option>
                 <option value="false">Disabled only</option>
               </select>
               <span className="input-group-btn paddingLeft">
-                <Button className="btn btn-default" onClick={this.handleRefresh}>
+                <Button className="btn btn-default" onClick={this.handleRefresh} data-toggle="tooltip" title="Refresh table">
                   <i className="icon-resize-small fa fa-refresh"></i>
                 </Button>
               </span>
@@ -2403,7 +2541,7 @@ $(function() {
       if (this.state.enabled) {
         return (
         <div>
-          <button type="button" className="btn btn-danger" onClick={this.handleToggleAuthType} >Disable</button>
+          <Button type="button" className="btn btn-danger" onClick={this.handleToggleAuthType} data-toggle="tooltip" title="Disable">Disable</Button>
           <Modal show={this.state.showAlertModal} onHide={this.closeAlertModal}>
             <Modal.Header closeButton>
               <Modal.Title>Authorization Type</Modal.Title>
@@ -2419,7 +2557,7 @@ $(function() {
       } else {
         return (
         <div>
-          <button type="button" className="btn btn-success" onClick={this.handleToggleAuthType} >Enable</button>
+          <Button type="button" className="btn btn-success" onClick={this.handleToggleAuthType} data-toggle="tooltip" title="Enable">Enable</Button>
           <Modal show={this.state.showAlertModal} onHide={this.closeAlertModal}>
             <Modal.Header closeButton>
               <Modal.Title>Authorization Type</Modal.Title>
@@ -2437,7 +2575,7 @@ $(function() {
     
     handleToggleAuthType () {
       var self = this;
-      APIRequest("PUT","../glewlwyd/authorization/" + this.props.authType.name, {description: this.props.authType.description, enabled: !this.state.enabled})
+      APIRequest("PUT","/authorization/" + this.props.authType.name, {description: this.props.authType.description, enabled: !this.state.enabled})
       .done(function (result) {
         self.setState(prevState => ({
           enabled: !prevState.enabled
@@ -2593,60 +2731,37 @@ $(function() {
    */
   var params = getQueryParams(location.hash);
 
+  var message="Loading data...";
+  ReactDOM.render(
+    <SpinnerModal show={true} message={message} />,
+    document.getElementById('spinner')
+  );
   /**
-   * get access_token from url, or from cookie
+   * Get server parameters
+   * And initialize application
    */
-  if (params.access_token) {
-    oauth.access_token = params.access_token;
-    var expires = new Date();
-    expires.setTime(expires.getTime() + (params.expires_in * 1000));
-    $.cookie(access_token, params.access_token, {expires: expires});
-    document.location = "#";
-  } else if (params.error) {
-    ReactDOM.render(
-      <MessageModal show={true} title={"Error"} message={"You are not authorized to connect to this application"} />,
-      document.getElementById('modal')
-    );
-  } else if ($.cookie(access_token)) {
-    oauth.access_token = $.cookie(access_token);
-  }
-
-  /**
-   * If an acces_token is present, use it to get all lists
-   * if no access_token, display the login button
-   */
-  if (oauth.access_token) {
-    APIRequest("GET", "../glewlwyd/profile/")
-    .then(function (result) {
-      currentUser.loggedIn = true;
-      currentUser.name = result.name;
-      currentUser.email = result.email;
-      loadLists();
-    })
-    .fail(function (error) {
-      if (error.status === 401) {
-        currentUser.loggedIn = false;
-      }
-    })
-    .always(function () {
-      ReactDOM.render(
-        <LoginInformation user={currentUser} />,
-        document.getElementById('connectMessage')
-      );
+  $.ajax({
+    method: "GET",
+    url: oauth.glewlwyd_server_url + "/config"
+  })
+  .done(function (result) {
+    oauth.admin_scope = result.admin_scope;
+    oauth.api_prefix = result.api_prefix;
+    init();
+  })
+  .fail(function (error) {
+    if (error.status === 401) {
+      oauth.access_token = false;
+      currentUser.loggedIn = false;
       ReactDOM.render(
         <LoginComponent user={currentUser} />,
         document.getElementById('LoginComponent')
       );
-    });
-  } else {
+    }
     ReactDOM.render(
-      <ConnectMessage />,
-      document.getElementById('connectMessage')
+      <SpinnerModal show={false} />,
+      document.getElementById('spinner')
     );
-    ReactDOM.render(
-      <LoginComponent user={currentUser} />,
-      document.getElementById('LoginComponent')
-    );
-  }
-  
+  });
+    
 });
