@@ -6,6 +6,8 @@ Lightweight, fast and easy to install on small systems. Requires a MySql or SQLi
 
 Fully written in C language, based on [Ulfius](https://github.com/babelouest/ulfius) HTTP framework, [Hoel](https://github.com/babelouest/hoel) database framework and [Libjwt](https://github.com/benmcollins/libjwt.git) JSON Web Tokens library.
 
+![user list screenshot](https://raw.githubusercontent.com/babelouest/glewlwyd/master/screenshots/g_1_users.png)
+
 ## Installation
 
 You must install the following libraries including their header files:
@@ -267,6 +269,21 @@ All front-end pages have a minimal design, feel free to modify them for your own
 
 Glewlwyd comes with a small front-end that uses the backend API to manage profile, users, clients, scopes, resources and authorization types.
 
+Some screenshots examples:
+
+![User details page](https://github.com/babelouest/glewlwyd/raw/master/screenshots/g_2_user_details.png)
+
+![User update](https://github.com/babelouest/glewlwyd/raw/master/screenshots/g_1_users_udate.png)
+
+![Clients list page](https://github.com/babelouest/glewlwyd/raw/master/screenshots/g_3_clients.png)
+
+![Client update](https://github.com/babelouest/glewlwyd/raw/master/screenshots/g_3_clients_update.png)
+
+![Scopes list](https://github.com/babelouest/glewlwyd/raw/master/screenshots/g_4_scopes.png)
+
+![Authorization types](https://github.com/babelouest/glewlwyd/raw/master/screenshots/g_6_auth_types.png)
+
+
 To connect to the management application, you must use a user that have `g_admin` scope.
 
 The front-end management application is a tiny single page app (SPA) written in ReactJS/JQuery, responsive as much as I can, not the best design in the world, but useful anyway.
@@ -275,11 +292,21 @@ The front-end management application is a tiny single page app (SPA) written in 
 
 All users can also update their own profile with the dedicated page `profile.html`.
 
+![User profile page](https://github.com/babelouest/glewlwyd/raw/master/screenshots/profile.png)
+
+![Update user profile password](https://github.com/babelouest/glewlwyd/raw/master/screenshots/profile_upate_password.png)
+
 The pages `login.html`, `grant.html` and `reset.html` are tiny pages used to login, logout, grant scope access or reset a password.
+
+![login](https://github.com/babelouest/glewlwyd/raw/master/screenshots/sign_in.png)
+
+![reset](https://github.com/babelouest/glewlwyd/raw/master/screenshots/password_forgot.png)
 
 If a user uses the reset password functionnality, he or she will receive the content of the file `reset.eml`. The email uses two patterns that will be replaced by values: `$USERNAME` for the username and `$URL` for the url to the reset.html page.
 
 `$URL` must be set in the configuration file properly so the emails will lead to the correct page.
+
+More screenshots of the front-end application are availabe in the [screenshot](https://github.com/babelouest/glewlwyd/tree/master/screenshots) folder.
 
 ### tests/test-token.html
 
