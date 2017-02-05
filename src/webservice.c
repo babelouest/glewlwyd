@@ -347,7 +347,7 @@ int callback_glewlwyd_get_user_session_profile (const struct _u_request * reques
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL, * j_user = NULL;
   
-  j_session = session_check(config, u_map_get(request->map_cookie, config->session_key));
+  j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   if (check_result_value(j_session, G_OK)) {
     j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), NULL);
     if (check_result_value(j_user, G_OK)) {
