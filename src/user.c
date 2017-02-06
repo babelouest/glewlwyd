@@ -113,7 +113,7 @@ json_t * get_user_ldap(struct config_elements * config, const char * username) {
   
   int  result;
   int  ldap_version   = LDAP_VERSION3;
-  int  scope          = LDAP_SCOPE_SUBTREE;
+  int  scope          = LDAP_SCOPE_ONELEVEL;
   char * filter       = NULL;
   char * attrs[]      = {config->auth_ldap->name_property_user_read, config->auth_ldap->email_property_user_read, config->auth_ldap->login_property_user_read, config->auth_ldap->scope_property_user_read, NULL};
   int  attrsonly      = 0;
@@ -263,7 +263,7 @@ json_t * get_user_scope_grant_ldap(struct config_elements * config, const char *
   
   int  result;
   int  ldap_version   = LDAP_VERSION3;
-  int  scope          = LDAP_SCOPE_SUBTREE;
+  int  scope          = LDAP_SCOPE_ONELEVEL;
   char * filter       = NULL;
   char * attrs[]      = {"memberOf", config->auth_ldap->scope_property_user_read, NULL};
   int  attrsonly      = 0;
@@ -480,7 +480,7 @@ json_t * auth_check_user_credentials_ldap(struct config_elements * config, const
   
   int  result, result_login;
   int  ldap_version   = LDAP_VERSION3;
-  int  scope          = LDAP_SCOPE_SUBTREE;
+  int  scope          = LDAP_SCOPE_ONELEVEL;
   char * filter       = NULL;
   char * attrs[]      = {"memberOf", NULL, NULL};
   int  attrsonly      = 0;
@@ -648,7 +648,7 @@ json_t * auth_check_user_scope_ldap(struct config_elements * config, const char 
   
   int  result;
   int  ldap_version   = LDAP_VERSION3;
-  int  scope          = LDAP_SCOPE_SUBTREE;
+  int  scope          = LDAP_SCOPE_ONELEVEL;
   char * filter       = NULL;
   char * attrs[]      = {"memberOf", NULL, NULL};
   int  attrsonly      = 0;
@@ -783,7 +783,7 @@ json_t * get_user_list_ldap(struct config_elements * config, const char * search
   
   int  result;
   int  ldap_version   = LDAP_VERSION3;
-  int  scope          = LDAP_SCOPE_SUBTREE;
+  int  scope          = LDAP_SCOPE_ONELEVEL;
   char * filter       = NULL;
   char * attrs[]      = {config->auth_ldap->name_property_user_read, config->auth_ldap->email_property_user_read, config->auth_ldap->login_property_user_read, config->auth_ldap->scope_property_user_read, NULL};
   int  attrsonly      = 0;
