@@ -167,7 +167,7 @@ int check_auth_type_access_token_request (const struct _u_request * request, str
         json_decref(j_query);
         if (res == H_OK) {
           // Finally, the tokens are all here, no error, no problem
-          response->json_body = json_pack("{sssssssi}",
+          response->json_body = json_pack("{sssssssisi}",
                                 "token_type",
                                 "bearer",
                                 "access_token",
@@ -175,7 +175,9 @@ int check_auth_type_access_token_request (const struct _u_request * request, str
                                 "refresh_token",
                                 refresh_token,
                                 "iat",
-                                now);
+                                now,
+                                "expires_in",
+                                config->access_token_expiration);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error executing j_query update");
           response->status = 500;
