@@ -110,7 +110,7 @@ CREATE INDEX `i_g_reset_password_username` ON `g_reset_password`(`grp_username`)
 -- Refresh token table, to store a signature and meta information on all refresh tokens sent
 CREATE TABLE `g_refresh_token` (
   `grt_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
-  `grt_hash` VARCHAR(32) NOT NULL,
+  `grt_hash` VARCHAR(128) NOT NULL,
   `grt_authorization_type` INT(2) NOT NULL, -- 0: Authorization Code Grant, 1: Implicit Grant, 2: Resource Owner Password Credentials Grant, 3: Client Credentials Grant
   `grt_username` VARCHAR(128) NOT NULL,
   `grt_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -134,7 +134,7 @@ CREATE INDEX `i_g_refresh_token_username` ON `g_refresh_token`(`grt_username`);
 -- Session table, to store signature and meta information on session tokens sent
 CREATE TABLE `g_session` (
   `gss_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
-  `gss_hash` VARCHAR(32) NOT NULL,
+  `gss_hash` VARCHAR(128) NOT NULL,
   `gss_username` VARCHAR(128) NOT NULL,
   `gss_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `gss_last_seen` TIMESTAMP,
