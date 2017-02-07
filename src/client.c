@@ -368,7 +368,7 @@ json_t * auth_check_client_credentials_ldap(struct config_elements * config, con
 int auth_check_client_user_scope(struct config_elements * config, const char * client_id, const char * username, const char * scope_list) {
   json_t * j_query, * j_result;
   int res, nb_scope = 0;
-  char * scope, * escaped_scope, * escaped_scope_list = NULL, * save_scope_list, * saveptr, * tmp;
+  char * scope, * escaped_scope, * escaped_scope_list = NULL, * save_scope_list, * saveptr = NULL, * tmp;
   char * scope_clause;
   
   save_scope_list = strdup(scope_list);
@@ -1435,7 +1435,7 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
   int nb_scope = 0, nb_redirect_uri = json_array_size(json_object_get(j_client, "redirect_uri")), nb_attr = 2, i, attr_counter; // Default attribute is objectClass
   json_t * j_scope, * j_redirect_uri, * j_query;
   size_t index;
-  char * new_dn, * password = NULL, ** redirect_uri_array, * escaped = NULL, * clause_auth_type;
+  char * new_dn, * password = NULL, ** redirect_uri_array = NULL, * escaped = NULL, * clause_auth_type;
   
   for (i=0; config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
     nb_attr++;

@@ -404,7 +404,7 @@ char * generate_client_access_token(struct config_elements * config, const char 
 char * generate_authorization_code(struct config_elements * config, const char * username, const char * client_id, const char * scope_list, const char * redirect_uri, const char * ip_source) {
   uuid_t uuid;
   char * code_value = malloc(37*sizeof(char)), * code_hash, * clause_redirect_uri, * clause_scope, * escape;
-  char * save_scope_list, * scope, * saveptr;
+  char * save_scope_list, * scope, * saveptr = NULL;
   json_t * j_query, * j_result;
   int res;
   json_int_t gco_id;

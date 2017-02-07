@@ -426,7 +426,7 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
  */
 int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  char * access_token, * token_hash, * clause_expired_at, * last_seen_value, * scope, * scope_list_save, * scope_escaped, * scope_list_escaped, * saveptr, * clause_scope_list, * new_scope_list = NULL, * tmp;
+  char * access_token, * token_hash, * clause_expired_at, * last_seen_value, * scope, * scope_list_save, * scope_escaped, * scope_list_escaped = NULL, * saveptr, * clause_scope_list, * new_scope_list = NULL, * tmp;
   json_t * j_query, * j_result, * j_result2, * j_element;
   size_t index;
   int res;
