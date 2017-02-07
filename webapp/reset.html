@@ -87,7 +87,7 @@
   </head>
   <body>
 		<div class="container form-signin" id="sendResetDiv" style="display: none;">
-      <form action="" id="forgotPasswordForm">
+      <form action="#" id="forgotPasswordForm">
         <center><h2 class="form-signin-heading">Forgot password</h2></center>
         <h3 class="form-signin-heading">Please enter your login</h3>
         <label class="sr-only" for="inputLogin">Login</label>
@@ -104,19 +104,23 @@
       </form>
 		</div>
 		<div class="container form-signin" id="resetDiv" style="display: none;">
-      <h2 class="form-signin-heading">Please enter your new password</h2>
-      <input type="hidden" name="code" id="code" value="">
-      <input type="hidden" name="user" id="user" value="">
-      <input type="password" class="form-control" name="new_password" id="new_password" value="" placeholder="New password">
-      <input type="password" class="form-control" name="confirm_password" id="confirm_password" value="" placeholder="Confirm new password">
-      <button type="button" name="resetbut" id="resetbut" class="btn btn-lg btn-primary btn-block">Reset password</button>
-      <center><h4><label class="label label-info" id="resetOk" style="display: none;">Password changed, you can now <a href="login.html">log in</a></label></h4></center>
-      <center><h4><label class="label label-warning" id="resetError" style="display: none;"></label></h4></center>
+      <form action="#" id="resetPasswordForm">
+        <h2 class="form-signin-heading">Please enter your new password</h2>
+        <input type="hidden" name="code" id="code" value="">
+        <input type="hidden" name="user" id="user" value="">
+        <input type="password" class="form-control" name="new_password" id="new_password" value="" placeholder="New password">
+        <input type="password" class="form-control" name="confirm_password" id="confirm_password" value="" placeholder="Confirm new password">
+        <button type="submit" name="resetbut" id="resetbut" class="btn btn-lg btn-primary btn-block">Reset password</button>
+        <center><h4><label class="label label-info" id="resetOk" style="display: none;">Password changed, you can now <a href="login.html">log in</a></label></h4></center>
+        <center><h4><label class="label label-warning" id="resetError" style="display: none;"></label></h4></center>
+      </form>
 		</div>
   </body>
 </html>
 <script>
   var params;
+  var api_prefix;
+  
 	function getQueryParams(qs) {
 		qs = qs.split('+').join(' ');
 
@@ -143,6 +147,10 @@
       $("#sendResetDiv").show();
       $("#resetDiv").hide();
     }
+    
+    $.get("../config/", function (result) {
+      api_prefix = result.api_prefix;
+    });
   }
   
   $("#sendresetbut").click(function () {
@@ -158,9 +166,14 @@
     sendReset();
   });
   
+  $("#resetPasswordForm").submit(function(event) {
+    event.preventDefault();
+    resetPassword();
+  });
+  
   function sendReset () {
     if ($("#username").val()) {
-      $.post("../glewlwyd/profile/reset_password/" + $("#username").val(), null, 
+      $.post("../" + api_prefix + "/profile/reset_password/" + $("#username").val(), null, 
         function (result, status, request) {
           $("#emailSentOk").show();
           $("#emailSentError").hide();
@@ -185,7 +198,7 @@
       $.ajax
       ({
         type: "PUT",
-        url: "../glewlwyd/profile/reset_password/" + $("#user").val(),
+        url: "../" + api_prefix + "/profile/reset_password/" + $("#user").val(),
         async: false,
         data: {token: $("#code").val(), password: $("#new_password").val()},
         success: function (result, status, request) {

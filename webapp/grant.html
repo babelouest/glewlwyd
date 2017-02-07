@@ -106,6 +106,8 @@
 	
 <script>
   var params;
+  var api_prefix = "";
+  
 	function getQueryParams(qs) {
 		qs = qs.split('+').join(' ');
 
@@ -123,13 +125,17 @@
 	window.onload = function() {
 		params = getQueryParams(location.search);
     
+    $.get("../config/", function (result) {
+      api_prefix = result.api_prefix;
+    });
+    
     $("#clientDiv").text(params.client_id);
     $("#grantDiv").text(params.scope);
 	}
   
   $("#grantbut").click(function () {
-    $.post("../glewlwyd/auth/grant", {client_id: params.client_id, scope: params.scope}, function (data) {
-      var redirect = "../glewlwyd/auth" + location.search;
+    $.post("../" + api_prefix + "/auth/grant", {client_id: params.client_id, scope: params.scope}, function (data) {
+      var redirect = "../" + api_prefix + "/auth" + location.search;
       window.location = redirect;
     })
     .fail(function (error) {

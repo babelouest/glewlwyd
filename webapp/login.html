@@ -92,9 +92,10 @@
 				<input type="text" class="form-control" name="username" id="username" autofocus="" required="" placeholder="user name">
 				<label class="sr-only" for="inputPassword">Password</label>
 				<input type="password" class="form-control" name="password" id="password" required="" placeholder="password">
-        <button type="button" name="loginbut" id="loginbut" class="btn btn-lg btn-primary btn-block">Sign in</button>
+        <button type="submit" name="loginbut" id="loginbut" class="btn btn-lg btn-primary btn-block">Sign in</button>
         <center><strong><a href="reset.html" class="">Forgot password</a></strong></center>
         <center><h4><label class="label label-warning" id="loginInvalid" style="display: none;">Error invalid user/password</label></h4></center>
+        <center><h4><label class="label label-info" id="loading" style="display: none;"><span class="glyphicon glyphicon-repeat normal-right-spinner"></span>Connecting...</label></h4></center>
 			</form>
 		</div>
     <div class="container" id="userDiv" style="display: none;">
@@ -110,6 +111,8 @@
 	
 <script>
   var params;
+  var api_prefix = "";
+
 	function getQueryParams(qs) {
 		qs = qs.split('+').join(' ');
 
@@ -126,18 +129,21 @@
 	
 	window.onload = function () {
 		params = getQueryParams(location.search);
-    checkUser();
+    $.get("../config/", function (result) {
+      api_prefix = result.api_prefix;
+      checkUser();
+    });
 	};
   
   function checkUser () {
-    $.get("../glewlwyd/profile/", function (user) {
+    $.get("../" + api_prefix + "/profile/", function (user) {
       $("#currentUsername").text(user.name);
       $("#loginDiv").hide();
       $("#loginInvalid").hide();
       $("#userDiv").show();
       if (params.redirect_uri) {
         $("#currentUsernameValid").click(function () {
-          var redirect = "../glewlwyd/auth" + location.search + "&login_validated=true";
+          var redirect = "../" + api_prefix + "/auth" + location.search + "&login_validated=true";
           window.location = redirect;
         });
       } else {
@@ -152,11 +158,16 @@
   }
   
   function loginAction() {
-    $.post("../glewlwyd/auth/user", {username: $("#username").val(), password: $("#password").val()}, function (data) {
+    $("#loginInvalid").hide();
+    $("#loading").show();
+    $.post("../" + api_prefix + "/auth/user", {username: $("#username").val(), password: $("#password").val()}, function (data) {
       checkUser();
     })
     .fail(function (error) {
       $("#loginInvalid").show();
+    })
+    .always(function () {
+      $("#loading").hide();
     });
   }
   
@@ -171,7 +182,7 @@
   
   $("#logoutbut").click(function () {
     $.ajax({
-        url: "../glewlwyd/auth/user/",
+        url: "../" + api_prefix + "/auth/user/",
         type: "DELETE",
         success: function() {
             checkUser();
