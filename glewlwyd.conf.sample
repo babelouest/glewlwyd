@@ -107,12 +107,6 @@ login_url="https://example.org/glewlwyd/app/login.html?"
 grant_url="https://example.org/glewlwyd/app/grant.html?"
 
 # Reset password configuration
-reset_password_token_expiration=604800
-reset_password_email_from="glewlwyd@example.org"
-reset_password_email_template_path="reset.eml"
-reset_password_page_url_prefix="https://example.org/glewlwyd/app/reset.html?code="
-
-# Reset password configuration
 reset_password=true # optional, default false
 reset_password_config = 
 {
@@ -127,7 +121,7 @@ reset_password_config =
   token_expiration=604800                                                                     # in seconds, optional, default 604800
   email_from="glewlwyd@example.org"                                                           # mandatory
   email_subject="Glewlwyd email reset"                                                        # mandatory
-  email_template_path="reset.eml"                                                             # mandatory
+  email_template="reset.eml"                                                             # mandatory
   page_url_prefix="https://example.org/glewlwyd/app/reset.html?user=$USERNAME&code=$TOKEN"    # mandatory
 }
 
