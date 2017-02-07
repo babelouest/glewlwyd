@@ -45,22 +45,33 @@ $ ./configure
 $ make
 $ sudo make install
 
+# Install Orcania
+$ git clone https://github.com/babelouest/orcania.git
+$ cd orcania/
+$ make
+$ sudo make install
+
+# Install Yder
+$ git clone https://github.com/babelouest/yder.git
+$ cd yder/src/
+$ make
+$ sudo make install
+
 # Install Ulfius
 $ git clone https://github.com/babelouest/ulfius.git
-$ cd ulfius/
-$ git submodule update --init
+$ cd ulfius/src/
 $ make
 $ sudo make install
 
 # Install Hoel
 $ git clone https://github.com/babelouest/hoel.git
-$ cd hoel/
+$ cd hoel/src/
 $ make
 $ sudo make install
 
 # Install Glewlwyd
 $ git clone https://github.com/babelouest/glewlwyd.git
-$ cd glewlwyd
+$ cd glewlwyd/src/
 $ make 
 $ sudo make install
 ```
