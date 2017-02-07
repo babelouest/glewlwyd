@@ -52,6 +52,9 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
   } else {
     j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
+  if (check_result_value(j_res, G_ERROR_UNAUTHORIZED)) {
+    sleep(2);
+  }
   return j_res;
 }
 

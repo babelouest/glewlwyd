@@ -412,6 +412,9 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
   } else {
     j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
+  if (check_result_value(j_res, G_ERROR_UNAUTHORIZED)) {
+    sleep(2);
+  }
   return j_res;
 }
 
