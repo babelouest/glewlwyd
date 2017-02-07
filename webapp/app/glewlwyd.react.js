@@ -1291,7 +1291,7 @@ $(function() {
       var curAuthTypeList = [];
       this.state.authorizationTypes.forEach(function (authType, index) {
         curAuthTypeList.push(
-          <span className="tag label label-info" key={index}>
+          <span className="tag label label-info hide-overflow" key={index}>
             <span>{authType}&nbsp;</span>
             <a href="" onClick={(evt) => self.removeAuthType(authType, evt)}>
               <i className="remove fa fa-trash fa-white"></i>
@@ -2287,7 +2287,7 @@ $(function() {
       var curScopeList = [];
       this.state.scopes.forEach(function (scope, index) {
         curScopeList.push(
-          <span className="tag label label-info" key={index}>
+          <span className="tag label label-info hide-overflow" key={index}>
             <span>{scope}&nbsp;</span>
             <a href="" onClick={(evt) => self.removeScope(scope, evt)}>
               <i className="remove fa fa-trash fa-white"></i>
@@ -2318,7 +2318,7 @@ $(function() {
             <div className="col-md-6">
             </div>
             <div className="col-md-6" id="userScopeValue">
-            {curScopeList}
+              {curScopeList}
             </div>
           </div>
         </div>
