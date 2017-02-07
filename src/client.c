@@ -1434,28 +1434,28 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
   size_t index;
   char * new_dn, * password = NULL, ** redirect_uri_array, * escaped = NULL, * clause_auth_type;
   
-  for (i=0; json_object_get(j_client, "client_id") != NULL && config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
+  for (i=0; config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
     nb_attr++;
   }
-  for (i=0; json_object_get(j_client, "name") != NULL && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
+  for (i=0; json_object_get(j_client, "name") != NULL && json_string_length(json_object_get(j_client, "name")) > 0 && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
     nb_attr++;
   }
-  for (i=0; json_object_get(j_client, "description") != NULL && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
+  for (i=0; json_object_get(j_client, "description") != NULL && json_string_length(json_object_get(j_client, "description")) > 0 && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
     nb_attr++;
   }
-  for (i=0; json_object_get(j_client, "redirect_uri") != NULL && config->auth_ldap->redirect_uri_property_client_write[i] != NULL; i++) {
+  for (i=0; json_object_get(j_client, "redirect_uri") != NULL && json_array_size(json_object_get(j_client, "redirect_uri")) > 0 && config->auth_ldap->redirect_uri_property_client_write[i] != NULL; i++) {
     nb_attr++;
   }
-  for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL; i++) {
+  for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL && json_array_size(json_object_get(j_client, "scope")) > 0; i++) {
     nb_attr++;
   }
   for (i=0; config->auth_ldap->confidential_property_client_write[i] != NULL; i++) {
     nb_attr++;
   }
-  if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
+  if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && json_string_length(json_object_get(j_client, "password")) > 0) {
     nb_attr++;
   }
-  if (config->use_scope && json_object_get(j_client, "scope") != NULL) {
+  if (config->use_scope && json_object_get(j_client, "scope") != NULL && json_array_size(json_object_get(j_client, "scope")) > 0) {
     nb_scope = json_array_size(json_object_get(j_client, "scope"));
   }
   mods = malloc(nb_attr*sizeof(LDAPMod *));
@@ -1485,7 +1485,7 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
     mods[attr_counter]->mod_values = config->auth_ldap->object_class_client_write;
     attr_counter++;
     
-    for (i=0; json_object_get(j_client, "client_id") != NULL && config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
+    for (i=0; config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
       mods[attr_counter] = malloc(sizeof(LDAPMod));
       mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
       mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
@@ -1495,7 +1495,7 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
       attr_counter++;
     }
     
-    for (i=0; json_object_get(j_client, "name") != NULL && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
+    for (i=0; json_object_get(j_client, "name") != NULL && json_string_length(json_object_get(j_client, "name")) > 0 && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
       mods[attr_counter] = malloc(sizeof(LDAPMod));
       mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
       mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
@@ -1505,7 +1505,7 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
       attr_counter++;
     }
     
-    for (i=0; json_object_get(j_client, "description") != NULL && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
+    for (i=0; json_object_get(j_client, "description") != NULL && json_string_length(json_object_get(j_client, "description")) > 0 && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
       mods[attr_counter] = malloc(sizeof(LDAPMod));
       mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
       mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
@@ -1515,15 +1515,18 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
       attr_counter++;
     }
     
-    redirect_uri_array = malloc((nb_redirect_uri+1)*sizeof(char *));
-    if (redirect_uri_array != NULL) {
-      json_array_foreach(json_object_get(j_client, "redirect_uri"), index, j_redirect_uri) {
-        redirect_uri_array[index] = msprintf("%s %s", json_string_value(json_object_get(j_redirect_uri, "uri")), json_string_value(json_object_get(j_redirect_uri, "name")));
-        redirect_uri_array[index+1] = NULL;
+    if (nb_redirect_uri > 0) {
+      redirect_uri_array = malloc((nb_redirect_uri+1)*sizeof(char *));
+      if (redirect_uri_array != NULL) {
+        json_array_foreach(json_object_get(j_client, "redirect_uri"), index, j_redirect_uri) {
+          redirect_uri_array[index] = msprintf("%s %s", json_string_value(json_object_get(j_redirect_uri, "uri")), json_string_value(json_object_get(j_redirect_uri, "name")));
+          redirect_uri_array[index+1] = NULL;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for redirect_uri_array");
       }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for redirect_uri_array");
     }
+    
     for (i=0; config->auth_ldap->redirect_uri_property_client_write[i] != NULL && json_object_get(j_client, "redirect_uri") != NULL; i++) {
       mods[attr_counter] = malloc(sizeof(LDAPMod));
       mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
@@ -1542,7 +1545,7 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
       attr_counter++;
     }
     
-    for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL; i++) {
+    for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL && json_array_size(json_object_get(j_client, "scope")) > 0; i++) {
       mods[attr_counter] = malloc(sizeof(LDAPMod));
       mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
       mods[attr_counter]->mod_type   = config->auth_ldap->scope_property_client_write[i];
@@ -1554,7 +1557,7 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
       attr_counter++;
     }
     
-    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
+    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && json_string_length(json_object_get(j_client, "password")) > 0) {
       password = generate_hash(config, config->auth_ldap->password_algorithm_client_write, json_string_value(json_object_get(j_client, "password")));
       if (password != NULL) {
         mods[attr_counter] = malloc(sizeof(LDAPMod));
@@ -1606,37 +1609,39 @@ int add_client_ldap(struct config_elements * config, json_t * j_client) {
     attr_counter = 0;
     free(mods[attr_counter]);
     attr_counter++;
-    for (i=0; json_object_get(j_client, "client_id") != NULL && config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
+    for (i=0; config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
     }
-    for (i=0; json_object_get(j_client, "name") != NULL && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
+    for (i=0; json_object_get(j_client, "name") != NULL && json_string_length(json_object_get(j_client, "name")) > 0 && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
     }
-    for (i=0; json_object_get(j_client, "description") != NULL && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
+    for (i=0; json_object_get(j_client, "description") != NULL && json_string_length(json_object_get(j_client, "description")) > 0 && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
     }
-    free_string_array(redirect_uri_array);
-    for (i=0; config->auth_ldap->redirect_uri_property_client_write[i] != NULL && json_object_get(j_client, "redirect_uri") != NULL; i++) {
-      free(mods[attr_counter]);
-      attr_counter++;
+    if (nb_redirect_uri > 0) {
+      free_string_array(redirect_uri_array);
+      for (i=0; config->auth_ldap->redirect_uri_property_client_write[i] != NULL && json_object_get(j_client, "redirect_uri") != NULL && nb_redirect_uri > 0; i++) {
+        free(mods[attr_counter]);
+        attr_counter++;
+      }
     }
     for (i=0; config->use_scope && config->auth_ldap->confidential_property_client_write[i] != NULL; i++) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
     }
-    for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL; i++) {
+    for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL && json_array_size(json_object_get(j_client, "scope")) > 0; i++) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
     }
-    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
+    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && json_string_length(json_object_get(j_client, "password")) > 0) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
@@ -1805,28 +1810,25 @@ int set_client_ldap(struct config_elements * config, const char * client_id, jso
   size_t index;
   char * cur_dn, * password = NULL, ** redirect_uri_array;
   
-  for (i=0; json_object_get(j_client, "client_id") != NULL && config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
+  for (i=0; json_object_get(j_client, "name") != NULL && json_string_length(json_object_get(j_client, "name")) > 0 && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
     nb_attr++;
   }
-  for (i=0; json_object_get(j_client, "name") != NULL && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
+  for (i=0; json_object_get(j_client, "description") != NULL && json_string_length(json_object_get(j_client, "description")) > 0 && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
     nb_attr++;
   }
-  for (i=0; json_object_get(j_client, "description") != NULL && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
-    nb_attr++;
-  }
-  for (i=0; json_object_get(j_client, "redirect_uri") != NULL && config->auth_ldap->redirect_uri_property_client_write[i] != NULL; i++) {
+  for (i=0; json_object_get(j_client, "redirect_uri") != NULL && json_array_size(json_object_get(j_client, "redirect_uri")) > 0 && config->auth_ldap->redirect_uri_property_client_write[i] != NULL; i++) {
     nb_attr++;
   }
   for (i=0; config->auth_ldap->confidential_property_client_write[i] != NULL; i++) {
     nb_attr++;
   }
-  for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL; i++) {
+  for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL && json_array_size(json_object_get(j_client, "scope")) > 0; i++) {
     nb_attr++;
   }
-  if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
+  if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && json_string_length(json_object_get(j_client, "password")) > 0) {
     nb_attr++;
   }
-  if (config->use_scope && json_object_get(j_client, "scope") != NULL) {
+  if (config->use_scope && json_object_get(j_client, "scope") != NULL && json_array_size(json_object_get(j_client, "scope")) > 0) {
     nb_scope = json_array_size(json_object_get(j_client, "scope"));
   }
   mods = malloc(nb_attr*sizeof(LDAPMod *));
@@ -1850,17 +1852,7 @@ int set_client_ldap(struct config_elements * config, const char * client_id, jso
     cur_dn = msprintf("%s=%s,%s", config->auth_ldap->rdn_property_client_write, client_id, config->auth_ldap->base_search_client);
     
     attr_counter=0;
-    for (i=0; json_object_get(j_client, "client_id") != NULL && config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
-      mods[attr_counter] = malloc(sizeof(LDAPMod));
-      mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
-      mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
-      mods[attr_counter]->mod_type   = config->auth_ldap->client_id_property_client_write[i];
-      mods[attr_counter]->mod_values[0] = (char *)json_string_value(json_object_get(j_client, "client_id"));
-      mods[attr_counter]->mod_values[1] = NULL;
-      attr_counter++;
-    }
-    
-    for (i=0; json_object_get(j_client, "name") != NULL && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
+    for (i=0; json_object_get(j_client, "name") != NULL && json_string_length(json_object_get(j_client, "name")) > 0 && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
       mods[attr_counter] = malloc(sizeof(LDAPMod));
       mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
       mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
@@ -1870,7 +1862,7 @@ int set_client_ldap(struct config_elements * config, const char * client_id, jso
       attr_counter++;
     }
     
-    for (i=0; json_object_get(j_client, "description") != NULL && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
+    for (i=0; json_object_get(j_client, "description") != NULL && json_string_length(json_object_get(j_client, "description")) > 0 && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
       mods[attr_counter] = malloc(sizeof(LDAPMod));
       mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
       mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
@@ -1880,21 +1872,23 @@ int set_client_ldap(struct config_elements * config, const char * client_id, jso
       attr_counter++;
     }
     
-    redirect_uri_array = malloc((nb_redirect_uri+1)*sizeof(char *));
-    if (redirect_uri_array != NULL) {
-      json_array_foreach(json_object_get(j_client, "redirect_uri"), index, j_redirect_uri) {
-        redirect_uri_array[index] = msprintf("%s %s", json_string_value(json_object_get(j_redirect_uri, "uri")), json_string_value(json_object_get(j_redirect_uri, "name")));
-        redirect_uri_array[index+1] = NULL;
+    if (json_array_size(json_object_get(j_client, "redirect_uri")) > 0) {
+      redirect_uri_array = malloc((nb_redirect_uri+1)*sizeof(char *));
+      if (redirect_uri_array != NULL) {
+        json_array_foreach(json_object_get(j_client, "redirect_uri"), index, j_redirect_uri) {
+          redirect_uri_array[index] = msprintf("%s %s", json_string_value(json_object_get(j_redirect_uri, "uri")), json_string_value(json_object_get(j_redirect_uri, "name")));
+          redirect_uri_array[index+1] = NULL;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for redirect_uri_array");
       }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for redirect_uri_array");
-    }
-    for (i=0; config->auth_ldap->redirect_uri_property_client_write[i] != NULL && json_object_get(j_client, "redirect_uri") != NULL; i++) {
-      mods[attr_counter] = malloc(sizeof(LDAPMod));
-      mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
-      mods[attr_counter]->mod_type   = config->auth_ldap->redirect_uri_property_client_write[i];
-      mods[attr_counter]->mod_values = redirect_uri_array;
-      attr_counter++;
+      for (i=0; config->auth_ldap->redirect_uri_property_client_write[i] != NULL && json_object_get(j_client, "redirect_uri") != NULL; i++) {
+        mods[attr_counter] = malloc(sizeof(LDAPMod));
+        mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
+        mods[attr_counter]->mod_type   = config->auth_ldap->redirect_uri_property_client_write[i];
+        mods[attr_counter]->mod_values = redirect_uri_array;
+        attr_counter++;
+      }
     }
     
     for (i=0; config->auth_ldap->confidential_property_client_write[i] != NULL; i++) {
@@ -1902,12 +1896,12 @@ int set_client_ldap(struct config_elements * config, const char * client_id, jso
       mods[attr_counter]->mod_values = malloc(2 * sizeof(char *));
       mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
       mods[attr_counter]->mod_type   = config->auth_ldap->confidential_property_client_write[i];
-      mods[attr_counter]->mod_values[0] = json_object_get(j_client, "description")==json_true()?"1":"0";
+      mods[attr_counter]->mod_values[0] = json_object_get(j_client, "confidential")==json_true()?"1":"0";
       mods[attr_counter]->mod_values[1] = NULL;
       attr_counter++;
     }
     
-    for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL; i++) {
+    for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL && json_array_size(json_object_get(j_client, "scope")) > 0; i++) {
       mods[attr_counter] = malloc(sizeof(LDAPMod));
       mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
       mods[attr_counter]->mod_type   = config->auth_ldap->scope_property_client_write[i];
@@ -1919,7 +1913,7 @@ int set_client_ldap(struct config_elements * config, const char * client_id, jso
       attr_counter++;
     }
     
-    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
+    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && json_string_length(json_object_get(j_client, "password")) > 0) {
       password = generate_hash(config, config->auth_ldap->password_algorithm_client_write, json_string_value(json_object_get(j_client, "password")));
       if (password != NULL) {
         mods[attr_counter] = malloc(sizeof(LDAPMod));
@@ -1942,37 +1936,34 @@ int set_client_ldap(struct config_elements * config, const char * client_id, jso
     
     free(scope_values);
     attr_counter=0;
-    for (i=0; json_object_get(j_client, "client_id") != NULL && config->auth_ldap->client_id_property_client_write[i] != NULL; i++) {
+    for (i=0; json_object_get(j_client, "name") != NULL && json_string_length(json_object_get(j_client, "name")) > 0 && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
     }
-    for (i=0; json_object_get(j_client, "name") != NULL && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
+    for (i=0; json_object_get(j_client, "description") != NULL && json_string_length(json_object_get(j_client, "description")) > 0 && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
     }
-    for (i=0; json_object_get(j_client, "description") != NULL && config->auth_ldap->description_property_client_write[i] != NULL; i++) {
-      free(mods[attr_counter]->mod_values);
-      free(mods[attr_counter]);
-      attr_counter++;
-    }
-    free_string_array(redirect_uri_array);
-    for (i=0; config->auth_ldap->redirect_uri_property_client_write[i] != NULL && json_object_get(j_client, "redirect_uri") != NULL; i++) {
-      free(mods[attr_counter]);
-      attr_counter++;
+    if (json_array_size(json_object_get(j_client, "redirect_uri")) > 0) {
+      free_string_array(redirect_uri_array);
+      for (i=0; config->auth_ldap->redirect_uri_property_client_write[i] != NULL && json_object_get(j_client, "redirect_uri") != NULL; i++) {
+        free(mods[attr_counter]);
+        attr_counter++;
+      }
     }
     for (i=0; config->auth_ldap->confidential_property_client_write[i] != NULL; i++) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
     }
-    for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL; i++) {
+    for (i=0; config->use_scope && config->auth_ldap->scope_property_client_write[i] != NULL && json_object_get(j_client, "scope") != NULL && json_array_size(json_object_get(j_client, "scope")) > 0; i++) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
     }
-    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
+    if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL && json_string_length(json_object_get(j_client, "password")) > 0) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;
