@@ -1811,7 +1811,7 @@ int set_client_ldap(struct config_elements * config, const char * client_id, jso
   int nb_scope = 0, nb_redirect_uri = json_array_size(json_object_get(j_client, "redirect_uri")), nb_attr = 2, i, attr_counter;
   json_t * j_scope, * j_redirect_uri;
   size_t index;
-  char * cur_dn, * password = NULL, ** redirect_uri_array;
+  char * cur_dn, * password = NULL, ** redirect_uri_array = NULL;
   
   for (i=0; json_object_get(j_client, "name") != NULL && json_string_length(json_object_get(j_client, "name")) > 0 && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
     nb_attr++;
