@@ -324,7 +324,7 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
     if (refresh_token != NULL) {
       access_token = generate_access_token(config, refresh_token, u_map_get(request->map_post_body, "username"), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_result, "scope")), now);
       if (access_token != NULL) {
-          response->json_body = json_pack("{sssssssi}",
+          response->json_body = json_pack("{sssssssisi}",
                                 "token_type",
                                 "bearer",
                                 "access_token",
@@ -332,7 +332,9 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
                                 "refresh_token",
                                 refresh_token,
                                 "iat",
-                                now);
+                                now,
+                                "expires_in",
+                                config->access_token_expiration);
         if (response->json_body != NULL) {
           if (config->use_scope) {
             json_object_set_new(response->json_body, "scope", json_copy(json_object_get(j_result, "scope")));
@@ -529,13 +531,15 @@ int get_access_token_from_refresh (const struct _u_request * request, struct _u_
               access_token = generate_access_token(config, refresh_token, jwt_get_grant(jwt, "username"), GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN, ip_source, new_scope_list, now);
               free(new_scope_list);
               if (access_token != NULL) {
-                response->json_body = json_pack("{sssssi}",
+                response->json_body = json_pack("{sssssisi}",
                                                 "access_token",
                                                 access_token,
                                                 "token_type",
                                                 "bearer",
                                                 "expires_in",
-                                                config->access_token_expiration);
+                                                config->access_token_expiration,
+                                                "iat",
+                                                now);
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error generating access_token");
                 response->status = 500;
@@ -555,13 +559,15 @@ int get_access_token_from_refresh (const struct _u_request * request, struct _u_
             access_token = generate_access_token(config, refresh_token, jwt_get_grant(jwt, "username"), GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN, ip_source, new_scope_list, now);
             free(new_scope_list);
             if (access_token != NULL) {
-              response->json_body = json_pack("{sssssi}",
+              response->json_body = json_pack("{sssssisi}",
                                               "access_token",
                                               access_token,
                                               "token_type",
                                               "bearer",
                                               "expires_in",
-                                              config->access_token_expiration);
+                                              config->access_token_expiration,
+                                              "iat",
+                                              now);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error generating access_token");
               response->status = 500;

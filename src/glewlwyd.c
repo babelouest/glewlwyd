@@ -466,9 +466,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
  * Print help message to output file specified
  */
 void print_help(FILE * output) {
-  fprintf(output, "\nGlewlwyd Messaging REST Webservice\n");
-  fprintf(output, "\n");
-  fprintf(output, "Messaging system using a JSON/REST interface\n");
+  fprintf(output, "\nGlewlwyd OAuth2 authenticatio server\n");
   fprintf(output, "\n");
   fprintf(output, "-c --config-file=PATH\n");
   fprintf(output, "\tPath to configuration file\n");
