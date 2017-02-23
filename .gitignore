@@ -20,3 +20,4 @@ tests/glewlwyd_user_session_user
 tests/glewlwyd_user_session_admin
 tests/glewlwyd_user_refresh_token_user
 tests/glewlwyd_user_refresh_token_admin
+tests/test-token.html
