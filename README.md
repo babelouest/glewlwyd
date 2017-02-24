@@ -4,7 +4,7 @@
 
 Lightweight, fast and easy to install on small systems. Requires a MySql or SQLite3 database. Handles LDAP or database for users backend.
 
-Fully written in C language, based on [Ulfius](https://github.com/babelouest/ulfius) HTTP framework, [Hoel](https://github.com/babelouest/hoel) database framework and [Libjwt](https://github.com/benmcollins/libjwt.git) JSON Web Tokens library.
+The API backend is fully written in language C, it's based on [Ulfius](https://github.com/babelouest/ulfius) HTTP framework, [Hoel](https://github.com/babelouest/hoel) database framework and [Libjwt](https://github.com/benmcollins/libjwt.git) JSON Web Tokens library.
 
 ![user list screenshot](https://raw.githubusercontent.com/babelouest/glewlwyd/master/screenshots/g_1_users.png)
 
@@ -93,7 +93,7 @@ Use the dedicated script, `glewlwyd.mariadb.sql` or `glewlwyd.sqlite3.sql` to in
 
 #### Admin scope value
 
-If you want to use a different name for admin scope (default is `g_admin`), you must update the init script before running it, chenge the last line which reads:
+If you want to use a different name for admin scope (default is `g_admin`), you must update the init script before running it, change the last line which reads:
 
 ```sql
 INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_admin', 'Glewlwyd admin scope');
@@ -216,7 +216,7 @@ You can also manually start the application like this:
 $ ./glewlwyd --config-file=glewlwyd.conf
 ```
 
-By default, Glewlwyd is available on TCP port 4593. There's a test page in `webapp/index.html` to validate the behaviour. You can access it using the url: [http://localhost:4593/app/](http://localhost:4593/app/).
+By default, Glewlwyd is available on TCP port 4593. You can use the test page `tests/test-token.html` to validate the behaviour. To access it, copy the file into webapp and go to the url: [http://localhost:4593/app/test-token.html](http://localhost:4593/app/test-token.html).
 
 ## SSL/TLS
 
@@ -226,6 +226,10 @@ OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avo
 
 Glewlwyd provides [JSON Web Tokens](https://jwt.io/) which is a standard way to validate a token without asking the authorization server.
 A JSON Web Token (JWT) comes with a signature that authenticates itself.
+
+There is no way for a resource server to determine if a token is valid, except by checking the Authorization token. i.e., there is no API where you could ask Glewlwyd server if an access token is valid or not. Therefore, the resource server MUST verify the access token using its signature.
+
+Examples of resource server access token validation are available in the folder [clients](https://github.com/babelouest/glewlwyd/tree/master/clients/).
 
 There are 2 ways to sign a token:
 - SHA symetric encryption
