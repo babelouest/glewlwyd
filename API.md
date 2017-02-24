@@ -313,7 +313,7 @@ Session token or header bearer token
 
 #### Data Parameters
 
-```json
+```javascript
 {
   token_hash: text, required
 }
