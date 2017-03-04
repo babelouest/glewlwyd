@@ -66,7 +66,7 @@ CREATE TABLE `g_client` (
   `gc_name` VARCHAR(128) NOT NULL,
   `gc_description` VARCHAR(512) DEFAULT '',
   `gc_client_id` VARCHAR(128) NOT NULL UNIQUE,
-  `gc_client_password` VARCHAR(128) NOT NULL,
+  `gc_client_password` VARCHAR(128),
   `gc_confidential` TINYINT(1) DEFAULT 0,
   `gc_enabled` TINYINT(1) DEFAULT 1
 );
