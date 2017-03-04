@@ -284,6 +284,16 @@ All front-end pages have a minimal design, feel free to modify them for your own
 
 Glewlwyd comes with a small front-end that uses the backend API to manage profile, users, clients, scopes, resources and authorization types.
 
+#### Configuration
+
+The config file `glewlwyd.conf` contains the following variables: `static_files_path` and `static_files_prefix`, `static_files_path` is the path to the front-end application. Set it to the location of your webapp folder before running glewlwyd, e.g. `"/home/pi/glewlwyd/webapp"`, `static_files_prefix` will be the url path to access to the front-end application, default is [http://localhost:4953/app/](http://localhost:4953/app/).
+
+To connect to the management application, you must use a user that have `g_admin` scope.
+
+The front-end management application is a tiny single page app (SPA) written in ReactJS/JQuery, responsive as much as I can, not the best design in the world, but useful anyway.
+
+#### Screenshots
+
 Some screenshots examples:
 
 ![User details page](https://github.com/babelouest/glewlwyd/raw/master/screenshots/g_2_user_details.png)
@@ -297,11 +307,6 @@ Some screenshots examples:
 ![Scopes list](https://github.com/babelouest/glewlwyd/raw/master/screenshots/g_4_scopes.png)
 
 ![Authorization types](https://github.com/babelouest/glewlwyd/raw/master/screenshots/g_6_auth_types.png)
-
-
-To connect to the management application, you must use a user that have `g_admin` scope.
-
-The front-end management application is a tiny single page app (SPA) written in ReactJS/JQuery, responsive as much as I can, not the best design in the world, but useful anyway.
 
 ### Current user
 
