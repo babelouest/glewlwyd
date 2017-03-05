@@ -113,6 +113,7 @@ CREATE TABLE `g_refresh_token` (
   `grt_hash` VARCHAR(128) NOT NULL,
   `grt_authorization_type` INT(2) NOT NULL, -- 0: Authorization Code Grant, 1: Implicit Grant, 2: Resource Owner Password Credentials Grant, 3: Client Credentials Grant
   `grt_username` VARCHAR(128) NOT NULL,
+  `gc_client_id` VARCHAR(128),
   `grt_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `grt_last_seen` TIMESTAMP NULL,
   `grt_expired_at` TIMESTAMP NULL,
@@ -202,8 +203,7 @@ CREATE TABLE `g_code` (
   `gco_enabled` TINYINT(1) DEFAULT 1,
   `gc_client_id` VARCHAR(128) NOT NULL,
   `gco_username` VARCHAR(128) NOT NULL,
-  `gru_id` INT(11),
-  FOREIGN KEY(`gru_id`) REFERENCES `g_redirect_uri`(`gru_id`) ON DELETE CASCADE
+  `gco_redirect_uri` VARCHAR(512)
 );
 CREATE INDEX `i_g_code_username` ON `g_code`(`gco_username`);
 
