@@ -100,7 +100,7 @@ CREATE TABLE `g_reset_password` (
   `grp_token` TEXT NOT NULL,
   `grp_enabled` INTEGER DEFAULT 1,
   `grp_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `grp_reset_at` TIMESTAMP
+  `grp_reset_at` TIMESTAMP NULL
 );
 CREATE INDEX `i_g_reset_password` ON `g_reset_password`(`grp_id`);
 CREATE INDEX `i_g_reset_password_username` ON `g_reset_password`(`grp_username`);
@@ -115,10 +115,11 @@ CREATE TABLE `g_refresh_token` (
   `grt_hash` TEXT NOT NULL,
   `grt_authorization_type` INTEGER NOT NULL, -- 0: Authorization Code Grant, 1: Implicit Grant, 2: Resource Owner Password Credentials Grant, 3: Client Credentials Grant
   `grt_username` TEXT NOT NULL,
+  `gc_client_id` TEXT,
   `grt_scope` TEXT,
   `grt_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `grt_last_seen` TIMESTAMP,
-  `grt_expired_at` TIMESTAMP,
+  `grt_last_seen` TIMESTAMP NULL,
+  `grt_expired_at` TIMESTAMP NULL,
   `grt_ip_source` TEXT NOT NULL,
   `grt_enabled` INTEGER DEFAULT 1
 );
@@ -142,8 +143,8 @@ CREATE TABLE `g_session` (
   `gss_hash` TEXT NOT NULL,
   `gss_username` TEXT NOT NULL,
   `gss_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `gss_last_seen` TIMESTAMP,
-  `gss_expired_at` TIMESTAMP,
+  `gss_last_seen` TIMESTAMP NULL,
+  `gss_expired_at` TIMESTAMP NULL,
   `gss_ip_source` TEXT NOT NULL,
   `gss_enabled` INTEGER DEFAULT 1
 );
@@ -213,8 +214,7 @@ CREATE TABLE `g_code` (
   `gco_enabled` INTEGER DEFAULT 1,
   `gc_client_id` TEXT NOT NULL,
   `gco_username` TEXT NOT NULL,
-  `gru_id` INTEGER,
-  FOREIGN KEY(`gru_id`) REFERENCES `g_redirect_uri`(`gru_id`) ON DELETE CASCADE
+  `gco_redirect_uri` TEXT
 );
 CREATE INDEX `i_g_code` ON `g_code`(`gco_id`);
 CREATE INDEX `i_g_code_username` ON `g_code`(`gco_username`);
