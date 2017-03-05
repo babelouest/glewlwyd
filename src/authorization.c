@@ -232,14 +232,12 @@ json_t * validate_authorization_code(struct config_elements * config, const char
   size_t index;
   int res;
   json_int_t gco_id;
-  char * code_hash, * escape, * escape_ip_source, * clause_redirect_uri, * col_gco_date, * clause_gco_date, * clause_scope, * scope_list = NULL, * tmp;
+  char * code_hash, * escape, * escape_ip_source, * col_gco_date, * clause_gco_date, * clause_scope, * scope_list = NULL, * tmp;
   
   if (authorization_code != NULL && client_id != NULL) {
     code_hash = generate_hash(config, config->hash_algorithm, authorization_code);
     escape_ip_source = h_escape_string(config->conn, ip_source);
     escape = h_escape_string(config->conn, redirect_uri);
-    clause_redirect_uri = msprintf("= (SELECT `gru_id` FROM `%s` WHERE `gru_uri`='%s')", GLEWLWYD_TABLE_REDIRECT_URI, escape);
-    free(escape);
     
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
       col_gco_date = nstrdup("UNIX_TIMESTAMP(`gco_date`)");
@@ -249,7 +247,7 @@ json_t * validate_authorization_code(struct config_elements * config, const char
       clause_gco_date = msprintf("> (strftime('%%s','now') - %d)", config->code_expiration);
     }
     
-    j_query = json_pack("{sss[ss]s{si ss ss s{ssss} ss s{ssss}}}",
+    j_query = json_pack("{sss[ss]s{si ss ss ss ss s{ssss}}}",
                         "table",
                         GLEWLWYD_TABLE_CODE,
                         "columns",
@@ -262,11 +260,8 @@ json_t * validate_authorization_code(struct config_elements * config, const char
                           code_hash,
                           "gco_ip_source",
                           escape_ip_source,
-                          "gru_id",
-                            "operator",
-                            "raw",
-                            "value",
-                            clause_redirect_uri,
+                          "gco_redirect_uri",
+                          escape,
                           "gc_client_id",
                           client_id,
                           col_gco_date,
@@ -276,7 +271,7 @@ json_t * validate_authorization_code(struct config_elements * config, const char
                             clause_gco_date);
     free(clause_gco_date);
     free(col_gco_date);
-    free(clause_redirect_uri);
+    free(escape);
     free(escape_ip_source);
     free(code_hash);
     res = h_select(config->conn, j_query, &j_result, NULL);
