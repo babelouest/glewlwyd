@@ -99,7 +99,7 @@ CREATE TABLE `g_reset_password` (
   `grp_token` VARCHAR(512) NOT NULL,
   `grp_enabled` TINYINT(1) DEFAULT 1,
   `grp_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `grp_reset_at` TIMESTAMP NULL
+  `grp_reset_at` TIMESTAMP DEFAULT NULL
 );
 CREATE INDEX `i_g_reset_password_username` ON `g_reset_password`(`grp_username`);
 
@@ -114,8 +114,8 @@ CREATE TABLE `g_refresh_token` (
   `grt_authorization_type` INT(2) NOT NULL, -- 0: Authorization Code Grant, 1: Implicit Grant, 2: Resource Owner Password Credentials Grant, 3: Client Credentials Grant
   `grt_username` VARCHAR(128) NOT NULL,
   `grt_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `grt_last_seen` TIMESTAMP NULL,
-  `grt_expired_at` TIMESTAMP NULL,
+  `grt_last_seen` TIMESTAMP DEFAULT NULL,
+  `grt_expired_at` TIMESTAMP DEFAULT NULL,
   `grt_ip_source` VARCHAR(64) NOT NULL,
   `grt_enabled` TINYINT(1) DEFAULT 1
 );
@@ -138,8 +138,8 @@ CREATE TABLE `g_session` (
   `gss_hash` VARCHAR(128) NOT NULL,
   `gss_username` VARCHAR(128) NOT NULL,
   `gss_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `gss_last_seen` TIMESTAMP NULL,
-  `gss_expired_at` TIMESTAMP NULL,
+  `gss_last_seen` TIMESTAMP DEFAULT NULL,
+  `gss_expired_at` TIMESTAMP DEFAULT NULL,
   `gss_ip_source` VARCHAR(64) NOT NULL,
   `gss_enabled` TINYINT(1) DEFAULT 1
 );
