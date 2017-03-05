@@ -962,7 +962,8 @@ json_t * get_client_list_database(struct config_elements * config, const char * 
  */
 json_t * get_client(struct config_elements * config, const char * client_id, const char * source) {
   json_t * j_return = NULL, * j_client = NULL;
-  int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
+  int search_ldap = ((source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")) && (config->has_auth_ldap));
+  int search_database = ((source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")) && (config->has_auth_database));
   
   if (search_ldap) {
     j_client = get_client_ldap(config, client_id);
@@ -1410,9 +1411,9 @@ json_t * is_client_valid(struct config_elements * config, json_t * j_client, int
  * Add a new client
  */
 int add_client(struct config_elements * config, json_t * j_client) {
-  if (json_object_get(j_client, "source") == NULL || 0 == strcmp("database", json_string_value(json_object_get(j_client, "source")))) {
+  if (((json_object_get(j_client, "source") == NULL) || (0 == strcmp("database", json_string_value(json_object_get(j_client, "source"))))) && (config->has_auth_database)) {
     return add_client_database(config, j_client);
-  } else if (0 == strcmp("ldap", json_string_value(json_object_get(j_client, "source")))) {
+  } else if ((0 == strcmp("ldap", json_string_value(json_object_get(j_client, "source")))) && (config->has_auth_ldap)) {
     return add_client_ldap(config, j_client);
   } else {
     return G_ERROR_PARAM;
@@ -1788,10 +1789,12 @@ int add_client_database(struct config_elements * config, json_t * j_client) {
  * Update an existing client
  */
 int set_client(struct config_elements * config, const char * client, json_t * j_client, const char * source) {
-  if (source == NULL || 0 == strcmp("ldap", source) || 0 == strcmp("all", source)) {
+  if ((source == NULL || 0 == strcmp("ldap", source) || 0 == strcmp("all", source)) && (config->has_auth_ldap)) {
     return set_client_ldap(config, client, j_client);
-  } else {
+  } else if ((source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")) && (config->has_auth_database)) {
     return set_client_database(config, client, j_client);
+  } else {
+    return G_ERROR_PARAM;
   }
 }
 
@@ -2158,10 +2161,12 @@ int set_client_database(struct config_elements * config, const char * client_id,
  * Delete a specific client
  */
 int delete_client(struct config_elements * config, const char * client, const char * source) {
-  if (source == NULL || 0 == strcmp("ldap", source) || 0 == strcmp("all", source)) {
+  if ((source == NULL || 0 == strcmp("ldap", source) || 0 == strcmp("all", source)) && (config->has_auth_ldap)) {
     return delete_client_ldap(config, client);
-  } else {
+  } else if ((source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")) && (config->has_auth_database)){
     return delete_client_database(config, client);
+  } else {
+    return G_ERROR_PARAM;
   }
 }
 
