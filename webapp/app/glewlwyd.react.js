@@ -938,6 +938,7 @@ $(function() {
       this.handleChangeRedirectUriName = this.handleChangeRedirectUriName.bind(this);
       this.handleChangeRedirectUri = this.handleChangeRedirectUri.bind(this);
       this.addRedirectUri = this.addRedirectUri.bind(this);
+      this.removeRedirectUri = this.removeRedirectUri.bind(this);
       this.handleChangeEnabled = this.handleChangeEnabled.bind(this);
       this.updateScopes = this.updateScopes.bind(this);
       this.updateAuthTypes = this.updateAuthTypes.bind(this);
@@ -1063,8 +1064,16 @@ $(function() {
       this.setState({resource: newClient});
     }
     
+    removeRedirectUri (redirectUri, event) {
+      event.preventDefault();
+      var client = this.state.client;
+      client.redirect_uri.splice(client.redirect_uri.indexOf(client.redirectUri), 1);
+      this.setState({client: client});
+    }
+    
     render () {
       var clientRedirectUriList = [];
+      var self = this;
       this.state.client.redirect_uri.forEach(function (redirect_uri, index) {
         clientRedirectUriList.push(
           <span className="tag label label-info hide-overflow" key={index} data-toggle="tooltip" title={redirect_uri.uri}>
