@@ -41,10 +41,9 @@ INSERT INTO g_client (gc_name, gc_description, gc_client_id, gc_client_password,
 INSERT INTO g_client_scope (gc_id, gs_id) VALUES ((SELECT gc_id from g_client WHERE gc_client_id='client3_id'), (SELECT gs_id from g_scope WHERE gs_name='scope2'));
 INSERT INTO g_client_scope (gc_id, gs_id) VALUES ((SELECT gc_id from g_client WHERE gc_client_id='client3_id'), (SELECT gs_id from g_scope WHERE gs_name='scope3'));
 
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', 'http://localhost:3000/', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
-INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', 'http://localhost:3000/#/', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
 INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_1', '../app/test-token.html?param=client1_cb1', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
 INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_2', '../app/test-token.html?param=client1_cb2', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
+INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client1_3', 'http://localhost:3000/', (SELECT gc_id from g_client WHERE gc_client_id='client1_id'));
 INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client2', '../app/test-token.html?param=client2_cb', (SELECT gc_id from g_client WHERE gc_client_id='client2_id'));
 INSERT INTO g_redirect_uri (gru_name, gru_uri, gc_id) VALUES ('uri_client3', '../app/test-token.html?param=client3_cb', (SELECT gc_id from g_client WHERE gc_client_id='client3_id'));
 
