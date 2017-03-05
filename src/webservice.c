@@ -622,6 +622,8 @@ int callback_glewlwyd_get_user (const struct _u_request * request, struct _u_res
       response->json_body = json_copy(json_object_get(j_user, "user"));
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
       response->status = 404;
+    } else if (check_result_value(j_user, G_ERROR_PARAM)) {
+      response->status = 400;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user - Error getting user");
       response->status = 500;
@@ -636,9 +638,13 @@ int callback_glewlwyd_get_user (const struct _u_request * request, struct _u_res
 int callback_glewlwyd_add_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_result = is_user_valid(config, request->json_body, 1);
+  int res;
   
   if (j_result != NULL && json_array_size(j_result) == 0) {
-    if (add_user(config, request->json_body) != G_OK) {
+    res = add_user(config, request->json_body);
+    if (res == G_ERROR_PARAM) {
+      response->status = 400;
+    } else if (res != G_OK) {
       response->status = 500;
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user - Error adding new user");
     }
@@ -674,6 +680,8 @@ int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_res
         response->status = 500;
       }
       json_decref(j_result);
+    } else if (check_result_value(j_user, G_ERROR_PARAM)) {
+      response->status = 400;
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
       response->status = 404;
     } else {
@@ -698,6 +706,8 @@ int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_
         response->status = 500;
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user - Error deleting user");
       }
+    } else if (check_result_value(j_user, G_ERROR_PARAM)) {
+      response->status = 400;
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
       response->status = 404;
     } else {
@@ -865,6 +875,8 @@ int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_r
       response->json_body = json_copy(json_object_get(j_client, "client"));
     } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
       response->status = 404;
+    } else if (check_result_value(j_client, G_ERROR_PARAM)) {
+      response->status = 400;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_client - Error getting client");
       response->status = 500;
@@ -879,9 +891,13 @@ int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_r
 int callback_glewlwyd_add_client (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_result = is_client_valid(config, request->json_body, 1);
+  int res;
   
   if (j_result != NULL && json_array_size(j_result) == 0) {
-    if (add_client(config, request->json_body) != G_OK) {
+    res = add_client(config, request->json_body);
+    if (res == G_ERROR_PARAM) {
+      response->status = 400;
+    } else if (res != G_OK) {
       response->status = 500;
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client - Error adding new client");
     }
@@ -919,6 +935,8 @@ int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_r
       json_decref(j_result);
     } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
       response->status = 404;
+    } else if (check_result_value(j_client, G_ERROR_PARAM)) {
+      response->status = 400;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client - Error getting client");
       response->status = 500;
@@ -941,6 +959,8 @@ int callback_glewlwyd_delete_client (const struct _u_request * request, struct _
         response->status = 500;
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_client - Error deleting client");
       }
+    } else if (check_result_value(j_client, G_ERROR_PARAM)) {
+      response->status = 400;
     } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
       response->status = 404;
     } else {

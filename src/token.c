@@ -403,7 +403,7 @@ char * generate_client_access_token(struct config_elements * config, const char 
  */
 char * generate_authorization_code(struct config_elements * config, const char * username, const char * client_id, const char * scope_list, const char * redirect_uri, const char * ip_source) {
   uuid_t uuid;
-  char * code_value = malloc(37*sizeof(char)), * code_hash, * clause_redirect_uri, * clause_scope, * escape;
+  char * code_value = malloc(37*sizeof(char)), * code_hash, * clause_scope, * escape;
   char * save_scope_list, * scope, * saveptr = NULL;
   json_t * j_query, * j_result;
   int res;
@@ -415,10 +415,8 @@ char * generate_authorization_code(struct config_elements * config, const char *
     code_hash = generate_hash(config, config->hash_algorithm, code_value);
     
     escape = h_escape_string(config->conn, redirect_uri);
-    clause_redirect_uri = msprintf("(SELECT `gru_id` FROM `%s` WHERE `gru_uri` = '%s')", GLEWLWYD_TABLE_REDIRECT_URI, escape);
-    free(escape);
     
-    j_query = json_pack("{sss{sssssssss{ss}}}",
+    j_query = json_pack("{sss{ssssssssss}}",
                         "table",
                         GLEWLWYD_TABLE_CODE,
                         "values",
@@ -430,11 +428,10 @@ char * generate_authorization_code(struct config_elements * config, const char *
                           username,
                           "gc_client_id",
                           client_id,
-                          "gru_id",
-                            "raw",
-                            clause_redirect_uri);
-    free(clause_redirect_uri);
+                          "gco_redirect_uri",
+                          escape);
     res = h_insert(config->conn, j_query, NULL);
+    free(escape);
     json_decref(j_query);
     
     if (res == H_OK) {
@@ -544,7 +541,7 @@ json_t * session_check(struct config_elements * config, const char * session_val
                                 "set",
                                   "gss_last_seen",
                                     "raw",
-                                    (config->conn->type==HOEL_DB_TYPE_MARIADB?"NOW()":"(strftime('%s','now')"),
+                                    (config->conn->type==HOEL_DB_TYPE_MARIADB?"NOW()":"(strftime('%s','now'))"),
                                 "where",
                                   "gss_hash",
                                   session_hash);

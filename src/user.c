@@ -981,16 +981,26 @@ json_t * get_user(struct config_elements * config, const char * login, const cha
   int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
   
   if (search_ldap) {
-    j_user = get_user_ldap(config, login);
+    if (config->has_auth_ldap) {
+      j_user = get_user_ldap(config, login);
+    } else {
+      j_user = json_pack("{si}", "result", G_ERROR_PARAM);
+    }
   }
   if (!check_result_value(j_user, G_OK) && search_database) {
     json_decref(j_user);
-    j_user = get_user_database(config, login);
+    if (config->has_auth_database) {
+      j_user = get_user_database(config, login);
+    } else {
+      j_user = json_pack("{si}", "result", G_ERROR_PARAM);
+    }
   }
   if (check_result_value(j_user, G_OK)) {
     j_return = json_pack("{siso}", "result", G_OK, "user", json_copy(json_object_get(j_user, "user")));
   } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
     j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+  } else if (check_result_value(j_user, G_ERROR_PARAM)) {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error getting user");
     j_return = json_pack("{si}", "result", G_ERROR);
@@ -1103,9 +1113,9 @@ json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add
  * Add a new user
  */
 int add_user(struct config_elements * config, json_t * j_user) {
-  if (json_object_get(j_user, "source") == NULL || 0 == strcmp("database", json_string_value(json_object_get(j_user, "source")))) {
+  if ((json_object_get(j_user, "source") == NULL || 0 == strcmp("database", json_string_value(json_object_get(j_user, "source")))) && config->has_auth_database) {
     return add_user_database(config, j_user);
-  } else if (0 == strcmp("ldap", json_string_value(json_object_get(j_user, "source")))) {
+  } else if (0 == nstrcmp("ldap", json_string_value(json_object_get(j_user, "source"))) && config->has_auth_ldap) {
     return add_user_ldap(config, j_user);
   } else {
     return G_ERROR_PARAM;

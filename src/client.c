@@ -70,7 +70,7 @@ json_t * client_check_ldap(struct config_elements * config, const char * client_
   if (check_result_value(j_client, G_OK)) {
     // Check if redirect_uri is allowed
     json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index, j_element) {
-      if (nstrcmp(redirect_uri, json_string_value(j_element)) == 0) {
+      if (nstrcmp(redirect_uri, json_string_value(json_object_get(j_element, "uri"))) == 0) {
         redirect_uri_allowed = 1;
       }
     }
@@ -661,7 +661,7 @@ json_t * get_client_list_ldap(struct config_elements * config, const char * sear
   LDAPMessage * answer = NULL, * entry;
   int i, j, res;
   json_t * j_result, * j_scope_list = get_scope_list(config), * j_query, * j_auth_type, * j_cur_auth_type;
-  char * client_clause;
+  char * client_clause, * client_id_escaped;
   size_t i_auth_type;
   
   int  result;
@@ -775,7 +775,8 @@ json_t * get_client_list_ldap(struct config_elements * config, const char * sear
             
             json_object_set_new(j_entry, "source", json_string("ldap"));
             
-            client_clause = msprintf("IN (SELECT `got_id` FROM `%s` WHERE `gc_client_id`=(SELECT `gc_client_id` FROM `%s` WHERE `gc_id`='%" JSON_INTEGER_FORMAT "'))", GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE, GLEWLWYD_TABLE_CLIENT, json_integer_value(json_object_get(j_entry, "gc_id")));
+            client_id_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_entry, "client_id")));
+            client_clause = msprintf("IN (SELECT `got_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE, client_id_escaped);
             j_query = json_pack("{sss[s]s{s{ssss}}}",
                                 "table",
                                 GLEWLWYD_TABLE_AUTHORIZATION_TYPE,
@@ -788,6 +789,7 @@ json_t * get_client_list_ldap(struct config_elements * config, const char * sear
                                     "value",
                                     client_clause);
             free(client_clause);
+            free(client_id_escaped);
             res = h_select(config->conn, j_query, &j_auth_type, NULL);
             json_decref(j_query);
             if (res == H_OK) {
@@ -830,7 +832,7 @@ json_t * get_client_list_ldap(struct config_elements * config, const char * sear
 json_t * get_client_list_database(struct config_elements * config, const char * search, long int offset, long int limit) {
   json_t * j_query, * j_result, * j_scope, * j_redirect_uri, * j_return, * j_entry, * j_scope_entry, * j_auth_type, * j_cur_auth_type;
   int res;
-  char * scope_clause, * client_clause;
+  char * scope_clause, * client_clause, * client_id_escaped;
   size_t index, i_scope, i_auth_type;
   
   j_query = json_pack("{sss[ssssss]sisi}",
@@ -896,7 +898,8 @@ json_t * get_client_list_database(struct config_elements * config, const char * 
         if (res == H_OK) {
           json_object_set_new(j_entry, "redirect_uri", j_redirect_uri);
 
-          client_clause = msprintf("IN (SELECT `got_id` FROM `%s` WHERE `gc_client_id`=(SELECT `gc_client_id` FROM `%s` WHERE `gc_id`='%" JSON_INTEGER_FORMAT "'))", GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE, GLEWLWYD_TABLE_CLIENT, json_integer_value(json_object_get(j_entry, "gc_id")));
+          client_id_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_entry, "client_id")));
+          client_clause = msprintf("IN (SELECT `got_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE, client_id_escaped);
           j_query = json_pack("{sss[s]s{s{ssss}}}",
                               "table",
                               GLEWLWYD_TABLE_AUTHORIZATION_TYPE,
@@ -909,6 +912,7 @@ json_t * get_client_list_database(struct config_elements * config, const char * 
                                   "value",
                                   client_clause);
           free(client_clause);
+          free(client_id_escaped);
           res = h_select(config->conn, j_query, &j_auth_type, NULL);
           json_decref(j_query);
           if (res == H_OK) {
@@ -965,16 +969,26 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
   int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
   
   if (search_ldap) {
-    j_client = get_client_ldap(config, client_id);
+    if (config->has_auth_ldap) {
+      j_client = get_client_ldap(config, client_id);
+    } else {
+      j_client = json_pack("{si}", "result", G_ERROR_PARAM);
+    }
   }
   if (!check_result_value(j_client, G_OK) && search_database) {
     json_decref(j_client);
-    j_client = get_client_database(config, client_id);
+    if (config->has_auth_database) {
+      j_client = get_client_database(config, client_id);
+    } else {
+      j_client = json_pack("{si}", "result", G_ERROR_PARAM);
+    }
   }
   if (check_result_value(j_client, G_OK)) {
     j_return = json_pack("{siso}", "result", G_OK, "client", json_copy(json_object_get(j_client, "client")));
   } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
     j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+  } else if (check_result_value(j_client, G_ERROR_PARAM)) {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error getting client");
     j_return = json_pack("{si}", "result", G_ERROR);
@@ -990,7 +1004,7 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
 json_t * get_client_database(struct config_elements * config, const char * client_id) {
   json_t * j_query, * j_result = NULL, * j_scope, * j_redirect_uri, * j_return = NULL, * j_entry, * j_scope_entry, * j_auth_type , * j_cur_auth_type;
   int res;
-  char * scope_clause, * client_clause;
+  char * scope_clause, * client_clause, * client_id_escaped;
   size_t i_scope, i_auth_type;
   
   j_query = json_pack("{sss[ssssss]s{ss}}",
@@ -1047,7 +1061,8 @@ json_t * get_client_database(struct config_elements * config, const char * clien
         if (res == H_OK) {
           json_object_set_new(j_entry, "redirect_uri", j_redirect_uri);
 
-          client_clause = msprintf("IN (SELECT `got_id` FROM `%s` WHERE `gc_client_id`=(SELECT `gc_client_id` FROM `%s` WHERE `gc_id`='%" JSON_INTEGER_FORMAT "'))", GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE, GLEWLWYD_TABLE_CLIENT, json_integer_value(json_object_get(j_entry, "gc_id")));
+          client_id_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_entry, "client_id")));
+          client_clause = msprintf("IN (SELECT `got_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE, client_id_escaped);
           j_query = json_pack("{sss[s]s{s{ssss}}}",
                               "table",
                               GLEWLWYD_TABLE_AUTHORIZATION_TYPE,
@@ -1060,6 +1075,7 @@ json_t * get_client_database(struct config_elements * config, const char * clien
                                   "value",
                                   client_clause);
           free(client_clause);
+          free(client_id_escaped);
           res = h_select(config->conn, j_query, &j_auth_type, NULL);
           json_decref(j_query);
           if (res == H_OK) {
@@ -1118,7 +1134,7 @@ json_t * get_client_ldap(struct config_elements * config, const char * client_id
   LDAPMessage * answer = NULL, * entry;
   int j, res;
   json_t * j_result, * j_scope_list = get_scope_list(config), * j_query, * j_auth_type, * j_cur_auth_type;
-  char * client_clause;
+  char * client_clause, * client_id_escaped;
   size_t i_auth_type;
   
   int  result;
@@ -1210,8 +1226,9 @@ json_t * get_client_ldap(struct config_elements * config, const char * client_id
           } else {
             json_object_set_new(j_entry, "confidential", json_true());
           }
-            
-          client_clause = msprintf("IN (SELECT `got_id` FROM `%s` WHERE `gc_client_id`=(SELECT `gc_client_id` FROM `%s` WHERE `gc_id`='%" JSON_INTEGER_FORMAT "'))", GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE, GLEWLWYD_TABLE_CLIENT, json_integer_value(json_object_get(j_entry, "gc_id")));
+          
+          client_id_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_entry, "client_id")));
+          client_clause = msprintf("IN (SELECT `got_id` FROM `%s` WHERE `gc_client_id`='%s')", GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE, client_id_escaped);
           j_query = json_pack("{sss[s]s{s{ssss}}}",
                               "table",
                               GLEWLWYD_TABLE_AUTHORIZATION_TYPE,
@@ -1224,6 +1241,7 @@ json_t * get_client_ldap(struct config_elements * config, const char * client_id
                                   "value",
                                   client_clause);
           free(client_clause);
+          free(client_id_escaped);
           res = h_select(config->conn, j_query, &j_auth_type, NULL);
           json_decref(j_query);
           if (res == H_OK) {
@@ -1410,9 +1428,9 @@ json_t * is_client_valid(struct config_elements * config, json_t * j_client, int
  * Add a new client
  */
 int add_client(struct config_elements * config, json_t * j_client) {
-  if (json_object_get(j_client, "source") == NULL || 0 == strcmp("database", json_string_value(json_object_get(j_client, "source")))) {
+  if ((json_object_get(j_client, "source") == NULL || 0 == strcmp("database", json_string_value(json_object_get(j_client, "source")))) && config->has_auth_database) {
     return add_client_database(config, j_client);
-  } else if (0 == strcmp("ldap", json_string_value(json_object_get(j_client, "source")))) {
+  } else if (0 == nstrcmp("ldap", json_string_value(json_object_get(j_client, "source"))) && config->has_auth_ldap) {
     return add_client_ldap(config, j_client);
   } else {
     return G_ERROR_PARAM;
@@ -1812,6 +1830,8 @@ int set_client_ldap(struct config_elements * config, const char * client_id, jso
   json_t * j_scope, * j_redirect_uri;
   size_t index;
   char * cur_dn, * password = NULL, ** redirect_uri_array = NULL;
+  json_t * j_query;
+  char * escaped, * clause_auth_type;
   
   for (i=0; json_object_get(j_client, "name") != NULL && json_string_length(json_object_get(j_client, "name")) > 0 && config->auth_ldap->name_property_client_write[i] != NULL; i++) {
     nb_attr++;
@@ -1934,7 +1954,49 @@ int set_client_ldap(struct config_elements * config, const char * client_id, jso
       y_log_message(Y_LOG_LEVEL_ERROR, "Error setting client %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
       res = G_ERROR;
     } else {
-      res = G_OK;
+      if (json_object_get(j_client, "authorization_type") != NULL) {
+        j_query = json_pack("{sss{ss}}",
+                            "table",
+                            GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE,
+                            "where",
+                              "gc_client_id",
+                              client_id);
+        res = h_delete(config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          j_query = json_pack("{sss[]}",
+                              "table",
+                              GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE,
+                              "values");
+          json_array_foreach(json_object_get(j_client, "authorization_type"), index, j_redirect_uri) {
+            escaped = h_escape_string(config->conn, json_string_value(j_redirect_uri));
+            clause_auth_type = msprintf("(SELECT `got_id` FROM `%s` WHERE `got_name`='%s')", GLEWLWYD_TABLE_AUTHORIZATION_TYPE, escaped);
+            free(escaped);
+            json_array_append_new(json_object_get(j_query, "values"), 
+                                  json_pack("{sss{ss}}", 
+                                            "gc_client_id", 
+                                            client_id, 
+                                            "got_id",
+                                              "raw",
+                                              clause_auth_type));
+            free(clause_auth_type);
+          }
+          if (json_array_size(json_object_get(j_query, "values")) > 0) {
+            if (h_insert(config->conn, j_query, NULL) != H_OK) {
+              res = G_ERROR_DB;
+              y_log_message(Y_LOG_LEVEL_ERROR, "set_client_database - Error adding authorization_type");
+            } else {
+              res = G_OK;
+            }
+          }
+          json_decref(j_query);
+        } else {
+          res = G_ERROR_DB;
+          y_log_message(Y_LOG_LEVEL_ERROR, "set_client_database - Error deleting old authorization_type");
+        }
+      } else {
+        res = G_OK;
+      }
     }
     
     free(scope_values);
