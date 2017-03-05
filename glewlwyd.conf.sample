@@ -125,8 +125,8 @@ reset_password_config =
   page_url_prefix="https://example.org/glewlwyd/app/reset.html?user=$USERNAME&code=$TOKEN"    # mandatory
 }
 
-# Algorithms available are SHA1, SHA256, SHA512, MD5, default is MD5
-hash_algorithm = "MD5"
+# Algorithms available are SHA1, SHA256, SHA512, MD5, default is SHA256
+hash_algorithm = "SHA256"
 
 # MariaDB/Mysql database connection
 database =
