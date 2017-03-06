@@ -61,6 +61,10 @@ static_files_mime_types =
   {
     extension = ".map"
     type = "application/octet-stream"
+  },
+  {
+    extension = ".ico"
+    type = "image/x-icon"
   }
 )
 
