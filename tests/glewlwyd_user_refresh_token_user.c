@@ -16,7 +16,7 @@
 #define SERVER_URI "http://localhost:4593/glewlwyd"
 #define USER_LOGIN "user1"
 #define USER_PASSWORD "MyUser1Password!"
-#define USER_SCOPE_LIST "scope1"
+#define USER_SCOPE_LIST "scope1 g_profile"
 
 struct _u_request admin_req;
 struct _u_request user_req;
@@ -59,16 +59,16 @@ START_TEST(test_glwd_user_refresh_token_revoke_ok_user)
   
   ulfius_init_response(&list_resp);
   ulfius_init_response(&del_resp);
-  admin_req.http_url = msprintf("%s/profile/refresh_token/?valid=true", SERVER_URI);
-  res = ulfius_send_http_request(&admin_req, &list_resp);
+  user_req.http_url = msprintf("%s/profile/refresh_token/?valid=true", SERVER_URI);
+  res = ulfius_send_http_request(&user_req, &list_resp);
   if (res == U_OK) {
-    u_map_put(admin_req.map_header, "Content-Type", "application/x-www-form-urlencoded");
-    admin_req.json_body = json_pack("{ss}", "token_hash", json_string_value(json_object_get(json_array_get(list_resp.json_body, 0), "token_hash")));
+    u_map_put(user_req.map_header, "Content-Type", "application/x-www-form-urlencoded");
+    user_req.json_body = json_pack("{ss}", "token_hash", json_string_value(json_object_get(json_array_get(list_resp.json_body, 0), "token_hash")));
   }
   
-  admin_req.http_url = msprintf("%s/profile/refresh_token/", SERVER_URI);
-  admin_req.http_verb = strdup("DELETE");
-  ulfius_send_http_request(&admin_req, &del_resp);
+  user_req.http_url = msprintf("%s/profile/refresh_token/", SERVER_URI);
+  user_req.http_verb = strdup("DELETE");
+  ulfius_send_http_request(&user_req, &del_resp);
 	ck_assert_int_eq(del_resp.status, 200);
   
   ulfius_clean_response(&list_resp);

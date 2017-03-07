@@ -98,6 +98,9 @@ session_key="GLEWLWYD_SESSION_ID"
 # admin scope name
 admin_scope="g_admin"
 
+# profile scope name
+profile_scope="g_profile"
+
 # code expiration in seconds, default is 10 minutes
 code_expiration=600
 

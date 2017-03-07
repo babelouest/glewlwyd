@@ -19,7 +19,7 @@
 #define ADMIN_SCOPE_LIST "g_admin"
 #define USER_LOGIN "user1"
 #define USER_PASSWORD "MyUser1Password!"
-#define USER_SCOPE_LIST "scope1"
+#define USER_SCOPE_LIST "scope1 g_profile"
 
 struct _u_request admin_req;
 struct _u_request user_req;

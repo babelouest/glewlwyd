@@ -27,6 +27,7 @@ INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES
 -- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('user3', 'Dave Lopper3', 'user3@glewlwyd.domain', '{MD5}MSs++hzB5w==', 1);
 
 INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_admin', 'Glewlwyd admin scope');
+INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_profile', 'Glewlwyd profile scope');
 INSERT INTO g_scope (gs_name, gs_description) VALUES ('scope1', 'Description for scope1');
 INSERT INTO g_scope (gs_name, gs_description) VALUES ('scope2', 'Description for scope2');
 INSERT INTO g_scope (gs_name, gs_description) VALUES ('scope3', 'Description for scope3');

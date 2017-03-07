@@ -587,15 +587,17 @@ json_t * session_check(struct config_elements * config, const char * session_val
 }
 
 /**
- * Validates if an access_token is valid
+ * Validates if an access_token is valid and contains a scope profile
  */
-json_t * access_token_check(struct config_elements * config, const char * header_value) {
+json_t * access_token_check_scope_profile(struct config_elements * config, const char * header_value) {
   json_t * j_return, * j_grants;
   jwt_t * jwt = NULL;
   time_t now;
   long expiration;
   char  * grants;
   const char * type, * token_value;
+  int scope_found = 0, count, i;
+  char ** scope_list;
   
   if (header_value != NULL) {
     if (strstr(header_value, GLEWLWYD_PREFIX_BEARER) == header_value) {
@@ -608,7 +610,77 @@ json_t * access_token_check(struct config_elements * config, const char * header
           grants = jwt_get_grants_json(jwt, NULL);
           j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
           if (j_grants != NULL) {
-            j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+            count = split_string(json_string_value(json_object_get(j_grants, "scope")), " ", &scope_list);
+            for (i=0; count > 0 && scope_list[i] != NULL; i++) {
+              if (strcmp(scope_list[i], config->profile_scope) == 0) {
+                scope_found = 1;
+                break;
+              }
+            }
+            free_string_array(scope_list);
+            if (scope_found) {
+              j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+            } else {
+              j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "access_token_check - Error encoding token grants '%s'", grants);
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
+          free(grants);
+        } else {
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        }
+      } else {
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      }
+      jwt_free(jwt);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    }
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  }
+  return j_return;
+}
+
+/**
+ * Validates if an access_token is valid and contains a scope admin
+ */
+json_t * access_token_check_scope_admin(struct config_elements * config, const char * header_value) {
+  json_t * j_return, * j_grants;
+  jwt_t * jwt = NULL;
+  time_t now;
+  long expiration;
+  char  * grants;
+  const char * type, * token_value;
+  int scope_found = 0, count, i;
+  char ** scope_list;
+  
+  if (header_value != NULL) {
+    if (strstr(header_value, GLEWLWYD_PREFIX_BEARER) == header_value) {
+      token_value = header_value + strlen(GLEWLWYD_PREFIX_BEARER);
+      if (!jwt_decode(&jwt, token_value, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
+        time(&now);
+        expiration = jwt_get_grant_int(jwt, "iat") + jwt_get_grant_int(jwt, "expires_in");
+        type = jwt_get_grant(jwt, "type");
+        if (now < expiration && 0 == nstrcmp(type, "access_token")) {
+          grants = jwt_get_grants_json(jwt, NULL);
+          j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
+          if (j_grants != NULL) {
+            count = split_string(json_string_value(json_object_get(j_grants, "scope")), " ", &scope_list);
+            for (i=0; count > 0 && scope_list[i] != NULL; i++) {
+              if (strcmp(scope_list[i], config->admin_scope) == 0) {
+                scope_found = 1;
+                break;
+              }
+            }
+            free_string_array(scope_list);
+            if (scope_found) {
+              j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+            } else {
+              j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+            }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "access_token_check - Error encoding token grants '%s'", grants);
             j_return = json_pack("{si}", "result", G_ERROR);
@@ -640,7 +712,7 @@ json_t * session_or_access_token_check(struct config_elements * config, const ch
     return j_valid;
   } else {
     json_decref(j_valid);
-    return access_token_check(config, header_value);
+    return access_token_check_scope_profile(config, header_value);
   }
 }
 

@@ -78,6 +78,7 @@ int main (int argc, char ** argv) {
   config->session_key = nstrdup(GLEWLWYD_SESSION_KEY_DEFAULT);
   config->session_expiration = GLEWLWYD_SESSION_EXPIRATION_DEFAULT;
   config->admin_scope = nstrdup(GLEWLWYD_ADMIN_SCOPE);
+  config->profile_scope = nstrdup(GLEWLWYD_PROFILE_SCOPE);
   config->use_secure_connection = 0;
   config->secure_connection_key_file = NULL;
   config->secure_connection_pem_file = NULL;
@@ -138,12 +139,12 @@ int main (int argc, char ** argv) {
 
   // Authentication
   ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/user/", NULL, NULL, NULL, &callback_glewlwyd_validate_user_session, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/user/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_delete_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/user/", &callback_glewlwyd_check_user_session, (void*)config, NULL, &callback_glewlwyd_delete_user_session, (void*)config);
 
   // Current user scope grant endpoints
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/grant/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_user_session_scope_grant, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/grant/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_set_user_scope_grant, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/grant/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_user_scope_delete, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/grant/", &callback_glewlwyd_check_user_session, (void*)config, NULL, &callback_glewlwyd_get_user_session_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/grant/", &callback_glewlwyd_check_user_session, (void*)config, NULL, &callback_glewlwyd_set_user_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/grant/", &callback_glewlwyd_check_user_session, (void*)config, NULL, &callback_glewlwyd_user_scope_delete, (void*)config);
 
   // Current user endpoints
   ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_user_session_profile, (void*)config);
@@ -258,6 +259,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     free((*config)->jwt_decode_key);
     free((*config)->session_key);
     free((*config)->admin_scope);
+    free((*config)->profile_scope);
     free((*config)->secure_connection_key_file);
     free((*config)->secure_connection_pem_file);
     free((*config)->hash_algorithm);
@@ -538,7 +540,7 @@ int build_config_from_file(struct config_elements * config) {
   config_t cfg;
   config_setting_t * root, * database, * auth, * jwt, * mime_type_list, * mime_type, * reset_password_config;
   const char * cur_prefix, * cur_log_mode, * cur_log_level, * cur_log_file = NULL, * one_log_mode, * cur_hash_algorithm, 
-             * db_type, * db_sqlite_path, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL, * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL, * cur_session_key = NULL, * cur_admin_scope = NULL,
+             * db_type, * db_sqlite_path, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL, * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL, * cur_session_key = NULL, * cur_admin_scope = NULL, * cur_profile_scope = NULL,
              * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL,
              * cur_auth_ldap_base_search_user = NULL, * cur_auth_ldap_filter_user_read = NULL, * cur_auth_ldap_login_property_user_read = NULL, * cur_auth_ldap_name_property_user_read = NULL, * cur_auth_ldap_email_property_user_read = NULL, * cur_auth_ldap_scope_property_user_read = NULL, * cur_auth_ldap_rdn_property_user_write = NULL, * cur_auth_ldap_login_property_user_write = NULL, * cur_auth_ldap_name_property_user_write = NULL, * cur_auth_ldap_email_property_user_write = NULL, * cur_auth_ldap_scope_property_user_write = NULL, * cur_auth_ldap_password_property_user_write = NULL, * cur_auth_ldap_password_algorithm_user_write = NULL, * cur_auth_ldap_object_class_user_write = NULL,
              * cur_auth_ldap_base_search_client = NULL, * cur_auth_ldap_filter_client_read = NULL, * cur_auth_ldap_client_id_property_client_read = NULL, * cur_auth_ldap_name_property_client_read = NULL, * cur_auth_ldap_scope_property_client_read = NULL, * cur_auth_ldap_description_property_client_read = NULL, * cur_auth_ldap_redirect_uri_property_client_read = NULL, * cur_auth_ldap_confidential_property_client_read = NULL, * cur_auth_ldap_client_id_property_client_write = NULL, * cur_auth_ldap_rdn_property_client_write = NULL, * cur_auth_ldap_name_property_client_write = NULL, * cur_auth_ldap_scope_property_client_write = NULL, * cur_auth_ldap_description_property_client_write = NULL, * cur_auth_ldap_redirect_uri_property_client_write = NULL, * cur_auth_ldap_confidential_property_client_write = NULL, * cur_auth_ldap_password_property_client_write = NULL, * cur_auth_ldap_password_algorithm_client_write = NULL, * cur_auth_ldap_object_class_client_write = NULL,
@@ -652,6 +654,12 @@ int build_config_from_file(struct config_elements * config) {
   if (cur_admin_scope != NULL) {
     free(config->admin_scope);
     config->admin_scope = strdup(cur_admin_scope);
+  }
+  
+  config_lookup_string(&cfg, "profile_scope", &cur_profile_scope);
+  if (cur_profile_scope != NULL) {
+    free(config->profile_scope);
+    config->profile_scope = strdup(cur_profile_scope);
   }
   
   config_lookup_bool(&cfg, "use_scope", &cur_use_scope);

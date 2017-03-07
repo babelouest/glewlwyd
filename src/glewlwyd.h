@@ -64,6 +64,7 @@
 #define GLEWLWYD_CODE_EXPIRATION_DEFAULT    600
 #define GLEWLWYD_SALT_LENGTH                16
 #define GLEWLWYD_ADMIN_SCOPE                "g_admin"
+#define GLEWLWYD_PROFILE_SCOPE              "g_profile"
 #define GLEWLWYD_DEFAULT_LIMIT              20
 #define GLEWLWYD_PREFIX_BEARER              "Bearer "
 #define GLEWLWYD_DEFAULT_HASH_ALGORITHM     "MD5"
@@ -209,6 +210,7 @@ struct config_elements {
   unsigned int                    access_token_expiration;
   unsigned int                    code_expiration;
   char *                          admin_scope;
+  char *                          profile_scope;
   char *                          hash_algorithm;
   int                             reset_password;
   struct _reset_password_config * reset_password_config;
@@ -250,6 +252,7 @@ int callback_glewlwyd_token (const struct _u_request * request, struct _u_respon
 
 // Authorization callbacks functions
 int callback_glewlwyd_check_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_check_scope_admin (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 // Validate user login/password credentials
@@ -279,7 +282,8 @@ int auth_check_client_user_scope(struct config_elements * config, const char * c
 
 // Validate authorization
 json_t * session_check(struct config_elements * config, const char * session_value);
-json_t * access_token_check(struct config_elements * config, const char * header_value);
+json_t * access_token_check_scope_profile(struct config_elements * config, const char * header_value);
+json_t * access_token_check_scope_admin(struct config_elements * config, const char * header_value);
 json_t * session_or_access_token_check(struct config_elements * config, const char * session_value, const char * header_value);
 
 json_t * get_user_scope_grant(struct config_elements * config, const char * username);

@@ -231,3 +231,4 @@ INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('
 INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('password', 3, 'Resource Owner Password Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.3');
 INSERT INTO g_authorization_type (got_name, got_code, got_description) VALUES ('client_credentials', 4, 'Client Credentials Grant: https://tools.ietf.org/html/rfc6749#section-4.4');
 INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_admin', 'Glewlwyd admin scope');
+INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_profile', 'Glewlwyd profile scope');
