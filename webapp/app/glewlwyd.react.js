@@ -875,8 +875,8 @@ $(function() {
     return (
       <tr className={!props.client.enabled?"danger":""}>
         <td>{props.client.source}</td>
-        <td>{props.client.name}</td>
         <td>{props.client.client_id}</td>
+        <td>{props.client.name}</td>
         <td>{props.client.description}</td>
         <td>{String(props.client.confidential)}</td>
         <td>{props.client.scope.join(", ")}</td>
