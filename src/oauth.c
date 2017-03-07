@@ -43,9 +43,9 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
   time_t now;
   
   // Check if client is allowed to perform this request
-  j_client_check = client_check(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_CODE);
+  j_client_check = client_check(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE);
   if (check_result_value(j_client_check, G_OK)) {
-    // Client is allowed to use implicit grant with this redirection_uri
+    // Client is allowed to use auth_code grant with this redirection_uri
     session_payload = session_check(config, u_map_get(request->map_cookie, config->session_key));
     if (check_result_value(session_payload, G_OK)) {
       if (u_map_get(request->map_url, "login_validated") != NULL) {
@@ -133,72 +133,79 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
  */
 int check_auth_type_access_token_request (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_query, * j_validate;
+  json_t * j_query, * j_validate, * j_auth;
   int res;
   const char * code = u_map_get(request->map_post_body, "code"), 
-             * client_id = u_map_get(request->map_post_body, "client_id"), 
              * redirect_uri = u_map_get(request->map_post_body, "redirect_uri"),
              * ip_source = get_ip_source(request),
+             * client_id = u_map_get(request->map_post_body, "client_id"), 
              * scope_list = NULL;
   time_t now;
   char * refresh_token, * access_token;
   
-  j_validate = validate_authorization_code(config, code, client_id, redirect_uri, ip_source);
-  if (check_result_value(j_validate, G_OK)) {
-    if (config->use_scope) {
-      scope_list = json_string_value(json_object_get(j_validate, "scope"));
-    }
-    time(&now);
-    refresh_token = generate_refresh_token(config, json_string_value(json_object_get(j_validate, "username")), GLEWLWYD_AUHORIZATION_TYPE_CODE, ip_source, scope_list, now);
-    if (refresh_token != NULL) {
-      access_token = generate_access_token(config, refresh_token, json_string_value(json_object_get(j_validate, "username")), GLEWLWYD_AUHORIZATION_TYPE_CODE, ip_source, scope_list, now);
-      if (access_token != NULL) {
-        // Disable gco_id entry
-        j_query = json_pack("{sss{si}s{sI}}",
-                            "table",
-                            GLEWLWYD_TABLE_CODE,
-                            "set",
-                              "gco_enabled",
-                              0,
-                            "where",
-                              "gco_id",
-                              json_integer_value((json_object_get(j_validate, "gco_id"))));
-        res = h_update(config->conn, j_query, NULL);
-        json_decref(j_query);
-        if (res == H_OK) {
-          // Finally, the tokens are all here, no error, no problem
-          response->json_body = json_pack("{sssssssisi}",
-                                "token_type",
-                                "bearer",
-                                "access_token",
-                                access_token,
-                                "refresh_token",
-                                refresh_token,
-                                "iat",
-                                now,
-                                "expires_in",
-                                config->access_token_expiration);
+  // Check if client is allowed to perform this request
+  j_auth = client_check(config, client_id, request->auth_basic_user, request->auth_basic_password, redirect_uri, GLEWLWYD_AUHORIZATION_TYPE_CODE);
+  if (check_result_value(j_auth, G_OK)) {
+    j_validate = validate_authorization_code(config, code, u_map_get(request->map_post_body, "client_id"), redirect_uri, ip_source);
+    if (check_result_value(j_validate, G_OK)) {
+      if (config->use_scope) {
+        scope_list = json_string_value(json_object_get(j_validate, "scope"));
+      }
+      time(&now);
+        refresh_token = generate_refresh_token(config, request->auth_basic_user, json_string_value(json_object_get(j_validate, "username")), GLEWLWYD_AUHORIZATION_TYPE_CODE, ip_source, scope_list, now);
+        if (refresh_token != NULL) {
+          access_token = generate_access_token(config, refresh_token, json_string_value(json_object_get(j_validate, "username")), GLEWLWYD_AUHORIZATION_TYPE_CODE, ip_source, scope_list, now);
+          if (access_token != NULL) {
+            // Disable gco_id entry
+            j_query = json_pack("{sss{si}s{sI}}",
+                                "table",
+                                GLEWLWYD_TABLE_CODE,
+                                "set",
+                                  "gco_enabled",
+                                  0,
+                                "where",
+                                  "gco_id",
+                                  json_integer_value((json_object_get(j_validate, "gco_id"))));
+            res = h_update(config->conn, j_query, NULL);
+            json_decref(j_query);
+            if (res == H_OK) {
+              // Finally, the tokens are all here, no error, no problem
+              response->json_body = json_pack("{sssssssisi}",
+                                    "token_type",
+                                    "bearer",
+                                    "access_token",
+                                    access_token,
+                                    "refresh_token",
+                                    refresh_token,
+                                    "iat",
+                                    now,
+                                    "expires_in",
+                                    config->access_token_expiration);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error executing j_query update");
+              response->status = 500;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error generating access_token");
+            response->status = 500;
+          }
+          free(access_token);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error executing j_query update");
+          y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error generating refresh_token");
           response->status = 500;
         }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error generating access_token");
-        response->status = 500;
-      }
-      free(access_token);
+        free(refresh_token);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error generating refresh_token");
-      response->status = 500;
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid from IP Address %s", ip_source);
+      response->json_body = json_pack("{ss}", "error", json_string_value(json_object_get(j_validate, "error")));
+      response->status = 400;
     }
-    free(refresh_token);
+    json_decref(j_validate);
   } else {
-    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid from IP Address %s", ip_source);
-    response->json_body = json_pack("{ss}", "error", json_string_value(json_object_get(j_validate, "error")));
+    response->json_body = json_pack("{ss}", "error", "unauthorized_client");
     response->status = 400;
   }
-  json_decref(j_validate);
-  
+  json_decref(j_auth);
   return U_OK;
 }
 
@@ -311,56 +318,65 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
   time_t now;
   char * refresh_token, * access_token;
   const char * ip_source = get_ip_source(request);
-  json_t * j_result;
+  json_t * j_result, * j_auth = NULL;
   
-  if (config->use_scope) {
-    j_result = auth_check_user_credentials_scope(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"), u_map_get(request->map_post_body, "scope"));
-  } else {
-    j_result = auth_check_user_credentials(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"));
+  if (request->auth_basic_user != NULL && request->auth_basic_password != NULL) {
+    j_auth = client_check(config, request->auth_basic_user, request->auth_basic_user, request->auth_basic_password, NULL, GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS);
   }
-  if (check_result_value(j_result, G_OK)) {
-    time(&now);
-    refresh_token = generate_refresh_token(config, u_map_get(request->map_post_body, "username"), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_result, "scope")), now);
-    if (refresh_token != NULL) {
-      access_token = generate_access_token(config, refresh_token, u_map_get(request->map_post_body, "username"), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_result, "scope")), now);
-      if (access_token != NULL) {
-          response->json_body = json_pack("{sssssssisi}",
-                                "token_type",
-                                "bearer",
-                                "access_token",
-                                access_token,
-                                "refresh_token",
-                                refresh_token,
-                                "iat",
-                                now,
-                                "expires_in",
-                                config->access_token_expiration);
-        if (response->json_body != NULL) {
-          if (config->use_scope) {
-            json_object_set_new(response->json_body, "scope", json_copy(json_object_get(j_result, "scope")));
+  if (check_result_value(j_auth, G_OK) || (request->auth_basic_user == NULL && request->auth_basic_password == NULL)) {
+    if (config->use_scope) {
+      j_result = auth_check_user_credentials_scope(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"), u_map_get(request->map_post_body, "scope"));
+    } else {
+      j_result = auth_check_user_credentials(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"));
+    }
+    if (check_result_value(j_result, G_OK)) {
+      time(&now);
+      refresh_token = generate_refresh_token(config, request->auth_basic_user, u_map_get(request->map_post_body, "username"), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_result, "scope")), now);
+      if (refresh_token != NULL) {
+        access_token = generate_access_token(config, refresh_token, u_map_get(request->map_post_body, "username"), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_result, "scope")), now);
+        if (access_token != NULL) {
+            response->json_body = json_pack("{sssssssisi}",
+                                  "token_type",
+                                  "bearer",
+                                  "access_token",
+                                  access_token,
+                                  "refresh_token",
+                                  refresh_token,
+                                  "iat",
+                                  now,
+                                  "expires_in",
+                                  config->access_token_expiration);
+          if (response->json_body != NULL) {
+            if (config->use_scope) {
+              json_object_set_new(response->json_body, "scope", json_copy(json_object_get(j_result, "scope")));
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for response->json_body");
+            response->status = 500;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for response->json_body");
+          y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for access_token");
           response->status = 500;
         }
+        free(access_token);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for access_token");
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for refresh_token");
         response->status = 500;
       }
-      free(access_token);
+      free(refresh_token);
+    } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
+      response->status = 403;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for refresh_token");
+      y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error checking credentials");
       response->status = 500;
     }
-    free(refresh_token);
-  } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
-    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
-    response->status = 403;
+    json_decref(j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error checking credentials");
-    response->status = 500;
+    response->json_body = json_pack("{ss}", "error", "unauthorized_client");
+    response->status = 400;
   }
-  json_decref(j_result);
+  json_decref(j_auth);
   return U_OK;
 }
 
@@ -429,105 +445,145 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
 int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   char * access_token, * token_hash, * clause_expired_at, * last_seen_value, * scope, * scope_list_save, * scope_escaped, * scope_list_escaped = NULL, * saveptr = NULL, * clause_scope_list, * new_scope_list = NULL, * tmp;
-  json_t * j_query, * j_result, * j_result2, * j_element;
+  json_t * j_query, * j_result, * j_result2, * j_element, * j_auth = NULL;
   size_t index;
   int res;
   const char * refresh_token = u_map_get(request->map_post_body, "refresh_token");
   const char * ip_source = get_ip_source(request);
   jwt_t * jwt;
   time_t now;
+  char * query;
   
-  if (refresh_token != NULL) {
-    time(&now);
-    token_hash = generate_hash(config, config->hash_algorithm, refresh_token);
-    
-    if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
-      clause_expired_at = nstrdup("> NOW()");
-    } else {
-      clause_expired_at = nstrdup("> (strftime('%s','now'))");
-    }
+  if (request->auth_basic_user != NULL && request->auth_basic_password != NULL) {
+    j_auth = client_check(config, request->auth_basic_user, request->auth_basic_user, request->auth_basic_password, NULL, GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN);
+  }
+  if (check_result_value(j_auth, G_OK) || (request->auth_basic_user == NULL && request->auth_basic_password == NULL)) {
+    if (refresh_token != NULL) {
+      time(&now);
+      token_hash = generate_hash(config, config->hash_algorithm, refresh_token);
+      
+      if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
+        clause_expired_at = nstrdup("> NOW()");
+      } else {
+        clause_expired_at = nstrdup("> (strftime('%s','now'))");
+      }
 
-    j_query = json_pack("{sss[s]s{sssis{ssss}}}",
-                        "table",
-                        GLEWLWYD_TABLE_REFRESH_TOKEN,
-                        "columns",
-                          "grt_id",
-                        "where",
-                          "grt_hash",
-                          token_hash,
-                          "grt_enabled",
-                          1,
-                          "grt_expired_at",
-                            "operator",
-                            "raw",
-                            "value",
-                            clause_expired_at);
-    free(clause_expired_at);
-    res = h_select(config->conn, j_query, &j_result, NULL);
-    json_decref(j_query);
-    if (res == H_OK && json_array_size(j_result) > 0) {
-      if (!jwt_decode(&jwt, refresh_token, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
-        last_seen_value = msprintf(config->conn->type==HOEL_DB_TYPE_MARIADB?"FROM_UNIXTIME(%d)":"%d", now);
-        j_query = json_pack("{sss{ss}s{ss}}",
-                            "table",
-                            GLEWLWYD_TABLE_REFRESH_TOKEN,
-                            "set",
-                              "grt_last_seen",
-                              last_seen_value,
-                            "where",
-                              "grt_hash",
-                              token_hash);
-        free(last_seen_value);
-        res = h_update(config->conn, j_query, NULL);
-        json_decref(j_query);
-        if (res == H_OK) {
-          if (config->use_scope) {
-            // Get scope
-            if (u_map_get(request->map_post_body, "scope") != NULL) {
-              scope_list_save = nstrdup(u_map_get(request->map_post_body, "scope"));
-              scope = strtok_r(scope_list_save, " ", &saveptr);
-              while (scope != NULL) {
-                scope_escaped = h_escape_string(config->conn, scope);
-                if (scope_list_escaped == NULL) {
-                  scope_list_escaped = msprintf("'%s'", scope_escaped);
-                } else {
-                  tmp = msprintf("%s,'%s'", scope_list_escaped, scope_escaped);
-                  free(scope_list_escaped);
-                  scope_list_escaped = tmp;
+      j_query = json_pack("{sss[s]s{sssisos{ssss}}}",
+                          "table",
+                          GLEWLWYD_TABLE_REFRESH_TOKEN,
+                          "columns",
+                            "grt_id",
+                          "where",
+                            "grt_hash",
+                            token_hash,
+                            "grt_enabled",
+                            1,
+                            "gc_client_id",
+                            (request->auth_basic_user==NULL?json_null():json_string(request->auth_basic_user)),
+                            "grt_expired_at",
+                              "operator",
+                              "raw",
+                              "value",
+                              clause_expired_at);
+      free(clause_expired_at);
+      if (request->auth_basic_user != NULL) {
+        json_object_set_new(json_object_get(j_query, "where"), "gc_client_id", json_string(request->auth_basic_user));
+      } else {
+        json_object_set_new(json_object_get(j_query, "where"), "gc_client_id", json_null());
+      }
+      res = h_select(config->conn, j_query, &j_result, &query);
+      json_decref(j_query);
+      if (res == H_OK && json_array_size(j_result) > 0) {
+        if (!jwt_decode(&jwt, refresh_token, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
+          last_seen_value = msprintf(config->conn->type==HOEL_DB_TYPE_MARIADB?"FROM_UNIXTIME(%d)":"%d", now);
+          j_query = json_pack("{sss{ss}s{ss}}",
+                              "table",
+                              GLEWLWYD_TABLE_REFRESH_TOKEN,
+                              "set",
+                                "grt_last_seen",
+                                last_seen_value,
+                              "where",
+                                "grt_hash",
+                                token_hash);
+          free(last_seen_value);
+          res = h_update(config->conn, j_query, NULL);
+          json_decref(j_query);
+          if (res == H_OK) {
+            if (config->use_scope) {
+              // Get scope
+              if (u_map_get(request->map_post_body, "scope") != NULL) {
+                scope_list_save = nstrdup(u_map_get(request->map_post_body, "scope"));
+                scope = strtok_r(scope_list_save, " ", &saveptr);
+                while (scope != NULL) {
+                  scope_escaped = h_escape_string(config->conn, scope);
+                  if (scope_list_escaped == NULL) {
+                    scope_list_escaped = msprintf("'%s'", scope_escaped);
+                  } else {
+                    tmp = msprintf("%s,'%s'", scope_list_escaped, scope_escaped);
+                    free(scope_list_escaped);
+                    scope_list_escaped = tmp;
+                  }
+                  free(scope_escaped);
+                  scope = strtok_r(NULL, " ", &saveptr);
                 }
-                free(scope_escaped);
-                scope = strtok_r(NULL, " ", &saveptr);
+                clause_scope_list = msprintf("IN (SELECT `gs_id` FROM `%s` WHERE `grt_id` = (SELECT `grt_id` FROM `%s` WHERE `grt_hash` = '%s' AND `grt_enabled` = 1) AND `gs_id` IN (SELECT `gs_id` FROM `%s` WHERE `gs_name` IN (%s)))", GLEWLWYD_TABLE_REFRESH_TOKEN_SCOPE, GLEWLWYD_TABLE_REFRESH_TOKEN, token_hash, GLEWLWYD_TABLE_SCOPE, scope_list_escaped);
+                free(scope_list_save);
+                free(scope_list_escaped);
+              } else {
+                clause_scope_list = msprintf("IN (SELECT `gs_id` FROM `%s` WHERE `grt_id` = (SELECT `grt_id` FROM `%s` WHERE `grt_hash` = '%s' AND `grt_enabled` = 1))", GLEWLWYD_TABLE_REFRESH_TOKEN_SCOPE, GLEWLWYD_TABLE_REFRESH_TOKEN, token_hash);
               }
-              clause_scope_list = msprintf("IN (SELECT `gs_id` FROM `%s` WHERE `grt_id` = (SELECT `grt_id` FROM `%s` WHERE `grt_hash` = '%s' AND `grt_enabled` = 1) AND `gs_id` IN (SELECT `gs_id` FROM `%s` WHERE `gs_name` IN (%s)))", GLEWLWYD_TABLE_REFRESH_TOKEN_SCOPE, GLEWLWYD_TABLE_REFRESH_TOKEN, token_hash, GLEWLWYD_TABLE_SCOPE, scope_list_escaped);
-              free(scope_list_save);
-              free(scope_list_escaped);
+              j_query = json_pack("{sss[s]s{s{ssss}}}",
+                                  "table",
+                                  GLEWLWYD_TABLE_SCOPE,
+                                  "columns",
+                                    "gs_name",
+                                  "where",
+                                    "gs_id",
+                                      "operator",
+                                      "raw",
+                                      "value",
+                                      clause_scope_list);
+              free(clause_scope_list);
+              res = h_select(config->conn, j_query, &j_result2, NULL);
+              json_decref(j_query);
+              if (res == H_OK && json_array_size(j_result2) > 0) {
+                json_array_foreach(j_result2, index, j_element) {
+                  if (new_scope_list == NULL) {
+                    new_scope_list = nstrdup(json_string_value(json_object_get(j_element, "gs_name")));
+                  } else {
+                    tmp = msprintf("%s %s", new_scope_list, json_string_value(json_object_get(j_element, "gs_name")));
+                    free(new_scope_list);
+                    new_scope_list = tmp;
+                  }
+                }
+                access_token = generate_access_token(config, refresh_token, jwt_get_grant(jwt, "username"), GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN, ip_source, new_scope_list, now);
+                free(new_scope_list);
+                if (access_token != NULL) {
+                  response->json_body = json_pack("{sssssisi}",
+                                                  "access_token",
+                                                  access_token,
+                                                  "token_type",
+                                                  "bearer",
+                                                  "expires_in",
+                                                  config->access_token_expiration,
+                                                  "iat",
+                                                  now);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error generating access_token");
+                  response->status = 500;
+                  response->json_body = json_pack("{ss}", "error", "server_error");
+                }
+                free(access_token);
+              } else if (res != H_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error database while validating refresh_token");
+                response->status = 500;
+                response->json_body = json_pack("{ss}", "error", "server_error");
+              } else {
+                response->status = 400;
+                response->json_body = json_pack("{ss}", "error", "invalid_scope");
+              }
+              json_decref(j_result2);
             } else {
-              clause_scope_list = msprintf("IN (SELECT `gs_id` FROM `%s` WHERE `grt_id` = (SELECT `grt_id` FROM `%s` WHERE `grt_hash` = '%s' AND `grt_enabled` = 1))", GLEWLWYD_TABLE_REFRESH_TOKEN_SCOPE, GLEWLWYD_TABLE_REFRESH_TOKEN, token_hash);
-            }
-            j_query = json_pack("{sss[s]s{s{ssss}}}",
-                                "table",
-                                GLEWLWYD_TABLE_SCOPE,
-                                "columns",
-                                  "gs_name",
-                                "where",
-                                  "gs_id",
-                                    "operator",
-                                    "raw",
-                                    "value",
-                                    clause_scope_list);
-            free(clause_scope_list);
-            res = h_select(config->conn, j_query, &j_result2, NULL);
-            json_decref(j_query);
-            if (res == H_OK && json_array_size(j_result2) > 0) {
-              json_array_foreach(j_result2, index, j_element) {
-                if (new_scope_list == NULL) {
-                  new_scope_list = nstrdup(json_string_value(json_object_get(j_element, "gs_name")));
-                } else {
-                  tmp = msprintf("%s %s", new_scope_list, json_string_value(json_object_get(j_element, "gs_name")));
-                  free(new_scope_list);
-                  new_scope_list = tmp;
-                }
-              }
               access_token = generate_access_token(config, refresh_token, jwt_get_grant(jwt, "username"), GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN, ip_source, new_scope_list, now);
               free(new_scope_list);
               if (access_token != NULL) {
@@ -546,56 +602,37 @@ int get_access_token_from_refresh (const struct _u_request * request, struct _u_
                 response->json_body = json_pack("{ss}", "error", "server_error");
               }
               free(access_token);
-            } else if (res != H_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error database while validating refresh_token");
-              response->status = 500;
-              response->json_body = json_pack("{ss}", "error", "server_error");
-            } else {
-              response->status = 400;
-              response->json_body = json_pack("{ss}", "error", "invalid_scope");
             }
-            json_decref(j_result2);
           } else {
-            access_token = generate_access_token(config, refresh_token, jwt_get_grant(jwt, "username"), GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN, ip_source, new_scope_list, now);
-            free(new_scope_list);
-            if (access_token != NULL) {
-              response->json_body = json_pack("{sssssisi}",
-                                              "access_token",
-                                              access_token,
-                                              "token_type",
-                                              "bearer",
-                                              "expires_in",
-                                              config->access_token_expiration,
-                                              "iat",
-                                              now);
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error generating access_token");
-              response->status = 500;
-              response->json_body = json_pack("{ss}", "error", "server_error");
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error updating grt_last_seen");
+            response->status = 500;
+            response->json_body = json_pack("{ss}", "error", "server_error");
             }
-            free(access_token);
-          }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error updating grt_last_seen");
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error decoding refresh_token");
           response->status = 500;
           response->json_body = json_pack("{ss}", "error", "server_error");
-          }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error decoding refresh_token");
+        }
+        jwt_free(jwt);
+      } else if (res != H_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error executing j_query (1)");
         response->status = 500;
         response->json_body = json_pack("{ss}", "error", "server_error");
+      } else {
+        response->status = 400;
+        response->json_body = json_pack("{ss}", "error", "invalid_grant");
       }
-      jwt_free(jwt);
+      free(token_hash);
+      json_decref(j_result);
     } else {
       response->status = 400;
-      response->json_body = json_pack("{ss}", "error", "invalid_grant");
+      response->json_body = json_pack("{ss}", "error", "invalid_request");
     }
-    free(token_hash);
-    json_decref(j_result);
   } else {
     response->status = 400;
-    response->json_body = json_pack("{ss}", "error", "invalid_request");
+    response->json_body = json_pack("{ss}", "error", "invalid_client");
   }
+  json_decref(j_auth);
   return U_OK;
 }
 

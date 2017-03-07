@@ -34,7 +34,7 @@
 /**
  * Serialize in the database a print of a refresh_token
  */
-int serialize_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * refresh_token, const char * scope_list, time_t now) {
+int serialize_refresh_token(struct config_elements * config, const char * client_id, const char * username, const uint auth_type, const char * ip_source, const char * refresh_token, const char * scope_list, time_t now) {
   json_t * j_query, * j_result;
   int res, to_return;
   char * token_hash, * last_seen_value, * expired_at_value, * scope, * scope_escape, * scope_clause, * save_scope_list, * saveptr = NULL;
@@ -67,6 +67,9 @@ int serialize_refresh_token(struct config_elements * config, const char * userna
     free(expired_at_value);
     
     if (j_query != NULL) {
+      if (client_id != NULL) {
+        json_object_set_new(json_object_get(j_query, "values"), "gc_client_id", json_string(client_id));
+      }
       res = h_insert(config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
@@ -223,7 +226,7 @@ int serialize_access_token(struct config_elements * config, const uint auth_type
 /**
  * Generates a refresh_token from the specified parameters that are considered valid
  */
-char * generate_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now) {
+char * generate_refresh_token(struct config_elements * config, const char * client_id, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now) {
   jwt_t * jwt;
   char * token = NULL;
   char salt[GLEWLWYD_SALT_LENGTH + 1] = {0};
@@ -240,9 +243,12 @@ char * generate_refresh_token(struct config_elements * config, const char * user
     if (config->use_scope && scope_list != NULL) {
       jwt_add_grant(jwt, "scope", scope_list);
     }
+    if (client_id != NULL) {
+      jwt_add_grant(jwt, "client_id", client_id);
+    }
     token = jwt_encode_str(jwt);
     if (token != NULL) {
-      if (serialize_refresh_token(config, username, auth_type, ip_source, token, scope_list, now) != G_OK) {
+      if (serialize_refresh_token(config, client_id, username, auth_type, ip_source, token, scope_list, now) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_refresh_token - Error serializing token");
       }
     } else {

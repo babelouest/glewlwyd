@@ -412,9 +412,6 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
   } else {
     j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
-  if (check_result_value(j_res, G_ERROR_UNAUTHORIZED)) {
-    sleep(2);
-  }
   return j_res;
 }
 
@@ -631,12 +628,16 @@ json_t * auth_check_user_scope_database(struct config_elements * config, const c
 json_t * auth_check_user_scope(struct config_elements * config, const char * username, const char * scope_list) {
   json_t * j_res = NULL;
   
-  if (config->has_auth_ldap) {
-    j_res = auth_check_user_scope_ldap(config, username, scope_list);
-  }
-  if (config->has_auth_database && (j_res == NULL || !check_result_value(j_res, G_OK))) {
-    json_decref(j_res);
-    j_res = auth_check_user_scope_database(config, username, scope_list);
+  if (scope_list != NULL) {
+    if (config->has_auth_ldap) {
+      j_res = auth_check_user_scope_ldap(config, username, scope_list);
+    }
+    if (config->has_auth_database && (j_res == NULL || !check_result_value(j_res, G_OK))) {
+      json_decref(j_res);
+      j_res = auth_check_user_scope_database(config, username, scope_list);
+    }
+  } else {
+    j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   return j_res;
 }
@@ -725,7 +726,6 @@ json_t * auth_check_user_scope_ldap(struct config_elements * config, const char 
           res = json_pack("{siss}", "result", G_OK, "scope", new_scope_list);
         } else {
           // User hasn't all of part of the scope requested, sending unauthorized answer
-          y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, scope incorrect");
           res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
         free(new_scope_list);
@@ -1229,7 +1229,7 @@ int i;
       attr_counter++;
     }
     
-    if (json_object_get(j_user, "password") != NULL && json_string_length(json_object_get(j_user, "password")) > 0) {
+    if (json_object_get(j_user, "password") != NULL) {
       password = generate_hash(config, config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(j_user, "password")));
       if (password != NULL) {
         mods[attr_counter] = malloc(sizeof(LDAPMod));
@@ -1449,7 +1449,7 @@ int set_user_ldap(struct config_elements * config, const char * user, json_t * j
       attr_counter++;
     }
     
-    if (json_object_get(j_user, "password") != NULL && json_string_length(json_object_get(j_user, "password")) > 0) {
+    if (json_object_get(j_user, "password") != NULL) {
       password = generate_hash(config, config->auth_ldap->password_algorithm_user_write, json_string_value(json_object_get(j_user, "password")));
       if (password != NULL) {
         mods[attr_counter] = malloc(sizeof(LDAPMod));

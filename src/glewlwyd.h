@@ -275,8 +275,6 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
 
 // Validate client on a user oauth2 request
 json_t * client_check(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
-json_t * client_check_ldap(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
-json_t * client_check_database(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
 int auth_check_client_user_scope(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
 
 // Validate authorization
@@ -365,7 +363,7 @@ int get_session(struct config_elements * config, const char * username, const ch
 int revoke_session(struct config_elements * config, const char * username, const char * session_hash);
 
 // Tokens generation and store digest
-char * generate_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
+char * generate_refresh_token(struct config_elements * config, const char * client_id, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
 char * generate_access_token(struct config_elements * config, const char * refresh_token, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
 char * generate_session_token(struct config_elements * config, const char * username, const char * ip_source, time_t now);
 char * generate_authorization_code(struct config_elements * config, const char * username, const char * client_id, const char * scope_list, const char * redirect_uri, const char * ip_source);
@@ -373,7 +371,7 @@ char * generate_client_access_token(struct config_elements * config, const char 
 char * generate_user_reset_password_token(struct config_elements * config, const char * username, const char * ip_source);
 
 // Token serialization functions
-int serialize_refresh_token(struct config_elements * config, const char * username, const uint auth_type, const char * ip_source, const char * refresh_token, const char * scope_list, time_t now);
+int serialize_refresh_token(struct config_elements * config, const char * client_id, const char * username, const uint auth_type, const char * ip_source, const char * refresh_token, const char * scope_list, time_t now);
 int serialize_access_token(struct config_elements * config, const uint auth_type, const char * ip_source, const char * refresh_token, const char * scope_list);
 int serialize_session_token(struct config_elements * config, const char * username, const char * ip_source, const char * session_token, time_t now);
 

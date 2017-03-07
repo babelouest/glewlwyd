@@ -125,6 +125,14 @@
       </div>
       <div class="row">
         <div class="col-md-2">
+          <label for="clientpassword">client confidential</label>
+        </div>
+        <div class="col-md-2">
+          <input type="checkbox" id="clientconfidential" name="clientconfidential" value="confidential" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
           <label for="redirect_uri">redirect_uri</label>
         </div>
         <div class="col-md-2">
@@ -226,6 +234,13 @@
     if (params.access_token) {
       $("#result").append("<div><strong>access_token</strong>: <code>" + params.access_token + "</code></div>");
     }
+		params = getQueryParams(location.hash.substring(1));
+		if (params.code) {
+		  $("#code").val(params.code);
+		}
+    if (params.access_token) {
+      $("#result").append("<div><strong>access_token</strong>: <code>" + params.access_token + "</code></div>");
+    }
 	};
 
   function setAuthHeader(xhr){
@@ -243,16 +258,25 @@
         window.location = url;
         break;
       case "authorization_code":
-        $.post(glewlwyd_api + "/token", {grant_type: "authorization_code", client_id: $("#client_id").val(), redirect_uri: $("#redirect_uri").val(), code: $("#code").val()},
-        function (result, status, request) {
-          $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
-          for (var key in result) {
-            $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
-          }
-        })
-        .fail(function (error) {
-          $("#result").append("<div class=\"alert alert-danger\">Error</div>");
-          $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+        $.ajax({
+          type: "POST",
+          url: glewlwyd_api + "/token", 
+          data: {grant_type: "authorization_code", client_id: $("#client_id").val(), redirect_uri: $("#redirect_uri").val(), code: $("#code").val()},
+          beforeSend: function (xhr) {
+            if ($("#clientconfidential").is(':checked')) {
+              xhr.setRequestHeader ("Authorization", "Basic " + btoa($("#client_id").val() + ":" + $("#clientpassword").val()));
+            }
+          },
+          success: function (result, status, request) {
+            $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
+            for (var key in result) {
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+            }
+          },
+          error: function (error) {
+              $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+              $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+            }
         });
         break;
       case "token":
@@ -260,16 +284,25 @@
         window.location = url;
         break;
       case "password":
-        $.post(glewlwyd_api + "/token", {grant_type: "password", username: $("#username").val(), password: $("#password").val(), state: $("#state").val(), scope: $("#scope").val().join(" ")},
-        function (result, status, request) {
-          $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
-          for (var key in result) {
-            $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+        $.ajax({
+          type: "POST",
+          url: glewlwyd_api + "/token", 
+          data: {grant_type: "password", username: $("#username").val(), password: $("#password").val(), state: $("#state").val(), scope: $("#scope").val().join(" ")},
+          beforeSend: function (xhr) {
+            if ($("#clientconfidential").is(':checked')) {
+              xhr.setRequestHeader ("Authorization", "Basic " + btoa($("#client_id").val() + ":" + $("#clientpassword").val()));
+            }
+          },
+          success: function (result, status, request) {
+            $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
+            for (var key in result) {
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+            }
+          },
+          error: function (error) {
+            $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+            $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
           }
-        })
-        .fail(function (error) {
-          $("#result").append("<div class=\"alert alert-danger\">Error</div>");
-          $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
         });
         break;
       case "client_credentials":
@@ -295,26 +328,44 @@
         });
         break;
       case "refresh_token":
-        $.post(glewlwyd_api + "/token", {grant_type: "refresh_token", refresh_token: $("#refresh_token").val()},
-        function (result, status, request) {
-          $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
-          for (var key in result) {
-            $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+        $.ajax({
+          type: "POST",
+          url: glewlwyd_api + "/token", 
+          data: {grant_type: "refresh_token", refresh_token: $("#refresh_token").val()},
+          beforeSend: function (xhr) {
+            if ($("#clientconfidential").is(':checked')) {
+              xhr.setRequestHeader ("Authorization", "Basic " + btoa($("#client_id").val() + ":" + $("#clientpassword").val()));
+            }
+          },
+          success: function (result, status, request) {
+            $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
+            for (var key in result) {
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+            }
+          },
+          error:function (error) {
+            $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+            $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
           }
-        })
-        .fail(function (error) {
-          $("#result").append("<div class=\"alert alert-danger\">Error</div>");
-          $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
         });
         break;
       case "delete_token":
-        $.post(glewlwyd_api + "/token", {grant_type: "delete_token", refresh_token: $("#refresh_token").val()},
-        function (result, status, request) {
-          $("#result").append("<div class=\"alert alert-info\">Success</div>");
-        })
-        .fail(function (error) {
-          $("#result").append("<div class=\"alert alert-danger\">Error</div>");
-          $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+        $.ajax({
+          type: "POST",
+          url: glewlwyd_api + "/token", 
+          data: {grant_type: "delete_token", refresh_token: $("#refresh_token").val()},
+          beforeSend: function (xhr) {
+            if ($("#clientconfidential").is(':checked')) {
+              xhr.setRequestHeader ("Authorization", "Basic " + btoa($("#client_id").val() + ":" + $("#clientpassword").val()));
+            }
+          },
+          success: function (result, status, request) {
+            $("#result").append("<div class=\"alert alert-info\">Success</div>");
+          },
+          error:function (error) {
+            $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+            $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+          }
         });
         break;
     }

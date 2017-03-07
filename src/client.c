@@ -36,176 +36,93 @@
  * otherwise client is public
  */
 json_t * client_check(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type) {
-  json_t * j_res = NULL;
-  
-  if (client_id_header != NULL && client_password_header != NULL && strlen(client_password_header) == 0) {
-    // Client empty password unauthorized
-    j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-  } else if (client_id != NULL && redirect_uri != NULL) {
-    if (config->has_auth_ldap) {
-      j_res = client_check_ldap(config, client_id, client_id_header, client_password_header, redirect_uri, auth_type);
-    }
-    if (config->has_auth_database && !check_result_value(j_res, G_OK)) {
-      json_decref(j_res);
-      j_res = client_check_database(config, client_id, client_id_header, client_password_header, redirect_uri, auth_type);
-    }
-  } else {
-    j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-  }
-  if (check_result_value(j_res, G_ERROR_UNAUTHORIZED)) {
-    sleep(2);
-  }
-  return j_res;
-}
-
-/**
- * check client credentials in ldap backend
- */
-json_t * client_check_ldap(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type) {
-  json_t * j_client = get_client_ldap(config, client_id), * j_return, * j_element, * j_auth_client;
+  json_t * j_res = NULL, * j_client = NULL, * j_auth, * j_element;
   size_t index;
-  int redirect_uri_allowed = 0, auth_type_allowed = 0;
-  char * auth_type_str;
+  int redirect_uri_allowed = 1, auth_type_allowed = 0;
+  const char * auth_type_str;
   
-  if (check_result_value(j_client, G_OK)) {
-    // Check if redirect_uri is allowed
-    json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index, j_element) {
-      if (nstrcmp(redirect_uri, json_string_value(json_object_get(j_element, "uri"))) == 0) {
-        redirect_uri_allowed = 1;
-      }
-    }
-    
-    // Check if auth_type is allowed
-    switch (auth_type) {
-      case GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE:
-        auth_type_str = "authorization_code";
-        break;
-      case GLEWLWYD_AUHORIZATION_TYPE_CODE:
-        auth_type_str = "code";
-        break;
-      case GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT:
-        auth_type_str = "token";
-        break;
-      case GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS:
-        auth_type_str = "password";
-        break;
-      case GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS:
-        auth_type_str = "client_credentials";
-        break;
-      default:
-        auth_type_str = "";
-        break;
-    }
-    json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
-      if (nstrcmp(json_string_value(j_element), auth_type_str)) {
-        auth_type_allowed = 1;
-      }
-    }
-    
-    if (redirect_uri_allowed && auth_type_allowed) {
-      if (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
-        j_auth_client = auth_check_client_credentials_ldap(config, client_id_header, client_password_header);
-        if (check_result_value(j_auth_client, G_OK)) {
-          j_return = json_pack("{siss}", "result", G_OK, "client_id", client_id_header);
-        } else if (check_result_value(j_auth_client, G_ERROR_UNAUTHORIZED)) {
-          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  // First, check if client_id exist and is valid
+  if (client_id != NULL) {
+    j_client = get_client(config, client_id, NULL);
+    if (check_result_value(j_client, G_OK)) {
+      // If client is confidential and auth type can require credentials, check its credentials
+      if (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true() && 
+          (auth_type == GLEWLWYD_AUHORIZATION_TYPE_CODE ||
+          auth_type == GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS ||
+          auth_type == GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS ||
+          auth_type == GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN)) {
+        if (nstrcmp(client_id, client_id_header) != 0) {
+          j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         } else {
-          j_return = json_pack("{si}", "result", G_ERROR);
+          j_auth = auth_check_client_credentials(config, client_id_header, client_password_header);
+          if (!check_result_value(j_auth, G_OK)) {
+            j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          }
+          json_decref(j_auth);
         }
-        json_decref(j_auth_client);
-      } else {
-        j_return = json_pack("{siss}", "result", G_OK, "client_id", client_id);
       }
-    } else {
-      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-    }
-  } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
-    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
-  } else {
-    j_return = json_pack("{si}", "result", G_ERROR);
-  }
-  json_decref(j_client);
-  return j_return;
-}
+      // if no error occured, continue
+      if (j_res == NULL) {
 
-/**
- * check client credentials in database backend
- */
-json_t * client_check_database(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type) {
-  json_t * j_result, * j_return;
-  int res, is_confidential;
-  char * redirect_uri_escaped, * client_id_escaped, * query, * tmp, * password_escaped;
-  
-  
-  if ((client_id != NULL || client_id_header != NULL) && redirect_uri != NULL) {
-    if (client_id_header != NULL) {
-      client_id_escaped = h_escape_string(config->conn, client_id_header);
-      is_confidential = 1;
-    } else {
-      client_id_escaped = h_escape_string(config->conn, client_id);
-      is_confidential = 0;
-    }
-    
-    // I don't want to build a huge j_query since there are 4 tables involved so I'll build my own sql query
-    redirect_uri_escaped = h_escape_string(config->conn, redirect_uri);
-    query = msprintf("SELECT `%s`.`gc_id` FROM `%s`, `%s`, `%s` WHERE `%s`.`gc_client_id`=`%s`.`gc_client_id` AND `%s`.`gc_id`=`%s`.`gc_id`\
-                      AND `%s`.`gc_enabled`=1 AND  `%s`.`gru_uri`='%s' AND `%s`.`gc_client_id`='%s' \
-                      AND `%s`.`got_id`=(SELECT `got_id` FROM `%s` WHERE `got_code`=%d);", 
-            GLEWLWYD_TABLE_CLIENT,
-            
-            GLEWLWYD_TABLE_CLIENT,
-            GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE,
-            GLEWLWYD_TABLE_REDIRECT_URI,
-              
-            GLEWLWYD_TABLE_CLIENT,
-            GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE,
-            
-            GLEWLWYD_TABLE_CLIENT,
-            GLEWLWYD_TABLE_REDIRECT_URI,
-            
-            GLEWLWYD_TABLE_CLIENT,
-            
-            GLEWLWYD_TABLE_REDIRECT_URI,
-            redirect_uri_escaped,
-            
-            GLEWLWYD_TABLE_CLIENT,
-            client_id_escaped,
-            
-            GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE,
-            GLEWLWYD_TABLE_AUTHORIZATION_TYPE,
-            auth_type);
-    free(redirect_uri_escaped);
-    
-    if (is_confidential) {
-      if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
-        password_escaped = h_escape_string(config->conn, client_password_header);
-        tmp = msprintf("%s AND `gc_client_password` = PASSWORD('%s')", query, password_escaped);
-      } else {
-        password_escaped = generate_hash(config, config->hash_algorithm, client_password_header);
-        tmp = msprintf("%s AND `gc_client_password` = '%s'", query, password_escaped);
+        // Check if auth_type is allowed
+        switch (auth_type) {
+          case GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE:
+            auth_type_str = "authorization_code";
+            break;
+          case GLEWLWYD_AUHORIZATION_TYPE_CODE:
+            auth_type_str = "code";
+            break;
+          case GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT:
+            auth_type_str = "token";
+            break;
+          case GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS:
+            auth_type_str = "password";
+            break;
+          case GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS:
+            auth_type_str = "client_credentials";
+            break;
+          default:
+            auth_type_str = "";
+            break;
+        }
+        json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
+          if (nstrcmp(json_string_value(j_element), auth_type_str)) {
+            auth_type_allowed = 1;
+          }
+        }
+        
+        if (auth_type == GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE || auth_type == GLEWLWYD_AUHORIZATION_TYPE_CODE || auth_type == GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT) {
+          // Check redirect_uri if auth type requires it
+          if (redirect_uri != NULL) {
+            redirect_uri_allowed = 0;
+            json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index, j_element) {
+              if (0 == nstrcmp(json_string_value(json_object_get(j_element, "uri")), redirect_uri)) {
+                redirect_uri_allowed = 1;
+              }
+            }
+          } else {
+            j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          }
+        } else {
+          j_res = json_pack("{siso}", "result", G_OK, "client", json_copy(json_object_get(j_client, "client")));
+        }
+        
+        // Final check, is everything ok?
+        if (!redirect_uri_allowed || !auth_type_allowed) {
+          j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        } else {
+          j_res = json_pack("{siso}", "result", G_OK, "client", json_copy(json_object_get(j_client, "client")));
+        }
       }
-      free(query);
-      query = tmp;
-    }
-    
-    res = h_execute_query_json(config->conn, query, &j_result);
-    free(query);
-    if (res == H_OK) {
-      if (json_array_size(j_result) > 0) {
-        j_return = json_pack("{siss}", "result", G_OK, "client_id", (is_confidential?client_id_header:client_id));
-      } else {
-        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-      }
-      json_decref(j_result);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "client_check - Error executing query auth");
-      j_return = json_pack("{si}", "result", G_ERROR_DB);
+      j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
-    free(client_id_escaped);
+    json_decref(j_client);
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+    j_res = json_pack("{si}", "result", G_ERROR_PARAM);
   }
-  return j_return;
+  
+  return j_res;
 }
 
 /**
@@ -371,7 +288,7 @@ int auth_check_client_user_scope(struct config_elements * config, const char * c
   char * scope, * escaped_scope, * escaped_scope_list = NULL, * save_scope_list, * saveptr = NULL, * tmp;
   char * scope_clause;
   
-  save_scope_list = strdup(scope_list);
+  save_scope_list = nstrdup(scope_list);
   scope = strtok_r(save_scope_list, " ", &saveptr);
   while (scope != NULL) {
     nb_scope++;
@@ -603,7 +520,6 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
           res = json_pack("{siss}", "result", G_OK, "scope", new_scope_list);
         } else {
           // Client hasn't all of part of the scope requested, sending unauthorized answer
-          y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap, scope incorrect");
           res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
         free(new_scope_list);
@@ -968,30 +884,34 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
   json_t * j_return = NULL, * j_client = NULL;
   int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
   
-  if (search_ldap) {
-    if (config->has_auth_ldap) {
-      j_client = get_client_ldap(config, client_id);
-    } else {
-      j_client = json_pack("{si}", "result", G_ERROR_PARAM);
-    }
-  }
-  if (!check_result_value(j_client, G_OK) && search_database) {
-    json_decref(j_client);
-    if (config->has_auth_database) {
-      j_client = get_client_database(config, client_id);
-    } else {
-      j_client = json_pack("{si}", "result", G_ERROR_PARAM);
-    }
-  }
-  if (check_result_value(j_client, G_OK)) {
-    j_return = json_pack("{siso}", "result", G_OK, "client", json_copy(json_object_get(j_client, "client")));
-  } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
-    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
-  } else if (check_result_value(j_client, G_ERROR_PARAM)) {
-    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  if (client_id == NULL || strlen(client_id) == 0) {
+    j_client = json_pack("{si}", "result", G_ERROR_PARAM);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error getting client");
-    j_return = json_pack("{si}", "result", G_ERROR);
+    if (search_ldap) {
+      if (config->has_auth_ldap) {
+        j_client = get_client_ldap(config, client_id);
+      } else {
+        j_client = json_pack("{si}", "result", G_ERROR_PARAM);
+      }
+    }
+    if (!check_result_value(j_client, G_OK) && search_database) {
+      json_decref(j_client);
+      if (config->has_auth_database) {
+        j_client = get_client_database(config, client_id);
+      } else {
+        j_client = json_pack("{si}", "result", G_ERROR_PARAM);
+      }
+    }
+    if (check_result_value(j_client, G_OK)) {
+      j_return = json_pack("{siso}", "result", G_OK, "client", json_copy(json_object_get(j_client, "client")));
+    } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    } else if (check_result_value(j_client, G_ERROR_PARAM)) {
+      j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error getting client");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
   }
   json_decref(j_client);
   

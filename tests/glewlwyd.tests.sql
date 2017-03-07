@@ -68,5 +68,7 @@ INSERT INTO g_resource_scope (gr_id, gs_id) VALUES ((SELECT gr_id from g_resourc
 INSERT INTO g_client_authorization_type (gc_client_id, got_id) VALUES ('client1_id', (SELECT got_id from g_authorization_type WHERE got_name='code'));
 INSERT INTO g_client_authorization_type (gc_client_id, got_id) VALUES ('client1_id', (SELECT got_id from g_authorization_type WHERE got_name='token'));
 INSERT INTO g_client_authorization_type (gc_client_id, got_id) VALUES ('client2_id', (SELECT got_id from g_authorization_type WHERE got_name='code'));
+INSERT INTO g_client_authorization_type (gc_client_id, got_id) VALUES ('client3_id', (SELECT got_id FROM g_authorization_type WHERE got_name='code'));
 INSERT INTO g_client_authorization_type (gc_client_id, got_id) VALUES ('client3_id', (SELECT got_id from g_authorization_type WHERE got_name='token'));
+INSERT INTO g_client_authorization_type (gc_client_id, got_id) VALUES ('client3_id', (SELECT got_id from g_authorization_type WHERE got_name='password'));
 INSERT INTO g_client_authorization_type (gc_client_id, got_id) VALUES ('client3_id', (SELECT got_id FROM g_authorization_type WHERE got_name='client_credentials'));

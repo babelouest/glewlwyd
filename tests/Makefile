@@ -26,7 +26,7 @@ LIBS=-lc -lulfius -lorcania -ljansson -lyder -lcheck -lpthread -lm -lrt -lsubuni
 all: test
 
 clean:
-	rm -f *.o glewlwyd_auth_code glewlwyd_client_cred glewlwyd_code glewlwyd_implicit glewlwyd_resource_owner_pwd_cred glewlwyd_delete_token glewlwyd_admin_authorization glewlwyd_crud_scope glewlwyd_crud_user glewlwyd_crud_client glewlwyd_crud_resource glewlwyd_update_user_profile glewlwyd_user_session_user glewlwyd_user_session_admin glewlwyd_user_refresh_token_user glewlwyd_user_refresh_token_admin valgrind.txt
+	rm -f *.o glewlwyd_auth_code glewlwyd_client_cred glewlwyd_code glewlwyd_code_client_confidential glewlwyd_implicit glewlwyd_resource_owner_pwd_cred glewlwyd_resource_owner_pwd_cred_client_confidential glewlwyd_refresh_token glewlwyd_refresh_token_client_confidential glewlwyd_delete_token glewlwyd_admin_authorization glewlwyd_crud_scope glewlwyd_crud_user glewlwyd_crud_client glewlwyd_crud_resource glewlwyd_update_user_profile glewlwyd_user_session_user glewlwyd_user_session_admin glewlwyd_user_refresh_token_user glewlwyd_user_refresh_token_admin valgrind.txt
 
 unit-tests.o: unit-tests.c unit-tests.h
 	$(CC) $(CFLAGS) -c unit-tests.c
@@ -49,6 +49,12 @@ glewlwyd_code: glewlwyd_code.c unit-tests.o
 test_glewlwyd_code: glewlwyd_code
 	-./glewlwyd_code
 
+glewlwyd_code_client_confidential: glewlwyd_code_client_confidential.c unit-tests.o
+	$(CC) $(CFLAGS) glewlwyd_code_client_confidential.c unit-tests.o -o glewlwyd_code_client_confidential $(LIBS)
+
+test_glewlwyd_code_client_confidential: glewlwyd_code_client_confidential
+	-./glewlwyd_code_client_confidential
+
 glewlwyd_implicit: glewlwyd_implicit.c unit-tests.o
 	$(CC) $(CFLAGS) glewlwyd_implicit.c unit-tests.o -o glewlwyd_implicit $(LIBS)
 
@@ -60,6 +66,24 @@ glewlwyd_resource_owner_pwd_cred: glewlwyd_resource_owner_pwd_cred.c unit-tests.
 
 test_glewlwyd_resource_owner_pwd_cred: glewlwyd_resource_owner_pwd_cred
 	-./glewlwyd_resource_owner_pwd_cred
+
+glewlwyd_resource_owner_pwd_cred_client_confidential: glewlwyd_resource_owner_pwd_cred_client_confidential.c unit-tests.o
+	$(CC) $(CFLAGS) glewlwyd_resource_owner_pwd_cred_client_confidential.c unit-tests.o -o glewlwyd_resource_owner_pwd_cred_client_confidential $(LIBS)
+
+test_glewlwyd_resource_owner_pwd_cred_client_confidential: glewlwyd_resource_owner_pwd_cred_client_confidential
+	-./glewlwyd_resource_owner_pwd_cred_client_confidential
+
+glewlwyd_refresh_token: glewlwyd_refresh_token.c unit-tests.o
+	$(CC) $(CFLAGS) glewlwyd_refresh_token.c unit-tests.o -o glewlwyd_refresh_token $(LIBS)
+
+test_glewlwyd_refresh_token: glewlwyd_refresh_token
+	-./glewlwyd_refresh_token
+
+glewlwyd_refresh_token_client_confidential: glewlwyd_refresh_token_client_confidential.c unit-tests.o
+	$(CC) $(CFLAGS) glewlwyd_refresh_token_client_confidential.c unit-tests.o -o glewlwyd_refresh_token_client_confidential $(LIBS)
+
+test_glewlwyd_refresh_token_client_confidential: glewlwyd_refresh_token_client_confidential
+	-./glewlwyd_refresh_token_client_confidential
 
 glewlwyd_delete_token: glewlwyd_delete_token.c unit-tests.o
 	$(CC) $(CFLAGS) glewlwyd_delete_token.c unit-tests.o -o glewlwyd_delete_token $(LIBS)
@@ -100,7 +124,7 @@ test_glewlwyd_crud_resource: glewlwyd_crud_resource
 glewlwyd_update_user_profile: glewlwyd_update_user_profile.c unit-tests.o
 	$(CC) $(CFLAGS) glewlwyd_update_user_profile.c unit-tests.o -o glewlwyd_update_user_profile $(LIBS)
 
-# This test has to be launched manually,because it expects an input from the user
+# This test has to be launched manually, because it expects an input from the user
 test_glewlwyd_update_user_profile: glewlwyd_update_user_profile
 	-./glewlwyd_update_user_profile
 
@@ -128,4 +152,4 @@ glewlwyd_user_refresh_token_admin: glewlwyd_user_refresh_token_admin.c unit-test
 test_glewlwyd_user_refresh_token_admin: glewlwyd_user_refresh_token_admin
 	-./glewlwyd_user_refresh_token_admin
 
-test: test_glewlwyd_resource_owner_pwd_cred test_glewlwyd_implicit test_glewlwyd_code test_glewlwyd_client_cred test_glewlwyd_auth_code test_glewlwyd_delete_token test_glewlwyd_admin_authorization test_glewlwyd_crud_scope test_glewlwyd_crud_user test_glewlwyd_crud_client test_glewlwyd_crud_resource test_glewlwyd_user_session_user test_glewlwyd_user_session_admin test_glewlwyd_user_refresh_token_user test_glewlwyd_user_refresh_token_admin
+test: test_glewlwyd_resource_owner_pwd_cred test_glewlwyd_resource_owner_pwd_cred_client_confidential test_glewlwyd_implicit test_glewlwyd_code test_glewlwyd_code_client_confidential test_glewlwyd_client_cred test_glewlwyd_auth_code test_glewlwyd_refresh_token test_glewlwyd_refresh_token_client_confidential test_glewlwyd_delete_token test_glewlwyd_admin_authorization test_glewlwyd_crud_scope test_glewlwyd_crud_user test_glewlwyd_crud_client test_glewlwyd_crud_resource test_glewlwyd_user_session_user test_glewlwyd_user_session_admin test_glewlwyd_user_refresh_token_user test_glewlwyd_user_refresh_token_admin
