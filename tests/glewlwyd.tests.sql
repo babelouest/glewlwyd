@@ -56,10 +56,13 @@ INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE 
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user1'), (SELECT gs_id from g_scope WHERE gs_name='scope1'));
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user1'), (SELECT gs_id from g_scope WHERE gs_name='scope2'));
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user1'), (SELECT gs_id from g_scope WHERE gs_name='scope3'));
+INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user1'), (SELECT gs_id from g_scope WHERE gs_name='g_profile'));
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user2'), (SELECT gs_id from g_scope WHERE gs_name='scope1'));
+INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user2'), (SELECT gs_id from g_scope WHERE gs_name='g_profile'));
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user3'), (SELECT gs_id from g_scope WHERE gs_name='scope1'));
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user3'), (SELECT gs_id from g_scope WHERE gs_name='scope2'));
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user3'), (SELECT gs_id from g_scope WHERE gs_name='scope3'));
+INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user3'), (SELECT gs_id from g_scope WHERE gs_name='g_profile'));
 
 INSERT INTO g_resource_scope (gr_id, gs_id) VALUES ((SELECT gr_id from g_resource WHERE gr_name='resource1'), (SELECT gs_id from g_scope WHERE gs_name='scope1'));
 INSERT INTO g_resource_scope (gr_id, gs_id) VALUES ((SELECT gr_id from g_resource WHERE gr_name='resource1'), (SELECT gs_id from g_scope WHERE gs_name='scope2'));
