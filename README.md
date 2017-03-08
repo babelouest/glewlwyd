@@ -121,6 +121,20 @@ Use the script `glewlwyd.sqlite3.sql` to initialize the SQLite3 database tables.
 $ sqlite3 /var/cache/glewlwyd/glewlwyd.db < glewlwyd.sqlite3.sql
 ```
 
+#### Register management webapp
+
+To be able to connect to the front-end application, you must register it first with the script `webapp/init.sql`. For example, run this command for the MySql/Mariadb database:
+
+```shell
+$ mysql glewlwyd < webapp/init.sql
+```
+
+For the sqlite3 database backend, use the following command:
+
+```shell
+$ sqlite3 /var/cache/glewlwyd/glewlwyd.db < webapp/init.sql
+```
+
 ### Authentication backend configuration
 
 For the authentication backend, you can use a LDAP server or your database, or both. If you use both backends, then on an authentication process, the user or the client will be tested in the LDAP first, then in the database if not found.
@@ -145,6 +159,7 @@ To add an administrator in the MySql/MariaDB database, connect to the databse an
 $ mysql
 mysql> INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', PASSWORD('password'), 1);
 mysql> INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_admin'));
+sqlite> INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_profile'));
 ```
 
 #### Database Backend administrator (SQLite3)
@@ -165,6 +180,7 @@ To add an administrator in the SQLite3 database, connect to the databse and use 
 $ sqlite <path_to_sqlite3_database>
 sqlite> INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', '{MD5}X03MO1qnZdYdgyfeuILPmQ==', 1);
 sqlite> INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_admin'));
+sqlite> INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_profile'));
 ```
 
 ### JWT configuration
