@@ -331,6 +331,9 @@ $(function() {
     
     saveUser (add, user) {
       var self = this;
+      if (!user.password) {
+        delete(user.password);
+      }
       if (add) {
         APIRequest("GET", "/user/" + user.login)
         .then(function (result) {
@@ -776,6 +779,9 @@ $(function() {
     
     saveClient (add, client) {
       var self = this;
+      if (!client.password) {
+        delete(client.password);
+      }
       if (add) {
         APIRequest("GET", "/client/" + client.client_id)
         .then(function (result) {
