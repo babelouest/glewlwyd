@@ -1488,7 +1488,7 @@ int set_user_ldap(struct config_elements * config, const char * user, json_t * j
       free(mods[attr_counter]);
       attr_counter++;
     }
-    if (json_object_get(j_user, "password") != NULL && json_string_length(json_object_get(j_user, "password")) > 0) {
+    if (json_object_get(j_user, "password") != NULL) {
       free(mods[attr_counter]->mod_values);
       free(mods[attr_counter]);
       attr_counter++;

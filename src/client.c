@@ -100,11 +100,7 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
                 redirect_uri_allowed = 1;
               }
             }
-          } else {
-            j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
           }
-        } else {
-          j_res = json_pack("{siso}", "result", G_OK, "client", json_copy(json_object_get(j_client, "client")));
         }
         
         // Final check, is everything ok?

@@ -445,14 +445,13 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
 int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   char * access_token, * token_hash, * clause_expired_at, * last_seen_value, * scope, * scope_list_save, * scope_escaped, * scope_list_escaped = NULL, * saveptr = NULL, * clause_scope_list, * new_scope_list = NULL, * tmp;
-  json_t * j_query, * j_result, * j_result2, * j_element, * j_auth = NULL;
+  json_t * j_query, * j_result = NULL, * j_result2 = NULL, * j_element, * j_auth = NULL;
   size_t index;
   int res;
   const char * refresh_token = u_map_get(request->map_post_body, "refresh_token");
   const char * ip_source = get_ip_source(request);
   jwt_t * jwt;
   time_t now;
-  char * query;
   
   if (request->auth_basic_user != NULL && request->auth_basic_password != NULL) {
     j_auth = client_check(config, request->auth_basic_user, request->auth_basic_user, request->auth_basic_password, NULL, GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN);
@@ -491,7 +490,7 @@ int get_access_token_from_refresh (const struct _u_request * request, struct _u_
       } else {
         json_object_set_new(json_object_get(j_query, "where"), "gc_client_id", json_null());
       }
-      res = h_select(config->conn, j_query, &j_result, &query);
+      res = h_select(config->conn, j_query, &j_result, NULL);
       json_decref(j_query);
       if (res == H_OK && json_array_size(j_result) > 0) {
         if (!jwt_decode(&jwt, refresh_token, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
