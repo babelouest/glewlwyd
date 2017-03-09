@@ -38,6 +38,7 @@ Then, download Glewlwyd and its dependendencies hosted in github, compile and in
 
 ```shell
 # Install libjwt
+# libtool and autoconf may be required, install them with 'sudo apt-get install libtool autoconf'
 $ git clone https://github.com/benmcollins/libjwt.git
 $ cd libjwt/
 $ autoreconf -i
@@ -79,6 +80,15 @@ $ sudo make install
 ## Configuration
 
 Copy `glewlwyd.conf.sample` to `glewlwyd.conf`, edit the file `glewlwyd.conf` with your own settings.
+
+### login and grant urls
+
+Update the entries `login_url` and `grant_url` in the configuration file to fit your installation, for example:
+
+```
+login_url="http://localhost:4593/app/login.html?"
+grant_url="http://localhost:4593/app/grant.html?"
+```
 
 ### Digest algorithm
 
