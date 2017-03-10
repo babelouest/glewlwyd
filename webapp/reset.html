@@ -87,7 +87,7 @@
 		</style>
   </head>
   <body>
-		<div class="container form-signin" id="sendResetDiv" style="display: none;">
+	<div class="container form-signin" id="sendResetDiv" style="display: none;">
       <form action="#" id="forgotPasswordForm">
         <center><h2 class="form-signin-heading">Forgot password</h2></center>
         <h3 class="form-signin-heading">Please enter your login</h3>
@@ -98,13 +98,13 @@
           </span>
           <input type="text" class="form-control" name="username" id="username" autofocus="" required="" placeholder="user name">
         </div>
-        <button type="button" name="sendresetbut" id="sendresetbut" class="btn btn-lg btn-primary btn-block">Send reset password email</button>
+        <button type="submit" name="sendresetbut" id="sendresetbut" class="btn btn-lg btn-primary btn-block">Send reset password email</button>
         <center><strong><a href="login.html" class="">Go to log in page</a></strong></center>
         <center><h4><label class="label label-info" id="emailSentOk" style="display: none;">Email sent</label></h4></center>
         <center><h4><label class="label label-warning" id="emailSentError" style="display: none;">Error while sending reset email</label></h4></center>
       </form>
-		</div>
-		<div class="container form-signin" id="resetDiv" style="display: none;">
+    </div>
+    <div class="container form-signin" id="resetDiv" style="display: none;">
       <form action="#" id="resetPasswordForm">
         <h2 class="form-signin-heading">Please enter your new password</h2>
         <input type="hidden" name="code" id="code" value="">
@@ -115,7 +115,7 @@
         <center><h4><label class="label label-info" id="resetOk" style="display: none;">Password changed, you can now <a href="login.html">log in</a></label></h4></center>
         <center><h4><label class="label label-warning" id="resetError" style="display: none;"></label></h4></center>
       </form>
-		</div>
+    </div>
   </body>
 </html>
 <script>
@@ -153,14 +153,6 @@
       api_prefix = result.api_prefix;
     });
   }
-  
-  $("#sendresetbut").click(function () {
-    sendReset();
-  });
-  
-  $("#resetbut").click(function () {
-    resetPassword();
-  });
   
   $("#forgotPasswordForm").submit(function(event) {
     event.preventDefault();
