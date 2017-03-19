@@ -1,0 +1,15 @@
+# Token validation for resource service based on [Ulfius](https://github.com/babelouest/ulfius) framework
+
+These files contain an authentication callback for Ulfius framework to validate a Glewlwyd access token with the correct scope.
+
+To use this file, you must create a `struct _glewlwyd_resource_config` with your specifiec parameters:
+
+```C
+struct _glewlwyd_resource_config {
+  int       method;         // Values are G_METHOD_HEADER, G_METHOD_BODY or G_METHOD_URL for the access_token location, see https://tools.ietf.org/html/rfc6750
+  char *    oauth_scope;    // Scope values required by the resource, multiple values must be separated by a space character
+  char *    jwt_decode_key; // The key used to decode an access token
+  jwt_alg_t jwt_alg;        // The algorithm used to encode a token, see http://benmcollins.github.io/libjwt/
+  char *    realm;          // Optional, a realm value that will be sent back to the client
+};
+```
