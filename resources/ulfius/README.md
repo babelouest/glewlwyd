@@ -13,3 +13,20 @@ struct _glewlwyd_resource_config {
   char *    realm;          // Optional, a realm value that will be sent back to the client
 };
 ```
+
+Then, you use `callback_check_glewlwyd_access_token` as authentication callback for your ulfius endpoints that need to validate a glewlwyd access_token, example:
+
+```C
+struct _glewlwyd_resource_config g_config;
+g_config.method = G_METHOD_HEADER;
+g_config.oauth_scope = "scope1";
+g_config.jwt_decode_key = "secret";
+g_config.jwt_alg = JWT_ALG_HS512;
+g_config.realm = "example";
+
+// First example, add an endpoint with the authentication callback callback_check_glewlwyd_access_token
+ulfius_add_endpoint_by_val(instance, "GET", "/api", "/resurce/:id", &callback_check_glewlwyd_access_token, (void*)g_config, NULL, &callback_get_resource, (void*)config);
+
+// Second example, use callback_check_glewlwyd_access_token as a default authentication callback
+ulfius_set_default_auth_function(instance, &callback_check_glewlwyd_access_token, (void*)g_config, NULL);
+```
