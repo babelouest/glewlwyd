@@ -47,8 +47,13 @@
 #include <ulfius.h>
 #include <yder.h>
 
-#define _HOEL_MARIADB
-#define _HOEL_SQLITE
+#ifndef _HOEL_MARIADB
+ #define _HOEL_MARIADB
+#endif
+
+#ifndef _HOEL_SQLITE
+ #define _HOEL_SQLITE
+#endif
 #include <hoel.h>
 
 #define _GLEWLWYD_VERSION 0.9.9
