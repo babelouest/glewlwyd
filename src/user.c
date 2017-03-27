@@ -978,7 +978,8 @@ json_t * get_user_list_database(struct config_elements * config, const char * se
  */
 json_t * get_user(struct config_elements * config, const char * login, const char * source) {
   json_t * j_return = NULL, * j_user = NULL;
-  int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
+  int search_ldap = ((source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")) && (config->has_auth_ldap));
+  int search_database = ((source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")) && (config->has_auth_database));
   
   if (search_ldap) {
     if (config->has_auth_ldap) {
