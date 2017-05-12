@@ -20,7 +20,7 @@
 #
 
 GLEWLWYD_SOURCE=./src
-GLEWLWYD_TESTS=./tests
+GLEWLWYD_TESTS=./test
 
 all:
 	cd $(GLEWLWYD_SOURCE) && $(MAKE)

@@ -42,10 +42,12 @@ END_TEST
 START_TEST(test_glwd_user_session_revoke_not_found_user)
 {
   char * url = msprintf("%s/profile/session", SERVER_URI);
+  json_t * json_body = json_pack("{ss}", "session_hash", "not_found");
   
-  user_req.json_body = json_pack("{ss}", "session_hash", "not_found");
+  ulfius_set_json_body_request(&user_req, json_body);
   int res = run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL);
   free(url);
+  json_decref(json_body);
 	ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -55,6 +57,7 @@ START_TEST(test_glwd_user_session_revoke_ok_user)
   struct _u_response list_resp, del_resp;
   int res;
   struct _u_map body;
+  json_t * json_resp_body;
   
   u_map_init(&body);
   ulfius_init_response(&list_resp);
@@ -62,8 +65,12 @@ START_TEST(test_glwd_user_session_revoke_ok_user)
   user_req.http_url = msprintf("%s/profile/session?valid=true", SERVER_URI);
   res = ulfius_send_http_request(&user_req, &list_resp);
   if (res == U_OK) {
+    json_resp_body = ulfius_get_json_body_response(&list_resp, NULL);
+    json_t * json_body = json_pack("{ss}", "session_hash", json_string_value(json_object_get(json_array_get(json_resp_body, 0), "session_hash")));
     u_map_put(user_req.map_header, "Content-Type", "application/x-www-form-urlencoded");
-    user_req.json_body = json_pack("{ss}", "session_hash", json_string_value(json_object_get(json_array_get(list_resp.json_body, 0), "session_hash")));
+    ulfius_set_json_body_request(&user_req, json_body);
+    json_decref(json_body);
+    json_decref(json_resp_body);
   }
   user_req.http_url = msprintf("%s/profile/session/", SERVER_URI, USER_LOGIN);
   user_req.http_verb = strdup("DELETE");
@@ -77,12 +84,12 @@ START_TEST(test_glwd_user_session_revoke_ok_user)
 }
 END_TEST
 
-static Suite *libjwt_suite(void)
+static Suite *glewlwyd_suite(void)
 {
 	Suite *s;
 	TCase *tc_core;
 
-	s = suite_create("Glewlwyd user session management");
+	s = suite_create("Glewlwyd user session management user");
 	tc_core = tcase_create("test_glwd_user_session");
 	tcase_add_test(tc_core, test_glwd_user_session_list_all_user);
 	tcase_add_test(tc_core, test_glwd_user_session_list_enabled_user);
@@ -127,7 +134,7 @@ int main(int argc, char *argv[])
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
 
-  s = libjwt_suite();
+  s = glewlwyd_suite();
   sr = srunner_create(s);
 
   srunner_run_all(sr, CK_VERBOSE);

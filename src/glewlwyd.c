@@ -49,7 +49,7 @@
  *
  */
 int main (int argc, char ** argv) {
-  struct config_elements * config = malloc(sizeof(struct config_elements));
+  struct config_elements * config = o_malloc(sizeof(struct config_elements));
   int res;
   
   srand(time(NULL));
@@ -66,7 +66,7 @@ int main (int argc, char ** argv) {
   config->log_file = NULL;
   config->use_scope = 0;
   config->conn = NULL;
-  config->instance = malloc(sizeof(struct _u_instance));
+  config->instance = o_malloc(sizeof(struct _u_instance));
   config->allow_origin = NULL;
   config->static_files_path = NULL;
   config->static_files_prefix = NULL;
@@ -75,14 +75,14 @@ int main (int argc, char ** argv) {
   config->access_token_expiration = GLEWLWYD_ACCESS_TOKEN_EXP_DEFAULT;
   config->code_expiration = GLEWLWYD_CODE_EXPIRATION_DEFAULT;
   config->jwt_decode_key = NULL;
-  config->session_key = nstrdup(GLEWLWYD_SESSION_KEY_DEFAULT);
+  config->session_key = o_strdup(GLEWLWYD_SESSION_KEY_DEFAULT);
   config->session_expiration = GLEWLWYD_SESSION_EXPIRATION_DEFAULT;
-  config->admin_scope = nstrdup(GLEWLWYD_ADMIN_SCOPE);
-  config->profile_scope = nstrdup(GLEWLWYD_PROFILE_SCOPE);
+  config->admin_scope = o_strdup(GLEWLWYD_ADMIN_SCOPE);
+  config->profile_scope = o_strdup(GLEWLWYD_PROFILE_SCOPE);
   config->use_secure_connection = 0;
   config->secure_connection_key_file = NULL;
   config->secure_connection_pem_file = NULL;
-  config->hash_algorithm = nstrdup(GLEWLWYD_DEFAULT_HASH_ALGORITHM);
+  config->hash_algorithm = o_strdup(GLEWLWYD_DEFAULT_HASH_ALGORITHM);
   config->reset_password = 0;
   config->reset_password_config = NULL;
   config->login_url = NULL;
@@ -91,9 +91,9 @@ int main (int argc, char ** argv) {
     fprintf(stderr, "Memory error - config->instance\n");
     return 1;
   }
-  ulfius_init_instance(config->instance, -1, NULL);
+  ulfius_init_instance(config->instance, GLEWLWYD_DEFAULT_PORT, NULL, NULL);
 
-  config->mime_types = malloc(sizeof(struct _u_map));
+  config->mime_types = o_malloc(sizeof(struct _u_map));
   if (config->mime_types == NULL) {
     y_log_message(Y_LOG_LEVEL_ERROR, "init - Error allocating resources for config->mime_types, aborting");
     exit_server(&config, GLEWLWYD_ERROR);
@@ -131,81 +131,89 @@ int main (int argc, char ** argv) {
   // At this point, we declare all API endpoints and configure 
   
   // Authorization endpoint
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/", NULL, NULL, NULL, &callback_glewlwyd_authorization, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/", NULL, NULL, NULL, &callback_glewlwyd_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/", 1, &callback_glewlwyd_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/", 1, &callback_glewlwyd_authorization, (void*)config);
 
   // Token endpoint
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/token/", NULL, NULL, NULL, &callback_glewlwyd_token, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/token/", 1, &callback_glewlwyd_token, (void*)config);
 
   // Authentication
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/user/", NULL, NULL, NULL, &callback_glewlwyd_validate_user_session, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/user/", &callback_glewlwyd_check_user_session, (void*)config, NULL, &callback_glewlwyd_delete_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/user/", 1, &callback_glewlwyd_validate_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/user/", 0, &callback_glewlwyd_check_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/user/", 1, &callback_glewlwyd_delete_user_session, (void*)config);
 
   // Current user scope grant endpoints
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/grant/", &callback_glewlwyd_check_user_session, (void*)config, NULL, &callback_glewlwyd_get_user_session_scope_grant, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/grant/", &callback_glewlwyd_check_user_session, (void*)config, NULL, &callback_glewlwyd_set_user_scope_grant, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/grant/", &callback_glewlwyd_check_user_session, (void*)config, NULL, &callback_glewlwyd_user_scope_delete, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/auth/grant/", 0, &callback_glewlwyd_check_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/grant/", 1, &callback_glewlwyd_get_user_session_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/grant/", 1, &callback_glewlwyd_set_user_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/grant/", 1, &callback_glewlwyd_user_scope_delete, (void*)config);
 
   // Current user endpoints
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_user_session_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_set_user_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/refresh_token", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_refresh_token_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/refresh_token", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_delete_refresh_token_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/session", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_get_session_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/session", &callback_glewlwyd_check_user, (void*)config, NULL, &callback_glewlwyd_delete_session_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/profile/", 0, &callback_glewlwyd_check_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/", 1, &callback_glewlwyd_get_user_session_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/", 1, &callback_glewlwyd_set_user_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/refresh_token", 1, &callback_glewlwyd_get_refresh_token_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/refresh_token", 1, &callback_glewlwyd_delete_refresh_token_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/session", 1, &callback_glewlwyd_get_session_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/session", 1, &callback_glewlwyd_delete_session_profile, (void*)config);
   if (config->reset_password) {
-    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/profile/reset_password/:username", NULL, NULL, NULL, &callback_glewlwyd_send_reset_user_profile, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/reset_password/:username", NULL, NULL, NULL, &callback_glewlwyd_reset_user_profile, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/profile/reset_password/:username", 1, &callback_glewlwyd_send_reset_user_profile, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/reset_password/:username", 1, &callback_glewlwyd_reset_user_profile, (void*)config);
   }
 
   // Authorization type callbacks
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/authorization/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_authorization, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/authorization/:authorization_type", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_authorization, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/authorization/:authorization_type", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/authorization/*", 0, &callback_glewlwyd_check_scope_admin, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/authorization/", 1, &callback_glewlwyd_get_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/authorization/:authorization_type", 1, &callback_glewlwyd_get_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/authorization/:authorization_type", 1, &callback_glewlwyd_set_authorization, (void*)config);
 
   // Scope endpoints
   if (config->use_scope) {
-    ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_list_scope, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/:scope", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_scope, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/scope/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_scope, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/scope/:scope", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_scope, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/scope/:scope", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_scope, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/scope/*", 0, &callback_glewlwyd_check_scope_admin, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/", 1, &callback_glewlwyd_get_list_scope, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/:scope", 1, &callback_glewlwyd_get_scope, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/scope/", 1, &callback_glewlwyd_add_scope, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/scope/:scope", 1, &callback_glewlwyd_set_scope, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/scope/:scope", 1, &callback_glewlwyd_delete_scope, (void*)config);
   }
 
   // User endpoints
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_list_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/user/:username", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/refresh_token", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_refresh_token_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/refresh_token", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_refresh_token_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/session", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_session_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/session", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_session_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/user/*", 0, &callback_glewlwyd_check_scope_admin, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/", 1, &callback_glewlwyd_get_list_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username", 1, &callback_glewlwyd_get_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/", 1, &callback_glewlwyd_add_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/user/:username", 1, &callback_glewlwyd_set_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username", 1, &callback_glewlwyd_delete_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/refresh_token", 1, &callback_glewlwyd_get_refresh_token_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/refresh_token", 1, &callback_glewlwyd_delete_refresh_token_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/session", 1, &callback_glewlwyd_get_session_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/session", 1, &callback_glewlwyd_delete_session_user, (void*)config);
   if (config->reset_password) {
-    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/:username/reset_password", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_send_reset_user, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/:username/reset_password", 1, &callback_glewlwyd_send_reset_user, (void*)config);
   }
 
   // Client endpoints
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_list_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/:client_id", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/client/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/client/:client_id", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/client/:client_id", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/client/*", 0, &callback_glewlwyd_check_scope_admin, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/", 1, &callback_glewlwyd_get_list_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/:client_id", 1, &callback_glewlwyd_get_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/client/", 1, &callback_glewlwyd_add_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/client/:client_id", 1, &callback_glewlwyd_set_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/client/:client_id", 1, &callback_glewlwyd_delete_client, (void*)config);
 
   // Resource endpoints
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_list_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/:resource", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_get_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/resource/", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_add_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/resource/:resource", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_set_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/resource/:resource", &callback_glewlwyd_check_scope_admin, (void*)config, NULL, &callback_glewlwyd_delete_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/resource/*", 0, &callback_glewlwyd_check_scope_admin, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/", 1, &callback_glewlwyd_get_list_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/:resource", 1, &callback_glewlwyd_get_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/resource/", 1, &callback_glewlwyd_add_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/resource/:resource", 1, &callback_glewlwyd_set_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/resource/:resource", 1, &callback_glewlwyd_delete_resource, (void*)config);
 
   // Other configuration
-  ulfius_add_endpoint_by_val(config->instance, "GET", "/", NULL, NULL, NULL, NULL, &callback_glewlwyd_root, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", "/config/", NULL, NULL, NULL, NULL, &callback_glewlwyd_server_configuration, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", NULL, NULL, NULL, &callback_glewlwyd_options, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->static_files_prefix, "*", NULL, NULL, NULL, &callback_glewlwyd_static_file, (void*)config);
-  ulfius_set_default_endpoint(config->instance, NULL, NULL, NULL, &callback_default, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", "/", NULL, 1, &callback_glewlwyd_root, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", "/config/", NULL, 1, &callback_glewlwyd_server_configuration, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", 1, &callback_glewlwyd_options, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->static_files_prefix, "*", 1, &callback_glewlwyd_static_file, (void*)config);
+  ulfius_set_default_endpoint(config->instance, &callback_default, (void*)config);
 
   // Set default headers
   u_map_put(config->instance->default_headers, "Access-Control-Allow-Origin", config->allow_origin);
@@ -225,8 +233,8 @@ int main (int argc, char ** argv) {
     } else {
       res = U_ERROR_PARAMS;
     }
-    free(key_file);
-    free(pem_file);
+    o_free(key_file);
+    o_free(pem_file);
   } else {
     res = ulfius_start_framework(config->instance);
   }
@@ -250,82 +258,82 @@ void exit_server(struct config_elements ** config, int exit_value) {
   
   if (config != NULL && *config != NULL) {
     // Cleaning data
-    free((*config)->config_file);
-    free((*config)->url_prefix);
-    free((*config)->log_file);
-    free((*config)->allow_origin);
-    free((*config)->static_files_path);
-    free((*config)->static_files_prefix);
-    free((*config)->jwt_decode_key);
-    free((*config)->session_key);
-    free((*config)->admin_scope);
-    free((*config)->profile_scope);
-    free((*config)->secure_connection_key_file);
-    free((*config)->secure_connection_pem_file);
-    free((*config)->hash_algorithm);
-    free((*config)->login_url);
-    free((*config)->grant_url);
+    o_free((*config)->config_file);
+    o_free((*config)->url_prefix);
+    o_free((*config)->log_file);
+    o_free((*config)->allow_origin);
+    o_free((*config)->static_files_path);
+    o_free((*config)->static_files_prefix);
+    o_free((*config)->jwt_decode_key);
+    o_free((*config)->session_key);
+    o_free((*config)->admin_scope);
+    o_free((*config)->profile_scope);
+    o_free((*config)->secure_connection_key_file);
+    o_free((*config)->secure_connection_pem_file);
+    o_free((*config)->hash_algorithm);
+    o_free((*config)->login_url);
+    o_free((*config)->grant_url);
     if ((*config)->reset_password_config != NULL) {
-      free((*config)->reset_password_config->smtp_host);
-      free((*config)->reset_password_config->smtp_user);
-      free((*config)->reset_password_config->smtp_password);
-      free((*config)->reset_password_config->email_from);
-      free((*config)->reset_password_config->email_subject);
-      free((*config)->reset_password_config->email_template);
-      free((*config)->reset_password_config->page_url_prefix);
-      free((*config)->reset_password_config);
+      o_free((*config)->reset_password_config->smtp_host);
+      o_free((*config)->reset_password_config->smtp_user);
+      o_free((*config)->reset_password_config->smtp_password);
+      o_free((*config)->reset_password_config->email_from);
+      o_free((*config)->reset_password_config->email_subject);
+      o_free((*config)->reset_password_config->email_template);
+      o_free((*config)->reset_password_config->page_url_prefix);
+      o_free((*config)->reset_password_config);
     }
     jwt_free((*config)->jwt);
     u_map_clean_full((*config)->mime_types);
     if ((*config)->auth_ldap != NULL) {
-      free((*config)->auth_ldap->uri);
-      free((*config)->auth_ldap->bind_dn);
-      free((*config)->auth_ldap->bind_passwd);
+      o_free((*config)->auth_ldap->uri);
+      o_free((*config)->auth_ldap->bind_dn);
+      o_free((*config)->auth_ldap->bind_passwd);
       
-      free((*config)->auth_ldap->base_search_user);
-      free((*config)->auth_ldap->filter_user_read);
-      free((*config)->auth_ldap->login_property_user_read);
-      free((*config)->auth_ldap->scope_property_user_read);
-      free((*config)->auth_ldap->name_property_user_read);
-      free((*config)->auth_ldap->email_property_user_read);
-      free((*config)->auth_ldap->rdn_property_user_write);
+      o_free((*config)->auth_ldap->base_search_user);
+      o_free((*config)->auth_ldap->filter_user_read);
+      o_free((*config)->auth_ldap->login_property_user_read);
+      o_free((*config)->auth_ldap->scope_property_user_read);
+      o_free((*config)->auth_ldap->name_property_user_read);
+      o_free((*config)->auth_ldap->email_property_user_read);
+      o_free((*config)->auth_ldap->rdn_property_user_write);
       free_string_array((*config)->auth_ldap->login_property_user_write);
       free_string_array((*config)->auth_ldap->scope_property_user_write);
       free_string_array((*config)->auth_ldap->name_property_user_write);
       free_string_array((*config)->auth_ldap->email_property_user_write);
-      free((*config)->auth_ldap->password_property_user_write);
-      free((*config)->auth_ldap->password_algorithm_user_write);
+      o_free((*config)->auth_ldap->password_property_user_write);
+      o_free((*config)->auth_ldap->password_algorithm_user_write);
       free_string_array((*config)->auth_ldap->object_class_user_write);
       
-      free((*config)->auth_ldap->base_search_client);
-      free((*config)->auth_ldap->filter_client_read);
-      free((*config)->auth_ldap->client_id_property_client_read);
-      free((*config)->auth_ldap->scope_property_client_read);
-      free((*config)->auth_ldap->name_property_client_read);
-      free((*config)->auth_ldap->description_property_client_read);
-      free((*config)->auth_ldap->redirect_uri_property_client_read);
-      free((*config)->auth_ldap->confidential_property_client_read);
-      free((*config)->auth_ldap->rdn_property_client_write);
+      o_free((*config)->auth_ldap->base_search_client);
+      o_free((*config)->auth_ldap->filter_client_read);
+      o_free((*config)->auth_ldap->client_id_property_client_read);
+      o_free((*config)->auth_ldap->scope_property_client_read);
+      o_free((*config)->auth_ldap->name_property_client_read);
+      o_free((*config)->auth_ldap->description_property_client_read);
+      o_free((*config)->auth_ldap->redirect_uri_property_client_read);
+      o_free((*config)->auth_ldap->confidential_property_client_read);
+      o_free((*config)->auth_ldap->rdn_property_client_write);
       free_string_array((*config)->auth_ldap->client_id_property_client_write);
       free_string_array((*config)->auth_ldap->scope_property_client_write);
       free_string_array((*config)->auth_ldap->name_property_client_write);
       free_string_array((*config)->auth_ldap->description_property_client_write);
       free_string_array((*config)->auth_ldap->redirect_uri_property_client_write);
       free_string_array((*config)->auth_ldap->confidential_property_client_write);
-      free((*config)->auth_ldap->password_property_client_write);
-      free((*config)->auth_ldap->password_algorithm_client_write);
+      o_free((*config)->auth_ldap->password_property_client_write);
+      o_free((*config)->auth_ldap->password_algorithm_client_write);
       free_string_array((*config)->auth_ldap->object_class_client_write);
       
-      free((*config)->auth_ldap);
+      o_free((*config)->auth_ldap);
     }
     h_close_db((*config)->conn);
     h_clean_connection((*config)->conn);
     ulfius_stop_framework((*config)->instance);
     ulfius_clean_instance((*config)->instance);
-    free((*config)->instance);
+    o_free((*config)->instance);
     y_close_logs();
     
-    free(*config);
+    o_free(*config);
     (*config) = NULL;
   }
   exit(exit_value);
@@ -356,7 +364,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
       switch (next_option) {
         case 'c':
           if (optarg != NULL) {
-            config->config_file = nstrdup(optarg);
+            config->config_file = o_strdup(optarg);
             if (config->config_file == NULL) {
               fprintf(stderr, "Error allocating config->config_file, exiting\n");
               exit_server(&config, GLEWLWYD_STOP);
@@ -380,7 +388,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
           break;
         case 'u':
           if (optarg != NULL) {
-            config->url_prefix = nstrdup(optarg);
+            config->url_prefix = o_strdup(optarg);
             if (config->url_prefix == NULL) {
               fprintf(stderr, "Error allocating config->url_prefix, exiting\n");
               exit_server(&config, GLEWLWYD_STOP);
@@ -392,7 +400,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
           break;
         case 'm':
           if (optarg != NULL) {
-            tmp = nstrdup(optarg);
+            tmp = o_strdup(optarg);
             if (tmp == NULL) {
               fprintf(stderr, "Error allocating log_mode, exiting\n");
               exit_server(&config, GLEWLWYD_STOP);
@@ -408,7 +416,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
               }
               one_log_mode = strtok(NULL, ",");
             }
-            free(to_free);
+            o_free(to_free);
           } else {
             fprintf(stderr, "Error!\nNo mode specified\n");
             return 0;
@@ -434,7 +442,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
           break;
         case 'f':
           if (optarg != NULL) {
-            config->log_file = nstrdup(optarg);
+            config->log_file = o_strdup(optarg);
             if (config->log_file == NULL) {
               fprintf(stderr, "Error allocating config->log_file, exiting\n");
               exit_server(&config, GLEWLWYD_STOP);
@@ -503,7 +511,7 @@ void exit_handler(int signal) {
 /**
  *
  * Read the content of a file and return it as a char *
- * returned value must be free'd after use
+ * returned value must be o_free'd after use
  *
  */
 char * get_file_content(const char * file_path) {
@@ -516,7 +524,7 @@ char * get_file_content(const char * file_path) {
     fseek (f, 0, SEEK_END);
     length = ftell (f);
     fseek (f, 0, SEEK_SET);
-    buffer = malloc((length+1)*sizeof(char));
+    buffer = o_malloc((length+1)*sizeof(char));
     if (buffer) {
       res = fread (buffer, 1, length, f);
       if (res != length) {
@@ -538,17 +546,33 @@ char * get_file_content(const char * file_path) {
 int build_config_from_file(struct config_elements * config) {
   
   config_t cfg;
-  config_setting_t * root, * database, * auth, * jwt, * mime_type_list, * mime_type, * reset_password_config;
-  const char * cur_prefix, * cur_log_mode, * cur_log_level, * cur_log_file = NULL, * one_log_mode, * cur_hash_algorithm, 
-             * db_type, * db_sqlite_path, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL, * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL, * cur_session_key = NULL, * cur_admin_scope = NULL, * cur_profile_scope = NULL,
+  config_setting_t * root = NULL, * database = NULL, * auth = NULL, * jwt = NULL, * mime_type_list = NULL, * mime_type = NULL, * reset_password_config = NULL;
+  const char * cur_prefix = NULL, * cur_log_mode = NULL, * cur_log_level = NULL, * cur_log_file = NULL, * one_log_mode = NULL, * cur_hash_algorithm = NULL, 
+             * db_type = NULL, * db_sqlite_path = NULL, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL,
+             * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL,
+             * cur_session_key = NULL, * cur_admin_scope = NULL, * cur_profile_scope = NULL,
              * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL,
-             * cur_auth_ldap_base_search_user = NULL, * cur_auth_ldap_filter_user_read = NULL, * cur_auth_ldap_login_property_user_read = NULL, * cur_auth_ldap_name_property_user_read = NULL, * cur_auth_ldap_email_property_user_read = NULL, * cur_auth_ldap_scope_property_user_read = NULL, * cur_auth_ldap_rdn_property_user_write = NULL, * cur_auth_ldap_login_property_user_write = NULL, * cur_auth_ldap_name_property_user_write = NULL, * cur_auth_ldap_email_property_user_write = NULL, * cur_auth_ldap_scope_property_user_write = NULL, * cur_auth_ldap_password_property_user_write = NULL, * cur_auth_ldap_password_algorithm_user_write = NULL, * cur_auth_ldap_object_class_user_write = NULL,
-             * cur_auth_ldap_base_search_client = NULL, * cur_auth_ldap_filter_client_read = NULL, * cur_auth_ldap_client_id_property_client_read = NULL, * cur_auth_ldap_name_property_client_read = NULL, * cur_auth_ldap_scope_property_client_read = NULL, * cur_auth_ldap_description_property_client_read = NULL, * cur_auth_ldap_redirect_uri_property_client_read = NULL, * cur_auth_ldap_confidential_property_client_read = NULL, * cur_auth_ldap_client_id_property_client_write = NULL, * cur_auth_ldap_rdn_property_client_write = NULL, * cur_auth_ldap_name_property_client_write = NULL, * cur_auth_ldap_scope_property_client_write = NULL, * cur_auth_ldap_description_property_client_write = NULL, * cur_auth_ldap_redirect_uri_property_client_write = NULL, * cur_auth_ldap_confidential_property_client_write = NULL, * cur_auth_ldap_password_property_client_write = NULL, * cur_auth_ldap_password_algorithm_client_write = NULL, * cur_auth_ldap_object_class_client_write = NULL,
-             * cur_rsa_key_file = NULL, * cur_rsa_pub_file = NULL, * cur_sha_secret = NULL,
-             * extension = NULL, * mime_type_value = NULL,
-             * cur_secure_connection_key_file = NULL, * cur_secure_connection_pem_file = NULL,
-             * cur_grant_url = NULL, * cur_login_url = NULL,
-             * cur_reset_password_smtp_host = NULL, * cur_reset_password_smtp_user = NULL, * cur_reset_password_smtp_password = NULL, * cur_reset_password_email_from = NULL, * cur_reset_password_email_subject = NULL, * cur_reset_password_email_template_path = NULL, * cur_reset_password_page_url_prefix = NULL;
+             * cur_auth_ldap_base_search_user = NULL, * cur_auth_ldap_filter_user_read = NULL,
+             * cur_auth_ldap_login_property_user_read = NULL, * cur_auth_ldap_name_property_user_read = NULL,
+             * cur_auth_ldap_email_property_user_read = NULL, * cur_auth_ldap_scope_property_user_read = NULL,
+             * cur_auth_ldap_rdn_property_user_write = NULL, * cur_auth_ldap_login_property_user_write = NULL,
+             * cur_auth_ldap_name_property_user_write = NULL, * cur_auth_ldap_email_property_user_write = NULL,
+             * cur_auth_ldap_scope_property_user_write = NULL, * cur_auth_ldap_password_property_user_write = NULL,
+             * cur_auth_ldap_password_algorithm_user_write = NULL, * cur_auth_ldap_object_class_user_write = NULL,
+             * cur_auth_ldap_base_search_client = NULL, * cur_auth_ldap_filter_client_read = NULL,
+             * cur_auth_ldap_client_id_property_client_read = NULL, * cur_auth_ldap_name_property_client_read = NULL,
+             * cur_auth_ldap_scope_property_client_read = NULL, * cur_auth_ldap_description_property_client_read = NULL,
+             * cur_auth_ldap_redirect_uri_property_client_read = NULL, * cur_auth_ldap_confidential_property_client_read = NULL,
+             * cur_auth_ldap_client_id_property_client_write = NULL, * cur_auth_ldap_rdn_property_client_write = NULL,
+             * cur_auth_ldap_name_property_client_write = NULL, * cur_auth_ldap_scope_property_client_write = NULL,
+             * cur_auth_ldap_description_property_client_write = NULL, * cur_auth_ldap_redirect_uri_property_client_write = NULL,
+             * cur_auth_ldap_confidential_property_client_write = NULL, * cur_auth_ldap_password_property_client_write = NULL,
+             * cur_auth_ldap_password_algorithm_client_write = NULL, * cur_auth_ldap_object_class_client_write = NULL,
+             * cur_rsa_key_file = NULL, * cur_rsa_pub_file = NULL, * cur_sha_secret = NULL, * extension = NULL, * mime_type_value = NULL,
+             * cur_secure_connection_key_file = NULL, * cur_secure_connection_pem_file = NULL, * cur_grant_url = NULL, * cur_login_url = NULL,
+             * cur_reset_password_smtp_host = NULL, * cur_reset_password_smtp_user = NULL, * cur_reset_password_smtp_password = NULL,
+             * cur_reset_password_email_from = NULL, * cur_reset_password_email_subject = NULL,
+             * cur_reset_password_email_template_path = NULL, * cur_reset_password_page_url_prefix = NULL;
   int db_mariadb_port = 0;
   int cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_sha = 0, cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, i;
   
@@ -560,15 +584,17 @@ int build_config_from_file(struct config_elements * config) {
     return 0;
   }
   
-  if (config->instance->port == -1) {
+  if (config->instance->port == GLEWLWYD_DEFAULT_PORT) {
+    int port;
     // Get Port number to listen to
-    config_lookup_int(&cfg, "port", &(config->instance->port));
+    config_lookup_int(&cfg, "port", &port);
+    config->instance->port = (uint)port;
   }
   
   if (config->url_prefix == NULL) {
     // Get prefix url
     if (config_lookup_string(&cfg, "url_prefix", &cur_prefix)) {
-      config->url_prefix = nstrdup(cur_prefix);
+      config->url_prefix = o_strdup(cur_prefix);
       if (config->url_prefix == NULL) {
         fprintf(stderr, "Error allocating config->url_prefix, exiting\n");
         config_destroy(&cfg);
@@ -591,7 +617,7 @@ int build_config_from_file(struct config_elements * config) {
           // Get log file path
           if (config->log_file == NULL) {
             if (config_lookup_string(&cfg, "log_file", &cur_log_file)) {
-              config->log_file = nstrdup(cur_log_file);
+              config->log_file = o_strdup(cur_log_file);
               if (config->log_file == NULL) {
                 fprintf(stderr, "Error allocating config->log_file, exiting\n");
                 config_destroy(&cfg);
@@ -630,7 +656,7 @@ int build_config_from_file(struct config_elements * config) {
   if (config->allow_origin == NULL) {
     // Get allow-origin value for CORS
     if (config_lookup_string(&cfg, "allow_origin", &cur_allow_origin)) {
-      config->allow_origin = nstrdup(cur_allow_origin);
+      config->allow_origin = o_strdup(cur_allow_origin);
       if (config->allow_origin == NULL) {
         fprintf(stderr, "Error allocating config->allow_origin, exiting\n");
         config_destroy(&cfg);
@@ -646,19 +672,19 @@ int build_config_from_file(struct config_elements * config) {
   
   config_lookup_string(&cfg, "session_key", &cur_session_key);
   if (cur_session_key != NULL) {
-    free(config->session_key);
+    o_free(config->session_key);
     config->session_key = strdup(cur_session_key);
   }
   
   config_lookup_string(&cfg, "admin_scope", &cur_admin_scope);
   if (cur_admin_scope != NULL) {
-    free(config->admin_scope);
+    o_free(config->admin_scope);
     config->admin_scope = strdup(cur_admin_scope);
   }
   
   config_lookup_string(&cfg, "profile_scope", &cur_profile_scope);
   if (cur_profile_scope != NULL) {
-    free(config->profile_scope);
+    o_free(config->profile_scope);
     config->profile_scope = strdup(cur_profile_scope);
   }
   
@@ -698,7 +724,7 @@ int build_config_from_file(struct config_elements * config) {
   if (config->reset_password) {
     reset_password_config = config_setting_get_member(root, "reset_password_config");
     if (reset_password_config != NULL) {
-      config->reset_password_config = malloc(sizeof(struct _reset_password_config));
+      config->reset_password_config = o_malloc(sizeof(struct _reset_password_config));
       if (config->reset_password_config != NULL) {
         config->reset_password_config->smtp_host = NULL;
         config->reset_password_config->smtp_port = GLEWLWYD_RESET_PASSWORD_DEFAULT_SMTP_PORT;
@@ -714,7 +740,7 @@ int build_config_from_file(struct config_elements * config) {
         config->reset_password_config->page_url_prefix = NULL;
         
         if (config_setting_lookup_string(reset_password_config, "smtp_host", &cur_reset_password_smtp_host) == CONFIG_TRUE) {
-          if ((config->reset_password_config->smtp_host = nstrdup(cur_reset_password_smtp_host)) == NULL) {
+          if ((config->reset_password_config->smtp_host = o_strdup(cur_reset_password_smtp_host)) == NULL) {
             fprintf(stderr, "Error allocating config->reset_password_config->smtp_host, exiting\n");
             config_destroy(&cfg);
             return 0;
@@ -724,14 +750,14 @@ int build_config_from_file(struct config_elements * config) {
         config_setting_lookup_bool(reset_password_config, "smtp_use_tls", &config->reset_password_config->smtp_use_tls);
         config_setting_lookup_bool(reset_password_config, "smtp_verify_certificate", &config->reset_password_config->smtp_verify_certificate);
         if (config_setting_lookup_string(reset_password_config, "smtp_user", &cur_reset_password_smtp_user) == CONFIG_TRUE) {
-          if ((config->reset_password_config->smtp_user = nstrdup(cur_reset_password_smtp_user)) == NULL) {
+          if ((config->reset_password_config->smtp_user = o_strdup(cur_reset_password_smtp_user)) == NULL) {
             fprintf(stderr, "Error allocating config->reset_password_config->smtp_user, exiting\n");
             config_destroy(&cfg);
             return 0;
           }
         }
         if (config_setting_lookup_string(reset_password_config, "smtp_password", &cur_reset_password_smtp_password) == CONFIG_TRUE) {
-          if ((config->reset_password_config->smtp_password = nstrdup(cur_reset_password_smtp_password)) == NULL) {
+          if ((config->reset_password_config->smtp_password = o_strdup(cur_reset_password_smtp_password)) == NULL) {
             fprintf(stderr, "Error allocating config->reset_password_config->smtp_password, exiting\n");
             config_destroy(&cfg);
             return 0;
@@ -739,14 +765,14 @@ int build_config_from_file(struct config_elements * config) {
         }
         config_setting_lookup_int(reset_password_config, "token_expiration", (int *)&config->reset_password_config->token_expiration);
         if (config_setting_lookup_string(reset_password_config, "email_from", &cur_reset_password_email_from) == CONFIG_TRUE) {
-          if ((config->reset_password_config->email_from = nstrdup(cur_reset_password_email_from)) == NULL) {
+          if ((config->reset_password_config->email_from = o_strdup(cur_reset_password_email_from)) == NULL) {
             fprintf(stderr, "Error allocating config->reset_password_config->email_from, exiting\n");
             config_destroy(&cfg);
             return 0;
           }
         }
         if (config_setting_lookup_string(reset_password_config, "email_subject", &cur_reset_password_email_subject) == CONFIG_TRUE) {
-          if ((config->reset_password_config->email_subject = nstrdup(cur_reset_password_email_subject)) == NULL) {
+          if ((config->reset_password_config->email_subject = o_strdup(cur_reset_password_email_subject)) == NULL) {
             fprintf(stderr, "Error allocating config->reset_password_config->email_subject, exiting\n");
             config_destroy(&cfg);
             return 0;
@@ -760,7 +786,7 @@ int build_config_from_file(struct config_elements * config) {
           }
         }
         if (config_setting_lookup_string(reset_password_config, "page_url_prefix", &cur_reset_password_page_url_prefix) == CONFIG_TRUE) {
-          if ((config->reset_password_config->page_url_prefix = nstrdup(cur_reset_password_page_url_prefix)) == NULL) {
+          if ((config->reset_password_config->page_url_prefix = o_strdup(cur_reset_password_page_url_prefix)) == NULL) {
             fprintf(stderr, "Error allocating config->reset_password_config->page_url_prefix, exiting\n");
             config_destroy(&cfg);
             return 0;
@@ -787,7 +813,7 @@ int build_config_from_file(struct config_elements * config) {
   if (config->static_files_path == NULL) {
     // Get path that serve static files
     if (config_lookup_string(&cfg, "static_files_path", &cur_static_files_path)) {
-      config->static_files_path = nstrdup(cur_static_files_path);
+      config->static_files_path = o_strdup(cur_static_files_path);
       if (config->static_files_path == NULL) {
         fprintf(stderr, "Error allocating config->static_files_path, exiting\n");
         config_destroy(&cfg);
@@ -799,7 +825,7 @@ int build_config_from_file(struct config_elements * config) {
   if (config->static_files_prefix == NULL) {
     // Get prefix url
     if (config_lookup_string(&cfg, "static_files_prefix", &cur_static_files_prefix)) {
-      config->static_files_prefix = nstrdup(cur_static_files_prefix);
+      config->static_files_prefix = o_strdup(cur_static_files_prefix);
       if (config->static_files_prefix == NULL) {
         fprintf(stderr, "Error allocating config->static_files_prefix, exiting\n");
         config_destroy(&cfg);
@@ -824,8 +850,8 @@ int build_config_from_file(struct config_elements * config) {
   if (config_lookup_bool(&cfg, "use_secure_connection", &cur_use_secure_connection)) {
     if (config_lookup_string(&cfg, "secure_connection_key_file", &cur_secure_connection_key_file) && config_lookup_string(&cfg, "secure_connection_pem_file", &cur_secure_connection_pem_file)) {
       config->use_secure_connection = cur_use_secure_connection;
-      config->secure_connection_key_file = nstrdup(cur_secure_connection_key_file);
-      config->secure_connection_pem_file = nstrdup(cur_secure_connection_pem_file);
+      config->secure_connection_key_file = o_strdup(cur_secure_connection_key_file);
+      config->secure_connection_pem_file = o_strdup(cur_secure_connection_pem_file);
     } else {
       fprintf(stderr, "Error secure connection is active but certificate is not valid, exiting\n");
       config_destroy(&cfg);
@@ -835,8 +861,8 @@ int build_config_from_file(struct config_elements * config) {
   
   // Get token hash algorithm
   if (config_lookup_string(&cfg, "hash_algorithm", &cur_hash_algorithm)) {
-    free(config->hash_algorithm);
-    config->hash_algorithm = nstrdup(cur_hash_algorithm);
+    o_free(config->hash_algorithm);
+    config->hash_algorithm = o_strdup(cur_hash_algorithm);
     if (config->hash_algorithm == NULL) {
       fprintf(stderr, "Error allocating config->hash_algorithm, exiting\n");
       config_destroy(&cfg);
@@ -995,7 +1021,7 @@ int build_config_from_file(struct config_elements * config) {
           cur_auth_ldap_password_property_client_write != NULL && 
           cur_auth_ldap_password_algorithm_client_write != NULL && 
           cur_auth_ldap_object_class_client_write != NULL))) {
-        config->auth_ldap = malloc(sizeof(struct _auth_ldap));
+        config->auth_ldap = o_malloc(sizeof(struct _auth_ldap));
         if (config->auth_ldap == NULL) {
           config_destroy(&cfg);
           fprintf(stderr, "Error allocating resources for config->auth_ldap\n");
@@ -1003,63 +1029,63 @@ int build_config_from_file(struct config_elements * config) {
         } else {
           memset(config->auth_ldap, 0, sizeof(struct _auth_ldap));
           
-          config->auth_ldap->uri = nstrdup(cur_auth_ldap_uri);
+          config->auth_ldap->uri = o_strdup(cur_auth_ldap_uri);
           if (config->auth_ldap->uri == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->uri\n");
             return 0;
           }
-          config->auth_ldap->bind_dn = nstrdup(cur_auth_ldap_bind_dn);
+          config->auth_ldap->bind_dn = o_strdup(cur_auth_ldap_bind_dn);
           if (config->auth_ldap->bind_dn == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->bind_dn\n");
             return 0;
           }
-          config->auth_ldap->bind_passwd = nstrdup(cur_auth_ldap_bind_passwd);
+          config->auth_ldap->bind_passwd = o_strdup(cur_auth_ldap_bind_passwd);
           if (config->auth_ldap->bind_passwd == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->bind_passwd\n");
             return 0;
           }
           
-          config->auth_ldap->base_search_user = nstrdup(cur_auth_ldap_base_search_user);
+          config->auth_ldap->base_search_user = o_strdup(cur_auth_ldap_base_search_user);
           if (config->auth_ldap->base_search_user == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->base_search_user\n");
             return 0;
           }
-          config->auth_ldap->filter_user_read = nstrdup(cur_auth_ldap_filter_user_read);
+          config->auth_ldap->filter_user_read = o_strdup(cur_auth_ldap_filter_user_read);
           if (config->auth_ldap->filter_user_read == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->filter_user_read\n");
             return 0;
           }
-          config->auth_ldap->login_property_user_read = nstrdup(cur_auth_ldap_login_property_user_read);
+          config->auth_ldap->login_property_user_read = o_strdup(cur_auth_ldap_login_property_user_read);
           if (config->auth_ldap->login_property_user_read == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->login_property_user_read\n");
             return 0;
           }
-          config->auth_ldap->scope_property_user_read = nstrdup(cur_auth_ldap_scope_property_user_read);
+          config->auth_ldap->scope_property_user_read = o_strdup(cur_auth_ldap_scope_property_user_read);
           if (config->auth_ldap->scope_property_user_read == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_user_read\n");
             return 0;
           }
-          config->auth_ldap->name_property_user_read = nstrdup(cur_auth_ldap_name_property_user_read);
+          config->auth_ldap->name_property_user_read = o_strdup(cur_auth_ldap_name_property_user_read);
           if (config->auth_ldap->name_property_user_read == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->name_property_user_read\n");
             return 0;
           }
-          config->auth_ldap->email_property_user_read = nstrdup(cur_auth_ldap_email_property_user_read);
+          config->auth_ldap->email_property_user_read = o_strdup(cur_auth_ldap_email_property_user_read);
           if (config->auth_ldap->email_property_user_read == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->email_property_user_read\n");
             return 0;
           }
           config->auth_ldap->user_write = cur_auth_ldap_user_write;
-          config->auth_ldap->rdn_property_user_write = nstrdup(cur_auth_ldap_rdn_property_user_write);
+          config->auth_ldap->rdn_property_user_write = o_strdup(cur_auth_ldap_rdn_property_user_write);
           if (config->auth_ldap->rdn_property_user_write == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->rdn_property_user_write\n");
@@ -1085,13 +1111,13 @@ int build_config_from_file(struct config_elements * config) {
             fprintf(stderr, "Error allocating resources for config->auth_ldap->email_property_user_write\n");
             return 0;
           }
-          config->auth_ldap->password_property_user_write = nstrdup(cur_auth_ldap_password_property_user_write);
+          config->auth_ldap->password_property_user_write = o_strdup(cur_auth_ldap_password_property_user_write);
           if (config->auth_ldap->password_property_user_write == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->password_property_user_write\n");
             return 0;
           }
-          config->auth_ldap->password_algorithm_user_write = nstrdup(cur_auth_ldap_password_algorithm_user_write);
+          config->auth_ldap->password_algorithm_user_write = o_strdup(cur_auth_ldap_password_algorithm_user_write);
           if (config->auth_ldap->password_algorithm_user_write == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->password_algorithm_user_write\n");
@@ -1119,56 +1145,56 @@ int build_config_from_file(struct config_elements * config) {
             return 0;
           }
           
-          config->auth_ldap->base_search_client = nstrdup(cur_auth_ldap_base_search_client);
+          config->auth_ldap->base_search_client = o_strdup(cur_auth_ldap_base_search_client);
           if (config->auth_ldap->base_search_client == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->base_search_client\n");
             return 0;
           }
-          config->auth_ldap->filter_client_read = nstrdup(cur_auth_ldap_filter_client_read);
+          config->auth_ldap->filter_client_read = o_strdup(cur_auth_ldap_filter_client_read);
           if (config->auth_ldap->filter_client_read == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->filter_client_read\n");
             return 0;
           }
-          config->auth_ldap->client_id_property_client_read = nstrdup(cur_auth_ldap_client_id_property_client_read);
+          config->auth_ldap->client_id_property_client_read = o_strdup(cur_auth_ldap_client_id_property_client_read);
           if (config->auth_ldap->client_id_property_client_read == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->client_id_property_client_read\n");
             return 0;
           }
-          config->auth_ldap->scope_property_client_read = nstrdup(cur_auth_ldap_scope_property_client_read);
+          config->auth_ldap->scope_property_client_read = o_strdup(cur_auth_ldap_scope_property_client_read);
           if (config->auth_ldap->scope_property_client_read == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_client_read\n");
             return 0;
           }
-          config->auth_ldap->name_property_client_read = nstrdup(cur_auth_ldap_name_property_client_read);
+          config->auth_ldap->name_property_client_read = o_strdup(cur_auth_ldap_name_property_client_read);
           if (config->auth_ldap->name_property_client_read == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->name_property_client_read\n");
             return 0;
           }
-          config->auth_ldap->description_property_client_read = nstrdup(cur_auth_ldap_description_property_client_read);
+          config->auth_ldap->description_property_client_read = o_strdup(cur_auth_ldap_description_property_client_read);
           if (config->auth_ldap->description_property_client_read == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->description_property_client_read\n");
             return 0;
           }
-          config->auth_ldap->redirect_uri_property_client_read = nstrdup(cur_auth_ldap_redirect_uri_property_client_read);
+          config->auth_ldap->redirect_uri_property_client_read = o_strdup(cur_auth_ldap_redirect_uri_property_client_read);
           if (config->auth_ldap->redirect_uri_property_client_read == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->redirect_uri_property_client_read\n");
             return 0;
           }
-          config->auth_ldap->confidential_property_client_read = nstrdup(cur_auth_ldap_confidential_property_client_read);
+          config->auth_ldap->confidential_property_client_read = o_strdup(cur_auth_ldap_confidential_property_client_read);
           if (config->auth_ldap->confidential_property_client_read == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->confidential_property_client_read\n");
             return 0;
           }
           config->auth_ldap->client_write = cur_auth_ldap_client_write;
-          config->auth_ldap->rdn_property_client_write = nstrdup(cur_auth_ldap_rdn_property_client_write);
+          config->auth_ldap->rdn_property_client_write = o_strdup(cur_auth_ldap_rdn_property_client_write);
           if (config->auth_ldap->rdn_property_client_write == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->rdn_property_client_write\n");
@@ -1204,13 +1230,13 @@ int build_config_from_file(struct config_elements * config) {
             fprintf(stderr, "Error allocating resources for config->auth_ldap->confidential_property_client_write\n");
             return 0;
           }
-          config->auth_ldap->password_property_client_write = nstrdup(cur_auth_ldap_password_property_client_write);
+          config->auth_ldap->password_property_client_write = o_strdup(cur_auth_ldap_password_property_client_write);
           if (config->auth_ldap->password_property_client_write == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->password_property_client_write\n");
             return 0;
           }
-          config->auth_ldap->password_algorithm_client_write = nstrdup(cur_auth_ldap_password_algorithm_client_write);
+          config->auth_ldap->password_algorithm_client_write = o_strdup(cur_auth_ldap_password_algorithm_client_write);
           if (config->auth_ldap->password_algorithm_client_write == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->password_algorithm_client_write\n");
@@ -1266,7 +1292,7 @@ int build_config_from_file(struct config_elements * config) {
         if (key != NULL) {
           key_len = strlen(key);
           jwt_set_alg(config->jwt, JWT_ALG_RS512, (const unsigned char *)key, key_len);
-          free(key);
+          o_free(key);
         } else {
           config_destroy(&cfg);
           fprintf(stderr, "Error, rsa_key_file content incorrect\n");
@@ -1289,7 +1315,7 @@ int build_config_from_file(struct config_elements * config) {
       config_setting_lookup_string(jwt, "sha_secret", &cur_sha_secret);
       if (cur_sha_secret != NULL) {
         jwt_set_alg(config->jwt, JWT_ALG_HS512, (const unsigned char *)cur_sha_secret, strlen(cur_sha_secret));
-        config->jwt_decode_key = nstrdup(cur_sha_secret);
+        config->jwt_decode_key = o_strdup(cur_sha_secret);
       } else {
         config_destroy(&cfg);
         fprintf(stderr, "Error, sha_secret incorrect\n");
@@ -1321,7 +1347,7 @@ int check_config(struct config_elements * config) {
   }
   
   if (config->url_prefix == NULL) {
-    config->url_prefix = nstrdup(GLEWLWYD_DEFAULT_PREFIX);
+    config->url_prefix = o_strdup(GLEWLWYD_DEFAULT_PREFIX);
     if (config->url_prefix == NULL) {
       fprintf(stderr, "Error allocating url_prefix, exit\n");
       return 0;
@@ -1394,12 +1420,12 @@ char to_hex(char code) {
 
 /**
  * Returns a url-encoded version of str
- * IMPORTANT: be sure to free() the returned string after use 
+ * IMPORTANT: be sure to o_free() the returned string after use 
  * Thanks Geek Hideout!
  * http://www.geekhideout.com/urlcode.shtml
  */
 char * url_encode(char * str) {
-  char * pstr = str, * buf = malloc(strlen(str) * 3 + 1), * pbuf = buf;
+  char * pstr = str, * buf = o_malloc(strlen(str) * 3 + 1), * pbuf = buf;
   while (* pstr) {
     if (isalnum(* pstr) || * pstr == '-' || * pstr == '_' || * pstr == '.' || * pstr == '~') 
       * pbuf++ = * pstr;
@@ -1415,12 +1441,12 @@ char * url_encode(char * str) {
 
 /**
  * Returns a url-decoded version of str
- * IMPORTANT: be sure to free() the returned string after use
+ * IMPORTANT: be sure to o_free() the returned string after use
  * Thanks Geek Hideout!
  * http://www.geekhideout.com/urlcode.shtml
  */
 char * url_decode(char * str) {
-  char * pstr = str, * buf = malloc(strlen(str) + 1), * pbuf = buf;
+  char * pstr = str, * buf = o_malloc(strlen(str) + 1), * pbuf = buf;
   while (* pstr) {
     if (* pstr == '%') {
       if (pstr[1] && pstr[2]) {
@@ -1441,7 +1467,7 @@ char * url_decode(char * str) {
 /**
  *
  * Generates a query string based on url and post parameters of a request
- * Returned value must be free'd after use
+ * Returned value must be o_free'd after use
  *
  */
 char * generate_query_parameters(const struct _u_request * request) {
@@ -1466,15 +1492,15 @@ char * generate_query_parameters(const struct _u_request * request) {
   for (i=0; keys[i] != NULL; i++) {
     value = url_encode((char *)u_map_get(request->map_url, keys[i]));
     param = msprintf("%s=%s", keys[i], value);
-    free(value);
+    o_free(value);
     if (query == NULL) {
-      query = nstrdup(param);
+      query = o_strdup(param);
     } else {
       tmp = msprintf("%s&%s", query, param);
-      free(query);
+      o_free(query);
       query = tmp;
     }
-    free(param);
+    o_free(param);
   }
   
   u_map_clean(&params);
@@ -1487,7 +1513,7 @@ char * generate_query_parameters(const struct _u_request * request) {
  * Escapes any special chars (RFC 4515) from a string representing a
  * a search filter assertion value.
  * 
- * You must free the returned value after use
+ * You must o_free the returned value after use
  *
  */
 char * escape_ldap(const char * input) {
@@ -1502,42 +1528,42 @@ char * escape_ldap(const char * input) {
       if (c == '*') {
         // escape asterisk
         tmp = msprintf("%s\\2a", to_return);
-        free(to_return);
+        o_free(to_return);
         to_return = tmp;
       } else if (c == '(') {
         // escape left parenthesis
         tmp = msprintf("%s\\28", to_return);
-        free(to_return);
+        o_free(to_return);
         to_return = tmp;
       } else if (c == ')') {
         // escape right parenthesis
         tmp = msprintf("%s\\29", to_return);
-        free(to_return);
+        o_free(to_return);
         to_return = tmp;
       } else if (c == '\\') {
         // escape backslash
         tmp = msprintf("%s\\5c", to_return);
-        free(to_return);
+        o_free(to_return);
         to_return = tmp;
       } else if ((c & 0x80) == 0) {
         // regular 1-byte UTF-8 char
         tmp = msprintf("%s%c", to_return, c);
-        free(to_return);
+        o_free(to_return);
         to_return = tmp;
       } else if (((c & 0xE0) == 0xC0) && i < (len-2)) { 
         // higher-order 2-byte UTF-8 chars
         tmp = msprintf("%s\\%02x\\%02x", to_return, input[i], input[i+1]);
-        free(to_return);
+        o_free(to_return);
         to_return = tmp;
       } else if (((c & 0xF0) == 0xE0) && i < (len-3)) { 
         // higher-order 3-byte UTF-8 chars
         tmp = msprintf("%s\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2]);
-        free(to_return);
+        o_free(to_return);
         to_return = tmp;
       } else if (((c & 0xF8) == 0xF0) && i < (len-4)) { 
         // higher-order 4-byte UTF-8 chars
         tmp = msprintf("%s\\%02x\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2], input[i+3]);
-        free(to_return);
+        o_free(to_return);
         to_return = tmp;
       }
     }

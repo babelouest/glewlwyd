@@ -47,13 +47,14 @@ Request body arameters must be encoded using the `application/x-www-form-urlenco
 ```
 username: text, required
 password: text, required
+remember: text, optional
 ```
 
 #### Success response
 
 Code 200
 
-A session cookie containing a valid token
+A session cookie containing a valid token. If `remember` is equal to the string value `true`, the session cookie will have a max_age equal to config value `session_expiration`, otherwise, the session cookie will expire at the end of the session.
 
 #### Error Response
 

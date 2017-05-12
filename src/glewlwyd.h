@@ -51,7 +51,7 @@
 #define _HOEL_SQLITE
 #include <hoel.h>
 
-#define _GLEWLWYD_VERSION 0.9.9
+#define _GLEWLWYD_VERSION 1.1
 #define GLEWLWYD_LOG_NAME "Glewlwyd"
 
 // Configuration default values

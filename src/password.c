@@ -94,7 +94,7 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
       res = 0;
     } else {
       if (strlen(password) > 0) {
-        intermediate = malloc(strlen(password)+((GLEWLWYD_SALT_LENGTH+1)*sizeof(char)));
+        intermediate = o_malloc(strlen(password)+((GLEWLWYD_SALT_LENGTH+1)*sizeof(char)));
         if (intermediate != NULL) {
           sprintf(intermediate, "%s", password);
           
@@ -137,7 +137,7 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
               res = 0;
             }
           }
-          free(intermediate);
+          o_free(intermediate);
         } else {
           res = 0;
         }
@@ -191,7 +191,7 @@ char * rand_crypt_salt(char * str, size_t str_size) {
 
 /**
  * Generates a hash from the specified password, using the digest method specified
- * returned value must be free'd after user
+ * returned value must be 'd after user
  */
 char * generate_hash(struct config_elements * config, const char * digest, const char * password) {
   char * to_return = NULL, buffer[1024] = {0};

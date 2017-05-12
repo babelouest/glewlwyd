@@ -76,12 +76,12 @@ START_TEST(test_glwd_implicit_empty)
 }
 END_TEST
 
-static Suite *libjwt_suite(void)
+static Suite *glewlwyd_suite(void)
 {
 	Suite *s;
 	TCase *tc_core;
 
-	s = suite_create("Glewlwyd");
+	s = suite_create("Glewlwyd implicit");
 	tc_core = tcase_create("test_glwd_implicit");
 	tcase_add_test(tc_core, test_glwd_implicit_redirect_login);
 	tcase_add_test(tc_core, test_glwd_implicit_valid);
@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
   }
   ulfius_clean_response(&auth_resp);
 
-	s = libjwt_suite();
+	s = glewlwyd_suite();
 	sr = srunner_create(s);
 
 	srunner_run_all(sr, CK_VERBOSE);
