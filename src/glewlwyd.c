@@ -131,88 +131,88 @@ int main (int argc, char ** argv) {
   // At this point, we declare all API endpoints and configure 
   
   // Authorization endpoint
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/", 1, &callback_glewlwyd_authorization, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/", 1, &callback_glewlwyd_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_authorization, (void*)config);
 
   // Token endpoint
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/token/", 1, &callback_glewlwyd_token, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_token, (void*)config);
 
   // Authentication
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/user/", 1, &callback_glewlwyd_validate_user_session, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/user/", 0, &callback_glewlwyd_check_user_session, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/user/", 1, &callback_glewlwyd_delete_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_validate_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_user_session, (void*)config);
 
   // Current user scope grant endpoints
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/auth/grant/", 0, &callback_glewlwyd_check_user_session, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/grant/", 1, &callback_glewlwyd_get_user_session_scope_grant, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/grant/", 1, &callback_glewlwyd_set_user_scope_grant, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/grant/", 1, &callback_glewlwyd_user_scope_delete, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/auth/grant/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/grant/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_session_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/grant/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/grant/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_scope_delete, (void*)config);
 
   // Current user endpoints
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/profile/", 0, &callback_glewlwyd_check_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/", 1, &callback_glewlwyd_get_user_session_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/", 1, &callback_glewlwyd_set_user_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/refresh_token", 1, &callback_glewlwyd_get_refresh_token_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/refresh_token", 1, &callback_glewlwyd_delete_refresh_token_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/session", 1, &callback_glewlwyd_get_session_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/session", 1, &callback_glewlwyd_delete_session_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_session_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/refresh_token", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_refresh_token_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/refresh_token", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_refresh_token_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_session_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_session_profile, (void*)config);
   if (config->reset_password) {
-    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/profile/reset_password/:username", 1, &callback_glewlwyd_send_reset_user_profile, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/reset_password/:username", 1, &callback_glewlwyd_reset_user_profile, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/profile/reset_password/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_send_reset_user_profile, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/reset_password/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_reset_user_profile, (void*)config);
   }
 
   // Authorization type callbacks
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/authorization/*", 0, &callback_glewlwyd_check_scope_admin, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/authorization/", 1, &callback_glewlwyd_get_authorization, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/authorization/:authorization_type", 1, &callback_glewlwyd_get_authorization, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/authorization/:authorization_type", 1, &callback_glewlwyd_set_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/authorization/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/authorization/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/authorization/:authorization_type", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_authorization, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/authorization/:authorization_type", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_authorization, (void*)config);
 
   // Scope endpoints
   if (config->use_scope) {
-    ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/scope/*", 0, &callback_glewlwyd_check_scope_admin, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/", 1, &callback_glewlwyd_get_list_scope, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/:scope", 1, &callback_glewlwyd_get_scope, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/scope/", 1, &callback_glewlwyd_add_scope, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/scope/:scope", 1, &callback_glewlwyd_set_scope, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/scope/:scope", 1, &callback_glewlwyd_delete_scope, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/scope/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_list_scope, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/:scope", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_scope, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/scope/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_scope, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/scope/:scope", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_scope, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/scope/:scope", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_scope, (void*)config);
   }
 
   // User endpoints
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/user/*", 0, &callback_glewlwyd_check_scope_admin, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/", 1, &callback_glewlwyd_get_list_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username", 1, &callback_glewlwyd_get_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/", 1, &callback_glewlwyd_add_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/user/:username", 1, &callback_glewlwyd_set_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username", 1, &callback_glewlwyd_delete_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/refresh_token", 1, &callback_glewlwyd_get_refresh_token_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/refresh_token", 1, &callback_glewlwyd_delete_refresh_token_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/session", 1, &callback_glewlwyd_get_session_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/session", 1, &callback_glewlwyd_delete_session_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/user/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_list_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/refresh_token", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_refresh_token_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/refresh_token", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_refresh_token_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_session_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_session_user, (void*)config);
   if (config->reset_password) {
-    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/:username/reset_password", 1, &callback_glewlwyd_send_reset_user, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/:username/reset_password", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_send_reset_user, (void*)config);
   }
 
   // Client endpoints
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/client/*", 0, &callback_glewlwyd_check_scope_admin, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/", 1, &callback_glewlwyd_get_list_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/:client_id", 1, &callback_glewlwyd_get_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/client/", 1, &callback_glewlwyd_add_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/client/:client_id", 1, &callback_glewlwyd_set_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/client/:client_id", 1, &callback_glewlwyd_delete_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/client/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_list_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/client/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_client, (void*)config);
 
   // Resource endpoints
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/resource/*", 0, &callback_glewlwyd_check_scope_admin, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/", 1, &callback_glewlwyd_get_list_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/:resource", 1, &callback_glewlwyd_get_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/resource/", 1, &callback_glewlwyd_add_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/resource/:resource", 1, &callback_glewlwyd_set_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/resource/:resource", 1, &callback_glewlwyd_delete_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/resource/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_list_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/:resource", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/resource/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/resource/:resource", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_resource, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/resource/:resource", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_resource, (void*)config);
 
   // Other configuration
-  ulfius_add_endpoint_by_val(config->instance, "GET", "/", NULL, 1, &callback_glewlwyd_root, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", "/config/", NULL, 1, &callback_glewlwyd_server_configuration, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", 1, &callback_glewlwyd_options, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->static_files_prefix, "*", 1, &callback_glewlwyd_static_file, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", "/", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_root, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", "/config/", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_ZERO, &callback_glewlwyd_options, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->static_files_prefix, "*", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_static_file, (void*)config);
   ulfius_set_default_endpoint(config->instance, &callback_default, (void*)config);
 
   // Set default headers

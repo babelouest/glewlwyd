@@ -114,6 +114,11 @@
 #define GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS                  4
 #define GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN                       5
 
+// Callback priority
+#define GLEWLWYD_CALLBACK_PRIORITY_ZERO           0
+#define GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION 1
+#define GLEWLWYD_CALLBACK_PRIORITY_APPLICATION    2
+
 int global_handler_variable;
 
 typedef enum {
