@@ -105,7 +105,6 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
               encoded_key_size += GLEWLWYD_SALT_LENGTH;
             }
             if (o_base64_encode(encoded_key, encoded_key_size, (unsigned char *)out_digest, &encoded_key_size_base64)) {
-              y_log_message(Y_LOG_LEVEL_DEBUG, "encode complete, encoded_key_size_base64 is %ld, use_salt is %d, GLEWLWYD_SALT_LENGTH is %d", encoded_key_size_base64, use_salt, GLEWLWYD_SALT_LENGTH);
               res = 1;
             } else{
               res = 0;
