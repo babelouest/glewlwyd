@@ -32,8 +32,6 @@
 #include <signal.h>
 #include <ctype.h>
 #include <libconfig.h>
-#include <openssl/md5.h>
-#include <openssl/ssl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -222,8 +220,6 @@ int main (int argc, char ** argv) {
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
 
   y_log_message(Y_LOG_LEVEL_INFO, "Start glewlwyd on port %d, prefix: %s, secure: %s", config->instance->port, config->url_prefix, config->use_secure_connection?"true":"false");
-  
-  OpenSSL_add_all_digests();
   
   if (config->use_secure_connection) {
     char * key_file = get_file_content(config->secure_connection_key_file);
@@ -881,7 +877,10 @@ int build_config_from_file(struct config_elements * config) {
   database = config_setting_get_member(root, "database");
   if (database != NULL) {
     if (config_setting_lookup_string(database, "type", &db_type) == CONFIG_TRUE) {
-      if (0 == strncmp(db_type, "sqlite3", strlen("sqlite3"))) {
+      if (0) {
+        // I know, this is for the code below to work
+#ifdef _HOEL_MARIADB
+        } else if (0 == strncmp(db_type, "sqlite3", strlen("sqlite3"))) {
         if (config_setting_lookup_string(database, "path", &db_sqlite_path) == CONFIG_TRUE) {
           config->conn = h_connect_sqlite(db_sqlite_path);
           if (config->conn == NULL) {
@@ -894,6 +893,8 @@ int build_config_from_file(struct config_elements * config) {
           fprintf(stderr, "Error, no sqlite database specified\n");
           return 0;
         }
+#endif
+#ifdef _HOEL_SQLITE
       } else if (0 == strncmp(db_type, "mariadb", strlen("mariadb"))) {
         config_setting_lookup_string(database, "host", &db_mariadb_host);
         config_setting_lookup_string(database, "user", &db_mariadb_user);
@@ -906,7 +907,8 @@ int build_config_from_file(struct config_elements * config) {
           config_destroy(&cfg);
           return 0;
         }
-      } else {
+#endif
+        } else {
         config_destroy(&cfg);
         fprintf(stderr, "Error, database type unknown\n");
         return 0;

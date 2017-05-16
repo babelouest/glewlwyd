@@ -69,7 +69,6 @@ START_TEST(test_glwd_user_refresh_token_revoke_ok_admin)
   res = ulfius_send_http_request(&admin_req, &list_resp);
   if (res == U_OK) {
     json_resp_body = ulfius_get_json_body_response(&list_resp, NULL);
-    y_log_message(Y_LOG_LEVEL_DEBUG, "resp %s", json_string_value(json_object_get(json_array_get(json_resp_body, 0), "token_hash")));
     json_body = json_pack("{ss}", "token_hash", json_string_value(json_object_get(json_array_get(json_resp_body, 0), "token_hash")));
     u_map_put(admin_req.map_header, "Content-Type", "application/x-www-form-urlencoded");
     ulfius_set_json_body_request(&admin_req, json_body);
