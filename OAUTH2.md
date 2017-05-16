@@ -2,7 +2,7 @@
 
 This document is intended to describe Glewlwyd oauth 2 implementation.
 
-OAuth endpoints are used to authenticate the user, and to send tokens or other. The complete specification is available in the [OAuth 2 RFC document](https://tools.ietf.org/html/rfc6749). If you see an issue or have a question on Glewlwyd OAuth 2 implementation, you can open an issue or send an email at the following address [mail@babelouest.org](mail@babelouest.org).
+OAuth endpoints are used to authenticate the user, and to send tokens or other authentication and identification data. The complete specification is available in the [OAuth 2 RFC document](https://tools.ietf.org/html/rfc6749). If you see an issue or have a question on Glewlwyd OAuth 2 implementation, you can open an issue or send an email at the following address [mail@babelouest.org](mail@babelouest.org).
 
 ## Endpoints authentication
 
@@ -73,10 +73,12 @@ Each scheme is described in the following chapter. The description may not be as
 
 Required
 
+```
 `response_type`: text, must be set to `code`
 `client_id`: text, client_id that sends the request on behalf of the resource owner, must be a valid client_id
 `redirect_uri`: text, redirect_uri to send the resource owner to after the connection, must ba a valid redirect_uri for the specified client_id
 `scope`: text, scope list that the resource owner will grant access to the client, multiple scope values must be separated by a space
+```
 
 Optional
 
@@ -192,10 +194,12 @@ The combination code/redirect_uri/client_id is incorrect.
 
 Required
 
+```
 `response_type`: text, must be set to `token`
 `client_id`: text, client_id that sends the request on behalf of the resource owner, must be a valid client_id
 `redirect_uri`: text, redirect_uri to send the resource owner to after the connection, must ba a valid redirect_uri for the specified client_id
 `scope`: text, scope list that the resource owner will grant access to the client, multiple scope values must be separated by a space
+```
 
 Optional
 
