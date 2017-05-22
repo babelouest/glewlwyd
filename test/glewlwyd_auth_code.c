@@ -93,7 +93,7 @@ START_TEST(test_glwd_auth_code_ok_redirect_cb_with_code)
 }
 END_TEST
 
-static Suite *libjwt_suite(void)
+static Suite *glewlwyd_suite(void)
 {
 	Suite *s;
 	TCase *tc_core;
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
   ulfius_clean_request(&scope_req);
   ulfius_clean_response(&scope_resp);
   
-	s = libjwt_suite();
+	s = glewlwyd_suite();
 	sr = srunner_create(s);
 
 	srunner_run_all(sr, CK_VERBOSE);

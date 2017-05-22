@@ -27,7 +27,6 @@
  */
  
 #include <ldap.h>
-#include <openssl/md5.h>
 
 #include "glewlwyd.h"
 
@@ -76,7 +75,7 @@ int is_authorization_type_enabled(struct config_elements * config, uint authoriz
  */
 int grant_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list) {
   json_t * j_query, * j_result;
-  char * save_scope_list = nstrdup(scope_list), * scope, * saveptr;
+  char * save_scope_list = o_strdup(scope_list), * scope, * saveptr;
   char * where_clause_scope, * scope_escaped;
   int res, to_return = G_OK;
   
@@ -101,7 +100,7 @@ int grant_client_user_scope_access(struct config_elements * config, const char *
                               "raw",
                               "value",
                               where_clause_scope);
-      free(where_clause_scope);
+      o_free(where_clause_scope);
       res = h_select(config->conn, j_query, &j_result, NULL);
       json_decref(j_query);
       if (res == H_OK) {
@@ -119,7 +118,7 @@ int grant_client_user_scope_access(struct config_elements * config, const char *
                                 "gs_id",
                                   "raw",
                                   where_clause_scope);
-          free(where_clause_scope);
+          o_free(where_clause_scope);
           res = h_insert(config->conn, j_query, NULL);
           json_decref(j_query);
           if (res != H_OK) {
@@ -131,7 +130,7 @@ int grant_client_user_scope_access(struct config_elements * config, const char *
         y_log_message(Y_LOG_LEVEL_ERROR, "grant_client_user_scope_access - Error getting grant for scope %s to client_id %s for user %s", scope, client_id, username);
         to_return = G_ERROR_DB;
       }
-      free(scope_escaped);
+      o_free(scope_escaped);
       json_decref(j_result);
       scope = strtok_r(NULL, " ", &saveptr);
     }
@@ -140,7 +139,7 @@ int grant_client_user_scope_access(struct config_elements * config, const char *
     y_log_message(Y_LOG_LEVEL_ERROR, "grant_client_user_scope_access - Error input parameters");
     to_return = G_ERROR_PARAM;
   }
-  free(save_scope_list);
+  o_free(save_scope_list);
   
   return to_return;
 }
@@ -152,7 +151,7 @@ int grant_client_user_scope_access(struct config_elements * config, const char *
  */
 int delete_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list) {
   json_t * j_query, * j_result;
-  char * save_scope_list = nstrdup(scope_list), * scope, * saveptr;
+  char * save_scope_list = o_strdup(scope_list), * scope, * saveptr;
   char * where_clause_scope, * scope_escaped;
   int res, to_return = G_OK;
   
@@ -177,7 +176,7 @@ int delete_client_user_scope_access(struct config_elements * config, const char 
                               "raw",
                               "value",
                               where_clause_scope);
-      free(where_clause_scope);
+      o_free(where_clause_scope);
       res = h_select(config->conn, j_query, &j_result, NULL);
       json_decref(j_query);
       if (res == H_OK) {
@@ -195,7 +194,7 @@ int delete_client_user_scope_access(struct config_elements * config, const char 
                                 "gs_id",
                                   "raw",
                                   where_clause_scope);
-          free(where_clause_scope);
+          o_free(where_clause_scope);
           res = h_delete(config->conn, j_query, NULL);
           json_decref(j_query);
           if (res != H_OK) {
@@ -207,7 +206,7 @@ int delete_client_user_scope_access(struct config_elements * config, const char 
         y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_user_scope_access - Error getting grant for scope %s to client_id %s for user %s", scope, client_id, username);
         to_return = G_ERROR_DB;
       }
-      free(scope_escaped);
+      o_free(scope_escaped);
       json_decref(j_result);
       scope = strtok_r(NULL, " ", &saveptr);
     }
@@ -216,7 +215,7 @@ int delete_client_user_scope_access(struct config_elements * config, const char 
     y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_user_scope_access - Error input parameters");
     to_return = G_ERROR_PARAM;
   }
-  free(save_scope_list);
+  o_free(save_scope_list);
   
   return to_return;
 }
@@ -236,97 +235,102 @@ json_t * validate_authorization_code(struct config_elements * config, const char
   
   if (authorization_code != NULL && client_id != NULL) {
     code_hash = generate_hash(config, config->hash_algorithm, authorization_code);
-    escape_ip_source = h_escape_string(config->conn, ip_source);
-    escape = h_escape_string(config->conn, redirect_uri);
-    
-    if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
-      col_gco_date = nstrdup("UNIX_TIMESTAMP(`gco_date`)");
-      clause_gco_date = msprintf("> (UNIX_TIMESTAMP(NOW()) - %d)", config->code_expiration);
-    } else {
-      col_gco_date = nstrdup("gco_date");
-      clause_gco_date = msprintf("> (strftime('%%s','now') - %d)", config->code_expiration);
-    }
-    
-    j_query = json_pack("{sss[ss]s{si ss ss ss ss s{ssss}}}",
-                        "table",
-                        GLEWLWYD_TABLE_CODE,
-                        "columns",
-                          "gco_id",
-                          "gco_username",
-                        "where",
-                          "gco_enabled",
-                          1,
-                          "gco_code_hash",
-                          code_hash,
-                          "gco_ip_source",
-                          escape_ip_source,
-                          "gco_redirect_uri",
-                          escape,
-                          "gc_client_id",
-                          client_id,
-                          col_gco_date,
-                            "operator",
-                            "raw",
-                            "value",
-                            clause_gco_date);
-    free(clause_gco_date);
-    free(col_gco_date);
-    free(escape);
-    free(escape_ip_source);
-    free(code_hash);
-    res = h_select(config->conn, j_query, &j_result, NULL);
-    json_decref(j_query);
-    if (res == H_OK) {
-      if (json_array_size(j_result) > 0) {
-        // Get scope_list (if any)
-        if (config->use_scope) {
-          gco_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "gco_id"));
-          clause_scope = msprintf("IN (SELECT `gs_id` FROM `%s` WHERE `gco_id`=%" JSON_INTEGER_FORMAT ")", GLEWLWYD_TABLE_CODE_SCOPE, gco_id);
-          j_query = json_pack("{sss[s]s{s{ssss}}}",
-                              "table",
-                              GLEWLWYD_TABLE_SCOPE,
-                              "columns",
-                              "gs_name",
-                              "where",
-                                "gs_id",
-                                  "operator",
-                                  "raw",
-                                  "value",
-                                  clause_scope);
-          free(clause_scope);
-          res = h_select(config->conn, j_query, &j_scope, NULL);
-          json_decref(j_query);
-          if (res == H_OK) {
-            json_array_foreach(j_scope, index, j_element) {
-              if (scope_list == NULL) {
-                scope_list = nstrdup(json_string_value(json_object_get(j_element, "gs_name")));
-              } else {
-                tmp = msprintf("%s %s", scope_list, json_string_value(json_object_get(j_element, "gs_name")));
-                free(scope_list);
-                scope_list = tmp;
-              }
-            }
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error executing query scope");
-            j_return = json_pack("{siss}", "result", G_ERROR_DB, "error", "server_error");
-          }
-          json_decref(j_scope);
-          
-          if (scope_list != NULL) {
-            j_return = json_pack("{sisssssI}", "result", G_OK, "scope", scope_list, "username", json_string_value(json_object_get(json_array_get(j_result, 0), "gco_username")), "gco_id", json_integer_value((json_object_get(json_array_get(j_result, 0), "gco_id"))));
-          } else {
-            j_return = json_pack("{siss}", "result", G_ERROR_UNAUTHORIZED, "error", "invalid_scope");
-          }
-          free(scope_list);
-        } else {
-          j_return = json_pack("{sisssI}", "result", G_OK, "username", json_string_value(json_object_get(json_array_get(j_result, 0), "gco_username")), "gco_id", json_integer_value((json_object_get(json_array_get(j_result, 0), "gco_id"))));
-        }
+    if (code_hash != NULL) {
+      escape_ip_source = h_escape_string(config->conn, ip_source);
+      escape = h_escape_string(config->conn, redirect_uri);
+      
+      if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
+        col_gco_date = o_strdup("UNIX_TIMESTAMP(`gco_date`)");
+        clause_gco_date = msprintf("> (UNIX_TIMESTAMP(NOW()) - %d)", config->code_expiration);
       } else {
-        j_return = json_pack("{siss}", "result", G_ERROR_UNAUTHORIZED, "error", "access_denied");
+        col_gco_date = o_strdup("gco_date");
+        clause_gco_date = msprintf("> (strftime('%%s','now') - %d)", config->code_expiration);
       }
-      json_decref(j_result);
+      
+      j_query = json_pack("{sss[ss]s{si ss ss ss ss s{ssss}}}",
+                          "table",
+                          GLEWLWYD_TABLE_CODE,
+                          "columns",
+                            "gco_id",
+                            "gco_username",
+                          "where",
+                            "gco_enabled",
+                            1,
+                            "gco_code_hash",
+                            code_hash,
+                            "gco_ip_source",
+                            escape_ip_source,
+                            "gco_redirect_uri",
+                            escape,
+                            "gc_client_id",
+                            client_id,
+                            col_gco_date,
+                              "operator",
+                              "raw",
+                              "value",
+                              clause_gco_date);
+      o_free(clause_gco_date);
+      o_free(col_gco_date);
+      o_free(escape);
+      o_free(escape_ip_source);
+      o_free(code_hash);
+      res = h_select(config->conn, j_query, &j_result, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        if (json_array_size(j_result) > 0) {
+          // Get scope_list (if any)
+          if (config->use_scope) {
+            gco_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "gco_id"));
+            clause_scope = msprintf("IN (SELECT `gs_id` FROM `%s` WHERE `gco_id`=%" JSON_INTEGER_FORMAT ")", GLEWLWYD_TABLE_CODE_SCOPE, gco_id);
+            j_query = json_pack("{sss[s]s{s{ssss}}}",
+                                "table",
+                                GLEWLWYD_TABLE_SCOPE,
+                                "columns",
+                                "gs_name",
+                                "where",
+                                  "gs_id",
+                                    "operator",
+                                    "raw",
+                                    "value",
+                                    clause_scope);
+            o_free(clause_scope);
+            res = h_select(config->conn, j_query, &j_scope, NULL);
+            json_decref(j_query);
+            if (res == H_OK) {
+              json_array_foreach(j_scope, index, j_element) {
+                if (scope_list == NULL) {
+                  scope_list = o_strdup(json_string_value(json_object_get(j_element, "gs_name")));
+                } else {
+                  tmp = msprintf("%s %s", scope_list, json_string_value(json_object_get(j_element, "gs_name")));
+                  o_free(scope_list);
+                  scope_list = tmp;
+                }
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error executing query scope");
+              j_return = json_pack("{siss}", "result", G_ERROR_DB, "error", "server_error");
+            }
+            json_decref(j_scope);
+            
+            if (scope_list != NULL) {
+              j_return = json_pack("{sisssssI}", "result", G_OK, "scope", scope_list, "username", json_string_value(json_object_get(json_array_get(j_result, 0), "gco_username")), "gco_id", json_integer_value((json_object_get(json_array_get(j_result, 0), "gco_id"))));
+            } else {
+              j_return = json_pack("{siss}", "result", G_ERROR_UNAUTHORIZED, "error", "invalid_scope");
+            }
+            o_free(scope_list);
+          } else {
+            j_return = json_pack("{sisssI}", "result", G_OK, "username", json_string_value(json_object_get(json_array_get(j_result, 0), "gco_username")), "gco_id", json_integer_value((json_object_get(json_array_get(j_result, 0), "gco_id"))));
+          }
+        } else {
+          j_return = json_pack("{siss}", "result", G_ERROR_UNAUTHORIZED, "error", "access_denied");
+        }
+        json_decref(j_result);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error executng query code");
+        j_return = json_pack("{siss}", "result", G_ERROR_DB, "error", "server_error");
+      }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error executng query code");
+      y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error generating hash from password");
       j_return = json_pack("{siss}", "result", G_ERROR_DB, "error", "server_error");
     }
   } else {

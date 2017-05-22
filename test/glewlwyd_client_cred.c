@@ -126,12 +126,12 @@ START_TEST(glewlwyd_client_cred_empty)
 }
 END_TEST
 
-static Suite *libjwt_suite(void)
+static Suite *glewlwyd_suite(void)
 {
 	Suite *s;
 	TCase *tc_core;
 
-	s = suite_create("Glewlwyd");
+	s = suite_create("Glewlwyd client credentials");
 	tc_core = tcase_create("glewlwyd_client_cred");
 	tcase_add_test(tc_core, glewlwyd_client_cred_valid);
 	tcase_add_test(tc_core, glewlwyd_client_cred_valid_reduced_scope);
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
   
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
-	s = libjwt_suite();
+	s = glewlwyd_suite();
 	sr = srunner_create(s);
 
 	srunner_run_all(sr, CK_VERBOSE);

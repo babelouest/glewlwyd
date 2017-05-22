@@ -45,9 +45,11 @@ START_TEST(test_glwd_user_refresh_token_revoke_not_found_user)
 {
   char * url = msprintf("%s/profile/refresh_token", SERVER_URI);
   
-  user_req.json_body = json_pack("{ss}", "token_hash", "not_found");
+  json_t * json_body = json_pack("{ss}", "token_hash", "not_found");
+  ulfius_set_json_body_request(&user_req, json_body);
   int res = run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL);
   free(url);
+  json_decref(json_body);
 	ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -56,14 +58,19 @@ START_TEST(test_glwd_user_refresh_token_revoke_ok_user)
 {
   struct _u_response list_resp, del_resp;
   int res;
+  json_t * json_body, * json_resp_body;
   
   ulfius_init_response(&list_resp);
   ulfius_init_response(&del_resp);
   user_req.http_url = msprintf("%s/profile/refresh_token/?valid=true", SERVER_URI);
   res = ulfius_send_http_request(&user_req, &list_resp);
   if (res == U_OK) {
+    json_resp_body = ulfius_get_json_body_response(&list_resp, NULL);
+    json_body = json_pack("{ss}", "token_hash", json_string_value(json_object_get(json_array_get(json_resp_body, 0), "token_hash")));
     u_map_put(user_req.map_header, "Content-Type", "application/x-www-form-urlencoded");
-    user_req.json_body = json_pack("{ss}", "token_hash", json_string_value(json_object_get(json_array_get(list_resp.json_body, 0), "token_hash")));
+    ulfius_set_json_body_request(&user_req, json_body);
+    json_decref(json_body);
+    json_decref(json_resp_body);
   }
   
   user_req.http_url = msprintf("%s/profile/refresh_token/", SERVER_URI);
@@ -76,12 +83,12 @@ START_TEST(test_glwd_user_refresh_token_revoke_ok_user)
 }
 END_TEST
 
-static Suite *libjwt_suite(void)
+static Suite *glewlwyd_suite(void)
 {
 	Suite *s;
 	TCase *tc_core;
 
-	s = suite_create("Glewlwyd user refresh_token management");
+	s = suite_create("Glewlwyd user refresh_token management user");
 	tc_core = tcase_create("test_glwd_user_refresh_token");
 	tcase_add_test(tc_core, test_glwd_user_refresh_token_list_all_user);
 	tcase_add_test(tc_core, test_glwd_user_refresh_token_list_enabled_user);
@@ -118,10 +125,12 @@ int main(int argc, char *argv[])
   u_map_put(auth_req.map_post_body, "scope", USER_SCOPE_LIST);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
   if (res == U_OK) {
-    char * bearer_token = msprintf("Bearer %s", (json_string_value(json_object_get(auth_resp.json_body, "access_token"))));
+    json_t * json_body = ulfius_get_json_body_response(&auth_resp, NULL);
+    char * bearer_token = msprintf("Bearer %s", (json_string_value(json_object_get(json_body, "access_token"))));
     y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USER_LOGIN);
-    u_map_put(admin_req.map_header, "Authorization", bearer_token);
+    u_map_put(user_req.map_header, "Authorization", bearer_token);
     free(bearer_token);
+    json_decref(json_body);
   }
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
@@ -146,7 +155,7 @@ int main(int argc, char *argv[])
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
 
-  s = libjwt_suite();
+  s = glewlwyd_suite();
   sr = srunner_create(s);
 
   srunner_run_all(sr, CK_VERBOSE);

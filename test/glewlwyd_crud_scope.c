@@ -20,33 +20,33 @@
 
 struct _u_request user_req;
 
-START_TEST(test_glwd_crud_resource_list)
+START_TEST(test_glwd_crud_scope_list)
 {
-  char * url = msprintf("%s/resource/", SERVER_URI);
-  json_t * j_resource1 = json_string("resource1");
+  char * url = msprintf("%s/scope/", SERVER_URI);
+  json_t * j_scope1 = json_string("scope1");
   
-  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_resource1, NULL, NULL);
+  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_scope1, NULL, NULL);
   free(url);
-	json_decref(j_resource1);
+	json_decref(j_scope1);
 	ck_assert_int_eq(res, 1);
 }
 END_TEST
 
-START_TEST(test_glwd_crud_resource_get)
+START_TEST(test_glwd_crud_scope_get)
 {
-  char * url = msprintf("%s/resource/resource1", SERVER_URI);
-  json_t * j_resource1 = json_string("resource1");
+  char * url = msprintf("%s/scope/scope1", SERVER_URI);
+  json_t * j_scope1 = json_string("scope1");
   
-  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_resource1, NULL, NULL);
+  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_scope1, NULL, NULL);
   free(url);
-	json_decref(j_resource1);
+	json_decref(j_scope1);
 	ck_assert_int_eq(res, 1);
 }
 END_TEST
 
-START_TEST(test_glwd_crud_resource_get_not_found)
+START_TEST(test_glwd_crud_scope_get_not_found)
 {
-  char * url = msprintf("%s/resource/not_found", SERVER_URI);
+  char * url = msprintf("%s/scope/not_found", SERVER_URI);
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL);
   free(url);
@@ -54,13 +54,13 @@ START_TEST(test_glwd_crud_resource_get_not_found)
 }
 END_TEST
 
-START_TEST(test_glwd_crud_resource_add_ok)
+START_TEST(test_glwd_crud_scope_add_ok)
 {
   json_t * json_body;
-  char * url = msprintf("%s/resource/", SERVER_URI);
+  char * url = msprintf("%s/scope/", SERVER_URI);
   int res;
   
-  json_body = json_pack("{sssssss[ss]}", "description", "New resource description", "name", "new_resource", "uri", "http://new_resource.domain", "scope", "scope1", "scope2");
+  json_body = json_pack("{ssss}", "description", "New scope description", "name", "new_scope");
   res = run_simple_test(&user_req, "POST", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   json_decref(json_body);
 	ck_assert_int_eq(res, 1);
@@ -69,10 +69,10 @@ START_TEST(test_glwd_crud_resource_add_ok)
 }
 END_TEST
 
-START_TEST(test_glwd_crud_resource_add_invalid)
+START_TEST(test_glwd_crud_scope_add_invalid)
 {
   json_t * json_body;
-  char * url = msprintf("%s/resource/", SERVER_URI);
+  char * url = msprintf("%s/scope/", SERVER_URI);
   int res;
   
   json_body = json_pack("{si}", "description", 22);
@@ -84,22 +84,22 @@ START_TEST(test_glwd_crud_resource_add_invalid)
 }
 END_TEST
 
-START_TEST(test_glwd_crud_resource_get_new)
+START_TEST(test_glwd_crud_scope_get_new)
 {
-  char * url = msprintf("%s/resource/new_resource", SERVER_URI);
-  json_t * j_new_resource = json_string("New resource description");
+  char * url = msprintf("%s/scope/new_scope", SERVER_URI);
+  json_t * j_new_scope = json_string("New scope description");
   
-  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_new_resource, NULL, NULL);
+  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_new_scope, NULL, NULL);
   free(url);
-	json_decref(j_new_resource);
+	json_decref(j_new_scope);
 	ck_assert_int_eq(res, 1);
 }
 END_TEST
 
-START_TEST(test_glwd_crud_resource_set_new)
+START_TEST(test_glwd_crud_scope_set_new)
 {
-  char * url = msprintf("%s/resource/new_resource", SERVER_URI);
-  json_t * json_body = json_pack("{sssss[ss]}", "description", "New new resource description", "uri", "http://new_resource.domain", "scope", "scope1", "scope2");
+  char * url = msprintf("%s/scope/new_scope", SERVER_URI);
+  json_t * json_body = json_pack("{ss}", "description", "New new scope description");
   
   int res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   free(url);
@@ -108,21 +108,21 @@ START_TEST(test_glwd_crud_resource_set_new)
 }
 END_TEST
 
-START_TEST(test_glwd_crud_resource_get_new_updated)
+START_TEST(test_glwd_crud_scope_get_new_updated)
 {
-  char * url = msprintf("%s/resource/new_resource", SERVER_URI);
-  json_t * j_new_resource = json_string("New new resource description");
+  char * url = msprintf("%s/scope/new_scope", SERVER_URI);
+  json_t * j_new_scope = json_string("New new scope description");
   
-  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_new_resource, NULL, NULL);
+  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_new_scope, NULL, NULL);
   free(url);
-	json_decref(j_new_resource);
+	json_decref(j_new_scope);
 	ck_assert_int_eq(res, 1);
 }
 END_TEST
 
-START_TEST(test_glwd_crud_resource_delete_new)
+START_TEST(test_glwd_crud_scope_delete_new)
 {
-  char * url = msprintf("%s/resource/new_resource", SERVER_URI);
+  char * url = msprintf("%s/scope/new_scope", SERVER_URI);
   
   int res = run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
   free(url);
@@ -130,22 +130,22 @@ START_TEST(test_glwd_crud_resource_delete_new)
 }
 END_TEST
 
-static Suite *libjwt_suite(void)
+static Suite *glewlwyd_suite(void)
 {
 	Suite *s;
 	TCase *tc_core;
 
-	s = suite_create("Glewlwyd resource CRUD");
-	tc_core = tcase_create("test_glwd_crud_resource");
-	tcase_add_test(tc_core, test_glwd_crud_resource_list);
-	tcase_add_test(tc_core, test_glwd_crud_resource_get);
-	tcase_add_test(tc_core, test_glwd_crud_resource_get_not_found);
-	tcase_add_test(tc_core, test_glwd_crud_resource_add_ok);
-	tcase_add_test(tc_core, test_glwd_crud_resource_add_invalid);
-	tcase_add_test(tc_core, test_glwd_crud_resource_get_new);
-	tcase_add_test(tc_core, test_glwd_crud_resource_set_new);
-	tcase_add_test(tc_core, test_glwd_crud_resource_get_new_updated);
-	tcase_add_test(tc_core, test_glwd_crud_resource_delete_new);
+	s = suite_create("Glewlwyd scope CRUD");
+	tc_core = tcase_create("test_glwd_crud_scope");
+	tcase_add_test(tc_core, test_glwd_crud_scope_list);
+	tcase_add_test(tc_core, test_glwd_crud_scope_get);
+	tcase_add_test(tc_core, test_glwd_crud_scope_get_not_found);
+	tcase_add_test(tc_core, test_glwd_crud_scope_add_ok);
+	tcase_add_test(tc_core, test_glwd_crud_scope_add_invalid);
+	tcase_add_test(tc_core, test_glwd_crud_scope_get_new);
+	tcase_add_test(tc_core, test_glwd_crud_scope_set_new);
+	tcase_add_test(tc_core, test_glwd_crud_scope_get_new_updated);
+	tcase_add_test(tc_core, test_glwd_crud_scope_delete_new);
 	tcase_set_timeout(tc_core, 30);
 	suite_add_tcase(s, tc_core);
 
@@ -175,15 +175,17 @@ int main(int argc, char *argv[])
   u_map_put(auth_req.map_post_body, "scope", SCOPE_LIST);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
   if (res == U_OK) {
-    char * bearer_token = msprintf("Bearer %s", (json_string_value(json_object_get(auth_resp.json_body, "access_token"))));
+    json_t * json_body = ulfius_get_json_body_response(&auth_resp, NULL);
+    char * bearer_token = msprintf("Bearer %s", (json_string_value(json_object_get(json_body, "access_token"))));
     y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USERNAME);
     u_map_put(user_req.map_header, "Authorization", bearer_token);
     free(bearer_token);
+    json_decref(json_body);
   }
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
   
-  s = libjwt_suite();
+  s = glewlwyd_suite();
   sr = srunner_create(s);
 
   srunner_run_all(sr, CK_VERBOSE);

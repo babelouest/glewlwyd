@@ -17,8 +17,6 @@
 #define USERNAME "user1"
 #define PASSWORD "MyUser1Password!"
 #define SCOPE_LIST "scope1 scope2"
-#define CLIENT "client3_id"
-#define CLIENT_PASSWORD "client3_password"
 
 char * refresh_token;
 
@@ -29,36 +27,6 @@ START_TEST(test_glwd_refresh_token_token_invalid)
   u_map_init(&body);
   u_map_put(&body, "grant_type", "refresh_token");
   u_map_put(&body, "refresh_token", "invalid");
-  
-  int res = run_simple_test(NULL, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 400, NULL, NULL, NULL);
-  free(url);
-  u_map_clean(&body);
-  ck_assert_int_eq(res, 1);
-}
-END_TEST
-
-START_TEST(test_glwd_refresh_token_client_invalid)
-{
-  char * url = msprintf("%s/token/", SERVER_URI);
-  struct _u_map body;
-  u_map_init(&body);
-  u_map_put(&body, "grant_type", "refresh_token");
-  u_map_put(&body, "refresh_token", refresh_token);
-  
-  int res = run_simple_test(NULL, "POST", url, CLIENT, "invalid", NULL, &body, 400, NULL, NULL, NULL);
-  free(url);
-  u_map_clean(&body);
-  ck_assert_int_eq(res, 1);
-}
-END_TEST
-
-START_TEST(test_glwd_refresh_token_no_client)
-{
-  char * url = msprintf("%s/token/", SERVER_URI);
-  struct _u_map body;
-  u_map_init(&body);
-  u_map_put(&body, "grant_type", "refresh_token");
-  u_map_put(&body, "refresh_token", refresh_token);
   
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 400, NULL, NULL, NULL);
   free(url);
@@ -75,23 +43,21 @@ START_TEST(test_glwd_refresh_token_ok)
   u_map_put(&body, "grant_type", "refresh_token");
   u_map_put(&body, "refresh_token", refresh_token);
   
-  int res = run_simple_test(NULL, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 200, NULL, NULL, NULL);
+  int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 200, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
 	ck_assert_int_eq(res, 1);
 }
 END_TEST
 
-static Suite *libjwt_suite(void)
+static Suite *glewlwyd_suite(void)
 {
 	Suite *s;
 	TCase *tc_core;
 
-	s = suite_create("Glewlwyd code");
+	s = suite_create("Glewlwyd refresh token");
 	tc_core = tcase_create("test_glwd_refresh_token");
 	tcase_add_test(tc_core, test_glwd_refresh_token_token_invalid);
-	tcase_add_test(tc_core, test_glwd_refresh_token_client_invalid);
-	tcase_add_test(tc_core, test_glwd_refresh_token_no_client);
 	tcase_add_test(tc_core, test_glwd_refresh_token_ok);
 	tcase_set_timeout(tc_core, 30);
 	suite_add_tcase(s, tc_core);
@@ -119,17 +85,17 @@ int main(int argc, char *argv[])
   u_map_put(auth_req.map_post_body, "username", USERNAME);
   u_map_put(auth_req.map_post_body, "password", PASSWORD);
   u_map_put(auth_req.map_post_body, "scope", SCOPE_LIST);
-  auth_req.auth_basic_user = strdup(CLIENT);
-  auth_req.auth_basic_password = strdup(CLIENT_PASSWORD);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
   if (res == U_OK) {
-    refresh_token = nstrdup(json_string_value(json_object_get(auth_resp.json_body, "refresh_token")));
+    json_t * json_body = ulfius_get_json_body_response(&auth_resp, NULL);
+    refresh_token = o_strdup(json_string_value(json_object_get(json_body, "refresh_token")));
     y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USERNAME);
+    json_decref(json_body);
   }
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
   
-  s = libjwt_suite();
+  s = glewlwyd_suite();
   sr = srunner_create(s);
 
   srunner_run_all(sr, CK_VERBOSE);

@@ -268,7 +268,7 @@ static Suite *libjwt_suite0(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd tests: new user");
+  s = suite_create("Glewlwyd tests user profile");
   tc_core = tcase_create("test_glwd_update_user_profile");
   tcase_add_test(tc_core, test_glwd_update_user_profile_add_user_database);
   tcase_add_test(tc_core, test_glwd_update_user_connect_user_success);
@@ -283,7 +283,7 @@ static Suite *libjwt_suite1(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd tests: update user profile");
+  s = suite_create("Glewlwyd tests update user profile");
   tc_core = tcase_create("test_glwd_update_user_profile");
   tcase_add_test(tc_core, test_glwd_update_user_profile_update_fail);
   tcase_add_test(tc_core, test_glwd_update_user_profile_update_success);
@@ -303,7 +303,7 @@ static Suite *libjwt_suite2(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd tests: reset password");
+  s = suite_create("Glewlwyd tests reset password");
   tc_core = tcase_create("test_glwd_update_user_profile");
   tcase_add_test(tc_core, test_glwd_update_user_profile_reset_password_success);
   tcase_add_test(tc_core, test_glwd_update_user_profile_reset_password_token_error);
@@ -352,7 +352,7 @@ static Suite *libjwt_suite4(void)
   return s;
 }
 
-static Suite *libjwt_suite5(void)
+static Suite *glewlwyd_suite(void)
 {
   Suite *s;
   TCase *tc_core;
@@ -474,7 +474,7 @@ int main(int argc, char *argv[])
   fgets(token, 128, stdin);
   token[strlen(token) - 1] = '\0';
   
-  s5 = libjwt_suite5();
+  s5 = glewlwyd_suite();
   sr5 = srunner_create(s5);
 
   srunner_run_all(sr5, CK_VERBOSE);

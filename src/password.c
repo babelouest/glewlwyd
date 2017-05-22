@@ -28,7 +28,8 @@
  *
  */
 
-#include <openssl/ssl.h>
+#include <string.h>
+#include <gnutls/gnutls.h>
 
 #include "glewlwyd.h"
 
@@ -54,99 +55,77 @@ char * rand_salt(char * str, size_t str_size) {
  * Generates a digest using the digest_algorithm specified from password and add a salt if specified, stores it in out_digest
  */
 int generate_digest(digest_algorithm digest, const char * password, int use_salt, char * out_digest) {
-  EVP_MD_CTX mdctx;
-  const EVP_MD *md;
-  unsigned char md_value[1024] = {0};
-  unsigned int md_len, res = 0;
-  
-	BIO *bio, *b64;
-	BUF_MEM *bufferPtr;
+  unsigned int res = 0;
+  int alg, dig_res;
+  gnutls_datum_t key_data;
+  char * intermediate = NULL, salt[GLEWLWYD_SALT_LENGTH + 1] = {0};
+  unsigned char encoded_key[128 + GLEWLWYD_SALT_LENGTH + 1] = {0};
+  size_t encoded_key_size = (128 + GLEWLWYD_SALT_LENGTH), encoded_key_size_base64;
 
-  char * intermediate, buffer[1024 + GLEWLWYD_SALT_LENGTH + 1] = {0}, salt[GLEWLWYD_SALT_LENGTH + 1] = {0};
-  if (password == NULL || out_digest == NULL) {
-    res = 0;
-  } else {
+  if (password != NULL && out_digest != NULL) {
     switch (digest) {
       case digest_SHA1:
-        md = EVP_sha1();
+        alg = GNUTLS_DIG_SHA1;
         break;
       case digest_SHA224:
-        md = EVP_sha224();
+        alg = GNUTLS_MAC_SHA224;
         break;
       case digest_SHA256:
-        md = EVP_sha256();
+        alg = GNUTLS_MAC_SHA256;
         break;
       case digest_SHA384:
-        md = EVP_sha384();
+        alg = GNUTLS_DIG_SHA384;
         break;
       case digest_SHA512:
-        md = EVP_sha512();
+        alg = GNUTLS_DIG_SHA512;
         break;
       case digest_MD5:
-        md = EVP_md5();
+        alg = GNUTLS_MAC_MD5;
         break;
       default:
-        md = NULL;
+        alg = GNUTLS_MAC_UNKNOWN;
         break;
     }
     
-    if(md == NULL) {
-      res = 0;
-    } else {
-      if (strlen(password) > 0) {
-        intermediate = malloc(strlen(password)+((GLEWLWYD_SALT_LENGTH+1)*sizeof(char)));
+    if(alg != GNUTLS_MAC_UNKNOWN) {
+      if (o_strlen(password) > 0) {
+        intermediate = o_malloc(strlen(password)+((GLEWLWYD_SALT_LENGTH+1)*sizeof(char)));
         if (intermediate != NULL) {
+          key_data.data = (unsigned char*)intermediate;
           sprintf(intermediate, "%s", password);
-          
           if (use_salt) {
             rand_salt(salt, GLEWLWYD_SALT_LENGTH);
             strncat(intermediate, salt, GLEWLWYD_SALT_LENGTH);
           }
           
-          EVP_MD_CTX_init(&mdctx);
-          
-          if (EVP_DigestInit_ex(&mdctx, md, NULL) && 
-              EVP_DigestUpdate(&mdctx,
-                               intermediate,
-                               (unsigned int) strlen(intermediate)) &&
-              EVP_DigestFinal_ex(&mdctx,
-                                 md_value,
-                                 &md_len)) {
-            memcpy(buffer, md_value, md_len);
+          key_data.size = strlen(intermediate);
+          if (key_data.data != NULL && (dig_res = gnutls_fingerprint(alg, &key_data, encoded_key, &encoded_key_size)) == GNUTLS_E_SUCCESS) {
             if (use_salt) {
-              memcpy(buffer+md_len, salt, GLEWLWYD_SALT_LENGTH);
-              md_len += GLEWLWYD_SALT_LENGTH;
+              memcpy(encoded_key+encoded_key_size, salt, GLEWLWYD_SALT_LENGTH);
+              encoded_key_size += GLEWLWYD_SALT_LENGTH;
             }
-
-            b64 = BIO_new(BIO_f_base64());
-            bio = BIO_new(BIO_s_mem());
-            bio = BIO_push(b64, bio);
-
-            BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-            if (BIO_write(bio, buffer, md_len) > 0) {
-              BIO_flush(bio);
-              BIO_get_mem_ptr(bio, &bufferPtr);
-
-              memcpy(out_digest, (*bufferPtr).data, (*bufferPtr).length);
-              
-              BIO_set_close(bio, BIO_CLOSE);
-              BIO_free_all(bio);
-              EVP_MD_CTX_cleanup(&mdctx);
+            if (o_base64_encode(encoded_key, encoded_key_size, (unsigned char *)out_digest, &encoded_key_size_base64)) {
               res = 1;
-            } else {
+            } else{
               res = 0;
             }
+          } else {
+            res = 0;
           }
-          free(intermediate);
         } else {
           res = 0;
         }
+        o_free(intermediate);
       } else {
         // No password, then out_digest becomes an empty string
         out_digest[0] = '\0';
         res = 1;
       }
+    } else {
+      res = 0;
     }
+  } else {
+    res = 0;
   }
   return res;
 }
@@ -191,7 +170,7 @@ char * rand_crypt_salt(char * str, size_t str_size) {
 
 /**
  * Generates a hash from the specified password, using the digest method specified
- * returned value must be free'd after user
+ * returned value must be 'd after user
  */
 char * generate_hash(struct config_elements * config, const char * digest, const char * password) {
   char * to_return = NULL, buffer[1024] = {0};

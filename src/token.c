@@ -63,8 +63,8 @@ int serialize_refresh_token(struct config_elements * config, const char * client
                 "grt_expired_at",
                   "raw",
                   expired_at_value);
-    free(last_seen_value);
-    free(expired_at_value);
+    o_free(last_seen_value);
+    o_free(expired_at_value);
     
     if (j_query != NULL) {
       if (client_id != NULL) {
@@ -91,17 +91,17 @@ int serialize_refresh_token(struct config_elements * config, const char * client
                                 "table",
                                 GLEWLWYD_TABLE_REFRESH_TOKEN_SCOPE,
                                 "values");
-            save_scope_list = nstrdup(scope_list);
+            save_scope_list = o_strdup(scope_list);
             scope = strtok_r(save_scope_list, " ", &saveptr);
             while (scope != NULL) {
               scope_escape = h_escape_string(config->conn, scope);
               scope_clause = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name` = '%s')", GLEWLWYD_TABLE_SCOPE, scope_escape);
               json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIs{ss}}", "grt_id", grt_id, "gs_id", "raw", scope_clause));
-              free(scope_clause);
-              free(scope_escape);
+              o_free(scope_clause);
+              o_free(scope_escape);
               scope = strtok_r(NULL, " ", &saveptr);
             }
-            free(save_scope_list);
+            o_free(save_scope_list);
             
             if (json_array_size(json_object_get(j_query, "values")) > 0) {
               res = h_insert(config->conn, j_query, NULL);
@@ -131,12 +131,12 @@ int serialize_refresh_token(struct config_elements * config, const char * client
       y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error allocating resources for j_query");
       to_return = G_ERROR;
     }
-    free(token_hash);
+    o_free(token_hash);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error allocating resources for token_hash or last_seen_value or expired_at_value");
-    free(last_seen_value);
-    free(expired_at_value);
-    free(token_hash);
+    o_free(last_seen_value);
+    o_free(expired_at_value);
+    o_free(token_hash);
     to_return = G_ERROR;
   }
   return to_return;
@@ -184,7 +184,7 @@ int serialize_access_token(struct config_elements * config, const uint auth_type
         );
         res = h_insert(config->conn, j_query, NULL);
         json_decref(j_query);
-        free(grt_id_clause);
+        o_free(grt_id_clause);
         if (res == H_OK) {
           ret = G_OK;
         } else {
@@ -199,8 +199,8 @@ int serialize_access_token(struct config_elements * config, const uint auth_type
       y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error allocating resources for j_query");
       ret = G_ERROR;
     }
-    free(refresh_token_hash);
-    free(refresh_token_hash_escaped);
+    o_free(refresh_token_hash);
+    o_free(refresh_token_hash_escaped);
   } else {
     j_query = json_pack("{sss{siss}}",
               "table",
@@ -323,9 +323,9 @@ int serialize_session_token(struct config_elements * config, const char * userna
                             expired_at_value,
                           "gss_ip_source",
                           ip_source);
-    free(session_hash);
-    free(last_seen_value);
-    free(expired_at_value);
+    o_free(session_hash);
+    o_free(last_seen_value);
+    o_free(expired_at_value);
     res = h_insert(config->conn, j_query, NULL);
     json_decref(j_query);
     return (res==H_OK?G_OK:G_ERROR_DB);
@@ -409,7 +409,7 @@ char * generate_client_access_token(struct config_elements * config, const char 
  */
 char * generate_authorization_code(struct config_elements * config, const char * username, const char * client_id, const char * scope_list, const char * redirect_uri, const char * ip_source) {
   uuid_t uuid;
-  char * code_value = malloc(37*sizeof(char)), * code_hash, * clause_scope, * escape;
+  char * code_value = o_malloc(37*sizeof(char)), * code_hash, * clause_scope, * escape;
   char * save_scope_list, * scope, * saveptr = NULL;
   json_t * j_query, * j_result;
   int res;
@@ -437,7 +437,7 @@ char * generate_authorization_code(struct config_elements * config, const char *
                           "gco_redirect_uri",
                           escape);
     res = h_insert(config->conn, j_query, NULL);
-    free(escape);
+    o_free(escape);
     json_decref(j_query);
     
     if (res == H_OK) {
@@ -460,14 +460,14 @@ char * generate_authorization_code(struct config_elements * config, const char *
 															"table",
 															GLEWLWYD_TABLE_CODE_SCOPE,
 															"values");
-					save_scope_list = nstrdup(scope_list);
+					save_scope_list = o_strdup(scope_list);
 					scope = strtok_r(save_scope_list, " ", &saveptr);
 					while (scope != NULL) {
 						escape = h_escape_string(config->conn, scope);
 						clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name` = '%s')", GLEWLWYD_TABLE_SCOPE, escape);
 						json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIs{ss}}", "gco_id", gco_id, "gs_id", "raw", clause_scope));
-						free(clause_scope);
-						free(escape);
+						o_free(clause_scope);
+						o_free(escape);
 						scope = strtok_r(NULL, " ", &saveptr);
 					}
 					
@@ -475,12 +475,12 @@ char * generate_authorization_code(struct config_elements * config, const char *
 						res = h_insert(config->conn, j_query, NULL);
 						json_decref(j_query);
 						if (res != H_OK) {
-							free(code_value);
+							o_free(code_value);
 							code_value = NULL;
 							y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error insert into %s", GLEWLWYD_TABLE_CODE_SCOPE);
 						}
 					}
-					free(save_scope_list);
+					o_free(save_scope_list);
 				} else {
 					json_decref(j_result);
 				}
@@ -490,7 +490,7 @@ char * generate_authorization_code(struct config_elements * config, const char *
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error insert into %s", GLEWLWYD_TABLE_CODE);
     }
-    free(code_hash);
+    o_free(code_hash);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error input arameters");
   }
@@ -514,12 +514,12 @@ json_t * session_check(struct config_elements * config, const char * session_val
       time(&now);
       expiration = jwt_get_grant_int(jwt, "iat") + jwt_get_grant_int(jwt, "expires_in");
       type = jwt_get_grant(jwt, "type");
-      if (now < expiration && 0 == nstrcmp(type, "session_token")) {
+      if (now < expiration && 0 == o_strcmp(type, "session_token")) {
         session_hash = generate_hash(config, config->hash_algorithm, session_value);
         if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
-          clause_expired_at = nstrdup("> NOW()");
+          clause_expired_at = o_strdup("> NOW()");
         } else {
-          clause_expired_at = nstrdup("> (strftime('%s','now'))");
+          clause_expired_at = o_strdup("> (strftime('%s','now'))");
         }
         j_query = json_pack("{sss[s]s{sssis{ssss}}}",
                           "table",
@@ -536,7 +536,7 @@ json_t * session_check(struct config_elements * config, const char * session_val
                               "raw",
                               "value",
                               clause_expired_at);
-        free(clause_expired_at);
+        o_free(clause_expired_at);
         res = h_select(config->conn, j_query, &j_result, NULL);
         json_decref(j_query);
         if (res == H_OK) {
@@ -556,7 +556,7 @@ json_t * session_check(struct config_elements * config, const char * session_val
             if (res == H_OK) {
               grants = jwt_get_grants_json(jwt, NULL);
               j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
-              free(grants);
+              o_free(grants);
               if (j_grants != NULL) {
                 j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
               } else {
@@ -571,7 +571,7 @@ json_t * session_check(struct config_elements * config, const char * session_val
         } else {
           j_return = json_pack("{si}", "result", G_ERROR_DB);
         }
-        free(session_hash);
+        o_free(session_hash);
         json_decref(j_result);
       } else {
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
@@ -606,7 +606,7 @@ json_t * access_token_check_scope_profile(struct config_elements * config, const
         time(&now);
         expiration = jwt_get_grant_int(jwt, "iat") + jwt_get_grant_int(jwt, "expires_in");
         type = jwt_get_grant(jwt, "type");
-        if (now < expiration && 0 == nstrcmp(type, "access_token")) {
+        if (now < expiration && 0 == o_strcmp(type, "access_token")) {
           grants = jwt_get_grants_json(jwt, NULL);
           j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
           if (j_grants != NULL) {
@@ -627,7 +627,7 @@ json_t * access_token_check_scope_profile(struct config_elements * config, const
             y_log_message(Y_LOG_LEVEL_ERROR, "access_token_check - Error encoding token grants '%s'", grants);
             j_return = json_pack("{si}", "result", G_ERROR);
           }
-          free(grants);
+          o_free(grants);
         } else {
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
@@ -664,7 +664,7 @@ json_t * access_token_check_scope_admin(struct config_elements * config, const c
         time(&now);
         expiration = jwt_get_grant_int(jwt, "iat") + jwt_get_grant_int(jwt, "expires_in");
         type = jwt_get_grant(jwt, "type");
-        if (now < expiration && 0 == nstrcmp(type, "access_token")) {
+        if (now < expiration && 0 == o_strcmp(type, "access_token")) {
           grants = jwt_get_grants_json(jwt, NULL);
           j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
           if (j_grants != NULL) {
@@ -685,7 +685,7 @@ json_t * access_token_check_scope_admin(struct config_elements * config, const c
             y_log_message(Y_LOG_LEVEL_ERROR, "access_token_check - Error encoding token grants '%s'", grants);
             j_return = json_pack("{si}", "result", G_ERROR);
           }
-          free(grants);
+          o_free(grants);
         } else {
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
@@ -737,7 +737,7 @@ int session_delete(struct config_elements * config, const char * session_value) 
                         session_hash);
     res = h_update(config->conn, j_query, NULL);
     json_decref(j_query);
-    free(session_hash);
+    o_free(session_hash);
     return (res==H_OK?G_OK:G_ERROR_DB);
   } else {
     return G_ERROR_PARAM;
@@ -750,7 +750,7 @@ int session_delete(struct config_elements * config, const char * session_value) 
 char * generate_user_reset_password_token(struct config_elements * config, const char * username, const char * ip_source) {
   json_t * j_query;
   int res;
-  char * token = malloc(37*sizeof(char)), * token_hash;
+  char * token = o_malloc(37*sizeof(char)), * token_hash;
   uuid_t uuid;
   
   if (token != NULL) {
@@ -791,10 +791,10 @@ char * generate_user_reset_password_token(struct config_elements * config, const
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "generate_user_reset_password_token - Error allocating resources for token_hash");
-      free(token);
+      o_free(token);
       token = NULL;
     }
-    free(token_hash);
+    o_free(token_hash);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "generate_user_reset_password_token - Error allocating resources for token");
   }

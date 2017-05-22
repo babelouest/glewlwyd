@@ -63,7 +63,7 @@ json_t * get_resource_list(struct config_elements * config) {
                                 "raw",
                                 "value",
                                 scope_clause);
-        free(scope_clause);
+        o_free(scope_clause);
         res = h_select(config->conn, j_query, &j_scope, NULL);
         json_decref(j_query);
         if (res == H_OK) {
@@ -120,7 +120,7 @@ json_t * get_resource(struct config_elements * config, const char * resource) {
                                 "raw",
                                 "value",
                                 scope_clause);
-        free(scope_clause);
+        o_free(scope_clause);
         res = h_select(config->conn, j_query, &j_scope, NULL);
         json_decref(j_query);
         if (res == H_OK) {
@@ -193,7 +193,7 @@ json_t * is_resource_valid(struct config_elements * config, json_t * j_resource,
               if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
                 char * message = msprintf("scope name '%s' not found", json_string_value(j_scope));
                 json_array_append_new(j_return, json_pack("{ss}", "scope", message));
-                free(message);
+                o_free(message);
               } else if (!check_result_value(j_result, G_OK)) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error while checking scope name '%s'", json_string_value(j_scope));
               }
@@ -245,7 +245,7 @@ int add_resource(struct config_elements * config, json_t * j_resource) {
     if (json_object_get(j_resource, "scope") != NULL && config->use_scope) {
       escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_resource, "name")));
       clause_login = msprintf("(SELECT `gr_id` FROM `%s` WHERE `gr_name`='%s')", GLEWLWYD_TABLE_RESOURCE, escaped);
-      free(escaped);
+      o_free(escaped);
       j_query = json_pack("{sss[]}",
                           "table",
                           GLEWLWYD_TABLE_RESOURCE_SCOPE,
@@ -253,9 +253,9 @@ int add_resource(struct config_elements * config, json_t * j_resource) {
       json_array_foreach(json_object_get(j_resource, "scope"), index, j_scope) {
         escaped = h_escape_string(config->conn, json_string_value(j_scope));
         clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, escaped);
-        free(escaped);
+        o_free(escaped);
         json_array_append_new(json_object_get(j_query, "values"), json_pack("{s{ss}s{ss}}", "gr_id", "raw", clause_login, "gs_id", "raw", clause_scope));
-        free(clause_scope);
+        o_free(clause_scope);
       }
       if (json_array_size(json_object_get(j_query, "values")) > 0) {
         if (h_insert(config->conn, j_query, NULL) != H_OK) {
@@ -263,7 +263,7 @@ int add_resource(struct config_elements * config, json_t * j_resource) {
           to_return = G_ERROR_DB;
         }
       }
-      free(clause_login);
+      o_free(clause_login);
       json_decref(j_query);
     }
   } else {
@@ -305,7 +305,7 @@ int set_resource(struct config_elements * config, const char * resource, json_t 
     if (json_object_get(j_resource, "scope") != NULL && config->use_scope) {
       escaped = h_escape_string(config->conn, resource);
       clause_login = msprintf("= (SELECT `gr_id` FROM `%s` WHERE `gr_name`='%s')", GLEWLWYD_TABLE_RESOURCE, escaped);
-      free(escaped);
+      o_free(escaped);
       j_query = json_pack("{sss{s{ssss}}}",
                           "table",
                           GLEWLWYD_TABLE_RESOURCE_SCOPE,
@@ -315,13 +315,13 @@ int set_resource(struct config_elements * config, const char * resource, json_t 
                               "raw",
                               "value",
                               clause_login);
-      free(clause_login);
+      o_free(clause_login);
       res = h_delete(config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
           escaped = h_escape_string(config->conn, resource);
           clause_login = msprintf("(SELECT `gr_id` FROM `%s` WHERE `gr_name`='%s')", GLEWLWYD_TABLE_RESOURCE, escaped);
-          free(escaped);
+          o_free(escaped);
           j_query = json_pack("{sss[]}",
                               "table",
                               GLEWLWYD_TABLE_RESOURCE_SCOPE,
@@ -329,11 +329,11 @@ int set_resource(struct config_elements * config, const char * resource, json_t 
           json_array_foreach(json_object_get(j_resource, "scope"), index, j_scope) {
             escaped = h_escape_string(config->conn, json_string_value(j_scope));
             clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, escaped);
-            free(escaped);
+            o_free(escaped);
             json_array_append_new(json_object_get(j_query, "values"), json_pack("{s{ss}s{ss}}", "gr_id", "raw", clause_login, "gs_id", "raw", clause_scope));
-            free(clause_scope);
+            o_free(clause_scope);
           }
-          free(clause_login);
+          o_free(clause_login);
           if (json_array_size(json_object_get(j_query, "values")) > 0) {
             if (h_insert(config->conn, j_query, NULL) != H_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "add_client_database - Error adding scope");
