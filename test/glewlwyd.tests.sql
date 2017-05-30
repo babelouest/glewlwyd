@@ -53,6 +53,7 @@ INSERT INTO g_resource (gr_name, gr_description, gr_uri) VALUES ('resource2', 'D
 INSERT INTO g_resource (gr_name, gr_description, gr_uri) VALUES ('resource3', 'Description for resource3', 'http://resource1.domain');
 
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_admin'));
+INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_profile'));
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user1'), (SELECT gs_id from g_scope WHERE gs_name='scope1'));
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user1'), (SELECT gs_id from g_scope WHERE gs_name='scope2'));
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='user1'), (SELECT gs_id from g_scope WHERE gs_name='scope3'));
