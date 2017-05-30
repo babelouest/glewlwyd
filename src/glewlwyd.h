@@ -44,7 +44,6 @@
 #include <stdio.h>
 
 /** Angharad libraries **/
-#define U_DISABLE_WEBSOCKET
 #include <ulfius.h>
 #include <yder.h>
 
