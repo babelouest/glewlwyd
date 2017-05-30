@@ -2760,7 +2760,7 @@ $(function() {
     url: oauth.glewlwyd_server_url + "/config"
   })
   .done(function (result) {
-    oauth.admin_scope = result.admin_scope;
+    oauth.admin_scope = result.admin_scope + " " + result.profile_scope;
     oauth.api_prefix = result.api_prefix;
     init();
   })
