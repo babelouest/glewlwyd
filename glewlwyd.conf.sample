@@ -190,6 +190,7 @@ authentication =
    name_property_client_read         = "sn"
    description_property_client_read  = "description"
    redirect_uri_property_client_read = "labeledURI"
+   confidential_property_client_read = "employeeType"
 # Write parameters
    ldap_client_write                  = true
    rdn_property_client_write          = "cn"          # Single value
@@ -199,6 +200,7 @@ authentication =
    description_property_client_write  = "description" # Multiple values separated by a comma
    redirect_uri_property_client_write = "labeledURI"  # Multiple values separated by a comma
    password_property_client_write     = "userPassword"# Single value
+   confidential_property_client_write = "employeeType"
    password_algorithm_client_write    = "SSHA"        # Single value, values available are SSHA, SHA, SMD5, MD5 or PLAIN
    object_class_client_write          = "top,person,organizationalPerson,inetOrgPerson" # Multiple values separated by a comma
 }
