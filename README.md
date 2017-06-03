@@ -21,18 +21,23 @@ libldap2
 libmysqlclient 
 libsqlite3 
 libconfig 
+libgnutls
 libssl
 ```
 
 On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install those dependencies using the following command:
 
 ```shell
-$ sudo apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev uuid-dev libldap2-dev libmysqlclient-dev libsqlite3-dev libconfig-dev libssl-dev
+$ sudo apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev uuid-dev libldap2-dev libmysqlclient-dev libsqlite3-dev libconfig-dev libgnutls28-dev libssl-dev
 ```
+
+### Libssl vs libgnutls
+
+Both libraries are mentionned required, but you can get rid of libssl if you install `libjwt` with the option `--without-openssl`, but `gnutls` 3.5.8 minimum is required. For this documentation t be compatible with most linux distributions (at least the one I use), I don't remove libssl from the required libraries yet.
 
 ### Debian Jessie libmicrohttpd bug
 
-I've noticed that on a Debian Jessie and previous, libmicrohttpd has a bug when it parses `application/x-www-form-urlencoded` parameters. This is fixed in later version, so I suggest using the latest stable version of [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/).
+I've noticed that on a Debian Jessie and previous versions, libmicrohttpd has a bug when it parses `application/x-www-form-urlencoded` parameters. This is fixed in later version, so I suggest using the latest stable version of [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/).
 
 Then, download Glewlwyd and its dependendencies hosted in github, compile and install.
 
@@ -42,7 +47,7 @@ Then, download Glewlwyd and its dependendencies hosted in github, compile and in
 $ git clone https://github.com/benmcollins/libjwt.git
 $ cd libjwt/
 $ autoreconf -i
-$ ./configure
+$ ./configure # use ./configure --without-openssl to use gnutls instead, you must have gnutls 3.5.8 minimum
 $ make
 $ sudo make install
 
