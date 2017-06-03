@@ -351,19 +351,11 @@ int callback_glewlwyd_check_user_session (const struct _u_request * request, str
 int callback_glewlwyd_check_scope_admin (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session = NULL;
-  int res = U_CALLBACK_UNAUTHORIZED, i, count;
-  char ** scope_list;
+  int res = U_CALLBACK_UNAUTHORIZED;
   
   j_session = access_token_check_scope_admin(config, u_map_get(request->map_header, "Authorization"));
   if (check_result_value(j_session, G_OK)) {
-    count = split_string(json_string_value(json_object_get(json_object_get(j_session, "grants"), "scope")), " ", &scope_list);
-    for (i=0; count > 0 && scope_list[i] != NULL; i++) {
-      if (strcmp(scope_list[i], config->admin_scope) == 0) {
-        res = U_CALLBACK_CONTINUE;
-        break;
-      }
-    }
-    free_string_array(scope_list);
+    res = U_CALLBACK_CONTINUE;
   }
   json_decref(j_session);
   return res;
