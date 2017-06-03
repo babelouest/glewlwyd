@@ -22,7 +22,6 @@
 #define USER_SCOPE_LIST "scope1 g_profile"
 
 struct _u_request admin_req;
-struct _u_request user_req;
 
 START_TEST(test_glwd_user_refresh_token_list_all_admin)
 {
@@ -114,19 +113,13 @@ int main(int argc, char *argv[])
   
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
-  // Getting a valid refresh_token id for authenticated http requests
+  // Getting a valid session id for authenticated http requests
   ulfius_init_request(&auth_req);
   ulfius_init_request(&admin_req);
-  ulfius_init_request(&user_req);
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
   auth_req.http_url = msprintf("%s/token/", SERVER_URI);
   u_map_put(auth_req.map_post_body, "grant_type", "password");
-  u_map_put(auth_req.map_post_body, "username", USER_LOGIN);
-  u_map_put(auth_req.map_post_body, "password", USER_PASSWORD);
-  u_map_put(auth_req.map_post_body, "scope", USER_SCOPE_LIST);
-  res = ulfius_send_http_request(&auth_req, &auth_resp);
-
   u_map_put(auth_req.map_post_body, "username", ADMIN_LOGIN);
   u_map_put(auth_req.map_post_body, "password", ADMIN_PASSWORD);
   u_map_put(auth_req.map_post_body, "scope", ADMIN_SCOPE_LIST);
@@ -150,7 +143,6 @@ int main(int argc, char *argv[])
   srunner_free(sr);
   
   ulfius_clean_request(&admin_req);
-  ulfius_clean_request(&user_req);
   
 	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

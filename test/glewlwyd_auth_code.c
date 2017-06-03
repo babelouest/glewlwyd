@@ -163,7 +163,6 @@ int main(int argc, char *argv[])
     y_log_message(Y_LOG_LEVEL_ERROR, "Error sending auth request");
   }
   ulfius_clean_request(&scope_req);
-  ulfius_clean_response(&scope_resp);
   
 	s = glewlwyd_suite();
 	sr = srunner_create(s);
