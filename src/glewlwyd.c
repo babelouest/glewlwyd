@@ -104,10 +104,13 @@ int main (int argc, char ** argv) {
     y_log_message(Y_LOG_LEVEL_ERROR, "init - Error initializing global_handler_close_lock or global_handler_close_cond");
   }
   // Catch end signals to make a clean exit
-  signal (SIGQUIT, exit_handler);
-  signal (SIGINT, exit_handler);
-  signal (SIGTERM, exit_handler);
-  signal (SIGHUP, exit_handler);
+  if (signal (SIGQUIT, exit_handler) == SIG_ERR || 
+      signal (SIGINT, exit_handler) == SIG_ERR || 
+      signal (SIGTERM, exit_handler) == SIG_ERR || 
+      signal (SIGHUP, exit_handler) == SIG_ERR) {
+    fprintf(stderr, "init - Error initializing end signal\n");
+    return 1;
+  }
 
   // First we parse command line arguments
   if (!build_config_from_args(argc, argv, config)) {
