@@ -120,7 +120,8 @@
 #define GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION 1
 #define GLEWLWYD_CALLBACK_PRIORITY_APPLICATION    2
 
-int global_handler_variable;
+pthread_mutex_t global_handler_close_lock;
+pthread_cond_t  global_handler_close_cond;
 
 typedef enum {
   digest_SHA1,
