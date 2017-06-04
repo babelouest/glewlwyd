@@ -238,7 +238,7 @@ int main (int argc, char ** argv) {
     res = ulfius_start_framework(config->instance);
   }
   if (res == U_OK) {
-    // Loop until stop signal is broadcasted
+    // Wait until stop signal is broadcasted
     pthread_mutex_lock(&global_handler_close_lock);
     pthread_cond_wait(&global_handler_close_cond, &global_handler_close_lock);
     pthread_mutex_unlock(&global_handler_close_lock);
