@@ -25,3 +25,4 @@ test/glewlwyd_refresh_token
 test/glewlwyd_refresh_token_client_confidential
 test/glewlwyd_resource_owner_pwd_cred_client_confidential
 test/test-token.html
+webapp/test-token.html
