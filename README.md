@@ -12,7 +12,7 @@ The API backend is fully written in language C, it's based on [Ulfius](https://g
 
 Please read the [INSTALL.md](INSTALL.md) file for more information.
 
-#### Screenshots
+## Screenshots
 
 Some screenshots examples:
 
