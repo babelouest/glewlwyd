@@ -318,3 +318,9 @@ The config file `glewlwyd.conf` contains the following variables: `static_files_
 To connect to the management application, you must use a user that have `g_admin` scope.
 
 The front-end management application is a tiny single page app (SPA) written in ReactJS/JQuery, responsive as much as I can, not the best design in the world, but useful anyway.
+
+### tests/test-token.html
+
+This page is here only for oauth2 tests and behaviour validation. If you want to use it, you need to update the `glewlwyd_api` value and all parameters provided, such as `redirect_uri`, `scope` and `client`.
+
+Beware, all password inputs are of type `text`, so a typed password is not hidden from a hidden third-party dangerous predator.

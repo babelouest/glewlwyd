@@ -47,9 +47,3 @@ If a user uses the reset password functionnality, he or she will receive the con
 `$URL` must be set in the configuration file properly so the emails will lead to the correct page.
 
 More screenshots of the front-end application are availabe in the [screenshot](https://github.com/babelouest/glewlwyd/tree/master/screenshots) folder.
-
-### tests/test-token.html
-
-This page is here only for oauth2 tests and behaviour validation. If you want to use it, you need to update the `glewlwyd_api` value and all parameters provided, such as `redirect_uri`, `scope` and `client`.
-
-Beware, all password inputs are of type `text`, so a typed password is not hidden from a hidden third-party dangerous predator.
