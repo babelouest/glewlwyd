@@ -229,7 +229,7 @@ $ sudo systemctl enable glewlwyd
 $ sudo sudo systemctl start glewlwyd
 ```
 
-## Usage
+## Run Glewlwyd
 
 Run the application using the service command if you installed the init file:
 
@@ -302,3 +302,19 @@ Every `access_token` has the following header and payload format:
 ```
 
 Refresh and session tokens are also JWTs, but their payload have slightly different values. A session token doesn't have a scope value, and the `type` values are respectively `refresh_token` and `session_token`. Although these tokens are validated by the Glewlwyd server directly.
+
+## Front-end application
+
+All front-end pages have a minimal design, feel free to modify them for your own need, or create your own application.
+
+### Glewlwyd manager
+
+Glewlwyd comes with a small front-end that uses the backend API to manage profile, users, clients, scopes, resources and authorization types.
+
+#### Configuration
+
+The config file `glewlwyd.conf` contains the following variables: `static_files_path` and `static_files_prefix`, `static_files_path` is the path to the front-end application. Set it to the location of your webapp folder before running glewlwyd, e.g. `"/home/pi/glewlwyd/webapp"`, `static_files_prefix` will be the url path to access to the front-end application, default is [http://localhost:4953/app/](http://localhost:4953/app/).
+
+To connect to the management application, you must use a user that have `g_admin` scope.
+
+The front-end management application is a tiny single page app (SPA) written in ReactJS/JQuery, responsive as much as I can, not the best design in the world, but useful anyway.
