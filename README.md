@@ -8,6 +8,10 @@ The API backend is fully written in language C, it's based on [Ulfius](https://g
 
 ![user list screenshot](https://raw.githubusercontent.com/babelouest/glewlwyd/master/screenshots/g_1_users.png)
 
+## Installation
+
+Please read the [INSTALL.md](INSTALL.md) file for more information.
+
 ## Front-end application
 
 All front-end pages have a minimal design, feel free to modify them for your own need, or create your own application.
