@@ -13,7 +13,7 @@
 
 #include "unit-tests.h"
 
-#define SERVER_URI "http://localhost:4593/glewlwyd"
+#define SERVER_URI "http://localhost:4593/api"
 #define CLIENT_ID "client3_id"
 #define CLIENT_PASSWORD "client3_password"
 #define SCOPE_LIST "scope2 scope3"

@@ -13,7 +13,7 @@
 
 #include "unit-tests.h"
 
-#define SERVER_URI "http://localhost:4593/glewlwyd"
+#define SERVER_URI "http://localhost:4593/api"
 #define ADMIN_LOGIN "admin"
 #define ADMIN_PASSWORD "MyAdminPassword2016!"
 #define ADMIN_SCOPE_LIST "g_admin"
