@@ -45,9 +45,8 @@ $(function() {
   var oauth = {
     client_id: "g_admin",                  /* client_id used for the glewlwyd manager app, default value is "g_admin", update this value if you have changed it in your installation */
     glewlwyd_server_url: "../",            /* Default value if the web app is hosted by the API server. For security, I recommend to put the absolute url, e.g. https://auth.domain.com/ */
-    redirect_uri: "index.html",            /* Path to Glewlwyd manager index.html page */
+    redirect_uri: "../app/index.html",     /* Path to Glewlwyd manager index.html page */
     access_token_cookie: "g_access_token", /* Name of the cookie to store the access_token */
-    redirect_uri: "../app/index.html",     /* Redirect uri for the glewlwyd manager application */
     /**
      *
      * This will contain server config variables, do not modify them. 
