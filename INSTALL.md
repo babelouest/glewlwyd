@@ -35,7 +35,9 @@ Both libraries are mentionned required, but you can get rid of libssl if you ins
 
 With Libmicrohttpd 0.9.37 and older version, there is a bug when parsing `application/x-www-form-urlencoded` parameters. This is fixed in later version, from the 0.9.38, so if your Libmicrohttd version is older than that, I suggest getting a newer version of [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/).
 
-Then, download Glewlwyd and its dependendencies hosted in github, compile and install.
+### Build Glewlwyd and its dependencies
+
+Download Glewlwyd and its dependendencies hosted on github, compile and install.
 
 ```shell
 # Install libjwt
