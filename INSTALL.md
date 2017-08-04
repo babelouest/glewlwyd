@@ -29,11 +29,11 @@ $ sudo apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev uuid
 
 ### Libssl vs libgnutls
 
-Both libraries are mentionned required, but you can get rid of libssl if you install `libjwt` with the option `--without-openssl`, but `gnutls` 3.5.8 minimum is required. For this documentation to be compatible with most linux distributions (at least the one I use), I don't remove libssl from the required libraries yet.
+Both libraries are mentionned required, but you can get rid of libssl if you install `libjwt` with the option `--without-openssl`. `gnutls` 3.5.8 minimum is required. For this documentation to be compatible with most linux distributions (at least the one I use), I don't remove libssl from the required libraries yet.
 
-### Debian Jessie libmicrohttpd bug
+### Libmicrohttpd bug on POST parameters
 
-I've noticed that on a Debian Jessie and previous versions, libmicrohttpd has a bug when it parses `application/x-www-form-urlencoded` parameters. This is fixed in later version, so I suggest using the latest stable version of [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/).
+With Libmicrohttpd 0.9.37 and older version, there is a bug when parsing `application/x-www-form-urlencoded` parameters. This is fixed in later version, from the 0.9.38, so if your Libmicrohttd version is older than that, I suggest getting a newer version of [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/).
 
 Then, download Glewlwyd and its dependendencies hosted in github, compile and install.
 
