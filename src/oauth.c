@@ -503,12 +503,13 @@ int get_access_token_from_refresh (const struct _u_request * request, struct _u_
       if (res == H_OK && json_array_size(j_result) > 0) {
         if (!jwt_decode(&jwt, refresh_token, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == jwt_get_alg(config->jwt)) {
           last_seen_value = msprintf(config->conn->type==HOEL_DB_TYPE_MARIADB?"FROM_UNIXTIME(%d)":"%d", now);
-          j_query = json_pack("{sss{ss}s{ss}}",
+          j_query = json_pack("{sss{s{ss}}s{ss}}",
                               "table",
                               GLEWLWYD_TABLE_REFRESH_TOKEN,
                               "set",
                                 "grt_last_seen",
-                                last_seen_value,
+                                  "raw",
+                                  last_seen_value,
                               "where",
                                 "grt_hash",
                                 token_hash);
@@ -690,14 +691,15 @@ int delete_refresh_token (const struct _u_request * request, struct _u_response 
     if (res == H_OK && json_array_size(j_result) > 0) {
       last_seen_value = msprintf(config->conn->type==HOEL_DB_TYPE_MARIADB?"FROM_UNIXTIME(%d)":"%d", now);
       grt_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "grt_id"));
-      j_query = json_pack("{sss{siss}s{sI}}",
+      j_query = json_pack("{sss{sis{ss}}s{sI}}",
                           "table",
                           GLEWLWYD_TABLE_REFRESH_TOKEN,
                           "set",
                             "grt_enabled",
                             0,
                             "grt_last_seen",
-                            last_seen_value,
+                              "raw",
+                              last_seen_value,
                           "where",
                             "grt_id",
                             grt_id);
