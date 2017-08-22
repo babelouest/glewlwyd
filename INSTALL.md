@@ -1,10 +1,18 @@
 # Installation
 
-## From docker
+## Debian package
+
+Glewlwyd is now available in Debian Buster (testing), and Debian sid. To install it on your device, use the following command as root:
+
+```shell
+# apt install glewlwyd
+```
+
+## Docker
 
 [Rafael](https://github.com/rafaelhdr/) is currently working on a [docker image](https://github.com/rafaelhdr/glewlwyd-oauth2-server) for Glewlwyd, Kudos to him! This is a work-in-progress but you already can easily build an image with MariaDB or SQLite3 backend. Check out the documentation for more informations.
 
-## From Github
+## Manual install from Github
 
 You must install the following libraries including their header files:
 
