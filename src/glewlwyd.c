@@ -584,13 +584,13 @@ int build_config_from_file(struct config_elements * config) {
              * cur_auth_ldap_description_property_client_write = NULL, * cur_auth_ldap_redirect_uri_property_client_write = NULL,
              * cur_auth_ldap_confidential_property_client_write = NULL, * cur_auth_ldap_password_property_client_write = NULL,
              * cur_auth_ldap_password_algorithm_client_write = NULL, * cur_auth_ldap_object_class_client_write = NULL,
-             * cur_rsa_key_file = NULL, * cur_rsa_pub_file = NULL, * cur_sha_secret = NULL, * extension = NULL, * mime_type_value = NULL,
-             * cur_secure_connection_key_file = NULL, * cur_secure_connection_pem_file = NULL, * cur_grant_url = NULL, * cur_login_url = NULL,
-             * cur_reset_password_smtp_host = NULL, * cur_reset_password_smtp_user = NULL, * cur_reset_password_smtp_password = NULL,
-             * cur_reset_password_email_from = NULL, * cur_reset_password_email_subject = NULL,
+             * cur_rsa_key_file = NULL, * cur_rsa_pub_file = NULL, * cur_ecdsa_key_file = NULL, * cur_ecdsa_pub_file = NULL, * cur_sha_secret = NULL,
+             * extension = NULL, * mime_type_value = NULL, * cur_secure_connection_key_file = NULL, * cur_secure_connection_pem_file = NULL,
+             * cur_grant_url = NULL, * cur_login_url = NULL, * cur_reset_password_smtp_host = NULL, * cur_reset_password_smtp_user = NULL,
+             * cur_reset_password_smtp_password = NULL, * cur_reset_password_email_from = NULL, * cur_reset_password_email_subject = NULL,
              * cur_reset_password_email_template_path = NULL, * cur_reset_password_page_url_prefix = NULL;
-  int db_mariadb_port = 0;
-  int cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_sha = 0, cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, i;
+  int db_mariadb_port = 0, cur_key_size = 512;
+  int cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_ecdsa = 0, cur_use_sha = 0, cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, i;
   
   config_init(&cfg);
   
@@ -1301,7 +1301,14 @@ int build_config_from_file(struct config_elements * config) {
   jwt = config_setting_get_member(root, "jwt");
   if (jwt != NULL) {
     config_setting_lookup_bool(jwt, "use_rsa", &cur_use_rsa);
+    config_setting_lookup_bool(jwt, "use_ecdsa", &cur_use_ecdsa);
     config_setting_lookup_bool(jwt, "use_sha", &cur_use_sha);
+    config_setting_lookup_int(jwt, "key_size", &cur_key_size);
+    if (cur_key_size != 256 && cur_key_size != 384 && cur_key_size != 512) {
+      config_destroy(&cfg);
+      fprintf(stderr, "Error, key_size incorrect, values available are 256, 384 or 512\n");
+      return 0;
+    }
     if (cur_use_rsa) {
       config_setting_lookup_string(jwt, "rsa_key_file", &cur_rsa_key_file);
       config_setting_lookup_string(jwt, "rsa_pub_file", &cur_rsa_pub_file);
@@ -1313,7 +1320,13 @@ int build_config_from_file(struct config_elements * config) {
         key = get_file_content(cur_rsa_key_file);
         if (key != NULL) {
           key_len = strlen(key);
-          jwt_set_alg(config->jwt, JWT_ALG_RS512, (const unsigned char *)key, key_len);
+          if (cur_key_size == 256) {
+            jwt_set_alg(config->jwt, JWT_ALG_RS256, (const unsigned char *)key, key_len);
+          } else if (cur_key_size == 384) {
+            jwt_set_alg(config->jwt, JWT_ALG_RS384, (const unsigned char *)key, key_len);
+          } else if (cur_key_size == 512) {
+            jwt_set_alg(config->jwt, JWT_ALG_RS512, (const unsigned char *)key, key_len);
+          }
           o_free(key);
         } else {
           config_destroy(&cfg);
@@ -1332,11 +1345,53 @@ int build_config_from_file(struct config_elements * config) {
         fprintf(stderr, "Error, rsa_key_file or rsa_pub_file incorrect\n");
         return 0;
       }
+    } else if (cur_use_ecdsa) {
+      config_setting_lookup_string(jwt, "ecdsa_key_file", &cur_ecdsa_key_file);
+      config_setting_lookup_string(jwt, "ecdsa_pub_file", &cur_ecdsa_pub_file);
+      if (cur_ecdsa_key_file != NULL && cur_ecdsa_pub_file != NULL) {
+        char * key;
+        size_t key_len;
+        
+        jwt_new(&(config->jwt));
+        key = get_file_content(cur_ecdsa_key_file);
+        if (key != NULL) {
+          key_len = strlen(key);
+          if (cur_key_size == 256) {
+            jwt_set_alg(config->jwt, JWT_ALG_ES256, (const unsigned char *)key, key_len);
+          } else if (cur_key_size == 384) {
+            jwt_set_alg(config->jwt, JWT_ALG_ES384, (const unsigned char *)key, key_len);
+          } else if (cur_key_size == 512) {
+            jwt_set_alg(config->jwt, JWT_ALG_ES512, (const unsigned char *)key, key_len);
+          }
+          o_free(key);
+        } else {
+          config_destroy(&cfg);
+          fprintf(stderr, "Error, ecdsa_key_file content incorrect\n");
+          return 0;
+        }
+        
+        config->jwt_decode_key = get_file_content(cur_ecdsa_pub_file);
+        if (config->jwt_decode_key == NULL) {
+          config_destroy(&cfg);
+          fprintf(stderr, "Error, ecdsa_pub_file content incorrect\n");
+          return 0;
+        }
+      } else {
+        config_destroy(&cfg);
+        fprintf(stderr, "Error, ecdsa_key_file or ecdsa_pub_file incorrect\n");
+        return 0;
+      }
     } else if (cur_use_sha) {
       jwt_new(&(config->jwt));
       config_setting_lookup_string(jwt, "sha_secret", &cur_sha_secret);
       if (cur_sha_secret != NULL) {
-        jwt_set_alg(config->jwt, JWT_ALG_HS512, (const unsigned char *)cur_sha_secret, strlen(cur_sha_secret));
+        if (cur_key_size == 256) {
+          jwt_set_alg(config->jwt, JWT_ALG_HS256, (const unsigned char *)cur_sha_secret, strlen(cur_sha_secret));
+        } else if (cur_key_size == 384) {
+          jwt_set_alg(config->jwt, JWT_ALG_HS384, (const unsigned char *)cur_sha_secret, strlen(cur_sha_secret));
+        } else if (cur_key_size == 512) {
+          jwt_set_alg(config->jwt, JWT_ALG_HS512, (const unsigned char *)cur_sha_secret, strlen(cur_sha_secret));
+        }
         config->jwt_decode_key = o_strdup(cur_sha_secret);
       } else {
         config_destroy(&cfg);
