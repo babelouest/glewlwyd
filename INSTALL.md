@@ -206,18 +206,31 @@ sqlite> INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_use
 
 ### JWT configuration
 
-You can choose between SHA (HS512) and RSA (RS512) anglorithms to sign the tokens. Note that if you use SHA, you will need to share the `sha_secret` value with the resource providers and keep it safe in all places. If you use RSA algorithm, you will need to share the public key `rsa_pub_file` with resource providers, and you will need to keep the private key `rsa_key_file` safe.
+You can choose between SHA (HS256, HS384, HS512), RSA (RS256, RS384, RS512) and ECDSA (ES256, ES384, ES512) anglorithms to sign the tokens. Note that if you use SHA, you will need to share the `sha_secret` value with the resource providers and keep it safe in all places. If you use RSA or ECDSA algorithm, you will need to share the public key specified in `[rsa|ecdsa]_pub_file` with resource providers, and you will need to keep the private key `[rsa|ecdsa]_key_file` safe.
+
+The values available for the parameter `key_size` are 256, 284 and 512 only. To choose your signature algorithm, set the value `true` to the parameter `use_[rsa|ecdsa|sha]` you want, and `false` to the other ones. Finally, set the additional parameter used for your algorithm:
+- `*_key_file` and `*_pub_file` if you choose ECDSA or RSA signatures, with the path to the public and private signature files
+- `sha_secret` if you choose SHA signatures, with the value of the secret
 
 #### RSA private/public key creation
 
-You can use the following command to create a pair of private and public keys for the RSA algorithm:
+You can use the following example commands to create a pair of private and public keys for the algorithms RSA or ECDSA:
 
 ```SHELL
-$ openssl genrsa -out private.key 4096
-$ openssl rsa -in private.key -outform PEM -pubout -out public.pem
+$ # RS512
+$ # private key
+$ openssl genrsa -out private-rsa.key 4096
+$ # public key
+$ openssl rsa -in private-rsa.key -outform PEM -pubout -out public-rsa.pem
+
+$ # ES512
+$ # private key
+$ openssl ecparam -genkey -name secp521r1 -noout -out private-ecdsa.key
+$ # public key
+$ openssl ec -in private-ecdsa.key -pubout -out public-ecdsa.pem
 ```
 
-For more information about generating RSA keys, see [OpenSSL Documentation](https://www.openssl.org/docs/)
+For more information about generating keys, see [OpenSSL Documentation](https://www.openssl.org/docs/)
 
 ### Install service
 
