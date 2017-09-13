@@ -208,9 +208,9 @@ authentication =
 # jwt parameters
 jwt =
 {
-	 # key size for algorithms, values available are 256, 384 or 512, default 512
-	 key_size = 512
-	 
+   # key size for algorithms, values available are 256, 384 or 512, default 512
+   key_size = 512
+   
    # Use RSA algorithm to sign tokens (asymetric)
    use_rsa = false
    
@@ -219,16 +219,16 @@ jwt =
    
    # path to the public certificate file to validate signatures
    rsa_pub_file = "public.pem"
-	 
-	 # Use ECDSA algorithm to sign tokens (asymetric)
-	 use_ecdsa = false
+   
+   # Use ECDSA algorithm to sign tokens (asymetric)
+   use_ecdsa = false
    
    # path to the key (private) certificate file to sign tokens
    ecdsa_key_file = "private.key"
    
    # path to the public certificate file to validate signatures
    ecdsa_pub_file = "public.pem"
-	 
+   
    # Use SHA algorithm to sign tokens (symetric)
    use_sha = true
    
