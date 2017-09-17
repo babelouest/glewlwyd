@@ -109,6 +109,34 @@ Algorithms available are SHA1, SHA256, SHA512, MD5.
 
 ### Data storage backend initialisation
 
+#### TL;DR
+
+For a Mariadb/Mysql database, you must create a database or use an existing one first, example:
+
+```sql
+-- Create database and user
+CREATE DATABASE `glewlwyd`;
+GRANT ALL PRIVILEGES ON glewlwyd.* TO 'glewlwyd'@'%' identified BY 'glewlwyd';
+GRANT ALL PRIVILEGES ON glewlwyd.* TO 'glewlwyd'@'localhost' identified BY 'glewlwyd';
+FLUSH PRIVILEGES;
+```
+
+Then, use the script that fit your database backend and Digest algorithm in the [database](database) folder:
+
+- `database/init-mariadb.sql`
+- `database/init-sqlite3-md5.sql`
+- `database/init-sqlite3-sha.sql`
+- `database/init-sqlite3-sha256.sql`
+- `database/init-sqlite3-sha512.sql`
+
+##### Secuity warning!
+
+Those scripts create a valid database that allow to use glewlwyd but to avoid huge security issues, you must make 2 changes on your first connection:
+- Change the admin password when you connect to the application
+- Change the redirect_uri for the client `g_admin` with your real redirect_uri
+
+#### Detailed installation
+
 You can use a MySql/MariaDB database or a SQLite3 database file.
 Use the dedicated script, `glewlwyd.mariadb.sql` or `glewlwyd.sqlite3.sql` to initialize your database.
 
@@ -144,16 +172,16 @@ $ sqlite3 /var/cache/glewlwyd/glewlwyd.db < glewlwyd.sqlite3.sql
 
 #### Register management webapp
 
-To be able to connect to the front-end application, you must register it first with the script `webapp/init.sql`. For example, run this command for the MySql/Mariadb database:
+To be able to connect to the front-end application, you must register it first with the script `database/init.sql`. For example, run this command for the MySql/Mariadb database:
 
 ```shell
-$ mysql glewlwyd < webapp/init.sql
+$ mysql glewlwyd < database/init.sql
 ```
 
 For the sqlite3 database backend, use the following command:
 
 ```shell
-$ sqlite3 /var/cache/glewlwyd/glewlwyd.db < webapp/init.sql
+$ sqlite3 /var/cache/glewlwyd/glewlwyd.db < database/init.sql
 ```
 
 ### Authentication backend configuration
