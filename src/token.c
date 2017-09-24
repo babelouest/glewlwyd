@@ -501,8 +501,8 @@ char * generate_authorization_code(struct config_elements * config, const char *
  * Validates if a session token is valid
  */
 json_t * session_check(struct config_elements * config, const char * session_value) {
-  json_t * j_query, * j_result, * j_return, * j_grants;
-  char * session_hash, * clause_expired_at, * grants;
+  json_t * j_query, * j_result, * j_return, * j_grants = NULL, * j_user;
+  char * session_hash, * clause_expired_at, * grants = NULL;
   const char * type;
   int res;
   jwt_t * jwt = NULL;
@@ -558,7 +558,17 @@ json_t * session_check(struct config_elements * config, const char * session_val
               j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
               o_free(grants);
               if (j_grants != NULL) {
-                j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+                j_user = get_user(config, jwt_get_grant(jwt, "username"), NULL);
+                if (check_result_value(j_user, G_OK)) {
+                  if (json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
+                    j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+                  } else {
+                    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+                  }
+                } else {
+                  j_return = json_pack("{si}", "result", G_ERROR);
+                }
+                json_decref(j_user);
               } else {
                 j_return = json_pack("{si}", "result", G_ERROR);
               }
