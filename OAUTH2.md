@@ -1,4 +1,4 @@
-# Glewlwyd OAuth 2 endpoints spceifications
+# Glewlwyd OAuth 2 endpoints specifications
 
 This document is intended to describe Glewlwyd oauth 2 implementation.
 
