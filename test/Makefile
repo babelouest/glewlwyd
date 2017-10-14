@@ -26,7 +26,7 @@ LIBS=-lc -lulfius -lorcania -ljansson -lyder -lcheck -lpthread -lm -lrt -lsubuni
 all: test
 
 clean:
-	rm -f *.o glewlwyd_auth_code glewlwyd_client_cred glewlwyd_code glewlwyd_code_client_confidential glewlwyd_implicit glewlwyd_resource_owner_pwd_cred glewlwyd_resource_owner_pwd_cred_client_confidential glewlwyd_refresh_token glewlwyd_refresh_token_client_confidential glewlwyd_delete_token glewlwyd_admin_authorization glewlwyd_crud_scope glewlwyd_crud_user glewlwyd_crud_client glewlwyd_crud_resource glewlwyd_update_user_profile glewlwyd_user_session_user glewlwyd_user_session_admin glewlwyd_user_refresh_token_user glewlwyd_user_refresh_token_admin valgrind.txt
+	rm -f *.o *.log *.err glewlwyd_auth_code glewlwyd_client_cred glewlwyd_code glewlwyd_code_client_confidential glewlwyd_implicit glewlwyd_resource_owner_pwd_cred glewlwyd_resource_owner_pwd_cred_client_confidential glewlwyd_refresh_token glewlwyd_refresh_token_client_confidential glewlwyd_delete_token glewlwyd_admin_authorization glewlwyd_crud_scope glewlwyd_crud_user glewlwyd_crud_client glewlwyd_crud_resource glewlwyd_update_user_profile glewlwyd_user_session_user glewlwyd_user_session_admin glewlwyd_user_refresh_token_user glewlwyd_user_refresh_token_admin valgrind.txt
 
 unit-tests.o: unit-tests.c unit-tests.h
 	$(CC) $(CFLAGS) -c unit-tests.c
