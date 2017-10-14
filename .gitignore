@@ -1,6 +1,8 @@
 *.o
 *.key
 *.pem
+*.log
+*.err
 valgrind.txt
 glewlwyd.conf
 glewlwyd

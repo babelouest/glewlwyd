@@ -38,7 +38,7 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
   char * scope_clause;
   size_t i_scope;
   
-  j_query = json_pack("{sss[sssss]s{ss}}",
+  j_query = json_pack("{sss[ssssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER,
                       "columns",
@@ -46,6 +46,7 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
                         "gu_name AS name", 
                         "gu_email AS email",
                         "gu_login AS login",
+                        "gu_additional_property_value AS additional_property_value",
                         "gu_enabled",
                       "where",
                         "gu_login",
@@ -86,6 +87,12 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
         json_decref(j_scope);
         json_object_set_new(json_array_get(j_result, 0), "source", json_string("database"));
         
+        if (config->additional_property_name != NULL && o_strlen(config->additional_property_name)) {
+          json_object_set_new(json_array_get(j_result, 0), "additional_property_name", json_string(config->additional_property_name));
+        } else {
+          json_object_del(json_array_get(j_result, 0), "additional_property_value");
+        }
+        
         j_return = json_pack("{siso}", "result", G_OK, "user", json_copy(json_array_get(j_result, 0)));
       } else {
         j_return = json_pack("{si}", "result", G_ERROR_DB);
@@ -110,16 +117,17 @@ json_t * get_user_ldap(struct config_elements * config, const char * username) {
   LDAPMessage * answer = NULL, * entry;
   int j;
   json_t * j_result = NULL, * j_scope_list = get_scope_list(config);
+  char * additional_property_value, * tmp;
   
   int  result;
   int  ldap_version   = LDAP_VERSION3;
   int  scope          = LDAP_SCOPE_ONELEVEL;
   char * filter       = NULL;
-  char * attrs[]      = {config->auth_ldap->name_property_user_read, config->auth_ldap->email_property_user_read, config->auth_ldap->login_property_user_read, config->auth_ldap->scope_property_user_read, NULL};
+  char * attrs[]      = {config->auth_ldap->name_property_user_read, config->auth_ldap->email_property_user_read, config->auth_ldap->login_property_user_read, config->auth_ldap->scope_property_user_read, o_strlen(config->auth_ldap->additional_property_value_read)>0?config->auth_ldap->additional_property_value_read:NULL, NULL};
   int  attrsonly      = 0;
   char * ldap_mech    = LDAP_SASL_SIMPLE;
   struct berval cred;
-  struct berval *servcred;
+  struct berval *servcred, ** name_values, ** email_values, ** login_values, ** scope_values, ** additional_property_values = NULL;
 
   cred.bv_val = config->auth_ldap->bind_passwd;
   cred.bv_len = strlen(config->auth_ldap->bind_passwd);
@@ -150,10 +158,13 @@ json_t * get_user_ldap(struct config_elements * config, const char * username) {
         json_t * j_entry = json_object();
         
         if (j_entry != NULL) {
-          struct berval ** name_values = ldap_get_values_len(ldap, entry, config->auth_ldap->name_property_user_read);
-          struct berval ** email_values = ldap_get_values_len(ldap, entry, config->auth_ldap->email_property_user_read);
-          struct berval ** login_values = ldap_get_values_len(ldap, entry, config->auth_ldap->login_property_user_read);
-          struct berval ** scope_values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_user_read);
+          name_values = ldap_get_values_len(ldap, entry, config->auth_ldap->name_property_user_read);
+          email_values = ldap_get_values_len(ldap, entry, config->auth_ldap->email_property_user_read);
+          login_values = ldap_get_values_len(ldap, entry, config->auth_ldap->login_property_user_read);
+          scope_values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_user_read);
+          if (o_strlen(config->auth_ldap->additional_property_value_read)>0) {
+            additional_property_values = ldap_get_values_len(ldap, entry, config->auth_ldap->additional_property_value_read);
+          }
           
           if (ldap_count_values_len(name_values) > 0) {
             json_object_set_new(j_entry, "name", json_stringn(name_values[0]->bv_val, name_values[0]->bv_len));
@@ -165,6 +176,24 @@ json_t * get_user_ldap(struct config_elements * config, const char * username) {
           
           if (ldap_count_values_len(login_values) > 0) {
             json_object_set_new(j_entry, "login", json_stringn(login_values[0]->bv_val, login_values[0]->bv_len));
+          }
+          
+          if (additional_property_values != NULL && ldap_count_values_len(additional_property_values) > 0) {
+            additional_property_value = NULL;
+            for (j=0; j<ldap_count_values_len(additional_property_values); j++) {
+              if (additional_property_value == NULL) {
+                additional_property_value = o_strndup(additional_property_values[j]->bv_val, additional_property_values[j]->bv_len);
+              } else {
+                tmp = msprintf("%s,%.*s", additional_property_value, additional_property_values[j]->bv_len, additional_property_values[j]->bv_val);
+                o_free(additional_property_value);
+                additional_property_value = tmp;
+              }
+            }
+            if (config->additional_property_name != NULL && o_strlen(config->additional_property_name)) {
+              json_object_set_new(j_entry, "additional_property_name", json_string(config->additional_property_name));
+              json_object_set_new(j_entry, "additional_property_value", json_string(additional_property_value));
+            }
+            o_free(additional_property_value);
           }
           
           // For now a ldap user is always enabled, until I find a standard way to do it
@@ -186,6 +215,8 @@ json_t * get_user_ldap(struct config_elements * config, const char * username) {
           ldap_value_free_len(email_values);
           ldap_value_free_len(login_values);
           ldap_value_free_len(scope_values);
+          ldap_value_free_len(additional_property_values);
+          //y_log_message(Y_LOG_LEVEL_DEBUG, "j_entry is %s", json_dumps(j_entry, JSON_ENCODE_ANY));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for j_entry");
         }
@@ -783,16 +814,17 @@ json_t * get_user_list_ldap(struct config_elements * config, const char * search
   LDAPMessage * answer = NULL, * entry;
   int i, j;
   json_t * j_result, * j_scope_list = get_scope_list(config);
+  char * additional_property_value, * tmp;
   
   int  result;
   int  ldap_version   = LDAP_VERSION3;
   int  scope          = LDAP_SCOPE_ONELEVEL;
   char * filter       = NULL;
-  char * attrs[]      = {config->auth_ldap->name_property_user_read, config->auth_ldap->email_property_user_read, config->auth_ldap->login_property_user_read, config->auth_ldap->scope_property_user_read, NULL};
+  char * attrs[]      = {config->auth_ldap->name_property_user_read, config->auth_ldap->email_property_user_read, config->auth_ldap->login_property_user_read, config->auth_ldap->scope_property_user_read, o_strlen(config->auth_ldap->additional_property_value_read)>0?config->auth_ldap->additional_property_value_read:NULL, NULL};
   int  attrsonly      = 0;
   char * ldap_mech    = LDAP_SASL_SIMPLE;
   struct berval cred;
-  struct berval *servcred;
+  struct berval *servcred, ** name_values, ** email_values, ** login_values, ** scope_values, ** additional_property_values = NULL;
 
   cred.bv_val = config->auth_ldap->bind_passwd;
   cred.bv_len = strlen(config->auth_ldap->bind_passwd);
@@ -842,10 +874,13 @@ json_t * get_user_list_ldap(struct config_elements * config, const char * search
           json_t * j_entry = json_object();
           
           if (j_entry != NULL) {
-            struct berval ** name_values = ldap_get_values_len(ldap, entry, config->auth_ldap->name_property_user_read);
-            struct berval ** email_values = ldap_get_values_len(ldap, entry, config->auth_ldap->email_property_user_read);
-            struct berval ** login_values = ldap_get_values_len(ldap, entry, config->auth_ldap->login_property_user_read);
-            struct berval ** scope_values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_user_read);
+            name_values = ldap_get_values_len(ldap, entry, config->auth_ldap->name_property_user_read);
+            email_values = ldap_get_values_len(ldap, entry, config->auth_ldap->email_property_user_read);
+            login_values = ldap_get_values_len(ldap, entry, config->auth_ldap->login_property_user_read);
+            scope_values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_user_read);
+            if (o_strlen(config->auth_ldap->additional_property_value_read)>0 && config->additional_property_name != NULL && o_strlen(config->additional_property_name)) {
+              additional_property_values = ldap_get_values_len(ldap, entry, config->auth_ldap->additional_property_value_read);
+            }
             
             if (ldap_count_values_len(name_values) > 0) {
               json_object_set_new(j_entry, "name", json_stringn(name_values[0]->bv_val, name_values[0]->bv_len));
@@ -857,6 +892,24 @@ json_t * get_user_list_ldap(struct config_elements * config, const char * search
             
             if (ldap_count_values_len(login_values) > 0) {
               json_object_set_new(j_entry, "login", json_stringn(login_values[0]->bv_val, login_values[0]->bv_len));
+            }
+            
+            if (additional_property_values != NULL && ldap_count_values_len(additional_property_values) > 0) {
+              additional_property_value = NULL;
+              for (j=0; j<ldap_count_values_len(additional_property_values); j++) {
+                if (additional_property_value == NULL) {
+                  additional_property_value = o_strndup(login_values[j]->bv_val, login_values[j]->bv_len);
+                } else {
+                  tmp = msprintf("%s,%.*s", additional_property_value, login_values[j]->bv_len, login_values[j]->bv_val);
+                  o_free(additional_property_value);
+                  additional_property_value = tmp;
+                }
+              }
+              if (config->additional_property_name != NULL && o_strlen(config->additional_property_name)) {
+                json_object_set_new(j_entry, "additional_property_name", json_string(config->additional_property_name));
+                json_object_set_new(j_entry, "additional_property_value", json_string(additional_property_value));
+              }
+              o_free(additional_property_value);
             }
             
             // For now a ldap user is always enabled, until I find a standard way to do it
@@ -878,6 +931,7 @@ json_t * get_user_list_ldap(struct config_elements * config, const char * search
             ldap_value_free_len(email_values);
             ldap_value_free_len(login_values);
             ldap_value_free_len(scope_values);
+            ldap_value_free_len(additional_property_values);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for j_entry");
           }
@@ -903,7 +957,7 @@ json_t * get_user_list_database(struct config_elements * config, const char * se
   char * scope_clause;
   size_t index, i_scope;
   
-  j_query = json_pack("{sss[sssss]sisi}",
+  j_query = json_pack("{sss[ssssss]sisi}",
                       "table",
                       GLEWLWYD_TABLE_USER,
                       "columns",
@@ -911,6 +965,7 @@ json_t * get_user_list_database(struct config_elements * config, const char * se
                         "gu_name AS name", 
                         "gu_email AS email",
                         "gu_login AS login",
+                        "gu_additional_property_value AS additional_property_value",
                         "gu_enabled",
                       "offset",
                       offset,
@@ -959,6 +1014,12 @@ json_t * get_user_list_database(struct config_elements * config, const char * se
         }
         json_decref(j_scope);
         json_object_set_new(j_entry, "source", json_string("database"));
+        
+        if (config->additional_property_name != NULL && o_strlen(config->additional_property_name)) {
+          json_object_set_new(j_entry, "additional_property_name", json_string(config->additional_property_name));
+        } else {
+          json_object_del(j_entry, "additional_property_value");
+        }
         
         json_array_append_new(json_object_get(j_return, "user"), json_copy(j_entry));
       } else {
@@ -1029,6 +1090,10 @@ json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add
       
       if (json_object_get(j_user, "email") != NULL && (!json_is_string(json_object_get(j_user, "email")) || json_string_length(json_object_get(j_user, "email")) > 128)) {
         json_array_append_new(j_return, json_pack("{ss}", "email", "email is an optional string between 0 and 128 characters"));
+      }
+      
+      if (json_object_get(j_user, "additional_property_value") != NULL && (!json_is_string(json_object_get(j_user, "additional_property_value")) || json_string_length(json_object_get(j_user, "additional_property_value")) > 512)) {
+        json_array_append_new(j_return, json_pack("{ss}", "additional_property_value", "additional_property_value is an optional string between 0 and 512 characters"));
       }
       
       if (json_object_get(j_user, "enabled") != NULL && !json_is_boolean(json_object_get(j_user, "enabled"))) {
@@ -1149,6 +1214,9 @@ int add_user_ldap(struct config_elements * config, json_t * j_user) {
   for (i=0; json_object_get(j_user, "email") != NULL && json_string_length(json_object_get(j_user, "email")) > 0 && config->auth_ldap->email_property_user_write[i] != NULL; i++) {
     nb_attr++;
   }
+  for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL; i++) {
+    nb_attr++;
+  }
   for (i=0; config->use_scope && config->auth_ldap->scope_property_user_write[i] != NULL && json_object_get(j_user, "scope") != NULL && json_array_size(json_object_get(j_user, "scope")) > 0; i++) {
     nb_attr++;
   }
@@ -1217,6 +1285,16 @@ int i;
       attr_counter++;
     }
     
+    for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL; i++) {
+      mods[attr_counter] = o_malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_values = o_malloc(2 * sizeof(char *));
+      mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
+      mods[attr_counter]->mod_type   = config->auth_ldap->additional_property_value_write[i];
+      mods[attr_counter]->mod_values[0] = (char *)json_string_value(json_object_get(j_user, "additional_property_value"));
+      mods[attr_counter]->mod_values[1] = NULL;
+      attr_counter++;
+    }
+    
     for (i=0; config->use_scope && config->auth_ldap->scope_property_user_write[i] != NULL && json_object_get(j_user, "scope") != NULL && json_array_size(json_object_get(j_user, "scope")) > 0; i++) {
       mods[attr_counter] = o_malloc(sizeof(LDAPMod));
       mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
@@ -1270,6 +1348,11 @@ int i;
       o_free(mods[attr_counter]);
       attr_counter++;
     }
+    for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL; i++) {
+      o_free(mods[attr_counter]->mod_values);
+      o_free(mods[attr_counter]);
+      attr_counter++;
+    }
     for (i=0; config->use_scope && config->auth_ldap->scope_property_user_write[i] != NULL && json_object_get(j_user, "scope") != NULL && json_array_size(json_object_get(j_user, "scope")) > 0; i++) {
       o_free(mods[attr_counter]->mod_values);
       o_free(mods[attr_counter]);
@@ -1304,7 +1387,7 @@ int add_user_database(struct config_elements * config, json_t * j_user) {
     escaped = generate_hash(config, config->hash_algorithm,json_string_value(json_object_get(j_user, "password")));
     password = msprintf("'%s'", escaped);
   }
-  j_query = json_pack("{sss{sssssss{ss}si}}",
+  j_query = json_pack("{sss{sssssss{ss}sOsi}}",
                       "table",
                       GLEWLWYD_TABLE_USER,
                       "values",
@@ -1317,6 +1400,8 @@ int add_user_database(struct config_elements * config, json_t * j_user) {
                         "gu_password",
                           "raw",
                           password,
+                        "gu_additional_property_value",
+                        json_object_get(j_user, "additional_property_value")!=NULL?json_object_get(j_user, "additional_property_value"):json_null(),
                         "gu_enabled",
                         json_object_get(j_user, "enabled")==json_false()?0:1);
   res = h_insert(config->conn, j_query, NULL);
@@ -1390,6 +1475,9 @@ int set_user_ldap(struct config_elements * config, const char * user, json_t * j
   for (i=0; json_object_get(j_user, "email") != NULL && json_string_length(json_object_get(j_user, "email")) > 0 && config->auth_ldap->email_property_user_write[i] != NULL; i++) {
     nb_attr++;
   }
+  for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL; i++) {
+    nb_attr++;
+  }
   for (i=0; config->use_scope && config->auth_ldap->scope_property_user_write[i] != NULL && json_object_get(j_user, "scope") != NULL && json_array_size(json_object_get(j_user, "scope")) > 0; i++) {
     nb_attr++;
   }
@@ -1437,6 +1525,16 @@ int set_user_ldap(struct config_elements * config, const char * user, json_t * j
       attr_counter++;
     }
     
+    for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL; i++) {
+      mods[attr_counter] = o_malloc(sizeof(LDAPMod));
+      mods[attr_counter]->mod_values = o_malloc(2 * sizeof(char *));
+      mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
+      mods[attr_counter]->mod_type   = config->auth_ldap->additional_property_value_write[i];
+      mods[attr_counter]->mod_values[0] = (char *)json_string_value(json_object_get(j_user, "additional_property_value"));
+      mods[attr_counter]->mod_values[1] = NULL;
+      attr_counter++;
+    }
+    
     for (i=0; config->use_scope && config->auth_ldap->scope_property_user_write[i] != NULL && json_object_get(j_user, "scope") != NULL && json_array_size(json_object_get(j_user, "scope")) > 0; i++) {
       mods[attr_counter] = o_malloc(sizeof(LDAPMod));
       mods[attr_counter]->mod_op     = LDAP_MOD_REPLACE;
@@ -1479,6 +1577,11 @@ int set_user_ldap(struct config_elements * config, const char * user, json_t * j
       attr_counter++;
     }
     for (i=0; json_object_get(j_user, "email") != NULL && json_string_length(json_object_get(j_user, "email")) > 0 && config->auth_ldap->email_property_user_write[i] != NULL; i++) {
+      o_free(mods[attr_counter]->mod_values);
+      o_free(mods[attr_counter]);
+      attr_counter++;
+    }
+    for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL; i++) {
       o_free(mods[attr_counter]->mod_values);
       o_free(mods[attr_counter]);
       attr_counter++;
@@ -1534,6 +1637,9 @@ int set_user_database(struct config_elements * config, const char * user, json_t
     json_object_set_new(json_object_get(j_query, "set"), "gu_password", json_pack("{ss}", "raw", password));
     o_free(password);
     o_free(escaped);
+  }
+  if (json_object_get(j_user, "additional_property_value") != NULL) {
+    json_object_set_new(json_object_get(j_query, "set"), "gu_additional_property_value", json_copy(json_object_get(j_user, "additional_property_value")));
   }
   if (json_object_get(j_user, "enabled") != NULL) {
     json_object_set_new(json_object_get(j_query, "set"), "gu_enabled", json_object_get(j_user, "enabled")==json_false()?json_integer(0):json_integer(1));
