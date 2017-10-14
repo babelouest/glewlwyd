@@ -310,6 +310,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
       o_free((*config)->auth_ldap->filter_user_read);
       o_free((*config)->auth_ldap->login_property_user_read);
       o_free((*config)->auth_ldap->scope_property_user_read);
+      o_free((*config)->auth_ldap->additional_property_value_read);
       o_free((*config)->auth_ldap->name_property_user_read);
       o_free((*config)->auth_ldap->email_property_user_read);
       o_free((*config)->auth_ldap->rdn_property_user_write);
