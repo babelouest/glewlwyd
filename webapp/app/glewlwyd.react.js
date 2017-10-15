@@ -508,6 +508,7 @@ $(function() {
       this.handleChangeLogin = this.handleChangeLogin.bind(this);
       this.handleChangeName = this.handleChangeName.bind(this);
       this.handleChangeEmail = this.handleChangeEmail.bind(this);
+      this.handleChangeAdditionalValue = this.handleChangeAdditionalValue.bind(this);
       this.handleChangePassword = this.handleChangePassword.bind(this);
       this.handleChangeConfirmPassword = this.handleChangeConfirmPassword.bind(this);
       this.handleChangeEnabled = this.handleChangeEnabled.bind(this);
@@ -568,6 +569,12 @@ $(function() {
     handleChangeEmail (event) {
       var newUser = $.extend({}, this.state.user);
       newUser.email = event.target.value || "";
+      this.setState({user: newUser});
+    }
+    
+    handleChangeAdditionalValue (event) {
+      var newUser = $.extend({}, this.state.user);
+      newUser.additional_property_value = event.target.value || "";
       this.setState({user: newUser});
     }
     
@@ -678,6 +685,23 @@ $(function() {
                        onChange={this.handleChangeEmail} 
                        data-toggle="tooltip" 
                        title="User e-mail address, used to send password reset">
+                 </input>
+              </div>
+            </div>
+            <div className={!!this.state.user.additional_property_name ? 'row top-buffer' : 'row top-buffer hidden'}>
+              <div className="col-md-6">
+                <label htmlFor="additionalValue">{this.state.user.additional_property_name}</label>
+              </div>
+              <div className="col-md-6">
+                <input className="form-control" 
+                       type="text" 
+                       name="additionalValue" 
+                       id="additionalValue" 
+                       placeholder="Value" 
+                       value={this.state.user.additional_property_value} 
+                       onChange={this.handleChangeAdditionalValue} 
+                       data-toggle="tooltip" 
+                       title="User additional value, optional">
                  </input>
               </div>
             </div>
