@@ -1214,7 +1214,7 @@ int add_user_ldap(struct config_elements * config, json_t * j_user) {
   for (i=0; json_object_get(j_user, "email") != NULL && json_string_length(json_object_get(j_user, "email")) > 0 && config->auth_ldap->email_property_user_write[i] != NULL; i++) {
     nb_attr++;
   }
-  for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL; i++) {
+  for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL && config->additional_property_name != NULL && o_strlen(config->additional_property_name); i++) {
     nb_attr++;
   }
   for (i=0; config->use_scope && config->auth_ldap->scope_property_user_write[i] != NULL && json_object_get(j_user, "scope") != NULL && json_array_size(json_object_get(j_user, "scope")) > 0; i++) {
@@ -1285,7 +1285,7 @@ int i;
       attr_counter++;
     }
     
-    for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL; i++) {
+    for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL && config->additional_property_name != NULL && o_strlen(config->additional_property_name); i++) {
       mods[attr_counter] = o_malloc(sizeof(LDAPMod));
       mods[attr_counter]->mod_values = o_malloc(2 * sizeof(char *));
       mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
@@ -1348,7 +1348,7 @@ int i;
       o_free(mods[attr_counter]);
       attr_counter++;
     }
-    for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL; i++) {
+    for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL && config->additional_property_name != NULL && o_strlen(config->additional_property_name); i++) {
       o_free(mods[attr_counter]->mod_values);
       o_free(mods[attr_counter]);
       attr_counter++;
@@ -1387,7 +1387,7 @@ int add_user_database(struct config_elements * config, json_t * j_user) {
     escaped = generate_hash(config, config->hash_algorithm,json_string_value(json_object_get(j_user, "password")));
     password = msprintf("'%s'", escaped);
   }
-  j_query = json_pack("{sss{sssssss{ss}sOsi}}",
+  j_query = json_pack("{sss{sssssss{ss}si}}",
                       "table",
                       GLEWLWYD_TABLE_USER,
                       "values",
@@ -1400,11 +1400,12 @@ int add_user_database(struct config_elements * config, json_t * j_user) {
                         "gu_password",
                           "raw",
                           password,
-                        "gu_additional_property_value",
-                        json_object_get(j_user, "additional_property_value")!=NULL?json_object_get(j_user, "additional_property_value"):json_null(),
                         "gu_enabled",
                         json_object_get(j_user, "enabled")==json_false()?0:1);
-  res = h_insert(config->conn, j_query, NULL);
+  if (config->additional_property_name != NULL && o_strlen(config->additional_property_name)) {
+		json_object_set(json_object_get(j_query, "values"), "gu_additional_property_value", json_object_get(j_user, "additional_property_value")!=NULL?json_object_get(j_user, "additional_property_value"):json_null());
+	}
+	res = h_insert(config->conn, j_query, NULL);
   json_decref(j_query);
   o_free(escaped);
   o_free(password);
@@ -1475,7 +1476,7 @@ int set_user_ldap(struct config_elements * config, const char * user, json_t * j
   for (i=0; json_object_get(j_user, "email") != NULL && json_string_length(json_object_get(j_user, "email")) > 0 && config->auth_ldap->email_property_user_write[i] != NULL; i++) {
     nb_attr++;
   }
-  for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL; i++) {
+  for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL && config->additional_property_name != NULL && o_strlen(config->additional_property_name); i++) {
     nb_attr++;
   }
   for (i=0; config->use_scope && config->auth_ldap->scope_property_user_write[i] != NULL && json_object_get(j_user, "scope") != NULL && json_array_size(json_object_get(j_user, "scope")) > 0; i++) {
@@ -1525,7 +1526,7 @@ int set_user_ldap(struct config_elements * config, const char * user, json_t * j
       attr_counter++;
     }
     
-    for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL; i++) {
+    for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL && config->additional_property_name != NULL && o_strlen(config->additional_property_name); i++) {
       mods[attr_counter] = o_malloc(sizeof(LDAPMod));
       mods[attr_counter]->mod_values = o_malloc(2 * sizeof(char *));
       mods[attr_counter]->mod_op     = LDAP_MOD_ADD;
@@ -1581,7 +1582,7 @@ int set_user_ldap(struct config_elements * config, const char * user, json_t * j
       o_free(mods[attr_counter]);
       attr_counter++;
     }
-    for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL; i++) {
+    for (i=0; json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 0 && config->auth_ldap->additional_property_value_write[i] != NULL && config->additional_property_name != NULL && o_strlen(config->additional_property_name); i++) {
       o_free(mods[attr_counter]->mod_values);
       o_free(mods[attr_counter]);
       attr_counter++;
@@ -1638,7 +1639,7 @@ int set_user_database(struct config_elements * config, const char * user, json_t
     o_free(password);
     o_free(escaped);
   }
-  if (json_object_get(j_user, "additional_property_value") != NULL) {
+  if (json_object_get(j_user, "additional_property_value") != NULL && config->additional_property_name != NULL && o_strlen(config->additional_property_name)) {
     json_object_set_new(json_object_get(j_query, "set"), "gu_additional_property_value", json_copy(json_object_get(j_user, "additional_property_value")));
   }
   if (json_object_get(j_user, "enabled") != NULL) {
