@@ -1,8 +1,8 @@
 # Installation
 
-## Debian package
+## Debian and Ubuntu packages
 
-Glewlwyd is now available in Debian Buster (testing), and Debian sid. To install it on your device, use the following command as root:
+Glewlwyd is now available in Debian Buster (testing), Debian sid, and since Ubuntu 17.10 "The Artful Aardvark". To install it on your device, use the following command as root:
 
 ```shell
 # apt install glewlwyd
