@@ -907,6 +907,12 @@ int build_config_from_file(struct config_elements * config) {
             config_destroy(&cfg);
             fprintf(stderr, "Error opening sqlite database %s\n", db_sqlite_path);
             return 0;
+          } else {
+            if (h_exec_query_sqlite(config->conn, "PRAGMA foreign_keys = ON;") != H_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON;'");
+              config_destroy(&cfg);
+              return 0;
+            }
           }
         } else {
           config_destroy(&cfg);
