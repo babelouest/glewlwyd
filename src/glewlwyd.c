@@ -617,7 +617,7 @@ int build_config_from_file(struct config_elements * config) {
              * cur_reset_password_email_template_path = NULL, * cur_reset_password_page_url_prefix = NULL,
              * cur_auth_http_auth_url = NULL;
   int db_mariadb_port = 0, cur_key_size = 512;
-  int cur_http_auth = 0, cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_ecdsa = 0, cur_use_sha = 0, cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, i;
+  int cur_http_auth = 0, cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_ecdsa = 0, cur_use_sha = 0, cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, cur_auth_http_check_server_certificate = 1, i;
   
   config_init(&cfg);
   
@@ -733,7 +733,6 @@ int build_config_from_file(struct config_elements * config) {
   
   config_lookup_string(&cfg, "additional_property_name", &cur_additional_property_name);
   if (cur_additional_property_name != NULL) {
-    o_free(config->additional_property_name);
     config->additional_property_name = strdup(cur_additional_property_name);
   }
   
@@ -988,9 +987,9 @@ int build_config_from_file(struct config_elements * config) {
     config_setting_lookup_bool(auth, "http_auth", &cur_http_auth);
     config->has_auth_http = cur_http_auth;
     if (config->has_auth_http &&
-        config->use_scope) {
+        (config->use_scope || config->additional_property_name != NULL)) {
       config_destroy(&cfg);
-      fprintf(stderr, "Error, due to security concerns you can not use authentication via HTTP together with scopes\n");
+      fprintf(stderr, "Error, due to security concerns you can not use authentication via HTTP together with scopes or additional_property\n");
       return 0;
     }
     config_setting_lookup_bool(auth, "database_auth", &cur_database_auth);
@@ -1007,8 +1006,8 @@ int build_config_from_file(struct config_elements * config) {
           fprintf(stderr, "Error allocating resources for config->auth_http\n");
           return 0;
         } else {
-          memset(config->auth_http, 0, sizeof(struct _auth_http));
-
+          config_setting_lookup_bool(auth, "http_auth_check_certificate", &cur_auth_http_check_server_certificate);
+          config->auth_http->check_server_certificate = cur_auth_http_check_server_certificate;
           config->auth_http->url = o_strdup(cur_auth_http_auth_url);
           if (config->auth_http->url == NULL) {
             config_destroy(&cfg);

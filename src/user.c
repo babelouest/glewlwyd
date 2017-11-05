@@ -114,11 +114,7 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
  * this is not possible, so return an error
  */
 json_t * get_user_http(struct config_elements * config, const char * username) {
-  json_t * j_result = NULL;
-
-  j_result = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
-
-  return j_result;
+  return json_pack("{si}", "result", G_ERROR_NOT_FOUND);
 }
 
 /**
@@ -272,11 +268,7 @@ json_t * get_user_scope_grant(struct config_elements * config, const char * user
  * as we have no scope in http, we return an empty list
  */
 json_t * get_user_scope_grant_http(struct config_elements * config, const char * username) {
-  json_t * j_result = NULL;
-
-  j_result = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
-
-  return j_result;
+  return json_pack("{si}", "result", G_ERROR_NOT_FOUND);
 }
 
 /**
@@ -490,34 +482,44 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
  * On success, return a json array with all scope values available
  */
 json_t * auth_check_user_credentials_http(struct config_elements * config, const char * username, const char * password) {
-  int res, res_status;
-  struct _u_response response;
+  int res, to_return;
   struct _u_request request;
+  struct _u_response response;
 
   if (o_strlen(username) <= 0 || o_strlen(password) <= 0) {
-    return json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    to_return = G_ERROR_UNAUTHORIZED;
   } else {
     ulfius_init_request(&request);
+    ulfius_init_response(&response);
     request.http_verb = o_strdup("GET");
     request.http_url = o_strdup(config->auth_http->url);
+    request.check_server_certificate = config->auth_http->check_server_certificate;
     request.auth_basic_user = o_strdup(username);
     request.auth_basic_password = o_strdup(password);
-    ulfius_init_response(&response);
+    /*
+      Set a timeout for the outgoing connection (10 seconds for example),
+      in case the authentication server is down or something like that, 
+      this can be hardcoded, or we can add a config value
+    */
+    request.timeout = 10;
     res = ulfius_send_http_request(&request, &response);
-    res_status = response.status;
-    ulfius_clean_response(&response);
-    ulfius_clean_request(&request);
     if (res == U_OK) {
-      if (res_status == 200) {
-        return json_pack("{si}", "result", G_OK);
+      if (response.status == 200) {
+        to_return = G_OK;
+      } else if (response.status == 403 || response.status == 401) {
+        to_return = G_ERROR_UNAUTHORIZED;
       } else {
-        return json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials_http - Error http auth: %d", response.status);
+        to_return = G_ERROR;
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error querying authentication server");
-      return json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials_http - Error ulfius_send_http_request");
+      to_return = G_ERROR;
     }
+    ulfius_clean_response(&response);
+    ulfius_clean_request(&request);
   }
+  return json_pack("{si}", "result", to_return);
 }
 
 /**
@@ -757,9 +759,7 @@ json_t * auth_check_user_scope(struct config_elements * config, const char * use
  * as we have no scope in http, we return an empty list
  */
 json_t * auth_check_user_scope_http(struct config_elements * config, const char * username, const char * scope_list) {
-  json_t * res        = NULL;
-
-  return res;
+  return NULL;
 }
 
 /**
@@ -1139,11 +1139,7 @@ json_t * get_user_list_database(struct config_elements * config, const char * se
  * as we have no user list in http, we return an empty list
  */
 json_t * get_user_list_http(struct config_elements * config, const char * search, long int offset, long int limit) {
-  json_t * j_return;
-
-  j_return = json_pack("{sis[]}", "result", G_OK, "user");
-
-  return j_return;
+  return json_pack("{sis[]}", "result", G_OK, "user");
 }
 
 /**
@@ -1352,11 +1348,7 @@ int add_user(struct config_elements * config, json_t * j_user) {
  * as this is not possible right now, we just retrun ok
  */
 int add_user_http(struct config_elements * config, json_t * j_user) {
-  int res;
-
-  res = G_ERROR_PARAM;
-
-  return res;
+  return G_ERROR_PARAM;
 }
 
 /**
