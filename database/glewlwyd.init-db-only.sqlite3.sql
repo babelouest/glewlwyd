@@ -31,6 +31,7 @@ CREATE TABLE `g_user` (
   `gu_email` TEXT DEFAULT '',
   `gu_login` TEXT NOT NULL UNIQUE,
   `gu_password` TEXT NOT NULL,
+  `gu_additional_property_value` TEXT,
   `gu_enabled` INTEGER DEFAULT 1
 );
 CREATE INDEX `i_g_user` ON `g_user`(`gu_id`);

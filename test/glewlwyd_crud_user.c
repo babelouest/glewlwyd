@@ -10,6 +10,7 @@
 #include <ulfius.h>
 #include <orcania.h>
 #include <yder.h>
+#include <jwt.h>
 
 #include "unit-tests.h"
 
@@ -72,7 +73,15 @@ START_TEST(test_glwd_crud_user_add_ok_database)
   char * url = msprintf("%s/user/", SERVER_URI);
   int res;
   
-  json_body = json_pack("{sssssssssss[ss]}", "source", "database", "login", "new_user", "name", "New User", "password", "password", "email", "test@glewlwyd.domain", "scope", "scope1", "scope2");
+  json_body = json_pack("{sssssssssssss[ss]}",
+                        "source", "database",
+                        "login", "new_user",
+                        "name", "New User",
+                        "password", "password",
+                        "email", "test@glewlwyd.domain",
+                        "additional_property_value", "new property value",
+                        "scope", 
+                          "scope1", "scope2");
   res = run_simple_test(&user_req, "POST", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   json_decref(json_body);
   ck_assert_int_eq(res, 1);
@@ -99,7 +108,15 @@ END_TEST
 START_TEST(test_glwd_crud_user_get_new_database)
 {
   char * url = msprintf("%s/user/new_user?source=database", SERVER_URI);
-  json_t * j_new_user = json_string("test@glewlwyd.domain");
+  json_t * j_new_user = json_pack("{sssssssssssos[ss]}",
+                        "login", "new_user",
+                        "name", "New User",
+                        "email", "test@glewlwyd.domain",
+                        "additional_property_name", "new_property",
+                        "additional_property_value", "new property value",
+                        "enabled", json_true(),
+                        "scope", 
+                          "scope1", "scope2");
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_new_user, NULL, NULL);
   free(url);
@@ -162,6 +179,42 @@ START_TEST(test_glwd_crud_user_connect_success_new)
 }
 END_TEST
 
+START_TEST(test_glwd_crud_user_check_access_token_ok)
+{
+  struct _u_request auth_req;
+  struct _u_response auth_resp;
+  json_t * j_body;
+  jwt_t * my_jwt;
+  char * grants;
+  
+  ulfius_init_request(&auth_req);
+  ulfius_init_response(&auth_resp);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/token/", SERVER_URI);
+  u_map_put(auth_req.map_post_body, "username", "new_user");
+  u_map_put(auth_req.map_post_body, "password", "password");
+  u_map_put(auth_req.map_post_body, "grant_type", "password");
+  u_map_put(auth_req.map_post_body, "scope", "scope1 scope2");
+  ulfius_send_http_request(&auth_req, &auth_resp);
+  ck_assert_int_eq(auth_resp.status, 200);
+  j_body = json_loadb(auth_resp.binary_body, auth_resp.binary_body_length, JSON_DECODE_ANY, NULL);
+  ck_assert_ptr_ne(json_object_get(j_body, "access_token"), NULL);
+  ck_assert_ptr_ne(json_object_get(j_body, "refresh_token"), NULL);
+  ck_assert_str_eq(json_string_value(json_object_get(j_body, "token_type")), "bearer");
+  ck_assert_ptr_ne(json_object_get(j_body, "iat"), NULL);
+  ck_assert_ptr_ne(json_object_get(j_body, "expires_in"), NULL);
+  ck_assert_str_eq(json_string_value(json_object_get(j_body, "scope")), "scope1 scope2");
+  ck_assert_int_eq(jwt_decode(&my_jwt, json_string_value(json_object_get(j_body, "access_token")), NULL, 0), 0);
+  grants = jwt_get_grants_json(my_jwt, "new_property");
+  ck_assert_str_eq(grants, "\"new property value\"");
+  free(grants);
+  json_decref(j_body);
+  jwt_free(my_jwt);
+  ulfius_clean_request(&auth_req);
+  ulfius_clean_response(&auth_resp);
+}
+END_TEST
+
 START_TEST(test_glwd_crud_user_delete_new_database)
 {
   char * url = msprintf("%s/user/new_user?source=database", SERVER_URI);
@@ -214,7 +267,15 @@ START_TEST(test_glwd_crud_user_add_ok_ldap)
   char * url = msprintf("%s/user/", SERVER_URI);
   int res;
   
-  json_body = json_pack("{sssssssssss[ss]}", "source", "ldap", "login", "new_user", "name", "New User", "password", "password", "email", "test@glewlwyd.domain", "scope", "scope1", "scope2");
+  json_body = json_pack("{sssssssssssss[ss]}",
+                        "source", "ldap",
+                        "login", "new_user",
+                        "name", "New User",
+                        "password", "password",
+                        "email", "test@glewlwyd.domain",
+                        "additional_property_value", "new property value",
+                        "scope",
+                          "scope1", "scope2");
   res = run_simple_test(&user_req, "POST", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   json_decref(json_body);
   ck_assert_int_eq(res, 1);
@@ -241,7 +302,15 @@ END_TEST
 START_TEST(test_glwd_crud_user_get_new_ldap)
 {
   char * url = msprintf("%s/user/new_user?source=ldap", SERVER_URI);
-  json_t * j_new_user = json_string("test@glewlwyd.domain");
+  json_t * j_new_user = json_pack("{sssssssssssos[ss]}",
+                        "login", "new_user",
+                        "name", "New User",
+                        "email", "test@glewlwyd.domain",
+                        "additional_property_name", "new_property",
+                        "additional_property_value", "new property value",
+                        "enabled", json_true(),
+                        "scope", 
+                          "scope1", "scope2");
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_new_user, NULL, NULL);
   free(url);
@@ -302,7 +371,14 @@ START_TEST(test_glwd_crud_user_add_ok_no_source)
   char * url = msprintf("%s/user/", SERVER_URI);
   int res;
   
-  json_body = json_pack("{sssssssss[ss]}", "login", "new_user", "name", "New User", "password", "password", "email", "test@glewlwyd.domain", "scope", "scope1", "scope2");
+  json_body = json_pack("{sssssssssss[ss]}",
+                        "login", "new_user",
+                        "name", "New User",
+                        "password", "password",
+                        "email", "test@glewlwyd.domain",
+                        "additional_property_value", "new property value",
+                        "scope",
+                          "scope1", "scope2");
   res = run_simple_test(&user_req, "POST", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   json_decref(json_body);
   ck_assert_int_eq(res, 1);
@@ -329,7 +405,15 @@ END_TEST
 START_TEST(test_glwd_crud_user_get_new_no_source)
 {
   char * url = msprintf("%s/user/new_user", SERVER_URI);
-  json_t * j_new_user = json_string("test@glewlwyd.domain");
+  json_t * j_new_user = json_pack("{sssssssssssos[ss]}",
+                        "login", "new_user",
+                        "name", "New User",
+                        "email", "test@glewlwyd.domain",
+                        "additional_property_name", "new_property",
+                        "additional_property_value", "new property value",
+                        "enabled", json_true(),
+                        "scope", 
+                          "scope1", "scope2");
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_new_user, NULL, NULL);
   free(url);
@@ -397,11 +481,13 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_database);
   tcase_add_test(tc_core, test_glwd_crud_user_search_success);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
+  tcase_add_test(tc_core, test_glwd_crud_user_check_access_token_ok);
   tcase_add_test(tc_core, test_glwd_crud_user_add_invalid_database);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_database);
   tcase_add_test(tc_core, test_glwd_crud_user_set_new_database);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_updated_database);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
+  tcase_add_test(tc_core, test_glwd_crud_user_check_access_token_ok);
   tcase_add_test(tc_core, test_glwd_crud_user_disable_password_new_database);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_empty_password_new);
@@ -410,11 +496,13 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_search_success);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
+  tcase_add_test(tc_core, test_glwd_crud_user_check_access_token_ok);
   tcase_add_test(tc_core, test_glwd_crud_user_add_invalid_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_set_new_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_updated_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
+  tcase_add_test(tc_core, test_glwd_crud_user_check_access_token_ok);
   tcase_add_test(tc_core, test_glwd_crud_user_disable_password_new_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_empty_password_new);
@@ -423,11 +511,13 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_no_source);
   tcase_add_test(tc_core, test_glwd_crud_user_search_success);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
+  tcase_add_test(tc_core, test_glwd_crud_user_check_access_token_ok);
   tcase_add_test(tc_core, test_glwd_crud_user_add_invalid_no_source);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_no_source);
   tcase_add_test(tc_core, test_glwd_crud_user_set_new_no_source);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_updated_no_source);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
+  tcase_add_test(tc_core, test_glwd_crud_user_check_access_token_ok);
   tcase_add_test(tc_core, test_glwd_crud_user_disable_password_new_no_source);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_empty_password_new);

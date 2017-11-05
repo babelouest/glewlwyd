@@ -77,6 +77,7 @@ int main (int argc, char ** argv) {
   config->session_expiration = GLEWLWYD_SESSION_EXPIRATION_DEFAULT;
   config->admin_scope = o_strdup(GLEWLWYD_ADMIN_SCOPE);
   config->profile_scope = o_strdup(GLEWLWYD_PROFILE_SCOPE);
+  config->additional_property_name = NULL;
   config->use_secure_connection = 0;
   config->secure_connection_key_file = NULL;
   config->secure_connection_pem_file = NULL;
@@ -287,6 +288,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->hash_algorithm);
     o_free((*config)->login_url);
     o_free((*config)->grant_url);
+    o_free((*config)->additional_property_name);
     if ((*config)->reset_password_config != NULL) {
       o_free((*config)->reset_password_config->smtp_host);
       o_free((*config)->reset_password_config->smtp_user);
@@ -308,6 +310,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
       o_free((*config)->auth_ldap->filter_user_read);
       o_free((*config)->auth_ldap->login_property_user_read);
       o_free((*config)->auth_ldap->scope_property_user_read);
+      o_free((*config)->auth_ldap->additional_property_value_read);
       o_free((*config)->auth_ldap->name_property_user_read);
       o_free((*config)->auth_ldap->email_property_user_read);
       o_free((*config)->auth_ldap->rdn_property_user_write);
@@ -315,6 +318,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
       free_string_array((*config)->auth_ldap->scope_property_user_write);
       free_string_array((*config)->auth_ldap->name_property_user_write);
       free_string_array((*config)->auth_ldap->email_property_user_write);
+      free_string_array((*config)->auth_ldap->additional_property_value_write);
       o_free((*config)->auth_ldap->password_property_user_write);
       o_free((*config)->auth_ldap->password_algorithm_user_write);
       free_string_array((*config)->auth_ldap->object_class_user_write);
@@ -566,11 +570,12 @@ int build_config_from_file(struct config_elements * config) {
   const char * cur_prefix = NULL, * cur_log_mode = NULL, * cur_log_level = NULL, * cur_log_file = NULL, * one_log_mode = NULL, * cur_hash_algorithm = NULL, 
              * db_type = NULL, * db_sqlite_path = NULL, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL,
              * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL,
-             * cur_session_key = NULL, * cur_admin_scope = NULL, * cur_profile_scope = NULL,
+             * cur_session_key = NULL, * cur_admin_scope = NULL, * cur_profile_scope = NULL, * cur_additional_property_name = NULL, 
              * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL,
              * cur_auth_ldap_base_search_user = NULL, * cur_auth_ldap_filter_user_read = NULL,
              * cur_auth_ldap_login_property_user_read = NULL, * cur_auth_ldap_name_property_user_read = NULL,
              * cur_auth_ldap_email_property_user_read = NULL, * cur_auth_ldap_scope_property_user_read = NULL,
+             * cur_auth_ldap_additional_property_value_read = NULL, * cur_auth_ldap_additional_property_value_write = NULL,
              * cur_auth_ldap_rdn_property_user_write = NULL, * cur_auth_ldap_login_property_user_write = NULL,
              * cur_auth_ldap_name_property_user_write = NULL, * cur_auth_ldap_email_property_user_write = NULL,
              * cur_auth_ldap_scope_property_user_write = NULL, * cur_auth_ldap_password_property_user_write = NULL,
@@ -702,6 +707,12 @@ int build_config_from_file(struct config_elements * config) {
   if (cur_profile_scope != NULL) {
     o_free(config->profile_scope);
     config->profile_scope = strdup(cur_profile_scope);
+  }
+  
+  config_lookup_string(&cfg, "additional_property_name", &cur_additional_property_name);
+  if (cur_additional_property_name != NULL) {
+    o_free(config->additional_property_name);
+    config->additional_property_name = strdup(cur_additional_property_name);
   }
   
   config_lookup_bool(&cfg, "use_scope", &cur_use_scope);
@@ -967,6 +978,7 @@ int build_config_from_file(struct config_elements * config) {
       config_setting_lookup_string(auth, "login_property_user_read", &cur_auth_ldap_login_property_user_read);
       config_setting_lookup_string(auth, "name_property_user_read", &cur_auth_ldap_name_property_user_read);
       config_setting_lookup_string(auth, "email_property_user_read", &cur_auth_ldap_email_property_user_read);
+      config_setting_lookup_string(auth, "additional_property_value_read", &cur_auth_ldap_additional_property_value_read);
       if (config->use_scope) {
         config_setting_lookup_string(auth, "scope_property_user_read", &cur_auth_ldap_scope_property_user_read);
       }
@@ -976,6 +988,7 @@ int build_config_from_file(struct config_elements * config) {
       config_setting_lookup_string(auth, "login_property_user_write", &cur_auth_ldap_login_property_user_write);
       config_setting_lookup_string(auth, "name_property_user_write", &cur_auth_ldap_name_property_user_write);
       config_setting_lookup_string(auth, "email_property_user_write", &cur_auth_ldap_email_property_user_write);
+      config_setting_lookup_string(auth, "additional_property_value_write", &cur_auth_ldap_additional_property_value_write);
       if (config->use_scope) {
         config_setting_lookup_string(auth, "scope_property_user_write", &cur_auth_ldap_scope_property_user_write);
       }
@@ -1017,6 +1030,7 @@ int build_config_from_file(struct config_elements * config) {
           cur_auth_ldap_login_property_user_read != NULL && 
           cur_auth_ldap_name_property_user_read != NULL && 
           cur_auth_ldap_email_property_user_read != NULL && 
+          cur_auth_ldap_additional_property_value_read != NULL && 
           (cur_auth_ldap_scope_property_user_read != NULL || !config->use_scope) && 
           
           (!cur_auth_ldap_user_write || 
@@ -1024,6 +1038,7 @@ int build_config_from_file(struct config_elements * config) {
           cur_auth_ldap_login_property_user_write != NULL && 
           cur_auth_ldap_name_property_user_write != NULL && 
           cur_auth_ldap_email_property_user_write != NULL && 
+          cur_auth_ldap_additional_property_value_write != NULL && 
           (cur_auth_ldap_scope_property_user_write != NULL || !config->use_scope) && 
           cur_auth_ldap_password_property_user_write != NULL && 
           cur_auth_ldap_password_algorithm_user_write != NULL && 
@@ -1112,6 +1127,12 @@ int build_config_from_file(struct config_elements * config) {
             fprintf(stderr, "Error allocating resources for config->auth_ldap->email_property_user_read\n");
             return 0;
           }
+          config->auth_ldap->additional_property_value_read = o_strdup(cur_auth_ldap_additional_property_value_read);
+          if (config->auth_ldap->additional_property_value_read == NULL) {
+            config_destroy(&cfg);
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->additional_property_value_read\n");
+            return 0;
+          }
           config->auth_ldap->user_write = cur_auth_ldap_user_write;
           config->auth_ldap->rdn_property_user_write = o_strdup(cur_auth_ldap_rdn_property_user_write);
           if (config->auth_ldap->rdn_property_user_write == NULL) {
@@ -1137,6 +1158,11 @@ int build_config_from_file(struct config_elements * config) {
           if (split_string(cur_auth_ldap_email_property_user_write, ",", &config->auth_ldap->email_property_user_write) < 1) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->email_property_user_write\n");
+            return 0;
+          }
+          if (split_string(cur_auth_ldap_additional_property_value_write, ",", &config->auth_ldap->additional_property_value_write) < 1) {
+            config_destroy(&cfg);
+            fprintf(stderr, "Error allocating resources for config->auth_ldap->additional_property_value_write\n");
             return 0;
           }
           config->auth_ldap->password_property_user_write = o_strdup(cur_auth_ldap_password_property_user_write);

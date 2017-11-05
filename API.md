@@ -10,7 +10,7 @@ All the endpoints require proper authentication to provide their service. The au
 
 ## Prefix
 
-All urls are based on the prefix you will setup. In this document, all endpoints will assume they use the prefix `/glewlwyd`.
+All urls are based on the prefix you will setup. In this document, all endpoints will assume they use the prefix `/api`.
 
 ## Content-type
 
@@ -30,7 +30,7 @@ The HTTP status codes used are the following:
 
 #### URL
 
-`/glewlwyd/auth/user/`
+`/api/auth/user/`
 
 #### Method
 
@@ -68,7 +68,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/auth/user/`
+`/api/auth/user/`
 
 #### Method
 
@@ -98,7 +98,7 @@ Return the list of scope available for the connected user
 
 #### URL
 
-`/glewlwyd/auth/grant`
+`/api/auth/grant`
 
 #### Method
 
@@ -129,7 +129,7 @@ Content
 
 #### URL
 
-`/glewlwyd/auth/grant`
+`/api/auth/grant`
 
 #### Method
 
@@ -164,7 +164,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/auth/grant`
+`/api/auth/grant`
 
 #### Method
 
@@ -201,7 +201,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/profile/`
+`/api/profile/`
 
 #### Method
 
@@ -231,7 +231,7 @@ Content
 
 #### URL
 
-`/glewlwyd/profile/`
+`/api/profile/`
 
 #### Method
 
@@ -268,7 +268,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/profile/refresh_token/`
+`/api/profile/refresh_token/`
 
 #### Method
 
@@ -302,7 +302,7 @@ Content
 
 #### URL
 
-`/glewlwyd/profile/refresh_token/`
+`/api/profile/refresh_token/`
 
 #### Method
 
@@ -328,7 +328,7 @@ Code 200
 
 #### URL
 
-`/glewlwyd/profile/refresh_token/`
+`/api/profile/refresh_token/`
 
 #### Method
 
@@ -362,7 +362,7 @@ Content
 
 #### URL
 
-`/glewlwyd/profile/refresh_token/`
+`/api/profile/refresh_token/`
 
 #### Method
 
@@ -388,7 +388,7 @@ Code 200
 
 #### URL
 
-`/glewlwyd/profile/session/`
+`/api/profile/session/`
 
 #### Method
 
@@ -421,7 +421,7 @@ Content
 
 #### URL
 
-`/glewlwyd/profile/session/`
+`/api/profile/session/`
 
 #### Method
 
@@ -506,7 +506,7 @@ Token or password invalid.
 
 #### URL
 
-`/glewlwyd/authorization/`
+`/api/authorization/`
 
 #### Method
 
@@ -536,7 +536,7 @@ Content
 
 #### URL
 
-`/glewlwyd/authorization/{authorization_type}`
+`/api/authorization/{authorization_type}`
 
 #### Method
 
@@ -570,7 +570,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/authorization/{authorization_type}`
+`/api/authorization/{authorization_type}`
 
 #### Method
 
@@ -617,7 +617,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/scope`
+`/api/scope`
 
 #### Method
 
@@ -646,7 +646,7 @@ Content
 
 #### URL
 
-`/glewlwyd/scope/{scope_name}`
+`/api/scope/{scope_name}`
 
 #### Method
 
@@ -685,7 +685,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/scope`
+`/api/scope`
 
 #### Method
 
@@ -720,7 +720,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/scope/{scope_name}`
+`/api/scope/{scope_name}`
 
 #### Method
 
@@ -764,7 +764,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/scope/{scope_name}`
+`/api/scope/{scope_name}`
 
 #### Method
 
@@ -798,7 +798,7 @@ The user API allows user CRUD. You can have LDAP or Database backend to store us
 
 #### URL
 
-`/glewlwyd/user?source&search&offset&limit`
+`/api/user?source&search&offset&limit`
 
 #### Method
 
@@ -834,6 +834,8 @@ Content
     email: text,
     login: text,
     enabled: boolean,
+		additional_property_name: text, optional, set if additional_property_name is set in the config file
+		additional_property_value: text, optional, set if additional_property_name is set in the config file
     scope: [ // Array of strings
     ]
   }
@@ -844,7 +846,7 @@ Content
 
 #### URL
 
-`/glewlwyd/user/{login}?source`
+`/api/user/{login}?source`
 
 #### Method
 
@@ -877,6 +879,8 @@ Content
   email: text,
   login: text,
   enabled: boolean,
+	additional_property_name: text, optional, set if additional_property_name is set in the config file
+	additional_property_value: text, optional, set if additional_property_name is set in the config file
   scope: [ // Array of strings
   ]
 }
@@ -892,7 +896,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/user`
+`/api/user`
 
 #### Method
 
@@ -911,6 +915,7 @@ Scope required: `g_admin`
   email: text, maximum 256 characters, optional
   login: text, maximum 128 characters, mandatory
   password: text, minimum 8 characters, mandatory
+	additional_property_value: text, maximum 512 characters, optional, set if additional_property_name is set in the config file
   enabled: boolean, default true
   scope: [ // Array of strings
   ]
@@ -935,7 +940,7 @@ If no password is specified in the request, the password is not changed.
 
 #### URL
 
-`/glewlwyd/user/{login}?source`
+`/api/user/{login}?source`
 
 #### Method
 
@@ -963,6 +968,7 @@ Optional
   email: text, maximum 256 characters, optional
   password: text, minimum 8 characters, optional
   enabled: boolean, default true
+	additional_property_value: text, maximum 512 characters, optional, set if additional_property_name is set in the config file
   scope: [ // Array of strings
   ]
 }
@@ -988,7 +994,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/user/{login}?source`
+`/api/user/{login}?source`
 
 #### Method
 
@@ -1022,7 +1028,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/user/{login}/refresh_token/`
+`/api/user/{login}/refresh_token/`
 
 #### Method
 
@@ -1056,7 +1062,7 @@ Content
 
 #### URL
 
-`/glewlwyd/user/{login}/refresh_token/`
+`/api/user/{login}/refresh_token/`
 
 #### Method
 
@@ -1082,7 +1088,7 @@ Code 200
 
 #### URL
 
-`/glewlwyd/user/{login}/session/`
+`/api/user/{login}/session/`
 
 #### Method
 
@@ -1115,7 +1121,7 @@ Content
 
 #### URL
 
-`/glewlwyd/user/{login}/session/`
+`/api/user/{login}/session/`
 
 #### Method
 
@@ -1173,7 +1179,7 @@ The client API allows client CRUD. You can have LDAP or Database backend to stor
 
 #### URL
 
-`/glewlwyd/client?source&search&offset&limit`
+`/api/client?source&search&offset&limit`
 
 #### Method
 
@@ -1229,7 +1235,7 @@ Content
 
 #### URL
 
-`/glewlwyd/client/{client_id}?source`
+`/api/client/{client_id}?source`
 
 #### Method
 
@@ -1287,7 +1293,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/client`
+`/api/client`
 
 #### Method
 
@@ -1340,7 +1346,7 @@ If no password is specified in the request, the password is not changed.
 
 #### URL
 
-`/glewlwyd/client/{client_id}?source`
+`/api/client/{client_id}?source`
 
 #### Method
 
@@ -1404,7 +1410,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/client/{client_id}?source`
+`/api/client/{client_id}?source`
 
 #### Method
 
@@ -1442,7 +1448,7 @@ These endpoints allows resource management, although since tokens are JWT, there
 
 #### URL
 
-`/glewlwyd/resource`
+`/api/resource`
 
 #### Method
 
@@ -1472,7 +1478,7 @@ Content
 
 #### URL
 
-`/glewlwyd/resource/{resource_name}`
+`/api/resource/{resource_name}`
 
 #### Method
 
@@ -1512,7 +1518,7 @@ Resource not found
 
 #### URL
 
-`/glewlwyd/resource`
+`/api/resource`
 
 #### Method
 
@@ -1548,7 +1554,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/resource/{resource_name}`
+`/api/resource/{resource_name}`
 
 #### Method
 
@@ -1593,7 +1599,7 @@ Content: json array containing all errors
 
 #### URL
 
-`/glewlwyd/resourceError binding to ldap server mode/:resource_name`
+`/api/resourceError binding to ldap server mode/:resource_name`
 
 #### Method
 
