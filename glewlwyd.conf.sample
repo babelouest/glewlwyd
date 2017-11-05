@@ -101,6 +101,9 @@ admin_scope="g_admin"
 # profile scope name
 profile_scope="g_profile"
 
+# additional property name that will be included in access tokens
+additional_property_name  = "new_property"
+
 # code expiration in seconds, default is 10 minutes
 code_expiration=600
 
@@ -164,23 +167,25 @@ authentication =
    bind_dn                  = "cn=operator,dc=example,dc=org"
    bind_passwd              = "password"
    
-   base_search_user             = "ou=user,dc=example,dc=org"
+   base_search_user               = "ou=user,dc=example,dc=org"
 # Read parameters
-   filter_user_read             = "objectClass=inetOrgPerson"
-   login_property_user_read     = "cn"
-   scope_property_user_read     = "o"
-   email_property_user_read     = "mail"
-   name_property_user_read      = "sn"
+   filter_user_read               = "objectClass=inetOrgPerson"
+   login_property_user_read       = "cn"
+   scope_property_user_read       = "o"
+   email_property_user_read       = "mail"
+   name_property_user_read        = "sn"
+   additional_property_value_read = "memberOf" # will fill the jwt property `group` with the content of the LDAP property `memberOf`, optional, leave empty if no use
 # Write parameters
-   ldap_user_write               = true
-   rdn_property_user_write       = "cn"           # Single value
-   login_property_user_write     = "cn"           # Multiple values separated by a comma
-   scope_property_user_write     = "o"            # Multiple values separated by a comma
-   email_property_user_write     = "mail"         # Multiple values separated by a comma
-   name_property_user_write      = "sn"           # Multiple values separated by a comma
-   password_property_user_write  = "userPassword" # Single value
-   password_algorithm_user_write = "SSHA"         # Single value, values available are SSHA, SHA, SMD5, MD5 or PLAIN
-   object_class_user_write       = "top,person,organizationalPerson,inetOrgPerson" # Multiple values separated by a comma
+   ldap_user_write                 = true
+   rdn_property_user_write         = "cn"           # Single value
+   login_property_user_write       = "cn"           # Multiple values separated by a comma
+   scope_property_user_write       = "o"            # Multiple values separated by a comma
+   email_property_user_write       = "mail"         # Multiple values separated by a comma
+   additional_property_value_write = "memberOf"     # Multiple values separated by a comma
+   name_property_user_write        = "sn"          
+   password_property_user_write    = "userPassword" # Single value
+   password_algorithm_user_write   = "SSHA"         # Single value, values available are SSHA, SHA, SMD5, MD5 or PLAIN
+   object_class_user_write         = "top,person,organizationalPerson,inetOrgPerson" # Multiple values separated by a comma
    
    base_search_client             = "ou=client,dc=example,dc=org"
 # Read parameters

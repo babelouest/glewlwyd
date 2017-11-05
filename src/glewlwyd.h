@@ -148,12 +148,14 @@ struct _auth_ldap {
   char *  scope_property_user_read;
   char *  name_property_user_read;
   char *  email_property_user_read;
+  char *  additional_property_value_read;
   int     user_write;
   char *  rdn_property_user_write;
   char ** login_property_user_write;
   char ** scope_property_user_write;
   char ** name_property_user_write;
   char ** email_property_user_write;
+  char ** additional_property_value_write;
   char *  password_property_user_write;
   char *  password_algorithm_user_write;
   char ** object_class_user_write;
@@ -227,6 +229,7 @@ struct config_elements {
   struct _reset_password_config * reset_password_config;
   char *                          login_url;
   char *                          grant_url;
+  char *                          additional_property_name;
 };
 
 // Main functions and misc functions
@@ -379,7 +382,7 @@ int revoke_session(struct config_elements * config, const char * username, const
 
 // Tokens generation and store digest
 char * generate_refresh_token(struct config_elements * config, const char * client_id, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
-char * generate_access_token(struct config_elements * config, const char * refresh_token, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now);
+char * generate_access_token(struct config_elements * config, const char * refresh_token, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, const char * additional_property_name, const char * additional_property_value, time_t now);
 char * generate_session_token(struct config_elements * config, const char * username, const char * ip_source, time_t now);
 char * generate_authorization_code(struct config_elements * config, const char * username, const char * client_id, const char * scope_list, const char * redirect_uri, const char * ip_source);
 char * generate_client_access_token(struct config_elements * config, const char * client_id, const char * ip_source, const char * scope_list, time_t now);
