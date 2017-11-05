@@ -26,7 +26,7 @@ LIBS=-lc -lulfius -lorcania -ljansson -lyder -lcheck -lpthread -lm -lrt -lsubuni
 all: test
 
 clean:
-	rm -f *.o *.log *.err glewlwyd_oauth2_auth_code glewlwyd_oauth2_client_cred glewlwyd_oauth2_code glewlwyd_oauth2_code_client_confidential glewlwyd_oauth2_implicit glewlwyd_oauth2_resource_owner_pwd_cred glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential glewlwyd_oauth2_refresh_token glewlwyd_oauth2_refresh_token_client_confidential glewlwyd_delete_token glewlwyd_admin_authorization glewlwyd_crud_scope glewlwyd_crud_user glewlwyd_crud_client glewlwyd_crud_resource glewlwyd_update_user_profile glewlwyd_user_session_user glewlwyd_user_session_admin glewlwyd_user_refresh_token_user glewlwyd_user_refresh_token_admin valgrind.txt
+	rm -f *.o *.log *.err glewlwyd_oauth2_auth_code glewlwyd_oauth2_client_cred glewlwyd_oauth2_code glewlwyd_oauth2_code_client_confidential glewlwyd_oauth2_implicit glewlwyd_oauth2_resource_owner_pwd_cred glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential glewlwyd_oauth2_refresh_token glewlwyd_oauth2_refresh_token_client_confidential glewlwyd_delete_token glewlwyd_admin_authorization glewlwyd_crud_scope glewlwyd_crud_user glewlwyd_crud_client glewlwyd_crud_resource glewlwyd_update_user_profile glewlwyd_user_session_user glewlwyd_user_session_admin glewlwyd_user_refresh_token_user glewlwyd_user_refresh_token_admin glewlwyd_http_auth valgrind.txt
 
 unit-tests.o: unit-tests.c unit-tests.h
 	$(CC) $(CFLAGS) -c unit-tests.c
@@ -121,13 +121,6 @@ glewlwyd_crud_resource: glewlwyd_crud_resource.c unit-tests.o
 test_glewlwyd_crud_resource: glewlwyd_crud_resource
 	-./run_test.sh ./glewlwyd_crud_resource
 
-glewlwyd_update_user_profile: glewlwyd_update_user_profile.c unit-tests.o
-	$(CC) $(CFLAGS) glewlwyd_update_user_profile.c unit-tests.o -o glewlwyd_update_user_profile $(LIBS)
-
-# This test has to be launched manually, because it expects an input from the user
-test_glewlwyd_update_user_profile: glewlwyd_update_user_profile
-	-./run_test.sh ./glewlwyd_update_user_profile
-
 glewlwyd_user_session_user: glewlwyd_user_session_user.c unit-tests.o
 	$(CC) $(CFLAGS) glewlwyd_user_session_user.c unit-tests.o -o glewlwyd_user_session_user $(LIBS)
 
@@ -152,4 +145,18 @@ glewlwyd_user_refresh_token_admin: glewlwyd_user_refresh_token_admin.c unit-test
 test_glewlwyd_user_refresh_token_admin: glewlwyd_user_refresh_token_admin
 	-./run_test.sh ./glewlwyd_user_refresh_token_admin
 
-test: test_glewlwyd_oauth2_resource_owner_pwd_cred test_glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential test_glewlwyd_oauth2_implicit test_glewlwyd_oauth2_code test_glewlwyd_oauth2_code_client_confidential test_glewlwyd_oauth2_client_cred test_glewlwyd_oauth2_auth_code test_glewlwyd_oauth2_refresh_token test_glewlwyd_oauth2_refresh_token_client_confidential test_glewlwyd_delete_token test_glewlwyd_admin_authorization test_glewlwyd_crud_scope test_glewlwyd_crud_user test_glewlwyd_crud_client test_glewlwyd_crud_resource test_glewlwyd_user_session_user test_glewlwyd_user_session_admin test_glewlwyd_user_refresh_token_user test_glewlwyd_user_refresh_token_admin
+# This test has to be launched manually, because it expects an input from the user
+glewlwyd_update_user_profile: glewlwyd_update_user_profile.c unit-tests.o
+	$(CC) $(CFLAGS) glewlwyd_update_user_profile.c unit-tests.o -o glewlwyd_update_user_profile $(LIBS)
+
+test_glewlwyd_update_user_profile: glewlwyd_update_user_profile
+	-./run_test.sh ./glewlwyd_update_user_profile
+
+# This test has to be launched manually, because it requires a different config file
+glewlwyd_http_auth: glewlwyd_http_auth.c unit-tests.o
+	$(CC) $(CFLAGS) glewlwyd_http_auth.c unit-tests.o -o glewlwyd_http_auth $(LIBS)
+
+test_glewlwyd_http_auth: glewlwyd_http_auth
+	./glewlwyd_http_auth
+
+test: test_glewlwyd_oauth2_resource_owner_pwd_cred test_glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential test_glewlwyd_oauth2_implicit test_glewlwyd_oauth2_code test_glewlwyd_oauth2_code_client_confidential test_glewlwyd_oauth2_client_cred test_glewlwyd_oauth2_auth_code test_glewlwyd_oauth2_refresh_token test_glewlwyd_oauth2_refresh_token_client_confidential test_glewlwyd_delete_token test_glewlwyd_admin_authorization test_glewlwyd_crud_scope test_glewlwyd_crud_user test_glewlwyd_crud_client test_glewlwyd_crud_resource test_glewlwyd_user_session_user test_glewlwyd_user_session_admin test_glewlwyd_user_refresh_token_user test_glewlwyd_user_refresh_token_admin test_glewlwyd_http_auth

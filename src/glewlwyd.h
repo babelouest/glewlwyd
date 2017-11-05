@@ -139,7 +139,8 @@ typedef enum {
 } digest_algorithm;
 
 struct _auth_http {
-  char *            url;
+  char *         url;
+  unsigned short check_server_certificate;
 };
 
 struct _auth_ldap {

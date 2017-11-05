@@ -159,9 +159,9 @@ database =
 # Authentication configuration
 authentication =
 {
-
-   http_auth                = true
-   http_auth_url            = "https://example.com/auth/validate"		# mandatory
+   http_auth                   = false
+   http_auth_url               = "https://example.com/auth/validate" # mandatory if http_auth is true set this value to "http://localhost:2884/auth" for unit tests
+   http_auth_check_certificate = true                                # optional, default true
 
    database_auth            = true
    
