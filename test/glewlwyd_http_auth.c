@@ -159,6 +159,122 @@ START_TEST(test_glwd_implicit_valid_http_auth)
 }
 END_TEST
 
+START_TEST(test_glwd_refresh_token_ok_http_auth)
+{
+  char * url = msprintf("%s/token/", SERVER_URI), * refresh_token;
+  struct _u_map body;
+  struct _u_request auth_req;
+  struct _u_response auth_resp;
+	int res;
+	
+  ulfius_init_request(&auth_req);
+  ulfius_init_response(&auth_resp);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/token/", SERVER_URI);
+  u_map_put(auth_req.map_post_body, "grant_type", "password");
+  u_map_put(auth_req.map_post_body, "username", HTTP_USER);
+  u_map_put(auth_req.map_post_body, "password", HTTP_PASSWORD);
+  res = ulfius_send_http_request(&auth_req, &auth_resp);
+  if (res == U_OK) {
+    json_t * json_body = ulfius_get_json_body_response(&auth_resp, NULL);
+    refresh_token = o_strdup(json_string_value(json_object_get(json_body, "refresh_token")));
+    json_decref(json_body);
+  }
+  ulfius_clean_request(&auth_req);
+  ulfius_clean_response(&auth_resp);
+	
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "refresh_token");
+  u_map_put(&body, "refresh_token", refresh_token);
+  
+  res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 200, NULL, NULL, NULL);
+  free(url);
+  u_map_clean(&body);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(test_glwd_user_refresh_token_list_all_user)
+{
+  char * url = msprintf("%s/profile/refresh_token", SERVER_URI);
+  
+  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
+  free(url);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(test_glwd_user_refresh_token_revoke_ok_user)
+{
+  struct _u_response list_resp, del_resp;
+  int res;
+  json_t * json_body, * json_resp_body;
+  
+  ulfius_init_response(&list_resp);
+  ulfius_init_response(&del_resp);
+  user_req.http_url = msprintf("%s/profile/refresh_token/?valid=true", SERVER_URI);
+  res = ulfius_send_http_request(&user_req, &list_resp);
+  if (res == U_OK) {
+    json_resp_body = ulfius_get_json_body_response(&list_resp, NULL);
+    json_body = json_pack("{ss}", "token_hash", json_string_value(json_object_get(json_array_get(json_resp_body, 0), "token_hash")));
+    u_map_put(user_req.map_header, "Content-Type", "application/x-www-form-urlencoded");
+    ulfius_set_json_body_request(&user_req, json_body);
+    json_decref(json_body);
+    json_decref(json_resp_body);
+  }
+  
+  user_req.http_url = msprintf("%s/profile/refresh_token/", SERVER_URI);
+  user_req.http_verb = strdup("DELETE");
+  ulfius_send_http_request(&user_req, &del_resp);
+	ck_assert_int_eq(del_resp.status, 200);
+  
+  ulfius_clean_response(&list_resp);
+  ulfius_clean_response(&del_resp);
+}
+END_TEST
+
+START_TEST(test_glwd_user_session_list_all_user)
+{
+  char * url = msprintf("%s/profile/session", SERVER_URI);
+  
+  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
+  free(url);
+	ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(test_glwd_user_session_revoke_ok_user)
+{
+  struct _u_response list_resp, del_resp;
+  int res;
+  struct _u_map body;
+  json_t * json_resp_body;
+  
+  u_map_init(&body);
+  ulfius_init_response(&list_resp);
+  ulfius_init_response(&del_resp);
+  user_req.http_url = msprintf("%s/profile/session?valid=true", SERVER_URI);
+  res = ulfius_send_http_request(&user_req, &list_resp);
+  if (res == U_OK) {
+    json_resp_body = ulfius_get_json_body_response(&list_resp, NULL);
+    json_t * json_body = json_pack("{ss}", "session_hash", json_string_value(json_object_get(json_array_get(json_resp_body, 0), "session_hash")));
+    u_map_put(user_req.map_header, "Content-Type", "application/x-www-form-urlencoded");
+    ulfius_set_json_body_request(&user_req, json_body);
+    json_decref(json_body);
+    json_decref(json_resp_body);
+  }
+  user_req.http_url = msprintf("%s/profile/session/", SERVER_URI);
+  user_req.http_verb = strdup("DELETE");
+  ulfius_send_http_request(&user_req, &del_resp);
+  
+	ck_assert_int_eq(del_resp.status, 200);
+  
+  u_map_clean(&body);
+  ulfius_clean_response(&list_resp);
+  ulfius_clean_response(&del_resp);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -173,6 +289,11 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_auth_code_ok_redirect_cb_with_code_http_auth);
   tcase_add_test(tc_core, test_glwd_code_http_auth_ok);
   tcase_add_test(tc_core, test_glwd_implicit_valid_http_auth);
+  tcase_add_test(tc_core, test_glwd_refresh_token_ok_http_auth);
+  tcase_add_test(tc_core, test_glwd_user_refresh_token_list_all_user);
+  tcase_add_test(tc_core, test_glwd_user_refresh_token_revoke_ok_user);
+  tcase_add_test(tc_core, test_glwd_user_session_list_all_user);
+  tcase_add_test(tc_core, test_glwd_user_session_revoke_ok_user);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
@@ -189,6 +310,17 @@ int main(int argc, char *argv[])
   struct _u_response auth_resp, code_resp;
   
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
+  
+  if (ulfius_init_instance(&instance, PORT, NULL, "auth_basic_default") != U_OK) {
+    y_log_message(Y_LOG_LEVEL_INFO, "Error ulfius_init_instance, abort");
+    return(1);
+  }
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, 0, &auth_basic, "auth param");
+  if (ulfius_start_framework(&instance) == U_OK) {
+    y_log_message(Y_LOG_LEVEL_INFO, "Start framework on port %d", instance.port);
+  } else {
+    y_log_message(Y_LOG_LEVEL_INFO, "Error starting framework");
+  }
   
   // Getting a valid session id for authenticated http requests
   ulfius_init_request(&auth_req);
@@ -224,17 +356,6 @@ int main(int argc, char *argv[])
     ulfius_clean_response(&code_resp);
   }
   ulfius_clean_response(&auth_resp);
-  
-  if (ulfius_init_instance(&instance, PORT, NULL, "auth_basic_default") != U_OK) {
-    y_log_message(Y_LOG_LEVEL_INFO, "Error ulfius_init_instance, abort");
-    return(1);
-  }
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, 0, &auth_basic, "auth param");
-  if (ulfius_start_framework(&instance) == U_OK) {
-    y_log_message(Y_LOG_LEVEL_INFO, "Start framework on port %d", instance.port);
-  } else {
-    y_log_message(Y_LOG_LEVEL_INFO, "Error starting framework");
-  }
   
   s = glewlwyd_suite();
   sr = srunner_create(s);

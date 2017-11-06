@@ -987,9 +987,9 @@ int build_config_from_file(struct config_elements * config) {
     config_setting_lookup_bool(auth, "http_auth", &cur_http_auth);
     config->has_auth_http = cur_http_auth;
     if (config->has_auth_http &&
-        (config->use_scope || config->additional_property_name != NULL)) {
+        config->use_scope) {
       config_destroy(&cfg);
-      fprintf(stderr, "Error, due to security concerns you can not use authentication via HTTP together with scopes or additional_property\n");
+      fprintf(stderr, "Error, due to security concerns you can not use authentication via HTTP together with scopes\n");
       return 0;
     }
     config_setting_lookup_bool(auth, "database_auth", &cur_database_auth);
@@ -1021,6 +1021,7 @@ int build_config_from_file(struct config_elements * config) {
         return 0;
       }
     }
+    
     if (config->has_auth_ldap) {
       config_setting_lookup_string(auth, "uri", &cur_auth_ldap_uri);
       config_setting_lookup_string(auth, "bind_dn", &cur_auth_ldap_bind_dn);
