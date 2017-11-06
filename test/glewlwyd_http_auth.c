@@ -15,9 +15,6 @@
 #include "unit-tests.h"
 
 #define SERVER_URI "http://localhost:4593/api"
-#define USERNAME "admin"
-#define PASSWORD "MyAdminPassword2016!"
-#define SCOPE_LIST "g_admin"
 #define CLIENT "client1_id"
 
 #define PORT   2884
@@ -146,7 +143,7 @@ END_TEST
 
 START_TEST(test_glwd_auth_code_ok_redirect_cb_with_code_http_auth)
 {
-  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/test-token.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
+  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/test-token.html?param=client1_cb1&state=xyzabcd", SERVER_URI);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code=");
   free(url);
 	ck_assert_int_eq(res, 1);
@@ -155,7 +152,7 @@ END_TEST
 
 START_TEST(test_glwd_implicit_valid_http_auth)
 {
-  char * url = msprintf("%s/auth?response_type=token&login_validated=true&client_id=%s&redirect_uri=../app/test-token.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
+  char * url = msprintf("%s/auth?response_type=token&login_validated=true&client_id=%s&redirect_uri=../app/test-token.html?param=client1_cb1&state=xyzabcd", SERVER_URI, CLIENT);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "token=");
   free(url);
 	ck_assert_int_eq(res, 1);
@@ -199,11 +196,11 @@ int main(int argc, char *argv[])
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
   auth_req.http_url = msprintf("%s/auth/user", SERVER_URI);
-  u_map_put(auth_req.map_post_body, "username", USERNAME);
-  u_map_put(auth_req.map_post_body, "password", PASSWORD);
+  u_map_put(auth_req.map_post_body, "username", HTTP_USER);
+  u_map_put(auth_req.map_post_body, "password", HTTP_PASSWORD);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
   if (res == U_OK) {
-    y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USERNAME);
+    y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", HTTP_USER);
     int i;
     for (i=0; i<auth_resp.nb_cookies; i++) {
       char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
@@ -213,7 +210,7 @@ int main(int argc, char *argv[])
     
     ulfius_init_response(&code_resp);
     user_req.http_verb = strdup("GET");
-    user_req.http_url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/test-token.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
+    user_req.http_url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/test-token.html?param=client1_cb1&state=xyzabcd", SERVER_URI);
     if (ulfius_send_http_request(&user_req, &code_resp) != U_OK) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "Get code error");
     } else if (strstr(u_map_get(code_resp.map_header, "Location"), "code=") != NULL) {
