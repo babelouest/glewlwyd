@@ -15,16 +15,16 @@ DELETE FROM `g_scope`;
 DELETE FROM `g_user`;
 
 -- Mariadb/Mysql user add queries
-INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', PASSWORD('MyAdminPassword2016!'), 1);
-INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user1', 'Dave Lopper1', 'user1@glewlwyd.domain', PASSWORD('MyUser1Password!'), 'newValue1', 1);
-INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user2', 'Dave Lopper2', 'user2@glewlwyd.domain', PASSWORD('MyUser2Password!'), 'newValue2', 1);
-INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user3', 'Dave Lopper3', 'user3@glewlwyd.domain', PASSWORD('MyUser3Password!'), 'newValue3', 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_backend, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', PASSWORD('MyAdminPassword2016!'), 'database', 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_backend, gu_enabled) VALUES ('user1', 'Dave Lopper1', 'user1@glewlwyd.domain', PASSWORD('MyUser1Password!'), 'newValue1', 'database', 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_backend, gu_enabled) VALUES ('user2', 'Dave Lopper2', 'user2@glewlwyd.domain', PASSWORD('MyUser2Password!'), 'newValue2', 'database', 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_backend, gu_enabled) VALUES ('user3', 'Dave Lopper3', 'user3@glewlwyd.domain', PASSWORD('MyUser3Password!'), 'newValue3', 'database', 1);
 
 -- SQLite3 user add queries (passwords are md5/base64 encoded, but they are the same as below)
--- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', '{MD5}Fq5Um/6ZzkTEE01faw8dlw==', 1);
--- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user1', 'Dave Lopper1', 'user1@glewlwyd.domain', '{MD5}5jDmBvYYgDjSOobF6bsjdw==', 'newValue1', 1);
--- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user2', 'Dave Lopper2', 'user2@glewlwyd.domain', '{MD5}SGTYDlfN1G2QkANBZgzCIQ==', 'newValue2', 1);
--- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user3', 'Dave Lopper3', 'user3@glewlwyd.domain', '{MD5}MSs++hzB5w==', 'newValue3', 1);
+-- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_backend, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', '{MD5}Fq5Um/6ZzkTEE01faw8dlw==', 'database', 1);
+-- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_backend, gu_enabled) VALUES ('user1', 'Dave Lopper1', 'user1@glewlwyd.domain', '{MD5}5jDmBvYYgDjSOobF6bsjdw==', 'newValue1', 'database', 1);
+-- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_backend, gu_enabled) VALUES ('user2', 'Dave Lopper2', 'user2@glewlwyd.domain', '{MD5}SGTYDlfN1G2QkANBZgzCIQ==', 'newValue2', 'database', 1);
+-- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_backend, gu_enabled) VALUES ('user3', 'Dave Lopper3', 'user3@glewlwyd.domain', '{MD5}MSs++hzB5w==', 'newValue3', 'database', 1);
 
 INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_admin', 'Glewlwyd admin scope');
 INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_profile', 'Glewlwyd profile scope');
