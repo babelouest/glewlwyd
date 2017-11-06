@@ -878,7 +878,8 @@ json_t * get_client_list_database(struct config_elements * config, const char * 
  */
 json_t * get_client(struct config_elements * config, const char * client_id, const char * source) {
   json_t * j_return = NULL, * j_client = NULL;
-  int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
+  int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), 
+      search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
   
   if (client_id == NULL || strlen(client_id) == 0) {
     j_client = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -886,21 +887,25 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
     if (search_ldap) {
       if (config->has_auth_ldap) {
         j_client = get_client_ldap(config, client_id);
-      } else {
+      } else if (0 == o_strcmp(source, "ldap") && !config->has_auth_ldap) {
         j_client = json_pack("{si}", "result", G_ERROR_PARAM);
+      } else {
+        j_client = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       }
     }
-    if (!check_result_value(j_client, G_OK) && search_database) {
+    if ((j_client == NULL || check_result_value(j_client, G_ERROR_NOT_FOUND)) && search_database) {
       json_decref(j_client);
       if (config->has_auth_database) {
         j_client = get_client_database(config, client_id);
-      } else {
+      } else if (0 == o_strcmp(source, "database") && !config->has_auth_database) {
         j_client = json_pack("{si}", "result", G_ERROR_PARAM);
+      } else {
+        j_client = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       }
     }
     if (check_result_value(j_client, G_OK)) {
       j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
-    } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
+    } else if (check_result_value(j_client, G_ERROR_NOT_FOUND) || j_client == NULL) {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else if (check_result_value(j_client, G_ERROR_PARAM)) {
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
