@@ -268,6 +268,6 @@ INSERT INTO g_client_authorization_type (gc_client_id, got_id) VALUES ('g_admin'
 
 -- Create admin user with admin scope
 
-INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_backend, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', '{MD5}X03MO1qnZdYdgyfeuILPmQ==', 'database', 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_backend, gu_backend, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', '{MD5}X03MO1qnZdYdgyfeuILPmQ==', 'database', 1);
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_admin'));
 INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_profile'));
