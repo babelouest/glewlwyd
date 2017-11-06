@@ -55,7 +55,7 @@
 #include <hoel.h>
 
 #if MHD_VERSION < 0x00093800
-	#error Libmicrohttpd version 0.9.38 minimum is required, you can download it at http://ftp.gnu.org/gnu/libmicrohttpd/
+  #error Libmicrohttpd version 0.9.38 minimum is required, you can download it at http://ftp.gnu.org/gnu/libmicrohttpd/
 #endif
 
 #define _GLEWLWYD_VERSION 1.1
@@ -89,7 +89,7 @@
 #define G_ERROR_PARAM        3
 #define G_ERROR_DB           4
 #define G_ERROR_MEMORY       5
-#define G_ERROR_NOT_FOUND	   6
+#define G_ERROR_NOT_FOUND    6
 
 // Data tables
 #define GLEWLWYD_TABLE_CLIENT                    "g_client"
@@ -125,6 +125,10 @@
 #define GLEWLWYD_CALLBACK_PRIORITY_ZERO           0
 #define GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION 1
 #define GLEWLWYD_CALLBACK_PRIORITY_APPLICATION    2
+
+#define GLEWLWYD_AUTH_BACKEND_DATABASE "database"
+#define GLEWLWYD_AUTH_BACKEND_LDAP     "ldap"
+#define GLEWLWYD_AUTH_BACKEND_HTTP     "http"
 
 pthread_mutex_t global_handler_close_lock;
 pthread_cond_t  global_handler_close_cond;
@@ -287,7 +291,6 @@ json_t * auth_check_user_credentials_ldap(struct config_elements * config, const
 
 // Validate user scope
 json_t * auth_check_user_scope(struct config_elements * config, const char * username, const char * scope_list);
-json_t * auth_check_user_scope_http(struct config_elements * config, const char * username, const char * scope_list);
 json_t * auth_check_user_scope_database(struct config_elements * config, const char * username, const char * scope_list);
 json_t * auth_check_user_scope_ldap(struct config_elements * config, const char * username, const char * scope_list);
 
@@ -314,7 +317,6 @@ json_t * access_token_check_scope_admin(struct config_elements * config, const c
 json_t * session_or_access_token_check(struct config_elements * config, const char * session_value, const char * header_value);
 
 json_t * get_user_scope_grant(struct config_elements * config, const char * username);
-json_t * get_user_scope_grant_http(struct config_elements * config, const char * username);
 json_t * get_user_scope_grant_database(struct config_elements * config, const char * username);
 json_t * get_user_scope_grant_ldap(struct config_elements * config, const char * username);
 
