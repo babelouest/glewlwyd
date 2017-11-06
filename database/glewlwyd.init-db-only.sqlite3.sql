@@ -29,8 +29,9 @@ CREATE TABLE `g_user` (
   `gu_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `gu_name` TEXT DEFAULT '',
   `gu_email` TEXT DEFAULT '',
-  `gu_login` TEXT NOT NULL UNIQUE,
-  `gu_password` TEXT NOT NULL,
+  `gu_login` TEXT NOT NULL,
+  `gu_password` TEXT,
+	`gu_backend` TEXT NOT NULL,
   `gu_additional_property_value` TEXT,
   `gu_enabled` INTEGER DEFAULT 1
 );
