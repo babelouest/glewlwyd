@@ -497,7 +497,6 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
 int insert_user_http(struct config_elements * config, const char * username) {
   json_t * j_user = get_user_http(config, username), * j_query;
   int ret, res;
-  char * query;
   
   if (check_result_value(j_user, G_OK)) {
     ret = G_OK;
@@ -510,8 +509,7 @@ int insert_user_http(struct config_elements * config, const char * username) {
                           username,
                           "gu_backend",
                           GLEWLWYD_AUTH_BACKEND_HTTP);
-    res = h_insert(config->conn, j_query, &query);
-    y_log_message(Y_LOG_LEVEL_DEBUG, "query is %s", query);
+    res = h_insert(config->conn, j_query, NULL);
     json_decref(j_query);
     if (res == G_OK) {
       ret = G_OK;
