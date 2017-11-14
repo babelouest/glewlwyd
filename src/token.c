@@ -224,76 +224,6 @@ int serialize_access_token(struct config_elements * config, const uint auth_type
 }
 
 /**
- * Generates a refresh_token from the specified parameters that are considered valid
- */
-char * generate_refresh_token(struct config_elements * config, const char * client_id, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now) {
-  jwt_t * jwt;
-  char * token = NULL;
-  char salt[GLEWLWYD_SALT_LENGTH + 1] = {0};
-  
-  jwt = jwt_dup(config->jwt);
-  if (jwt != NULL) {
-    // Build jwt payload
-    rand_string(salt, GLEWLWYD_SALT_LENGTH);
-    jwt_add_grant(jwt, "salt", salt);
-    jwt_add_grant(jwt, "username", username);
-    jwt_add_grant(jwt, "type", "refresh_token");
-    jwt_add_grant_int(jwt, "iat", now);
-    jwt_add_grant_int(jwt, "expires_in", config->access_token_expiration);
-    if (config->use_scope && scope_list != NULL) {
-      jwt_add_grant(jwt, "scope", scope_list);
-    }
-    if (client_id != NULL) {
-      jwt_add_grant(jwt, "client_id", client_id);
-    }
-    token = jwt_encode_str(jwt);
-    if (token != NULL) {
-      if (serialize_refresh_token(config, client_id, username, auth_type, ip_source, token, scope_list, now) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "generate_refresh_token - Error serializing token");
-      }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "generate_refresh_token - generating token");
-    }
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "generate_refresh_token - Error cloning jwt");
-  }
-  jwt_free(jwt);
-  return token;
-}
-
-/**
- * Generates a session_token from the specified parameters that are considered valid
- */
-char * generate_session_token(struct config_elements * config, const char * username, const char * ip_source, time_t now) {
-  jwt_t * jwt;
-  char * token = NULL;
-  char salt[GLEWLWYD_SALT_LENGTH + 1] = {0};
-  
-  jwt = jwt_dup(config->jwt);
-  if (jwt != NULL) {
-    // Build jwt payload
-    rand_string(salt, GLEWLWYD_SALT_LENGTH);
-    jwt_add_grant(jwt, "salt", salt);
-    jwt_add_grant(jwt, "username", username);
-    jwt_add_grant(jwt, "type", "session_token");
-    jwt_add_grant_int(jwt, "iat", now);
-    jwt_add_grant_int(jwt, "expires_in", config->session_expiration);
-    token = jwt_encode_str(jwt);
-    if (token == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "generate_session_token - generating token");
-    } else {
-      if (serialize_session_token(config, username, ip_source, token, now) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "generate_session_token - Error serializing session_token");
-      }
-    }
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "generate_session_token - Error cloning jwt");
-  }
-  jwt_free(jwt);
-  return token;
-}
-
-/**
  * Serialize in the database a print of a session_token
  */
 int serialize_session_token(struct config_elements * config, const char * username, const char * ip_source, const char * session_token, time_t now) {
@@ -335,6 +265,44 @@ int serialize_session_token(struct config_elements * config, const char * userna
 }
 
 /**
+ * Generates a refresh_token from the specified parameters that are considered valid
+ */
+char * generate_refresh_token(struct config_elements * config, const char * client_id, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, time_t now) {
+  jwt_t * jwt;
+  char * token = NULL;
+  char salt[GLEWLWYD_SALT_LENGTH + 1] = {0};
+  
+  jwt = jwt_dup(config->jwt);
+  if (jwt != NULL) {
+    // Build jwt payload
+    rand_string(salt, GLEWLWYD_SALT_LENGTH);
+    jwt_add_grant(jwt, "salt", salt);
+    jwt_add_grant(jwt, "username", username);
+    jwt_add_grant(jwt, "type", "refresh_token");
+    jwt_add_grant_int(jwt, "iat", now);
+    jwt_add_grant_int(jwt, "expires_in", config->access_token_expiration);
+    if (config->use_scope && scope_list != NULL) {
+      jwt_add_grant(jwt, "scope", scope_list);
+    }
+    if (client_id != NULL) {
+      jwt_add_grant(jwt, "client_id", client_id);
+    }
+    token = jwt_encode_str(jwt);
+    if (token != NULL) {
+      if (serialize_refresh_token(config, client_id, username, auth_type, ip_source, token, scope_list, now) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_refresh_token - Error serializing token");
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_refresh_token - generating token");
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_refresh_token - Error cloning jwt");
+  }
+  jwt_free(jwt);
+  return token;
+}
+
+/**
  * Generates a access_token from the specified parameters that are considered valid
  */
 char * generate_access_token(struct config_elements * config, const char * refresh_token, const char * username, const uint auth_type, const char * ip_source, const char * scope_list, const char * additional_property_name, const char * additional_property_value, time_t now) {
@@ -367,6 +335,38 @@ char * generate_access_token(struct config_elements * config, const char * refre
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - Error cloning jwt");
+  }
+  jwt_free(jwt);
+  return token;
+}
+
+/**
+ * Generates a session_token from the specified parameters that are considered valid
+ */
+char * generate_session_token(struct config_elements * config, const char * username, const char * ip_source, time_t now) {
+  jwt_t * jwt;
+  char * token = NULL;
+  char salt[GLEWLWYD_SALT_LENGTH + 1] = {0};
+  
+  jwt = jwt_dup(config->jwt);
+  if (jwt != NULL) {
+    // Build jwt payload
+    rand_string(salt, GLEWLWYD_SALT_LENGTH);
+    jwt_add_grant(jwt, "salt", salt);
+    jwt_add_grant(jwt, "username", username);
+    jwt_add_grant(jwt, "type", "session_token");
+    jwt_add_grant_int(jwt, "iat", now);
+    jwt_add_grant_int(jwt, "expires_in", config->session_expiration);
+    token = jwt_encode_str(jwt);
+    if (token == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_session_token - generating token");
+    } else {
+      if (serialize_session_token(config, username, ip_source, token, now) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_session_token - Error serializing session_token");
+      }
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_session_token - Error cloning jwt");
   }
   jwt_free(jwt);
   return token;

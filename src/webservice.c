@@ -140,7 +140,7 @@ int callback_glewlwyd_token (const struct _u_request * request, struct _u_respon
  */
 int callback_glewlwyd_validate_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_result = auth_check_user_credentials(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"));
+  json_t * j_result = auth_check_user_credentials(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password")), * j_user;
   char * session_token;
   const char * ip_source = get_ip_source(request);
   time_t now;
@@ -149,12 +149,19 @@ int callback_glewlwyd_validate_user_session (const struct _u_request * request, 
   time(&now);
   if (check_result_value(j_result, G_OK)) {
     // Store session cookie
-    session_token = generate_session_token(config, u_map_get(request->map_post_body, "username"), ip_source, now);
-    if (0 == o_strcmp(u_map_get(request->map_post_body, "remember"), "true")) {
-      max_age = config->session_expiration;
-    }
-    ulfius_add_cookie_to_response(response, config->session_key, session_token, NULL, max_age, NULL, "/", 0, 0);
-    o_free(session_token);
+		j_user = get_user(config, u_map_get(request->map_post_body, "username"), NULL);
+		if (check_result_value(j_user, G_OK)) {
+			session_token = generate_session_token(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), ip_source, now);
+			if (0 == o_strcmp(u_map_get(request->map_post_body, "remember"), "true")) {
+				max_age = config->session_expiration;
+			}
+			ulfius_add_cookie_to_response(response, config->session_key, session_token, NULL, max_age, NULL, "/", 0, 0);
+			o_free(session_token);
+		} else {
+			y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_validate_user_session - Error get_user");
+			response->status = 500;
+		}
+		json_decref(j_user);
   } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
     y_log_message(Y_LOG_LEVEL_WARNING, "Security - Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
     response->status = 403;
