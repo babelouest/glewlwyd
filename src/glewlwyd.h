@@ -138,6 +138,10 @@ typedef enum {
   digest_MD5,
 } digest_algorithm;
 
+struct _auth_http {
+  char *            url;
+};
+
 struct _auth_ldap {
   char *            uri;
   char *            bind_dn;
@@ -211,8 +215,10 @@ struct config_elements {
   unsigned int                    use_secure_connection;
   char *                          secure_connection_key_file;
   char *                          secure_connection_pem_file;
+  unsigned int                    has_auth_http;
   unsigned int                    has_auth_database;
   unsigned int                    has_auth_ldap;
+  struct _auth_http *             auth_http;
   struct _auth_ldap *             auth_ldap;
   struct _u_map *                 mime_types;
   struct _h_connection *          conn;
@@ -274,16 +280,19 @@ int callback_glewlwyd_check_scope_admin (const struct _u_request * request, stru
 // Validate user login/password credentials
 json_t * auth_check_user_credentials_scope(struct config_elements * config, const char * username, const char * password, const char * scope_list);
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password);
+json_t * auth_check_user_credentials_http(struct config_elements * config, const char * username, const char * password);
 json_t * auth_check_user_credentials_database(struct config_elements * config, const char * username, const char * password);
 json_t * auth_check_user_credentials_ldap(struct config_elements * config, const char * username, const char * password);
 
 // Validate user scope
 json_t * auth_check_user_scope(struct config_elements * config, const char * username, const char * scope_list);
+json_t * auth_check_user_scope_http(struct config_elements * config, const char * username, const char * scope_list);
 json_t * auth_check_user_scope_database(struct config_elements * config, const char * username, const char * scope_list);
 json_t * auth_check_user_scope_ldap(struct config_elements * config, const char * username, const char * scope_list);
 
 // Validate client login/password credentials
 json_t * auth_check_client_credentials(struct config_elements * config, const char * client_id, const char * password);
+json_t * auth_check_client_credentials_http(struct config_elements * config, const char * client_id, const char * password);
 json_t * auth_check_client_credentials_database(struct config_elements * config, const char * client_id, const char * password);
 json_t * auth_check_client_credentials_ldap(struct config_elements * config, const char * client_id, const char * password);
 
@@ -291,6 +300,7 @@ json_t * auth_check_client_credentials_ldap(struct config_elements * config, con
 json_t * auth_check_client_scope(struct config_elements * config, const char * client_id, const char * scope_list);
 json_t * auth_check_client_scope_database(struct config_elements * config, const char * client_id, const char * scope_list);
 json_t * auth_check_client_scope_ldap(struct config_elements * config, const char * client_id, const char * scope_list);
+json_t * auth_check_client_scope_http(struct config_elements * config, const char * client_id, const char * scope_list);
 
 // Validate client on a user oauth2 request
 json_t * client_check(struct config_elements * config, const char * client_id, const char * client_id_header, const char * client_password_header, const char * redirect_uri, const int auth_type);
@@ -303,6 +313,7 @@ json_t * access_token_check_scope_admin(struct config_elements * config, const c
 json_t * session_or_access_token_check(struct config_elements * config, const char * session_value, const char * header_value);
 
 json_t * get_user_scope_grant(struct config_elements * config, const char * username);
+json_t * get_user_scope_grant_http(struct config_elements * config, const char * username);
 json_t * get_user_scope_grant_database(struct config_elements * config, const char * username);
 json_t * get_user_scope_grant_ldap(struct config_elements * config, const char * username);
 
@@ -324,13 +335,16 @@ int delete_scope(struct config_elements * config, const char * scope);
 
 // User CRUD
 json_t * get_user_list(struct config_elements * config, const char * source, const char * search, long int offset, long int limit);
+json_t * get_user_list_http(struct config_elements * config, const char * search, long int offset, long int limit);
 json_t * get_user_list_ldap(struct config_elements * config, const char * search, long int offset, long int limit);
 json_t * get_user_list_database(struct config_elements * config, const char * search, long int offset, long int limit);
 json_t * get_user(struct config_elements * config, const char * username, const char * source);
 json_t * get_user_database(struct config_elements * config, const char * username);
 json_t * get_user_ldap(struct config_elements * config, const char * username);
+json_t * get_user_http(struct config_elements * config, const char * username);
 json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add);
 int add_user(struct config_elements * config, json_t * j_user);
+int add_user_http(struct config_elements * config, json_t * j_user);
 int add_user_ldap(struct config_elements * config, json_t * j_user);
 int add_user_database(struct config_elements * config, json_t * j_user);
 int set_user(struct config_elements * config, const char * user, json_t * j_user, const char * source);
@@ -349,6 +363,7 @@ int reset_user_profile(struct config_elements * config, const char * username, c
 
 // Client CRUD
 json_t * get_client_list(struct config_elements * config, const char * source, const char * search, long int offset, long int limit);
+json_t * get_client_list_http(struct config_elements * config, const char * search, long int offset, long int limit);
 json_t * get_client_list_ldap(struct config_elements * config, const char * search, long int offset, long int limit);
 json_t * get_client_list_database(struct config_elements * config, const char * search, long int offset, long int limit);
 json_t * get_client(struct config_elements * config, const char * client_id, const char * source);
@@ -358,6 +373,7 @@ json_t * is_client_valid(struct config_elements * config, json_t * j_client, int
 int add_client(struct config_elements * config, json_t * j_client);
 int add_client_ldap(struct config_elements * config, json_t * j_client);
 int add_client_database(struct config_elements * config, json_t * j_client);
+int add_client_http(struct config_elements * config, json_t * j_client);
 int set_client(struct config_elements * config, const char * client, json_t * j_client, const char * source);
 int set_client_ldap(struct config_elements * config, const char * client, json_t * j_client);
 int set_client_database(struct config_elements * config, const char * client, json_t * j_client);

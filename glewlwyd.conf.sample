@@ -160,6 +160,9 @@ database =
 authentication =
 {
 
+   http_auth                = true
+   http_auth_url            = "https://example.com/auth/validate"		# mandatory
+
    database_auth            = true
    
    ldap_auth                = true

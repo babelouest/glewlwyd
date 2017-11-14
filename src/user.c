@@ -110,6 +110,18 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
 }
 
 /**
+ * Get a specific user in the http backend
+ * this is not possible, so return an error
+ */
+json_t * get_user_http(struct config_elements * config, const char * username) {
+  json_t * j_result = NULL;
+
+  j_result = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+
+  return j_result;
+}
+
+/**
  * Get a specific user in the ldap backend
  */
 json_t * get_user_ldap(struct config_elements * config, const char * username) {
@@ -246,10 +258,26 @@ json_t * get_user_scope_grant(struct config_elements * config, const char * user
       json_decref(j_res);
       j_res = get_user_scope_grant_database(config, username);
     }
+    if (config->has_auth_http && !check_result_value(j_res, G_OK)) {
+      json_decref(j_res);
+      j_res = get_user_scope_grant_http(config, username);
+    }
   } else {
     j_res = json_pack("{si}", "result", G_ERROR_PARAM);
   }
   return j_res;
+}
+
+/**
+ * Get the list of available scopes for a specific user in the http backend
+ * as we have no scope in http, we return an empty list
+ */
+json_t * get_user_scope_grant_http(struct config_elements * config, const char * username) {
+  json_t * j_result = NULL;
+
+  j_result = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+
+  return j_result;
 }
 
 /**
@@ -404,6 +432,14 @@ json_t * auth_check_user_credentials_scope(struct config_elements * config, cons
         j_res_scope = auth_check_user_scope_database(config, username, scope_list);
       }
     }
+
+    if (config->has_auth_http && !check_result_value(j_res_auth, G_OK)) {
+      json_decref(j_res_auth);
+      j_res_auth = auth_check_user_credentials_http(config, username, password);
+      if (check_result_value(j_res_auth, G_OK)) {
+        j_res_scope = auth_check_user_scope_http(config, username, scope_list);
+      }
+    }
     
     if (check_result_value(j_res_auth, G_OK)) {
       if (check_result_value(j_res_scope, G_OK)) {
@@ -440,10 +476,49 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
       json_decref(j_res);
       j_res = auth_check_user_credentials_database(config, username, password);
     }
+    if (config->has_auth_http && !check_result_value(j_res, G_OK)) {
+      json_decref(j_res);
+      j_res = auth_check_user_credentials_http(config, username, password);
+    }
   } else {
     j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   return j_res;
+}
+
+/**
+ * Check if the username and password specified are valid as a http user
+ * On success, return a json array with all scope values available
+ */
+json_t * auth_check_user_credentials_http(struct config_elements * config, const char * username, const char * password) {
+  int res, res_status;
+  struct _u_response response;
+  struct _u_request request;
+
+  if (o_strlen(username) <= 0 || o_strlen(password) <= 0) {
+    return json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  } else {
+    ulfius_init_request(&request);
+    request.http_verb = o_strdup("GET");
+    request.http_url = o_strdup(config->auth_http->url);
+    request.auth_basic_user = o_strdup(username);
+    request.auth_basic_password = o_strdup(password);
+    ulfius_init_response(&response);
+    res = ulfius_send_http_request(&request, &response);
+    res_status = response.status;
+    ulfius_clean_response(&response);
+    ulfius_clean_request(&request);
+    if (res == U_OK) {
+      if (res_status == 200) {
+        return json_pack("{si}", "result", G_OK);
+      } else {
+        return json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error querying authentication server");
+      return json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    }
+  }
 }
 
 /**
@@ -667,10 +742,25 @@ json_t * auth_check_user_scope(struct config_elements * config, const char * use
       json_decref(j_res);
       j_res = auth_check_user_scope_database(config, username, scope_list);
     }
+    if (config->has_auth_http && (j_res == NULL || !check_result_value(j_res, G_OK))) {
+      json_decref(j_res);
+      j_res = auth_check_user_scope_http(config, username, scope_list);
+    }
   } else {
     j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   return j_res;
+}
+
+/**
+ * Check if http user is allowed for the scope_list specified
+ * Return a refined list of scope
+ * as we have no scope in http, we return an empty list
+ */
+json_t * auth_check_user_scope_http(struct config_elements * config, const char * username, const char * scope_list) {
+  json_t * res        = NULL;
+
+  return res;
 }
 
 /**
@@ -778,6 +868,17 @@ json_t * get_user_list(struct config_elements * config, const char * source, con
   if (j_result_list != NULL) {
     if ((source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")) && config->has_auth_ldap) {
       j_source_list = get_user_list_ldap(config, search, offset, limit);
+      if (check_result_value(j_source_list, G_OK)) {
+        json_array_extend(j_result_list, json_object_get(j_source_list, "user"));
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error getting ldap list");
+      }
+      json_decref(j_source_list);
+      j_source_list = NULL;
+    }
+
+    if ((source == NULL || 0 == strcmp(source, "http") || 0 == strcmp(source, "all")) && config->has_auth_http) {
+      j_source_list = get_user_list_http(config, search, offset, limit);
       if (check_result_value(j_source_list, G_OK)) {
         json_array_extend(j_result_list, json_object_get(j_source_list, "user"));
       } else {
@@ -1035,11 +1136,23 @@ json_t * get_user_list_database(struct config_elements * config, const char * se
 }
 
 /**
+ * Return the list of users in the http backend
+ * as we have no user list in http, we return an empty list
+ */
+json_t * get_user_list_http(struct config_elements * config, const char * search, long int offset, long int limit) {
+  json_t * j_return;
+
+  j_return = json_pack("{sis[]}", "result", G_OK, "user");
+
+  return j_return;
+}
+
+/**
  * Return a specific user
  */
 json_t * get_user(struct config_elements * config, const char * login, const char * source) {
   json_t * j_return = NULL, * j_user = NULL;
-  int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
+  int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")), search_http = (source == NULL || 0 == strcmp(source, "http") || 0 == strcmp(source, "all"));
   
   if (search_ldap) {
     if (config->has_auth_ldap) {
@@ -1052,6 +1165,14 @@ json_t * get_user(struct config_elements * config, const char * login, const cha
     json_decref(j_user);
     if (config->has_auth_database) {
       j_user = get_user_database(config, login);
+    } else {
+      j_user = json_pack("{si}", "result", G_ERROR_PARAM);
+    }
+  }
+  if (!check_result_value(j_user, G_OK) && search_http) {
+    json_decref(j_user);
+    if (config->has_auth_http) {
+      j_user = get_user_http(config, login);
     } else {
       j_user = json_pack("{si}", "result", G_ERROR_PARAM);
     }
@@ -1182,9 +1303,23 @@ int add_user(struct config_elements * config, json_t * j_user) {
     return add_user_database(config, j_user);
   } else if (0 == o_strcmp("ldap", json_string_value(json_object_get(j_user, "source"))) && config->has_auth_ldap) {
     return add_user_ldap(config, j_user);
+  } else if (0 == o_strcmp("http", json_string_value(json_object_get(j_user, "source"))) && config->has_auth_http) {
+    return add_user_http(config, j_user);
   } else {
     return G_ERROR_PARAM;
   }
+}
+
+/**
+ * Add a new user in the http backend
+ * as this is not possible right now, we just retrun ok
+ */
+int add_user_http(struct config_elements * config, json_t * j_user) {
+  int res;
+
+  res = G_ERROR_PARAM;
+
+  return res;
 }
 
 /**

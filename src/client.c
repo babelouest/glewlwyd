@@ -135,10 +135,45 @@ json_t * auth_check_client_credentials(struct config_elements * config, const ch
       json_decref(j_res);
       j_res = auth_check_client_credentials_database(config, client_id, password);
     }
+    if (config->has_auth_http && !check_result_value(j_res, G_OK)) {
+      json_decref(j_res);
+      j_res = auth_check_client_credentials_http(config, client_id, password);
+    }
   } else {
     j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   return j_res;
+}
+
+/**
+ * Check client credentials in http backend
+ */
+json_t * auth_check_client_credentials_http(struct config_elements * config, const char * client_id, const char * password) {
+  int res, res_status, to_return;
+  struct _u_response response;
+  struct _u_request request;
+
+  if (client_id != NULL && password != NULL) {
+    ulfius_init_request(&request);
+    request.http_verb = o_strdup("GET");
+    request.http_url = o_strdup(config->auth_http->url);
+    request.auth_basic_user = o_strdup(client_id);
+    request.auth_basic_password = o_strdup(password);
+    ulfius_init_response(&response);
+    res = ulfius_send_http_request(&request, &response);
+    res_status = response.status;
+    ulfius_clean_response(&response);
+    ulfius_clean_request(&request);
+    if (res == U_OK) {
+      to_return = res_status==200?G_OK:G_ERROR_UNAUTHORIZED;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "client_auth - Error querying authentication server");
+      to_return = G_ERROR_UNAUTHORIZED;
+    }
+  } else {
+    to_return = G_ERROR_UNAUTHORIZED;
+  }
+  return json_pack("{si}", "result", to_return);
 }
 
 /**
@@ -347,7 +382,21 @@ json_t * auth_check_client_scope(struct config_elements * config, const char * c
     json_decref(j_res);
     j_res = auth_check_client_scope_database(config, client_id, scope_list);
   }
+  if (config->has_auth_http && (j_res == NULL || !check_result_value(j_res, G_OK))) {
+    json_decref(j_res);
+    j_res = auth_check_client_scope_http(config, client_id, scope_list);
+  }
   return j_res;
+}
+
+/**
+ * Check if client is allowed for the scope_list specified in the http backend
+ * As there is no scope available for this backend, just return an empty list
+ */
+json_t * auth_check_client_scope_http(struct config_elements * config, const char * client_id, const char * scope_list) {
+  json_t * scope_list_allowed = NULL;
+
+  return scope_list_allowed;
 }
 
 /**
@@ -557,6 +606,17 @@ json_t * get_client_list(struct config_elements * config, const char * source, c
       j_source_list = NULL;
     }
     
+    if ((source == NULL || 0 == strcmp(source, "http") || 0 == strcmp(source, "all")) && config->has_auth_http) {
+      j_source_list = get_client_list_http(config, search, offset, limit);
+      if (check_result_value(j_source_list, G_OK)) {
+        json_array_extend(j_result_list, json_object_get(j_source_list, "client"));
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error getting http list");
+      }
+      json_decref(j_source_list);
+      j_source_list = NULL;
+    }
+
     j_return = json_pack("{siso}", "result", G_OK, "client", j_result_list);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error allocating resources for j_result_list");
@@ -874,11 +934,24 @@ json_t * get_client_list_database(struct config_elements * config, const char * 
 }
 
 /**
+ * Get a list of clients in the http backend
+ * as this list is not available yet (we just do basic auth),
+ * we return an empty list
+ */
+json_t * get_client_list_http(struct config_elements * config, const char * search, long int offset, long int limit) {
+  json_t * j_return;
+
+  j_return = json_pack("{sis[]}", "result", G_OK, "client");
+
+  return j_return;
+}
+
+/**
  * Get a specific client
  */
 json_t * get_client(struct config_elements * config, const char * client_id, const char * source) {
   json_t * j_return = NULL, * j_client = NULL;
-  int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
+  int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")), search_http = (source == NULL || 0 == strcmp(source, "http") || 0 == strcmp(source, "all"));
   
   if (client_id == NULL || strlen(client_id) == 0) {
     j_client = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -897,6 +970,12 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
       } else {
         j_client = json_pack("{si}", "result", G_ERROR_PARAM);
       }
+    }
+    if (!check_result_value(j_client, G_OK) && search_http) {
+      /*
+       * at the moment we are not able to get a client via http
+       * so we do not change anything here
+       */
     }
     if (check_result_value(j_client, G_OK)) {
       j_return = json_pack("{siso}", "result", G_OK, "client", json_copy(json_object_get(j_client, "client")));
@@ -1348,6 +1427,8 @@ int add_client(struct config_elements * config, json_t * j_client) {
     return add_client_database(config, j_client);
   } else if (0 == o_strcmp("ldap", json_string_value(json_object_get(j_client, "source"))) && config->has_auth_ldap) {
     return add_client_ldap(config, j_client);
+  } else if (0 == o_strcmp("http", json_string_value(json_object_get(j_client, "source"))) && config->has_auth_http) {
+    return add_client_http(config, j_client);
   } else {
     return G_ERROR_PARAM;
   }
@@ -1715,6 +1796,18 @@ int add_client_database(struct config_elements * config, json_t * j_client) {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_client_database - Error adding client");
     to_return = G_ERROR_DB;
   }
+  return to_return;
+}
+
+/**
+ * Add a new client in the http backend
+ * as this is not possible now, we do nothing
+ */
+int add_client_http(struct config_elements * config, json_t * j_client) {
+  int to_return;
+
+  to_return = G_ERROR_PARAM;
+
   return to_return;
 }
 

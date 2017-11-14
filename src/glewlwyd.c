@@ -69,10 +69,12 @@ int main (int argc, char ** argv) {
   config->static_files_path = NULL;
   config->static_files_prefix = NULL;
   config->auth_ldap = NULL;
+  config->auth_http = NULL;
   config->refresh_token_expiration = GLEWLWYD_REFRESH_TOKEN_EXP_DEFAULT;
   config->access_token_expiration = GLEWLWYD_ACCESS_TOKEN_EXP_DEFAULT;
   config->code_expiration = GLEWLWYD_CODE_EXPIRATION_DEFAULT;
   config->jwt_decode_key = NULL;
+  config->jwt = NULL;
   config->session_key = o_strdup(GLEWLWYD_SESSION_KEY_DEFAULT);
   config->session_expiration = GLEWLWYD_SESSION_EXPIRATION_DEFAULT;
   config->admin_scope = o_strdup(GLEWLWYD_ADMIN_SCOPE);
@@ -270,7 +272,7 @@ int main (int argc, char ** argv) {
  * Exit properly the server by closing opened connections, databases and files
  */
 void exit_server(struct config_elements ** config, int exit_value) {
-  
+
   if (config != NULL && *config != NULL) {
     // Cleaning data
     o_free((*config)->config_file);
@@ -343,6 +345,10 @@ void exit_server(struct config_elements ** config, int exit_value) {
       free_string_array((*config)->auth_ldap->object_class_client_write);
       
       o_free((*config)->auth_ldap);
+    }
+    if ((*config)->auth_http != NULL) {
+      o_free((*config)->auth_http->url);
+      o_free((*config)->auth_http);
     }
     h_close_db((*config)->conn);
     h_clean_connection((*config)->conn);
@@ -608,9 +614,10 @@ int build_config_from_file(struct config_elements * config) {
              * extension = NULL, * mime_type_value = NULL, * cur_secure_connection_key_file = NULL, * cur_secure_connection_pem_file = NULL,
              * cur_grant_url = NULL, * cur_login_url = NULL, * cur_reset_password_smtp_host = NULL, * cur_reset_password_smtp_user = NULL,
              * cur_reset_password_smtp_password = NULL, * cur_reset_password_email_from = NULL, * cur_reset_password_email_subject = NULL,
-             * cur_reset_password_email_template_path = NULL, * cur_reset_password_page_url_prefix = NULL;
+             * cur_reset_password_email_template_path = NULL, * cur_reset_password_page_url_prefix = NULL,
+             * cur_auth_http_auth_url = NULL;
   int db_mariadb_port = 0, cur_key_size = 512;
-  int cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_ecdsa = 0, cur_use_sha = 0, cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, i;
+  int cur_http_auth = 0, cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_ecdsa = 0, cur_use_sha = 0, cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, i;
   
   config_init(&cfg);
   
@@ -978,11 +985,43 @@ int build_config_from_file(struct config_elements * config) {
   
   auth = config_setting_get_member(root, "authentication");
   if (auth != NULL) {
+    config_setting_lookup_bool(auth, "http_auth", &cur_http_auth);
+    config->has_auth_http = cur_http_auth;
+    if (config->has_auth_http &&
+        config->use_scope) {
+      config_destroy(&cfg);
+      fprintf(stderr, "Error, due to security concerns you can not use authentication via HTTP together with scopes\n");
+      return 0;
+    }
     config_setting_lookup_bool(auth, "database_auth", &cur_database_auth);
     config->has_auth_database = cur_database_auth;
     config_setting_lookup_bool(auth, "ldap_auth", &cur_ldap_auth);
     config->has_auth_ldap = cur_ldap_auth;
-    
+
+    if (config->has_auth_http) {
+      config_setting_lookup_string(auth, "http_auth_url", &cur_auth_http_auth_url);
+      if (cur_auth_http_auth_url != NULL) {
+        config->auth_http = o_malloc(sizeof(struct _auth_http));
+        if (config->auth_http == NULL) {
+          config_destroy(&cfg);
+          fprintf(stderr, "Error allocating resources for config->auth_http\n");
+          return 0;
+        } else {
+          memset(config->auth_http, 0, sizeof(struct _auth_http));
+
+          config->auth_http->url = o_strdup(cur_auth_http_auth_url);
+          if (config->auth_http->url == NULL) {
+            config_destroy(&cfg);
+            fprintf(stderr, "Error allocating resources for config->auth_http->url\n");
+            return 0;
+          }
+        }
+      } else {
+        config_destroy(&cfg);
+        fprintf(stderr, "Error, auth http error parameters\n");
+        return 0;
+      }
+    }
     if (config->has_auth_ldap) {
       config_setting_lookup_string(auth, "uri", &cur_auth_ldap_uri);
       config_setting_lookup_string(auth, "bind_dn", &cur_auth_ldap_bind_dn);
