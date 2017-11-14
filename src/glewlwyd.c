@@ -112,7 +112,7 @@ int main (int argc, char ** argv) {
     fprintf(stderr, "init - Error initializing end signal\n");
     return 1;
   }
-
+	
   // First we parse command line arguments
   if (!build_config_from_args(argc, argv, config)) {
     fprintf(stderr, "Error reading command-line parameters\n");
@@ -362,7 +362,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
  */
 int build_config_from_args(int argc, char ** argv, struct config_elements * config) {
   int next_option;
-  const char * short_options = "c::p::u::m::l::f::h::";
+  const char * short_options = "c::p::u::m::l::f::h::v::";
   char * tmp = NULL, * to_free = NULL, * one_log_mode = NULL;
   static const struct option long_options[]= {
     {"config-file", optional_argument, NULL, 'c'},
@@ -372,6 +372,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
     {"log-level", optional_argument, NULL, 'l'},
     {"log-file", optional_argument, NULL, 'f'},
     {"help", optional_argument, NULL, 'h'},
+    {"version", optional_argument, NULL, 'v'},
     {NULL, 0, NULL, 0}
   };
   
@@ -471,6 +472,8 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
           }
           break;
         case 'h':
+        case 'v':
+					print_help(stdout);
           exit_server(&config, GLEWLWYD_STOP);
           break;
       }
@@ -494,14 +497,25 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
  * Print help message to output file specified
  */
 void print_help(FILE * output) {
-  fprintf(output, "\nGlewlwyd OAuth2 authenticatio server\n");
+  fprintf(output, "\nGlewlwyd OAuth2 authentication server\n");
+  fprintf(output, "\n");
+  fprintf(output, "Version %s\n", _GLEWLWYD_VERSION_);
+  fprintf(output, "\n");
+  fprintf(output, "Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>\n");
+  fprintf(output, "\n");
+  fprintf(output, "This program is free software; you can redistribute it and/or\n");
+  fprintf(output, "modify it under the terms of the GNU GENERAL PUBLIC LICENSE\n");
+  fprintf(output, "License as published by the Free Software Foundation;\n");
+  fprintf(output, "version 3 of the License.\n");
+  fprintf(output, "\n");
+  fprintf(output, "Command-line options:\n");
   fprintf(output, "\n");
   fprintf(output, "-c --config-file=PATH\n");
   fprintf(output, "\tPath to configuration file\n");
   fprintf(output, "-p --port=PORT\n");
   fprintf(output, "\tPort to listen to\n");
   fprintf(output, "-u --url-prefix=PREFIX\n");
-  fprintf(output, "\tURL prefix\n");
+  fprintf(output, "\tAPI URL prefix\n");
   fprintf(output, "-m --log-mode=MODE\n");
   fprintf(output, "\tLog Mode\n");
   fprintf(output, "\tconsole, syslog or file\n");
@@ -514,6 +528,7 @@ void print_help(FILE * output) {
   fprintf(output, "-f --log-file=PATH\n");
   fprintf(output, "\tPath for log file if log mode file is specified\n");
   fprintf(output, "-h --help\n");
+  fprintf(output, "-v --version\n");
   fprintf(output, "\tPrint this message\n\n");
 }
 
