@@ -1124,11 +1124,13 @@ int build_config_from_file(struct config_elements * config) {
             fprintf(stderr, "Error allocating resources for config->auth_ldap->login_property_user_read\n");
             return 0;
           }
-          config->auth_ldap->scope_property_user_read = o_strdup(cur_auth_ldap_scope_property_user_read);
-          if (config->auth_ldap->scope_property_user_read == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_user_read\n");
-            return 0;
+          if (config->use_scope) {
+            config->auth_ldap->scope_property_user_read = o_strdup(cur_auth_ldap_scope_property_user_read);
+            if (config->auth_ldap->scope_property_user_read == NULL) {
+              config_destroy(&cfg);
+              fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_user_read\n");
+              return 0;
+            }
           }
           config->auth_ldap->name_property_user_read = o_strdup(cur_auth_ldap_name_property_user_read);
           if (config->auth_ldap->name_property_user_read == NULL) {
@@ -1160,10 +1162,12 @@ int build_config_from_file(struct config_elements * config) {
             fprintf(stderr, "Error allocating resources for config->auth_ldap->login_property_user_write\n");
             return 0;
           }
-          if (split_string(cur_auth_ldap_scope_property_user_write, ",", &config->auth_ldap->scope_property_user_write) < 1) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_user_write\n");
-            return 0;
+          if (config->use_scope) {
+            if (split_string(cur_auth_ldap_scope_property_user_write, ",", &config->auth_ldap->scope_property_user_write) < 1) {
+              config_destroy(&cfg);
+              fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_user_write\n");
+              return 0;
+            }
           }
           if (split_string(cur_auth_ldap_name_property_user_write, ",", &config->auth_ldap->name_property_user_write) < 1) {
             config_destroy(&cfg);
@@ -1232,11 +1236,13 @@ int build_config_from_file(struct config_elements * config) {
             fprintf(stderr, "Error allocating resources for config->auth_ldap->client_id_property_client_read\n");
             return 0;
           }
-          config->auth_ldap->scope_property_client_read = o_strdup(cur_auth_ldap_scope_property_client_read);
-          if (config->auth_ldap->scope_property_client_read == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_client_read\n");
-            return 0;
+          if (config->use_scope) {
+            config->auth_ldap->scope_property_client_read = o_strdup(cur_auth_ldap_scope_property_client_read);
+            if (config->auth_ldap->scope_property_client_read == NULL) {
+              config_destroy(&cfg);
+              fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_client_read\n");
+              return 0;
+            }
           }
           config->auth_ldap->name_property_client_read = o_strdup(cur_auth_ldap_name_property_client_read);
           if (config->auth_ldap->name_property_client_read == NULL) {
@@ -1274,10 +1280,12 @@ int build_config_from_file(struct config_elements * config) {
             fprintf(stderr, "Error allocating resources for config->auth_ldap->client_id_property_client_write\n");
             return 0;
           }
-          if (split_string(cur_auth_ldap_scope_property_client_write, ",", &config->auth_ldap->scope_property_client_write) < 1) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_client_write\n");
-            return 0;
+          if (config->use_scope) {
+            if (split_string(cur_auth_ldap_scope_property_client_write, ",", &config->auth_ldap->scope_property_client_write) < 1) {
+              config_destroy(&cfg);
+              fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_client_write\n");
+              return 0;
+            }
           }
           if (split_string(cur_auth_ldap_name_property_client_write, ",", &config->auth_ldap->name_property_client_write) < 1) {
             config_destroy(&cfg);
