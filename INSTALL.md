@@ -1,12 +1,16 @@
 # Installation
 
-## Debian and Ubuntu packages
+## Debian-ish packages
 
-Glewlwyd is now available in Debian Buster (testing), Debian sid, and since Ubuntu 17.10 "The Artful Aardvark". To install it on your device, use the following command as root:
+https://repology.org/metapackage/glewlwyd/badges
+
+Glewlwyd is now available in Debian Buster (testing) and some Debian based distributions. To install it on your device, use the following command as root:
 
 ```shell
 # apt install glewlwyd
 ```
+
+Then, you must initialize your database, setup your jwt key and setup your `glewlwyd.conf` file
 
 ## Docker
 
