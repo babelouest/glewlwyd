@@ -74,64 +74,71 @@ int is_authorization_type_enabled(struct config_elements * config, uint authoriz
  *
  */
 int grant_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list) {
-  json_t * j_query, * j_result;
+  json_t * j_query, * j_result, * j_scope;
   char * save_scope_list = o_strdup(scope_list), * scope, * saveptr;
   char * where_clause_scope, * scope_escaped;
   int res, to_return = G_OK;
   
   if (client_id != NULL && username != NULL && save_scope_list != NULL && strlen(save_scope_list) > 0) {
     scope = strtok_r(save_scope_list, " ", &saveptr);
-    while (scope != NULL) {
-      // Check if this user hasn't granted access to this client for this scope
-      scope_escaped = h_escape_string(config->conn, scope);
-      where_clause_scope = msprintf("= (SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, scope_escaped);
-      j_query = json_pack("{sss[s]s{sssss{ssss}}}",
-                          "table",
-                          GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
-                          "columns",
-                            "gcus_id",
-                          "where",
-                            "gc_client_id",
-                            client_id,
-                            "gco_username",
-                            username,
-                            "gs_id",
-                              "operator",
-                              "raw",
-                              "value",
-                              where_clause_scope);
-      o_free(where_clause_scope);
-      res = h_select(config->conn, j_query, &j_result, NULL);
-      json_decref(j_query);
-      if (res == H_OK) {
-        if (json_array_size(j_result) == 0) {
-          // Add grant to this scope
-          where_clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, scope_escaped);
-          j_query = json_pack("{sss{sssss{ss}}}",
-                              "table",
-                              GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
-                              "values",
-                                "gc_client_id",
-                                client_id,
-                                "gco_username",
-                                username,
-                                "gs_id",
-                                  "raw",
-                                  where_clause_scope);
-          o_free(where_clause_scope);
-          res = h_insert(config->conn, j_query, NULL);
-          json_decref(j_query);
-          if (res != H_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "grant_client_user_scope_access - Error adding scope %s to client_id %s for user %s", scope, client_id, username);
-            to_return = G_ERROR_DB;
+    while (scope != NULL && to_return == G_OK) {
+      j_scope = get_scope(config, scope);
+      if (check_result_value(j_scope, G_OK)) {
+        // Check if this user hasn't granted access to this client for this scope
+        scope_escaped = h_escape_string(config->conn, scope);
+        where_clause_scope = msprintf("= (SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, scope_escaped);
+        j_query = json_pack("{sss[s]s{sssss{ssss}}}",
+                            "table",
+                            GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
+                            "columns",
+                              "gcus_id",
+                            "where",
+                              "gc_client_id",
+                              client_id,
+                              "gco_username",
+                              username,
+                              "gs_id",
+                                "operator",
+                                "raw",
+                                "value",
+                                where_clause_scope);
+        o_free(where_clause_scope);
+        res = h_select(config->conn, j_query, &j_result, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          if (json_array_size(j_result) == 0) {
+            // Add grant to this scope
+            where_clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, scope_escaped);
+            j_query = json_pack("{sss{sssss{ss}}}",
+                                "table",
+                                GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
+                                "values",
+                                  "gc_client_id",
+                                  client_id,
+                                  "gco_username",
+                                  username,
+                                  "gs_id",
+                                    "raw",
+                                    where_clause_scope);
+            o_free(where_clause_scope);
+            res = h_insert(config->conn, j_query, NULL);
+            json_decref(j_query);
+            if (res != H_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "grant_client_user_scope_access - Error adding scope %s to client_id %s for user %s", scope, client_id, username);
+              to_return = G_ERROR_DB;
+            }
           }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "grant_client_user_scope_access - Error getting grant for scope %s to client_id %s for user %s", scope, client_id, username);
+          to_return = G_ERROR_DB;
         }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "grant_client_user_scope_access - Error getting grant for scope %s to client_id %s for user %s", scope, client_id, username);
-        to_return = G_ERROR_DB;
+        o_free(scope_escaped);
+        json_decref(j_result);
+      } else if (!check_result_value(j_scope, G_ERROR_NOT_FOUND)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "grant_client_user_scope_access - Error get_scope %s", scope);
+        to_return = G_ERROR;
       }
-      o_free(scope_escaped);
-      json_decref(j_result);
+      json_decref(j_scope);
       scope = strtok_r(NULL, " ", &saveptr);
     }
   } else {
@@ -150,64 +157,71 @@ int grant_client_user_scope_access(struct config_elements * config, const char *
  *
  */
 int delete_client_user_scope_access(struct config_elements * config, const char * client_id, const char * username, const char * scope_list) {
-  json_t * j_query, * j_result;
+  json_t * j_query, * j_result, * j_scope;
   char * save_scope_list = o_strdup(scope_list), * scope, * saveptr;
   char * where_clause_scope, * scope_escaped;
   int res, to_return = G_OK;
   
   if (client_id != NULL && username != NULL && save_scope_list != NULL && strlen(save_scope_list) > 0) {
     scope = strtok_r(save_scope_list, " ", &saveptr);
-    while (scope != NULL) {
-      // Check if this user hasn't granted access to this client for this scope
-      scope_escaped = h_escape_string(config->conn, scope);
-      where_clause_scope = msprintf("= (SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, scope_escaped);
-      j_query = json_pack("{sss[s]s{sssss{ssss}}}",
-                          "table",
-                          GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
-                          "columns",
-                            "gcus_id",
-                          "where",
-                            "gc_client_id",
-                            client_id,
-                            "gco_username",
-                            username,
-                            "gs_id",
-                              "operator",
-                              "raw",
-                              "value",
-                              where_clause_scope);
-      o_free(where_clause_scope);
-      res = h_select(config->conn, j_query, &j_result, NULL);
-      json_decref(j_query);
-      if (res == H_OK) {
-        if (json_array_size(j_result) == 0) {
-          // Add grant to this scope
-          where_clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, scope_escaped);
-          j_query = json_pack("{sss{sssss{ss}}}",
-                              "table",
-                              GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
-                              "where",
-                                "gc_client_id",
-                                client_id,
-                                "gco_username",
-                                username,
-                                "gs_id",
-                                  "raw",
-                                  where_clause_scope);
-          o_free(where_clause_scope);
-          res = h_delete(config->conn, j_query, NULL);
-          json_decref(j_query);
-          if (res != H_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_user_scope_access - Error adding scope %s to client_id %s for user %s", scope, client_id, username);
-            to_return = G_ERROR_DB;
+    while (scope != NULL && to_return == G_OK) {
+      j_scope = get_scope(config, scope);
+      if (check_result_value(j_scope, G_OK)) {
+        // Check if this user hasn't granted access to this client for this scope
+        scope_escaped = h_escape_string(config->conn, scope);
+        where_clause_scope = msprintf("= (SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, scope_escaped);
+        j_query = json_pack("{sss[s]s{sssss{ssss}}}",
+                            "table",
+                            GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
+                            "columns",
+                              "gcus_id",
+                            "where",
+                              "gc_client_id",
+                              client_id,
+                              "gco_username",
+                              username,
+                              "gs_id",
+                                "operator",
+                                "raw",
+                                "value",
+                                where_clause_scope);
+        o_free(where_clause_scope);
+        res = h_select(config->conn, j_query, &j_result, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          if (json_array_size(j_result) == 0) {
+            // Add grant to this scope
+            where_clause_scope = msprintf("(SELECT `gs_id` FROM `%s` WHERE `gs_name`='%s')", GLEWLWYD_TABLE_SCOPE, scope_escaped);
+            j_query = json_pack("{sss{sssss{ss}}}",
+                                "table",
+                                GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
+                                "where",
+                                  "gc_client_id",
+                                  client_id,
+                                  "gco_username",
+                                  username,
+                                  "gs_id",
+                                    "raw",
+                                    where_clause_scope);
+            o_free(where_clause_scope);
+            res = h_delete(config->conn, j_query, NULL);
+            json_decref(j_query);
+            if (res != H_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_user_scope_access - Error adding scope %s to client_id %s for user %s", scope, client_id, username);
+              to_return = G_ERROR_DB;
+            }
           }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_user_scope_access - Error getting grant for scope %s to client_id %s for user %s", scope, client_id, username);
+          to_return = G_ERROR_DB;
         }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_user_scope_access - Error getting grant for scope %s to client_id %s for user %s", scope, client_id, username);
-        to_return = G_ERROR_DB;
+        o_free(scope_escaped);
+        json_decref(j_result);
+      } else if (!check_result_value(j_scope, G_ERROR_NOT_FOUND)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "grant_client_user_scope_access - Error get_scope %s", scope);
+        to_return = G_ERROR;
       }
-      o_free(scope_escaped);
-      json_decref(j_result);
+      json_decref(j_scope);
       scope = strtok_r(NULL, " ", &saveptr);
     }
   } else {
