@@ -2,7 +2,7 @@
 
 ## Debian-ish packages
 
-https://repology.org/metapackage/glewlwyd/badges
+[![Packaging status](https://repology.org/badge/vertical-allrepos/glewlwyd.svg)](https://repology.org/metapackage/glewlwyd)
 
 Glewlwyd is now available in Debian Buster (testing) and some Debian based distributions. To install it on your device, use the following command as root:
 
