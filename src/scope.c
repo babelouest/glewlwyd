@@ -73,7 +73,7 @@ json_t * get_scope(struct config_elements * config, const char * scope) {
   json_decref(j_query);
   if (res == H_OK) {
     if (json_array_size(j_result) > 0) {
-      j_return = json_pack("{siso}", "result", G_OK, "scope", json_copy(json_array_get(j_result, 0)));
+      j_return = json_pack("{sisO}", "result", G_OK, "scope", json_array_get(j_result, 0));
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
@@ -148,7 +148,7 @@ int add_scope(struct config_elements * config, json_t * j_scope) {
                         "gs_name",
                         json_string_value(json_object_get(j_scope, "name")));
   if (json_object_get(j_scope, "description") != NULL) {
-    json_object_set_new(json_object_get(j_query, "values"), "gs_description", json_copy(json_object_get(j_scope, "description")));
+    json_object_set(json_object_get(j_query, "values"), "gs_description", json_object_get(j_scope, "description"));
   }
   
   res = h_insert(config->conn, j_query, NULL);

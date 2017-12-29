@@ -69,7 +69,7 @@ json_t * get_resource_list(struct config_elements * config) {
         if (res == H_OK) {
           json_object_set_new(j_element, "scope", json_array());
           json_array_foreach(j_scope, i_scope, j_scope_entry) {
-            json_array_append_new(json_object_get(j_element, "scope"), json_copy(json_object_get(j_scope_entry, "gs_name")));
+            json_array_append(json_object_get(j_element, "scope"), json_object_get(j_scope_entry, "gs_name"));
           }
           json_decref(j_scope);
         }
@@ -126,13 +126,13 @@ json_t * get_resource(struct config_elements * config, const char * resource) {
         if (res == H_OK) {
           json_object_set_new(json_array_get(j_result, 0), "scope", json_array());
           json_array_foreach(j_scope, i_scope, j_scope_entry) {
-            json_array_append_new(json_object_get(json_array_get(j_result, 0), "scope"), json_copy(json_object_get(j_scope_entry, "gs_name")));
+            json_array_append(json_object_get(json_array_get(j_result, 0), "scope"), json_object_get(j_scope_entry, "gs_name"));
           }
           json_decref(j_scope);
         }
       }
       json_object_del(json_array_get(j_result, 0), "gr_id");
-      j_return = json_pack("{siso}", "result", G_OK, "resource", json_copy(json_array_get(j_result, 0)));
+      j_return = json_pack("{sisO}", "result", G_OK, "resource", json_array_get(j_result, 0));
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
@@ -235,7 +235,7 @@ int add_resource(struct config_elements * config, json_t * j_resource) {
                         "gr_uri",
                         json_object_get(j_resource, "uri")!=NULL?json_string_value(json_object_get(j_resource, "uri")):"");
   if (json_object_get(j_resource, "description") != NULL) {
-    json_object_set_new(json_object_get(j_query, "values"), "gr_description", json_copy(json_object_get(j_resource, "description")));
+    json_object_set(json_object_get(j_query, "values"), "gr_description", json_object_get(j_resource, "description"));
   }
   
   res = h_insert(config->conn, j_query, NULL);
@@ -295,7 +295,7 @@ int set_resource(struct config_elements * config, const char * resource, json_t 
                         "gr_name",
                         resource);
   if (json_object_get(j_resource, "description") != NULL) {
-    json_object_set_new(json_object_get(j_query, "set"), "gr_description", json_copy(json_object_get(j_resource, "description")));
+    json_object_set(json_object_get(j_query, "set"), "gr_description", json_object_get(j_resource, "description"));
   }
   
   res = h_update(config->conn, j_query, NULL);

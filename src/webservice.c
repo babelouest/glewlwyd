@@ -377,14 +377,15 @@ int callback_glewlwyd_get_user_session_profile (const struct _u_request * reques
   
   j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   if (check_result_value(j_session, G_OK)) {
-    j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), NULL);
+		if (json_object_get(json_object_get(j_session, "grants"), "session_token") == json_true()) {
+			j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), NULL);
+		} else {
+			j_user = get_user_profile(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), NULL);
+		}
     if (check_result_value(j_user, G_OK)) {
-      json_t * json_body = NULL;
       json_object_del(json_object_get(j_user, "user"), "source");
       json_object_del(json_object_get(j_user, "user"), "enabled");
-      json_body = json_copy(json_object_get(j_user, "user"));
-      ulfius_set_json_body_response(response, 200, json_body);
-      json_decref(json_body);
+      ulfius_set_json_body_response(response, 200, json_object_get(j_user, "user"));
     }
     json_decref(j_user);
   } else {
@@ -428,9 +429,7 @@ int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * re
   } else {
     j_scope_grant = get_user_scope_grant(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")));
     if (check_result_value(j_scope_grant, G_OK)) {
-      json_t * json_body = json_copy(json_object_get(j_scope_grant, "scope"));
-      ulfius_set_json_body_response(response, 200, json_body);
-      json_decref(json_body);
+      ulfius_set_json_body_response(response, 200, json_object_get(j_scope_grant, "scope"));
     } else {
       response->status = 500;
     }
@@ -470,13 +469,9 @@ int callback_glewlwyd_get_authorization (const struct _u_request * request, stru
   
   if (check_result_value(j_result, G_OK)) {
     if (u_map_get(request->map_url, "authorization_type") != NULL) {
-      json_t * json_body = json_copy(json_array_get(json_object_get(j_result, "authorization"), 0));
-      ulfius_set_json_body_response(response, 200, json_body);
-      json_decref(json_body);
+      ulfius_set_json_body_response(response, 200, json_array_get(json_object_get(j_result, "authorization"), 0));
     } else {
-      json_t * json_body = json_copy(json_object_get(j_result, "authorization"));
-      ulfius_set_json_body_response(response, 200, json_body);
-      json_decref(json_body);
+      ulfius_set_json_body_response(response, 200, json_object_get(j_result, "authorization"));
     }
   } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
     response->status = 404;
@@ -500,9 +495,7 @@ int callback_glewlwyd_set_authorization (const struct _u_request * request, stru
         response->status = 500;
       }
     } else if (j_valid != NULL && json_array_size(j_valid) > 0) {
-      json_t * json_body = json_copy(j_valid);
-      ulfius_set_json_body_response(response, 400, json_body);
-      json_decref(json_body);
+      ulfius_set_json_body_response(response, 400, j_valid);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_authorization - Error is_authorization_type_valid");
       response->status = 500;
@@ -527,9 +520,7 @@ int callback_glewlwyd_get_list_scope (const struct _u_request * request, struct 
   json_t * j_result = get_scope_list(config);
   
   if (check_result_value(j_result, G_OK)) {
-    json_t * json_body = json_copy(json_object_get(j_result, "scope"));
-    ulfius_set_json_body_response(response, 200, json_body);
-    json_decref(json_body);
+    ulfius_set_json_body_response(response, 200, json_object_get(j_result, "scope"));
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_list_scope - Error getting scope list");
     response->status = 500;
@@ -543,9 +534,7 @@ int callback_glewlwyd_get_scope (const struct _u_request * request, struct _u_re
   json_t * j_result = get_scope(config, u_map_get(request->map_url, "scope"));
   
   if (check_result_value(j_result, G_OK)) {
-    json_t * json_body = json_copy(json_object_get(j_result, "scope"));
-    ulfius_set_json_body_response(response, 200, json_body);
-    json_decref(json_body);
+    ulfius_set_json_body_response(response, 200, json_object_get(j_result, "scope"));
   } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
     response->status = 404;
   } else {
@@ -567,9 +556,7 @@ int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_re
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_scope - Error adding new scope");
     }
   } else if (j_result != NULL && json_array_size(j_result) > 0) {
-    json_t * json_body = json_copy(j_result);
-    ulfius_set_json_body_response(response, 400, json_body);
-    json_decref(json_body);
+    ulfius_set_json_body_response(response, 400, j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_scope - Error is_scope_valid");
     response->status = 500;
@@ -592,9 +579,7 @@ int callback_glewlwyd_set_scope (const struct _u_request * request, struct _u_re
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_scope - Error adding new scope");
       }
     } else if (j_result != NULL && json_array_size(j_result) > 0) {
-      json_t * json_body = json_copy(j_result);
-      ulfius_set_json_body_response(response, 400, json_body);
-      json_decref(json_body);
+      ulfius_set_json_body_response(response, 400, j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_scope - Error is_scope_valid");
       response->status = 500;
@@ -653,9 +638,7 @@ int callback_glewlwyd_get_list_user (const struct _u_request * request, struct _
   j_result = get_user_list(config, u_map_get(request->map_url, "source"), u_map_get(request->map_url, "search"), offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
   
   if (check_result_value(j_result, G_OK)) {
-    json_t * json_body = json_copy(json_object_get(j_result, "user"));
-    ulfius_set_json_body_response(response, 200, json_body);
-    json_decref(json_body);
+    ulfius_set_json_body_response(response, 200, json_object_get(j_result, "user"));
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_list_user - Error getting user list");
     response->status = 500;
@@ -671,9 +654,7 @@ int callback_glewlwyd_get_user (const struct _u_request * request, struct _u_res
   if (u_map_get(request->map_url, "source") == NULL || 0 == strcmp("all", u_map_get(request->map_url, "source")) || 0 == strcmp("ldap", u_map_get(request->map_url, "source")) || 0 == strcmp("database", u_map_get(request->map_url, "source"))) {
     j_user = get_user(config, u_map_get(request->map_url, "username"), u_map_get(request->map_url, "source"));
     if (check_result_value(j_user, G_OK)) {
-      json_t * json_body = json_copy(json_object_get(j_user, "user"));
-      ulfius_set_json_body_response(response, 200, json_body);
-      json_decref(json_body);
+      ulfius_set_json_body_response(response, 200, json_object_get(j_user, "user"));
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
       response->status = 404;
     } else if (check_result_value(j_user, G_ERROR_PARAM)) {
@@ -698,15 +679,15 @@ int callback_glewlwyd_add_user (const struct _u_request * request, struct _u_res
   if (j_result != NULL && json_array_size(j_result) == 0) {
     res = add_user(config, json_req_body);
     if (res == G_ERROR_PARAM) {
-      response->status = 400;
+			json_t * j_body = json_pack("{sssO}", "error", "Error source parameter", "user", json_req_body);
+			ulfius_set_json_body_response(response, 400, j_body);
+			json_decref(j_body);
     } else if (res != G_OK) {
       response->status = 500;
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user - Error adding new user");
     }
   } else if (j_result != NULL && json_array_size(j_result) > 0) {
-    json_t * json_body = json_copy(j_result);
-    ulfius_set_json_body_response(response, 400, json_body);
-    json_decref(json_body);
+    ulfius_set_json_body_response(response, 400, j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user - Error is_user_valid");
     response->status = 500;
@@ -731,9 +712,7 @@ int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_res
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user - Error adding new user");
         }
       } else if (j_result != NULL && json_array_size(j_result) > 0) {
-        json_t * json_body = json_copy(j_result);
-        ulfius_set_json_body_response(response, 400, json_body);
-        json_decref(json_body);
+        ulfius_set_json_body_response(response, 400, j_result);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user - Error is_user_valid");
         response->status = 500;
@@ -812,9 +791,7 @@ int callback_glewlwyd_get_refresh_token_user (const struct _u_request * request,
   j_result = get_refresh_token_list(config, u_map_get(request->map_url, "username"), valid, offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
   
   if (check_result_value(j_result, G_OK)) {
-    json_t * json_body = json_copy(json_object_get(j_result, "token"));
-    ulfius_set_json_body_response(response, 200, json_body);
-    json_decref(json_body);
+    ulfius_set_json_body_response(response, 200, json_object_get(j_result, "token"));
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_refresh_token_user - Error getting token list");
     response->status = 500;
@@ -872,9 +849,7 @@ int callback_glewlwyd_get_session_user (const struct _u_request * request, struc
   j_result = get_session_list(config, u_map_get(request->map_url, "username"), valid, offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
   
   if (check_result_value(j_result, G_OK)) {
-    json_t * json_body = json_copy(json_object_get(j_result, "session"));
-    ulfius_set_json_body_response(response, 200, json_body);
-    json_decref(json_body);
+    ulfius_set_json_body_response(response, 200, json_object_get(j_result, "session"));
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_session_user - Error getting session list");
     response->status = 500;
@@ -924,9 +899,7 @@ int callback_glewlwyd_get_list_client (const struct _u_request * request, struct
   j_result = get_client_list(config, u_map_get(request->map_url, "source"), u_map_get(request->map_url, "search"), offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
   
   if (check_result_value(j_result, G_OK)) {
-    json_t * json_body = json_copy(json_object_get(j_result, "client"));
-    ulfius_set_json_body_response(response, 200, json_body);
-    json_decref(json_body);
+    ulfius_set_json_body_response(response, 200, json_object_get(j_result, "client"));
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_list_client - Error getting client list");
     response->status = 500;
@@ -942,9 +915,7 @@ int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_r
   if (u_map_get(request->map_url, "source") == NULL || 0 == strcmp("all", u_map_get(request->map_url, "source")) || 0 == strcmp("ldap", u_map_get(request->map_url, "source")) || 0 == strcmp("database", u_map_get(request->map_url, "source"))) {
     j_client = get_client(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "source"));
     if (check_result_value(j_client, G_OK)) {
-      json_t * json_body = json_copy(json_object_get(j_client, "client"));
-      ulfius_set_json_body_response(response, 200, json_body);
-      json_decref(json_body);
+      ulfius_set_json_body_response(response, 200, json_object_get(j_client, "client"));
     } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
       response->status = 404;
     } else if (check_result_value(j_client, G_ERROR_PARAM)) {
@@ -977,9 +948,7 @@ int callback_glewlwyd_add_client (const struct _u_request * request, struct _u_r
     }
     json_decref(json_body);
   } else if (j_result != NULL && json_array_size(j_result) > 0) {
-    json_t * json_body = json_copy(j_result);
-    ulfius_set_json_body_response(response, 400, json_body);
-    json_decref(json_body);
+    ulfius_set_json_body_response(response, 400, j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client - Error is_client_valid");
     response->status = 500;
@@ -1006,9 +975,7 @@ int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_r
         }
         json_decref(json_body);
       } else if (j_result != NULL && json_array_size(j_result) > 0) {
-        json_t * json_body = json_copy(j_result);
-        ulfius_set_json_body_response(response, 400, json_body);
-        json_decref(json_body);
+        ulfius_set_json_body_response(response, 400, j_result);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client - Error is_client_valid");
         response->status = 500;
@@ -1064,9 +1031,7 @@ int callback_glewlwyd_get_list_resource (const struct _u_request * request, stru
   json_t * j_result = get_resource_list(config);
   
   if (check_result_value(j_result, G_OK)) {
-    json_t * json_body = json_copy(json_object_get(j_result, "resource"));
-    ulfius_set_json_body_response(response, 200, json_body);
-    json_decref(json_body);
+    ulfius_set_json_body_response(response, 200, json_object_get(j_result, "resource"));
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_list_resource - Error getting resource list");
     response->status = 500;
@@ -1080,9 +1045,7 @@ int callback_glewlwyd_get_resource (const struct _u_request * request, struct _u
   json_t * j_result = get_resource(config, u_map_get(request->map_url, "resource"));
   
   if (check_result_value(j_result, G_OK)) {
-    json_t * json_body = json_copy(json_object_get(j_result, "resource"));
-    ulfius_set_json_body_response(response, 200, json_body);
-    json_decref(json_body);
+    ulfius_set_json_body_response(response, 200, json_object_get(j_result, "resource"));
   } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
     response->status = 404;
   } else {
@@ -1106,9 +1069,7 @@ int callback_glewlwyd_add_resource (const struct _u_request * request, struct _u
     }
     json_decref(json_body);
   } else if (j_result != NULL && json_array_size(j_result) > 0) {
-    json_t * json_body = json_copy(j_result);
-    ulfius_set_json_body_response(response, 400, json_body);
-    json_decref(json_body);
+    ulfius_set_json_body_response(response, 400, j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_resource - Error is_resource_valid");
     response->status = 500;
@@ -1134,9 +1095,7 @@ int callback_glewlwyd_set_resource (const struct _u_request * request, struct _u
       }
       json_decref(json_body);
     } else if (j_result != NULL && json_array_size(j_result) > 0) {
-      json_t * json_body = json_copy(j_result);
-      ulfius_set_json_body_response(response, 400, json_body);
-      json_decref(json_body);
+      ulfius_set_json_body_response(response, 400, j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_resource - Error is_resource_valid");
       response->status = 500;
@@ -1191,9 +1150,7 @@ int callback_glewlwyd_set_user_profile (const struct _u_request * request, struc
       }
       json_decref(json_body);
     } else if (j_user_valid != NULL) {
-      json_t * json_body = json_copy(j_user_valid);
-      ulfius_set_json_body_response(response, 400, json_body);
-      json_decref(json_body);
+      ulfius_set_json_body_response(response, 400, j_user_valid);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_profile - Error is_user_profile_valid");
       response->status = 500;
@@ -1316,9 +1273,7 @@ int callback_glewlwyd_get_refresh_token_profile (const struct _u_request * reque
     j_result = get_refresh_token_list(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), valid, offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
     
     if (check_result_value(j_result, G_OK)) {
-      json_t * json_body = json_copy(json_object_get(j_result, "token"));
-      ulfius_set_json_body_response(response, 200, json_body);
-      json_decref(json_body);
+      ulfius_set_json_body_response(response, 200, json_object_get(j_result, "token"));
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_refresh_token_user - Error getting token list");
       response->status = 500;
@@ -1392,9 +1347,7 @@ int callback_glewlwyd_get_session_profile (const struct _u_request * request, st
     j_result = get_session_list(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), valid, offset>=0?offset:0, limit>0?limit:GLEWLWYD_DEFAULT_LIMIT);
     
     if (check_result_value(j_result, G_OK)) {
-      json_t * json_body = json_copy(json_object_get(j_result, "session"));
-      ulfius_set_json_body_response(response, 200, json_body);
-      json_decref(json_body);
+      ulfius_set_json_body_response(response, 200, json_object_get(j_result, "session"));
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_session_user - Error getting session list");
       response->status = 500;

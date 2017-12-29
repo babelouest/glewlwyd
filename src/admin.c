@@ -58,7 +58,7 @@ json_t * get_authorization_type(struct config_elements * config, const char * au
         json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "got_enabled"))==1?json_true():json_false());
         json_object_del(j_element, "got_enabled");
       }
-      j_return = json_pack("{siso}", "result", G_OK, "authorization", json_copy(j_result));
+      j_return = json_pack("{sisO}", "result", G_OK, "authorization", j_result);
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_authorization_type_list - Error getting authorization type list");
@@ -116,7 +116,7 @@ int set_authorization_type(struct config_elements * config, const char * authori
                         "got_name",
                         authorization_type);
   if (json_object_get(j_authorization_type, "description") != NULL) {
-    json_object_set_new(json_object_get(j_query, "set"), "got_description", json_copy(json_object_get(j_authorization_type, "description")));
+    json_object_set(json_object_get(j_query, "set"), "got_description", json_object_get(j_authorization_type, "description"));
   }
   
   if (json_object_get(j_authorization_type, "enabled") != NULL) {
