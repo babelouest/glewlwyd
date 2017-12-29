@@ -107,7 +107,7 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
         if (!redirect_uri_allowed || !auth_type_allowed) {
           j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         } else {
-          j_res = json_pack("{siso}", "result", G_OK, "client", json_copy(json_object_get(j_client, "client")));
+          j_res = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
         }
       }
     } else {
@@ -708,7 +708,7 @@ json_t * get_client_list_ldap(struct config_elements * config, const char * sear
               json_object_set_new(j_entry, "authorization_type", json_array());
               if (json_object_get(j_entry, "authorization_type") != NULL) {
                 json_array_foreach(j_auth_type, i_auth_type, j_cur_auth_type) {
-                  json_array_append_new(json_object_get(j_entry, "authorization_type"), json_copy(json_object_get(j_cur_auth_type, "name")));
+                  json_array_append(json_object_get(j_entry, "authorization_type"), json_object_get(j_cur_auth_type, "name"));
                 }
               }
               json_decref(j_auth_type);
@@ -792,7 +792,7 @@ json_t * get_client_list_database(struct config_elements * config, const char * 
       if (res == H_OK) {
         json_object_set_new(j_entry, "scope", json_array());
         json_array_foreach(j_scope, i_scope, j_scope_entry) {
-          json_array_append_new(json_object_get(j_entry, "scope"), json_copy(json_object_get(j_scope_entry, "gs_name")));
+          json_array_append(json_object_get(j_entry, "scope"), json_object_get(j_scope_entry, "gs_name"));
         }
         json_decref(j_scope);
         
@@ -831,7 +831,7 @@ json_t * get_client_list_database(struct config_elements * config, const char * 
             json_object_set_new(j_entry, "authorization_type", json_array());
             if (json_object_get(j_entry, "authorization_type") != NULL) {
               json_array_foreach(j_auth_type, i_auth_type, j_cur_auth_type) {
-                json_array_append_new(json_object_get(j_entry, "authorization_type"), json_copy(json_object_get(j_cur_auth_type, "name")));
+                json_array_append(json_object_get(j_entry, "authorization_type"), json_object_get(j_cur_auth_type, "name"));
               }
             }
             json_decref(j_auth_type);
@@ -854,7 +854,7 @@ json_t * get_client_list_database(struct config_elements * config, const char * 
             
             json_object_del(j_entry, "gc_id");
             
-            json_array_append_new(json_object_get(j_return, "client"), json_copy(j_entry));
+            json_array_append(json_object_get(j_return, "client"), j_entry);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "get_client_database - Error executing j_query for authorization type");
           }
@@ -899,7 +899,7 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
       }
     }
     if (check_result_value(j_client, G_OK)) {
-      j_return = json_pack("{siso}", "result", G_OK, "client", json_copy(json_object_get(j_client, "client")));
+      j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
     } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else if (check_result_value(j_client, G_ERROR_PARAM)) {
@@ -959,7 +959,7 @@ json_t * get_client_database(struct config_elements * config, const char * clien
       if (res == H_OK) {
         json_object_set_new(j_entry, "scope", json_array());
         json_array_foreach(j_scope, i_scope, j_scope_entry) {
-          json_array_append_new(json_object_get(j_entry, "scope"), json_copy(json_object_get(j_scope_entry, "gs_name")));
+          json_array_append(json_object_get(j_entry, "scope"), json_object_get(j_scope_entry, "gs_name"));
         }
         json_decref(j_scope);
         
@@ -998,7 +998,7 @@ json_t * get_client_database(struct config_elements * config, const char * clien
             json_object_set_new(j_entry, "authorization_type", json_array());
             if (json_object_get(j_entry, "authorization_type") != NULL) {
               json_array_foreach(j_auth_type, i_auth_type, j_cur_auth_type) {
-                json_array_append_new(json_object_get(j_entry, "authorization_type"), json_copy(json_object_get(j_cur_auth_type, "name")));
+                json_array_append(json_object_get(j_entry, "authorization_type"), json_object_get(j_cur_auth_type, "name"));
               }
             }
             json_decref(j_auth_type);
@@ -1021,7 +1021,7 @@ json_t * get_client_database(struct config_elements * config, const char * clien
             
             json_object_del(j_entry, "gc_id");
             
-            j_return = json_pack("{siso}", "result", G_OK, "client", json_copy(j_entry));
+            j_return = json_pack("{sisO}", "result", G_OK, "client", j_entry);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "get_client_database - Error executing j_query for authorization type");
           }
@@ -1164,7 +1164,7 @@ json_t * get_client_ldap(struct config_elements * config, const char * client_id
             json_object_set_new(j_entry, "authorization_type", json_array());
             if (json_object_get(j_entry, "authorization_type") != NULL) {
               json_array_foreach(j_auth_type, i_auth_type, j_cur_auth_type) {
-                json_array_append_new(json_object_get(j_entry, "authorization_type"), json_copy(json_object_get(j_cur_auth_type, "name")));
+                json_array_append(json_object_get(j_entry, "authorization_type"), json_object_get(j_cur_auth_type, "name"));
               }
             }
             json_decref(j_auth_type);
@@ -1974,10 +1974,10 @@ int set_client_database(struct config_elements * config, const char * client_id,
                         "gc_client_id",
                         client_id);
   if (json_object_get(j_client, "name") != NULL) {
-    json_object_set_new(json_object_get(j_query, "set"), "gc_name", json_copy(json_object_get(j_client, "name")));
+    json_object_set(json_object_get(j_query, "set"), "gc_name", json_object_get(j_client, "name"));
   }
   if (json_object_get(j_client, "description") != NULL) {
-    json_object_set_new(json_object_get(j_query, "set"), "gc_description", json_copy(json_object_get(j_client, "description")));
+    json_object_set(json_object_get(j_query, "set"), "gc_description", json_object_get(j_client, "description"));
   }
   if (json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, "password") != NULL) {
     json_object_set_new(json_object_get(j_query, "set"), "gc_confidential", json_integer(1));

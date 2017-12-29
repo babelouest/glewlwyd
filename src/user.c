@@ -82,7 +82,7 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
         
         json_object_set_new(json_array_get(j_result, 0), "scope", json_array());
         json_array_foreach(j_scope, i_scope, j_scope_entry) {
-          json_array_append_new(json_object_get(json_array_get(j_result, 0), "scope"), json_copy(json_object_get(j_scope_entry, "gs_name")));
+          json_array_append(json_object_get(json_array_get(j_result, 0), "scope"), json_object_get(j_scope_entry, "gs_name"));
         }
         json_decref(j_scope);
         json_object_set_new(json_array_get(j_result, 0), "source", json_string("database"));
@@ -93,7 +93,7 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
           json_object_del(json_array_get(j_result, 0), "additional_property_value");
         }
         
-        j_return = json_pack("{siso}", "result", G_OK, "user", json_copy(json_array_get(j_result, 0)));
+        j_return = json_pack("{sisO}", "result", G_OK, "user", json_array_get(j_result, 0));
       } else {
         j_return = json_pack("{si}", "result", G_ERROR_DB);
         y_log_message(Y_LOG_LEVEL_ERROR, "get_user_database - Error executing j_query for scope");
@@ -216,7 +216,6 @@ json_t * get_user_ldap(struct config_elements * config, const char * username) {
           ldap_value_free_len(login_values);
           ldap_value_free_len(scope_values);
           ldap_value_free_len(additional_property_values);
-          //y_log_message(Y_LOG_LEVEL_DEBUG, "j_entry is %s", json_dumps(j_entry, JSON_ENCODE_ANY));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for j_entry");
         }
@@ -1010,7 +1009,7 @@ json_t * get_user_list_database(struct config_elements * config, const char * se
         
         json_object_set_new(j_entry, "scope", json_array());
         json_array_foreach(j_scope, i_scope, j_scope_entry) {
-          json_array_append_new(json_object_get(j_entry, "scope"), json_copy(json_object_get(j_scope_entry, "gs_name")));
+          json_array_append(json_object_get(j_entry, "scope"), json_object_get(j_scope_entry, "gs_name"));
         }
         json_decref(j_scope);
         json_object_set_new(j_entry, "source", json_string("database"));
@@ -1021,7 +1020,7 @@ json_t * get_user_list_database(struct config_elements * config, const char * se
           json_object_del(j_entry, "additional_property_value");
         }
         
-        json_array_append_new(json_object_get(j_return, "user"), json_copy(j_entry));
+        json_array_append(json_object_get(j_return, "user"), j_entry);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list_database - Error executing j_query for scope");
       }
@@ -1057,7 +1056,45 @@ json_t * get_user(struct config_elements * config, const char * login, const cha
     }
   }
   if (check_result_value(j_user, G_OK)) {
-    j_return = json_pack("{siso}", "result", G_OK, "user", json_copy(json_object_get(j_user, "user")));
+    j_return = json_pack("{sisO}", "result", G_OK, "user", json_object_get(j_user, "user"));
+  } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+  } else if (check_result_value(j_user, G_ERROR_PARAM)) {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error getting user");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  json_decref(j_user);
+  
+  return j_return;
+}
+
+/**
+ * Return a specific user for API GET /profile
+ */
+json_t * get_user_profile(struct config_elements * config, const char * login, const char * source) {
+  json_t * j_return = NULL, * j_user = NULL;
+  int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
+  
+  if (search_ldap) {
+    if (config->has_auth_ldap) {
+      j_user = get_user_ldap(config, login);
+    } else {
+      j_user = json_pack("{si}", "result", G_ERROR_PARAM);
+    }
+  }
+  if (!check_result_value(j_user, G_OK) && search_database) {
+    json_decref(j_user);
+    if (config->has_auth_database) {
+      j_user = get_user_database(config, login);
+    } else {
+      j_user = json_pack("{si}", "result", G_ERROR_PARAM);
+    }
+  }
+  if (check_result_value(j_user, G_OK)) {
+		json_object_del(json_object_get(j_user, "user"), "scope");
+    j_return = json_pack("{sisO}", "result", G_OK, "user", json_object_get(j_user, "user"));
   } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
     j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
   } else if (check_result_value(j_user, G_ERROR_PARAM)) {
@@ -1622,10 +1659,10 @@ int set_user_database(struct config_elements * config, const char * user, json_t
                         "gu_login",
                         user);
   if (json_object_get(j_user, "name") != NULL) {
-    json_object_set_new(json_object_get(j_query, "set"), "gu_name", json_copy(json_object_get(j_user, "name")));
+    json_object_set(json_object_get(j_query, "set"), "gu_name", json_object_get(j_user, "name"));
   }
   if (json_object_get(j_user, "email") != NULL) {
-    json_object_set_new(json_object_get(j_query, "set"), "gu_email", json_copy(json_object_get(j_user, "email")));
+    json_object_set(json_object_get(j_query, "set"), "gu_email", json_object_get(j_user, "email"));
   }
   if (json_object_get(j_user, "password") != NULL) {
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
@@ -1640,7 +1677,7 @@ int set_user_database(struct config_elements * config, const char * user, json_t
     o_free(escaped);
   }
   if (json_object_get(j_user, "additional_property_value") != NULL && config->additional_property_name != NULL && o_strlen(config->additional_property_name)) {
-    json_object_set_new(json_object_get(j_query, "set"), "gu_additional_property_value", json_copy(json_object_get(j_user, "additional_property_value")));
+    json_object_set(json_object_get(j_query, "set"), "gu_additional_property_value", json_object_get(j_user, "additional_property_value"));
   }
   if (json_object_get(j_user, "enabled") != NULL) {
     json_object_set_new(json_object_get(j_query, "set"), "gu_enabled", json_object_get(j_user, "enabled")==json_false()?json_integer(0):json_integer(1));
@@ -1950,7 +1987,7 @@ int set_user_profile_database(struct config_elements * config, const char * user
                         "gu_login",
                         username);
   if (json_object_get(profile, "name") != NULL) {
-    json_object_set_new(json_object_get(j_query, "set"), "gu_name", json_copy(json_object_get(profile, "name")));
+    json_object_set(json_object_get(j_query, "set"), "gu_name", json_object_get(profile, "name"));
   }
   if (json_object_get(profile, "new_password") != NULL) {
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {

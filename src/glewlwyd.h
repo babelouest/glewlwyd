@@ -327,6 +327,7 @@ json_t * get_user_list(struct config_elements * config, const char * source, con
 json_t * get_user_list_ldap(struct config_elements * config, const char * search, long int offset, long int limit);
 json_t * get_user_list_database(struct config_elements * config, const char * search, long int offset, long int limit);
 json_t * get_user(struct config_elements * config, const char * username, const char * source);
+json_t * get_user_profile(struct config_elements * config, const char * username, const char * source);
 json_t * get_user_database(struct config_elements * config, const char * username);
 json_t * get_user_ldap(struct config_elements * config, const char * username);
 json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add);

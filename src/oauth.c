@@ -366,7 +366,7 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
 																		config->access_token_expiration);
 						if (json_body != NULL) {
 							if (config->use_scope) {
-								json_object_set_new(json_body, "scope", json_copy(json_object_get(j_result, "scope")));
+								json_object_set(json_body, "scope", json_object_get(j_result, "scope"));
 							}
 							ulfius_set_json_body_response(response, 200, json_body);
 						} else {
@@ -423,12 +423,12 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
         time(&now);
         access_token = generate_client_access_token(config, request->auth_basic_user, json_string_value(json_object_get(j_scope_list, "scope")), ip_source, now);
         if (access_token != NULL) {
-          json_body = json_pack("{sssssiso}",
+          json_body = json_pack("{sssssisO}",
                                           "access_token", access_token,
                                           "token_type", "bearer",
                                           "expires_in", config->access_token_expiration,
                                           "scope",
-                                          json_copy(json_object_get(j_scope_list, "scope")));
+                                          json_object_get(j_scope_list, "scope"));
           o_free(access_token);
           ulfius_set_json_body_response(response, 200, json_body);
         } else {
