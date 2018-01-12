@@ -47,3 +47,17 @@ If a user uses the reset password functionnality, he or she will receive the con
 `$URL` must be set in the configuration file properly so the emails will lead to the correct page.
 
 More screenshots of the front-end application are availabe in the [screenshot](https://github.com/babelouest/glewlwyd/tree/master/screenshots) folder.
+
+## Projects using Glewlwyd as authentication server
+
+Glewlwyd front-end applications uses glewlwyd to authenticate of course, but other projects are also using it to delegate the authentication and focus on their goals:
+
+- [Taliesin](https://github.com/babelouest/taliesin), an audio streaming server
+
+- [Angharad](https://github.com/babelouest/angharad), a house automation server to connect and control IOT devices using different protocols (Zwave, Taulas, etc.)
+
+- [Hutch](https://github.com/babelouest/hutch), an online password manager
+
+## Questions, problems or feature requests
+
+You can open an [issue](https://github.com/babelouest/glewlwyd/issues) in github or send me an [e-mail](mailto:mail@babelouest.org). Any help is much appreciated!
