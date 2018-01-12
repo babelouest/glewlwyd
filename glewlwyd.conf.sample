@@ -101,8 +101,8 @@ admin_scope="g_admin"
 # profile scope name
 profile_scope="g_profile"
 
-# additional property name that will be included in access tokens
-additional_property_name  = "new_property"
+# additional property name that will be included in access tokens, uncomment to enable this feature
+# additional_property_name  = "new_property"
 
 # code expiration in seconds, default is 10 minutes
 code_expiration=600
