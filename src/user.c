@@ -110,6 +110,44 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
 }
 
 /**
+ * Get a specific user in the http backend
+ * this is not possible, so return an error
+ */
+json_t * get_user_http(struct config_elements * config, const char * username) {
+  json_t * j_query, * j_result, * j_return;
+  int res;
+  
+  j_query = json_pack("{sss[ssss]s{ss}}",
+                      "table",
+                      GLEWLWYD_TABLE_USER,
+                      "columns",
+                        "gu_name AS name", 
+                        "gu_email AS email",
+                        "gu_login AS login",
+                        "gu_additional_property_value AS additional_property_value",
+                      "where",
+                        "gu_login",
+                        username);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result) > 0) {
+      // An HTTP user is always enabled, because only the authentication server is able to validate the user
+      json_object_set_new(json_array_get(j_result, 0), "enabled", json_true());
+      j_return = json_pack("{sisO}", "result", G_OK, "user", json_array_get(j_result, 0));
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_user_http - Error executing j_query");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  return j_return;
+}
+
+/**
  * Get a specific user in the ldap backend
  */
 json_t * get_user_ldap(struct config_elements * config, const char * username) {
@@ -403,7 +441,7 @@ json_t * auth_check_user_credentials_scope(struct config_elements * config, cons
         j_res_scope = auth_check_user_scope_database(config, username, scope_list);
       }
     }
-    
+
     if (check_result_value(j_res_auth, G_OK)) {
       if (check_result_value(j_res_scope, G_OK)) {
         j_res = json_copy(j_res_scope);
@@ -439,10 +477,59 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
       json_decref(j_res);
       j_res = auth_check_user_credentials_database(config, username, password);
     }
+    if (config->has_auth_http && !check_result_value(j_res, G_OK)) {
+      json_decref(j_res);
+      j_res = auth_check_user_credentials_http(config, username, password);
+    }
   } else {
     j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   return j_res;
+}
+
+/**
+ * Check if the username and password specified are valid as a http user
+ * On success, return a json array with all scope values available
+ */
+json_t * auth_check_user_credentials_http(struct config_elements * config, const char * username, const char * password) {
+  int res, to_return;
+  struct _u_request request;
+  struct _u_response response;
+
+  if (o_strlen(username) <= 0 || o_strlen(password) <= 0) {
+    to_return = G_ERROR_UNAUTHORIZED;
+  } else {
+    ulfius_init_request(&request);
+    ulfius_init_response(&response);
+    request.http_verb = o_strdup("GET");
+    request.http_url = o_strdup(config->auth_http->url);
+    request.check_server_certificate = config->auth_http->check_server_certificate;
+    request.auth_basic_user = o_strdup(username);
+    request.auth_basic_password = o_strdup(password);
+    /*
+      Set a timeout for the outgoing connection (10 seconds for example),
+      in case the authentication server is down or something like that, 
+      this can be hardcoded, or we can add a config value
+    */
+    request.timeout = 10;
+    res = ulfius_send_http_request(&request, &response);
+    if (res == U_OK) {
+      if (response.status == 200) {
+        to_return = G_OK;
+      } else if (response.status == 403 || response.status == 401) {
+        to_return = G_ERROR_UNAUTHORIZED;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials_http - Error http auth: %d", response.status);
+        to_return = G_ERROR;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials_http - Error ulfius_send_http_request");
+      to_return = G_ERROR;
+    }
+    ulfius_clean_response(&response);
+    ulfius_clean_request(&request);
+  }
+  return json_pack("{si}", "result", to_return);
 }
 
 /**
@@ -785,7 +872,7 @@ json_t * get_user_list(struct config_elements * config, const char * source, con
       json_decref(j_source_list);
       j_source_list = NULL;
     }
-    
+
     if ((source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")) && json_array_size(j_result_list) < limit && config->has_auth_database) {
       j_source_list = get_user_list_database(config, search, offset, (limit - json_array_size(j_result_list)));
       if (check_result_value(j_source_list, G_OK)) {
@@ -972,8 +1059,7 @@ json_t * get_user_list_database(struct config_elements * config, const char * se
                       limit);
   if (search != NULL && strcmp("", search) != 0) {
     char * search_escaped = h_escape_string(config->conn, search);
-    char * clause_search = msprintf("IN (SELECT `gu_id` FROM `%s` WHERE `gu_name` LIKE '%%%s%%' OR `gu_email` LIKE '%%%s%%' OR `gu_login` LIKE '%%%s%%')",
-                                    GLEWLWYD_TABLE_USER, search_escaped, search_escaped, search_escaped);
+    char * clause_search = msprintf("IN (SELECT `gu_id` FROM `%s` WHERE `gu_name` LIKE '%%%s%%' OR `gu_email` LIKE '%%%s%%' OR `gu_login` LIKE '%%%s%%')", GLEWLWYD_TABLE_USER, search_escaped, search_escaped, search_escaped);
     json_object_set_new(j_query, "where", json_pack("{s{ssss}}", "gu_id", "operator", "raw", "value", clause_search));
     o_free(search_escaped);
     o_free(clause_search);
@@ -1038,21 +1124,37 @@ json_t * get_user_list_database(struct config_elements * config, const char * se
  */
 json_t * get_user(struct config_elements * config, const char * login, const char * source) {
   json_t * j_return = NULL, * j_user = NULL;
-  int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
+  int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), 
+      search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")), 
+      search_http = (source == NULL || 0 == strcmp(source, "http") || 0 == strcmp(source, "all"));
   
   if (search_ldap) {
     if (config->has_auth_ldap) {
       j_user = get_user_ldap(config, login);
-    } else {
+    } else if (0 == o_strcmp(source, "ldap") && !config->has_auth_ldap) {
       j_user = json_pack("{si}", "result", G_ERROR_PARAM);
+    } else {
+      j_user = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
   }
-  if (!check_result_value(j_user, G_OK) && search_database) {
+  if ((j_user == NULL || check_result_value(j_user, G_ERROR_NOT_FOUND)) && search_database) {
     json_decref(j_user);
     if (config->has_auth_database) {
       j_user = get_user_database(config, login);
-    } else {
+    } else if (0 == o_strcmp(source, "database") && !config->has_auth_database) {
       j_user = json_pack("{si}", "result", G_ERROR_PARAM);
+    } else {
+      j_user = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    }
+  }
+  if ((j_user == NULL || check_result_value(j_user, G_ERROR_NOT_FOUND)) && search_http) {
+    json_decref(j_user);
+    if (config->has_auth_http) {
+      j_user = get_user_http(config, login);
+    } else if (0 == o_strcmp(source, "http") && !config->has_auth_http) {
+      j_user = json_pack("{si}", "result", G_ERROR_PARAM);
+    } else {
+      j_user = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
   }
   if (check_result_value(j_user, G_OK)) {
@@ -1095,7 +1197,7 @@ json_t * get_user_profile(struct config_elements * config, const char * login, c
   if (check_result_value(j_user, G_OK)) {
 		json_object_del(json_object_get(j_user, "user"), "scope");
     j_return = json_pack("{sisO}", "result", G_OK, "user", json_object_get(j_user, "user"));
-  } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+  } else if (check_result_value(j_user, G_ERROR_NOT_FOUND) || j_user == NULL) {
     j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
   } else if (check_result_value(j_user, G_ERROR_PARAM)) {
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -1440,9 +1542,9 @@ int add_user_database(struct config_elements * config, json_t * j_user) {
                         "gu_enabled",
                         json_object_get(j_user, "enabled")==json_false()?0:1);
   if (config->additional_property_name != NULL && o_strlen(config->additional_property_name)) {
-		json_object_set(json_object_get(j_query, "values"), "gu_additional_property_value", json_object_get(j_user, "additional_property_value")!=NULL?json_object_get(j_user, "additional_property_value"):json_null());
-	}
-	res = h_insert(config->conn, j_query, NULL);
+    json_object_set(json_object_get(j_query, "values"), "gu_additional_property_value", json_object_get(j_user, "additional_property_value")!=NULL?json_object_get(j_user, "additional_property_value"):json_null());
+  }
+  res = h_insert(config->conn, j_query, NULL);
   json_decref(j_query);
   o_free(escaped);
   o_free(password);
@@ -1718,7 +1820,7 @@ int set_user_database(struct config_elements * config, const char * user, json_t
           }
           if (json_array_size(json_object_get(j_query, "values")) > 0) {
             if (h_insert(config->conn, j_query, NULL) != H_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "add_user_database - Error adding scope");
+              y_log_message(Y_LOG_LEVEL_ERROR, "set_user_database - Error adding scope");
             }
           }
           json_decref(j_query);
