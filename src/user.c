@@ -488,38 +488,6 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
 }
 
 /**
- * Add an HTTP user in the database if not exist
- */
-int insert_user_http(struct config_elements * config, const char * username) {
-  json_t * j_user = get_user_http(config, username), * j_query;
-  int ret, res;
-  
-  if (check_result_value(j_user, G_OK)) {
-    ret = G_OK;
-  } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
-    j_query = json_pack("{sss{ss}}",
-                        "table",
-                        GLEWLWYD_TABLE_USER,
-                        "values",
-                          "gu_login",
-                          username);
-    res = h_insert(config->conn, j_query, NULL);
-    json_decref(j_query);
-    if (res == G_OK) {
-      ret = G_OK;
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "insert_user_http - Error executing j_query");
-      ret = G_ERROR_DB;
-    }
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "insert_user_http - Error get_user_http");
-  }
-  json_decref(j_user);
-  
-  return ret;
-}
-
-/**
  * Check if the username and password specified are valid as a http user
  * On success, return a json array with all scope values available
  */
@@ -547,12 +515,7 @@ json_t * auth_check_user_credentials_http(struct config_elements * config, const
     res = ulfius_send_http_request(&request, &response);
     if (res == U_OK) {
       if (response.status == 200) {
-        if (insert_user_http(config, username) == G_OK) {
-          to_return = G_OK;
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials_http - Error insert_user_http");
-          to_return = G_ERROR;
-        }
+        to_return = G_OK;
       } else if (response.status == 403 || response.status == 401) {
         to_return = G_ERROR_UNAUTHORIZED;
       } else {
@@ -910,17 +873,6 @@ json_t * get_user_list(struct config_elements * config, const char * source, con
       j_source_list = NULL;
     }
 
-    if ((source == NULL || 0 == strcmp(source, "http") || 0 == strcmp(source, "all")) && config->has_auth_http) {
-      j_source_list = get_user_list_http(config, search, offset, limit);
-      if (check_result_value(j_source_list, G_OK)) {
-        json_array_extend(j_result_list, json_object_get(j_source_list, "user"));
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error getting ldap list");
-      }
-      json_decref(j_source_list);
-      j_source_list = NULL;
-    }
-    
     if ((source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")) && json_array_size(j_result_list) < limit && config->has_auth_database) {
       j_source_list = get_user_list_database(config, search, offset, (limit - json_array_size(j_result_list)));
       if (check_result_value(j_source_list, G_OK)) {
@@ -1168,44 +1120,6 @@ json_t * get_user_list_database(struct config_elements * config, const char * se
 }
 
 /**
- * Return the list of users in the http backend
- * as we have no user list in http, we return an empty list
- */
-json_t * get_user_list_http(struct config_elements * config, const char * search, long int offset, long int limit) {
-  json_t * j_query, * j_result, * j_return, * j_element;
-  int res;
-  size_t index;
-  
-  j_query = json_pack("{sss[ssss]}",
-                      "table",
-                      GLEWLWYD_TABLE_USER,
-                      "columns",
-                        "gu_name AS name", 
-                        "gu_email AS email",
-                        "gu_login AS login",
-                        "gu_additional_property_value AS additional_property_value");
-  res = h_select(config->conn, j_query, &j_result, NULL);
-  
-  json_decref(j_query);
-  if (res == H_OK) {
-    if (json_array_size(j_result) > 0) {
-      // An HTTP user is always enabled, because only the authentication server is able to validate the user
-      json_array_foreach(j_result, index, j_element) {
-        json_object_set_new(j_element, "enabled", json_true());
-      }
-      j_return = json_pack("{sisO}", "result", G_OK, "user", json_array_get(j_result, 0));
-    } else {
-      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
-    }
-    json_decref(j_result);
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list_http - Error executing j_query");
-    j_return = json_pack("{si}", "result", G_ERROR_DB);
-  }
-  return j_return;
-}
-
-/**
  * Return a specific user
  */
 json_t * get_user(struct config_elements * config, const char * login, const char * source) {
@@ -1407,19 +1321,9 @@ int add_user(struct config_elements * config, json_t * j_user) {
     return add_user_database(config, j_user);
   } else if (0 == o_strcmp("ldap", json_string_value(json_object_get(j_user, "source"))) && config->has_auth_ldap) {
     return add_user_ldap(config, j_user);
-  } else if (0 == o_strcmp("http", json_string_value(json_object_get(j_user, "source"))) && config->has_auth_http) {
-    return add_user_http(config, j_user);
   } else {
     return G_ERROR_PARAM;
   }
-}
-
-/**
- * Add a new user in the http backend
- * as this is not possible right now, we just retrun G_ERROR_PARAM
- */
-int add_user_http(struct config_elements * config, json_t * j_user) {
-  return G_ERROR_PARAM;
 }
 
 /**
