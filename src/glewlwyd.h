@@ -126,10 +126,6 @@
 #define GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION 1
 #define GLEWLWYD_CALLBACK_PRIORITY_APPLICATION    2
 
-#define GLEWLWYD_AUTH_BACKEND_DATABASE "database"
-#define GLEWLWYD_AUTH_BACKEND_LDAP     "ldap"
-#define GLEWLWYD_AUTH_BACKEND_HTTP     "http"
-
 pthread_mutex_t global_handler_close_lock;
 pthread_cond_t  global_handler_close_cond;
 
