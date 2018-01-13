@@ -69,7 +69,7 @@ CREATE TABLE `g_client` (
   `gc_id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `gc_name` TEXT NOT NULL,
   `gc_description` TEXT DEFAULT '',
-  `gc_client_id` TEXT NOT NULL,
+  `gc_client_id` TEXT NOT NULL UNIQUE,
   `gc_client_password` TEXT,
   `gc_confidential` INTEGER DEFAULT 0,
   `gc_enabled` INTEGER DEFAULT 1
