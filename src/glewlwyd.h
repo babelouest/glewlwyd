@@ -334,7 +334,6 @@ int delete_scope(struct config_elements * config, const char * scope);
 
 // User CRUD
 json_t * get_user_list(struct config_elements * config, const char * source, const char * search, long int offset, long int limit);
-json_t * get_user_list_http(struct config_elements * config, const char * search, long int offset, long int limit);
 json_t * get_user_list_ldap(struct config_elements * config, const char * search, long int offset, long int limit);
 json_t * get_user_list_database(struct config_elements * config, const char * search, long int offset, long int limit);
 json_t * get_user(struct config_elements * config, const char * username, const char * source);
@@ -344,7 +343,6 @@ json_t * get_user_ldap(struct config_elements * config, const char * username);
 json_t * get_user_http(struct config_elements * config, const char * username);
 json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add);
 int add_user(struct config_elements * config, json_t * j_user);
-int add_user_http(struct config_elements * config, json_t * j_user);
 int add_user_ldap(struct config_elements * config, json_t * j_user);
 int add_user_database(struct config_elements * config, json_t * j_user);
 int set_user(struct config_elements * config, const char * user, json_t * j_user, const char * source);
