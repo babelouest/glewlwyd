@@ -28,3 +28,4 @@ test/glewlwyd_user_refresh_token_user
 test/glewlwyd_user_refresh_token_admin
 test/test-token.html
 webapp/test-token.html
+glewlwyd_http_auth
