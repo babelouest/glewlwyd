@@ -38,7 +38,7 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
   char * scope_clause;
   size_t i_scope;
   
-  j_query = json_pack("{sss[ssssss]s{ssss}}",
+  j_query = json_pack("{sss[ssssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER,
                       "columns",
@@ -50,9 +50,7 @@ json_t * get_user_database(struct config_elements * config, const char * usernam
                         "gu_enabled",
                       "where",
                         "gu_login",
-                        username,
-                        "gu_backend",
-                        GLEWLWYD_AUTH_BACKEND_DATABASE);
+                        username);
   res = h_select(config->conn, j_query, &j_result, NULL);
   
   json_decref(j_query);
@@ -119,7 +117,7 @@ json_t * get_user_http(struct config_elements * config, const char * username) {
   json_t * j_query, * j_result, * j_return;
   int res;
   
-  j_query = json_pack("{sss[ssss]s{ssss}}",
+  j_query = json_pack("{sss[ssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER,
                       "columns",
@@ -129,9 +127,7 @@ json_t * get_user_http(struct config_elements * config, const char * username) {
                         "gu_additional_property_value AS additional_property_value",
                       "where",
                         "gu_login",
-                        username,
-                        "gu_backend",
-                        GLEWLWYD_AUTH_BACKEND_HTTP);
+                        username);
   res = h_select(config->conn, j_query, &j_result, NULL);
   
   json_decref(j_query);
@@ -300,7 +296,7 @@ json_t * get_user_scope_grant_database(struct config_elements * config, const ch
   json_t * j_query, * j_result, * j_return;
   int res;
   char * username_escaped = h_escape_string(config->conn, username), 
-       * clause_where_scope = msprintf("IN (SELECT `gs_id` FROM `%s` WHERE `gu_id` = (SELECT `gu_id` FROM `%s` WHERE `gu_login`='%s' AND `gu_backend`='%s'))", GLEWLWYD_TABLE_USER_SCOPE, GLEWLWYD_TABLE_USER, username_escaped, GLEWLWYD_AUTH_BACKEND_DATABASE);
+       * clause_where_scope = msprintf("IN (SELECT `gs_id` FROM `%s` WHERE `gu_id` = (SELECT `gu_id` FROM `%s` WHERE `gu_login`='%s'))", GLEWLWYD_TABLE_USER_SCOPE, GLEWLWYD_TABLE_USER, username_escaped);
   
   j_query = json_pack("{sss[ss]s{s{ssss}}}",
                       "table",
@@ -501,14 +497,12 @@ int insert_user_http(struct config_elements * config, const char * username) {
   if (check_result_value(j_user, G_OK)) {
     ret = G_OK;
   } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
-    j_query = json_pack("{sss{ssss}}",
+    j_query = json_pack("{sss{ss}}",
                         "table",
                         GLEWLWYD_TABLE_USER,
                         "values",
                           "gu_login",
-                          username,
-                          "gu_backend",
-                          GLEWLWYD_AUTH_BACKEND_HTTP);
+                          username);
     res = h_insert(config->conn, j_query, NULL);
     json_decref(j_query);
     if (res == G_OK) {
@@ -596,7 +590,7 @@ json_t * auth_check_user_credentials_database(struct config_elements * config, c
       str_password = msprintf("= PASSWORD('%s')", escaped);
       o_free(escaped);
     }
-    j_query = json_pack("{sss{sss{ssss}siss}}",
+    j_query = json_pack("{sss{sss{ssss}si}}",
                         "table",
                         GLEWLWYD_TABLE_USER,
                         "where",
@@ -608,9 +602,7 @@ json_t * auth_check_user_credentials_database(struct config_elements * config, c
                             "value",
                             str_password,
                           "gu_enabled",
-                          1,
-                          "gu_backend",
-                          GLEWLWYD_AUTH_BACKEND_DATABASE);
+                          1);
     
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
@@ -731,7 +723,7 @@ json_t * auth_check_user_scope_database(struct config_elements * config, const c
       o_free(scope_escaped);
       scope = strtok_r(NULL, " ", &saveptr);
     }
-    where_clause = msprintf("IN (SELECT gs_id FROM %s WHERE gu_id = (SELECT gu_id FROM %s WHERE gu_login='%s' AND `gu_backend`='%s') AND gs_id IN (SELECT gs_id FROM %s WHERE gs_name IN (%s)))", GLEWLWYD_TABLE_USER_SCOPE, GLEWLWYD_TABLE_USER, login_escaped, GLEWLWYD_AUTH_BACKEND_DATABASE, GLEWLWYD_TABLE_SCOPE, scope_list_escaped);
+    where_clause = msprintf("IN (SELECT gs_id FROM %s WHERE gu_id = (SELECT gu_id FROM %s WHERE gu_login='%s') AND gs_id IN (SELECT gs_id FROM %s WHERE gs_name IN (%s)))", GLEWLWYD_TABLE_USER_SCOPE, GLEWLWYD_TABLE_USER, login_escaped, GLEWLWYD_TABLE_SCOPE, scope_list_escaped);
     j_query = json_pack("{sss[s]s{s{ssss}}}",
               "table",
               GLEWLWYD_TABLE_SCOPE,
@@ -1099,7 +1091,7 @@ json_t * get_user_list_database(struct config_elements * config, const char * se
   char * scope_clause;
   size_t index, i_scope;
   
-  j_query = json_pack("{sss[ssssss]s{ss}sisi}",
+  j_query = json_pack("{sss[ssssss]sisi}",
                       "table",
                       GLEWLWYD_TABLE_USER,
                       "columns",
@@ -1109,16 +1101,13 @@ json_t * get_user_list_database(struct config_elements * config, const char * se
                         "gu_login AS login",
                         "gu_additional_property_value AS additional_property_value",
                         "gu_enabled",
-                      "where",
-                        "gu_backend",
-                        GLEWLWYD_AUTH_BACKEND_DATABASE,
                       "offset",
                       offset,
                       "limit",
                       limit);
   if (search != NULL && strcmp("", search) != 0) {
     char * search_escaped = h_escape_string(config->conn, search);
-    char * clause_search = msprintf("IN (SELECT `gu_id` FROM `%s` WHERE (`gu_name` LIKE '%%%s%%' OR `gu_email` LIKE '%%%s%%' OR `gu_login` LIKE '%%%s%%') AND `gu_backend`='%s')", GLEWLWYD_TABLE_USER, search_escaped, search_escaped, search_escaped, GLEWLWYD_AUTH_BACKEND_DATABASE);
+    char * clause_search = msprintf("IN (SELECT `gu_id` FROM `%s` WHERE `gu_name` LIKE '%%%s%%' OR `gu_email` LIKE '%%%s%%' OR `gu_login` LIKE '%%%s%%')", GLEWLWYD_TABLE_USER, search_escaped, search_escaped, search_escaped);
     json_object_set_new(j_query, "where", json_pack("{s{ssss}}", "gu_id", "operator", "raw", "value", clause_search));
     o_free(search_escaped);
     o_free(clause_search);
@@ -1187,17 +1176,14 @@ json_t * get_user_list_http(struct config_elements * config, const char * search
   int res;
   size_t index;
   
-  j_query = json_pack("{sss[ssss]s{ss}}",
+  j_query = json_pack("{sss[ssss]}",
                       "table",
                       GLEWLWYD_TABLE_USER,
                       "columns",
                         "gu_name AS name", 
                         "gu_email AS email",
                         "gu_login AS login",
-                        "gu_additional_property_value AS additional_property_value",
-                      "where",
-                        "gu_backend",
-                        GLEWLWYD_AUTH_BACKEND_HTTP);
+                        "gu_additional_property_value AS additional_property_value");
   res = h_select(config->conn, j_query, &j_result, NULL);
   
   json_decref(j_query);
@@ -1636,7 +1622,7 @@ int add_user_database(struct config_elements * config, json_t * j_user) {
     escaped = generate_hash(config, config->hash_algorithm,json_string_value(json_object_get(j_user, "password")));
     password = msprintf("'%s'", escaped);
   }
-  j_query = json_pack("{sss{sssssss{ss}siss}}",
+  j_query = json_pack("{sss{sssssss{ss}si}}",
                       "table",
                       GLEWLWYD_TABLE_USER,
                       "values",
@@ -1650,9 +1636,7 @@ int add_user_database(struct config_elements * config, json_t * j_user) {
                           "raw",
                           password,
                         "gu_enabled",
-                        json_object_get(j_user, "enabled")==json_false()?0:1,
-                        "gu_backend",
-                        GLEWLWYD_AUTH_BACKEND_DATABASE);
+                        json_object_get(j_user, "enabled")==json_false()?0:1);
   if (config->additional_property_name != NULL && o_strlen(config->additional_property_name)) {
     json_object_set(json_object_get(j_query, "values"), "gu_additional_property_value", json_object_get(j_user, "additional_property_value")!=NULL?json_object_get(j_user, "additional_property_value"):json_null());
   }
@@ -1663,7 +1647,7 @@ int add_user_database(struct config_elements * config, json_t * j_user) {
   if (res == H_OK) {
     if (json_object_get(j_user, "scope") != NULL && config->use_scope) {
       escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_user, "login")));
-      clause_login = msprintf("(SELECT `gu_id` FROM `%s` WHERE `gu_login`='%s' AND `gu_backend`='%s')", GLEWLWYD_TABLE_USER, escaped, GLEWLWYD_AUTH_BACKEND_DATABASE);
+      clause_login = msprintf("(SELECT `gu_id` FROM `%s` WHERE `gu_login`='%s')", GLEWLWYD_TABLE_USER, escaped);
       o_free(escaped);
       j_query = json_pack("{sss[]}",
                           "table",
@@ -1865,15 +1849,13 @@ int set_user_database(struct config_elements * config, const char * user, json_t
   size_t index;
   char * clause_login, * clause_scope, * escaped, * password;
   
-  j_query = json_pack("{sss{}s{ssss}}",
+  j_query = json_pack("{sss{}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER,
                       "set",
                       "where",
                         "gu_login",
-                        user,
-                        "gu_backend",
-                        GLEWLWYD_AUTH_BACKEND_DATABASE);
+                        user);
   if (json_object_get(j_user, "name") != NULL) {
     json_object_set(json_object_get(j_query, "set"), "gu_name", json_object_get(j_user, "name"));
   }
@@ -1903,7 +1885,7 @@ int set_user_database(struct config_elements * config, const char * user, json_t
   if (res == H_OK) {
     if (json_object_get(j_user, "scope") != NULL && config->use_scope) {
       escaped = h_escape_string(config->conn, user);
-      clause_login = msprintf("= (SELECT `gu_id` FROM `%s` WHERE `gu_login`='%s' AND `gu_backend`='%s')", GLEWLWYD_TABLE_USER, escaped, GLEWLWYD_AUTH_BACKEND_DATABASE);
+      clause_login = msprintf("= (SELECT `gu_id` FROM `%s` WHERE `gu_login`='%s')", GLEWLWYD_TABLE_USER, escaped);
       o_free(escaped);
       j_query = json_pack("{sss{s{ssss}}}",
                           "table",
@@ -1919,7 +1901,7 @@ int set_user_database(struct config_elements * config, const char * user, json_t
       json_decref(j_query);
       if (res == H_OK) {
           escaped = h_escape_string(config->conn, user);
-          clause_login = msprintf("(SELECT `gu_id` FROM `%s` WHERE `gu_login`='%s' AND `gu_backend`='%s')", GLEWLWYD_TABLE_USER, escaped, GLEWLWYD_AUTH_BACKEND_DATABASE);
+          clause_login = msprintf("(SELECT `gu_id` FROM `%s` WHERE `gu_login`='%s')", GLEWLWYD_TABLE_USER, escaped);
           o_free(escaped);
           j_query = json_pack("{sss[]}",
                               "table",
@@ -2009,14 +1991,12 @@ int delete_user_database(struct config_elements * config, const char * user) {
   json_t * j_query;
   int res;
   
-  j_query = json_pack("{sss{ssss}}",
+  j_query = json_pack("{sss{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER,
                       "where",
                         "gu_login",
-                        user,
-                        "gu_backend",
-                        GLEWLWYD_AUTH_BACKEND_DATABASE);
+                        user);
   res = h_delete(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -2197,15 +2177,13 @@ int set_user_profile_database(struct config_elements * config, const char * user
   int res, to_return;
   char * escaped, * password;
   
-  j_query = json_pack("{sss{}s{ssss}}",
+  j_query = json_pack("{sss{}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER,
                       "set",
                       "where",
                         "gu_login",
-                        username,
-                        "gu_backend",
-                        GLEWLWYD_AUTH_BACKEND_DATABASE);
+                        username);
   if (json_object_get(profile, "name") != NULL) {
     json_object_set(json_object_get(j_query, "set"), "gu_name", json_object_get(profile, "name"));
   }

@@ -37,7 +37,6 @@ CREATE TABLE `g_user` (
   `gu_login` VARCHAR(128) NOT NULL UNIQUE,
   `gu_password` VARCHAR(128) NOT NULL,
   `gu_additional_property_value` VARCHAR(512),
-	`gu_backend` VARCHAR(64) NOT NULL,
   `gu_enabled` TINYINT(1) DEFAULT 1
 );
 CREATE INDEX `i_g_user_name` ON `g_user`(`gu_name`);
