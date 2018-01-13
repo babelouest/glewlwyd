@@ -670,7 +670,7 @@ json_t * access_token_check_scope_admin(struct config_elements * config, const c
   char  * grants;
   const char * type, * token_value;
   int scope_found = 0, count, i;
-  char ** scope_list;
+  char ** scope_list = NULL;
   
   if (header_value != NULL) {
     if (strstr(header_value, GLEWLWYD_PREFIX_BEARER) == header_value) {
@@ -692,10 +692,11 @@ json_t * access_token_check_scope_admin(struct config_elements * config, const c
             }
             free_string_array(scope_list);
             if (scope_found) {
-              j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+              j_return = json_pack("{sisO}", "result", G_OK, "grants", j_grants);
             } else {
               j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
             }
+            json_decref(j_grants);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "access_token_check - Error encoding token grants '%s'", grants);
             j_return = json_pack("{si}", "result", G_ERROR);
