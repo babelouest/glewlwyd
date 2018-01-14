@@ -135,9 +135,10 @@ Then, use the script that fit your database backend and Digest algorithm in the 
 
 ##### Secuity warning!
 
-Those scripts create a valid database that allow to use glewlwyd but to avoid huge security issues, you must make 2 changes on your first connection:
+Those scripts create a valid database that allow to use glewlwyd but to avoid potential security issues, you must make the following changes before opening Glewlwyd API to the wild web:
 - Change the admin password when you connect to the application
-- Change the redirect_uri for the client `g_admin` with your real redirect_uri
+- Change the redirect_uri value for the client `g_admin` with an absolute redirect_uri value, e.g. `http://localhost:4593/app/`, then uncomment the corresponding line in [glewlwyd.react.js](https://github.com/babelouest/glewlwyd/blob/master/webapp/app/glewlwyd.react.js#L47) and set with your value.
+- Change the values `login_url` and `grant_url` in your configuration file for absolute urls, e.g. `http://localhost:4593/app/login.html?`
 
 #### Detailed installation
 
@@ -369,6 +370,22 @@ Glewlwyd comes with a small front-end that uses the backend API to manage profil
 #### Configuration
 
 The config file `glewlwyd.conf` contains the following variables: `static_files_path` and `static_files_prefix`, `static_files_path` is the path to the front-end application. Set it to the location of your webapp folder before running glewlwyd, e.g. `"/home/pi/glewlwyd/webapp"`, `static_files_prefix` will be the url path to access to the front-end application, default is [http://localhost:4953/app/](http://localhost:4953/app/).
+
+#### Change front-end path
+
+If you want to change the path to the front-end application, e.g. change it from http://localhost:4953/app/ to http://localhost:4953/admin/ for example, there are 2 steps to follow.
+
+- 1: Change the values `static_files_prefix`, `login_url` and `grant_url` in the confguration file
+
+The value `static_files_prefix` must match your new path, e.g. `admin`, the `login_url` and `grant_url` must be changed accordingly, e.g. `"../admin/login.html?"` and `"../admin/grant.html?"`.
+
+- 2: Change the `redirect_uri` value of the g_admin client in the database, e.g.:
+
+```SQL
+UPDATE g_redirect_uri set gru_uri='../admin/index.html' where gc_id=(SELECT gc_id from g_client WHERE gc_client_id='g_admin');
+```
+
+#### Scope
 
 To connect to the management application, you must use a user that have `g_admin` scope.
 

@@ -43,9 +43,11 @@ $(function() {
    * the default parameters values during the installation
    */
   var oauth = {
+    /* redirect_uri to allow this application to connect to Glewlwyd, Uncomment and change this value if you changed the default config, see INSTALL.md */
+    //redirect_uri: "http://localhost:4593/app/index.html",
+    
     client_id: "g_admin",                  /* client_id used for the glewlwyd manager app, default value is "g_admin", update this value if you have changed it in your installation */
     glewlwyd_server_url: "../",            /* Default value if the web app is hosted by the API server. For security, I recommend to put the absolute url, e.g. https://auth.domain.com/ */
-    redirect_uri: "../app/index.html",     /* Path to Glewlwyd manager index.html page */
     access_token_cookie: "g_access_token", /* Name of the cookie to store the access_token */
     /**
      *
@@ -2785,6 +2787,9 @@ $(function() {
   .done(function (result) {
     oauth.admin_scope = result.admin_scope + " " + result.profile_scope;
     oauth.api_prefix = result.api_prefix;
+    if (!oauth.redirect_uri) {
+      oauth.redirect_uri = "../" + result.app_prefix + "/index.html";
+    }
     init();
   })
   .fail(function (error) {
