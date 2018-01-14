@@ -225,6 +225,59 @@ START_TEST(test_glwd_crud_user_delete_new_database)
 }
 END_TEST
 
+START_TEST(test_glwd_crud_user_add_ok_database_empty_additional_property)
+{
+  json_t * json_body;
+  char * url = msprintf("%s/user/", SERVER_URI);
+  int res;
+  
+  json_body = json_pack("{sssssssssssss[ss]}",
+                        "source", "database",
+                        "login", "new_user",
+                        "name", "New User",
+                        "password", "password",
+                        "email", "test@glewlwyd.domain",
+                        "additional_property_value", "",
+                        "scope", 
+                          "scope1", "scope2");
+  res = run_simple_test(&user_req, "POST", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
+  json_decref(json_body);
+  ck_assert_int_eq(res, 1);
+  
+  free(url);
+}
+END_TEST
+
+START_TEST(test_glwd_crud_user_get_new_database_empty_additional_property)
+{
+  char * url = msprintf("%s/user/new_user?source=database", SERVER_URI);
+  json_t * j_new_user = json_pack("{sssssssssssos[ss]}",
+                        "login", "new_user",
+                        "name", "New User",
+                        "email", "test@glewlwyd.domain",
+                        "additional_property_name", "new_property",
+                        "additional_property_value", "",
+                        "enabled", json_true(),
+                        "scope", 
+                          "scope1", "scope2");
+  
+  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_new_user, NULL, NULL);
+  free(url);
+  json_decref(j_new_user);
+  ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(test_glwd_crud_user_delete_new_database_empty_additional_property)
+{
+  char * url = msprintf("%s/user/new_user?source=database", SERVER_URI);
+  
+  int res = run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
+  free(url);
+  ck_assert_int_eq(res, 1);
+}
+END_TEST
+
 START_TEST(test_glwd_crud_user_connect_fail_new)
 {
   struct _u_request auth_req;
@@ -492,6 +545,9 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_empty_password_new);
   tcase_add_test(tc_core, test_glwd_crud_user_delete_new_database);
+  tcase_add_test(tc_core, test_glwd_crud_user_add_ok_database_empty_additional_property);
+  tcase_add_test(tc_core, test_glwd_crud_user_get_new_database_empty_additional_property);
+  tcase_add_test(tc_core, test_glwd_crud_user_delete_new_database_empty_additional_property);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_search_success);

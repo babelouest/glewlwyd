@@ -1231,7 +1231,7 @@ json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add
         json_array_append_new(j_return, json_pack("{ss}", "email", "email is an optional string between 0 and 128 characters"));
       }
       
-      if (json_object_get(j_user, "additional_property_value") != NULL && (!json_is_string(json_object_get(j_user, "additional_property_value")) || json_string_length(json_object_get(j_user, "additional_property_value")) > 512)) {
+      if (json_object_get(j_user, "additional_property_value") != NULL && json_string_length(json_object_get(j_user, "additional_property_value")) > 512) {
         json_array_append_new(j_return, json_pack("{ss}", "additional_property_value", "additional_property_value is an optional string between 0 and 512 characters"));
       }
       
