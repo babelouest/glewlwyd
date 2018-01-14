@@ -565,7 +565,7 @@ json_t * session_check(struct config_elements * config, const char * session_val
                 if (check_result_value(j_user, G_OK)) {
                   if (json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
 										json_object_set(j_grants, "session_token", json_true());
-                    j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+                    j_return = json_pack("{sisO}", "result", G_OK, "grants", j_grants);
                   } else {
                     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
                   }
@@ -573,6 +573,7 @@ json_t * session_check(struct config_elements * config, const char * session_val
                   j_return = json_pack("{si}", "result", G_ERROR);
                 }
                 json_decref(j_user);
+                json_decref(j_grants);
               } else {
                 j_return = json_pack("{si}", "result", G_ERROR);
               }
@@ -634,10 +635,11 @@ json_t * access_token_check_scope_profile(struct config_elements * config, const
             free_string_array(scope_list);
             if (scope_found) {
 							json_object_set(j_grants, "session_token", json_false());
-              j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+              j_return = json_pack("{sisO}", "result", G_OK, "grants", j_grants);
             } else {
               j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
             }
+            json_decref(j_grants);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "access_token_check - Error encoding token grants '%s'", grants);
             j_return = json_pack("{si}", "result", G_ERROR);
