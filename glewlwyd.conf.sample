@@ -14,7 +14,7 @@ port=4593
 url_prefix="api"
 
 # path to static files for /app url
-static_files_path="/var/www/"
+static_files_path="/usr/share/glewlwyd/webapp/"
 
 # static files prefix
 static_files_prefix = "app"
