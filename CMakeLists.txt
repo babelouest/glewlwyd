@@ -27,8 +27,8 @@ set(PROGRAM_VERSION_MINOR "3")
 set(PROGRAM_VERSION_PATCH "2")
 set(PROJECT_DESCRIPTION "OAuth2 authentication server providing Json Web Tokens")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
-set(ULFIUS_VERSION_DOWNLOAD "2.3.0-b")
-set(HOEL_VERSION_DOWNLOAD "1.4.0-b")
+set(ULFIUS_VERSION_DOWNLOAD "2.3.0-b.2")
+set(HOEL_VERSION_DOWNLOAD "1.4.0-b.3")
 
 include(GNUInstallDirs)
 include(CheckSymbolExists)
@@ -208,8 +208,9 @@ endif ()
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/glewlwyd
         DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES glewlwyd.conf.sample DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/glewlwyd RENAME glewlwyd.conf COMPONENT config)
-install(FILES glewlwyd.service DESTINATION /lib/systemd/system COMPONENT config)
-install(FILES glewlwyd-init DESTINATION /etc/init.d/ RENAME glewlwyd COMPONENT config)
+install(FILES glewlwyd.service DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system COMPONENT config)
+install(FILES glewlwyd-init DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/init.d/ RENAME glewlwyd COMPONENT config)
+install(DIRECTORY webapp/ DESTINATION ${CMAKE_INSTALL_PREFIX}/share/glewlwyd/webapp/ COMPONENT runtime)
 
 set(TARGETS glewlwyd)
 
@@ -240,7 +241,7 @@ set(PACKAGE_FILE_NAME
 set(PACKAGE_IGNORED_FILES
         "${CMAKE_CURRENT_BINARY_DIR}/;/.git/;.gitignore;~$;${CPACK_SOURCE_IGNORE_FILES}")
 
-set(CPACK_GENERATOR "TGZ;DEB;RPM")
+set(CPACK_GENERATOR "TGZ;DEB")
 
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mail@babelouest.org")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
