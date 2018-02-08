@@ -27,7 +27,7 @@ set(PROGRAM_VERSION_MINOR "3")
 set(PROGRAM_VERSION_PATCH "2")
 set(PROJECT_DESCRIPTION "OAuth2 authentication server providing Json Web Tokens")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
-set(ULFIUS_VERSION_DOWNLOAD "2.3.0-b.2")
+set(ULFIUS_VERSION_DOWNLOAD "2.3.0-b.3")
 set(HOEL_VERSION_DOWNLOAD "1.4.0-b.3")
 
 include(GNUInstallDirs)
