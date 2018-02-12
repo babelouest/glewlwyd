@@ -205,8 +205,8 @@ endif ()
 
 # install target
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/glewlwyd
-        DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS glewlwyd
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES glewlwyd.conf.sample
         DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/glewlwyd RENAME glewlwyd.conf COMPONENT config)
 install(DIRECTORY webapp/
