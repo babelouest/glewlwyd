@@ -207,10 +207,10 @@ endif ()
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/glewlwyd
         DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES glewlwyd.conf.sample DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/glewlwyd RENAME glewlwyd.conf COMPONENT config)
-install(FILES glewlwyd.service DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system COMPONENT config)
-install(FILES glewlwyd-init DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/init.d/ RENAME glewlwyd COMPONENT config)
-install(DIRECTORY webapp/ DESTINATION ${CMAKE_INSTALL_PREFIX}/share/glewlwyd/webapp/ COMPONENT runtime)
+install(FILES glewlwyd.conf.sample
+        DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/glewlwyd RENAME glewlwyd.conf COMPONENT config)
+install(DIRECTORY webapp/
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/glewlwyd/webapp/ COMPONENT runtime)
 
 set(TARGETS glewlwyd)
 
@@ -246,7 +246,7 @@ set(CPACK_GENERATOR "TGZ;DEB")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mail@babelouest.org")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/babelouest/glewlwyd")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.3.4), libconfig9, libgnutls30 (>= 3.5.0), libhoel1.2, libjansson4 (>= 2.7), libjwt0, libldap-2.4-2 (>= 2.4.7), liborcania1.1, libulfius2.2, libuuid1 (>= 2.16), libyder2.0, lsb-base (>= 3.0-6)")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.3.4), libconfig9, libgnutls30 (>= 3.5.0), libjansson4 (>= 2.7), libjwt0, libldap-2.4-2 (>= 2.4.7), liborcania, libyder, libulfius, libhoel, libuuid1 (>= 2.16), lsb-base (>= 3.0-6)")
 set(CPACK_PACKAGE_FILE_NAME ${PACKAGE_FILE_NAME})
 
 set(CPACK_SOURCE_GENERATOR "TGZ")
