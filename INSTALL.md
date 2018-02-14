@@ -12,6 +12,23 @@ Glewlwyd is now available in Debian Buster (testing) and some Debian based distr
 
 Then, you must initialize your database, setup your jwt key and setup your `glewlwyd.conf` file
 
+### Pre-compiled packages
+
+You can install Glewlwyd with a pre-compiled package available in the [release pages](https://github.com/babelouest/glewlwyd/releases/latest/). The package files `glewlwyd-full_*` contain the package libraries of `orcania`, `yder`, `ulfius` and `hoel` precompiled for `glewlwyd`, plus `glewlwyd` package. To install a pre-compiled package, you need to have installed the following libraries:
+
+```
+libmicrohttpd
+libjansson
+libcurl-gnutls
+uuid
+libldap2
+libmysqlclient
+libsqlite3
+libconfig
+libgnutls
+libssl
+```
+
 ## Docker
 
 [Rafael](https://github.com/rafaelhdr/) is currently working on a [docker image](https://github.com/rafaelhdr/glewlwyd-oauth2-server) for Glewlwyd, Kudos to him! This is a work-in-progress but you already can easily build an image with MariaDB or SQLite3 backend. Check out the documentation for more informations.
@@ -23,12 +40,12 @@ You must install the following libraries including their header files:
 ```
 libmicrohttpd
 libjansson
-libcurl 
-uuid 
-libldap2 
-libmysqlclient 
-libsqlite3 
-libconfig 
+libcurl-gnutls
+uuid
+libldap2
+libmysqlclient
+libsqlite3
+libconfig
 libgnutls
 libssl
 ```
