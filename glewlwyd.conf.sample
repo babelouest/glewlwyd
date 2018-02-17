@@ -14,7 +14,7 @@ port=4593
 url_prefix="api"
 
 # path to static files for /app url
-static_files_path="/var/www/"
+static_files_path="/usr/share/glewlwyd/webapp/"
 
 # static files prefix
 static_files_prefix = "app"
@@ -109,12 +109,12 @@ code_expiration=600
 
 # TLS/SSL configuration values
 use_secure_connection=false
-secure_connection_key_file="cert.key"
-secure_connection_pem_file="cert.pem"
+secure_connection_key_file="/usr/etc/glewlwyd/cert.key"
+secure_connection_pem_file="/usr/etc/glewlwyd/cert.pem"
 
 # login and grant urls
-login_url="https://example.org/glewlwyd/app/login.html?"
-grant_url="https://example.org/glewlwyd/app/grant.html?"
+login_url="http://localhost:4593/app/login.html?"
+grant_url="http://localhost:4593/app/grant.html?"
 
 # Reset password configuration
 reset_password=true # optional, default false
@@ -165,7 +165,7 @@ authentication =
 
    database_auth            = true
    
-   ldap_auth                = true
+   ldap_auth                = false
    uri                      = "ldap://localhost"
    bind_dn                  = "cn=operator,dc=example,dc=org"
    bind_passwd              = "password"
@@ -220,25 +220,25 @@ jwt =
    key_size = 512
    
    # Use RSA algorithm to sign tokens (asymetric)
-   use_rsa = false
+   use_rsa = true
    
    # path to the key (private) certificate file to sign tokens
-   rsa_key_file = "private.key"
+   rsa_key_file = "/usr/etc/glewlwyd/private-rsa.key"
    
    # path to the public certificate file to validate signatures
-   rsa_pub_file = "public.pem"
+   rsa_pub_file = "/usr/etc/glewlwyd/public-rsa.pem"
    
    # Use ECDSA algorithm to sign tokens (asymetric)
    use_ecdsa = false
    
    # path to the key (private) certificate file to sign tokens
-   ecdsa_key_file = "private.key"
+   ecdsa_key_file = "/usr/etc/glewlwyd/private-ecdsa.key"
    
    # path to the public certificate file to validate signatures
-   ecdsa_pub_file = "public.pem"
+   ecdsa_pub_file = "/usr/etc/glewlwyd/public-ecdsa.pem"
    
    # Use SHA algorithm to sign tokens (symetric)
-   use_sha = true
+   use_sha = false
    
    # characters used to generate and validate the token
    sha_secret = "secret"
