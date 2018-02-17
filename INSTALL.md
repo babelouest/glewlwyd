@@ -22,16 +22,37 @@ libjansson
 libcurl-gnutls
 uuid
 libldap2
-libmysqlclient
+libmariadbclient
 libsqlite3
 libconfig
 libgnutls
 libssl
 ```
 
+For example, to install Glewlwyd with the `glewlwyd-full_1.3.2_Debian_stretch_x86_64.tar.gz` package downloaded on the `releases` page, you must execute the following commands:
+
+```shell
+$ sudo apt install -y autoconf automake make pkg-config libjansson-dev libssl-dev libcurl3 libconfig9 libcurl3-gnutls libgnutls30 libgcrypt20 libmicrohttpd12 libsqlite3-0 libmariadbclient18 libtool uuid
+$ wget https://github.com/benmcollins/libjwt/archive/v1.9.tar.gz
+$ tar -zxvf v1.9.tar.gz
+$ cd libjwt-1.9
+$ autoreconf -i
+$ ./configure
+$ make && sudo make install
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v1.3.2/glewlwyd-full_1.3.2_Debian_stretch_x86_64.tar.gz
+$ tar xf hoel-dev-full_1.4.0_Debian_stretch_x86_64.tar.gz
+$ sudo dpkg -i liborcania_1.2.0_Debian_stretch_x86_64.deb
+$ sudo dpkg -i libyder_1.2.0_Debian_stretch_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.0_Debian_stretch_x86_64.deb
+$ sudo dpkg -i libulfius_2.3.0_Debian_stretch_x86_64.deb
+$ sudo dpkg -i glewlwyd_1.3.2_Debian_stretch_x86_64.deb
+```
+
+If there's no package available for your distribution, you can recompile it manually using `CMake` or `Makefile`.
+
 ## Docker
 
-[Rafael](https://github.com/rafaelhdr/) is currently working on a [docker image](https://github.com/rafaelhdr/glewlwyd-oauth2-server) for Glewlwyd, Kudos to him! This is a work-in-progress but you already can easily build an image with MariaDB or SQLite3 backend. Check out the documentation for more informations.
+[Rafael](https://github.com/rafaelhdr/) has made [docker images](https://github.com/rafaelhdr/glewlwyd-oauth2-server) for Glewlwyd, Kudos to him!. Check out the documentation for more informations.
 
 ## Manual install from Github
 
@@ -43,7 +64,7 @@ libjansson
 libcurl-gnutls
 uuid
 libldap2
-libmysqlclient
+libmariadbclient
 libsqlite3
 libconfig
 libgnutls
@@ -53,7 +74,7 @@ libssl
 On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install those dependencies using the following command:
 
 ```shell
-$ sudo apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev uuid-dev libldap2-dev libmysqlclient-dev libsqlite3-dev libconfig-dev libgnutls28-dev libssl-dev
+$ sudo apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev uuid-dev libldap2-dev libmariadbclient-dev libsqlite3-dev libconfig-dev libgnutls28-dev libssl-dev
 ```
 
 ### Libssl vs libgnutls
@@ -66,7 +87,32 @@ With Libmicrohttpd 0.9.37 and older version, there is a bug when parsing `applic
 
 ### Build Glewlwyd and its dependencies
 
-Download Glewlwyd and its dependendencies hosted on github, compile and install.
+#### CMake
+
+Download and install libjwt, then download Glewlwyd from GitHub, then use the CMake script to build the application:
+
+```shell
+# Install libjwt
+# libtool and autoconf may be required, install them with 'sudo apt-get install libtool autoconf'
+$ git clone https://github.com/benmcollins/libjwt.git
+$ cd libjwt/
+$ autoreconf -i
+$ ./configure # use ./configure --without-openssl to use gnutls instead, you must have gnutls 3.5.8 minimum
+$ make
+$ sudo make install
+
+# Install Glewlwyd
+$ git clone https://github.com/babelouest/glewlwyd.git
+$ mkdir glewlwyd/build
+$ cd glewlwyd/build
+$ cmake ..
+$ make 
+$ sudo make install
+```
+
+### Good ol' Makefile
+
+Download Glewlwyd and its dependencies hosted on github, compile and install.
 
 ```shell
 # Install libjwt
@@ -99,7 +145,7 @@ $ sudo make install
 # Install Hoel
 $ git clone https://github.com/babelouest/hoel.git
 $ cd hoel/src/
-$ make
+$ make DISABLE_POSTGRESQL=1
 $ sudo make install
 
 # Install Glewlwyd
