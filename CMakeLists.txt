@@ -248,6 +248,18 @@ install(FILES glewlwyd.conf.sample
         DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/glewlwyd RENAME glewlwyd.conf COMPONENT config)
 install(DIRECTORY webapp/
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/glewlwyd/webapp/ COMPONENT runtime)
+install(DIRECTORY database/
+        DESTINATION ${CMAKE_INSTALL_DOCDIR}/database/ COMPONENT runtime)
+install(FILES README.md
+        DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
+install(FILES API.md
+        DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
+install(FILES INSTALL.md
+        DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
+install(FILES glewlwyd.service
+        DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
+install(FILES glewlwyd-init
+        DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
 
 set(TARGETS glewlwyd)
 
