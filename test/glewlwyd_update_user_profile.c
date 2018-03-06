@@ -263,7 +263,7 @@ START_TEST(test_glwd_update_user_profile_delete_user)
 }
 END_TEST
 
-static Suite *libjwt_suite0(void)
+static Suite *glewlwyd_suite0(void)
 {
   Suite *s;
   TCase *tc_core;
@@ -278,7 +278,7 @@ static Suite *libjwt_suite0(void)
   return s;
 }
 
-static Suite *libjwt_suite1(void)
+static Suite *glewlwyd_suite1(void)
 {
   Suite *s;
   TCase *tc_core;
@@ -298,7 +298,7 @@ static Suite *libjwt_suite1(void)
   return s;
 }
 
-static Suite *libjwt_suite2(void)
+static Suite *glewlwyd_suite2(void)
 {
   Suite *s;
   TCase *tc_core;
@@ -317,7 +317,7 @@ static Suite *libjwt_suite2(void)
   return s;
 }
 
-static Suite *libjwt_suite3(void)
+static Suite *glewlwyd_suite3(void)
 {
   Suite *s;
   TCase *tc_core;
@@ -332,7 +332,7 @@ static Suite *libjwt_suite3(void)
   return s;
 }
 
-static Suite *libjwt_suite4(void)
+static Suite *glewlwyd_suite4(void)
 {
   Suite *s;
   TCase *tc_core;
@@ -403,7 +403,7 @@ int main(int argc, char *argv[])
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
   
-  s0 = libjwt_suite0();
+  s0 = glewlwyd_suite0();
   sr0 = srunner_create(s0);
 
   srunner_run_all(sr0, CK_VERBOSE);
@@ -424,7 +424,7 @@ int main(int argc, char *argv[])
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
   
-  s1 = libjwt_suite1();
+  s1 = glewlwyd_suite1();
   sr1 = srunner_create(s1);
 
   srunner_run_all(sr1, CK_VERBOSE);
@@ -435,14 +435,14 @@ int main(int argc, char *argv[])
   fgets(token, 128, stdin);
   token[strlen(token) - 1] = '\0';
   
-  s2 = libjwt_suite2();
+  s2 = glewlwyd_suite2();
   sr2 = srunner_create(s2);
 
   srunner_run_all(sr2, CK_VERBOSE);
   number_failed = srunner_ntests_failed(sr2);
   srunner_free(sr2);
   
-  s3 = libjwt_suite3();
+  s3 = glewlwyd_suite3();
   sr3 = srunner_create(s3);
 
   srunner_run_all(sr3, CK_VERBOSE);
@@ -463,7 +463,7 @@ int main(int argc, char *argv[])
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
   
-  s4 = libjwt_suite4();
+  s4 = glewlwyd_suite4();
   sr4 = srunner_create(s4);
 
   srunner_run_all(sr4, CK_VERBOSE);
