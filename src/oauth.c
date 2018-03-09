@@ -421,7 +421,7 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
       j_scope_list = auth_check_client_scope(config, request->auth_basic_user, u_map_get(request->map_post_body, "scope"));
       if (check_result_value(j_scope_list, G_OK)) {
         time(&now);
-        access_token = generate_client_access_token(config, request->auth_basic_user, json_string_value(json_object_get(j_scope_list, "scope")), ip_source, now);
+        access_token = generate_client_access_token(config, request->auth_basic_user, ip_source, json_string_value(json_object_get(j_scope_list, "scope")), now);
         if (access_token != NULL) {
           json_body = json_pack("{sssssisO}",
                                           "access_token", access_token,
