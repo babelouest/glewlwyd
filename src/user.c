@@ -1195,7 +1195,7 @@ json_t * get_user_profile(struct config_elements * config, const char * login, c
     }
   }
   if (check_result_value(j_user, G_OK)) {
-		json_object_del(json_object_get(j_user, "user"), "scope");
+    json_object_del(json_object_get(j_user, "user"), "scope");
     j_return = json_pack("{sisO}", "result", G_OK, "user", json_object_get(j_user, "user"));
   } else if (check_result_value(j_user, G_ERROR_NOT_FOUND) || j_user == NULL) {
     j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);

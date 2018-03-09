@@ -114,7 +114,7 @@ int main (int argc, char ** argv) {
     fprintf(stderr, "init - Error initializing end signal\n");
     return 1;
   }
-	
+  
   // First we parse command line arguments
   if (!build_config_from_args(argc, argv, config)) {
     fprintf(stderr, "Error reading command-line parameters\n");
@@ -479,7 +479,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
           break;
         case 'h':
         case 'v':
-					print_help(stdout);
+          print_help(stdout);
           exit_server(&config, GLEWLWYD_STOP);
           break;
       }

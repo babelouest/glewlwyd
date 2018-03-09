@@ -148,61 +148,61 @@ int check_auth_type_access_token_request (const struct _u_request * request, str
   if (check_result_value(j_auth, G_OK)) {
     j_validate = validate_authorization_code(config, code, u_map_get(request->map_post_body, "client_id"), redirect_uri, ip_source);
     if (check_result_value(j_validate, G_OK)) {
-			j_user = get_user(config, json_string_value(json_object_get(j_validate, "username")), NULL);
-			if (check_result_value(j_user, G_OK)) {
-				if (config->use_scope) {
-					scope_list = json_string_value(json_object_get(j_validate, "scope"));
-				}
-				time(&now);
-				refresh_token = generate_refresh_token(config, request->auth_basic_user, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), GLEWLWYD_AUHORIZATION_TYPE_CODE, ip_source, scope_list, now);
-				if (refresh_token != NULL) {
-					access_token = generate_access_token(config, refresh_token, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), GLEWLWYD_AUHORIZATION_TYPE_CODE, ip_source, scope_list, json_object_get(json_object_get(j_user, "user"), "additional_property_name")!=json_null()?json_string_value(json_object_get(json_object_get(j_user, "user"), "additional_property_name")):NULL, json_object_get(json_object_get(j_user, "user"), "additional_property_value")!=json_null()?json_string_value(json_object_get(json_object_get(j_user, "user"), "additional_property_value")):NULL, now);
-					if (access_token != NULL) {
-						// Disable gco_id entry
-						j_query = json_pack("{sss{si}s{sI}}",
-																"table",
-																GLEWLWYD_TABLE_CODE,
-																"set",
-																	"gco_enabled",
-																	0,
-																"where",
-																	"gco_id",
-																	json_integer_value((json_object_get(j_validate, "gco_id"))));
-						res = h_update(config->conn, j_query, NULL);
-						json_decref(j_query);
-						if (res == H_OK) {
-							// Finally, the tokens are all here, no error, no problem
-							json_body = json_pack("{sssssssisi}",
-																		"token_type",
-																		"bearer",
-																		"access_token",
-																		access_token,
-																		"refresh_token",
-																		refresh_token,
-																		"iat",
-																		now,
-																		"expires_in",
-																		config->access_token_expiration);
-							ulfius_set_json_body_response(response, 200, json_body);
-						} else {
-							y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error executing j_query update");
-							response->status = 500;
-						}
-					} else {
-						y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error generating access_token");
-						response->status = 500;
-					}
-					o_free(access_token);
-					json_decref(j_user);
-				} else {
-					y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error generating refresh_token");
-					response->status = 500;
-				}
-				o_free(refresh_token);
-			} else {
-				y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error getting user");
-				response->status = 500;
-			}
+      j_user = get_user(config, json_string_value(json_object_get(j_validate, "username")), NULL);
+      if (check_result_value(j_user, G_OK)) {
+        if (config->use_scope) {
+          scope_list = json_string_value(json_object_get(j_validate, "scope"));
+        }
+        time(&now);
+        refresh_token = generate_refresh_token(config, request->auth_basic_user, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), GLEWLWYD_AUHORIZATION_TYPE_CODE, ip_source, scope_list, now);
+        if (refresh_token != NULL) {
+          access_token = generate_access_token(config, refresh_token, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), GLEWLWYD_AUHORIZATION_TYPE_CODE, ip_source, scope_list, json_object_get(json_object_get(j_user, "user"), "additional_property_name")!=json_null()?json_string_value(json_object_get(json_object_get(j_user, "user"), "additional_property_name")):NULL, json_object_get(json_object_get(j_user, "user"), "additional_property_value")!=json_null()?json_string_value(json_object_get(json_object_get(j_user, "user"), "additional_property_value")):NULL, now);
+          if (access_token != NULL) {
+            // Disable gco_id entry
+            j_query = json_pack("{sss{si}s{sI}}",
+                                "table",
+                                GLEWLWYD_TABLE_CODE,
+                                "set",
+                                  "gco_enabled",
+                                  0,
+                                "where",
+                                  "gco_id",
+                                  json_integer_value((json_object_get(j_validate, "gco_id"))));
+            res = h_update(config->conn, j_query, NULL);
+            json_decref(j_query);
+            if (res == H_OK) {
+              // Finally, the tokens are all here, no error, no problem
+              json_body = json_pack("{sssssssisi}",
+                                    "token_type",
+                                    "bearer",
+                                    "access_token",
+                                    access_token,
+                                    "refresh_token",
+                                    refresh_token,
+                                    "iat",
+                                    now,
+                                    "expires_in",
+                                    config->access_token_expiration);
+              ulfius_set_json_body_response(response, 200, json_body);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error executing j_query update");
+              response->status = 500;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error generating access_token");
+            response->status = 500;
+          }
+          o_free(access_token);
+          json_decref(j_user);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error generating refresh_token");
+          response->status = 500;
+        }
+        o_free(refresh_token);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - error getting user");
+        response->status = 500;
+      }
     } else {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid from IP Address %s", ip_source);
       json_body = json_pack("{ss}", "error", json_string_value(json_object_get(j_validate, "error")));
@@ -346,48 +346,48 @@ int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, 
       j_result = auth_check_user_credentials(config, u_map_get(request->map_post_body, "username"), u_map_get(request->map_post_body, "password"));
     }
     if (check_result_value(j_result, G_OK)) {
-			j_user = get_user(config, u_map_get(request->map_post_body, "username"), NULL);
-			if (check_result_value(j_user, G_OK)) {
-				time(&now);
-				refresh_token = generate_refresh_token(config, request->auth_basic_user, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_result, "scope")), now);
-				if (refresh_token != NULL) {
-					access_token = generate_access_token(config, refresh_token, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_result, "scope")), json_object_get(json_object_get(j_user, "user"), "additional_property_name")!=json_null()?json_string_value(json_object_get(json_object_get(j_user, "user"), "additional_property_name")):NULL, json_object_get(json_object_get(j_user, "user"), "additional_property_value")!=json_null()?json_string_value(json_object_get(json_object_get(j_user, "user"), "additional_property_value")):NULL, now);
-					if (access_token != NULL) {
-							json_body = json_pack("{sssssssisi}",
-																		"token_type",
-																		"bearer",
-																		"access_token",
-																		access_token,
-																		"refresh_token",
-																		refresh_token,
-																		"iat",
-																		now,
-																		"expires_in",
-																		config->access_token_expiration);
-						if (json_body != NULL) {
-							if (config->use_scope) {
-								json_object_set(json_body, "scope", json_object_get(j_result, "scope"));
-							}
-							ulfius_set_json_body_response(response, 200, json_body);
-						} else {
-							y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for json_body");
-							response->status = 500;
-						}
-					} else {
-						y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for access_token");
-						response->status = 500;
-					}
-					o_free(access_token);
-				} else {
-					y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for refresh_token");
-					response->status = 500;
-				}
-				o_free(refresh_token);
-			} else {
-				y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error get_user");
-				response->status = 500;
-			}
-			json_decref(j_user);
+      j_user = get_user(config, u_map_get(request->map_post_body, "username"), NULL);
+      if (check_result_value(j_user, G_OK)) {
+        time(&now);
+        refresh_token = generate_refresh_token(config, request->auth_basic_user, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_result, "scope")), now);
+        if (refresh_token != NULL) {
+          access_token = generate_access_token(config, refresh_token, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, ip_source, json_string_value(json_object_get(j_result, "scope")), json_object_get(json_object_get(j_user, "user"), "additional_property_name")!=json_null()?json_string_value(json_object_get(json_object_get(j_user, "user"), "additional_property_name")):NULL, json_object_get(json_object_get(j_user, "user"), "additional_property_value")!=json_null()?json_string_value(json_object_get(json_object_get(j_user, "user"), "additional_property_value")):NULL, now);
+          if (access_token != NULL) {
+              json_body = json_pack("{sssssssisi}",
+                                    "token_type",
+                                    "bearer",
+                                    "access_token",
+                                    access_token,
+                                    "refresh_token",
+                                    refresh_token,
+                                    "iat",
+                                    now,
+                                    "expires_in",
+                                    config->access_token_expiration);
+            if (json_body != NULL) {
+              if (config->use_scope) {
+                json_object_set(json_body, "scope", json_object_get(j_result, "scope"));
+              }
+              ulfius_set_json_body_response(response, 200, json_body);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for json_body");
+              response->status = 500;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for access_token");
+            response->status = 500;
+          }
+          o_free(access_token);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error allocating resources for refresh_token");
+          response->status = 500;
+        }
+        o_free(refresh_token);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - error get_user");
+        response->status = 500;
+      }
+      json_decref(j_user);
     } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
       response->status = 403;

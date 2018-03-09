@@ -149,19 +149,19 @@ int callback_glewlwyd_validate_user_session (const struct _u_request * request, 
   time(&now);
   if (check_result_value(j_result, G_OK)) {
     // Store session cookie
-		j_user = get_user(config, u_map_get(request->map_post_body, "username"), NULL);
-		if (check_result_value(j_user, G_OK)) {
-			session_token = generate_session_token(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), ip_source, now);
-			if (0 == o_strcmp(u_map_get(request->map_post_body, "remember"), "true")) {
-				max_age = config->session_expiration;
-			}
-			ulfius_add_cookie_to_response(response, config->session_key, session_token, NULL, max_age, NULL, "/", 0, 0);
-			o_free(session_token);
-		} else {
-			y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_validate_user_session - Error get_user");
-			response->status = 500;
-		}
-		json_decref(j_user);
+    j_user = get_user(config, u_map_get(request->map_post_body, "username"), NULL);
+    if (check_result_value(j_user, G_OK)) {
+      session_token = generate_session_token(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), ip_source, now);
+      if (0 == o_strcmp(u_map_get(request->map_post_body, "remember"), "true")) {
+        max_age = config->session_expiration;
+      }
+      ulfius_add_cookie_to_response(response, config->session_key, session_token, NULL, max_age, NULL, "/", 0, 0);
+      o_free(session_token);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_validate_user_session - Error get_user");
+      response->status = 500;
+    }
+    json_decref(j_user);
   } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
     y_log_message(Y_LOG_LEVEL_WARNING, "Security - Error login/password for username %s at IP Address %s", u_map_get(request->map_post_body, "username"), ip_source);
     response->status = 403;
@@ -377,11 +377,11 @@ int callback_glewlwyd_get_user_session_profile (const struct _u_request * reques
   
   j_session = session_or_access_token_check(config, u_map_get(request->map_cookie, config->session_key), u_map_get(request->map_header, "Authorization"));
   if (check_result_value(j_session, G_OK)) {
-		if (json_object_get(json_object_get(j_session, "grants"), "session_token") == json_true()) {
-			j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), NULL);
-		} else {
-			j_user = get_user_profile(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), NULL);
-		}
+    if (json_object_get(json_object_get(j_session, "grants"), "session_token") == json_true()) {
+      j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), NULL);
+    } else {
+      j_user = get_user_profile(config, json_string_value(json_object_get(json_object_get(j_session, "grants"), "username")), NULL);
+    }
     if (check_result_value(j_user, G_OK)) {
       json_object_del(json_object_get(j_user, "user"), "source");
       json_object_del(json_object_get(j_user, "user"), "enabled");
@@ -679,9 +679,9 @@ int callback_glewlwyd_add_user (const struct _u_request * request, struct _u_res
   if (j_result != NULL && json_array_size(j_result) == 0) {
     res = add_user(config, json_req_body);
     if (res == G_ERROR_PARAM) {
-			json_t * j_body = json_pack("{sssO}", "error", "Error source parameter", "user", json_req_body);
-			ulfius_set_json_body_response(response, 400, j_body);
-			json_decref(j_body);
+      json_t * j_body = json_pack("{sssO}", "error", "Error source parameter", "user", json_req_body);
+      ulfius_set_json_body_response(response, 400, j_body);
+      json_decref(j_body);
     } else if (res != G_OK) {
       response->status = 500;
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user - Error adding new user");
