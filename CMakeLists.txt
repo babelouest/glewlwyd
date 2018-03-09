@@ -115,10 +115,7 @@ add_executable(glewlwyd ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.h
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/scope.c
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/resource.c
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/password.c
-                ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.c
-                ${CMAKE_CURRENT_SOURCE_DIR}/glewlwyd.conf.sample
-                ${CMAKE_CURRENT_SOURCE_DIR}/glewlwyd.service
-                ${CMAKE_CURRENT_SOURCE_DIR}/glewlwyd-init )
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.c )
 
 set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
 include(FindOrcania)
@@ -244,21 +241,21 @@ endif ()
 
 install(TARGETS glewlwyd
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES glewlwyd.conf.sample
+install(FILES docs/glewlwyd.conf.sample
         DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/glewlwyd RENAME glewlwyd.conf COMPONENT config)
 install(DIRECTORY webapp/
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/glewlwyd/webapp/ COMPONENT runtime)
-install(DIRECTORY database/
+install(DIRECTORY docs/database/
         DESTINATION ${CMAKE_INSTALL_DOCDIR}/database/ COMPONENT runtime)
 install(FILES README.md
         DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
-install(FILES API.md
+install(FILES docs/API.md
         DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
-install(FILES INSTALL.md
+install(FILES docs/INSTALL.md
         DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
-install(FILES glewlwyd.service
+install(FILES docs/glewlwyd.service
         DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
-install(FILES glewlwyd-init
+install(FILES docs/glewlwyd-init
         DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
 
 set(TARGETS glewlwyd)
