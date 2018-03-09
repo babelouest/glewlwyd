@@ -24,7 +24,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 set(PROGRAM_VERSION_MAJOR "1")
 set(PROGRAM_VERSION_MINOR "3")
-set(PROGRAM_VERSION_PATCH "2")
+set(PROGRAM_VERSION_PATCH "3")
 set(PROJECT_DESCRIPTION "OAuth2 authentication server providing Json Web Tokens")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_DOWNLOAD "1.2.0")
