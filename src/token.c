@@ -564,7 +564,7 @@ json_t * session_check(struct config_elements * config, const char * session_val
                 j_user = get_user(config, jwt_get_grant(jwt, "username"), NULL);
                 if (check_result_value(j_user, G_OK)) {
                   if (json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
-										json_object_set(j_grants, "session_token", json_true());
+                    json_object_set(j_grants, "session_token", json_true());
                     j_return = json_pack("{sisO}", "result", G_OK, "grants", j_grants);
                   } else {
                     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
@@ -634,7 +634,7 @@ json_t * access_token_check_scope_profile(struct config_elements * config, const
             }
             free_string_array(scope_list);
             if (scope_found) {
-							json_object_set(j_grants, "session_token", json_false());
+              json_object_set(j_grants, "session_token", json_false());
               j_return = json_pack("{sisO}", "result", G_OK, "grants", j_grants);
             } else {
               j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
