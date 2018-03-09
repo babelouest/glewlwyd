@@ -37,11 +37,13 @@
 #define BODY_URL_PARAMETER   "access_token"
 
 struct _glewlwyd_resource_config {
-  int       method;
-  char *    oauth_scope;
-  char *    jwt_decode_key;
-  jwt_alg_t jwt_alg;
-  char *    realm;
+  int            method;
+  char *         oauth_scope;
+  char *         jwt_decode_key;
+  jwt_alg_t      jwt_alg;
+  char *         realm;
+  unsigned short accept_access_token;
+  unsigned short accept_client_token;
 };
 
 int callback_check_glewlwyd_access_token (const struct _u_request * request, struct _u_response * response, void * user_data);
