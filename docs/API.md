@@ -2,7 +2,7 @@
 
 This document is intended to describe all data API endpoints. Data API endpoints are Glewlwyd specific endpoints used to manage data such as users, passwords, clients, scope names, resources, and disable refresh tokens.
 
-For OAuth 2 endpoints specification, please read the document OAUTH2.md.
+For OAuth 2 endpoints specification, please read the document [OAUTH2.md](OAUTH2.md).
 
 ## Endpoints authentication
 
