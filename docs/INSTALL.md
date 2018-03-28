@@ -4,8 +4,8 @@
 2. [Pre-compiled packages](#pre-compiled-packages)
 3. [Docker](#docker)
 4. [Manual install from Github](#manual-install-from-github)
-- [CMake](#cmake)
-- [Good ol' Makefile](#good-ol-makefile)
+   * [CMake](#cmake)
+   * [Good ol' Makefile](#good-ol-makefile)
 
 ## Debian-ish packages
 
