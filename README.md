@@ -42,11 +42,11 @@ The pages `login.html`, `grant.html` and `reset.html` are tiny pages used to log
 
 ![reset](https://github.com/babelouest/glewlwyd/raw/master/screenshots/password_forgot.png)
 
-If a user uses the reset password functionnality, he or she will receive the content of the file `reset.eml`. The email uses two patterns that will be replaced by values: `$USERNAME` for the username and `$URL` for the url to the reset.html page.
+If a user uses the reset password functionality, he or she will receive the content of the file `reset.eml`. The email uses two patterns that will be replaced by values: `$USERNAME` for the username and `$URL` for the url to the reset.html page.
 
 `$URL` must be set in the configuration file properly so the emails will lead to the correct page.
 
-More screenshots of the front-end application are availabe in the [screenshot](https://github.com/babelouest/glewlwyd/tree/master/screenshots) folder.
+More screenshots of the front-end application are available in the [screenshot](https://github.com/babelouest/glewlwyd/tree/master/screenshots) folder.
 
 ## Projects using Glewlwyd as authentication server
 
