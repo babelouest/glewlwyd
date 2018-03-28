@@ -76,7 +76,7 @@ Required
 ```
 `response_type`: text, must be set to `code`
 `client_id`: text, client_id that sends the request on behalf of the resource owner, must be a valid client_id
-`redirect_uri`: text, redirect_uri to send the resource owner to after the connection, must ba a valid redirect_uri for the specified client_id
+`redirect_uri`: text, redirect_uri to send the resource owner to after the connection, must be a valid redirect_uri for the specified client_id
 `scope`: text, scope list that the resource owner will grant access to the client, multiple scope values must be separated by a space
 ```
 
@@ -148,7 +148,7 @@ If `client_id` refers to a confidential client, then client_id and client_passwo
 
 #### Data Parameters
 
-Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
 
 ```
 grant_type: text, must be set to "authorization_code".
@@ -197,7 +197,7 @@ Required
 ```
 `response_type`: text, must be set to `token`
 `client_id`: text, client_id that sends the request on behalf of the resource owner, must be a valid client_id
-`redirect_uri`: text, redirect_uri to send the resource owner to after the connection, must ba a valid redirect_uri for the specified client_id
+`redirect_uri`: text, redirect_uri to send the resource owner to after the connection, must be a valid redirect_uri for the specified client_id
 `scope`: text, scope list that the resource owner will grant access to the client, multiple scope values must be separated by a space
 ```
 
@@ -265,7 +265,7 @@ with `redirect_uri` specified in the request, `unauthorized_client` as error val
 
 #### Data Parameters
 
-Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
 
 ```
 grant_type: text, must be set to "password".
@@ -317,7 +317,7 @@ Optional
 
 #### Data Parameters
 
-Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
 
 ```
 grant_type: text, must be set to "client_credentials".
@@ -346,7 +346,7 @@ Access denied
 
 ### Refresh token
 
-Send a new access_token based on a valid reresh_token
+Send a new access_token based on a valid refresh_token
 
 #### URL
 
@@ -358,11 +358,11 @@ Send a new access_token based on a valid reresh_token
 
 #### Data Parameters
 
-Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
 
 ```
 grant_type: text, must be set to "refresh_token".
-refresh_token: text, a valid refres_token, mandatory
+refresh_token: text, a valid ref res_token, mandatory
 scope: text, must the same scope or a sub scope of the scope used to provide the refresh_token, optional
 ```
 
@@ -388,7 +388,7 @@ Error input parameters
 
 ### Invalidate refresh token
 
-Mark a refresh_token as invalid, to prevent further access_toen to be generated
+Mark a refresh_token as invalid, to prevent further access_token to be generated
 
 #### URL
 
@@ -400,11 +400,11 @@ Mark a refresh_token as invalid, to prevent further access_toen to be generated
 
 #### Data Parameters
 
-Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
 
 ```
 grant_type: text, must be set to "delete_token".
-refresh_token: text, a valid refres_token, mandatory
+refresh_token: text, a valid refresh_token, mandatory
 ```
 
 #### Success response

@@ -11,7 +11,7 @@ struct _glewlwyd_resource_config {
   char *         jwt_decode_key;      // The key used to decode an access token
   jwt_alg_t      jwt_alg;             // The algorithm used to encode a token, see http://benmcollins.github.io/libjwt/
   char *         realm;               // Optional, a realm value that will be sent back to the client
-  unsigned short accept_access_token; // required, accept type acces_token
+  unsigned short accept_access_token; // required, accept type access_token
   unsigned short accept_client_token; // required, accept type client_token
 };
 ```
