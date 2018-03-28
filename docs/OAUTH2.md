@@ -362,7 +362,7 @@ Request body parameters must be encoded using the `application/x-www-form-urlenc
 
 ```
 grant_type: text, must be set to "refresh_token".
-refresh_token: text, a valid ref res_token, mandatory
+refresh_token: text, a valid ref refresh_token, mandatory
 scope: text, must the same scope or a sub scope of the scope used to provide the refresh_token, optional
 ```
 
