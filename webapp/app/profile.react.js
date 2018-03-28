@@ -492,7 +492,7 @@ $(function() {
     }
     
     handleContinue() {
-      var redirect = "../glewlwyd/auth" + location.search + "&login_validated=true";
+      var redirect = oauth.glewlwyd_server_url + oauth.api_prefix + "/auth" + location.search + "&login_validated=true";
       window.location = redirect;
     }
   }
