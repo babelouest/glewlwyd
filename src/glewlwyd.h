@@ -29,7 +29,7 @@
 #ifndef __GLEWLWYD_H_
 #define __GLEWLWYD_H_
 
-#define _GLEWLWYD_VERSION_ "1.3.3"
+#define _GLEWLWYD_VERSION_ "1.3.4"
 
 #include <jansson.h>
 #include <jwt.h>
@@ -58,8 +58,8 @@
   #error Libmicrohttpd version 0.9.38 minimum is required, you can download it at http://ftp.gnu.org/gnu/libmicrohttpd/
 #endif
 
-#define _GLEWLWYD_VERSION 1.1
 #define GLEWLWYD_LOG_NAME "Glewlwyd"
+#define GLEWLWYD_CHECK_JWT_USERNAME "myrddin"
 
 // Configuration default values
 #define GLEWLWYD_DEFAULT_PREFIX             "glewlwyd"

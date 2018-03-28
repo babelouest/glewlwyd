@@ -619,6 +619,11 @@ int build_config_from_file(struct config_elements * config) {
   int db_mariadb_port = 0, cur_key_size = 512;
   int cur_http_auth = 0, cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_ecdsa = 0, cur_use_sha = 0, cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, cur_auth_http_check_server_certificate = 1, i;
   
+  // JWT autocheck
+  time_t now;
+  char * session_token;
+  jwt_t * jwt_check = NULL;
+  
   config_init(&cfg);
   
   if (!config_read_file(&cfg, config->config_file)) {
@@ -936,8 +941,8 @@ int build_config_from_file(struct config_elements * config) {
         if (config_setting_lookup_string(database, "path", &db_sqlite_path) == CONFIG_TRUE) {
           config->conn = h_connect_sqlite(db_sqlite_path);
           if (config->conn == NULL) {
-            config_destroy(&cfg);
             fprintf(stderr, "Error opening sqlite database %s\n", db_sqlite_path);
+            config_destroy(&cfg);
             return 0;
           } else {
             if (h_exec_query_sqlite(config->conn, "PRAGMA foreign_keys = ON;") != H_OK) {
@@ -1495,6 +1500,25 @@ int build_config_from_file(struct config_elements * config) {
     } else {
       config_destroy(&cfg);
       fprintf(stderr, "Error, no jwt algorithm selected\n");
+      return 0;
+    }
+    // Perform autocheck of the jwt configuration to validate the certificates
+    time(&now);
+    session_token = generate_session_token(config, GLEWLWYD_CHECK_JWT_USERNAME, "127.0.0.1", now);
+    if (session_token != NULL) {
+      if (jwt_decode(&jwt_check, session_token, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) || jwt_get_alg(jwt_check) != jwt_get_alg(config->jwt)) {
+        fprintf(stderr, "Error autocheck jwt, step session_token validate\n");
+        o_free(session_token);
+        jwt_free(jwt_check);
+        config_destroy(&cfg);
+        return 0;
+      }
+      // JWT config valid
+      o_free(session_token);
+      jwt_free(jwt_check);
+    } else {
+      fprintf(stderr, "Error autocheck jwt, step session_token generate\n");
+      config_destroy(&cfg);
       return 0;
     }
   } else {
