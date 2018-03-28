@@ -11,7 +11,7 @@
 
 ## 1.3.1
 
-- Make glewlwyd admin application url more changable
+- Make glewlwyd admin application url more changeable
 - fix minor bugs and memory leaks
 
 ## 1.3.0

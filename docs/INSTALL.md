@@ -14,7 +14,7 @@ Then, you must initialize your database, setup your jwt key and setup your `glew
 
 ### Pre-compiled packages
 
-You can install Glewlwyd with a pre-compiled package available in the [release pages](https://github.com/babelouest/glewlwyd/releases/latest/). The package files `glewlwyd-full_*` contain the package libraries of `orcania`, `yder`, `ulfius` and `hoel` precompiled for `glewlwyd`, plus `glewlwyd` package. To install a pre-compiled package, you need to have installed the following libraries:
+You can install Glewlwyd with a pre-compiled package available in the [release pages](https://github.com/babelouest/glewlwyd/releases/latest/). The package files `glewlwyd-full_*` contain the package libraries of `orcania`, `yder`, `ulfius` and `hoel` pre-compiled for `glewlwyd`, plus `glewlwyd` package. To install a pre-compiled package, you need to have installed the following libraries:
 
 ```
 libmicrohttpd
@@ -52,7 +52,7 @@ If there's no package available for your distribution, you can recompile it manu
 
 ## Docker
 
-[Rafael](https://github.com/rafaelhdr/) has made [docker images](https://github.com/rafaelhdr/glewlwyd-oauth2-server) for Glewlwyd, Kudos to him!. Check out the documentation for more informations.
+[Rafael](https://github.com/rafaelhdr/) has made [docker images](https://github.com/rafaelhdr/glewlwyd-oauth2-server) for Glewlwyd, Kudos to him!. Check out the documentation for more information.
 
 ## Manual install from Github
 
@@ -79,11 +79,11 @@ $ sudo apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev uuid
 
 ### Libssl vs libgnutls
 
-Both libraries are mentionned required, but you can get rid of libssl if you install `libjwt` with the option `--without-openssl`. `gnutls` 3.5.8 minimum is required. For this documentation to be compatible with most linux distributions (at least the one I use), I don't remove libssl from the required libraries yet.
+Both libraries are mentioned required, but you can get rid of libssl if you install `libjwt` with the option `--without-openssl`. `gnutls` 3.5.8 minimum is required. For this documentation to be compatible with most Linux distributions (at least the one I use), I don't remove libssl from the required libraries yet.
 
 ### Libmicrohttpd bug on POST parameters
 
-With Libmicrohttpd 0.9.37 and older version, there is a bug when parsing `application/x-www-form-urlencoded` parameters. This is fixed in later version, from the 0.9.38, so if your Libmicrohttd version is older than that, I suggest getting a newer version of [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/).
+With Libmicrohttpd 0.9.37 and older version, there is a bug when parsing `application/x-www-form-urlencoded` parameters. This is fixed in later version, from the 0.9.38, so if your Libmicrohttpd version is older than that, I suggest getting a newer version of [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/).
 
 ### Build Glewlwyd and its dependencies
 
@@ -159,7 +159,7 @@ $ sudo make install
 
 Copy `glewlwyd.conf.sample` to `glewlwyd.conf`, edit the file `glewlwyd.conf` with your own settings.
 
-### login and grant urls
+### login and grant URLs
 
 Update the entries `login_url` and `grant_url` in the configuration file to fit your installation, for example:
 
@@ -174,7 +174,7 @@ Specify in the config file the parameter `hash_algorithm` to store passwords wit
 
 Algorithms available are SHA1, SHA256, SHA512, MD5.
 
-### Data storage backend initialisation
+### Data storage backend initialization
 
 #### TL;DR
 
@@ -201,7 +201,7 @@ Then, use the script that fit your database backend and Digest algorithm in the 
 Those scripts create a valid database that allow to use glewlwyd but to avoid potential security issues, you must make the following changes before opening Glewlwyd API to the wild web:
 - Change the admin password when you connect to the application
 - Change the redirect_uri value for the client `g_admin` with an absolute redirect_uri value, e.g. `http://localhost:4593/app/`, then uncomment the corresponding line in [glewlwyd.react.js](https://github.com/babelouest/glewlwyd/blob/master/webapp/app/glewlwyd.react.js#L47) and set with your value.
-- Change the values `login_url` and `grant_url` in your configuration file for absolute urls, e.g. `http://localhost:4593/app/login.html?`
+- Change the values `login_url` and `grant_url` in your configuration file for absolute URLs, e.g. `http://localhost:4593/app/login.html?`
 
 #### Detailed installation
 
@@ -270,7 +270,7 @@ Scope list is stored in the parameter `scope_property_user_read` (`o` by default
 
 #### Database Backend administrator (MySql/MariaDB)
 
-To add an administrator in the MySql/MariaDB database, connect to the databse and use the following command (update with your own e-mail and password values):
+To add an administrator in the MySql/MariaDB database, connect to the database and use the following command (update with your own e-mail and password values):
 
 ```sql
 $ mysql
@@ -291,7 +291,7 @@ value 'password' hashed using different algorithms:
 - SHA512: {SHA512}sQnzu7wkTrgkQZF+0G1hi5AI3Qmzvv0bXgc5THBqi7mAsdd4Xll27ASbRt9fEyavWi6m0QP9B8lThf+rDKy8hg==
 ```
 
-To add an administrator in the SQLite3 database, connect to the databse and use the following command (update with your own e-mail and password values):
+To add an administrator in the SQLite3 database, connect to the database and use the following command (update with your own e-mail and password values):
 
 ```sql
 $ sqlite <path_to_sqlite3_database>
@@ -302,7 +302,7 @@ sqlite> INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_use
 
 ### JWT configuration
 
-You can choose between SHA (HS256, HS384, HS512), RSA (RS256, RS384, RS512) and ECDSA (ES256, ES384, ES512) anglorithms to sign the tokens. Note that if you use SHA, you will need to share the `sha_secret` value with the resource providers and keep it safe in all places. If you use RSA or ECDSA algorithm, you will need to share the public key specified in `[rsa|ecdsa]_pub_file` with resource providers, and you will need to keep the private key `[rsa|ecdsa]_key_file` safe.
+You can choose between SHA (HS256, HS384, HS512), RSA (RS256, RS384, RS512) and ECDSA (ES256, ES384, ES512) algorithms to sign the tokens. Note that if you use SHA, you will need to share the `sha_secret` value with the resource providers and keep it safe in all places. If you use RSA or ECDSA algorithm, you will need to share the public key specified in `[rsa|ecdsa]_pub_file` with resource providers, and you will need to keep the private key `[rsa|ecdsa]_key_file` safe.
 
 The values available for the parameter `key_size` are 256, 284 and 512 only. To choose your signature algorithm, set the value `true` to the parameter `use_[rsa|ecdsa|sha]` you want, and `false` to the other ones. Finally, set the additional parameter used for your algorithm:
 - `*_key_file` and `*_pub_file` if you choose ECDSA or RSA signatures, with the path to the public and private signature files
@@ -330,7 +330,7 @@ For more information about generating keys, see [OpenSSL Documentation](https://
 
 ### Install service
 
-The files `glewlwyd-init` (SysV init) and `glewlwyd.service` (Systemd) can be used to have glewlwyd as a daemon. They are fitted for a Raspbian distrbution, but can easily be changed for other systems.
+The files `glewlwyd-init` (SysV init) and `glewlwyd.service` (Systemd) can be used to have glewlwyd as a daemon. They are fitted for a Raspbian distribution, but can easily be changed for other systems.
 
 #### Install as a SysV init daemon and run
 
@@ -362,7 +362,7 @@ You can also manually start the application like this:
 $ ./glewlwyd --config-file=glewlwyd.conf
 ```
 
-By default, Glewlwyd is available on TCP port 4593. You can use the test page `tests/test-token.html` to validate the behaviour. To access it, copy the file into webapp and go to the url: [http://localhost:4593/app/test-token.html](http://localhost:4593/app/test-token.html).
+By default, Glewlwyd is available on TCP port 4593. You can use the test page `tests/test-token.html` to validate the behavior. To access it, copy the file into webapp and go to the url: [http://localhost:4593/app/test-token.html](http://localhost:4593/app/test-token.html).
 
 ## SSL/TLS
 
@@ -378,8 +378,8 @@ There is no way for a resource server to determine if a token is valid, except b
 Examples of resource server access token validation are available in the folder [clients](https://github.com/babelouest/glewlwyd/tree/master/clients/).
 
 There are 2 ways to sign a token:
-- SHA symetric encryption
-- RSA asymetric encryption
+- SHA symmetric encryption
+- RSA asymmetric encryption
 
 The token parameters are located in the `jwt` block in the configuration file:
 ```
@@ -438,7 +438,7 @@ The config file `glewlwyd.conf` contains the following variables: `static_files_
 
 If you want to change the path to the front-end application, e.g. change it from http://localhost:4953/app/ to http://localhost:4953/admin/ for example, there are 2 steps to follow.
 
-- 1: Change the values `static_files_prefix`, `login_url` and `grant_url` in the confguration file
+- 1: Change the values `static_files_prefix`, `login_url` and `grant_url` in the configuration file
 
 The value `static_files_prefix` must match your new path, e.g. `admin`, the `login_url` and `grant_url` must be changed accordingly, e.g. `"../admin/login.html?"` and `"../admin/grant.html?"`.
 
@@ -456,6 +456,6 @@ The front-end management application is a tiny single page app (SPA) written in 
 
 ### tests/test-token.html
 
-This page is here only for oauth2 tests and behaviour validation. If you want to use it, you need to update the `glewlwyd_api` value and all parameters provided, such as `redirect_uri`, `scope` and `client`.
+This page is here only for oauth2 tests and behavior validation. If you want to use it, you need to update the `glewlwyd_api` value and all parameters provided, such as `redirect_uri`, `scope` and `client`.
 
 Beware, all password inputs are of type `text`, so a typed password is not hidden from a hidden third-party dangerous predator.
