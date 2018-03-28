@@ -1,5 +1,12 @@
 # Installation
 
+1. [Debian-ish packages](#debian-ish-packages)
+2. [Pre-compiled packages](#pre-compiled-packages)
+3. [Docker](#docker)
+4. [Manual install from Github](#manual-install-from-github)
+- [CMake](#cmake)
+- [Good ol' Makefile](#good-ol-makefile)
+
 ## Debian-ish packages
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/glewlwyd.svg)](https://repology.org/metapackage/glewlwyd)
@@ -52,7 +59,22 @@ If there's no package available for your distribution, you can recompile it manu
 
 ## Docker
 
-[Rafael](https://github.com/rafaelhdr/) has made [docker images](https://github.com/rafaelhdr/glewlwyd-oauth2-server) for Glewlwyd, Kudos to him!. Check out the documentation for more information.
+[Rafael](https://github.com/rafaelhdr/) has made [docker images](https://github.com/rafaelhdr/glewlwyd-oauth2-server) for Glewlwyd, Kudos to him!.
+
+### Quickstart
+
+> Quickstart is not supposed to be used in production environments. It is only for testing.
+
+```shell
+# Run the following
+docker run --rm -it -p 4593:4593 rafaelhdr/glewlwyd-oauth2-server:2.0-quickstart
+```
+
+After creating the Quickstart, use as admin (username: *admin*, password: *password*) at [http://localhost:4593](http://localhost:4593).
+
+### Create your own docker image
+
+You can also use DOcker base images to create one with your own settings (database backend, private/public jwt key, etc). Check out the [documentation](https://github.com/rafaelhdr/glewlwyd-oauth2-server) for more information.
 
 ## Manual install from Github
 
