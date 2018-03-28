@@ -41,10 +41,10 @@ release: ADDITIONALFLAGS=-O3
 release: glewlwyd
 
 %.o: %.c glewlwyd.h
-	$(CC) $(CFLAGS) $<
+	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
 glewlwyd: $(OBJECTS)
-	$(CC) -o $@ $^ $(LIBS)
+	$(CC) -o $@ $^ $(LIBS) $(LDFLAGS)
 
 memcheck: debug
 	valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./glewlwyd --config-file=$(CONFIG_FILE) 2>valgrind.txt
