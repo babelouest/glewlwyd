@@ -2,7 +2,7 @@
  *
  * Glewlwyd OAuth2 Authorization Server
  *
- * OAuth2 authentiation server
+ * OAuth2 authentication server
  * Users are authenticated with a LDAP server
  * or users stored in the database 
  * Provides Json Web Tokens (jwt)
@@ -387,7 +387,7 @@ int add_resource(struct config_elements * config, json_t * j_resource);
 int set_resource(struct config_elements * config, const char * resource, json_t * j_resource);
 int delete_resource(struct config_elements * config, const char * resource);
 
-// Refesh token CRUD
+// Refresh token CRUD
 json_t * get_refresh_token_list(struct config_elements * config, const char * username, int valid, long int offset, long int limit);
 int revoke_token(struct config_elements * config, const char * username, const char * token_hash);
 

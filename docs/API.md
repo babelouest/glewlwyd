@@ -10,7 +10,7 @@ All the endpoints require proper authentication to provide their service. The au
 
 ## Prefix
 
-All urls are based on the prefix you will setup. In this document, all endpoints will assume they use the prefix `/api`.
+All URLs are based on the prefix you will setup. In this document, all endpoints will assume they use the prefix `/api`.
 
 ## Content-type
 
@@ -20,9 +20,9 @@ All request and response body use `application/json` content-type.
 
 The HTTP status codes used are the following:
 - 200 OK: no error
-- 400 Invlid parameters: The user has sent invalid data. The details of all the errors are sent in the response body
+- 400 Invalid parameters: The user has sent invalid data. The details of all the errors are sent in the response body
 - 404 Not found: The specified resource doesn't exist
-- 500 Server error: An error occured on the server
+- 500 Server error: An error occurred on the server
 
 ## Authentication API
 
@@ -42,7 +42,7 @@ none
 
 #### Data Parameters
 
-Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
 
 ```
 username: text, required
@@ -141,7 +141,7 @@ Session token or header bearer token
 
 #### Data Parameters
 
-Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
 
 ```
 client_id: text, required
@@ -176,7 +176,7 @@ Session token or header bearer token
 
 #### Data Parameters
 
-Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
 
 ```
 client_id: text, required
@@ -483,7 +483,7 @@ Username specified has no e-mail.
 
 #### Data parameters
 
-Request body arameters must be encoded using the `application/x-www-form-urlencoded` format.
+Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
 
 ```
 token: text, token sent to the user via e-mail, mandatory
@@ -812,7 +812,7 @@ Scope required: `g_admin`
 
 Optional
 
-`source`: source to get the user data: vaues can be `database`, `ldap` or `all` default is `all`
+`source`: source to get the user data: values can be `database`, `ldap` or `all` default is `all`
 
 `search`: search pattern for name, login or email. API will return any user that match the corresponding pattern.
 
@@ -864,7 +864,7 @@ Required
 
 Optional
 
-`source`: source to get the user data: vaues can be `database`, `ldap` or `all` default is `all`
+`source`: source to get the user data: values can be `database`, `ldap` or `all` default is `all`
 
 #### Success response
 
@@ -958,7 +958,7 @@ Required
 
 Optional
 
-`source`: source to get the user data: vaues can be `database`, `ldap` or `all` default is `all`
+`source`: source to get the user data: values can be `database`, `ldap` or `all` default is `all`
 
 #### Data Parameters
 
@@ -1012,7 +1012,7 @@ Required
 
 Optional
 
-`source`: source to get the user data: vaues can be `database`, `ldap` or `all` default is `all`
+`source`: source to get the user data: values can be `database`, `ldap` or `all` default is `all`
 
 #### Success response
 
@@ -1173,7 +1173,7 @@ Username specified has no e-mail.
 
 ## Client API
 
-The client API allows client CRUD. You can have LDAP or Database backend to store clients, or both. If you ose both, then the LDAP backend is checked first, if no client with this credentials exist, then the Database backend is checked. If you use the LDAP backend, make sure that the client specified in `bind_dn` config file parameter has proper credentials to list, create, modify and update entries.
+The client API allows client CRUD. You can have LDAP or Database backend to store clients, or both. If you use both, then the LDAP backend is checked first, if no client with this credentials exist, then the Database backend is checked. If you use the LDAP backend, make sure that the client specified in `bind_dn` config file parameter has proper credentials to list, create, modify and update entries.
 
 ### Get the list of clients
 
@@ -1193,7 +1193,7 @@ Scope required: `g_admin`
 
 Optional
 
-`source`: source to get the client data: vaues can be `database`, `ldap` or `all` default is `all`
+`source`: source to get the client data: values can be `database`, `ldap` or `all` default is `all`
 
 `search`: search pattern for name, description or client_id. API will return any client that match the corresponding pattern.
 
@@ -1253,7 +1253,7 @@ Required
 
 Optional
 
-`source`: source to get the client data: vaues can be `database`, `ldap` or `all` default is `all`
+`source`: source to get the client data: values can be `database`, `ldap` or `all` default is `all`
 
 #### Success response
 
@@ -1364,7 +1364,7 @@ Required
 
 Optional
 
-`source`: source to get the client data: vaues can be `database`, `ldap` or `all` default is `all`
+`source`: source to get the client data: values can be `database`, `ldap` or `all` default is `all`
 
 #### Data Parameters
 
@@ -1428,7 +1428,7 @@ Required
 
 Optional
 
-`source`: source to get the client data: vaues can be `database`, `ldap` or `all` default is `all`
+`source`: source to get the client data: values can be `database`, `ldap` or `all` default is `all`
 
 #### Success response
 
