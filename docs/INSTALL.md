@@ -6,6 +6,17 @@
 4. [Manual install from Github](#manual-install-from-github)
    * [CMake](#cmake)
    * [Good ol' Makefile](#good-ol-makefile)
+5. [Configuration](#configuration)
+   * [SSL/TLS](#ssltls)
+   * [login and grant URLs](#login-and-grant-urls)
+	 * [Reset password](#reset-password)
+	 * [Digest Algorithm](#digest-algorithm)
+	 * [Database back-end initialisation](#database-back-end-initialisation)
+	 * [Authentication back-end configuration](#authentication-back-end-configuration)
+	 * [JWT configuration](#jwt-configuration)
+	 * [Install as a service](#install-as-a-service)
+6. [Run Glewlwyd](#run-glewlwyd)
+7. [Front-end application](#front-end-application)
 
 ## Debian-ish packages
 
@@ -17,7 +28,7 @@ Glewlwyd is now available in Debian Buster (testing) and some Debian based distr
 # apt install glewlwyd
 ```
 
-Then, you must initialize your database, setup your jwt key and setup your `glewlwyd.conf` file
+Then, you must initialise your database, setup your jwt key and setup your `glewlwyd.conf` file
 
 ### Pre-compiled packages
 
@@ -59,22 +70,30 @@ If there's no package available for your distribution, you can recompile it manu
 
 ## Docker
 
-[Rafael](https://github.com/rafaelhdr/) has made [docker images](https://github.com/rafaelhdr/glewlwyd-oauth2-server) for Glewlwyd, Kudos to him!.
+[Rafael](https://github.com/rafaelhdr/) has made [docker images](https://github.com/rafaelhdr/glewlwyd-oauth2-server) for Glewlwyd, Kudos to him!
 
-### Quickstart
+### Quickstart SQLite3
 
-> Quickstart is not supposed to be used in production environments. It is only for testing.
+> Quickstart image is not supposed to be used in production environments. It is for testing only.
+> The JWT configuration uses sha algorithm with the secret `secret` hard coded. So the tokens generated are **_NOT SAFE_**!
+
+To run the quickstart image, you can execute the following command.
 
 ```shell
-# Run the following
-docker run --rm -it -p 4593:4593 rafaelhdr/glewlwyd-oauth2-server:2.0-quickstart
+$ docker run --rm -it -p 4593:4593 rafaelhdr/glewlwyd-oauth2-server:2.0-quickstart
 ```
 
-After creating the Quickstart, use as admin (username: *admin*, password: *password*) at [http://localhost:4593](http://localhost:4593).
+After creating the Quickstart, you can connect with admin login (username: *admin*, password: *password*) at [http://localhost:4593](http://localhost:4593).
+
+If you want to be able to reuse the quickstart instance by having the SQLite3 database file outside of the docker image, you must mount a volume to the docker image path `/var/cache/glewlwyd/`.
+
+```shell
+$ docker run --rm -it -p 4593:4593 -v /path/to/cache:/var/cache/glewlwyd rafaelhdr/glewlwyd-oauth2-server:2.0-quickstart
+```
 
 ### Create your own docker image
 
-You can also use DOcker base images to create one with your own settings (database backend, private/public jwt key, etc). Check out the [documentation](https://github.com/rafaelhdr/glewlwyd-oauth2-server) for more information.
+You can also use Docker base images to create one with your own settings (database back-end, private/public jwt key, etc). Check out the [documentation](https://github.com/rafaelhdr/glewlwyd-oauth2-server#installation) for more information.
 
 ## Manual install from Github
 
@@ -181,6 +200,10 @@ $ sudo make install
 
 Copy `glewlwyd.conf.sample` to `glewlwyd.conf`, edit the file `glewlwyd.conf` with your own settings.
 
+### SSL/TLS
+
+OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avoid data and token to be stolen, or Man-In-The-Middle attacks. Glewlwyd supports starting a secure connection with a private/public key certificate, but it also can be with a classic non-secure HTTP connection, and be available to users behind a HTTPS proxy for example. Glewlwyd won't check that you use it in a secure connection.
+
 ### login and grant URLs
 
 Update the entries `login_url` and `grant_url` in the configuration file to fit your installation, for example:
@@ -190,15 +213,38 @@ login_url="http://localhost:4593/app/login.html?"
 grant_url="http://localhost:4593/app/grant.html?"
 ```
 
+### Reset password
+
+If you enable the reset password setting in the configuration file, you must specify a SMTP server that can be used to send the e-mails, and copy the file `reset.eml` to the specified location.
+
+```
+# Reset password configuration
+reset_password=true # optional, default false
+reset_password_config = 
+{
+# SMTP parameters
+  smtp_host="localhost"         # mandatory
+  smtp_port=25                  # optional, default 25
+  smtp_use_tls=false            # optional, default false
+  smtp_verify_certificate=false # optional, default false
+#  smtp_user="user"             # optional, default no value
+#  smtp_password="password"     # optional, default no value
+  
+  token_expiration=604800                                                                     # in seconds, optional, default 7 days
+  email_from="glewlwyd@example.org"                                                           # mandatory
+  email_subject="Glewlwyd password reset"                                                     # mandatory
+  email_template="reset.eml"                                                                  # mandatory
+  page_url_prefix="https://example.org/glewlwyd/app/reset.html?user=$USERNAME&code=$TOKEN"    # mandatory
+}
+```
+
 ### Digest algorithm
 
-Specify in the config file the parameter `hash_algorithm` to store passwords with sqlite3 backend, and token digests.
+Specify in the config file the parameter `hash_algorithm` to store passwords with sqlite3 back-end, and token digests.
 
 Algorithms available are SHA1, SHA256, SHA512, MD5.
 
-### Data storage backend initialization
-
-#### TL;DR
+### Database back-end initialisation
 
 For a Mariadb/Mysql database, you must create a database or use an existing one first, example:
 
@@ -210,7 +256,7 @@ GRANT ALL PRIVILEGES ON glewlwyd.* TO 'glewlwyd'@'localhost' identified BY 'glew
 FLUSH PRIVILEGES;
 ```
 
-Then, use the script that fit your database backend and Digest algorithm in the [database](database) folder:
+Then, use the script that fit your database back-end and Digest algorithm in the [database](database) folder:
 
 - `database/init-mariadb.sql`
 - `database/init-sqlite3-md5.sql`
@@ -218,31 +264,7 @@ Then, use the script that fit your database backend and Digest algorithm in the 
 - `database/init-sqlite3-sha256.sql`
 - `database/init-sqlite3-sha512.sql`
 
-##### Secuity warning!
-
-Those scripts create a valid database that allow to use glewlwyd but to avoid potential security issues, you must make the following changes before opening Glewlwyd API to the wild web:
-- Change the admin password when you connect to the application
-- Change the redirect_uri value for the client `g_admin` with an absolute redirect_uri value, e.g. `http://localhost:4593/app/`, then uncomment the corresponding line in [glewlwyd.react.js](https://github.com/babelouest/glewlwyd/blob/master/webapp/app/glewlwyd.react.js#L47) and set with your value.
-- Change the values `login_url` and `grant_url` in your configuration file for absolute URLs, e.g. `http://localhost:4593/app/login.html?`
-
-#### Detailed installation
-
-You can use a MySql/MariaDB database or a SQLite3 database file.
-Use the dedicated script, `glewlwyd.mariadb.sql` or `glewlwyd.sqlite3.sql` to initialize your database.
-
-#### Admin scope value
-
-If you want to use a different name for admin scope (default is `g_admin`), you must update the init script before running it, change the last line which reads:
-
-```sql
-INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_admin', 'Glewlwyd admin scope');
-```
-
-With your own `gs_name` value.
-
-#### MySql/MariaDB database initialization
-
-Use the script `glewlwyd.mariadb.sql` provided to initialize the MySql/MariaDB database table. The example below creates a database called `glewlwyd` with user/password glewlwyd/glewlwyd.
+For example, initialise a MariaDB database:
 
 ```shell
 $ mysql
@@ -250,77 +272,109 @@ mysql> CREATE DATABASE `glewlwyd`;
 mysql> GRANT ALL PRIVILEGES ON glewlwyd.* TO 'glewlwyd'@'%' identified BY 'glewlwyd';
 mysql> FLUSH PRIVILEGES;
 mysql> USE glewlwyd
-mysql> SOURCE glewlwyd.mariadb.sql
+mysql> SOURCE database/init-mariadb.sql
 ```
 
-#### SQLite3 database file
-
-Use the script `glewlwyd.sqlite3.sql` to initialize the SQLite3 database tables.
-```shell
-$ sqlite3 /var/cache/glewlwyd/glewlwyd.db < glewlwyd.sqlite3.sql
-```
-
-#### Register management webapp
-
-To be able to connect to the front-end application, you must register it first with the script `database/init.sql`. For example, run this command for the MySql/Mariadb database:
+Initialise a SQLite3 database:
 
 ```shell
-$ mysql glewlwyd < database/init.sql
+$ sqlite3 /var/cache/glewlwyd/glewlwyd.db < database/init-sqlite3-sha256.sql
 ```
 
-For the sqlite3 database backend, use the following command:
+#### Security warning!
 
-```shell
-$ sqlite3 /var/cache/glewlwyd/glewlwyd.db < database/init.sql
-```
+Those scripts create a valid database that allow to use glewlwyd but to avoid potential security issues, you must make the following changes before opening Glewlwyd API to the wild web:
+- Change the admin password when you connect to the application
+- Change the redirect_uri value for the client `g_admin` with an absolute redirect_uri value, e.g. `http://localhost:4593/app/`, then uncomment the corresponding line in [glewlwyd.react.js](https://github.com/babelouest/glewlwyd/blob/master/webapp/app/glewlwyd.react.js#L47) and set with your value.
+- Change the values `login_url` and `grant_url` in your configuration file for absolute URLs, e.g. `http://localhost:4593/app/login.html?`
 
-### Authentication backend configuration
+#### Admin scope value
 
-For the authentication backend, you can use a LDAP server or your database, or both. If you use both backends, then on an authentication process, the user or the client will be tested in the LDAP first, then in the database if not found.
-
-### Add an administrator user before first use
-
-An administrator must be present in the backend to use the application (manage scopes, users, clients, resources, authorization types).
-
-An administrator in the LDAP backend is a user who has the `admin_scope` (default `g_admin`) in its scope list.
-
-The following examples will add an admin with the login `admin` and the password `password`.
-
-#### LDAP Backend administrator
-
-Scope list is stored in the parameter `scope_property_user_read` (`o` by default).
-
-#### Database Backend administrator (MySql/MariaDB)
-
-To add an administrator in the MySql/MariaDB database, connect to the database and use the following command (update with your own e-mail and password values):
+If you want to use a different name for admin scope (default is `g_admin`), you must update the init script with your own `gs_name` value before running it, change the last line which reads:
 
 ```sql
-$ mysql
-mysql> INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', PASSWORD('password'), 1);
-mysql> INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_admin'));
-mysql> INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_profile'));
+INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_admin', 'Glewlwyd admin scope');
 ```
 
-#### Database Backend administrator (SQLite3)
+### Authentication back-end configuration
 
-Since SQLite3 uses the `hash_algorithm` value to store its password, you must store the password with the correct hashed value. Use the following list for the initial password (don't forget the prefix):
+For the authentication back-end, you can use a LDAP server, your database or a remote HTTP service using Basic Auth. If you use multiple back-ends like database and LDAP back-ends, then on an authentication process, the user or the client will be tested in the LDAP first, then in the database if not found, then eventually in the HTTP Basic Auth.
+
+The HTTP Basic Auth back-end is to be used only without scope (config file `use_scope=false`) by design.
+
+#### Database authentication
+
+To use Database authentication, you must set the config parameter `database_auth` to `true`. Then your database can be used to store users and clients.
+
+#### LDAP authentication
+
+To use LDAP authentication, you must set the config parameter `ldap_auth` to `true`. Then you must setup the LDAP access parameters:
 
 ```
-value 'password' hashed using different algorithms:
-- MD5:    {MD5}X03MO1qnZdYdgyfeuILPmQ==
-- SHA1:   {SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=
-- SHA256: {SHA256}XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=
-- SHA512: {SHA512}sQnzu7wkTrgkQZF+0G1hi5AI3Qmzvv0bXgc5THBqi7mAsdd4Xll27ASbRt9fEyavWi6m0QP9B8lThf+rDKy8hg==
+   uri                      = "ldap://localhost"               # uri of the LDAP server
+   bind_dn                  = "cn=operator,dc=example,dc=org"  # bind_dn used to connect to the LDAP
+   bind_passwd              = "password"                       # password used to connect to the LDAP
+   base_search_user         = "ou=user,dc=example,dc=org"      # LDAP base search for users
+   base_search_client       = "ou=client,dc=example,dc=org"    # LDAP base search for clients
 ```
 
-To add an administrator in the SQLite3 database, connect to the database and use the following command (update with your own e-mail and password values):
+You can use a LDAP server to store users and/or clients. If you want to store users only, you must use database authentication as well in order to be able to store clients, and vice-versa.
 
-```sql
-$ sqlite <path_to_sqlite3_database>
-sqlite> INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', '{MD5}X03MO1qnZdYdgyfeuILPmQ==', 1);
-sqlite> INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_admin'));
-sqlite> INSERT INTO g_user_scope (gu_id, gs_id) VALUES ((SELECT gu_id from g_user WHERE gu_login='admin'), (SELECT gs_id from g_scope WHERE gs_name='g_profile'));
+The LDAP read parameters are required to specify the LDAP properties to map.
+
 ```
+# Users read parameters
+   filter_user_read               = "objectClass=inetOrgPerson" # filter used to search users
+   login_property_user_read       = "cn"                        # property used to map login
+   scope_property_user_read       = "o"                         # property used to map scope
+   email_property_user_read       = "mail"                      # property used to map e-mail
+   name_property_user_read        = "sn"                        # property used to map display name
+   additional_property_value_read = "memberOf"                  # will fill the jwt property `group` with the content of the LDAP property `memberOf`, optional, leave empty if no use
+# Clients read parameters
+   filter_client_read                = "objectClass=inetOrgPerson" # filter used to search client
+   client_id_property_client_read    = "cn"                        # property used to map client_id
+   scope_property_client_read        = "o"                         # property used to map scope
+   name_property_client_read         = "sn"                        # property used to map client name
+   description_property_client_read  = "description"               # property used to map client description
+   redirect_uri_property_client_read = "labeledURI"                # property used to map redirect uris
+   confidential_property_client_read = "employeeType"              # property used to map client confidential flag
+```
+
+The LDAP write parameters are mandatory if you want to be able to modify the users and/or the clients stored in the LDAP back-end. When a property specifies `Multiple values separated by a comma`, this means that the written value can be duplicated in multiple properties if necessary, for example having the display name in the LDAP properties `sn` and `display_name`.
+
+```
+# Users write parameters
+   ldap_user_write                 = true
+   rdn_property_user_write         = "cn"           # Single value
+   login_property_user_write       = "cn"           # Multiple values separated by a comma
+   scope_property_user_write       = "o"            # Multiple values separated by a comma
+   email_property_user_write       = "mail"         # Multiple values separated by a comma
+   additional_property_value_write = "memberOf"     # Multiple values separated by a comma
+   name_property_user_write        = "sn"          
+   password_property_user_write    = "userPassword" # Single value
+   password_algorithm_user_write   = "SSHA"         # Single value, values available are SSHA, SHA, SMD5, MD5 or PLAIN
+   object_class_user_write         = "top,person,organizationalPerson,inetOrgPerson" # Multiple values separated by a comma
+# Clients write parameters
+   ldap_client_write                  = true
+   rdn_property_client_write          = "cn"          # Single value
+   client_id_property_client_write    = "cn"          # Multiple values separated by a comma
+   scope_property_client_write        = "o"           # Multiple values separated by a comma
+   name_property_client_write         = "sn"          # Multiple values separated by a comma
+   description_property_client_write  = "description" # Multiple values separated by a comma
+   redirect_uri_property_client_write = "labeledURI"  # Multiple values separated by a comma
+   password_property_client_write     = "userPassword"# Single value
+   confidential_property_client_write = "employeeType"
+   password_algorithm_client_write    = "SSHA"        # Single value, values available are SSHA, SHA, SMD5, MD5 or PLAIN
+   object_class_client_write          = "top,person,organizationalPerson,inetOrgPerson" # Multiple values separated by a comma
+```
+
+### Administrator user
+
+An administrator must be present in the back-end to use the application (manage scopes, users, clients, resources, authorization types).
+
+An administrator in the LDAP back-end is a user who has the `admin_scope` (default `g_admin`) in its scope list.
+
+Scope list is stored in the config file parameter `scope_property_user_read` (`o` by default).
 
 ### JWT configuration
 
@@ -350,7 +404,7 @@ $ openssl ec -in private-ecdsa.key -pubout -out public-ecdsa.pem
 
 For more information about generating keys, see [OpenSSL Documentation](https://www.openssl.org/docs/)
 
-### Install service
+### Install as a service
 
 The files `glewlwyd-init` (SysV init) and `glewlwyd.service` (Systemd) can be used to have glewlwyd as a daemon. They are fitted for a Raspbian distribution, but can easily be changed for other systems.
 
@@ -384,18 +438,14 @@ You can also manually start the application like this:
 $ ./glewlwyd --config-file=glewlwyd.conf
 ```
 
-By default, Glewlwyd is available on TCP port 4593. You can use the test page `tests/test-token.html` to validate the behavior. To access it, copy the file into webapp and go to the url: [http://localhost:4593/app/test-token.html](http://localhost:4593/app/test-token.html).
-
-## SSL/TLS
-
-OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avoid data and token to be stolen, or Man-In-The-Middle attacks. Glewlwyd supports starting a secure connection with a private/public key certificate, but it also can be with a classic non-secure HTTP connection, and be available to users behind a HTTPS proxy.
+By default, Glewlwyd is available on TCP port 4593. You can use the test page `tests/test-token.html` to validate the behaviour. To access it, copy the file into webapp and go to the url: [http://localhost:4593/app/test-token.html](http://localhost:4593/app/test-token.html).
 
 ## Resource server authorization usage and access tokens
 
 Glewlwyd provides [JSON Web Tokens](https://jwt.io/) which is a standard way to validate a token without asking the authorization server.
 A JSON Web Token (JWT) comes with a signature that authenticates itself.
 
-There is no way for a resource server to determine if a token is valid, except by checking the Authorization token. i.e., there is no API where you could ask Glewlwyd server if an access token is valid or not. Therefore, the resource server MUST verify the access token using its signature.
+There is no way for a resource server to determine if a token is valid, except by checking the Authorisation token. i.e., there is no API where you could ask Glewlwyd server if an access token is valid or not. Therefore, the resource server MUST verify the access token using its signature.
 
 Examples of resource server access token validation are available in the folder [clients](https://github.com/babelouest/glewlwyd/tree/master/clients/).
 
@@ -446,11 +496,13 @@ Refresh and session tokens are also JWTs, but their payload have slightly differ
 
 ## Front-end application
 
+The front-end management application is a tiny single page app (SPA) written in ReactJS/JQuery, responsive as much as I can, not the best design in the world, but useful anyway.
+
 All front-end pages have a minimal design, feel free to modify them for your own need, or create your own application.
 
 ### Glewlwyd manager
 
-Glewlwyd comes with a small front-end that uses the backend API to manage profile, users, clients, scopes, resources and authorization types.
+Glewlwyd comes with a small front-end that uses the back-end API to manage profile, users, clients, scopes, resources and authorization types.
 
 #### Configuration
 
@@ -474,10 +526,8 @@ UPDATE g_redirect_uri set gru_uri='../admin/index.html' where gc_id=(SELECT gc_i
 
 To connect to the management application, you must use a user that have `g_admin` scope.
 
-The front-end management application is a tiny single page app (SPA) written in ReactJS/JQuery, responsive as much as I can, not the best design in the world, but useful anyway.
-
 ### tests/test-token.html
 
-This page is here only for oauth2 tests and behavior validation. If you want to use it, you need to update the `glewlwyd_api` value and all parameters provided, such as `redirect_uri`, `scope` and `client`.
+This page is here only for oauth2 tests and behaviour validation. If you want to use it, you need to update the `glewlwyd_api` value and all parameters provided, such as `redirect_uri`, `scope` and `client`.
 
 Beware, all password inputs are of type `text`, so a typed password is not hidden from a hidden third-party dangerous predator.
