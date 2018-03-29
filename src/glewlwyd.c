@@ -62,7 +62,7 @@ int main (int argc, char ** argv) {
   config->log_mode = Y_LOG_MODE_NONE;
   config->log_level = Y_LOG_LEVEL_NONE;
   config->log_file = NULL;
-  config->use_scope = 0;
+  config->use_scope = 1;
   config->conn = NULL;
   config->instance = o_malloc(sizeof(struct _u_instance));
   config->allow_origin = NULL;
