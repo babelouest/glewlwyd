@@ -578,7 +578,7 @@ json_t * get_client_list_ldap(struct config_elements * config, const char * sear
   
   int  result;
   int  ldap_version   = LDAP_VERSION3;
-  int  scope          = LDAP_SCOPE_ONELEVEL;
+  int  scope          = config->auth_ldap->search_scope;
   char * filter       = NULL;
   char * attrs[]      = {config->auth_ldap->name_property_client_read, config->auth_ldap->description_property_client_read, config->auth_ldap->client_id_property_client_read, config->auth_ldap->scope_property_client_read, config->auth_ldap->redirect_uri_property_client_read, config->auth_ldap->confidential_property_client_read, NULL};
   int  attrsonly      = 0;

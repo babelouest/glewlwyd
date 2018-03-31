@@ -592,7 +592,7 @@ int build_config_from_file(struct config_elements * config) {
              * db_type = NULL, * db_sqlite_path = NULL, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL,
              * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL,
              * cur_session_key = NULL, * cur_admin_scope = NULL, * cur_profile_scope = NULL, * cur_additional_property_name = NULL, 
-             * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL,
+             * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL, * cur_auth_ldap_search_scope = NULL,
              * cur_auth_ldap_base_search_user = NULL, * cur_auth_ldap_filter_user_read = NULL,
              * cur_auth_ldap_login_property_user_read = NULL, * cur_auth_ldap_name_property_user_read = NULL,
              * cur_auth_ldap_email_property_user_read = NULL, * cur_auth_ldap_scope_property_user_read = NULL,
@@ -1031,6 +1031,7 @@ int build_config_from_file(struct config_elements * config) {
       config_setting_lookup_string(auth, "uri", &cur_auth_ldap_uri);
       config_setting_lookup_string(auth, "bind_dn", &cur_auth_ldap_bind_dn);
       config_setting_lookup_string(auth, "bind_passwd", &cur_auth_ldap_bind_passwd);
+      config_setting_lookup_string(auth, "search_scope", &cur_auth_ldap_search_scope);
 
       config_setting_lookup_string(auth, "base_search_user", &cur_auth_ldap_base_search_user);
       config_setting_lookup_string(auth, "filter_user_read", &cur_auth_ldap_filter_user_read);
@@ -1083,6 +1084,7 @@ int build_config_from_file(struct config_elements * config) {
       if (cur_auth_ldap_uri != NULL && 
           cur_auth_ldap_bind_dn != NULL && 
           cur_auth_ldap_bind_passwd != NULL && 
+          cur_auth_ldap_search_scope != NULL &&
           
           cur_auth_ldap_base_search_user != NULL && 
           cur_auth_ldap_filter_user_read != NULL && 
@@ -1147,6 +1149,17 @@ int build_config_from_file(struct config_elements * config) {
           if (config->auth_ldap->bind_passwd == NULL) {
             config_destroy(&cfg);
             fprintf(stderr, "Error allocating resources for config->auth_ldap->bind_passwd\n");
+            return 0;
+          }
+          if (0 == o_strcmp("onelevel", cur_auth_ldap_search_scope)) {
+            config->auth_ldap->search_scope = LDAP_SCOPE_ONELEVEL;
+          } else if (0 == o_strcmp("subtree", cur_auth_ldap_search_scope)) {
+            config->auth_ldap->search_scope = LDAP_SCOPE_SUBTREE;
+          } else if (0 == o_strcmp("children", cur_auth_ldap_search_scope)) {
+            config->auth_ldap->search_scope = LDAP_SCOPE_CHILDREN;
+          } else {
+            config_destroy(&cfg);
+            fprintf(stderr, "Error search_scope error, values available are 'onelevel', 'subtree' or 'children'\n");
             return 0;
           }
           
