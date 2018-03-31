@@ -169,6 +169,7 @@ authentication =
    uri                      = "ldap://localhost"
    bind_dn                  = "cn=operator,dc=example,dc=org"
    bind_passwd              = "password"
+   search_scope             = "subtree" # mandatory, scope of the LDAP search, values available are "onelevel", "subtree" or "children", see the manpage ldap_search(3) for more information
    base_search_user         = "ou=user,dc=example,dc=org"
    base_search_client       = "ou=client,dc=example,dc=org"
    

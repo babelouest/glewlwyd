@@ -148,6 +148,7 @@ struct _auth_ldap {
   char *            bind_dn;
   char *            bind_passwd;
   struct crypt_data cur_crypt_data;
+  int               search_scope;
   
   char *  base_search_user;
   char *  filter_user_read;

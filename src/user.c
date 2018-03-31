@@ -904,7 +904,7 @@ json_t * get_user_list_ldap(struct config_elements * config, const char * search
   
   int  result;
   int  ldap_version   = LDAP_VERSION3;
-  int  scope          = LDAP_SCOPE_ONELEVEL;
+  int  scope          = config->auth_ldap->search_scope;
   char * filter       = NULL;
   char * attrs[]      = {config->auth_ldap->name_property_user_read, config->auth_ldap->email_property_user_read, config->auth_ldap->login_property_user_read, config->auth_ldap->scope_property_user_read, o_strlen(config->auth_ldap->additional_property_value_read)>0?config->auth_ldap->additional_property_value_read:NULL, NULL};
   int  attrsonly      = 0;
