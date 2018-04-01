@@ -29,7 +29,7 @@
 #ifndef __GLEWLWYD_H_
 #define __GLEWLWYD_H_
 
-#define _GLEWLWYD_VERSION_ "1.3.4"
+#define _GLEWLWYD_VERSION_ "1.4.0"
 
 #include <jansson.h>
 #include <jwt.h>
@@ -126,6 +126,12 @@
 #define GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION 1
 #define GLEWLWYD_CALLBACK_PRIORITY_APPLICATION    2
 
+// LDAP Scope property match
+#define GLEWLWYD_SCOPE_PROPERTY_MATCH_EQUALS     0
+#define GLEWLWYD_SCOPE_PROPERTY_MATCH_CONTAINS   1
+#define GLEWLWYD_SCOPE_PROPERTY_MATCH_STARTSWITH 2
+#define GLEWLWYD_SCOPE_PROPERTY_MATCH_ENDSWITH   3
+
 pthread_mutex_t global_handler_close_lock;
 pthread_cond_t  global_handler_close_cond;
 
@@ -154,6 +160,7 @@ struct _auth_ldap {
   char *  filter_user_read;
   char *  login_property_user_read;
   char *  scope_property_user_read;
+  int     scope_property_user_match;
   char *  name_property_user_read;
   char *  email_property_user_read;
   char *  additional_property_value_read;
@@ -172,6 +179,7 @@ struct _auth_ldap {
   char *  filter_client_read;
   char *  client_id_property_client_read;
   char *  scope_property_client_read;
+  int     scope_property_client_match;
   char *  name_property_client_read;
   char *  description_property_client_read;
   char *  redirect_uri_property_client_read;

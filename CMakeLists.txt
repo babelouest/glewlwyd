@@ -23,13 +23,13 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 # library info
 
 set(PROGRAM_VERSION_MAJOR "1")
-set(PROGRAM_VERSION_MINOR "3")
-set(PROGRAM_VERSION_PATCH "3")
+set(PROGRAM_VERSION_MINOR "4")
+set(PROGRAM_VERSION_PATCH "0")
 set(PROJECT_DESCRIPTION "OAuth2 authentication server providing Json Web Tokens")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
-set(ORCANIA_VERSION_DOWNLOAD "1.2.0")
-set(YDER_VERSION_DOWNLOAD "1.2.0")
-set(ULFIUS_VERSION_DOWNLOAD "2.3.1")
+set(ORCANIA_VERSION_DOWNLOAD "1.2.2")
+set(YDER_VERSION_DOWNLOAD "1.3.0")
+set(ULFIUS_VERSION_DOWNLOAD "2.3.2")
 set(HOEL_VERSION_DOWNLOAD "1.4.0")
 
 include(GNUInstallDirs)
