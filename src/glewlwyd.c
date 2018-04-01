@@ -595,7 +595,7 @@ int build_config_from_file(struct config_elements * config) {
              * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL, * cur_auth_ldap_search_scope = NULL,
              * cur_auth_ldap_base_search_user = NULL, * cur_auth_ldap_filter_user_read = NULL,
              * cur_auth_ldap_login_property_user_read = NULL, * cur_auth_ldap_name_property_user_read = NULL,
-             * cur_auth_ldap_email_property_user_read = NULL, * cur_auth_ldap_scope_property_user_read = NULL,
+             * cur_auth_ldap_email_property_user_read = NULL, * cur_auth_ldap_scope_property_user_read = NULL, * cur_auth_ldap_scope_property_user_match = NULL,
              * cur_auth_ldap_additional_property_value_read = NULL, * cur_auth_ldap_additional_property_value_write = NULL,
              * cur_auth_ldap_rdn_property_user_write = NULL, * cur_auth_ldap_login_property_user_write = NULL,
              * cur_auth_ldap_name_property_user_write = NULL, * cur_auth_ldap_email_property_user_write = NULL,
@@ -606,7 +606,7 @@ int build_config_from_file(struct config_elements * config) {
              * cur_auth_ldap_scope_property_client_read = NULL, * cur_auth_ldap_description_property_client_read = NULL,
              * cur_auth_ldap_redirect_uri_property_client_read = NULL, * cur_auth_ldap_confidential_property_client_read = NULL,
              * cur_auth_ldap_client_id_property_client_write = NULL, * cur_auth_ldap_rdn_property_client_write = NULL,
-             * cur_auth_ldap_name_property_client_write = NULL, * cur_auth_ldap_scope_property_client_write = NULL,
+             * cur_auth_ldap_name_property_client_write = NULL, * cur_auth_ldap_scope_property_client_write = NULL, * cur_auth_ldap_scope_property_client_match = NULL,
              * cur_auth_ldap_description_property_client_write = NULL, * cur_auth_ldap_redirect_uri_property_client_write = NULL,
              * cur_auth_ldap_confidential_property_client_write = NULL, * cur_auth_ldap_password_property_client_write = NULL,
              * cur_auth_ldap_password_algorithm_client_write = NULL, * cur_auth_ldap_object_class_client_write = NULL,
@@ -617,7 +617,8 @@ int build_config_from_file(struct config_elements * config) {
              * cur_reset_password_email_template_path = NULL, * cur_reset_password_page_url_prefix = NULL,
              * cur_auth_http_auth_url = NULL;
   int db_mariadb_port = 0, cur_key_size = 512;
-  int cur_http_auth = 0, cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_ecdsa = 0, cur_use_sha = 0, cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, cur_auth_http_check_server_certificate = 1, i;
+  int cur_http_auth = 0, cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_ecdsa = 0, cur_use_sha = 0,
+      cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, cur_auth_http_check_server_certificate = 1, i;
   
   // JWT autocheck
   time_t now;
@@ -1041,6 +1042,7 @@ int build_config_from_file(struct config_elements * config) {
       config_setting_lookup_string(auth, "additional_property_value_read", &cur_auth_ldap_additional_property_value_read);
       if (config->use_scope) {
         config_setting_lookup_string(auth, "scope_property_user_read", &cur_auth_ldap_scope_property_user_read);
+        config_setting_lookup_string(auth, "scope_property_user_match", &cur_auth_ldap_scope_property_user_match);
       }
       
       config_setting_lookup_bool(auth, "ldap_user_write", &cur_auth_ldap_user_write);
@@ -1065,6 +1067,7 @@ int build_config_from_file(struct config_elements * config) {
       config_setting_lookup_string(auth, "confidential_property_client_read", &cur_auth_ldap_confidential_property_client_read);
       if (config->use_scope) {
         config_setting_lookup_string(auth, "scope_property_client_read", &cur_auth_ldap_scope_property_client_read);
+        config_setting_lookup_string(auth, "scope_property_client_match", &cur_auth_ldap_scope_property_client_match);
       }
       
       config_setting_lookup_bool(auth, "ldap_client_write", &cur_auth_ldap_client_write);
@@ -1084,7 +1087,6 @@ int build_config_from_file(struct config_elements * config) {
       if (cur_auth_ldap_uri != NULL && 
           cur_auth_ldap_bind_dn != NULL && 
           cur_auth_ldap_bind_passwd != NULL && 
-          cur_auth_ldap_search_scope != NULL &&
           
           cur_auth_ldap_base_search_user != NULL && 
           cur_auth_ldap_filter_user_read != NULL && 
@@ -1132,6 +1134,7 @@ int build_config_from_file(struct config_elements * config) {
           return 0;
         } else {
           memset(config->auth_ldap, 0, sizeof(struct _auth_ldap));
+          config->auth_ldap->search_scope = LDAP_SCOPE_ONELEVEL;
           
           config->auth_ldap->uri = o_strdup(cur_auth_ldap_uri);
           if (config->auth_ldap->uri == NULL) {
@@ -1151,16 +1154,18 @@ int build_config_from_file(struct config_elements * config) {
             fprintf(stderr, "Error allocating resources for config->auth_ldap->bind_passwd\n");
             return 0;
           }
-          if (0 == o_strcmp("onelevel", cur_auth_ldap_search_scope)) {
-            config->auth_ldap->search_scope = LDAP_SCOPE_ONELEVEL;
-          } else if (0 == o_strcmp("subtree", cur_auth_ldap_search_scope)) {
-            config->auth_ldap->search_scope = LDAP_SCOPE_SUBTREE;
-          } else if (0 == o_strcmp("children", cur_auth_ldap_search_scope)) {
-            config->auth_ldap->search_scope = LDAP_SCOPE_CHILDREN;
-          } else {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error search_scope error, values available are 'onelevel', 'subtree' or 'children'\n");
-            return 0;
+          if (cur_auth_ldap_search_scope != NULL) {
+            if (0 == o_strcmp("onelevel", cur_auth_ldap_search_scope)) {
+              config->auth_ldap->search_scope = LDAP_SCOPE_ONELEVEL;
+            } else if (0 == o_strcmp("subtree", cur_auth_ldap_search_scope)) {
+              config->auth_ldap->search_scope = LDAP_SCOPE_SUBTREE;
+            } else if (0 == o_strcmp("children", cur_auth_ldap_search_scope)) {
+              config->auth_ldap->search_scope = LDAP_SCOPE_CHILDREN;
+            } else {
+              config_destroy(&cfg);
+              fprintf(stderr, "Error search_scope error, values available are 'onelevel', 'subtree' or 'children'\n");
+              return 0;
+            }
           }
           
           config->auth_ldap->base_search_user = o_strdup(cur_auth_ldap_base_search_user);
@@ -1187,6 +1192,21 @@ int build_config_from_file(struct config_elements * config) {
               config_destroy(&cfg);
               fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_user_read\n");
               return 0;
+            }
+            if (cur_auth_ldap_scope_property_user_match != NULL) {
+              if (0 == o_strcasecmp("equals", cur_auth_ldap_scope_property_user_match)) {
+                config->auth_ldap->scope_property_user_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_EQUALS;
+              } else if (0 == o_strcasecmp("contains", cur_auth_ldap_scope_property_user_match)) {
+                config->auth_ldap->scope_property_user_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_CONTAINS;
+              } else if (0 == o_strcasecmp("startswith", cur_auth_ldap_scope_property_user_match)) {
+                config->auth_ldap->scope_property_user_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_STARTSWITH;
+              } else if (0 == o_strcasecmp("endswith", cur_auth_ldap_scope_property_user_match)) {
+                config->auth_ldap->scope_property_user_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_ENDSWITH;
+              } else {
+                config_destroy(&cfg);
+                fprintf(stderr, "Error scope_property_user_match, values available are 'equals', 'contains', 'startswith' or 'endswith'\n");
+                return 0;
+              }
             }
           }
           config->auth_ldap->name_property_user_read = o_strdup(cur_auth_ldap_name_property_user_read);
@@ -1299,6 +1319,21 @@ int build_config_from_file(struct config_elements * config) {
               config_destroy(&cfg);
               fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_client_read\n");
               return 0;
+            }
+            if (cur_auth_ldap_scope_property_client_match != NULL) {
+              if (0 == o_strcasecmp("equals", cur_auth_ldap_scope_property_client_match)) {
+                config->auth_ldap->scope_property_client_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_EQUALS;
+              } else if (0 == o_strcasecmp("contains", cur_auth_ldap_scope_property_client_match)) {
+                config->auth_ldap->scope_property_client_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_CONTAINS;
+              } else if (0 == o_strcasecmp("startswith", cur_auth_ldap_scope_property_client_match)) {
+                config->auth_ldap->scope_property_client_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_STARTSWITH;
+              } else if (0 == o_strcasecmp("endswith", cur_auth_ldap_scope_property_client_match)) {
+                config->auth_ldap->scope_property_client_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_ENDSWITH;
+              } else {
+                config_destroy(&cfg);
+                fprintf(stderr, "Error scope_property_client_match, values available are 'equals', 'contains', 'startswith' or 'endswith'\n");
+                return 0;
+              }
             }
           }
           config->auth_ldap->name_property_client_read = o_strdup(cur_auth_ldap_name_property_client_read);

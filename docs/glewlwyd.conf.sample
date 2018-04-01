@@ -169,7 +169,7 @@ authentication =
    uri                      = "ldap://localhost"
    bind_dn                  = "cn=operator,dc=example,dc=org"
    bind_passwd              = "password"
-   search_scope             = "subtree" # mandatory, scope of the LDAP search, values available are "onelevel", "subtree" or "children", see the manpage ldap_search(3) for more information
+   search_scope             = "subtree" # optional, scope of the LDAP search, values available are "onelevel", "subtree" or "children", default is "onelevel", see the manpage ldap_search(3) for more information
    base_search_user         = "ou=user,dc=example,dc=org"
    base_search_client       = "ou=client,dc=example,dc=org"
    
@@ -177,6 +177,7 @@ authentication =
    filter_user_read               = "objectClass=inetOrgPerson"
    login_property_user_read       = "cn"
    scope_property_user_read       = "o"
+   scope_property_user_match      = "equals" # optional, search match for the scope value, values available are "equals", "contains", "startswith" or "endswith", default value is "equals"
    email_property_user_read       = "mail"
    name_property_user_read        = "sn"
    additional_property_value_read = "memberOf" # will fill the jwt property `group` with the content of the LDAP property `memberOf`, optional, leave empty if no use
@@ -196,6 +197,7 @@ authentication =
    filter_client_read                = "objectClass=inetOrgPerson"
    client_id_property_client_read    = "cn"
    scope_property_client_read        = "o"
+   scope_property_client_match       = "equals" # optional, search match for the scope value, values available are "equals", "contains", "startswith" or "endswith", default value is "equals"
    name_property_client_read         = "sn"
    description_property_client_read  = "description"
    redirect_uri_property_client_read = "labeledURI"
