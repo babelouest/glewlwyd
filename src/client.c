@@ -446,7 +446,8 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
   char * filter       = NULL;
   char * attrs[]      = {"memberOf", NULL, NULL};
   int  attrsonly      = 0;
-  json_t * res        = NULL;
+  json_t * res        = NULL,
+         * j_scope    = NULL;
   char * ldap_mech    = LDAP_SASL_SIMPLE;
   struct berval cred;
   struct berval *servcred;
@@ -496,19 +497,23 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
           snprintf(ldap_scope_value, values[i]->bv_len + 1, "%s", values[i]->bv_val);
           token = strtok_r(scope_list_dup, " ", &save_ptr);
           while (token != NULL) {
-            if ((config->auth_ldap->scope_property_client_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_EQUALS && 0 == o_strcmp(token, ldap_scope_value)) || 
-                (config->auth_ldap->scope_property_client_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_CONTAINS && NULL != o_strstr(ldap_scope_value, token)) ||
-                (config->auth_ldap->scope_property_client_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_STARTSWITH && 0 == o_strncmp(ldap_scope_value, token, o_strlen(token))) ||
-                (config->auth_ldap->scope_property_client_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_ENDSWITH && 0 == strcmp(ldap_scope_value + o_strlen(ldap_scope_value) - o_strlen(token), token))) {
-              if (strlen(new_scope_list) > 0) {
-                char * tmp = msprintf("%s %s", new_scope_list, token);
-                o_free(new_scope_list);
-                new_scope_list = tmp;
-              } else {
-                o_free(new_scope_list);
-                new_scope_list = strdup(token);
+            j_scope = get_scope(config, token);
+            if (check_result_value(j_scope, G_OK)) {
+              if ((config->auth_ldap->scope_property_client_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_EQUALS && 0 == o_strcmp(token, ldap_scope_value)) || 
+                  (config->auth_ldap->scope_property_client_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_CONTAINS && NULL != o_strstr(ldap_scope_value, token)) ||
+                  (config->auth_ldap->scope_property_client_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_STARTSWITH && 0 == o_strncmp(ldap_scope_value, token, o_strlen(token))) ||
+                  (config->auth_ldap->scope_property_client_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_ENDSWITH && 0 == strcmp(ldap_scope_value + o_strlen(ldap_scope_value) - o_strlen(token), token))) {
+                if (strlen(new_scope_list) > 0) {
+                  char * tmp = msprintf("%s %s", new_scope_list, token);
+                  o_free(new_scope_list);
+                  new_scope_list = tmp;
+                } else {
+                  o_free(new_scope_list);
+                  new_scope_list = strdup(token);
+                }
               }
             }
+            json_decref(j_scope);
             token = strtok_r(NULL, " ", &save_ptr);
           }
           o_free(scope_list_dup);
