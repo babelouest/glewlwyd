@@ -314,6 +314,7 @@ To use LDAP authentication, you must set the config parameter `ldap_auth` to `tr
    uri                      = "ldap://localhost"               # uri of the LDAP server
    bind_dn                  = "cn=operator,dc=example,dc=org"  # bind_dn used to connect to the LDAP
    bind_passwd              = "password"                       # password used to connect to the LDAP
+   search_scope             = "onelevel"                        # optional, scope of the LDAP search, values available are "onelevel", "subtree" or "children", default is "onelevel", see the manpage ldap_search(3) for more information
    base_search_user         = "ou=user,dc=example,dc=org"      # LDAP base search for users
    base_search_client       = "ou=client,dc=example,dc=org"    # LDAP base search for clients
 ```
@@ -327,6 +328,7 @@ The LDAP read parameters are required to specify the LDAP properties to map.
    filter_user_read               = "objectClass=inetOrgPerson" # filter used to search users
    login_property_user_read       = "cn"                        # property used to map login
    scope_property_user_read       = "o"                         # property used to map scope
+   scope_property_user_match      = "equals"                    # optional, search match for the scope value, values available are "equals", "contains", "startswith" or "endswith", default value is "equals"
    email_property_user_read       = "mail"                      # property used to map e-mail
    name_property_user_read        = "sn"                        # property used to map display name
    additional_property_value_read = "memberOf"                  # will fill the jwt property `group` with the content of the LDAP property `memberOf`, optional, leave empty if no use
@@ -348,6 +350,7 @@ The LDAP write parameters are mandatory if you want to be able to modify the use
    rdn_property_user_write         = "cn"           # Single value
    login_property_user_write       = "cn"           # Multiple values separated by a comma
    scope_property_user_write       = "o"            # Multiple values separated by a comma
+   scope_property_client_match     = "equals"       # optional, search match for the scope value, values available are "equals", "contains", "startswith" or "endswith", default value is "equals"
    email_property_user_write       = "mail"         # Multiple values separated by a comma
    additional_property_value_write = "memberOf"     # Multiple values separated by a comma
    name_property_user_write        = "sn"          
@@ -366,6 +369,102 @@ The LDAP write parameters are mandatory if you want to be able to modify the use
    confidential_property_client_write = "employeeType"
    password_algorithm_client_write    = "SSHA"        # Single value, values available are SSHA, SHA, SMD5, MD5 or PLAIN
    object_class_client_write          = "top,person,organizationalPerson,inetOrgPerson" # Multiple values separated by a comma
+```
+
+Be careful, the config parameters `scope_property_user_match` or `scope_property_client_match` can has dangerous side effects.
+
+For example, let's say you want to search the scope `company` in your users, the LDAP property of a user contains the scope value `ou=user,dc=mycompany,dc=com` but not the scope value `ou=company,dc=mycompany,dc=com` and the `search_scope` value is `equals`. Then the access will be granted anyway, since you gave a scope name that is present in all LDAP scope values.
+
+Here is an example of settings for a valid LDAP configuration.
+
+LDAP block in the file `glewlwyd.conf`:
+
+```
+authentication =
+{
+   database_auth = true
+
+   ldap_auth     = true
+   uri           = "ldap://ldapserver"
+   bind_dn       = "cn=operator,dc=glewlwyd,dc=domain"
+   bind_passwd   = "xxx"
+   search_scope  = "onelevel"
+
+   base_search_user             = "ou=user,dc=glewlwyd,dc=domain"
+# Read parameters
+   filter_user_read             = "objectClass=inetOrgPerson"
+   login_property_user_read     = "cn"
+   scope_property_user_read     = "o"
+   scope_property_user_match    = "equals"
+   email_property_user_read     = "mail"
+   name_property_user_read      = "sn"
+   additional_property_value_read = "postalCode"
+# Write parameters
+   ldap_user_write                 = true
+   rdn_property_user_write         = "cn"
+   login_property_user_write       = "cn"
+   scope_property_user_write       = "o"
+   email_property_user_write       = "mail"
+   additional_property_value_write = "postalCode"
+   name_property_user_write        = "sn"
+   password_property_user_write    = "userPassword"
+   password_algorithm_user_write   = "SSHA"
+   object_class_user_write         = "top,person,organizationalPerson,inetOrgPerson"
+
+   base_search_client             = "ou=client,dc=glewlwyd,dc=domain"
+# Read parameters
+   filter_client_read                = "objectClass=inetOrgPerson"
+   client_id_property_client_read    = "cn"
+   scope_property_client_read        = "o"
+   scope_property_client_match       = "equals"
+   name_property_client_read         = "sn"
+   description_property_client_read  = "description"
+   redirect_uri_property_client_read = "labeledURI"
+   confidential_property_client_read = "employeeType"
+# Write parameters
+   ldap_client_write                  = true
+   rdn_property_client_write          = "cn"
+   client_id_property_client_write    = "cn"
+   scope_property_client_write        = "o"
+   name_property_client_write         = "sn"
+   description_property_client_write  = "description"
+   redirect_uri_property_client_write = "labeledURI"
+   password_property_client_write     = "userPassword"
+   confidential_property_client_write = "employeeType"
+   password_algorithm_client_write    = "SSHA"
+   object_class_client_write          = "top,person,organizationalPerson,inetOrgPerson"
+}
+```
+
+Here are 2 example LDAP users extracted in LDIF format from an OpenLDAP server:
+
+```
+# bob, user
+dn: cn=bob,ou=user,dc=glewlwyd,dc=domain
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: bob
+sn: Bob the low-level guy
+mail: bob@glewlwyd.domain
+o: g_profile
+userPassword:: xxx
+```
+
+```
+# alice, super user
+dn: cn=alice,ou=user,dc=glewlwyd,dc=domain
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+cn: alice
+sn: Alice the high-level boss
+mail: alice@glewlwyd.domain
+o: g_admin
+o: g_profile
+userPassword:: xxx
 ```
 
 ### Administrator user
