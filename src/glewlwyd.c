@@ -478,8 +478,11 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
           }
           break;
         case 'h':
-        case 'v':
           print_help(stdout);
+          exit_server(&config, GLEWLWYD_STOP);
+          break;
+        case 'v':
+          fprintf(stdout, "%s\n", _GLEWLWYD_VERSION_);
           exit_server(&config, GLEWLWYD_STOP);
           break;
       }
@@ -507,7 +510,7 @@ void print_help(FILE * output) {
   fprintf(output, "\n");
   fprintf(output, "Version %s\n", _GLEWLWYD_VERSION_);
   fprintf(output, "\n");
-  fprintf(output, "Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>\n");
+  fprintf(output, "Copyright 2016-2018 Nicolas Mora <mail@babelouest.org>\n");
   fprintf(output, "\n");
   fprintf(output, "This program is free software; you can redistribute it and/or\n");
   fprintf(output, "modify it under the terms of the GNU GENERAL PUBLIC LICENSE\n");
@@ -533,8 +536,9 @@ void print_help(FILE * output) {
   fprintf(output, "\tdefault: ERROR\n");
   fprintf(output, "-f --log-file=PATH\n");
   fprintf(output, "\tPath for log file if log mode file is specified\n");
-  fprintf(output, "-h --help\n");
   fprintf(output, "-v --version\n");
+  fprintf(output, "\tPrint Glewlwyd's current version\n\n");
+  fprintf(output, "-h --help\n");
   fprintf(output, "\tPrint this message\n\n");
 }
 
