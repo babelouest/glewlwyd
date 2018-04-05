@@ -80,7 +80,7 @@ If there's no package available for your distribution, you can recompile it manu
 To run the quickstart image, you can execute the following command.
 
 ```shell
-$ docker run --rm -it -p 4593:4593 rafaelhdr/glewlwyd-oauth2-server:2.0-quickstart
+$ docker run --rm -it -p 4593:4593 rafaelhdr/glewlwyd-oauth2-server:quickstart
 ```
 
 After creating the Quickstart, you can connect with admin login (username: *admin*, password: *password*) at [http://localhost:4593](http://localhost:4593).
@@ -88,7 +88,7 @@ After creating the Quickstart, you can connect with admin login (username: *admi
 If you want to be able to reuse the quickstart instance by having the SQLite3 database file outside of the docker image, you must mount a volume to the docker image path `/var/cache/glewlwyd/`.
 
 ```shell
-$ docker run --rm -it -p 4593:4593 -v /path/to/cache:/var/cache/glewlwyd rafaelhdr/glewlwyd-oauth2-server:2.0-quickstart
+$ docker run --rm -it -p 4593:4593 -v /path/to/cache:/var/cache/glewlwyd rafaelhdr/glewlwyd-oauth2-server:quickstart
 ```
 
 ### Create your own docker image
