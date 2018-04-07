@@ -4,6 +4,7 @@
 
 - Add LDAP config properties search_scope, scope_property_user_match and scope_property_client_match
 - Add Debian hardening patch on Makefile
+- Add journald log mode
 
 ## 1.3.3
 
