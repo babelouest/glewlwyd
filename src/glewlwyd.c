@@ -433,11 +433,13 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
             one_log_mode = strtok(tmp, ",");
             while (one_log_mode != NULL) {
               if (0 == strncmp("console", one_log_mode, strlen("console"))) {
-                config->log_mode |= Y_LOG_MODE_CONSOLE;
+                config->log_mode += Y_LOG_MODE_CONSOLE;
               } else if (0 == strncmp("syslog", one_log_mode, strlen("syslog"))) {
-                config->log_mode |= Y_LOG_MODE_SYSLOG;
+                config->log_mode += Y_LOG_MODE_SYSLOG;
+              } else if (0 == strncmp("journald", one_log_mode, strlen("journald"))) {
+                config->log_mode += Y_LOG_MODE_JOURNALD;
               } else if (0 == strncmp("file", one_log_mode, strlen("file"))) {
-                config->log_mode |= Y_LOG_MODE_FILE;
+                config->log_mode += Y_LOG_MODE_FILE;
               }
               one_log_mode = strtok(NULL, ",");
             }
@@ -662,11 +664,13 @@ int build_config_from_file(struct config_elements * config) {
       one_log_mode = strtok((char *)cur_log_mode, ",");
       while (one_log_mode != NULL) {
         if (0 == strncmp("console", one_log_mode, strlen("console"))) {
-          config->log_mode |= Y_LOG_MODE_CONSOLE;
+          config->log_mode += Y_LOG_MODE_CONSOLE;
         } else if (0 == strncmp("syslog", one_log_mode, strlen("syslog"))) {
-          config->log_mode |= Y_LOG_MODE_SYSLOG;
+          config->log_mode += Y_LOG_MODE_SYSLOG;
+        } else if (0 == strncmp("journald", one_log_mode, strlen("journald"))) {
+          config->log_mode += Y_LOG_MODE_JOURNALD;
         } else if (0 == strncmp("file", one_log_mode, strlen("file"))) {
-          config->log_mode |= Y_LOG_MODE_FILE;
+          config->log_mode += Y_LOG_MODE_FILE;
           // Get log file path
           if (config->log_file == NULL) {
             if (config_lookup_string(&cfg, "log_file", &cur_log_file)) {
@@ -678,6 +682,10 @@ int build_config_from_file(struct config_elements * config) {
               }
             }
           }
+        } else {
+          fprintf(stderr, "Error, logging mode '%s' unknown\n", one_log_mode);
+          config_destroy(&cfg);
+          return 0;
         }
         one_log_mode = strtok(NULL, ",");
       }

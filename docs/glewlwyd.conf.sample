@@ -71,7 +71,7 @@ static_files_mime_types =
 # access-control-allow-origin value
 allow_origin="*"
 
-# log mode (console, syslog, file)
+# log mode (console, syslog, journald, file)
 log_mode="console"
 
 # log level: NONE, ERROR, WARNING, INFO, DEBUG

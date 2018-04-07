@@ -100,6 +100,7 @@ You can also use Docker base images to create one with your own settings (databa
 You must install the following libraries including their header files:
 
 ```
+libsystemd
 libmicrohttpd
 libjansson
 libcurl-gnutls
@@ -115,8 +116,12 @@ libssl
 On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install those dependencies using the following command:
 
 ```shell
-$ sudo apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev uuid-dev libldap2-dev libmariadbclient-dev libsqlite3-dev libconfig-dev libgnutls28-dev libssl-dev
+$ sudo apt-get install libsystemd-dev libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev uuid-dev libldap2-dev libmariadbclient-dev libsqlite3-dev libconfig-dev libgnutls28-dev libssl-dev
 ```
+
+#### Journald logs
+
+The library libsystemd-dev is required if you want to log messages in journald service. If you don't want or can't have journald, you can compile yder library without journald support. See [Yder documentation](https://github.com/babelouest/yder).
 
 ### Libssl vs libgnutls
 
@@ -174,7 +179,7 @@ $ sudo make install
 # Install Yder
 $ git clone https://github.com/babelouest/yder.git
 $ cd yder/src/
-$ make
+$ make # Or make Y_DISABLE_JOURNALD=1 to disable journald logging
 $ sudo make install
 
 # Install Ulfius
