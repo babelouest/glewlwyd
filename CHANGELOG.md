@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 1.4.1
+
+- Update libraries dependency versions
+
 ## 1.4.0
 
 - Add LDAP config properties search_scope, scope_property_user_match and scope_property_client_match
