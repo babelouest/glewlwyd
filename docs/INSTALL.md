@@ -17,6 +17,7 @@
    * [Install as a service](#install-as-a-service)
 6. [Run Glewlwyd](#run-glewlwyd)
 7. [Front-end application](#front-end-application)
+8. [Client configuration](#client-configuration)
 
 ## Debian-ish packages
 
@@ -635,3 +636,44 @@ To connect to the management application, you must use a user that have `g_admin
 This page is here only for oauth2 tests and behaviour validation. If you want to use it, you need to update the `glewlwyd_api` value and all parameters provided, such as `redirect_uri`, `scope` and `client`.
 
 Beware, all password inputs are of type `text`, so a typed password is not hidden from a hidden third-party dangerous predator.
+
+## Client configuration
+
+### Client settings in Glewlwyd
+
+The client application that will use Glewlwyd as OAuth2 instance will require some configuration too.
+
+First, you will need to add a new client in Glewlwyd:
+
+![Clients tab](https://raw.githubusercontent.com/babelouest/glewlwyd/master/screenshots/g_3_clients.png)
+
+You can add a new client by clicking on the '+' button. You will see a modal window where you will set your client data:
+
+![Client settings](https://raw.githubusercontent.com/babelouest/glewlwyd/master/screenshots/g_3_clients_update.png)
+
+The description fields are:
+- Backend: LDAP or Database, where your client data will be stored
+- Client Id: Mandatory, the client Id that will be required by Glewlwyd to identify your client, example `angharad`, `hutch_123xyz`
+- Name: Mandatory, must be unique, name of the client, for Glewlwyd use only
+- Description: Mandatory, description of the client, for Glewlwyd use only
+- Confidential: Check this if your want your client to be confidential, see [rfc6749 Client Types](https://tools.ietf.org/html/rfc6749#section-2.1)
+- Password/Confirm password: Mandatory if the client is confidential
+- Authorization types: Mandatory to be able to connect to Glewlwyd with this client, usual values are `code` and `token`
+- Scopes: Mandatory, list of scopes allowed to be granted via this client
+- Redirect URIs: Mandatory, list of URIs allowed to be used by the client. I.E., the url of the client, like [https://my-application.tld/](https://my-application.tld/)
+- Enabled: Uncheck this if you want to disable the client, no authorization will be granted via the client if it's disabled
+
+The following example shows how to configure [Hutch](https://github.com/babelouest/hutch/) with Glewlwyd:
+
+![Hutch config](https://raw.githubusercontent.com/babelouest/hutch/master/docs/images/glewlwyd.png)
+
+### Glewlwyd endpoints for the client
+
+There is no universal OAuth2 client configuration but they usually require some or all of the following data:
+
+- Authorization endpoint: This is the endpoint where the code or the implicit token is requested, the default value for Glewlwyd is [https://glewlwyd.tld/api/auth](https://glewlwyd.tld/api/auth)
+- Token endpoint: This is the endpoint where the OAuth2 token is requested by auth type code, the default value for Glewlwyd is [https://glewlwyd.tld/api/token](https://glewlwyd.tld/api/token)
+- Client Id: Must match the Client Id settings you provided in Glewlwyd
+- Response Type: Must match one of the allowed response type you set in Glewlwyd: `implicit` (sometimes called `token`), `code`
+- Scope: One or many scopes that will be requested by the client, multiple values must be separated by a space, i.e. `scope1 scope2`
+- Profile endpoint: On some clients, they require a profile endpoint that will get some of the connected user profile data, the default value for Glewlwyd is [https://glewlwyd.tld/api/profile](https://glewlwyd.tld/api/profile)
