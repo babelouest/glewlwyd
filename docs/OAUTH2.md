@@ -31,7 +31,7 @@ This is a multi-method, multi-parameters, versatile endpoint, used to provide au
 
 #### URL
 
-`/glewlwyd/auth`
+`/api/auth`
 
 #### Method
 
@@ -49,7 +49,7 @@ This endpoint is used to provide tokens to the user. It handles the following au
 
 #### URL
 
-`/glewlwyd/token`
+`/api/token`
 
 #### Method
 
@@ -63,7 +63,7 @@ Each scheme is described in the following chapter. The description may not be as
 
 #### URL
 
-`/glewlwyd/auth`
+`/api/auth`
 
 #### Method
 
@@ -136,7 +136,7 @@ with `redirect_uri` specified in the request, `unauthorized_client` as error val
 
 #### URL
 
-`/glewlwyd/token`
+`/api/token`
 
 #### Method
 
@@ -184,7 +184,7 @@ The combination code/redirect_uri/client_id is incorrect.
 
 #### URL
 
-`/glewlwyd/auth`
+`/api/auth`
 
 #### Method
 
@@ -257,7 +257,7 @@ with `redirect_uri` specified in the request, `unauthorized_client` as error val
 
 #### URL
 
-`/glewlwyd/token`
+`/api/token`
 
 #### Method
 
@@ -299,7 +299,7 @@ username or password invalid.
 
 #### URL
 
-`/glewlwyd/token`
+`/api/token`
 
 #### Method
 
@@ -350,7 +350,7 @@ Send a new access_token based on a valid refresh_token
 
 #### URL
 
-`/glewlwyd/token`
+`/api/token`
 
 #### Method
 
@@ -392,7 +392,7 @@ Mark a refresh_token as invalid, to prevent further access_token to be generated
 
 #### URL
 
-`/glewlwyd/token`
+`/api/token`
 
 #### Method
 
