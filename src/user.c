@@ -1257,7 +1257,7 @@ json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add
             if (!json_is_string(j_scope)) {
               json_array_append_new(j_return, json_pack("{ss}", "scope", "scope name must be a string"));
             } else {
-              if ((0 == o_strcmp(json_string_value(json_object_get(j_user, "source")), "ldap") && config->auth_ldap->scope_property_user_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_EQUALS) || 0 != o_strcmp(json_string_value(json_object_get(j_user, "source")), "ldap")) {
+              if ((0 == o_strcmp(json_string_value(json_object_get(j_user, "source")), "ldap") && config->has_auth_ldap && config->auth_ldap->scope_property_user_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_EQUALS) || 0 != o_strcmp(json_string_value(json_object_get(j_user, "source")), "ldap")) {
                   j_result = get_scope(config, json_string_value(j_scope));
                   if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
                     char * message = msprintf("scope name '%s' not found", json_string_value(j_scope));
@@ -1267,7 +1267,7 @@ json_t * is_user_valid(struct config_elements * config, json_t * j_user, int add
                     y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error while checking scope name '%s'", json_string_value(j_scope));
                   }
                   json_decref(j_result);
-              } else {
+              } else if (0 == o_strcmp(json_string_value(json_object_get(j_user, "source")), "ldap") && config->has_auth_ldap) {
                 j_scope_list = get_scope_list(config);
                 if (check_result_value(j_scope_list, G_OK)) {
                   found = 0;

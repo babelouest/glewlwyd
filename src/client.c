@@ -46,7 +46,10 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
     j_client = get_client(config, client_id, NULL);
     if (check_result_value(j_client, G_OK)) {
       // If client is confidential and auth type can require credentials, check its credentials
-      if (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true() && 
+      if (json_object_get(json_object_get(j_client, "client"), "confidential") != json_true() && auth_type == GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS) {
+        // A client can not request authorization type client_credentials if it's not confidential
+        j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      } else if (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true() &&
           (auth_type == GLEWLWYD_AUHORIZATION_TYPE_CODE ||
           auth_type == GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS ||
           auth_type == GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS ||
@@ -147,11 +150,9 @@ json_t * auth_check_client_credentials(struct config_elements * config, const ch
 json_t * auth_check_client_credentials_database(struct config_elements * config, const char * client_id, const char * password) {
   json_t * j_query, * j_result;
   int res, to_return;
-  char * client_id_escaped, * client_password_escaped, * clause_client_password, * clause_client_authorization_type;
+  char * client_password_escaped, * clause_client_password;
   
   if (client_id != NULL && password != NULL) {
-    client_id_escaped = h_escape_string(config->conn, client_id);
-    clause_client_authorization_type = msprintf("IN (SELECT `gc_client_id` FROM `%s` WHERE `gc_client_id` = '%s' and `got_id` = (SELECT `got_id` FROM `%s` WHERE `got_code` = %d))", GLEWLWYD_TABLE_CLIENT_AUTHORIZATION_TYPE, client_id_escaped, GLEWLWYD_TABLE_AUTHORIZATION_TYPE, GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS);
     if (config->conn->type == HOEL_DB_TYPE_MARIADB) {
       client_password_escaped = h_escape_string(config->conn, password);
       clause_client_password = msprintf("= PASSWORD('%s')", client_password_escaped);
@@ -160,7 +161,7 @@ json_t * auth_check_client_credentials_database(struct config_elements * config,
       clause_client_password = msprintf("= '%s'", client_password_escaped);
     }
     
-    j_query = json_pack("{sss[s]s{sss{ssss}sisis{ssss}}}",
+    j_query = json_pack("{sss[s]s{sss{ssss}sisi}}",
                         "table",
                         GLEWLWYD_TABLE_CLIENT,
                         "columns",
@@ -176,18 +177,11 @@ json_t * auth_check_client_credentials_database(struct config_elements * config,
                           "gc_enabled",
                           1,
                           "gc_confidential",
-                          1,
-                          "gc_client_id",
-                            "operator",
-                            "raw",
-                            "value",
-                            clause_client_authorization_type);
+                          1);
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     o_free(clause_client_password);
     o_free(client_password_escaped);
-    o_free(client_id_escaped);
-    o_free(clause_client_authorization_type);
     if (res == H_OK) {
       to_return = json_array_size(j_result)>0?G_OK:G_ERROR_UNAUTHORIZED;
     } else {
@@ -1272,7 +1266,7 @@ json_t * is_client_valid(struct config_elements * config, json_t * j_client, int
             if (!json_is_string(j_scope)) {
               json_array_append_new(j_return, json_pack("{ss}", "scope", "scope name must be a string"));
             } else {
-              if ((0 == o_strcmp(json_string_value(json_object_get(j_client, "source")), "ldap") && config->auth_ldap->scope_property_client_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_EQUALS) || 0 != o_strcmp(json_string_value(json_object_get(j_client, "source")), "ldap")) {
+              if ((0 == o_strcmp(json_string_value(json_object_get(j_client, "source")), "ldap") && config->has_auth_ldap && config->auth_ldap->scope_property_client_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_EQUALS) || 0 != o_strcmp(json_string_value(json_object_get(j_client, "source")), "ldap")) {
                 j_result = get_scope(config, json_string_value(j_scope));
                 if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
                   char * message = msprintf("scope name '%s' not found", json_string_value(j_scope));
@@ -1282,7 +1276,7 @@ json_t * is_client_valid(struct config_elements * config, json_t * j_client, int
                   y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error while checking scope name '%s'", json_string_value(j_scope));
                 }
                 json_decref(j_result);
-              } else {
+              } else if (0 == o_strcmp(json_string_value(json_object_get(j_client, "source")), "ldap") && config->has_auth_ldap) {
                 j_scope_list = get_scope_list(config);
                 if (check_result_value(j_scope_list, G_OK)) {
                   found = 0;
