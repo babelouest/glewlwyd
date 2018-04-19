@@ -261,7 +261,7 @@ json_t * validate_authorization_code(struct config_elements * config, const char
         clause_gco_date = msprintf("> (strftime('%%s','now') - %d)", config->code_expiration);
       }
       
-      j_query = json_pack("{sss[ss]s{si ss ss ss ss s{ssss}}}",
+      j_query = json_pack("{sss[ss]s{si ss ss ss s{ssss}}}",
                           "table",
                           GLEWLWYD_TABLE_CODE,
                           "columns",
@@ -272,8 +272,6 @@ json_t * validate_authorization_code(struct config_elements * config, const char
                             1,
                             "gco_code_hash",
                             code_hash,
-                            "gco_ip_source",
-                            escape_ip_source,
                             "gco_redirect_uri",
                             escape,
                             "gc_client_id",
@@ -283,6 +281,9 @@ json_t * validate_authorization_code(struct config_elements * config, const char
                               "raw",
                               "value",
                               clause_gco_date);
+      if (config->auth_code_match_ip_address) {
+        json_object_set_new(json_object_get(j_query, "where"), "gco_ip_source", json_string(escape_ip_source));
+      }
       o_free(clause_gco_date);
       o_free(col_gco_date);
       o_free(escape);
