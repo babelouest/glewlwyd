@@ -101,6 +101,11 @@ admin_scope="g_admin"
 # profile scope name
 profile_scope="g_profile"
 
+# If this option is set to true, the ip address that requests the authorization code must match
+# the ip address that will request the refresh token from the authorization code (default true)
+# Set this to false if your refresh tokens may be requested from third-party applications
+auth_code_match_ip_address=true
+
 # additional property name that will be included in access tokens, uncomment to enable this feature
 # additional_property_name  = "new_property"
 

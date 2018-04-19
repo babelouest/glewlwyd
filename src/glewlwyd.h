@@ -240,6 +240,7 @@ struct config_elements {
   unsigned int                    refresh_token_expiration;
   unsigned int                    access_token_expiration;
   unsigned int                    code_expiration;
+  unsigned int                    auth_code_match_ip_address;
   char *                          admin_scope;
   char *                          profile_scope;
   char *                          hash_algorithm;
