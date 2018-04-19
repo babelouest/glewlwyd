@@ -250,6 +250,10 @@ Specify in the config file the parameter `hash_algorithm` to store passwords wit
 
 Algorithms available are SHA1, SHA256, SHA512, MD5.
 
+### Match IP address on refresh token request from code
+
+The option `auth_code_match_ip_address` allows Glewlwyd to check that the IP Address that requested an authentication code matches the IP Address that request a refresh token from this code. You can disable this option if you use clients that will request the refresh token from a third-party application, like the http server that hosts the client for example.
+
 ### Database back-end initialisation
 
 For a Mariadb/Mysql database, you must create a database or use an existing one first, example:
