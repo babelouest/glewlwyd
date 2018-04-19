@@ -415,7 +415,7 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
   time_t now;
   json_t * j_scope_list = NULL, * j_auth, * json_body = NULL;
   
-  j_auth = auth_check_client_credentials(config, request->auth_basic_user, request->auth_basic_password);
+  j_auth = client_check(config, request->auth_basic_user, request->auth_basic_user, request->auth_basic_password, NULL, GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS);
   if (check_result_value(j_auth, G_OK)) {
     if (config->use_scope) {
       j_scope_list = auth_check_client_scope(config, request->auth_basic_user, u_map_get(request->map_post_body, "scope"));
