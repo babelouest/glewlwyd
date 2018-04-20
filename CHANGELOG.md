@@ -1,5 +1,10 @@
 # Glewlwyd Changelog
 
+## 1.4.3
+
+- LDAP search error more verbose
+- Fix LDAP search pagination
+
 ## 1.4.2
 
 - Add option `auth_code_match_ip_address` to prevent glewlwyd to check the match of the ip address that requested a code and the ip address that requested the refresh token
