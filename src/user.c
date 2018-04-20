@@ -186,7 +186,7 @@ json_t * get_user_ldap(struct config_elements * config, const char * username) {
     // Connection successful, doing ldap search
     filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_user_read, config->auth_ldap->login_property_user_read, username);
     if ((result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s: %s", config->auth_ldap->base_search_user, filter, ldap_err2string(result));
       j_result = json_pack("{si}", "result", G_ERROR_PARAM);
     } else {
       // Looping in results, staring at offset, until the end of the list
@@ -361,7 +361,7 @@ json_t * get_user_scope_grant_ldap(struct config_elements * config, const char *
     filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_user_read, config->auth_ldap->login_property_user_read, username);
     
     if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s, error message: %s", config->auth_ldap->base_search_user, filter, ldap_err2string(result));
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     } else if (ldap_count_entries(ldap, answer) == 0) {
       // No result found for username
@@ -627,7 +627,7 @@ json_t * auth_check_user_credentials_ldap(struct config_elements * config, const
       attrs[1] = config->auth_ldap->scope_property_user_read;
     }
     if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s, error message: %s", config->auth_ldap->base_search_user, filter, ldap_err2string(result));
       res = json_pack("{si}", "result", G_ERROR_PARAM);
     } else if (ldap_count_entries(ldap, answer) == 0) {
       // No result found for username
@@ -799,7 +799,7 @@ json_t * auth_check_user_scope_ldap(struct config_elements * config, const char 
       attrs[1] = config->auth_ldap->scope_property_user_read;
     }
     if (filter != NULL && (result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s, error message: %s", config->auth_ldap->base_search_user, filter, ldap_err2string(result));
       res = json_pack("{si}", "result", G_ERROR_PARAM);
     } else if (ldap_count_entries(ldap, answer) == 0) {
       // No result found for username
@@ -952,7 +952,7 @@ json_t * get_user_list_ldap(struct config_elements * config, const char * search
       filter = msprintf("(%s)", config->auth_ldap->filter_user_read);
     }
     if ((result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, (offset+limit), &answer)) != LDAP_SUCCESS) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s, error message: %s", config->auth_ldap->base_search_user, filter, ldap_err2string(result));
       j_result = json_pack("{si}", "result", G_ERROR_PARAM);
     } else {
       // Looping in results, staring at offset, until the end of the list
@@ -1614,7 +1614,7 @@ static json_t * get_user_dn_from_username(struct config_elements * config, LDAP 
   
   filter = msprintf("(&(%s)(%s=%s))", config->auth_ldap->filter_user_read, config->auth_ldap->login_property_user_read, username);
   if ((result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, config->auth_ldap->search_scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search: %s", ldap_err2string(result));
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter, error message: %s: %s", config->auth_ldap->base_search_user, filter, ldap_err2string(result));
     j_result = json_pack("{si}", "result", G_ERROR_PARAM);
   } else {
     // Looping in results, staring at offset, until the end of the list
