@@ -951,7 +951,7 @@ json_t * get_user_list_ldap(struct config_elements * config, const char * search
     } else {
       filter = msprintf("(%s)", config->auth_ldap->filter_user_read);
     }
-    if ((result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, (offset+limit), &answer)) != LDAP_SUCCESS) {
+    if ((result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, 0, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s, error message: %s", config->auth_ldap->base_search_user, filter, ldap_err2string(result));
       j_result = json_pack("{si}", "result", G_ERROR_PARAM);
     } else {
