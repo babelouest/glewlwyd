@@ -778,7 +778,11 @@ json_t * auth_check_user_scope_ldap(struct config_elements * config, const char 
   char * ldap_mech    = LDAP_SASL_SIMPLE;
   struct berval cred;
   struct berval *servcred;
-
+  
+  json_t * j_scope_list, * j_element;
+  size_t index;
+  int scope_found;
+  
   cred.bv_val = config->auth_ldap->bind_passwd;
   cred.bv_len = strlen(config->auth_ldap->bind_passwd);
 
@@ -813,47 +817,63 @@ json_t * auth_check_user_scope_ldap(struct config_elements * config, const char 
         res = json_pack("{si}", "result", G_ERROR);
       } else {
         struct berval ** values = ldap_get_values_len(ldap, entry, config->auth_ldap->scope_property_user_read);
-        char * new_scope_list = strdup("");
+        char * new_scope_list = NULL;
         int i;
         
-        for (i=0; i < ldap_count_values_len(values); i++) {
-          char * ldap_scope_value = o_malloc(values[i]->bv_len + 1);
-          char * scope_list_dup = o_strdup(scope_list);
-          char * token, * save_ptr = NULL;
-          
-          snprintf(ldap_scope_value, values[i]->bv_len + 1, "%s", values[i]->bv_val);
-          token = strtok_r(scope_list_dup, " ", &save_ptr);
-          while (token != NULL) {
-            j_scope = get_scope(config, token);
-            if (check_result_value(j_scope, G_OK)) {
-              if ((config->auth_ldap->scope_property_user_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_EQUALS && 0 == o_strcmp(token, ldap_scope_value)) || 
-                  (config->auth_ldap->scope_property_user_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_CONTAINS && NULL != o_strstr(ldap_scope_value, token)) ||
-                  (config->auth_ldap->scope_property_user_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_STARTSWITH && 0 == o_strncmp(ldap_scope_value, token, o_strlen(token))) ||
-                  (config->auth_ldap->scope_property_user_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_ENDSWITH && 0 == strcmp(ldap_scope_value + o_strlen(ldap_scope_value) - o_strlen(token), token))) {
-                if (o_strlen(new_scope_list) > 0) {
-                  char * tmp = msprintf("%s %s", new_scope_list, token);
-                  o_free(new_scope_list);
-                  new_scope_list = tmp;
-                } else {
-                  o_free(new_scope_list);
-                  new_scope_list = strdup(token);
+        j_scope_list = json_array();
+        if (j_scope_list != NULL) {
+          for (i=0; i < ldap_count_values_len(values); i++) {
+            char * ldap_scope_value = o_malloc(values[i]->bv_len + 1);
+            char * scope_list_dup = o_strdup(scope_list);
+            char * token, * save_ptr = NULL;
+            
+            snprintf(ldap_scope_value, values[i]->bv_len + 1, "%s", values[i]->bv_val);
+            token = strtok_r(scope_list_dup, " ", &save_ptr);
+            while (token != NULL) {
+              j_scope = get_scope(config, token);
+              if (check_result_value(j_scope, G_OK)) {
+                if ((config->auth_ldap->scope_property_user_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_EQUALS && 0 == o_strcmp(token, ldap_scope_value)) || 
+                    (config->auth_ldap->scope_property_user_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_CONTAINS && NULL != o_strstr(ldap_scope_value, token)) ||
+                    (config->auth_ldap->scope_property_user_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_STARTSWITH && 0 == o_strncmp(ldap_scope_value, token, o_strlen(token))) ||
+                    (config->auth_ldap->scope_property_user_match == GLEWLWYD_SCOPE_PROPERTY_MATCH_ENDSWITH && 0 == strcmp(ldap_scope_value + o_strlen(ldap_scope_value) - o_strlen(token), token))) {
+                  scope_found = 0;
+                  json_array_foreach(j_scope_list, index, j_element) {
+                    if (0 == o_strcmp(json_string_value(j_element), token)) {
+                      scope_found = 1;
+                    }
+                  }
+                  if (!scope_found) {
+                    json_array_append_new(j_scope_list, json_string(token));
+                    if (new_scope_list != NULL) {
+                      char * tmp = msprintf("%s %s", new_scope_list, token);
+                      o_free(new_scope_list);
+                      new_scope_list = tmp;
+                    } else {
+                      o_free(new_scope_list);
+                      new_scope_list = o_strdup(token);
+                    }
+                  }
                 }
               }
+              token = strtok_r(NULL, " ", &save_ptr);
+              json_decref(j_scope);
             }
-            token = strtok_r(NULL, " ", &save_ptr);
-            json_decref(j_scope);
+            o_free(scope_list_dup);
+            o_free(ldap_scope_value);
           }
-          o_free(scope_list_dup);
-          o_free(ldap_scope_value);
-        }
-        ldap_value_free_len(values);
-        if (o_strlen(new_scope_list) > 0) {
-          res = json_pack("{siss}", "result", G_OK, "scope", new_scope_list);
+          ldap_value_free_len(values);
+          if (o_strlen(new_scope_list) > 0) {
+            res = json_pack("{siss}", "result", G_OK, "scope", new_scope_list);
+          } else {
+            // User hasn't all of part of the scope requested, sending unauthorized answer
+            res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          }
+          o_free(new_scope_list);
         } else {
-          // User hasn't all of part of the scope requested, sending unauthorized answer
-          res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_scope_ldap - Error allocating resources for j_scope_list");
+          res = json_pack("{si}", "result", G_ERROR);
         }
-        o_free(new_scope_list);
+        json_decref(j_scope_list);
       }
     }
     o_free(filter);
@@ -868,6 +888,7 @@ json_t * auth_check_user_scope_ldap(struct config_elements * config, const char 
  */
 json_t * get_user_list(struct config_elements * config, const char * source, const char * search, long int offset, long int limit) {
   json_t * j_return, * j_source_list = NULL, * j_result_list = json_array();
+  json_int_t total_ldap = 0;
   
   if (j_result_list != NULL) {
     if ((source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")) && config->has_auth_ldap) {
@@ -877,11 +898,13 @@ json_t * get_user_list(struct config_elements * config, const char * source, con
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error getting ldap list");
       }
+      total_ldap = json_integer_value(json_object_get(j_source_list, "total"));
       json_decref(j_source_list);
       j_source_list = NULL;
     }
 
     if ((source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")) && json_array_size(j_result_list) < limit && config->has_auth_database) {
+      offset = (offset - total_ldap)<0?0:(offset - total_ldap);
       j_source_list = get_user_list_database(config, search, offset, (limit - json_array_size(j_result_list)));
       if (check_result_value(j_source_list, G_OK)) {
         json_array_extend(j_result_list, json_object_get(j_source_list, "user"));
@@ -905,9 +928,9 @@ json_t * get_user_list(struct config_elements * config, const char * source, con
  */
 json_t * get_user_list_ldap(struct config_elements * config, const char * search, long int offset, long int limit) {
   LDAP * ldap = NULL;
-  LDAPMessage * answer = NULL, * entry;
-  int i, j;
-  json_t * j_result, * j_scope_list = get_scope_list(config);
+  LDAPMessage * entry;
+  int i = 0, j;
+  json_t * j_result = NULL, * j_scope_list = get_scope_list(config), * j_result_user = NULL;
   char * additional_property_value, * tmp;
   
   int  result;
@@ -920,6 +943,13 @@ json_t * get_user_list_ldap(struct config_elements * config, const char * search
   struct berval cred;
   struct berval *servcred, ** name_values, ** email_values, ** login_values, ** scope_values, ** additional_property_values = NULL;
 
+  /* paged control variables */
+  struct berval new_cookie, * cookie = NULL;
+  int more_page, l_errcode = 0, l_entries, l_entry_count = 0, l_count;
+  LDAPControl * page_control = NULL, * search_controls[2] = { NULL, NULL }, ** returned_controls = NULL;
+  LDAPMessage * l_result = NULL;
+  ber_int_t total_count;
+  
   cred.bv_val = config->auth_ldap->bind_passwd;
   cred.bv_len = strlen(config->auth_ldap->bind_passwd);
   
@@ -951,17 +981,65 @@ json_t * get_user_list_ldap(struct config_elements * config, const char * search
     } else {
       filter = msprintf("(%s)", config->auth_ldap->filter_user_read);
     }
-    if ((result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, NULL, NULL, NULL, 0, &answer)) != LDAP_SUCCESS) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s, error message: %s", config->auth_ldap->base_search_user, filter, ldap_err2string(result));
-      j_result = json_pack("{si}", "result", G_ERROR_PARAM);
-    } else {
-      // Looping in results, staring at offset, until the end of the list
-      j_result = json_pack("{sis[]}", "result", G_OK, "user");
-      if (ldap_count_entries(ldap, answer) >= offset) {
-        entry = ldap_first_entry(ldap, answer);
-            
-        for (i=0; i<offset && entry != NULL; i++) {
-          entry = ldap_next_entry(ldap, entry);
+    j_result_user = json_pack("{sis[]}", "result", G_OK, "user");
+    do {
+      result = ldap_create_page_control(ldap, config->auth_ldap->page_size, cookie, 0, &page_control);
+      if (result != LDAP_SUCCESS) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap_create_page_control, message: %s", ldap_err2string(result));
+        j_result = json_pack("{si}", "result", G_ERROR);
+        break;
+      }
+      
+      search_controls[0] = page_control;
+      result = ldap_search_ext_s(ldap, config->auth_ldap->base_search_user, scope, filter, attrs, attrsonly, search_controls, NULL, NULL, 0, &l_result);
+      if ((result != LDAP_SUCCESS) & (result != LDAP_PARTIAL_RESULTS)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s, error message: %s", config->auth_ldap->base_search_user, filter, ldap_err2string(result));
+        j_result = json_pack("{si}", "result", G_ERROR);
+        break;
+      }
+      
+      result = ldap_parse_result(ldap, l_result, &l_errcode, NULL, NULL, NULL, &returned_controls, 0);
+      if (result != LDAP_SUCCESS) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap_parse_result, message: %s", ldap_err2string(result));
+        j_result = json_pack("{si}", "result", G_ERROR);
+        break;
+      }
+      
+      if (cookie != NULL) {
+        ber_bvfree(cookie);
+        cookie = NULL;
+      }
+      
+      result = ldap_parse_pageresponse_control(ldap, *returned_controls, &total_count, &new_cookie);
+      if (result != LDAP_SUCCESS) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap_parse_pageresponse_control, message: %s", ldap_err2string(result));
+        j_result = json_pack("{si}", "result", G_ERROR);
+        break;
+      }
+      
+      cookie = ber_memalloc( sizeof( struct berval ) );
+      *cookie = new_cookie;
+      if (cookie && cookie->bv_val != NULL && (strlen(cookie->bv_val) > 0)) {
+        more_page = 1;
+      } else {
+        more_page = 0;
+      }
+      
+      if (returned_controls != NULL)
+      {
+        ldap_controls_free(returned_controls);
+        returned_controls = NULL;
+      }
+      search_controls[0] = NULL;
+      ldap_control_free(page_control);
+      page_control = NULL;
+      
+      l_entries = ldap_count_entries(ldap, l_result);
+      if (l_entry_count <= offset && offset < (l_entry_count + l_entries)) {
+        entry = ldap_first_entry(ldap, l_result);
+        l_count = offset - l_entry_count;
+        for (;entry !=NULL && l_count > 0; entry = ldap_next_entry(ldap, entry)) {
+          l_count--;
         }
         
         while (entry != NULL && i<(offset+limit)) {
@@ -1020,7 +1098,7 @@ json_t * get_user_list_ldap(struct config_elements * config, const char * search
             }
             
             json_object_set_new(j_entry, "source", json_string("ldap"));
-            json_array_append_new(json_object_get(j_result, "user"), j_entry);
+            json_array_append_new(json_object_get(j_result_user, "user"), j_entry);
             ldap_value_free_len(name_values);
             ldap_value_free_len(email_values);
             ldap_value_free_len(login_values);
@@ -1033,9 +1111,25 @@ json_t * get_user_list_ldap(struct config_elements * config, const char * search
           i++;
         }
       }
-    }
+      if (l_entries > 0) {
+        l_entry_count = l_entry_count + l_entries;
+        if (l_entry_count >= (offset + limit)) {
+          break;
+        }
+      }
+      ldap_msgfree(l_result);
+      l_result = NULL;
+    } while (more_page);
+    ldap_msgfree(l_result);
+    l_result = NULL;
+    ber_bvfree(cookie);
+    cookie = NULL;
     o_free(filter);
-    ldap_msgfree(answer);
+    
+    if (j_result_user != NULL && j_result == NULL) {
+      j_result = j_result_user;
+      json_object_set_new(j_result, "total", json_integer(l_entry_count));
+    }
   }
   ldap_unbind_ext(ldap, NULL, NULL);
   json_decref(j_scope_list);

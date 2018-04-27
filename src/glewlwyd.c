@@ -27,7 +27,6 @@
  *
  */
 
-#include <ldap.h>
 #include <getopt.h>
 #include <signal.h>
 #include <ctype.h>
@@ -626,6 +625,7 @@ int build_config_from_file(struct config_elements * config) {
   int db_mariadb_port = 0, cur_key_size = 512;
   int cur_http_auth = 0, cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_ecdsa = 0, cur_use_sha = 0,
       cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, cur_auth_http_check_server_certificate = 1, i;
+  ber_int_t cur_auth_ldap_page_size = 0;
   
   // JWT autocheck
   time_t now;
@@ -1047,6 +1047,7 @@ int build_config_from_file(struct config_elements * config) {
       config_setting_lookup_string(auth, "bind_dn", &cur_auth_ldap_bind_dn);
       config_setting_lookup_string(auth, "bind_passwd", &cur_auth_ldap_bind_passwd);
       config_setting_lookup_string(auth, "search_scope", &cur_auth_ldap_search_scope);
+      config_setting_lookup_int(auth, "page_size", &cur_auth_ldap_page_size);
 
       config_setting_lookup_string(auth, "base_search_user", &cur_auth_ldap_base_search_user);
       config_setting_lookup_string(auth, "filter_user_read", &cur_auth_ldap_filter_user_read);
@@ -1101,6 +1102,7 @@ int build_config_from_file(struct config_elements * config) {
       if (cur_auth_ldap_uri != NULL && 
           cur_auth_ldap_bind_dn != NULL && 
           cur_auth_ldap_bind_passwd != NULL && 
+          cur_auth_ldap_page_size > 0 &&
           
           cur_auth_ldap_base_search_user != NULL && 
           cur_auth_ldap_filter_user_read != NULL && 
@@ -1149,6 +1151,7 @@ int build_config_from_file(struct config_elements * config) {
         } else {
           memset(config->auth_ldap, 0, sizeof(struct _auth_ldap));
           config->auth_ldap->search_scope = LDAP_SCOPE_ONELEVEL;
+          config->auth_ldap->page_size = GLEWLWYD_DEFAULT_LDAP_PAGE_SIZE;
           
           config->auth_ldap->uri = o_strdup(cur_auth_ldap_uri);
           if (config->auth_ldap->uri == NULL) {
@@ -1181,6 +1184,8 @@ int build_config_from_file(struct config_elements * config) {
               return 0;
             }
           }
+          
+          config->auth_ldap->page_size = cur_auth_ldap_page_size;
           
           config->auth_ldap->base_search_user = o_strdup(cur_auth_ldap_base_search_user);
           if (config->auth_ldap->base_search_user == NULL) {
