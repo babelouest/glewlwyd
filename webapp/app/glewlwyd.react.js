@@ -180,8 +180,8 @@ $(function() {
   // Load all lists at startup
   function loadLists () {
     var promises = [
-      APIRequest("GET", "/user/"),
-      APIRequest("GET", "/client/"),
+      APIRequest("GET", "/user/?limit=10"),
+      APIRequest("GET", "/client/?limit=10"),
       APIRequest("GET", "/scope/"),
       APIRequest("GET", "/resource/"),
       APIRequest("GET", "/authorization/")
