@@ -175,6 +175,7 @@ authentication =
    bind_dn                  = "cn=operator,dc=example,dc=org"
    bind_passwd              = "password"
    search_scope             = "subtree" # optional, scope of the LDAP search, values available are "onelevel", "subtree" or "children", default is "onelevel", see the manpage ldap_search(3) for more information
+   page_size                = 100 # optional, size of the page for LDAP search, must be lower or equal to the LDAP server sizelimit parameter, default is 100
    base_search_user         = "ou=user,dc=example,dc=org"
    base_search_client       = "ou=client,dc=example,dc=org"
    
