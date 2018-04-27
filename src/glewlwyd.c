@@ -1099,49 +1099,48 @@ int build_config_from_file(struct config_elements * config) {
       config_setting_lookup_string(auth, "password_algorithm_client_write", &cur_auth_ldap_password_algorithm_client_write);
       config_setting_lookup_string(auth, "object_class_client_write", &cur_auth_ldap_object_class_client_write);
       
-      if (cur_auth_ldap_uri != NULL && 
-          cur_auth_ldap_bind_dn != NULL && 
-          cur_auth_ldap_bind_passwd != NULL && 
-          cur_auth_ldap_page_size > 0 &&
+      if (cur_auth_ldap_uri != NULL &&
+          cur_auth_ldap_bind_dn != NULL &&
+          cur_auth_ldap_bind_passwd != NULL &&
           
-          cur_auth_ldap_base_search_user != NULL && 
-          cur_auth_ldap_filter_user_read != NULL && 
-          cur_auth_ldap_login_property_user_read != NULL && 
-          cur_auth_ldap_name_property_user_read != NULL && 
-          cur_auth_ldap_email_property_user_read != NULL && 
-          cur_auth_ldap_additional_property_value_read != NULL && 
-          (cur_auth_ldap_scope_property_user_read != NULL || !config->use_scope) && 
+          cur_auth_ldap_base_search_user != NULL &&
+          cur_auth_ldap_filter_user_read != NULL &&
+          cur_auth_ldap_login_property_user_read != NULL &&
+          cur_auth_ldap_name_property_user_read != NULL &&
+          cur_auth_ldap_email_property_user_read != NULL &&
+          cur_auth_ldap_additional_property_value_read != NULL &&
+          (cur_auth_ldap_scope_property_user_read != NULL || !config->use_scope) &&
           
-          (!cur_auth_ldap_user_write || 
-          (cur_auth_ldap_rdn_property_user_write != NULL && 
-          cur_auth_ldap_login_property_user_write != NULL && 
-          cur_auth_ldap_name_property_user_write != NULL && 
-          cur_auth_ldap_email_property_user_write != NULL && 
-          cur_auth_ldap_additional_property_value_write != NULL && 
-          (cur_auth_ldap_scope_property_user_write != NULL || !config->use_scope) && 
-          cur_auth_ldap_password_property_user_write != NULL && 
-          cur_auth_ldap_password_algorithm_user_write != NULL && 
-          cur_auth_ldap_object_class_user_write != NULL)) && 
+          (!cur_auth_ldap_user_write ||
+          (cur_auth_ldap_rdn_property_user_write != NULL &&
+          cur_auth_ldap_login_property_user_write != NULL &&
+          cur_auth_ldap_name_property_user_write != NULL &&
+          cur_auth_ldap_email_property_user_write != NULL &&
+          cur_auth_ldap_additional_property_value_write != NULL &&
+          (cur_auth_ldap_scope_property_user_write != NULL || !config->use_scope) &&
+          cur_auth_ldap_password_property_user_write != NULL &&
+          cur_auth_ldap_password_algorithm_user_write != NULL &&
+          cur_auth_ldap_object_class_user_write != NULL)) &&
           
-          cur_auth_ldap_base_search_client != NULL && 
-          cur_auth_ldap_filter_client_read != NULL && 
-          cur_auth_ldap_client_id_property_client_read != NULL && 
-          cur_auth_ldap_name_property_client_read != NULL && 
-          cur_auth_ldap_description_property_client_read != NULL && 
-          cur_auth_ldap_redirect_uri_property_client_read != NULL && 
-          cur_auth_ldap_confidential_property_client_read != NULL && 
-          (cur_auth_ldap_scope_property_client_read != NULL || !config->use_scope) && 
+          cur_auth_ldap_base_search_client != NULL &&
+          cur_auth_ldap_filter_client_read != NULL &&
+          cur_auth_ldap_client_id_property_client_read != NULL &&
+          cur_auth_ldap_name_property_client_read != NULL &&
+          cur_auth_ldap_description_property_client_read != NULL &&
+          cur_auth_ldap_redirect_uri_property_client_read != NULL &&
+          cur_auth_ldap_confidential_property_client_read != NULL &&
+          (cur_auth_ldap_scope_property_client_read != NULL || !config->use_scope) &&
           
-          (!cur_auth_ldap_client_write || 
-          (cur_auth_ldap_rdn_property_client_write != NULL && 
-          cur_auth_ldap_client_id_property_client_write != NULL && 
-          cur_auth_ldap_name_property_client_write != NULL && 
-          cur_auth_ldap_description_property_client_write != NULL && 
-          cur_auth_ldap_redirect_uri_property_client_write != NULL && 
-          cur_auth_ldap_confidential_property_client_write != NULL && 
-          (cur_auth_ldap_scope_property_client_write != NULL || !config->use_scope) && 
-          cur_auth_ldap_password_property_client_write != NULL && 
-          cur_auth_ldap_password_algorithm_client_write != NULL && 
+          (!cur_auth_ldap_client_write ||
+          (cur_auth_ldap_rdn_property_client_write != NULL &&
+          cur_auth_ldap_client_id_property_client_write != NULL &&
+          cur_auth_ldap_name_property_client_write != NULL &&
+          cur_auth_ldap_description_property_client_write != NULL &&
+          cur_auth_ldap_redirect_uri_property_client_write != NULL &&
+          cur_auth_ldap_confidential_property_client_write != NULL &&
+          (cur_auth_ldap_scope_property_client_write != NULL || !config->use_scope) &&
+          cur_auth_ldap_password_property_client_write != NULL &&
+          cur_auth_ldap_password_algorithm_client_write != NULL &&
           cur_auth_ldap_object_class_client_write != NULL))) {
         config->auth_ldap = o_malloc(sizeof(struct _auth_ldap));
         if (config->auth_ldap == NULL) {
@@ -1185,7 +1184,9 @@ int build_config_from_file(struct config_elements * config) {
             }
           }
           
-          config->auth_ldap->page_size = cur_auth_ldap_page_size;
+          if (cur_auth_ldap_page_size > 0) {
+            config->auth_ldap->page_size = cur_auth_ldap_page_size;
+          }
           
           config->auth_ldap->base_search_user = o_strdup(cur_auth_ldap_base_search_user);
           if (config->auth_ldap->base_search_user == NULL) {
