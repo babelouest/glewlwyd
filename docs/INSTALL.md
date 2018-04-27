@@ -324,7 +324,8 @@ To use LDAP authentication, you must set the config parameter `ldap_auth` to `tr
    uri                      = "ldap://localhost"               # uri of the LDAP server
    bind_dn                  = "cn=operator,dc=example,dc=org"  # bind_dn used to connect to the LDAP
    bind_passwd              = "password"                       # password used to connect to the LDAP
-   search_scope             = "onelevel"                        # optional, scope of the LDAP search, values available are "onelevel", "subtree" or "children", default is "onelevel", see the manpage ldap_search(3) for more information
+   search_scope             = "onelevel"                       # optional, scope of the LDAP search, values available are "onelevel", "subtree" or "children", default is "onelevel", see the manpage ldap_search(3) for more information
+   page_size                = 100                              # optional, size of the page for LDAP search, must be lower or equal to the LDAP server sizelimit parameter, default is 100
    base_search_user         = "ou=user,dc=example,dc=org"      # LDAP base search for users
    base_search_client       = "ou=client,dc=example,dc=org"    # LDAP base search for clients
 ```
@@ -381,7 +382,7 @@ The LDAP write parameters are mandatory if you want to be able to modify the use
    object_class_client_write          = "top,person,organizationalPerson,inetOrgPerson" # Multiple values separated by a comma
 ```
 
-Be careful, the config parameters `scope_property_user_match` or `scope_property_client_match` can has dangerous side effects.
+Be careful, the config parameters `scope_property_user_match` or `scope_property_client_match` can have dangerous side effects.
 
 For example, let's say you want to search the scope `company` in your users, the LDAP property of a user contains the scope value `ou=user,dc=mycompany,dc=com` but not the scope value `ou=company,dc=mycompany,dc=com` and the `search_scope` value is `equals`. Then the access will be granted anyway, since you gave a scope name that is present in all LDAP scope values.
 
@@ -399,6 +400,7 @@ authentication =
    bind_dn       = "cn=operator,dc=glewlwyd,dc=domain"
    bind_passwd   = "xxx"
    search_scope  = "onelevel"
+   page_size     = 100
 
    base_search_user             = "ou=user,dc=glewlwyd,dc=domain"
 # Read parameters
