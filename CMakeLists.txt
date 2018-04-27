@@ -76,7 +76,7 @@ endif ()
 include(FindLdap)
 find_package(Ldap REQUIRED)
 if (LDAP_FOUND)
-    set(LIBS ${LIBS} ${LDAP_LIBRARIES})
+    set(LIBS ${LIBS} ${LDAP_LIBRARIES} "-llber")
     include_directories(${LDAP_INCLUDE_DIRS})
 endif ()
 
