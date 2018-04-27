@@ -44,6 +44,7 @@
 
 #include <crypt.h>
 #include <stdio.h>
+#include <ldap.h>
 
 /** Angharad libraries **/
 #define U_DISABLE_WEBSOCKET
@@ -75,6 +76,7 @@
 #define GLEWLWYD_DEFAULT_LIMIT              20
 #define GLEWLWYD_PREFIX_BEARER              "Bearer "
 #define GLEWLWYD_DEFAULT_HASH_ALGORITHM     "MD5"
+#define GLEWLWYD_DEFAULT_LDAP_PAGE_SIZE     50
 
 #define GLEWLWYD_RESET_PASSWORD_DEFAULT_SMTP_PORT        25
 #define GLEWLWYD_RESET_PASSWORD_DEFAULT_TOKEN_EXPIRATION 604800
@@ -155,6 +157,7 @@ struct _auth_ldap {
   char *            bind_passwd;
   struct crypt_data cur_crypt_data;
   int               search_scope;
+	ber_int_t         page_size;
   
   char *  base_search_user;
   char *  filter_user_read;
