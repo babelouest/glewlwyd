@@ -951,7 +951,7 @@ int build_config_from_file(struct config_elements * config) {
     if (config_setting_lookup_string(database, "type", &db_type) == CONFIG_TRUE) {
       if (0) {
         // I know, this is for the code below to work
-#ifdef _HOEL_MARIADB
+#ifdef _HOEL_SQLITE
         } else if (0 == strncmp(db_type, "sqlite3", strlen("sqlite3"))) {
         if (config_setting_lookup_string(database, "path", &db_sqlite_path) == CONFIG_TRUE) {
           config->conn = h_connect_sqlite(db_sqlite_path);
@@ -972,7 +972,7 @@ int build_config_from_file(struct config_elements * config) {
           return 0;
         }
 #endif
-#ifdef _HOEL_SQLITE
+#ifdef _HOEL_MARIADB
       } else if (0 == strncmp(db_type, "mariadb", strlen("mariadb"))) {
         config_setting_lookup_string(database, "host", &db_mariadb_host);
         config_setting_lookup_string(database, "user", &db_mariadb_user);
