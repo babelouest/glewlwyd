@@ -986,7 +986,7 @@ int build_config_from_file(struct config_elements * config) {
           return 0;
         }
 #endif
-        } else {
+      } else {
         config_destroy(&cfg);
         fprintf(stderr, "Error, database type unknown\n");
         return 0;
