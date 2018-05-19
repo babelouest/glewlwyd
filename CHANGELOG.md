@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 1.4.4
+
+- Add current token scope list in the api `/api/profile` when authenticated with the OAuth2 token
+
 ## 1.4.3
 
 - LDAP search error more verbose

@@ -211,22 +211,6 @@ Content: json array containing all errors
 
 Session token or header bearer token
 
-#### Success response - OAuth2 token
-
-This response is obtained when the user access this API with a valid OAuth2 token. i.e. from a third-party application.
-
-Code 200
-
-Content
-
-```javascript
-{
-  name: text,
-  email: text,
-  login: text,
-}
-```
-
 #### Success response - Session cookie
 
 This response is obtained when the user access this API with a valid session cookie. i.e. from the page `/app/profile.html`.
@@ -240,6 +224,26 @@ Content
   name: text,
   email: text,
   login: text,
+  scope: [ // Array of strings of all the scopes available for the user
+  ]
+}
+```
+
+#### Success response - OAuth2 token
+
+This response is obtained when the user access this API with a valid OAuth2 token. i.e. from a third-party application.
+
+Code 200
+
+Content
+
+```javascript
+{
+  name: text,
+  email: text,
+  login: text,
+  scope: [ // Array of strings of the scopes available in the current token
+  ]
 }
 ```
 

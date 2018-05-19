@@ -1277,9 +1277,11 @@ json_t * get_user(struct config_elements * config, const char * login, const cha
 /**
  * Return a specific user for API GET /profile
  */
-json_t * get_user_profile(struct config_elements * config, const char * login, const char * source) {
+json_t * get_user_profile(struct config_elements * config, const char * login, const char * source, const char * scope_list) {
   json_t * j_return = NULL, * j_user = NULL;
   int search_ldap = (source == NULL || 0 == strcmp(source, "ldap") || 0 == strcmp(source, "all")), search_database = (source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all"));
+  int len, i;
+  char ** scopes_array = NULL;
   
   if (search_ldap) {
     if (config->has_auth_ldap) {
@@ -1298,6 +1300,14 @@ json_t * get_user_profile(struct config_elements * config, const char * login, c
   }
   if (check_result_value(j_user, G_OK)) {
     json_object_del(json_object_get(j_user, "user"), "scope");
+    if (scope_list != NULL) {
+      json_object_set_new(json_object_get(j_user, "user"), "scope", json_array());
+      len = split_string(scope_list, " ", &scopes_array);
+      for (i=0; i<len; i++) {
+        json_array_append_new(json_object_get(json_object_get(j_user, "user"), "scope"), json_string(scopes_array[i]));
+      }
+      free_string_array(scopes_array);
+    }
     j_return = json_pack("{sisO}", "result", G_OK, "user", json_object_get(j_user, "user"));
   } else if (check_result_value(j_user, G_ERROR_NOT_FOUND) || j_user == NULL) {
     j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
