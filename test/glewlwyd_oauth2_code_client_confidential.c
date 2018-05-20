@@ -19,6 +19,7 @@
 #define SCOPE_LIST "scope1 scope2"
 #define CLIENT "client3_id"
 #define CLIENT_PASSWORD "client3_password"
+#define REDIRECT_URI_ENCODED "..%%2fapp%%2ftest-token.html%%3fparam%%3dclient3_cb"
 #define REDIRECT_URI "../app/test-token.html?param=client3_cb"
 
 struct _u_request user_req;
@@ -162,7 +163,9 @@ int main(int argc, char *argv[])
     } else {
       ulfius_init_response(&code_resp);
       user_req.http_verb = strdup("GET");
-      user_req.http_url = msprintf(SERVER_URI "/auth?response_type=code&login_validated=true&state=xyzabcd&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&scope=" SCOPE_LIST);
+      user_req.http_url = msprintf(SERVER_URI "/auth?response_type=code&login_validated=true&state=xyzabcd&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI_ENCODED "&scope=" SCOPE_LIST);
+      user_req.auth_basic_user = strdup(CLIENT);
+      user_req.auth_basic_password = strdup(CLIENT_PASSWORD);
       if (ulfius_send_http_request(&user_req, &code_resp) != U_OK) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "Get code error");
       } else if (strstr(u_map_get(code_resp.map_header, "Location"), "code=") != NULL) {
