@@ -3,6 +3,7 @@
 ## 1.4.4
 
 - Add current token scope list in the api `/api/profile` when authenticated with the OAuth2 token
+- Fix issue in client_check that made it not check properly if a client is authorized or not
 
 ## 1.4.3
 
