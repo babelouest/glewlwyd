@@ -88,9 +88,13 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
             auth_type_str = "";
             break;
         }
-        json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
-          if (o_strcmp(json_string_value(j_element), auth_type_str)) {
-            auth_type_allowed = 1;
+        if (auth_type == GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN) {
+          auth_type_allowed = 1;
+        } else {
+          json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
+            if (o_strcmp(json_string_value(j_element), auth_type_str) == 0) {
+              auth_type_allowed = 1;
+            }
           }
         }
         
