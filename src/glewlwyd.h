@@ -29,7 +29,7 @@
 #ifndef __GLEWLWYD_H_
 #define __GLEWLWYD_H_
 
-#define _GLEWLWYD_VERSION_ "1.4.4"
+#define _GLEWLWYD_VERSION_ "1.4.5"
 
 #include <jansson.h>
 #include <jwt.h>
