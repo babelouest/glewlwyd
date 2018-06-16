@@ -1,6 +1,6 @@
 # Installation
 
-1. [Debian-ish packages](#debian-ish-packages)
+1. [Distribution packages](#distribution-packages)
 2. [Pre-compiled packages](#pre-compiled-packages)
 3. [Docker](#docker)
 4. [Manual install from Github](#manual-install-from-github)
@@ -19,14 +19,15 @@
 7. [Front-end application](#front-end-application)
 8. [Client configuration](#client-configuration)
 
-## Debian-ish packages
+### Distribution packages
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/glewlwyd.svg)](https://repology.org/metapackage/glewlwyd)
 
-Glewlwyd is now available in Debian Buster (testing) and some Debian based distributions. To install it on your device, use the following command as root:
+Glewlwyd is available in multiple distributions as official package. Check out your distribution documentation to install the package automatically.
 
 ```shell
-# apt install glewlwyd
+$ # Example for Debian testing
+$ apt install glewlwyd
 ```
 
 Then, you must initialise your database, setup your jwt key and setup your `glewlwyd.conf` file
@@ -51,7 +52,7 @@ libssl
 For example, to install Glewlwyd with the `glewlwyd-full_1.3.2_Debian_stretch_x86_64.tar.gz` package downloaded on the `releases` page, you must execute the following commands:
 
 ```shell
-$ sudo apt install -y autoconf automake make pkg-config libjansson-dev libssl-dev libcurl3 libconfig9 libcurl3-gnutls libgnutls30 libgcrypt20 libmicrohttpd12 libsqlite3-0 libmariadbclient18 libtool uuid
+$ sudo apt install -y autoconf automake make pkg-config libjansson-dev libssl-dev libcurl3 libconfig9 libcurl3-gnutls libgnutls30 libgcrypt20 libmicrohttpd12 libsqlite3-0 libmariadbclient18 libtool uuid libsystemd-dev
 $ wget https://github.com/benmcollins/libjwt/archive/v1.9.tar.gz
 $ tar -zxvf v1.9.tar.gz
 $ cd libjwt-1.9
@@ -112,6 +113,7 @@ libsqlite3
 libconfig
 libgnutls
 libssl
+ibsystemd
 ```
 
 On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install those dependencies using the following command:
