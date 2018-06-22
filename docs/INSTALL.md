@@ -113,7 +113,7 @@ libsqlite3
 libconfig
 libgnutls
 libssl
-ibsystemd
+libsystemd
 ```
 
 On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install those dependencies using the following command:
