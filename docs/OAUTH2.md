@@ -4,13 +4,29 @@ This document is intended to describe Glewlwyd oauth 2 implementation.
 
 OAuth endpoints are used to authenticate the user, and to send tokens or other authentication and identification data. The complete specification is available in the [OAuth 2 RFC document](https://tools.ietf.org/html/rfc6749). If you see an issue or have a question on Glewlwyd OAuth 2 implementation, you can open an issue or send an email at the following address [mail@babelouest.org](mail@babelouest.org).
 
+- [Endpoints authentication](#endpoints-authentication)
+- [Prefix](#prefix)
+- [Login and grant URIs](#login-and-grant-uris)
+- [Scope](#scope)
+- [OAuth 2 endpoints](#oauth-2-endpoints)
+  - [Authorization endpoint](#authorization-endpoint)
+  - [Token endpoint](#token-endpoint)
+- [OAuth 2 schemes](#oauth-2-schemes)
+  - [Authorization code grant - Authorization request](#authorization-code-grant---authorization-request)
+  - [Authorization code grant - Authorization Response](#authorization-code-grant---authorization-response)
+  - [Implicit Grant](#implicit-grant)
+  - [Resource Owner Password Credentials Grant](#resource-owner-password-credentials-grant)
+  - [Client Credentials Grant](#client-credentials-grant)
+  - [Refresh token](#refresh-token)
+  - [Invalidate refresh token](#invalidate-refresh-token)
+
 ## Endpoints authentication
 
 Authentication has different faces, and differs with the authorization scheme.
 
 ## Prefix
 
-All URIs are based on the prefix you will setup. In this document, all API endpoints will assume they use the prefix `/glewlwyd`, and all static file endpoints will assume they use the prefix `/app`.
+All URIs are based on the prefix you will setup. In this document, all API endpoints will assume they use the prefix `/api`, and all static file endpoints will assume they use the prefix `/app`.
 
 ## Login and grant URIs
 
