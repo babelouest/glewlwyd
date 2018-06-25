@@ -29,7 +29,7 @@
 #ifndef __GLEWLWYD_H_
 #define __GLEWLWYD_H_
 
-#define _GLEWLWYD_VERSION_ "1.4.5"
+#define _GLEWLWYD_VERSION_ "1.4.6"
 
 #include <jansson.h>
 #include <jwt.h>
@@ -117,7 +117,7 @@
 
 // Authorization types available
 #define GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE                  0
-#define GLEWLWYD_AUHORIZATION_TYPE_CODE                                1
+#define GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE_ACCESS_TOKEN     1
 #define GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT                            2
 #define GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS 3
 #define GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS                  4

@@ -865,7 +865,7 @@ json_t * get_refresh_token_list(struct config_elements * config, const char * us
         case GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE:
           json_object_set_new(j_element, "authorization_type", json_string("authorization_code"));
           break;
-        case GLEWLWYD_AUHORIZATION_TYPE_CODE:
+        case GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE_ACCESS_TOKEN:
           json_object_set_new(j_element, "authorization_type", json_string("code"));
           break;
         case GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT:

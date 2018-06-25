@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 1.4.6
+
+- Fix client confidential bug in code authorization flow, thanks to Bisco
+
 ## 1.4.5
 
 - Add last glewlwyd_resource
