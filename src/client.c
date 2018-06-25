@@ -50,7 +50,7 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
         // A client can not request authorization type client_credentials if it's not confidential
         j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       } else if (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true() &&
-          (auth_type == GLEWLWYD_AUHORIZATION_TYPE_CODE ||
+          (auth_type == GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE_ACCESS_TOKEN ||
           auth_type == GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS ||
           auth_type == GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS ||
           auth_type == GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN)) {
@@ -72,7 +72,7 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
           case GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE:
             auth_type_str = "authorization_code";
             break;
-          case GLEWLWYD_AUHORIZATION_TYPE_CODE:
+          case GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE_ACCESS_TOKEN:
             auth_type_str = "code";
             break;
           case GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT:
@@ -98,7 +98,7 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
           }
         }
         
-        if (auth_type == GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE || auth_type == GLEWLWYD_AUHORIZATION_TYPE_CODE || auth_type == GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT) {
+        if (auth_type == GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE || auth_type == GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE_ACCESS_TOKEN || auth_type == GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT) {
           // Check redirect_uri if auth type requires it
           if (redirect_uri != NULL) {
             redirect_uri_allowed = 0;

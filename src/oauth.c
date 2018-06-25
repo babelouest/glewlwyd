@@ -43,7 +43,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
   time_t now;
   
   // Check if client is allowed to perform this request
-  j_client_check = client_check(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_CODE);
+  j_client_check = client_check(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE);
   if (check_result_value(j_client_check, G_OK)) {
     // Client is allowed to use auth_code grant with this redirection_uri
     session_payload = session_check(config, u_map_get(request->map_cookie, config->session_key));
@@ -144,7 +144,7 @@ int check_auth_type_access_token_request (const struct _u_request * request, str
   char * refresh_token, * access_token;
   
   // Check if client is allowed to perform this request
-  j_auth = client_check(config, client_id, request->auth_basic_user, request->auth_basic_password, redirect_uri, GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE);
+  j_auth = client_check(config, client_id, request->auth_basic_user, request->auth_basic_password, redirect_uri, GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE_ACCESS_TOKEN);
   if (check_result_value(j_auth, G_OK)) {
     j_validate = validate_authorization_code(config, code, u_map_get(request->map_post_body, "client_id"), redirect_uri, ip_source);
     if (check_result_value(j_validate, G_OK)) {
@@ -154,9 +154,9 @@ int check_auth_type_access_token_request (const struct _u_request * request, str
           scope_list = json_string_value(json_object_get(j_validate, "scope"));
         }
         time(&now);
-        refresh_token = generate_refresh_token(config, request->auth_basic_user, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE, ip_source, scope_list, now);
+        refresh_token = generate_refresh_token(config, request->auth_basic_user, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE_ACCESS_TOKEN, ip_source, scope_list, now);
         if (refresh_token != NULL) {
-          access_token = generate_access_token(config, refresh_token, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE, ip_source, scope_list, json_object_get(json_object_get(j_user, "user"), "additional_property_name")!=json_null()?json_string_value(json_object_get(json_object_get(j_user, "user"), "additional_property_name")):NULL, json_object_get(json_object_get(j_user, "user"), "additional_property_value")!=json_null()?json_string_value(json_object_get(json_object_get(j_user, "user"), "additional_property_value")):NULL, now);
+          access_token = generate_access_token(config, refresh_token, json_string_value(json_object_get(json_object_get(j_user, "user"), "login")), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE_ACCESS_TOKEN, ip_source, scope_list, json_object_get(json_object_get(j_user, "user"), "additional_property_name")!=json_null()?json_string_value(json_object_get(json_object_get(j_user, "user"), "additional_property_name")):NULL, json_object_get(json_object_get(j_user, "user"), "additional_property_value")!=json_null()?json_string_value(json_object_get(json_object_get(j_user, "user"), "additional_property_value")):NULL, now);
           if (access_token != NULL) {
             // Disable gco_id entry
             j_query = json_pack("{sss{si}s{sI}}",
