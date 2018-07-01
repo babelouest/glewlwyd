@@ -3,7 +3,7 @@
 #
 # Makefile used to build the software
 #
-# Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
+# Copyright 2018 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -22,8 +22,8 @@
 CC=gcc
 #CC=clang
 CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
-LIBS=-lc -lulfius -lyder -ljansson -lorcania -lhoel -ljwt -lconfig -lldap -llber -luuid -lgnutls -lcrypt
-OBJECTS=glewlwyd.o authorization.o oauth.o webservice.o token.o user.o client.o admin.o scope.o resource.o password.o
+LIBS=-lc -ldl -lulfius -lyder -ljansson -lorcania -lhoel -ljwt -lconfig
+OBJECTS=glewlwyd.o glewlwyd_resource.o static_file_callback.o webservice.o
 PREFIX=/usr/local
 CONFIG_FILE=../glewlwyd.conf
 
