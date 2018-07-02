@@ -64,8 +64,6 @@
 #define GLEWLWYD_DEFAULT_PORT               4593
 #define GLEWLWYD_DEFAULT_PREFIX             "api"
 #define GLEWLWYD_DEFAULT_ALLOW_ORIGIN       "*"
-#define GLEWLWYD_DEFAULT_SESSION_KEY        "GLEWLWYD_SESSION_ID"
-#define GLEWLWYD_DEFAULT_SESSION_EXPIRATION 2419200
 #define GLEWLWYD_DEFAULT_SALT_LENGTH        16
 #define GLEWLWYD_DEFAULT_ADMIN_SCOPE        "g_admin"
 #define GLEWLWYD_DEFAULT_PROFILE_SCOPE      "g_profile"
@@ -74,6 +72,10 @@
 
 #define GLEWLWYD_RESET_PASSWORD_DEFAULT_SMTP_PORT        25
 #define GLEWLWYD_RESET_PASSWORD_DEFAULT_TOKEN_EXPIRATION 604800
+
+#define GLEWLWYD_DEFAULT_SESSION_KEY "GLEWLWYD_SESSION_ID"
+#define GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE 5256000 // 10 years
+#define GLEWLWYD_DEFAULT_SESSION_EXPIRATION_PASSWORD 40320 // 4 weeks
 
 #define GLEWLWYD_RUNNING  0
 #define GLEWLWYD_STOP     1
@@ -89,6 +91,8 @@
 
 // Data tables
 #define GLEWLWYD_TABLE_USER_MODULE_INSTANCE "g_user_module_instance"
+#define GLEWLWYD_TABLE_USER_SESSION "g_user_session"
+#define GLEWLWYD_TABLE_USER_SESSION_SCHEME "g_user_session_scheme"
 
 
 // Callback priority
@@ -112,19 +116,19 @@ typedef enum {
 struct config_elements;
 
 struct _user_module {
-  void    * file_handle;
-  uint16_t  uid;
-  char    * display_name;
-  int    (* user_module_load)(struct config_elements * config, uint16_t * uid, char ** display_name);
-  int    (* user_module_unload)(struct config_elements * config);
-  int    (* user_module_init)(struct config_elements * config, const char * parameters, void ** cls);
-  int    (* user_module_close)(struct config_elements * config, const char * parameters, void ** cls);
-  json_t (* user_module_get_list)(const char * pattern, uint limit, uint offset, void * cls);
-  json_t (* user_module_get)(const char * username, void * cls);
-  json_t (* user_module_add)(json_t * user, void * cls);
-  json_t (* user_module_update)(const char * username, json_t * user, void * cls);
-  json_t (* user_module_delete)(const char * username, void * cls);
-  json_t (* user_module_check_password)(const char * username, const char * password, void * cls);
+  void      * file_handle;
+  uint16_t    uid;
+  char      * display_name;
+  int      (* user_module_load)(struct config_elements * config, uint16_t * uid, char ** display_name);
+  int      (* user_module_unload)(struct config_elements * config);
+  int      (* user_module_init)(struct config_elements * config, const char * parameters, void ** cls);
+  int      (* user_module_close)(struct config_elements * config, void * cls);
+  json_t * (* user_module_get_list)(const char * pattern, uint limit, uint offset, void * cls);
+  json_t * (* user_module_get)(const char * username, void * cls);
+  json_t * (* user_module_add)(json_t * user, void * cls);
+  json_t * (* user_module_update)(const char * username, json_t * user, void * cls);
+  json_t * (* user_module_delete)(const char * username, void * cls);
+  json_t * (* user_module_check_password)(const char * username, const char * password, void * cls);
 };
 
 struct _user_module_instance {
@@ -135,17 +139,17 @@ struct _user_module_instance {
 };
 
 struct _client_module {
-  void    * file_handle;
-  uint16_t  uid;
-  char    * display_name;
-  int    (* client_module_load)(struct config_elements * config, uint16_t * uid, char ** display_name);
-  int    (* client_module_init)(struct config_elements * config, void ** cls);
-  int    (* client_module_clean)(struct config_elements * config, void * cls);
-  json_t (* client_module_get_list)(const char * pattern, uint limit, uint offset, void * cls);
-  json_t (* client_module_get)(const char * clientname, void * cls);
-  json_t (* client_module_add)(json_t * client, void * cls);
-  json_t (* client_module_update)(const char * clientname, json_t * client, void * cls);
-  json_t (* client_module_delete)(const char * clientname, void * cls);
+  void      * file_handle;
+  uint16_t    uid;
+  char      * display_name;
+  int      (* client_module_load)(struct config_elements * config, uint16_t * uid, char ** display_name);
+  int      (* client_module_init)(struct config_elements * config, void ** cls);
+  int      (* client_module_clean)(struct config_elements * config, void * cls);
+  json_t * (* client_module_get_list)(const char * pattern, uint limit, uint offset, void * cls);
+  json_t * (* client_module_get)(const char * clientname, void * cls);
+  json_t * (* client_module_add)(json_t * client, void * cls);
+  json_t * (* client_module_update)(const char * clientname, json_t * client, void * cls);
+  json_t * (* client_module_delete)(const char * clientname, void * cls);
 };
 
 struct _client_module_instance {
@@ -156,13 +160,13 @@ struct _client_module_instance {
 };
 
 struct _user_auth_scheme_module {
-  void    * file_handle;
-  uint16_t  uid;
-  char    * display_name;
-  int    (* user_auth_scheme_module_load)(struct config_elements * config, uint16_t * uid, char ** display_name);
-  int    (* user_auth_scheme_module_init)(struct config_elements * config, void ** cls);
-  int    (* user_auth_scheme_module_clean)(struct config_elements * config, void * cls);
-  json_t (* user_auth_scheme_module_validate)(const char * username, json_t * scheme_data, void * cls);
+  void      * file_handle;
+  uint16_t    uid;
+  char      * display_name;
+  int      (* user_auth_scheme_module_load)(struct config_elements * config, uint16_t * uid, char ** display_name);
+  int      (* user_auth_scheme_module_init)(struct config_elements * config, void ** cls);
+  int      (* user_auth_scheme_module_clean)(struct config_elements * config, void * cls);
+  json_t * (* user_auth_scheme_module_validate)(const char * username, json_t * scheme_data, void * cls);
 };
 
 struct _user_auth_scheme_module_instance {
@@ -223,7 +227,6 @@ char * url_encode(char *str);
 char * generate_query_parameters(const struct _u_request * request);
 const char * get_ip_source(const struct _u_request * request);
 char * rand_string(char * str, size_t size);
-char * rand_crypt_salt(char * str, size_t str_size);
 char * generate_hash(struct config_elements * config, const char * digest, const char * password);
 char * get_file_content(const char * file_path);
 int    load_user_module_instance_list(struct config_elements * config);
@@ -231,10 +234,17 @@ int    init_user_module_list(struct config_elements * config);
 int    init_client_module_list(struct config_elements * config);
 int    init_auth_scheme_module_list(struct config_elements * config);
 struct _user_module * get_user_module(struct config_elements * config, uint16_t uid);
+struct _user_auth_scheme_module * get_user_auth_scheme(struct config_elements * config, uint16_t uid);
+struct _user_auth_scheme_module_instance * get_user_auth_scheme_instance(struct config_elements * config, const char * name);
 
 // Validate user login/password credentials
 json_t * auth_check_user_credentials_scope(struct config_elements * config, const char * username, const char * password, const char * scope_list);
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password);
+
+// Session
+int update_session(struct config_elements * config, const char * session_uid, const char * username, char * scheme_name, uint expiration);
+json_t * get_session_for_username(struct config_elements * config, const char * session_uid, const char * username);
+json_t * get_session(struct config_elements * config, const char * session_uid);
 
 // Validate user scope
 json_t * auth_check_user_scope(struct config_elements * config, const char * username, const char * scope_list);
@@ -290,14 +300,10 @@ int add_resource(struct config_elements * config, json_t * j_resource);
 int set_resource(struct config_elements * config, const char * resource, json_t * j_resource);
 int delete_resource(struct config_elements * config, const char * resource);
 
-// Session CRUD
-json_t * get_session_list(struct config_elements * config, const char * username, int valid, uint offset, uint limit);
-int get_session(struct config_elements * config, const char * username, const char * session_hash);
-int revoke_session(struct config_elements * config, const char * username, const char * session_hash);
-
 // Callback functions
 
 int callback_glewlwyd_validate_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_check_user (const struct _u_request * request, struct _u_response * response, void * user_data); // TODO: Remove on release
 
 int callback_glewlwyd_options (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_server_configuration (const struct _u_request * request, struct _u_response * response, void * user_data);

@@ -71,7 +71,7 @@ int main (int argc, char ** argv) {
   config->secure_connection_pem_file = NULL;
   config->conn = NULL;
   config->session_key = o_strdup(GLEWLWYD_DEFAULT_SESSION_KEY);
-  config->session_expiration = GLEWLWYD_DEFAULT_SESSION_EXPIRATION;
+  config->session_expiration = GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE;
   config->salt_length = GLEWLWYD_DEFAULT_SALT_LENGTH;
   config->hash_algorithm = o_strdup(GLEWLWYD_DEFAULT_HASH_ALGORITHM);
   config->login_url = NULL;
@@ -184,6 +184,7 @@ int main (int argc, char ** argv) {
   
   // Authentication
   ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_validate_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_check_user, (void*)config); // TODO: Remove on release
 
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/config/", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
@@ -247,9 +248,21 @@ void exit_server(struct config_elements ** config, int exit_value) {
     // Cleaning data
     o_free((*config)->instance);
     for (i=0; i<(*config)->user_module_instance_list_size; i++) {
+      user_module = get_user_module((*config), (*config)->user_module_instance_list[i]->uid);
+      if (user_module != NULL) {
+        if (user_module->user_module_close((*config), (*config)->user_module_instance_list[i]->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error closing module %hu - %s", (*config)->user_module_instance_list[i]->uid, (*config)->user_module_instance_list[i]->name);
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - can't find user_module for uid %hu", (*config)->user_module_instance_list[i]->uid);
+      }
+      o_free((*config)->user_module_instance_list[i]->name);
+      o_free((*config)->user_module_instance_list[i]);
     }
+    o_free((*config)->user_module_instance_list);
     for (i=0; i<(*config)->user_module_list_size; i++) {
       (*config)->user_module_list[i]->user_module_unload(*config);
+      o_free((*config)->user_module_list[i]->display_name);
       dlclose((*config)->user_module_list[i]->file_handle);
       o_free((*config)->user_module_list[i]);
     }
@@ -756,13 +769,11 @@ int build_config_from_file(struct config_elements * config) {
     config_setting_lookup_int(jwt, "key_size", &int_value_4);
 
     if (config_lookup_string(&cfg, "admin_scope", &str_value) == CONFIG_TRUE) {
-      o_free(config->glewlwyd_resource_config_admin->oauth_scope);
       config->glewlwyd_resource_config_admin->oauth_scope = strdup(str_value);
     }
     
     if (config_lookup_string(&cfg, "profile_scope", &str_value) == CONFIG_TRUE) {
-      o_free(config->glewlwyd_resource_config_admin->oauth_scope);
-      config->glewlwyd_resource_config_admin->oauth_scope = strdup(str_value);
+      config->glewlwyd_resource_config_profile->oauth_scope = strdup(str_value);
     }
     
     if (int_value_4 == 256 || int_value_4 == 384 || int_value_4 == 512) {
@@ -1067,6 +1078,44 @@ char * generate_query_parameters(const struct _u_request * request) {
   return query;
 }
 
+long random_at_most(long max) {
+  unsigned long
+  // max <= RAND_MAX < ULONG_MAX, so this is okay.
+  num_bins = (unsigned long) max + 1,
+  num_rand = (unsigned long) RAND_MAX + 1,
+  bin_size = num_rand / num_bins,
+  defect   = num_rand % num_bins;
+
+  long x;
+  do {
+   x = random();
+  }
+  // This is carefully written not to overflow
+  while (num_rand - defect <= (unsigned long)x);
+
+  // Truncated division is intentional
+  return x/bin_size;
+}
+
+/**
+ * Generates a random string and store it in str
+ */
+char * rand_string(char * str, size_t str_size) {
+  const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  size_t n;
+  
+  if (str_size > 0 && str != NULL) {
+    for (n = 0; n < str_size; n++) {
+      long key = random_at_most((sizeof(charset)) - 2);
+      str[n] = charset[key];
+    }
+    str[str_size] = '\0';
+    return str;
+  } else {
+    return NULL;
+  }
+}
+
 int init_user_module_list(struct config_elements * config) {
   int ret = G_OK;
   struct _user_module * cur_user_module = NULL;
@@ -1094,6 +1143,8 @@ int init_user_module_list(struct config_elements * config) {
         if (file_handle != NULL) {
           cur_user_module = o_malloc(sizeof(struct _user_module));
           if (cur_user_module != NULL) {
+            cur_user_module->uid = 0;
+            cur_user_module->display_name = NULL;
             cur_user_module->file_handle = file_handle;
             *(void **) (&cur_user_module->user_module_load) = dlsym(file_handle, "user_module_load");
             *(void **) (&cur_user_module->user_module_unload) = dlsym(file_handle, "user_module_unload");
@@ -1164,14 +1215,17 @@ int load_user_module_instance_list(struct config_elements * config) {
   struct _user_module_instance * cur_instance;
   struct _user_module * module;
   
-  j_query = json_pack("{sss[ssss]}",
+  j_query = json_pack("{sss[sssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "columns",
                         "gumi_uid AS uid",
                         "gumi_name AS name",
+                        "gumi_order AS order_by",
                         "gumi_parameters AS parameters",
-                        "gumi_enabled AS enabled");
+                        "gumi_enabled AS enabled",
+                      "order_by",
+                      "gumi_order");
   res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -1182,6 +1236,7 @@ int load_user_module_instance_list(struct config_elements * config) {
           cur_instance = o_malloc(sizeof(struct _user_module_instance));
           if (cur_instance != NULL) {
             cur_instance->cls = NULL;
+            cur_instance->uid = json_integer_value(json_object_get(j_instance, "uid"));
             cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
             config->user_module_instance_list = o_realloc(config->user_module_instance_list, (config->user_module_instance_list_size + 1) * sizeof(struct _user_module_instance *));
             if (config->user_module_instance_list != NULL) {
@@ -1201,7 +1256,7 @@ int load_user_module_instance_list(struct config_elements * config) {
             y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error allocating resources for cur_instance");
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error module uid %u not found", json_integer_value(json_object_get(j_instance, "uid")));
+          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error module uid %"JSON_INTEGER_FORMAT" not found", json_integer_value(json_object_get(j_instance, "uid")));
         }
       }
     }
@@ -1220,6 +1275,28 @@ struct _user_module * get_user_module(struct config_elements * config, uint16_t 
   for (i=0; i<config->user_module_list_size; i++) {
     if (config->user_module_list[i]->uid == uid) {
       return config->user_module_list[i];
+    }
+  }
+  return NULL;
+}
+
+struct _user_auth_scheme_module * get_user_auth_scheme(struct config_elements * config, uint16_t uid) {
+  int i;
+
+  for (i=0; i<config->user_auth_scheme_module_list_size; i++) {
+    if (config->user_auth_scheme_module_list[i]->uid == uid) {
+      return config->user_auth_scheme_module_list[i];
+    }
+  }
+  return NULL;
+}
+
+struct _user_auth_scheme_module_instance * get_user_auth_scheme_instance(struct config_elements * config, const char * name) {
+  int i;
+
+  for (i=0; i<config->user_auth_scheme_module_instance_list_size; i++) {
+    if (0 == o_strcmp(config->user_auth_scheme_module_instance_list[i]->name, name)) {
+      return config->user_auth_scheme_module_instance_list[i];
     }
   }
   return NULL;

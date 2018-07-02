@@ -41,11 +41,9 @@ int user_module_unload(struct config_elements * config) {
 }
 
 int user_module_init(struct config_elements * config, const char * parameters, void ** cls) {
-  *cls = (void*)json_pack("[{ss ss ss ss s[ss]}{ss ss ss ss s[s]}]",
+  *cls = (void*)json_pack("[{ss ss ss s[ss]}{ss ss ss s[s]}]",
                             "username", 
                             "admin", 
-                            "password", 
-                            "password", 
                             "name", 
                             "The Boss", 
                             "email", 
@@ -55,19 +53,17 @@ int user_module_init(struct config_elements * config, const char * parameters, v
                               config->glewlwyd_resource_config_profile->oauth_scope,
                             "username",
                             "dev", 
-                            "password", 
-                            "password", 
                             "name", 
                             "Dave Lopper", 
                             "email", 
                             "dev@glewlwyd",
                             "scope",
                               config->glewlwyd_resource_config_profile->oauth_scope);
-  y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_init - success");
+  y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_init - success %s %s", config->glewlwyd_resource_config_profile->oauth_scope, config->glewlwyd_resource_config_admin->oauth_scope);
   return G_OK;
 }
 
-int user_module_close(struct config_elements * config, const char * parameters, void * cls) {
+int user_module_close(struct config_elements * config, void * cls) {
   y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_close - success");
   json_decref((json_t *)cls);
   return G_OK;
@@ -145,10 +141,10 @@ json_t * user_module_delete(const char * username, void * cls) {
 }
 
 json_t * user_module_check_password(const char * username, const char * password, void * cls) {
-  json_t * j_return = NULL, * j_user = user_module_get(json_string_value(json_object_get((json_t *)cls, "username")), cls);
+  json_t * j_return = NULL, * j_user = user_module_get(username, cls);
   
   if (check_result_value(j_user, G_OK)) {
-    if (0 == o_strcmp(password, json_string_value(json_object_get(j_user, "password")))) {
+    if (0 == o_strcmp(password, "password")) {
       j_return = json_pack("{si}", "result", G_OK);
     } else {
       j_return = json_pack("{si}", "result", G_ERROR);
