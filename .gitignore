@@ -5,6 +5,7 @@
 *.log
 *.err
 *.conf
+*.so
 valgrind.txt
 glewlwyd
 test/glewlwyd_oauth2_auth_code
