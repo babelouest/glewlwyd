@@ -6,16 +6,24 @@
 -- ----------------------------------------------------- --
 
 DROP TABLE IF EXISTS `g_user_module_instance`;
+DROP TABLE IF EXISTS `g_user_auth_scheme_module_instance`;
 DROP TABLE IF EXISTS `g_user_session_scheme`;
 DROP TABLE IF EXISTS `g_user_session`;
 
 CREATE TABLE `g_user_module_instance` (
   `gumi_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
-  `gumi_uid` INT(11) NOT NULL,
+  `gumi_module` VARCHAR(128) NOT NULL,
   `gumi_order` INT(11) NOT NULL,
   `gumi_name` VARCHAR(128) NOT NULL,
-  `gumi_parameters` TINYBLOB,
-  `gumi_enabled` TINYINT(1) DEFAULT 1
+  `gumi_parameters` TINYBLOB
+);
+
+CREATE TABLE `g_user_auth_scheme_module_instance` (
+  `guasmi_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `guasmi_module` VARCHAR(128) NOT NULL,
+  `guasmi_order` INT(11) NOT NULL,
+  `guasmi_name` VARCHAR(128) NOT NULL,
+  `guasmi_parameters` TINYBLOB
 );
 
 CREATE TABLE `g_user_session` (
@@ -35,4 +43,5 @@ CREATE TABLE `g_user_session_scheme` (
   FOREIGN KEY(`gus_id`) REFERENCES `g_user_session`(`gus_id`) ON DELETE CASCADE
 );
 
-INSERT INTO `g_user_module_instance` (`gumi_uid`, `gumi_name`, `gumi_order`) VALUES (42, 'mock', 0);
+INSERT INTO `g_user_module_instance` (`gumi_module`, `gumi_name`, `gumi_order`) VALUES ('mock', 'mock', 0);
+INSERT INTO `g_user_auth_scheme_module_instance` (`guasmi_module`, `guasmi_name`, `guasmi_order`) VALUES ('mock', 'mock', 0);

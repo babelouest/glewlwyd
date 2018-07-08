@@ -1,9 +1,9 @@
 #
-# Benoic device modules
+# Glewlwyd user backend
 #
 # Makefile used to build the software
 #
-# Copyright 2016 Nicolas Mora <mail@babelouest.org>
+# Copyright 2018 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
