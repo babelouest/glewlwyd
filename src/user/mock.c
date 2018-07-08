@@ -21,15 +21,10 @@
 #include <orcania.h>
 #include "../glewlwyd.h"
 
-int user_module_load(struct config_elements * config, uint16_t * uid, char ** display_name) {
+int user_module_load(struct config_elements * config, char ** name) {
   int ret = G_OK;
-  if (uid != NULL) {
-    *uid = 42;
-  } else {
-    ret = G_ERROR;
-  }
-  if (display_name != NULL) {
-    *display_name = o_strdup("mock");
+  if (name != NULL) {
+    *name = o_strdup("mock");
   } else {
     ret = G_ERROR;
   }
@@ -69,13 +64,30 @@ int user_module_close(struct config_elements * config, void * cls) {
   return G_OK;
 }
 
-json_t * user_module_get_list(const char * pattern, uint limit, uint offset, void * cls) {
-  return (json_t *)cls;
+char ** user_module_get_list(const char * pattern, uint limit, uint offset, uint * total, void * cls) {
+  json_t * j_element;
+  size_t index, list_size = 0;
+  char ** list = o_malloc(sizeof(char *));
+  
+  if (total != NULL) {
+    *total = json_array_size((json_t *)cls);
+  }
+  
+  list[0] = NULL;
+  json_array_foreach((json_t *)cls, index, j_element) {
+    if (index >= offset && index < (offset + limit)) {
+      list = o_realloc(list, (list_size +1) * sizeof(char *));
+      list[list_size] = json_dumps(j_element, JSON_ENCODE_ANY);
+      list[list_size + 1] = NULL;
+    }
+  }
+  return list;
 }
 
-json_t * user_module_get(const char * username, void * cls) {
+char * user_module_get(const char * username, void * cls) {
   json_t * j_user, * j_return = NULL;
   size_t index;
+  char * to_return;
   
   if (username == NULL || !o_strlen(username)) {
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -89,70 +101,95 @@ json_t * user_module_get(const char * username, void * cls) {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
   }
-  return j_return;
+  to_return = json_dumps(j_return, JSON_COMPACT);
+  json_decref(j_return);
+  return to_return;
 }
 
-json_t * user_module_add(json_t * user, void * cls) {
-  json_t * j_user = user_module_get(json_string_value(json_object_get((json_t *)cls, "username")), cls), * j_return;
-  if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
-    json_array_append((json_t *)cls, user);
-    j_return = json_pack("{si}", "result", G_OK);
-  } else {
-    j_return = json_pack("{si}", "result", G_ERROR);
-  }
-  json_decref(j_user);
-  return j_return;
-}
-
-json_t * user_module_update(const char * username, json_t * user, void * cls) {
-  json_t * j_return = NULL, * j_user;
-  size_t index;
+int user_module_add(const char * user, void * cls) {
+  json_t * parsed_user = json_loads(user, JSON_DECODE_ANY, NULL), * j_user;
+  int ret;
+  char * str_user;
   
-  json_array_foreach((json_t *)cls, index, j_user) {
-    if (0 == o_strcmp(username, json_string_value(json_object_get(j_user, "username")))) {
-      json_decref(j_user);
-      json_object_set_new(user, "username", json_string(username));
-      json_array_set((json_t *)cls, index, user);
-      j_return = json_pack("{si}", "result", G_OK);
-      break;
+  if (parsed_user != NULL) {
+    str_user = user_module_get(json_string_value(json_object_get((json_t *)cls, "username")), cls);
+    j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
+    if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+      json_array_append((json_t *)cls, parsed_user);
+      ret = G_OK;
+    } else {
+      ret = G_ERROR;
     }
+    o_free(str_user);
+    json_decref(j_user);
+    json_decref(parsed_user);
+  } else {
+    ret = G_ERROR_PARAM;
   }
-  if (j_return == NULL) {
-    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
-  }
-  return j_return;
+  return ret;
 }
 
-json_t * user_module_delete(const char * username, void * cls) {
-  json_t * j_return = NULL, * j_user;
+int user_module_update(const char * username, const char * user, void * cls) {
+  json_t * parsed_user = json_loads(user, JSON_DECODE_ANY, NULL), * j_user;
   size_t index;
+  int ret, found = 0;
+  
+  if (parsed_user != NULL) {
+    json_array_foreach((json_t *)cls, index, j_user) {
+      if (0 == o_strcmp(username, json_string_value(json_object_get(j_user, "username")))) {
+        json_object_set_new(parsed_user, "username", json_string(username));
+        json_array_set((json_t *)cls, index, parsed_user);
+        ret = G_OK;
+        found = 1;
+        break;
+      }
+    }
+    if (!found) {
+      ret = G_ERROR_NOT_FOUND;
+    }
+    json_decref(parsed_user);
+  } else {
+    ret = G_ERROR_PARAM;
+  }
+  return ret;
+}
+
+int user_module_delete(const char * username, void * cls) {
+  json_t * j_user;
+  size_t index;
+  int ret, found = 0;
   
   json_array_foreach((json_t *)cls, index, j_user) {
     if (0 == o_strcmp(username, json_string_value(json_object_get(j_user, "username")))) {
       json_array_remove((json_t *)cls, index);
-      j_return = json_pack("{si}", "result", G_OK);
+      ret = G_OK;
+      found = 1;
       break;
     }
   }
-  if (j_return == NULL) {
-    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+  if (!found) {
+    ret = G_ERROR_NOT_FOUND;
   }
-  return j_return;
+  return ret;
 }
 
-json_t * user_module_check_password(const char * username, const char * password, void * cls) {
-  json_t * j_return = NULL, * j_user = user_module_get(username, cls);
+int user_module_check_password(const char * username, const char * password, void * cls) {
+  json_t * j_user;
+  int ret;
+  char * str_user = user_module_get(username, cls);
+  j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
   
   if (check_result_value(j_user, G_OK)) {
     if (0 == o_strcmp(password, "password")) {
-      j_return = json_pack("{si}", "result", G_OK);
+      ret = G_OK;
     } else {
-      j_return = json_pack("{si}", "result", G_ERROR);
+      ret = G_ERROR;
     }
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    ret = G_ERROR_NOT_FOUND;
   }
   json_decref(j_user);
-  return j_return;
+  o_free(str_user);
+  return ret;
 }
 

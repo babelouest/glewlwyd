@@ -37,6 +37,8 @@
 #include <signal.h>
 #include <dirent.h>
 #include <dlfcn.h>
+#include <gnutls/gnutls.h>
+#include <crypt.h>
 
 #include "glewlwyd.h"
 
@@ -184,12 +186,14 @@ int main (int argc, char ** argv) {
   
   // Authentication
   ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_validate_user, (void*)config);
+#ifdef DEBUG
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_check_user, (void*)config); // TODO: Remove on release
+#endif
 
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/config/", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_ZERO, &callback_glewlwyd_options, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->static_file_config->url_prefix, "*", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_static_file, (void*)config->static_file_config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->static_file_config->url_prefix, "*", GLEWLWYD_CALLBACK_PRIORITY_FILE, &callback_static_file, (void*)config->static_file_config);
   ulfius_set_default_endpoint(config->instance, &callback_default, (void*)config);
 
   // Set default headers
@@ -248,13 +252,13 @@ void exit_server(struct config_elements ** config, int exit_value) {
     // Cleaning data
     o_free((*config)->instance);
     for (i=0; i<(*config)->user_module_instance_list_size; i++) {
-      user_module = get_user_module((*config), (*config)->user_module_instance_list[i]->uid);
+      user_module = get_user_module((*config), (*config)->user_module_instance_list[i]->name);
       if (user_module != NULL) {
         if (user_module->user_module_close((*config), (*config)->user_module_instance_list[i]->cls) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error closing module %hu - %s", (*config)->user_module_instance_list[i]->uid, (*config)->user_module_instance_list[i]->name);
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error closing module %s", (*config)->user_module_instance_list[i]->name);
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - can't find user_module for uid %hu", (*config)->user_module_instance_list[i]->uid);
+        y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - can't find user_module for %s", (*config)->user_module_instance_list[i]->name);
       }
       o_free((*config)->user_module_instance_list[i]->name);
       o_free((*config)->user_module_instance_list[i]);
@@ -262,7 +266,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->user_module_instance_list);
     for (i=0; i<(*config)->user_module_list_size; i++) {
       (*config)->user_module_list[i]->user_module_unload(*config);
-      o_free((*config)->user_module_list[i]->display_name);
+      o_free((*config)->user_module_list[i]->name);
       dlclose((*config)->user_module_list[i]->file_handle);
       o_free((*config)->user_module_list[i]);
     }
@@ -1143,8 +1147,7 @@ int init_user_module_list(struct config_elements * config) {
         if (file_handle != NULL) {
           cur_user_module = o_malloc(sizeof(struct _user_module));
           if (cur_user_module != NULL) {
-            cur_user_module->uid = 0;
-            cur_user_module->display_name = NULL;
+            cur_user_module->name = NULL;
             cur_user_module->file_handle = file_handle;
             *(void **) (&cur_user_module->user_module_load) = dlsym(file_handle, "user_module_load");
             *(void **) (&cur_user_module->user_module_unload) = dlsym(file_handle, "user_module_unload");
@@ -1167,10 +1170,10 @@ int init_user_module_list(struct config_elements * config) {
                 cur_user_module->user_module_update != NULL &&
                 cur_user_module->user_module_delete != NULL &&
                 cur_user_module->user_module_check_password != NULL) {
-              if (cur_user_module->user_module_load(config, &cur_user_module->uid, &cur_user_module->display_name) == G_OK) {
+              if (cur_user_module->user_module_load(config, &cur_user_module->name) == G_OK) {
                 config->user_module_list = realloc(config->user_module_list, (config->user_module_list_size + 1) * sizeof(struct _user_module *));
                 if (config->user_module_list != NULL) {
-                  y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s", file_path);
+                  y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s - %s", file_path, cur_user_module->name);
                   config->user_module_list[config->user_module_list_size] = cur_user_module;
                   config->user_module_list_size++;
                 } else {
@@ -1215,49 +1218,45 @@ int load_user_module_instance_list(struct config_elements * config) {
   struct _user_module_instance * cur_instance;
   struct _user_module * module;
   
-  j_query = json_pack("{sss[sssss]ss}",
+  j_query = json_pack("{sss[ssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "columns",
-                        "gumi_uid AS uid",
+                        "gumi_module AS module",
                         "gumi_name AS name",
                         "gumi_order AS order_by",
                         "gumi_parameters AS parameters",
-                        "gumi_enabled AS enabled",
                       "order_by",
                       "gumi_order");
   res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
     json_array_foreach(j_result, index, j_instance) {
-      if (json_integer_value(json_object_get(j_instance, "enabled"))) {
-        module = get_user_module(config, json_integer_value(json_object_get(j_instance, "uid")));
-        if (module != NULL) {
-          cur_instance = o_malloc(sizeof(struct _user_module_instance));
-          if (cur_instance != NULL) {
-            cur_instance->cls = NULL;
-            cur_instance->uid = json_integer_value(json_object_get(j_instance, "uid"));
-            cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
-            config->user_module_instance_list = o_realloc(config->user_module_instance_list, (config->user_module_instance_list_size + 1) * sizeof(struct _user_module_instance *));
-            if (config->user_module_instance_list != NULL) {
-              if (module->user_module_init(config, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
-                cur_instance->enabled = 1;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->display_name, json_string_value(json_object_get(j_instance, "name")));
-                cur_instance->enabled = 0;
-              }
-              config->user_module_instance_list[config->user_module_instance_list_size] = cur_instance;
-              config->user_module_instance_list_size++;
+      module = get_user_module(config, json_string_value(json_object_get(j_instance, "module")));
+      if (module != NULL) {
+        cur_instance = o_malloc(sizeof(struct _user_module_instance));
+        if (cur_instance != NULL) {
+          cur_instance->cls = NULL;
+          cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+          config->user_module_instance_list = o_realloc(config->user_module_instance_list, (config->user_module_instance_list_size + 1) * sizeof(struct _user_module_instance *));
+          if (config->user_module_instance_list != NULL) {
+            if (module->user_module_init(config, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
+              cur_instance->enabled = 1;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error reallocating resources for user_module_instance_list");
-              o_free(cur_instance->name);
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+              cur_instance->enabled = 0;
             }
+            config->user_module_instance_list[config->user_module_instance_list_size] = cur_instance;
+            config->user_module_instance_list_size++;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error allocating resources for cur_instance");
+            y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error reallocating resources for user_module_instance_list");
+            o_free(cur_instance->name);
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error module uid %"JSON_INTEGER_FORMAT" not found", json_integer_value(json_object_get(j_instance, "uid")));
+          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error allocating resources for cur_instance");
         }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error module  %s not found", json_string_value(json_object_get(j_instance, "module")));
       }
     }
     json_decref(j_result);
@@ -1269,22 +1268,22 @@ int load_user_module_instance_list(struct config_elements * config) {
   return ret;
 }
 
-struct _user_module * get_user_module(struct config_elements * config, uint16_t uid) {
+struct _user_module * get_user_module(struct config_elements * config, const char * name) {
   int i;
 
   for (i=0; i<config->user_module_list_size; i++) {
-    if (config->user_module_list[i]->uid == uid) {
+    if (0 == o_strcmp(config->user_module_list[i]->name, name)) {
       return config->user_module_list[i];
     }
   }
   return NULL;
 }
 
-struct _user_auth_scheme_module * get_user_auth_scheme(struct config_elements * config, uint16_t uid) {
+struct _user_auth_scheme_module * get_user_auth_scheme(struct config_elements * config, const char * name) {
   int i;
 
   for (i=0; i<config->user_auth_scheme_module_list_size; i++) {
-    if (config->user_auth_scheme_module_list[i]->uid == uid) {
+    if (0 == o_strcmp(config->user_auth_scheme_module_list[i]->name, name)) {
       return config->user_auth_scheme_module_list[i];
     }
   }

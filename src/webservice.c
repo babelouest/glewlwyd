@@ -113,6 +113,7 @@ int callback_glewlwyd_validate_user (const struct _u_request * request, struct _
   return U_CALLBACK_CONTINUE;
 }
 
+#ifdef DEBUG
 // TODO: Remove on release
 int callback_glewlwyd_check_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
@@ -133,3 +134,4 @@ int callback_glewlwyd_check_user (const struct _u_request * request, struct _u_r
   
   return U_CALLBACK_COMPLETE;
 }
+#endif

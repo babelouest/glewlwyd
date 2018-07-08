@@ -166,6 +166,13 @@ $ make
 $ sudo make install
 ```
 
+The available options for cmake are:
+- `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support for logging
+- `-DBUILD_TESTING=[on|off]` (default `off`): Compile unit tests
+- `-DBUILD_TEST_PROFILE=[on|off]` (default `off`): Compile profile unit tests
+- `-DBUILD_TEST_HTTP_AUTH=[on|off]` (default `off`): Compile HTTP Auth unit tests
+- `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
+
 ### Good ol' Makefile
 
 Download Glewlwyd and its dependencies hosted on github, compile and install.

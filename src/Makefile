@@ -22,8 +22,8 @@
 CC=gcc
 #CC=clang
 CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
-LIBS=-lc -ldl -lulfius -lyder -ljansson -lorcania -lhoel -ljwt -lconfig
-OBJECTS=glewlwyd.o glewlwyd_resource.o static_file_callback.o webservice.o session.o user.o
+LIBS=-lc -ldl -lulfius -lyder -ljansson -lorcania -lhoel -ljwt -lconfig -lgnutls -lcrypt
+OBJECTS=glewlwyd.o glewlwyd_resource.o static_file_callback.o webservice.o hash.o session.o user.o
 PREFIX=/usr/local
 CONFIG_FILE=../glewlwyd.conf
 
@@ -35,10 +35,12 @@ clean:
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 debug: glewlwyd
+	cd user && $(MAKE) debug
 
 release: ADDITIONALFLAGS=-O3
 
 release: glewlwyd
+	cd user && $(MAKE)
 
 %.o: %.c glewlwyd.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $<
