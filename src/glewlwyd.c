@@ -182,6 +182,16 @@ int main (int argc, char ** argv) {
     exit_server(&config, GLEWLWYD_ERROR);
   }
   
+  // Initialize user auth scheme modules
+  if (init_user_auth_scheme_module_list(config) != G_OK) {
+    fprintf(stderr, "Error initializing user auth scheme modules\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  if (load_user_auth_scheme_module_instance_list(config) != G_OK) {
+    fprintf(stderr, "Error loading user auth scheme modules instances\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  
   // At this point, we declare all API endpoints and configure 
   
   // Authentication
@@ -239,7 +249,6 @@ int main (int argc, char ** argv) {
  */
 void exit_server(struct config_elements ** config, int exit_value) {
   uint i;
-  struct _user_module * user_module;
   
   if (config != NULL && *config != NULL) {
     /* stop framework */
@@ -252,13 +261,8 @@ void exit_server(struct config_elements ** config, int exit_value) {
     // Cleaning data
     o_free((*config)->instance);
     for (i=0; i<(*config)->user_module_instance_list_size; i++) {
-      user_module = get_user_module((*config), (*config)->user_module_instance_list[i]->name);
-      if (user_module != NULL) {
-        if (user_module->user_module_close((*config), (*config)->user_module_instance_list[i]->cls) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error closing module %s", (*config)->user_module_instance_list[i]->name);
-        }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - can't find user_module for %s", (*config)->user_module_instance_list[i]->name);
+      if ((*config)->user_module_instance_list[i]->module->user_module_close((*config), (*config)->user_module_instance_list[i]->cls) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error closing module %s", (*config)->user_module_instance_list[i]->name);
       }
       o_free((*config)->user_module_instance_list[i]->name);
       o_free((*config)->user_module_instance_list[i]);
@@ -278,7 +282,17 @@ void exit_server(struct config_elements ** config, int exit_value) {
     }
     o_free((*config)->client_module_list);
     
+    for (i=0; i<(*config)->user_auth_scheme_module_instance_list_size; i++) {
+      if ((*config)->user_auth_scheme_module_instance_list[i]->module->user_auth_scheme_module_close((*config), (*config)->user_auth_scheme_module_instance_list[i]->cls) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error closing module %s", (*config)->user_auth_scheme_module_instance_list[i]->name);
+      }
+      o_free((*config)->user_auth_scheme_module_instance_list[i]->name);
+      o_free((*config)->user_auth_scheme_module_instance_list[i]);
+    }
+    o_free((*config)->user_auth_scheme_module_instance_list);
     for (i=0; i<(*config)->user_auth_scheme_module_list_size; i++) {
+      (*config)->user_auth_scheme_module_list[i]->user_auth_scheme_module_unload(*config);
+      o_free((*config)->user_auth_scheme_module_list[i]->name);
       dlclose((*config)->user_auth_scheme_module_list[i]->file_handle);
       o_free((*config)->user_auth_scheme_module_list[i]);
     }
@@ -1213,7 +1227,7 @@ int init_user_module_list(struct config_elements * config) {
 
 int load_user_module_instance_list(struct config_elements * config) {
   json_t * j_query, * j_result, * j_instance;
-  int res, ret;
+  int res, ret, i;
   size_t index;
   struct _user_module_instance * cur_instance;
   struct _user_module * module;
@@ -1232,12 +1246,18 @@ int load_user_module_instance_list(struct config_elements * config) {
   json_decref(j_query);
   if (res == H_OK) {
     json_array_foreach(j_result, index, j_instance) {
-      module = get_user_module(config, json_string_value(json_object_get(j_instance, "module")));
+      module = NULL;
+      for (i=0; i<config->user_module_list_size && module == NULL; i++) {
+        if (0 == o_strcmp(config->user_module_list[i]->name, json_string_value(json_object_get(j_instance, "module")))) {
+          module = config->user_module_list[i];
+        }
+      }
       if (module != NULL) {
         cur_instance = o_malloc(sizeof(struct _user_module_instance));
         if (cur_instance != NULL) {
           cur_instance->cls = NULL;
           cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+          cur_instance->module = module;
           config->user_module_instance_list = o_realloc(config->user_module_instance_list, (config->user_module_instance_list_size + 1) * sizeof(struct _user_module_instance *));
           if (config->user_module_instance_list != NULL) {
             if (module->user_module_init(config, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
@@ -1268,29 +1288,162 @@ int load_user_module_instance_list(struct config_elements * config) {
   return ret;
 }
 
-struct _user_module * get_user_module(struct config_elements * config, const char * name) {
+struct _user_module_instance * get_user_module_instance(struct config_elements * config, const char * name) {
   int i;
 
-  for (i=0; i<config->user_module_list_size; i++) {
-    if (0 == o_strcmp(config->user_module_list[i]->name, name)) {
-      return config->user_module_list[i];
+  for (i=0; i<config->user_module_instance_list_size; i++) {
+    if (0 == o_strcmp(config->user_module_instance_list[i]->name, name)) {
+      return config->user_module_instance_list[i];
     }
   }
   return NULL;
 }
 
-struct _user_auth_scheme_module * get_user_auth_scheme(struct config_elements * config, const char * name) {
-  int i;
-
-  for (i=0; i<config->user_auth_scheme_module_list_size; i++) {
-    if (0 == o_strcmp(config->user_auth_scheme_module_list[i]->name, name)) {
-      return config->user_auth_scheme_module_list[i];
+int init_user_auth_scheme_module_list(struct config_elements * config) {
+  int ret = G_OK;
+  struct _user_auth_scheme_module * cur_user_auth_scheme_module = NULL;
+  DIR * modules_directory;
+  struct dirent * in_file;
+  char * file_path;
+  void * file_handle;
+  
+  // read module_path and load modules
+  if (NULL == (modules_directory = opendir(config->user_auth_scheme_module_path))) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error reading libraries folder %s", config->user_auth_scheme_module_path);
+    ret = G_ERROR;
+  } else {
+    while ((in_file = readdir(modules_directory))) {
+      if (in_file->d_type == DT_REG) {
+        file_path = msprintf("%s/%s", config->user_auth_scheme_module_path, in_file->d_name);
+        
+        if (file_path == NULL) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error allocating resources for file_path");
+          ret = G_ERROR_MEMORY;
+        }
+        
+        file_handle = dlopen(file_path, RTLD_LAZY);
+        
+        if (file_handle != NULL) {
+          cur_user_auth_scheme_module = o_malloc(sizeof(struct _user_auth_scheme_module));
+          if (cur_user_auth_scheme_module != NULL) {
+            cur_user_auth_scheme_module->name = NULL;
+            cur_user_auth_scheme_module->file_handle = file_handle;
+            *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_load) = dlsym(file_handle, "user_auth_scheme_module_load");
+            *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_unload) = dlsym(file_handle, "user_auth_scheme_module_unload");
+            *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_init) = dlsym(file_handle, "user_auth_scheme_module_init");
+            *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_close) = dlsym(file_handle, "user_auth_scheme_module_close");
+            *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_validate) = dlsym(file_handle, "user_auth_scheme_module_validate");
+            
+            if (cur_user_auth_scheme_module->user_auth_scheme_module_load != NULL &&
+                cur_user_auth_scheme_module->user_auth_scheme_module_unload != NULL &&
+                cur_user_auth_scheme_module->user_auth_scheme_module_init != NULL &&
+                cur_user_auth_scheme_module->user_auth_scheme_module_close != NULL &&
+                cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL) {
+              if (cur_user_auth_scheme_module->user_auth_scheme_module_load(config, &cur_user_auth_scheme_module->name) == G_OK) {
+                config->user_auth_scheme_module_list = realloc(config->user_auth_scheme_module_list, (config->user_auth_scheme_module_list_size + 1) * sizeof(struct _user_auth_scheme_module *));
+                if (config->user_auth_scheme_module_list != NULL) {
+                  y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
+                  config->user_auth_scheme_module_list[config->user_auth_scheme_module_list_size] = cur_user_auth_scheme_module;
+                  config->user_auth_scheme_module_list_size++;
+                } else {
+                  cur_user_auth_scheme_module->user_auth_scheme_module_unload(config);
+                  dlclose(file_handle);
+                  o_free(cur_user_auth_scheme_module);
+                  y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error reallocating resources for user_auth_scheme_module_list");
+                  ret = G_ERROR_MEMORY;
+                }
+              } else {
+                dlclose(file_handle);
+                o_free(cur_user_auth_scheme_module);
+                y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error user_auth_scheme_module_load for module %s", file_path);
+                ret = G_ERROR_MEMORY;
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error module %s has not all required functions", file_path);
+              dlclose(file_handle);
+              o_free(cur_user_auth_scheme_module);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error allocating resources for cur_user_auth_scheme_module");
+            dlclose(file_handle);
+            ret = G_ERROR_MEMORY;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error opening module file %s, reason: %s", file_path, dlerror());
+        }
+        o_free(file_path);
+      }
     }
+    closedir(modules_directory);
   }
-  return NULL;
+  
+  return ret;
 }
 
-struct _user_auth_scheme_module_instance * get_user_auth_scheme_instance(struct config_elements * config, const char * name) {
+int load_user_auth_scheme_module_instance_list(struct config_elements * config) {
+  json_t * j_query, * j_result, * j_instance;
+  int res, ret, i;
+  size_t index;
+  struct _user_auth_scheme_module_instance * cur_instance;
+  struct _user_auth_scheme_module * module;
+  
+  j_query = json_pack("{sss[ssss]ss}",
+                      "table",
+                      GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
+                      "columns",
+                        "guasmi_module AS module",
+                        "guasmi_name AS name",
+                        "guasmi_order AS order_by",
+                        "guasmi_parameters AS parameters",
+                      "order_by",
+                      "guasmi_order");
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    json_array_foreach(j_result, index, j_instance) {
+      module = NULL;
+      for (i=0; i<config->user_auth_scheme_module_list_size && NULL == module; i++) {
+        if (0 == o_strcmp(config->user_auth_scheme_module_list[i]->name, json_string_value(json_object_get(j_instance, "module")))) {
+          module = config->user_auth_scheme_module_list[i];
+        }
+      }
+      if (module != NULL) {
+        cur_instance = o_malloc(sizeof(struct _user_auth_scheme_module_instance));
+        if (cur_instance != NULL) {
+          cur_instance->cls = NULL;
+          cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+          cur_instance->module = module;
+          config->user_auth_scheme_module_instance_list = o_realloc(config->user_auth_scheme_module_instance_list, (config->user_auth_scheme_module_instance_list_size + 1) * sizeof(struct _user_module_instance *));
+          if (config->user_auth_scheme_module_instance_list != NULL) {
+            if (module->user_auth_scheme_module_init(config, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
+              cur_instance->enabled = 1;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+              cur_instance->enabled = 0;
+            }
+            config->user_auth_scheme_module_instance_list[config->user_auth_scheme_module_instance_list_size] = cur_instance;
+            config->user_auth_scheme_module_instance_list_size++;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error reallocating resources for user_auth_scheme_module_instance_list");
+            o_free(cur_instance->name);
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error allocating resources for cur_instance");
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error module  %s not found", json_string_value(json_object_get(j_instance, "module")));
+      }
+    }
+    json_decref(j_result);
+    ret = G_OK;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error executing j_query");
+    ret = G_ERROR;
+  }
+  return ret;
+}
+
+struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * name) {
   int i;
 
   for (i=0; i<config->user_auth_scheme_module_instance_list_size; i++) {
@@ -1302,9 +1455,5 @@ struct _user_auth_scheme_module_instance * get_user_auth_scheme_instance(struct 
 }
 
 int init_client_module_list(struct config_elements * config) {
-  return G_ERROR;
-}
-
-int init_auth_scheme_module_list(struct config_elements * config) {
   return G_ERROR;
 }

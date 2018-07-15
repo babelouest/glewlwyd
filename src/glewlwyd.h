@@ -91,6 +91,7 @@
 
 // Data tables
 #define GLEWLWYD_TABLE_USER_MODULE_INSTANCE "g_user_module_instance"
+#define GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE "g_user_auth_scheme_module_instance"
 #define GLEWLWYD_TABLE_USER_SESSION "g_user_session"
 #define GLEWLWYD_TABLE_USER_SESSION_SCHEME "g_user_session_scheme"
 
@@ -132,17 +133,19 @@ struct _user_module {
 };
 
 struct _user_module_instance {
-  char    * name;
-  void    * cls;
-  short int enabled;
+  char                * name;
+  struct _user_module * module;
+  void                * cls;
+  short int             enabled;
 };
 
 struct _client_module {
   void      * file_handle;
   char      * name;
   int      (* client_module_load)(struct config_elements * config, char ** name);
-  int      (* client_module_init)(struct config_elements * config, void ** cls);
-  int      (* client_module_clean)(struct config_elements * config, void * cls);
+  int      (* client_module_unload)(struct config_elements * config);
+  int      (* client_module_init)(struct config_elements * config, const char * parameters, void ** cls);
+  int      (* client_module_close)(struct config_elements * config, void * cls);
   char **  (* client_module_get_list)(const char * pattern, uint limit, uint offset, uint * total, void * cls);
   char *   (* client_module_get)(const char * clientname, void * cls);
   int      (* client_module_add)(const char * client, void * cls);
@@ -151,24 +154,27 @@ struct _client_module {
 };
 
 struct _client_module_instance {
-  char    * name;
-  void    * cls;
-  short int enabled;
+  char                  * name;
+  struct _client_module * module;
+  void                  * cls;
+  short int               enabled;
 };
 
 struct _user_auth_scheme_module {
   void      * file_handle;
   char      * name;
   int      (* user_auth_scheme_module_load)(struct config_elements * config, char ** name);
-  int      (* user_auth_scheme_module_init)(struct config_elements * config, void ** cls);
-  int      (* user_auth_scheme_module_clean)(struct config_elements * config, void * cls);
+  int      (* user_auth_scheme_module_unload)(struct config_elements * config);
+  int      (* user_auth_scheme_module_init)(struct config_elements * config, const char * parameters, void ** cls);
+  int      (* user_auth_scheme_module_close)(struct config_elements * config, void * cls);
   int      (* user_auth_scheme_module_validate)(const char * username, const char * scheme_data, void * cls);
 };
 
 struct _user_auth_scheme_module_instance {
-  char    * name;
-  void    * cls;
-  short int enabled;
+  char                            * name;
+  struct _user_auth_scheme_module * module;
+  void                            * cls;
+  short int                         enabled;
 };
 
 struct config_elements {
@@ -227,18 +233,19 @@ char * get_file_content(const char * file_path);
 char * generate_hash(struct config_elements * config, const char * digest, const char * password);
 int    load_user_module_instance_list(struct config_elements * config);
 int    init_user_module_list(struct config_elements * config);
+int    load_user_auth_scheme_module_instance_list(struct config_elements * config);
 int    init_client_module_list(struct config_elements * config);
-int    init_auth_scheme_module_list(struct config_elements * config);
-struct _user_module * get_user_module(struct config_elements * config, const char * name);
-struct _user_auth_scheme_module * get_user_auth_scheme(struct config_elements * config, const char * name);
-struct _user_auth_scheme_module_instance * get_user_auth_scheme_instance(struct config_elements * config, const char * name);
+int    init_user_auth_scheme_module_list(struct config_elements * config);
+struct _user_module_instance * get_user_module_instance(struct config_elements * config, const char * name);
+struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * name);
 
 // Validate user login/password credentials
 json_t * auth_check_user_credentials_scope(struct config_elements * config, const char * username, const char * password, const char * scope_list);
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password);
+json_t * auth_check_user_scheme(struct config_elements * config, const char * scheme, const char * username, json_t * scheme_parameters);
 
 // Session
-int update_session(struct config_elements * config, const char * session_uid, const char * username, char * scheme_name, uint expiration);
+int update_session(struct config_elements * config, const char * session_uid, const char * username, const char * scheme_name, uint expiration);
 json_t * get_session_for_username(struct config_elements * config, const char * session_uid, const char * username);
 json_t * get_session(struct config_elements * config, const char * session_uid);
 

@@ -112,6 +112,7 @@ json_t * get_session_for_username(struct config_elements * config, const char * 
       } else {
         j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       }
+      json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_available_session_from_username - Error executing j_query");
       j_return = json_pack("{si}", "result", G_ERROR_DB);
@@ -184,13 +185,12 @@ json_t * get_session(struct config_elements * config, const char * session_uid) 
   return j_return;
 }
 
-int update_session(struct config_elements * config, const char * session_uid, const char * username, char * scheme_name, uint expiration) {
+int update_session(struct config_elements * config, const char * session_uid, const char * username, const char * scheme_name, uint expiration) {
   json_t * j_query, * j_element, * j_session = get_session_for_username(config, session_uid, username), * j_last_id;
   int res, ret;
   size_t index;
   time_t now;
   char * expiration_clause;
-  char * query = NULL;
   char * session_uid_hash = generate_hash(config, config->hash_algorithm, session_uid);
   
   time(&now);
@@ -209,7 +209,7 @@ int update_session(struct config_elements * config, const char * session_uid, co
                                 scheme_name,
                                 "gus_id",
                                 json_object_get(json_object_get(j_session, "session"), "gus_id"));
-          res = h_update(config->conn, j_query, &query);
+          res = h_update(config->conn, j_query, NULL);
           json_decref(j_query);
           if (res != H_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "update_session - Error executing j_query (1)");
@@ -229,7 +229,7 @@ int update_session(struct config_elements * config, const char * session_uid, co
                               "raw",
                               expiration_clause);
       o_free(expiration_clause);
-      res = h_insert(config->conn, j_query, &query);
+      res = h_insert(config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
         ret = G_OK;
@@ -238,7 +238,6 @@ int update_session(struct config_elements * config, const char * session_uid, co
         ret = G_ERROR_DB;
       }
     } else {
-      char * query;
       expiration_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE)):msprintf("%u", (now + expiration));
       j_query = json_pack("{sss{sssss{ss}}}",
                           "table",
@@ -252,7 +251,7 @@ int update_session(struct config_elements * config, const char * session_uid, co
                               "raw",
                               expiration_clause);
       o_free(expiration_clause);
-      res = h_insert(config->conn, j_query, &query);
+      res = h_insert(config->conn, j_query, NULL);
       
       json_decref(j_query);
       if (res == H_OK) {
@@ -294,5 +293,6 @@ int update_session(struct config_elements * config, const char * session_uid, co
     y_log_message(Y_LOG_LEVEL_ERROR, "update_session - Error generate_hash");
     ret = G_ERROR;
   }
+  json_decref(j_session);
   return ret;
 }

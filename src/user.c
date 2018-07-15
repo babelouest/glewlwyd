@@ -32,15 +32,13 @@ json_t * auth_check_user_credentials_scope(struct config_elements * config, cons
 }
 
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password) {
-  struct _user_module * user_module;
   int i, res;
   json_t * j_return = NULL;
   
   for (i=0; i<config->user_module_instance_list_size && j_return == NULL; i++) {
     if (config->user_module_instance_list[i] != NULL) {
-      user_module = get_user_module(config, config->user_module_instance_list[i]->name);
-      if (user_module != NULL && config->user_module_instance_list[i]->enabled) {
-        res = user_module->user_module_check_password(username, password, config->user_module_instance_list[i]->cls);
+      if (config->user_module_instance_list[i]->enabled) {
+        res = config->user_module_instance_list[i]->module->user_module_check_password(username, password, config->user_module_instance_list[i]->cls);
         if (res == G_OK) {
           j_return = json_pack("{si}", "result", G_OK);
         } else if (res == G_ERROR_UNAUTHORIZED) {
@@ -48,8 +46,6 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
         } else if (res != G_ERROR_NOT_FOUND) {
           y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error, user_module_check_password for module '%s', skip", config->user_module_instance_list[i]->name);
         }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error, user_module %s not found", config->user_module_instance_list[i]->name);
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error, user_module_instance %d is NULL", i);
@@ -58,5 +54,30 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
   if (j_return == NULL) {
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
+  return j_return;
+}
+
+json_t * auth_check_user_scheme(struct config_elements * config, const char * scheme_name, const char * username, json_t * scheme_parameters) {
+  struct _user_auth_scheme_module_instance * scheme_instance;
+  json_t * j_return;
+  char * str_scheme_parameters = json_dumps(scheme_parameters, JSON_COMPACT);
+  int res;
+  
+  if (NULL != str_scheme_parameters) {
+    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+    if (scheme_instance != NULL) {
+      res = scheme_instance->module->user_auth_scheme_module_validate(username, str_scheme_parameters, scheme_instance->cls);
+      if (res == G_OK || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM || res == G_ERROR_NOT_FOUND) {
+        j_return = json_pack("{si}", "result", res);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_scheme - Error unrecognize return value for user_auth_scheme_module_validate: %d", res);
+      }
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    }
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  }
+  o_free(str_scheme_parameters);
   return j_return;
 }
