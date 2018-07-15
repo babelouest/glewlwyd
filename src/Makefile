@@ -36,6 +36,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 debug: glewlwyd
 	cd user && $(MAKE) debug
+	cd scheme && $(MAKE) debug
 
 release: ADDITIONALFLAGS=-O3
 

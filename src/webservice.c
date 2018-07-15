@@ -96,8 +96,26 @@ int callback_glewlwyd_validate_user (const struct _u_request * request, struct _
             ulfius_set_string_body_response(response, 400, "password is mandatory");
           }
         } else {
-          // Look for another scheme
-          response->status = 401; // TODO
+          j_result = auth_check_user_scheme(config, json_string_value(json_object_get(j_param, "scheme")), json_string_value(json_object_get(j_param, "username")), j_param);
+          if (check_result_value(j_result, G_ERROR_PARAM)) {
+            ulfius_set_string_body_response(response, 400, "bad scheme parameters");
+          } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
+            response->status = 401;
+          } else if (check_result_value(j_result, G_OK)) {
+            if ((session_uid = (char *)u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY)) == NULL) {
+              session_uid = rand_string(session_str_array, 128);
+            }
+            if (update_session(config, session_uid, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme")), GLEWLWYD_DEFAULT_SESSION_EXPIRATION_PASSWORD) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_validate_user - Error update_session");
+              response->status = 500;
+            } else {
+              ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, NULL, 0, 0);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_validate_user - Error auth_check_user_scheme");
+            response->status = 500;
+          }
+          json_decref(j_result);
         }
       } else {
         ulfius_set_string_body_response(response, 400, "scheme is mandatory");
