@@ -31,17 +31,23 @@ all: release
 
 clean:
 	rm -f *.o glewlwyd valgrind.txt
+	cd user && $(MAKE) clean
+	cd client && $(MAKE) clean
+	cd scheme && $(MAKE) clean
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 debug: glewlwyd
 	cd user && $(MAKE) debug
+	cd client && $(MAKE) debug
 	cd scheme && $(MAKE) debug
 
 release: ADDITIONALFLAGS=-O3
 
 release: glewlwyd
 	cd user && $(MAKE)
+	cd client && $(MAKE)
+	cd scheme && $(MAKE)
 
 %.o: %.c glewlwyd.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $<

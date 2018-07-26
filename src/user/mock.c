@@ -21,10 +21,11 @@
 #include <orcania.h>
 #include "../glewlwyd.h"
 
-int user_module_load(struct config_elements * config, char ** name) {
+int user_module_load(struct config_elements * config, char ** name, char ** parameters) {
   int ret = G_OK;
-  if (name != NULL) {
+  if (name != NULL && parameters != NULL) {
     *name = o_strdup("mock");
+    *parameters = o_strdup("{\"mock-param-string\":{\"type\":\"string\",\"mandatory\":false},\"mock-param-number\":{\"type\":\"number\",\"mandatory\":true},\"mock-param-boolean\":{\"type\":\"boolean\",\"mandatory\":true},\"mock-param-list\":{\"type\":\"list\",\"values\":[\"elt1\",\"elt2\",\"elt3\"],\"mandatory\":true}}");
   } else {
     ret = G_ERROR;
   }
@@ -193,3 +194,6 @@ int user_module_check_password(const char * username, const char * password, voi
   return ret;
 }
 
+int user_module_update_password(const char * username, const char * new_password, void * cls) {
+  return G_OK;
+}
