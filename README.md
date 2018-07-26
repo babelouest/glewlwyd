@@ -2,9 +2,13 @@
 
 [![Build Status](https://travis-ci.com/babelouest/glewlwyd.svg?branch=master)](https://travis-ci.com/babelouest/glewlwyd)
 
-Single Sign On [Oauth 2](https://oauth.net/2/) authentication server providing Json Web Tokens for identification.
+Single Sign On [Oauth 2](https://oauth.net/2/) authentication server.
 
-Lightweight, fast and easy to install on small systems. Requires a MySql or SQLite3 database. Handles LDAP or database for users backend.
+This is the development branch for the next release 2.0. The next release is currently under development.
+
+See issue #35 (Glewlwyd 2.0 Roadmap) for the general architecture and design.
+
+A beta release will come out when it's ready, any help is welcome!
 
 The API backend is fully written in C language, it's based on [Ulfius](https://github.com/babelouest/ulfius) HTTP framework, [Hoel](https://github.com/babelouest/hoel) database framework and [Libjwt](https://github.com/benmcollins/libjwt.git) JSON Web Tokens library.
 
