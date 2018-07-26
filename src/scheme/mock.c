@@ -21,11 +21,12 @@
 #include <orcania.h>
 #include "../glewlwyd.h"
 
-int user_auth_scheme_module_load(struct config_elements * config, char ** name) {
+int user_auth_scheme_module_load(struct config_elements * config, char ** name, char ** parameters) {
   int ret = G_OK;
   
-  if (name != NULL) {
+  if (name != NULL && parameters != NULL) {
     *name = o_strdup("mock");
+    *parameters = o_strdup("{\"mock-param-string\":{\"type\":\"string\",\"mandatory\":true},\"mock-param-number\":{\"type\":\"number\",\"mandatory\":false},\"mock-param-boolean\":{\"type\":\"boolean\",\"mandatory\":true},\"mock-param-list\":{\"type\":\"list\",\"values\":[\"elt1\",\"elt2\",\"elt3\"],\"mandatory\":true}}");
   } else {
     ret = G_ERROR_PARAM;
   }
