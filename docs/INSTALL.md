@@ -17,7 +17,12 @@
    * [Install as a service](#install-as-a-service)
 6. [Run Glewlwyd](#run-glewlwyd)
 7. [Front-end application](#front-end-application)
+   * [Login, Grant access and reset password pages](#login-grant-access-and-reset-password-pages)
+   * [Glewlwyd manager](#glewlwyd-manager)
+   * [Glewlwyd user profile](#glewlwyd-user-profile)
 8. [Client configuration](#client-configuration)
+   * [Client settings in Glewlwyd](#client-settings-in-glewlwyd)
+   * [Glewlwyd endpoints for the client](#glewlwyd-endpoints-for-the-client)
 
 ### Distribution packages
 
@@ -609,13 +614,45 @@ Refresh and session tokens are also JWTs, but their payload have slightly differ
 
 ## Front-end application
 
-The front-end management application is a tiny single page app (SPA) written in ReactJS/JQuery, responsive as much as I can, not the best design in the world, but useful anyway.
-
 All front-end pages have a minimal design, feel free to modify them for your own need, or create your own application.
+
+All the front-end files are located in the webapp/ directory.
+
+### Login, Grant access and reset password pages
+
+These pages are used when a user requires some access to Glewlwyd. They are simple html pages with a small JavaScript/JQuery application in it to provide the expected behavior, and vanilla bootstrap 3 for the visual part. Fell free to update them to fit your needs or to adapt the front-end to your identity.
+
+#### Login Page
+
+![Login Page](https://raw.githubusercontent.com/babelouest/glewlwyd/master/screenshots/sign_in.png)
+![Logged In](https://raw.githubusercontent.com/babelouest/glewlwyd/master/screenshots/signed_in.png)
+
+This page is used when the user needs to log-in to Glewlwyd with its login/password and/or to redirect to a client with the access to the resource.
+
+The source code is available at [webapp/login.html](https://github.com/babelouest/glewlwyd/blob/master/webapp/login.html)
+
+#### Grant Page
+
+![Grant Page](https://raw.githubusercontent.com/babelouest/glewlwyd/master/screenshots/grant.png)
+
+This page is used when the user makes a first connection to the client with the specified scopes. After the user grants access, this page won't be displayed anymore on the next connections.
+
+The source code is available at [webapp/grant.html](https://github.com/babelouest/glewlwyd/blob/master/webapp/grant.html)
+
+#### Reset password
+
+![Forget Password](https://raw.githubusercontent.com/babelouest/glewlwyd/master/screenshots/password_forgot.png)
+![Password Reset](https://raw.githubusercontent.com/babelouest/glewlwyd/master/screenshots/password_reset.png)
+
+This page is used when the user has forgotten his/her password and requires a new one. This functionality [can be disabled](#reset-password).
+
+The source code is available at [webapp/reset.html](https://github.com/babelouest/glewlwyd/blob/master/webapp/reset.html)
 
 ### Glewlwyd manager
 
 Glewlwyd comes with a small front-end that uses the back-end API to manage profile, users, clients, scopes, resources and authorization types.
+
+The front-end management application is a tiny single page app (SPA) written in ReactJS/JQuery, responsive as much as I can, not the best design in the world, but useful anyway.
 
 #### Configuration
 
@@ -639,11 +676,12 @@ UPDATE g_redirect_uri set gru_uri='../admin/index.html' where gc_id=(SELECT gc_i
 
 To connect to the management application, you must use a user that have `g_admin` scope.
 
-### tests/test-token.html
+### Glewlwyd user profile
 
-This page is here only for oauth2 tests and behaviour validation. If you want to use it, you need to update the `glewlwyd_api` value and all parameters provided, such as `redirect_uri`, `scope` and `client`.
+![User Profile](https://raw.githubusercontent.com/babelouest/glewlwyd/master/screenshots/profile.png)
+![Update password](https://raw.githubusercontent.com/babelouest/glewlwyd/master/screenshots/profile_upate_password.png)
 
-Beware, all password inputs are of type `text`, so a typed password is not hidden from a hidden third-party dangerous predator.
+Glewlwyd comes with a [profile manager](https://github.com/babelouest/glewlwyd/blob/master/webapp/profile.html) for the connected users, where they will be able to change their display name or their password (if possible), check the access granted on their name and the scopes they are allowed to use, and revoke sessions or refresh tokens.
 
 ## Client configuration
 
@@ -663,7 +701,7 @@ The description fields are:
 - Backend: LDAP or Database, where your client data will be stored
 - Client Id: Mandatory, the client Id that will be required by Glewlwyd to identify your client, example `angharad`, `hutch_123xyz`
 - Name: Mandatory, must be unique, name of the client, for Glewlwyd use only
-- Description: Mandatory, description of the client, for Glewlwyd use only
+- Description: Optional, description of the client, for Glewlwyd use only
 - Confidential: Check this if your want your client to be confidential, see [rfc6749 Client Types](https://tools.ietf.org/html/rfc6749#section-2.1)
 - Password/Confirm password: Mandatory if the client is confidential
 - Authorization types: Mandatory to be able to connect to Glewlwyd with this client, usual values are `code` and `token`
