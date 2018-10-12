@@ -22,9 +22,9 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 # library info
 
-set(PROGRAM_VERSION_MAJOR "1")
-set(PROGRAM_VERSION_MINOR "4")
-set(PROGRAM_VERSION_PATCH "9")
+set(PROGRAM_VERSION_MAJOR "2")
+set(PROGRAM_VERSION_MINOR "0")
+set(PROGRAM_VERSION_PATCH "0")
 set(PROJECT_DESCRIPTION "OAuth2 authentication server providing Json Web Tokens")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_DOWNLOAD "1.2.9")
