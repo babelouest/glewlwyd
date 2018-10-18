@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 1.4.7
+
+- Adapt Glewlwyd build to the new version of the underlying libraries: orcania, yder, hoel, ulfius (thanks ythogtha!)
+
 ## 1.4.6
 
 - Fix client confidential bug in code authorization flow, thanks to Bisco
