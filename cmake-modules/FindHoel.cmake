@@ -31,7 +31,7 @@
 #=============================================================================
 
 find_package(PkgConfig QUIET)
-pkg_check_modules(PC_HOEL QUIET hoel)
+pkg_check_modules(PC_HOEL QUIET libhoel)
 
 find_path(HOEL_INCLUDE_DIR
         NAMES hoel.h
@@ -46,7 +46,7 @@ if (PC_HOEL_VERSION)
     set(HOEL_VERSION_STRING ${PC_HOEL_VERSION})
 elseif (HOEL_INCLUDE_DIR AND EXISTS "${HOEL_INCLUDE_DIR}/hoel.h")
     set(regex_hoel_version "^#define[ \t]+HOEL_VERSION[ \t]+([^\"]+).*")
-    file(STRINGS "${HOEL_INCLUDE_DIR}/hoel.h" hoel_version REGEX "${regex_hoel_version}")
+    file(STRINGS "${HOEL_INCLUDE_DIR}/hoel-cfg.h" hoel_version REGEX "${regex_hoel_version}")
     string(REGEX REPLACE "${regex_hoel_version}" "\\1" HOEL_VERSION_STRING "${hoel_version}")
     unset(regex_hoel_version)
     unset(hoel_version)

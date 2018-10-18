@@ -31,7 +31,7 @@
 #=============================================================================
 
 find_package(PkgConfig QUIET)
-pkg_check_modules(PC_ULFIUS QUIET ulfius)
+pkg_check_modules(PC_ULFIUS QUIET libulfius)
 
 find_path(ULFIUS_INCLUDE_DIR
         NAMES ulfius.h
@@ -46,7 +46,7 @@ if (PC_ULFIUS_VERSION)
     set(ULFIUS_VERSION_STRING ${PC_ULFIUS_VERSION})
 elseif (ULFIUS_INCLUDE_DIR AND EXISTS "${ULFIUS_INCLUDE_DIR}/ulfius.h")
     set(regex_ulfius_version "^#define[ \t]+ULFIUS_VERSION[ \t]+([^\"]+).*")
-    file(STRINGS "${ULFIUS_INCLUDE_DIR}/ulfius.h" ulfius_version REGEX "${regex_ulfius_version}")
+    file(STRINGS "${ULFIUS_INCLUDE_DIR}/ulfius-cfg.h" ulfius_version REGEX "${regex_ulfius_version}")
     string(REGEX REPLACE "${regex_ulfius_version}" "\\1" ULFIUS_VERSION_STRING "${ulfius_version}")
     unset(regex_ulfius_version)
     unset(ulfius_version)
