@@ -29,7 +29,7 @@
 #ifndef __GLEWLWYD_H_
 #define __GLEWLWYD_H_
 
-#define _GLEWLWYD_VERSION_ "1.4.6"
+#define _GLEWLWYD_VERSION_ "1.4.7"
 
 #include <jansson.h>
 #include <jwt.h>
@@ -47,12 +47,9 @@
 #include <ldap.h>
 
 /** Angharad libraries **/
-#define U_DISABLE_WEBSOCKET
 #include <ulfius.h>
 #include <yder.h>
 
-#define _HOEL_MARIADB
-#define _HOEL_SQLITE
 #include <hoel.h>
 
 #if MHD_VERSION < 0x00093800
