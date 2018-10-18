@@ -53,4 +53,4 @@ test-debug: debug
 	./glewlwyd --config-file=$(CONFIG_FILE)
 
 install: glewlwyd
-	cp -f glewlwyd $(PREFIX)/bin
+	install -f glewlwyd $(PREFIX)/bin
