@@ -3,6 +3,7 @@
 ## 1.4.7
 
 - Adapt Glewlwyd build to the new version of the underlying libraries: orcania, yder, hoel, ulfius (thanks ythogtha!)
+- Improve doc about front-end pages, as mentionned in #46, and fix libjwt install doc
 
 ## 1.4.6
 
