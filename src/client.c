@@ -689,11 +689,17 @@ json_t * get_client_list_ldap(struct config_elements * config, const char * sear
       }
       
       cookie = ber_memalloc( sizeof( struct berval ) );
-      *cookie = new_cookie;
-      if (cookie && cookie->bv_val != NULL && (strlen(cookie->bv_val) > 0)) {
-        more_page = 1;
+      if (cookie != NULL) {
+        *cookie = new_cookie;
+        if (cookie->bv_val != NULL && (strlen(cookie->bv_val) > 0)) {
+          more_page = 1;
+        } else {
+          more_page = 0;
+        }
       } else {
-        more_page = 0;
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error ber_malloc returned NULL");
+        j_result = json_pack("{si}", "result", G_ERROR);
+        break;
       }
       
       if (returned_controls != NULL)
