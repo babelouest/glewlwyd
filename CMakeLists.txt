@@ -71,9 +71,9 @@ endif ()
 
 include(FindMHD)
 set(MHD_MIN_VERSION 0.9.38)
-find_package(MHD ${LIBS} ${MHD_MIN_VERSION} REQUIRED)
+find_package(MHD ${MHD_MIN_VERSION} REQUIRED)
 if (MHD_FOUND)
-    set(LIBS ${MHD_LIBRARIES})
+    set(LIBS ${LIBS} ${MHD_LIBRARIES})
     include_directories(${MHD_INCLUDE_DIRS})
 endif ()
 
