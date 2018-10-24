@@ -7,7 +7,7 @@ language: c
 
 addons:
   apt:
-    packages: [ autoconf, automake, libtool, libsqlite3-dev, libmysqlclient-dev, libgnutls-dev, check, libsubunit-dev, cppcheck ]
+    packages: [ autoconf, automake, libtool, libsqlite3-dev, libmysqlclient-dev, libgnutls-dev, libconfig-dev, libssl-dev, libmicrohttpd-dev, uuid-dev, libldap2-dev, check, libsubunit-dev, cppcheck ]
 
 matrix:
   include:
@@ -31,5 +31,5 @@ install:
 
 script:
   - mkdir build && cd build
-  - cmake -DWITH_JOURNALD=off ..
+  - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on ..
   - make
