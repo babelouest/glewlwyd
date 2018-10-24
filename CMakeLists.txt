@@ -29,8 +29,8 @@ set(PROJECT_DESCRIPTION "OAuth2 authentication server providing Json Web Tokens"
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_DOWNLOAD "1.2.7")
 set(YDER_VERSION_DOWNLOAD "1.4.3")
-set(ULFIUS_VERSION_DOWNLOAD "2.4.3")
-set(HOEL_VERSION_DOWNLOAD "1.4.5")
+set(ULFIUS_VERSION_DOWNLOAD "2.4.4")
+set(HOEL_VERSION_DOWNLOAD "1.4.6")
 
 include(GNUInstallDirs)
 include(CheckSymbolExists)
@@ -117,8 +117,11 @@ add_executable(glewlwyd ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.h
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/password.c
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.c )
 
-set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false")
-set(SEARCH_YDER OFF CACHE BOOL "Force to false")
+set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during yder search and download
+set(SEARCH_ORCANIA_U OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during ulfius search and download
+set(SEARCH_ORCANIA_H OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during hoel search and download
+set(SEARCH_YDER OFF CACHE BOOL "Force to false") # Avoid to search and download yder during ulfius and hoel search and download
+
 set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
 include(FindOrcania)
 find_package(Orcania 1.1 QUIET) # try to find orcania
@@ -130,7 +133,8 @@ if (NOT ORCANIA_FOUND)
     add_subdirectory(${orcania_SOURCE_DIR} ${orcania_BINARY_DIR})
     include_directories(${orcania_SOURCE_DIR}/include)
     add_dependencies(glewlwyd orcania)
-		set(ORCANIA_LIBRARIES orcania)
+    set(ORCANIA_LIBRARIES orcania)
+    include_directories(${orcania_BINARY_DIR})
 endif ()
 set(LIBS ${LIBS} ${ORCANIA_LIBRARIES})
 
@@ -147,7 +151,8 @@ if (NOT YDER_FOUND)
     include_directories(${yder_SOURCE_DIR}/include)
     include_directories(${orcania_SOURCE_DIR}/include)
     add_dependencies(glewlwyd yder)
-		set(YDER_LIBRARIES yder)
+    set(YDER_LIBRARIES yder)
+    include_directories(${yder_BINARY_DIR})
 endif ()
 set(LIBS ${LIBS} ${YDER_LIBRARIES})
 
@@ -167,7 +172,8 @@ if (NOT ULFIUS_FOUND)
     include_directories(${orcania_SOURCE_DIR}/include)
     include_directories(${ulfius_SOURCE_DIR}/include)
     add_dependencies(glewlwyd ulfius)
-		set(ULFIUS_LIBRARIES ulfius)
+    set(ULFIUS_LIBRARIES ulfius)
+    include_directories(${ulfius_BINARY_DIR})
 endif ()
 set(LIBS ${LIBS} ${ULFIUS_LIBRARIES})
 
@@ -185,7 +191,8 @@ if (NOT HOEL_FOUND)
     add_subdirectory(${hoel_SOURCE_DIR} ${hoel_BINARY_DIR})
     include_directories(${hoel_SOURCE_DIR}/include)
     add_dependencies(glewlwyd hoel)
-		set(HOEL_LIBRARIES hoel)
+    set(HOEL_LIBRARIES hoel)
+    include_directories(${hoel_BINARY_DIR})
 endif ()
 set(LIBS ${LIBS} ${HOEL_LIBRARIES})
 
