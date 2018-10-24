@@ -117,6 +117,8 @@ add_executable(glewlwyd ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.h
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/password.c
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.c )
 
+set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false")
+set(SEARCH_YDER OFF CACHE BOOL "Force to false")
 set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
 include(FindOrcania)
 find_package(Orcania 1.1 QUIET) # try to find orcania
