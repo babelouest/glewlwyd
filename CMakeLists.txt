@@ -191,11 +191,11 @@ target_link_libraries(glewlwyd ${LIBS})
 
 # tests
 
-option(BUILD_TESTING "Build the testing tree." OFF)
-option(BUILD_TEST_PROFILE "Build test glewlwyd_update_user_profile" OFF)
-option(BUILD_TEST_HTTP_AUTH "Build test glewlwyd_http_auth only" OFF)
+option(BUILD_GLEWLWYD_TESTING "Build the testing tree." OFF)
+option(BUILD_GLEWLWYD_TEST_PROFILE "Build test glewlwyd_update_user_profile" OFF)
+option(BUILD_GLEWLWYD_TEST_HTTP_AUTH "Build test glewlwyd_http_auth only" OFF)
 
-if (BUILD_TESTING)
+if (BUILD_GLEWLWYD_TESTING)
     include(FindCheck)
     find_package(Check REQUIRED)
     if (CHECK_FOUND)
@@ -211,12 +211,12 @@ if (BUILD_TESTING)
         find_package(Threads REQUIRED)
         set(LIBS ${LIBS} ${SUBUNIT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} m rt)
 
-        if (BUILD_TEST_HTTP_AUTH)
+        if (BUILD_GLEWLWYD_TEST_HTTP_AUTH)
             set(TESTS glewlwyd_http_auth)
         else ()
             set(TESTS glewlwyd_admin_authorization glewlwyd_oauth2_code_client_confidential glewlwyd_user_session_admin glewlwyd_crud_client glewlwyd_oauth2_implicit glewlwyd_user_session_user glewlwyd_crud_resource glewlwyd_oauth2_refresh_token glewlwyd_crud_scope glewlwyd_oauth2_refresh_token_client_confidential glewlwyd_crud_user glewlwyd_oauth2_resource_owner_pwd_cred glewlwyd_delete_token glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential glewlwyd_oauth2_auth_code glewlwyd_oauth2_client_cred glewlwyd_user_refresh_token_admin glewlwyd_oauth2_code glewlwyd_user_refresh_token_user)
             
-            if (BUILD_TEST_PROFILE)
+            if (BUILD_TEST_GLEWLWYD_PROFILE)
                 set(TESTS ${TESTS} glewlwyd_update_user_profile)
             endif ()
         endif ()
