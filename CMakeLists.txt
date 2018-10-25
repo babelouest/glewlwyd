@@ -225,10 +225,11 @@ if (BUILD_GLEWLWYD_TESTING)
 
         enable_testing()
 
+        set(CMAKE_CTEST_COMMAND ctest -V)
+
         if (NOT BUILD_GLEWLWYD_TEST_LDAP)
             add_compile_definitions(WITHOUT_LDAP)
         endif ()
-        set(CMAKE_CTEST_COMMAND ctest -V)
 
         set(TST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
         set(LIBS ${LIBS} ${CHECK_LIBRARIES} ulfius yder orcania)
@@ -253,7 +254,7 @@ if (BUILD_GLEWLWYD_TESTING)
         foreach (t ${TESTS})
             add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
             target_include_directories(${t} PUBLIC ${TST_DIR})
-            add_compile_definitions(
+            target_link_libraries(${t} PUBLIC ${LIBS})
             add_test(NAME ${t}
                     WORKING_DIRECTORY ${TST_DIR}
                     COMMAND ${t})
