@@ -7,7 +7,7 @@ language: c
 
 addons:
   apt:
-    packages: [ autoconf, automake, libtool, libsqlite3-dev, libmysqlclient-dev, libgnutls-dev, libconfig-dev, libssl-dev, uuid-dev, libldap2-dev, check, libsubunit-dev, cppcheck ]
+    packages: [ autoconf, automake, libtool, sqlite3, libsqlite3-dev, libmysqlclient-dev, libgnutls-dev, libconfig-dev, libssl-dev, uuid-dev, libldap2-dev, check, libsubunit-dev, cppcheck ]
 
 matrix:
   include:
@@ -32,6 +32,7 @@ install:
 - tar xzf libjwt-1.9.0.tar.gz
 - pushd libjwt-1.9.0 && autoreconf -i && ./configure && make && sudo make install && popd
 - rm -rf libjwt-1.9.0
+- sudo ldconfig
 
 script:
   - mkdir build && cd build
