@@ -39,8 +39,8 @@ script:
   - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on -DBUILD_GLEWLWYD_TEST_LDAP=off ..
   - make
   - sudo make install
-  - sqlite /tmp/glewlwyd.db < ../docs/database/glewlwyd.init-db-only.sqlite3.sql
-  - sqlite /tmp/glewlwyd.db < ../test/glewlwyd.tests.sql
+  - sqlite3 /tmp/glewlwyd.db < ../docs/database/glewlwyd.init-db-only.sqlite3.sql
+  - sqlite3 /tmp/glewlwyd.db < ../test/glewlwyd.tests.sql
   - glewlwyd --config-file=../test/glewlwyd-1.conf &
   - export G_PID=$!
   - make test
