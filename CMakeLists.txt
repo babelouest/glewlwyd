@@ -228,7 +228,7 @@ if (BUILD_GLEWLWYD_TESTING)
         set(CMAKE_CTEST_COMMAND ctest -V)
 
         if (NOT BUILD_GLEWLWYD_TEST_LDAP)
-            add_compile_definitions(WITHOUT_LDAP)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWITHOUT_LDAP")
         endif ()
 
         set(TST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
