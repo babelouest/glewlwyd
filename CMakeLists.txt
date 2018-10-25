@@ -232,7 +232,7 @@ if (BUILD_GLEWLWYD_TESTING)
         endif ()
 
         set(TST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
-        set(LIBS ${LIBS} ${CHECK_LIBRARIES} ulfius yder orcania)
+        set(LIBS ${LIBS} ${CHECK_LIBRARIES})
         find_package(Threads REQUIRED)
         set(LIBS ${LIBS} ${SUBUNIT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} m rt)
 
