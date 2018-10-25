@@ -40,7 +40,7 @@ script:
   - make
   - sudo make install
   - sqlite3 /tmp/glewlwyd.db < ../docs/database/glewlwyd.init-db-only.sqlite3.sql
-  - sqlite3 /tmp/glewlwyd.db < ../test/glewlwyd.tests.sql
+  - sqlite3 /tmp/glewlwyd.db < ../test/glewlwyd.tests.sqlite3.sql
   - glewlwyd --config-file=../test/glewlwyd-1.conf &
   - export G_PID=$!
   - make test
