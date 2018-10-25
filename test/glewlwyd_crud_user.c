@@ -314,6 +314,7 @@ START_TEST(test_glwd_crud_user_connect_fail_empty_password_new)
 }
 END_TEST
 
+#ifndef WITHOUT_LDAP
 START_TEST(test_glwd_crud_user_add_ok_ldap)
 {
   json_t * json_body;
@@ -417,6 +418,7 @@ START_TEST(test_glwd_crud_user_delete_new_ldap)
   ck_assert_int_eq(res, 1);
 }
 END_TEST
+#endif
 
 START_TEST(test_glwd_crud_user_add_ok_no_source)
 {
@@ -549,6 +551,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_database_empty_additional_property);
   tcase_add_test(tc_core, test_glwd_crud_user_delete_new_database_empty_additional_property);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
+#ifndef WITHOUT_LDAP
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_ldap);
   tcase_add_test(tc_core, test_glwd_crud_user_search_success);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_success_new);
@@ -563,6 +566,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_empty_password_new);
   tcase_add_test(tc_core, test_glwd_crud_user_delete_new_ldap);
+#endif
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_no_source);
   tcase_add_test(tc_core, test_glwd_crud_user_search_success);
