@@ -212,6 +212,7 @@ target_link_libraries(glewlwyd ${LIBS})
 # tests
 
 option(BUILD_GLEWLWYD_TESTING "Build the testing tree." OFF)
+option(BUILD_GLEWLWYD_TEST_LDAP "Build user and client CRUD test with LDAP support" ON)
 option(BUILD_GLEWLWYD_TEST_PROFILE "Build test glewlwyd_update_user_profile" OFF)
 option(BUILD_GLEWLWYD_TEST_HTTP_AUTH "Build test glewlwyd_http_auth only" OFF)
 
@@ -224,6 +225,9 @@ if (BUILD_GLEWLWYD_TESTING)
 
         enable_testing()
 
+        if (NOT BUILD_GLEWLWYD_TEST_LDAP)
+            add_compile_definitions(WITHOUT_LDAP)
+        endif ()
         set(CMAKE_CTEST_COMMAND ctest -V)
 
         set(TST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
@@ -249,7 +253,7 @@ if (BUILD_GLEWLWYD_TESTING)
         foreach (t ${TESTS})
             add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
             target_include_directories(${t} PUBLIC ${TST_DIR})
-            target_link_libraries(${t} PUBLIC ${LIBS})
+            add_compile_definitions(
             add_test(NAME ${t}
                     WORKING_DIRECTORY ${TST_DIR}
                     COMMAND ${t})
