@@ -35,7 +35,7 @@ install:
 - sudo ldconfig
 
 script:
-  - mkdir build && cd build
+  - mkdir build && pushd build
   - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on -DBUILD_GLEWLWYD_TEST_LDAP=off ..
   - make
   - sudo make install
@@ -45,3 +45,4 @@ script:
   - export G_PID=$!
   - make test
   - kill $G_PID
+  - popd
