@@ -2,11 +2,11 @@
 
 [![Build Status](https://travis-ci.com/babelouest/glewlwyd.svg?branch=master)](https://travis-ci.com/babelouest/glewlwyd)
 
-[Oauth 2](https://oauth.net/2/) Server providing [JSON Web Tokens](https://jwt.io/) for identification.
+Single Sign On [Oauth 2](https://oauth.net/2/) authentication server providing Json Web Tokens for identification.
 
 Lightweight, fast and easy to install on small systems. Requires a MySql or SQLite3 database. Handles LDAP or database for users backend.
 
-The API backend is fully written in language C, it's based on [Ulfius](https://github.com/babelouest/ulfius) HTTP framework, [Hoel](https://github.com/babelouest/hoel) database framework and [Libjwt](https://github.com/benmcollins/libjwt.git) JSON Web Tokens library.
+The API backend is fully written in C language, it's based on [Ulfius](https://github.com/babelouest/ulfius) HTTP framework, [Hoel](https://github.com/babelouest/hoel) database framework and [Libjwt](https://github.com/benmcollins/libjwt.git) JSON Web Tokens library.
 
 ![user list screenshot](https://raw.githubusercontent.com/babelouest/glewlwyd/master/screenshots/g_1_users.png)
 
