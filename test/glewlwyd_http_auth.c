@@ -20,7 +20,7 @@
 #define PORT   2884
 #define PREFIX "/auth"
 
-#define HTTP_USER     "http_user"
+#define HTTP_USER     "user1"
 #define HTTP_PASSWORD "http_user_password"
 
 struct _u_request user_req;
@@ -143,7 +143,7 @@ END_TEST
 
 START_TEST(test_glwd_auth_code_ok_redirect_cb_with_code_http_auth)
 {
-  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=../app/test-token.html?param=client1_cb1&state=xyzabcd", SERVER_URI);
+  char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=%s&redirect_uri=../app/test-token.html?param=client1_cb1&state=xyzabcd", SERVER_URI, CLIENT);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code=");
   free(url);
 	ck_assert_int_eq(res, 1);
