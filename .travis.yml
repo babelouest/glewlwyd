@@ -46,4 +46,12 @@ script:
   - export G_PID=$!
   - make test
   - kill $G_PID
+  - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on -DBUILD_GLEWLWYD_TEST_HTTP_AUTH=on ..
+  - make
+  - sudo make install
+  - sudo ldconfig
+  - glewlwyd --config-file=../test/glewlwyd-2.conf &
+  - export G_PID=$!
+  - make test
+  - kill $G_PID
   - popd
