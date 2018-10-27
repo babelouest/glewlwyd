@@ -573,7 +573,7 @@ json_t * get_client_list(struct config_elements * config, const char * source, c
       j_source_list = NULL;
     }
     
-    if ((source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")) && json_array_size(j_result_list) < limit && config->has_auth_database) {
+    if ((source == NULL || 0 == strcmp(source, "database") || 0 == strcmp(source, "all")) && json_array_size(j_result_list) < limit && (config->has_auth_database || config->has_auth_http)) {
       offset = (offset - total_ldap)<0?0:(offset - total_ldap);
       j_source_list = get_client_list_database(config, search, offset, (limit - json_array_size(j_result_list)));
       if (check_result_value(j_source_list, G_OK)) {
@@ -689,11 +689,17 @@ json_t * get_client_list_ldap(struct config_elements * config, const char * sear
       }
       
       cookie = ber_memalloc( sizeof( struct berval ) );
-      *cookie = new_cookie;
-      if (cookie && cookie->bv_val != NULL && (strlen(cookie->bv_val) > 0)) {
-        more_page = 1;
+      if (cookie != NULL) {
+        *cookie = new_cookie;
+        if (cookie->bv_val != NULL && (strlen(cookie->bv_val) > 0)) {
+          more_page = 1;
+        } else {
+          more_page = 0;
+        }
       } else {
-        more_page = 0;
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error ber_malloc returned NULL");
+        j_result = json_pack("{si}", "result", G_ERROR);
+        break;
       }
       
       if (returned_controls != NULL)
@@ -994,9 +1000,9 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
     }
     if ((j_client == NULL || check_result_value(j_client, G_ERROR_NOT_FOUND)) && search_database) {
       json_decref(j_client);
-      if (config->has_auth_database) {
+      if (config->has_auth_database || config->has_auth_http) {
         j_client = get_client_database(config, client_id);
-      } else if (0 == o_strcmp(source, "database") && !config->has_auth_database) {
+      } else if (0 == o_strcmp(source, "database") && !config->has_auth_database && !config->has_auth_http) {
         j_client = json_pack("{si}", "result", G_ERROR_PARAM);
       } else {
         j_client = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
@@ -1448,7 +1454,7 @@ json_t * is_client_valid(struct config_elements * config, json_t * j_client, int
  * Add a new client
  */
 int add_client(struct config_elements * config, json_t * j_client) {
-  if ((json_object_get(j_client, "source") == NULL || 0 == strcmp("database", json_string_value(json_object_get(j_client, "source")))) && config->has_auth_database) {
+  if ((json_object_get(j_client, "source") == NULL || 0 == strcmp("database", json_string_value(json_object_get(j_client, "source")))) && (config->has_auth_database || config->has_auth_http)) {
     return add_client_database(config, j_client);
   } else if (0 == o_strcmp("ldap", json_string_value(json_object_get(j_client, "source"))) && config->has_auth_ldap) {
     return add_client_ldap(config, j_client);

@@ -1,5 +1,10 @@
 # Glewlwyd Changelog
 
+## 1.4.8
+
+- Add Travis CI script
+- Fix http_auth backend
+
 ## 1.4.7
 
 - Adapt Glewlwyd build to the new version of the underlying libraries: orcania, yder, hoel, ulfius (thanks ythogtha!)

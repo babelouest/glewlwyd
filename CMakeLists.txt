@@ -24,13 +24,13 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 set(PROGRAM_VERSION_MAJOR "1")
 set(PROGRAM_VERSION_MINOR "4")
-set(PROGRAM_VERSION_PATCH "7")
+set(PROGRAM_VERSION_PATCH "8")
 set(PROJECT_DESCRIPTION "OAuth2 authentication server providing Json Web Tokens")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
-set(ORCANIA_VERSION_DOWNLOAD "1.2.7")
-set(YDER_VERSION_DOWNLOAD "1.4.3")
-set(ULFIUS_VERSION_DOWNLOAD "2.4.3")
-set(HOEL_VERSION_DOWNLOAD "1.4.5")
+set(ORCANIA_VERSION_DOWNLOAD "1.2.8")
+set(YDER_VERSION_DOWNLOAD "1.4.4")
+set(ULFIUS_VERSION_DOWNLOAD "2.4.4")
+set(HOEL_VERSION_DOWNLOAD "1.4.6")
 
 include(GNUInstallDirs)
 include(CheckSymbolExists)
@@ -58,19 +58,30 @@ include(FindJansson)
 set(JANSSON_MIN_VERSION 2.4)
 find_package(Jansson ${JANSSON_MIN_VERSION} REQUIRED)
 if (JANSSON_FOUND)
-    set(LIBS ${JANSSON_LIBRARIES})
+    set(LIBS ${LIBS} ${JANSSON_LIBRARIES})
+    include_directories(${JANSSON_INCLUDE_DIRS})
 endif ()
 
 include(FindLibJWT)
 find_package(LibJWT REQUIRED)
 if (LIBJWT_FOUND)
     set(LIBS ${LIBS} ${LIBJWT_LIBRARIES})
+    include_directories(${LIBJWT_INCLUDE_DIRS})
+endif ()
+
+include(FindMHD)
+set(MHD_MIN_VERSION 0.9.38)
+find_package(MHD ${MHD_MIN_VERSION} REQUIRED)
+if (MHD_FOUND)
+    set(LIBS ${LIBS} ${MHD_LIBRARIES})
+    include_directories(${MHD_INCLUDE_DIRS})
 endif ()
 
 include(FindGnuTLS)
 find_package(GnuTLS REQUIRED)
 if (GNUTLS_FOUND)
     set(LIBS ${LIBS} ${GNUTLS_LIBRARIES})
+    include_directories(${GNUTLS_INCLUDE_DIRS})
 endif ()
 
 include(FindLdap)
@@ -117,6 +128,11 @@ add_executable(glewlwyd ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.h
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/password.c
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.c )
 
+set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during yder search and download
+set(SEARCH_ORCANIA_U OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during ulfius search and download
+set(SEARCH_ORCANIA_H OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during hoel search and download
+set(SEARCH_YDER OFF CACHE BOOL "Force to false") # Avoid to search and download yder during ulfius and hoel search and download
+
 set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
 include(FindOrcania)
 find_package(Orcania 1.1 QUIET) # try to find orcania
@@ -128,7 +144,8 @@ if (NOT ORCANIA_FOUND)
     add_subdirectory(${orcania_SOURCE_DIR} ${orcania_BINARY_DIR})
     include_directories(${orcania_SOURCE_DIR}/include)
     add_dependencies(glewlwyd orcania)
-		set(ORCANIA_LIBRARIES orcania)
+    set(ORCANIA_LIBRARIES orcania)
+    include_directories(${orcania_BINARY_DIR})
 endif ()
 set(LIBS ${LIBS} ${ORCANIA_LIBRARIES})
 
@@ -145,7 +162,8 @@ if (NOT YDER_FOUND)
     include_directories(${yder_SOURCE_DIR}/include)
     include_directories(${orcania_SOURCE_DIR}/include)
     add_dependencies(glewlwyd yder)
-		set(YDER_LIBRARIES yder)
+    set(YDER_LIBRARIES yder)
+    include_directories(${yder_BINARY_DIR})
 endif ()
 set(LIBS ${LIBS} ${YDER_LIBRARIES})
 
@@ -165,7 +183,8 @@ if (NOT ULFIUS_FOUND)
     include_directories(${orcania_SOURCE_DIR}/include)
     include_directories(${ulfius_SOURCE_DIR}/include)
     add_dependencies(glewlwyd ulfius)
-		set(ULFIUS_LIBRARIES ulfius)
+    set(ULFIUS_LIBRARIES ulfius)
+    include_directories(${ulfius_BINARY_DIR})
 endif ()
 set(LIBS ${LIBS} ${ULFIUS_LIBRARIES})
 
@@ -183,7 +202,8 @@ if (NOT HOEL_FOUND)
     add_subdirectory(${hoel_SOURCE_DIR} ${hoel_BINARY_DIR})
     include_directories(${hoel_SOURCE_DIR}/include)
     add_dependencies(glewlwyd hoel)
-		set(HOEL_LIBRARIES hoel)
+    set(HOEL_LIBRARIES hoel)
+    include_directories(${hoel_BINARY_DIR})
 endif ()
 set(LIBS ${LIBS} ${HOEL_LIBRARIES})
 
@@ -191,11 +211,12 @@ target_link_libraries(glewlwyd ${LIBS})
 
 # tests
 
-option(BUILD_TESTING "Build the testing tree." OFF)
-option(BUILD_TEST_PROFILE "Build test glewlwyd_update_user_profile" OFF)
-option(BUILD_TEST_HTTP_AUTH "Build test glewlwyd_http_auth only" OFF)
+option(BUILD_GLEWLWYD_TESTING "Build the testing tree." OFF)
+option(BUILD_GLEWLWYD_TEST_LDAP "Build user and client CRUD test with LDAP support" ON)
+option(BUILD_GLEWLWYD_TEST_PROFILE "Build test glewlwyd_update_user_profile" OFF)
+option(BUILD_GLEWLWYD_TEST_HTTP_AUTH "Build test glewlwyd_http_auth only" OFF)
 
-if (BUILD_TESTING)
+if (BUILD_GLEWLWYD_TESTING)
     include(FindCheck)
     find_package(Check REQUIRED)
     if (CHECK_FOUND)
@@ -206,17 +227,21 @@ if (BUILD_TESTING)
 
         set(CMAKE_CTEST_COMMAND ctest -V)
 
+        if (NOT BUILD_GLEWLWYD_TEST_LDAP)
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DWITHOUT_LDAP")
+        endif ()
+
         set(TST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
-        set(LIBS ${LIBS} ${CHECK_LIBRARIES} ulfius yder orcania)
+        set(LIBS ${LIBS} ${CHECK_LIBRARIES})
         find_package(Threads REQUIRED)
         set(LIBS ${LIBS} ${SUBUNIT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} m rt)
 
-        if (BUILD_TEST_HTTP_AUTH)
+        if (BUILD_GLEWLWYD_TEST_HTTP_AUTH)
             set(TESTS glewlwyd_http_auth)
         else ()
             set(TESTS glewlwyd_admin_authorization glewlwyd_oauth2_code_client_confidential glewlwyd_user_session_admin glewlwyd_crud_client glewlwyd_oauth2_implicit glewlwyd_user_session_user glewlwyd_crud_resource glewlwyd_oauth2_refresh_token glewlwyd_crud_scope glewlwyd_oauth2_refresh_token_client_confidential glewlwyd_crud_user glewlwyd_oauth2_resource_owner_pwd_cred glewlwyd_delete_token glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential glewlwyd_oauth2_auth_code glewlwyd_oauth2_client_cred glewlwyd_user_refresh_token_admin glewlwyd_oauth2_code glewlwyd_user_refresh_token_user)
             
-            if (BUILD_TEST_PROFILE)
+            if (BUILD_TEST_GLEWLWYD_PROFILE)
                 set(TESTS ${TESTS} glewlwyd_update_user_profile)
             endif ()
         endif ()
