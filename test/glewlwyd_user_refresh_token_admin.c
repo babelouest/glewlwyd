@@ -64,7 +64,7 @@ START_TEST(test_glwd_user_refresh_token_revoke_ok_admin)
   
   ulfius_init_response(&list_resp);
   ulfius_init_response(&del_resp);
-  admin_req.http_url = msprintf("%s/user/%s/refresh_token/?valid=true", SERVER_URI, USER_LOGIN);
+  admin_req.http_url = msprintf("%s/user/%s/refresh_token/?valid=true", SERVER_URI, ADMIN_LOGIN);
   res = ulfius_send_http_request(&admin_req, &list_resp);
   if (res == U_OK) {
     json_resp_body = ulfius_get_json_body_response(&list_resp, NULL);
@@ -75,7 +75,7 @@ START_TEST(test_glwd_user_refresh_token_revoke_ok_admin)
     json_decref(json_resp_body);
   }
   
-  admin_req.http_url = msprintf("%s/user/%s/refresh_token/", SERVER_URI, USER_LOGIN);
+  admin_req.http_url = msprintf("%s/user/%s/refresh_token/", SERVER_URI, ADMIN_LOGIN);
   admin_req.http_verb = strdup("DELETE");
   ulfius_send_http_request(&admin_req, &del_resp);
 	ck_assert_int_eq(del_resp.status, 200);
