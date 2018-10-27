@@ -395,10 +395,12 @@ int main(int argc, char *argv[])
   u_map_put(auth_req.map_post_body, "scope", SCOPE_LIST);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
   if (res == U_OK) {
-    char * bearer_token = msprintf("Bearer %s", (json_string_value(json_object_get(auth_resp.json_body, "access_token"))));
+    json_t * json_body = ulfius_get_json_body_response(&auth_resp, NULL);
+    char * bearer_token = msprintf("Bearer %s", (json_string_value(json_object_get(json_body, "access_token"))));
     y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", ADMIN_LOGIN);
     u_map_put(admin_req.map_header, "Authorization", bearer_token);
     free(bearer_token);
+    json_decref(json_body);
   }
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);

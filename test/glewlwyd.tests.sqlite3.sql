@@ -14,17 +14,11 @@ DELETE FROM `g_client`;
 DELETE FROM `g_scope`;
 DELETE FROM `g_user`;
 
--- Mariadb/Mysql user add queries
-INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', PASSWORD('MyAdminPassword2016!'), 1);
-INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user1', 'Dave Lopper1', 'user1@glewlwyd.domain', PASSWORD('MyUser1Password!'), 'newValue1', 1);
-INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user2', 'Dave Lopper2', 'user2@glewlwyd.domain', PASSWORD('MyUser2Password!'), 'newValue2', 1);
-INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user3', 'Dave Lopper3', 'user3@glewlwyd.domain', PASSWORD('MyUser3Password!'), 'newValue3', 1);
-
 -- SQLite3 user add queries (passwords are md5/base64 encoded, but they are the same as below)
--- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', '{MD5}Fq5Um/6ZzkTEE01faw8dlw==', 1);
--- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user1', 'Dave Lopper1', 'user1@glewlwyd.domain', '{MD5}5jDmBvYYgDjSOobF6bsjdw==', 'newValue1', 1);
--- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user2', 'Dave Lopper2', 'user2@glewlwyd.domain', '{MD5}SGTYDlfN1G2QkANBZgzCIQ==', 'newValue2', 1);
--- INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user3', 'Dave Lopper3', 'user3@glewlwyd.domain', '{MD5}MSs++hzB5w==', 'newValue3', 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_enabled) VALUES ('admin', 'The Boss', 'boss@glewlwyd.domain', '{MD5}Fq5Um/6ZzkTEE01faw8dlw==', 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user1', 'Dave Lopper1', 'user1@glewlwyd.domain', '{MD5}5jDmBvYYgDjSOobF6bsjdw==', 'newValue1', 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user2', 'Dave Lopper2', 'user2@glewlwyd.domain', '{MD5}SGTYDlfN1G2QkANBZgzCIQ==', 'newValue2', 1);
+INSERT INTO g_user (gu_login, gu_name, gu_email, gu_password, gu_additional_property_value, gu_enabled) VALUES ('user3', 'Dave Lopper3', 'user3@glewlwyd.domain', '{MD5}MSs++hzB5w==', 'newValue3', 1);
 
 INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_admin', 'Glewlwyd admin scope');
 INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_profile', 'Glewlwyd profile scope');
@@ -34,10 +28,8 @@ INSERT INTO g_scope (gs_name, gs_description) VALUES ('scope3', 'Description for
 
 INSERT INTO g_client (gc_name, gc_description, gc_client_id) VALUES ('client1', 'Description for client1', 'client1_id');
 INSERT INTO g_client (gc_name, gc_description, gc_client_id) VALUES ('client2', 'Description for client2', 'client2_id');
--- Mariadb/Mysql
-INSERT INTO g_client (gc_name, gc_description, gc_client_id, gc_client_password, gc_confidential) VALUES ('client3', 'Description for client3', 'client3_id', PASSWORD('client3_password'), 1);
 -- SQLite3 (password is md5/base64 encoded, but it is the same as below)
--- INSERT INTO g_client (gc_name, gc_description, gc_client_id, gc_client_password, gc_confidential) VALUES ('client3', 'Description for client3', 'client3_id', '{MD5}Vaqk5DGQQunyN3gdVjMJGw==', 1);
+INSERT INTO g_client (gc_name, gc_description, gc_client_id, gc_client_password, gc_confidential) VALUES ('client3', 'Description for client3', 'client3_id', '{MD5}Vaqk5DGQQunyN3gdVjMJGw==', 1);
 
 INSERT INTO g_client_scope (gc_id, gs_id) VALUES ((SELECT gc_id from g_client WHERE gc_client_id='client3_id'), (SELECT gs_id from g_scope WHERE gs_name='scope2'));
 INSERT INTO g_client_scope (gc_id, gs_id) VALUES ((SELECT gc_id from g_client WHERE gc_client_id='client3_id'), (SELECT gs_id from g_scope WHERE gs_name='scope3'));

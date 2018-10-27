@@ -685,14 +685,18 @@ json_t * access_token_check_scope_admin(struct config_elements * config, const c
           grants = jwt_get_grants_json(jwt, NULL);
           j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
           if (j_grants != NULL) {
-            count = split_string(json_string_value(json_object_get(j_grants, "scope")), " ", &scope_list);
-            for (i=0; count > 0 && scope_list[i] != NULL; i++) {
-              if (strcmp(scope_list[i], config->admin_scope) == 0) {
-                scope_found = 1;
-                break;
+            if (!config->use_scope) {
+              scope_found = 1;
+            } else {
+              count = split_string(json_string_value(json_object_get(j_grants, "scope")), " ", &scope_list);
+              for (i=0; count > 0 && scope_list[i] != NULL; i++) {
+                if (strcmp(scope_list[i], config->admin_scope) == 0) {
+                  scope_found = 1;
+                  break;
+                }
               }
+              free_string_array(scope_list);
             }
-            free_string_array(scope_list);
             if (scope_found) {
               j_return = json_pack("{sisO}", "result", G_OK, "grants", j_grants);
             } else {
