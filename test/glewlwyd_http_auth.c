@@ -302,12 +302,13 @@ static Suite *glewlwyd_suite(void)
 
 int main(int argc, char *argv[])
 {
-  int number_failed, res;
+  int number_failed = 0, res, do_test = 0;
   Suite *s;
   SRunner *sr;
   struct _u_instance instance;
   struct _u_request auth_req;
   struct _u_response auth_resp, code_resp;
+  char * url;
   
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
@@ -350,6 +351,7 @@ int main(int argc, char *argv[])
       if (strchr(code, '&') != NULL) {
         *strchr(code, '&') = '\0';
       }
+      do_test = 1;
     } else {
       y_log_message(Y_LOG_LEVEL_DEBUG, "Error, no code given");
     }
@@ -357,15 +359,21 @@ int main(int argc, char *argv[])
   }
   ulfius_clean_response(&auth_resp);
   
-  s = glewlwyd_suite();
-  sr = srunner_create(s);
+  if (do_test) {
+    s = glewlwyd_suite();
+    sr = srunner_create(s);
 
-  srunner_run_all(sr, CK_VERBOSE);
-  number_failed = srunner_ntests_failed(sr);
-  srunner_free(sr);
+    srunner_run_all(sr, CK_VERBOSE);
+    number_failed = srunner_ntests_failed(sr);
+    srunner_free(sr);
+  }
+  
+  url = msprintf("%s/auth/user/", SERVER_URI);
+  run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
+  free(url);
   
   ulfius_stop_framework(&instance);
   ulfius_clean_instance(&instance);
   
-  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

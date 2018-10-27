@@ -154,12 +154,12 @@ static Suite *glewlwyd_suite(void)
 
 int main(int argc, char *argv[])
 {
-  int number_failed;
+  int number_failed = 0;
   Suite *s;
   SRunner *sr;
   struct _u_request auth_req;
   struct _u_response auth_resp;
-  int res;
+  int res, do_test = 0;
   
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
@@ -181,18 +181,21 @@ int main(int argc, char *argv[])
     u_map_put(user_req.map_header, "Authorization", bearer_token);
     free(bearer_token);
     json_decref(json_body);
+    do_test = 1;
   }
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
   
-  s = glewlwyd_suite();
-  sr = srunner_create(s);
+  if (do_test) {
+    s = glewlwyd_suite();
+    sr = srunner_create(s);
 
-  srunner_run_all(sr, CK_VERBOSE);
-  number_failed = srunner_ntests_failed(sr);
-  srunner_free(sr);
+    srunner_run_all(sr, CK_VERBOSE);
+    number_failed = srunner_ntests_failed(sr);
+    srunner_free(sr);
+  }
   
   ulfius_clean_request(&user_req);
   
-	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+	return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
