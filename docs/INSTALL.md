@@ -486,6 +486,20 @@ o: g_profile
 userPassword:: xxx
 ```
 
+#### HTTP Basic Auth authentication
+
+This feature allows your glewlwyd server to authenticate via an URL that requires HTTP [Basic access authentication](https://en.wikipedia.org/wiki/Basic_access_authentication).
+
+This feature is incompatible with the use of scopes, so you must disable scopes in the config file first:
+
+```
+# in file glewlwyd.conf
+use_scope=false
+```
+
+Another requirement is that you need all the users to be present in the database with at least their username.
+To avoid security leaks, a user authenticated via HTTP Basic Auth must have its password empty in the database.
+
 ### Administrator user
 
 An administrator must be present in the back-end to use the application (manage scopes, users, clients, resources, authorization types).
