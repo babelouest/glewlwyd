@@ -25,7 +25,7 @@ CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 LIBS=-lc -ldl -lulfius -lyder -ljansson -lorcania -lhoel -ljwt -lconfig -lgnutls -lcrypt
 OBJECTS=glewlwyd.o glewlwyd_resource.o static_file_callback.o webservice.o hash.o session.o user.o
 PREFIX=/usr/local
-CONFIG_FILE=../glewlwyd.conf
+CONFIG_FILE=../glewlwyd2.conf
 
 all: release
 
