@@ -35,9 +35,9 @@ install:
 - sudo ldconfig
 
 script:
-  - mkdir build && pushd build
-  - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on -DBUILD_GLEWLWYD_TEST_LDAP=off ..
-  - make
+#  - mkdir build && pushd build
+#  - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on -DBUILD_GLEWLWYD_TEST_LDAP=off ..
+#  - make
 #  - sudo make install
 #  - sudo ldconfig
 #  - sqlite3 /tmp/glewlwyd.db < ../docs/database/glewlwyd.init-db-only.sqlite3.sql
@@ -54,4 +54,4 @@ script:
 #  - export G_PID=$!
 #  - make test
 #  - kill $G_PID
-  - popd
+#  - popd
