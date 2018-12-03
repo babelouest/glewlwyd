@@ -35,6 +35,7 @@ install:
 - sudo ldconfig
 
 script:
+  - echo "fake test" || true
 #  - mkdir build && pushd build
 #  - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on -DBUILD_GLEWLWYD_TEST_LDAP=off ..
 #  - make
