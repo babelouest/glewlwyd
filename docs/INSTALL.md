@@ -14,6 +14,8 @@
    * [Database back-end initialisation](#database-back-end-initialisation)
    * [Authentication back-end configuration](#authentication-back-end-configuration)
    * [JWT configuration](#jwt-configuration)
+   * [JWT Access Token Payload](#jwt-access-token-payload)
+     * [Additional property]n the JWT Payload(#additional-property-in-the-jwt-payload)
    * [Install as a service](#install-as-a-service)
 6. [Run Glewlwyd](#run-glewlwyd)
 7. [Front-end application](#front-end-application)
@@ -500,7 +502,7 @@ use_scope=false
 Another requirement is that you need all the users to be present in the database with at least their username.
 To avoid security leaks, a user authenticated via HTTP Basic Auth must have its password empty in the database.
 
-### Administrator user
+#### Administrator user
 
 An administrator must be present in the back-end to use the application (manage scopes, users, clients, resources, authorization types).
 
@@ -515,6 +517,56 @@ You can choose between SHA (HS256, HS384, HS512), RSA (RS256, RS384, RS512) and 
 The values available for the parameter `key_size` are 256, 284 and 512 only. To choose your signature algorithm, set the value `true` to the parameter `use_[rsa|ecdsa|sha]` you want, and `false` to the other ones. Finally, set the additional parameter used for your algorithm:
 - `*_key_file` and `*_pub_file` if you choose ECDSA or RSA signatures, with the path to the public and private signature files
 - `sha_secret` if you choose SHA signatures, with the value of the secret
+
+### JWT Access Token Payload
+
+Every accesstoken will have the following minimal payload:
+
+```javascript
+{
+  "expires_in": 3600,       // Token expiration in seconds, default is 1 hour
+  "iat": 1484278795,        // Issued at, time in UNIX epoch format
+  "salt": "abcd1234",       // A random string
+  "scope": "scope1 scope2", // The scope values
+  "type": "access_token",   // The token type
+  "username": "admin"       // The username who was granted access for this scope
+}
+```
+
+#### Additional property in the JWT payload
+
+The additional property is the only way to add a new value in the access token payload in Glewlwyd. By design, the access token payload is minimalist to keep it simple, usable, and avoid data leaks, since an access token can be read by users.
+
+But since it was required for some users to be able to add a new value in the payload (LDAP group, claims, etc.), a feature allows administrators to add a new property in Glewlwyd's access tokens for all users.
+
+To enable this feature, you must set a value to the property `additional_property_name` in glewlwyd configuration file, example:
+
+```
+additional_property_name = "group"
+```
+
+With users in the database backend, the additional property value will be the content of the table `g_user.gu_additional_property_value`.
+With users in the the ldap backend, the additional property value will be the content of the ldap property `additional_property_value_read` for read access, and `additional_property_value_write` if you allow write access to your ldap backend.
+
+If you allow write access, you can change the additional property value for each users in the admin app.
+
+Then, every access token payload will contain the additional property.
+
+Example:
+
+```javascript
+{
+  "expires_in": 3600,
+  "iat": 1484278795,
+  "salt": "abcd1234",
+  "scope": "scope1 scope2",
+  "type": "access_token",
+  "username": "admin",
+  "group": "group1 group2"
+}
+```
+
+This feature has limitations though. The first one is that you can have only one additional property in the payload, the second one is that the additional property value must come from the same backend than the user.
 
 #### RSA private/public key creation
 
