@@ -15,7 +15,7 @@
    * [Authentication back-end configuration](#authentication-back-end-configuration)
    * [JWT configuration](#jwt-configuration)
    * [JWT Access Token Payload](#jwt-access-token-payload)
-     * [Additional property]n the JWT Payload(#additional-property-in-the-jwt-payload)
+     * [Additional propertyn the JWT Payload](#additional-property-in-the-jwt-payload)
    * [Install as a service](#install-as-a-service)
 6. [Run Glewlwyd](#run-glewlwyd)
 7. [Front-end application](#front-end-application)
