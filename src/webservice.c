@@ -131,20 +131,21 @@ int callback_glewlwyd_validate_user (const struct _u_request * request, struct _
   return U_CALLBACK_CONTINUE;
 }
 
-#ifdef DEBUG
-// TODO: Remove on release
-int callback_glewlwyd_check_user (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_get_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session;
-  const char * username = u_map_get(request->map_url, "username"), * session_uid = u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY);
+  const char * session_uid = u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY);
   
   if (session_uid != NULL) {
-    if (username == NULL) {
-      j_session = get_session(config, session_uid);
+    j_session = get_users_for_session(config, session_uid);
+    if (check_result_value(j_session, G_OK)) {
+      ulfius_set_json_body_response(response, 200, json_object_get(j_session, "session"));
+    } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
+      response->status = 404;
     } else {
-      j_session = get_session_for_username(config, session_uid, username);
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_user - Error get_session");
+      response->status = 500;
     }
-    ulfius_set_json_body_response(response, 200, json_object_get(j_session, "session"));
     json_decref(j_session);
   } else {
     response->status = 404;
@@ -152,4 +153,3 @@ int callback_glewlwyd_check_user (const struct _u_request * request, struct _u_r
   
   return U_CALLBACK_COMPLETE;
 }
-#endif

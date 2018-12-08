@@ -81,3 +81,29 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
   o_free(str_scheme_parameters);
   return j_return;
 }
+
+json_t * get_user(struct config_elements * config, const char * username) {
+  int i, found = 0;
+  json_t * j_return = NULL, * j_user;
+  
+  for (i=0; !found && i<config->user_module_instance_list_size && j_return == NULL; i++) {
+    if (config->user_module_instance_list[i] != NULL) {
+      if (config->user_module_instance_list[i]->enabled) {
+        j_user = config->user_module_instance_list[i]->module->user_module_get(username, config->user_module_instance_list[i]->cls);
+        if (check_result_value(j_user, G_OK)) {
+          j_return = json_pack("{sisO}", "result", G_OK, "user", json_object_get(j_user, "user"));
+          found = 1;
+        } else if (!check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error user_module_get for username '%s' at module %s", username, config->user_module_instance_list[i]->name);
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error, user_module_instance %d is NULL", i);
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+  }
+  if (j_return == NULL) {
+    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+  }
+  return j_return;
+}
