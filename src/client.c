@@ -538,12 +538,12 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
             // Client hasn't all of part of the scope requested, sending unauthorized answer
             res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
           }
-          o_free(new_scope_list);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_client_scope_ldap - Error allocating resources for j_scope_list");
           res = json_pack("{si}", "result", G_ERROR);
         }
         json_decref(j_scope_list);
+        o_free(new_scope_list);
       }
     }
     o_free(filter);
