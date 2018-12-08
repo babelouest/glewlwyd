@@ -23,7 +23,7 @@ CC=gcc
 #CC=clang
 CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 LIBS=-lc -ldl -lulfius -lyder -ljansson -lorcania -lhoel -ljwt -lconfig -lgnutls -lcrypt
-OBJECTS=glewlwyd.o glewlwyd_resource.o static_file_callback.o webservice.o hash.o session.o user.o
+OBJECTS=glewlwyd.o glewlwyd_resource.o static_file_callback.o webservice.o hash.o session.o user.o scope.o
 PREFIX=/usr/local
 CONFIG_FILE=../glewlwyd2.conf
 
@@ -35,7 +35,7 @@ clean:
 	cd client && $(MAKE) clean
 	cd scheme && $(MAKE) clean
 
-debug: ADDITIONALFLAGS=-DDEBUG -g -O0
+debug: ADDITIONALFLAGS=-Wunreachable-code -DDEBUG -g -O0
 
 debug: glewlwyd
 	cd user && $(MAKE) debug

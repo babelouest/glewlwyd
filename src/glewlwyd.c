@@ -206,9 +206,7 @@ int main (int argc, char ** argv) {
   
   // Authentication
   ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_validate_user, (void*)config);
-#ifdef DEBUG
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_check_user, (void*)config); // TODO: Remove on release
-#endif
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_session, (void*)config);
 
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
