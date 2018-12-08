@@ -542,6 +542,7 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
           y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_client_scope_ldap - Error allocating resources for j_scope_list");
           res = json_pack("{si}", "result", G_ERROR);
         }
+        o_free(new_scope_list);
         json_decref(j_scope_list);
         o_free(new_scope_list);
       }
