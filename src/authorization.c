@@ -321,17 +321,17 @@ json_t * validate_authorization_code(struct config_elements * config, const char
                   scope_list = tmp;
                 }
               }
+              if (scope_list != NULL) {
+                j_return = json_pack("{sisssssI}", "result", G_OK, "scope", scope_list, "username", json_string_value(json_object_get(json_array_get(j_result, 0), "gco_username")), "gco_id", json_integer_value((json_object_get(json_array_get(j_result, 0), "gco_id"))));
+              } else {
+                j_return = json_pack("{siss}", "result", G_ERROR_UNAUTHORIZED, "error", "invalid_scope");
+              }
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error executing query scope");
               j_return = json_pack("{siss}", "result", G_ERROR_DB, "error", "server_error");
             }
             json_decref(j_scope);
             
-            if (scope_list != NULL) {
-              j_return = json_pack("{sisssssI}", "result", G_OK, "scope", scope_list, "username", json_string_value(json_object_get(json_array_get(j_result, 0), "gco_username")), "gco_id", json_integer_value((json_object_get(json_array_get(j_result, 0), "gco_id"))));
-            } else {
-              j_return = json_pack("{siss}", "result", G_ERROR_UNAUTHORIZED, "error", "invalid_scope");
-            }
             o_free(scope_list);
           } else {
             j_return = json_pack("{sisssI}", "result", G_OK, "username", json_string_value(json_object_get(json_array_get(j_result, 0), "gco_username")), "gco_id", json_integer_value((json_object_get(json_array_get(j_result, 0), "gco_id"))));
