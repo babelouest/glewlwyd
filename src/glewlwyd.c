@@ -274,6 +274,10 @@ int main (int argc, char ** argv) {
 void exit_server(struct config_elements ** config, int exit_value) {
 
   if (config != NULL && *config != NULL) {
+    /* stop framework */
+    ulfius_stop_framework((*config)->instance);
+    ulfius_clean_instance((*config)->instance);
+    o_free((*config)->instance);
     // Cleaning data
     o_free((*config)->config_file);
     o_free((*config)->url_prefix);
@@ -352,9 +356,6 @@ void exit_server(struct config_elements ** config, int exit_value) {
     }
     h_close_db((*config)->conn);
     h_clean_connection((*config)->conn);
-    ulfius_stop_framework((*config)->instance);
-    ulfius_clean_instance((*config)->instance);
-    o_free((*config)->instance);
     y_close_logs();
     
     o_free(*config);
