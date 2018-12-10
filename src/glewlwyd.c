@@ -550,7 +550,7 @@ void print_help(FILE * output) {
  * I don't like global variables but it looks fine to people who designed this
  */
 void exit_handler(int signal) {
-  y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd caught a stop or kill signal (%d), exiting", signal);
+  //y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd caught a stop or kill signal (%d), exiting", signal);
   pthread_mutex_lock(&global_handler_close_lock);
   pthread_cond_signal(&global_handler_close_cond);
   pthread_mutex_unlock(&global_handler_close_lock);
