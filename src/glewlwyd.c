@@ -277,8 +277,12 @@ void exit_server(struct config_elements ** config, int exit_value) {
     /* stop framework */
     ulfius_stop_framework((*config)->instance);
     ulfius_clean_instance((*config)->instance);
-    o_free((*config)->instance);
+    h_close_db((*config)->conn);
+    h_clean_connection((*config)->conn);
+    y_close_logs();
+    
     // Cleaning data
+    o_free((*config)->instance);
     o_free((*config)->config_file);
     o_free((*config)->url_prefix);
     o_free((*config)->log_file);
@@ -354,9 +358,6 @@ void exit_server(struct config_elements ** config, int exit_value) {
       o_free((*config)->auth_http->url);
       o_free((*config)->auth_http);
     }
-    h_close_db((*config)->conn);
-    h_clean_connection((*config)->conn);
-    y_close_logs();
     
     o_free(*config);
     (*config) = NULL;
@@ -550,7 +551,6 @@ void print_help(FILE * output) {
  * I don't like global variables but it looks fine to people who designed this
  */
 void exit_handler(int signal) {
-  //y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd caught a stop or kill signal (%d), exiting", signal);
   pthread_mutex_lock(&global_handler_close_lock);
   pthread_cond_signal(&global_handler_close_cond);
   pthread_mutex_unlock(&global_handler_close_lock);
