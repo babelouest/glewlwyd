@@ -250,13 +250,14 @@ int update_session(struct config_elements * config, const char * session_uid, co
   int res, ret;
   size_t index;
   time_t now;
-  char * expiration_clause;
+  char * expiration_clause, * last_login_clause;
   char * session_uid_hash = generate_hash(config, config->hash_algorithm, session_uid);
   
   time(&now);
   if (session_uid_hash != NULL) {
     if (check_result_value(j_session, G_OK)) {
       json_array_foreach(json_object_get(json_object_get(j_session, "session"), "scheme"), index, j_element) {
+        // Disable session scheme with this name
         if (0 == o_strcmp(json_string_value(json_object_get(j_element, "scheme_name")), scheme_name)) {
           j_query = json_pack("{sss{si}s{sssO}}",
                               "table",
@@ -276,8 +277,10 @@ int update_session(struct config_elements * config, const char * session_uid, co
           }
         }
       }
+      // Set a new session 
       expiration_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now + expiration)):msprintf("%u", (now + expiration));
-      j_query = json_pack("{sss{sOsss{ss}}}",
+      last_login_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
+      j_query = json_pack("{sss{sOsss{ss}s{ss}}}",
                           "table",
                           GLEWLWYD_TABLE_USER_SESSION_SCHEME,
                           "values",
@@ -287,19 +290,41 @@ int update_session(struct config_elements * config, const char * session_uid, co
                             scheme_name,
                             "guss_expiration",
                               "raw",
-                              expiration_clause);
+                              expiration_clause,
+                            "guss_last_login",
+                              "raw",
+                              last_login_clause);
       o_free(expiration_clause);
       res = h_insert(config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
-        ret = G_OK;
+        j_query = json_pack("{sss{s{ss}}s{sO}}",
+                            "table",
+                            GLEWLWYD_TABLE_USER_SESSION,
+                            "set",
+                              "gus_last_login",
+                                "raw",
+                                last_login_clause,
+                            "where",
+                              "gus_id",
+                              json_object_get(json_object_get(j_session, "session"), "gus_id"));
+        res = h_update(config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "update_session - Error executing j_query (2)");
+          ret = G_ERROR_DB;
+        }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "update_session - Error executing j_query (2)");
+        y_log_message(Y_LOG_LEVEL_ERROR, "update_session - Error executing j_query (3)");
         ret = G_ERROR_DB;
       }
+      o_free(last_login_clause);
     } else {
       expiration_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE)):msprintf("%u", (now + expiration));
-      j_query = json_pack("{sss{sssss{ss}}}",
+      last_login_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
+      j_query = json_pack("{sss{sssss{ss}s{ss}}}",
                           "table",
                           GLEWLWYD_TABLE_USER_SESSION,
                           "values",
@@ -309,7 +334,10 @@ int update_session(struct config_elements * config, const char * session_uid, co
                             username,
                             "gus_expiration",
                               "raw",
-                              expiration_clause);
+                              expiration_clause,
+                            "gus_last_login",
+                              "raw",
+                              last_login_clause);
       o_free(expiration_clause);
       res = h_insert(config->conn, j_query, NULL);
       
@@ -318,7 +346,7 @@ int update_session(struct config_elements * config, const char * session_uid, co
         j_last_id = h_last_insert_id(config->conn);
         if (j_last_id != NULL) {
           expiration_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now + expiration)):msprintf("%u", (now + expiration));
-          j_query = json_pack("{sss{sIsss{ss}}}",
+          j_query = json_pack("{sss{sIsss{ss}s{ss}}}",
                               "table",
                               GLEWLWYD_TABLE_USER_SESSION_SCHEME,
                               "values",
@@ -328,14 +356,17 @@ int update_session(struct config_elements * config, const char * session_uid, co
                                 scheme_name,
                                 "guss_expiration",
                                   "raw",
-                                  expiration_clause);
+                                  expiration_clause,
+                                "guss_last_login",
+                                  "raw",
+                                  last_login_clause);
           o_free(expiration_clause);
           res = h_insert(config->conn, j_query, NULL);
           json_decref(j_query);
           if (res == H_OK) {
             ret = G_OK;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "update_session - Error executing j_query (3)");
+            y_log_message(Y_LOG_LEVEL_ERROR, "update_session - Error executing j_query (4)");
             ret = G_ERROR_DB;
           }
         } else {
@@ -344,9 +375,10 @@ int update_session(struct config_elements * config, const char * session_uid, co
         }
         json_decref(j_last_id);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "update_session - Error executing j_query (4)");
+        y_log_message(Y_LOG_LEVEL_ERROR, "update_session - Error executing j_query (5)");
         ret = G_ERROR_DB;
       }
+      o_free(last_login_clause);
     }
     o_free(session_uid_hash);
   } else {
