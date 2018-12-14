@@ -1,5 +1,10 @@
 # Glewlwyd Changelog
 
+## 1.4.9
+
+- Small bugfixes
+- Clean some memory leaks
+
 ## 1.4.8
 
 - Add Travis CI script

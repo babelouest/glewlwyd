@@ -29,7 +29,7 @@
 #ifndef __GLEWLWYD_H_
 #define __GLEWLWYD_H_
 
-#define _GLEWLWYD_VERSION_ "1.4.8"
+#define _GLEWLWYD_VERSION_ "1.4.9"
 
 #include <jansson.h>
 #include <jwt.h>
@@ -154,7 +154,7 @@ struct _auth_ldap {
   char *            bind_passwd;
   struct crypt_data cur_crypt_data;
   int               search_scope;
-	ber_int_t         page_size;
+  ber_int_t         page_size;
   
   char *  base_search_user;
   char *  filter_user_read;

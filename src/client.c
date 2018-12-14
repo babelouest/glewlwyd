@@ -544,7 +544,6 @@ json_t * auth_check_client_scope_ldap(struct config_elements * config, const cha
         }
         o_free(new_scope_list);
         json_decref(j_scope_list);
-        o_free(new_scope_list);
       }
     }
     o_free(filter);

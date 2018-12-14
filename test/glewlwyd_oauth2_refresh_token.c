@@ -46,30 +46,30 @@ START_TEST(test_glwd_refresh_token_ok)
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 200, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
 static Suite *glewlwyd_suite(void)
 {
-	Suite *s;
-	TCase *tc_core;
+  Suite *s;
+  TCase *tc_core;
 
-	s = suite_create("Glewlwyd refresh token");
-	tc_core = tcase_create("test_glwd_refresh_token");
-	tcase_add_test(tc_core, test_glwd_refresh_token_token_invalid);
-	tcase_add_test(tc_core, test_glwd_refresh_token_ok);
-	tcase_set_timeout(tc_core, 30);
-	suite_add_tcase(s, tc_core);
+  s = suite_create("Glewlwyd refresh token");
+  tc_core = tcase_create("test_glwd_refresh_token");
+  tcase_add_test(tc_core, test_glwd_refresh_token_token_invalid);
+  tcase_add_test(tc_core, test_glwd_refresh_token_ok);
+  tcase_set_timeout(tc_core, 30);
+  suite_add_tcase(s, tc_core);
 
-	return s;
+  return s;
 }
 
 int main(int argc, char *argv[])
 {
-	int number_failed;
-	Suite *s;
-	SRunner *sr;
+  int number_failed;
+  Suite *s;
+  SRunner *sr;
   struct _u_request auth_req;
   struct _u_response auth_resp;
   int res;
@@ -104,5 +104,5 @@ int main(int argc, char *argv[])
   
   free(refresh_token);
   
-	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

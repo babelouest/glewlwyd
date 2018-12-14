@@ -27,8 +27,8 @@ START_TEST(test_glwd_crud_scope_list)
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_scope1, NULL, NULL);
   free(url);
-	json_decref(j_scope1);
-	ck_assert_int_eq(res, 1);
+  json_decref(j_scope1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -39,8 +39,8 @@ START_TEST(test_glwd_crud_scope_get)
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_scope1, NULL, NULL);
   free(url);
-	json_decref(j_scope1);
-	ck_assert_int_eq(res, 1);
+  json_decref(j_scope1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -50,7 +50,7 @@ START_TEST(test_glwd_crud_scope_get_not_found)
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL);
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -63,7 +63,7 @@ START_TEST(test_glwd_crud_scope_add_ok)
   json_body = json_pack("{ssss}", "description", "New scope description", "name", "new_scope");
   res = run_simple_test(&user_req, "POST", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   json_decref(json_body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
   
   free(url);
 }
@@ -78,7 +78,7 @@ START_TEST(test_glwd_crud_scope_add_invalid)
   json_body = json_pack("{si}", "description", 22);
   res = run_simple_test(&user_req, "POST", url, NULL, NULL, json_body, NULL, 400, NULL, NULL, NULL);
   json_decref(json_body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
   
   free(url);
 }
@@ -91,8 +91,8 @@ START_TEST(test_glwd_crud_scope_get_new)
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_new_scope, NULL, NULL);
   free(url);
-	json_decref(j_new_scope);
-	ck_assert_int_eq(res, 1);
+  json_decref(j_new_scope);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -103,8 +103,8 @@ START_TEST(test_glwd_crud_scope_set_new)
   
   int res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   free(url);
-	json_decref(json_body);
-	ck_assert_int_eq(res, 1);
+  json_decref(json_body);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -115,8 +115,8 @@ START_TEST(test_glwd_crud_scope_get_new_updated)
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_new_scope, NULL, NULL);
   free(url);
-	json_decref(j_new_scope);
-	ck_assert_int_eq(res, 1);
+  json_decref(j_new_scope);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -126,30 +126,30 @@ START_TEST(test_glwd_crud_scope_delete_new)
   
   int res = run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
 static Suite *glewlwyd_suite(void)
 {
-	Suite *s;
-	TCase *tc_core;
+  Suite *s;
+  TCase *tc_core;
 
-	s = suite_create("Glewlwyd scope CRUD");
-	tc_core = tcase_create("test_glwd_crud_scope");
-	tcase_add_test(tc_core, test_glwd_crud_scope_list);
-	tcase_add_test(tc_core, test_glwd_crud_scope_get);
-	tcase_add_test(tc_core, test_glwd_crud_scope_get_not_found);
-	tcase_add_test(tc_core, test_glwd_crud_scope_add_ok);
-	tcase_add_test(tc_core, test_glwd_crud_scope_add_invalid);
-	tcase_add_test(tc_core, test_glwd_crud_scope_get_new);
-	tcase_add_test(tc_core, test_glwd_crud_scope_set_new);
-	tcase_add_test(tc_core, test_glwd_crud_scope_get_new_updated);
-	tcase_add_test(tc_core, test_glwd_crud_scope_delete_new);
-	tcase_set_timeout(tc_core, 30);
-	suite_add_tcase(s, tc_core);
+  s = suite_create("Glewlwyd scope CRUD");
+  tc_core = tcase_create("test_glwd_crud_scope");
+  tcase_add_test(tc_core, test_glwd_crud_scope_list);
+  tcase_add_test(tc_core, test_glwd_crud_scope_get);
+  tcase_add_test(tc_core, test_glwd_crud_scope_get_not_found);
+  tcase_add_test(tc_core, test_glwd_crud_scope_add_ok);
+  tcase_add_test(tc_core, test_glwd_crud_scope_add_invalid);
+  tcase_add_test(tc_core, test_glwd_crud_scope_get_new);
+  tcase_add_test(tc_core, test_glwd_crud_scope_set_new);
+  tcase_add_test(tc_core, test_glwd_crud_scope_get_new_updated);
+  tcase_add_test(tc_core, test_glwd_crud_scope_delete_new);
+  tcase_set_timeout(tc_core, 30);
+  suite_add_tcase(s, tc_core);
 
-	return s;
+  return s;
 }
 
 int main(int argc, char *argv[])
@@ -197,5 +197,5 @@ int main(int argc, char *argv[])
   
   ulfius_clean_request(&user_req);
   
-	return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -32,7 +32,7 @@ START_TEST(glewlwyd_client_cred_valid)
   int res = run_simple_test(NULL, "POST", url, CLIENT_ID, CLIENT_PASSWORD, NULL, &body, 200, NULL, "access_token", NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -47,7 +47,7 @@ START_TEST(glewlwyd_client_cred_valid_reduced_scope)
   int res = run_simple_test(NULL, "POST", url, CLIENT_ID, CLIENT_PASSWORD, NULL, &body, 200, NULL, "scope\":\"scope2 scope3\"", NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -62,7 +62,7 @@ START_TEST(glewlwyd_client_cred_pwd_invalid)
   int res = run_simple_test(NULL, "POST", url, CLIENT_ID, "invalid", NULL, &body, 403, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -77,7 +77,7 @@ START_TEST(glewlwyd_client_cred_client_unauthorized)
   int res = run_simple_test(NULL, "POST", url, "client1_id", CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -92,7 +92,7 @@ START_TEST(glewlwyd_client_cred_client_invalid)
   int res = run_simple_test(NULL, "POST", url, "invalid", CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -107,7 +107,7 @@ START_TEST(glewlwyd_client_cred_scope_invalid)
   int res = run_simple_test(NULL, "POST", url, CLIENT_ID, CLIENT_PASSWORD, NULL, &body, 400, NULL, "scope_invalid", NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -122,46 +122,46 @@ START_TEST(glewlwyd_client_cred_empty)
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
 static Suite *glewlwyd_suite(void)
 {
-	Suite *s;
-	TCase *tc_core;
+  Suite *s;
+  TCase *tc_core;
 
-	s = suite_create("Glewlwyd client credentials");
-	tc_core = tcase_create("glewlwyd_client_cred");
-	tcase_add_test(tc_core, glewlwyd_client_cred_valid);
-	tcase_add_test(tc_core, glewlwyd_client_cred_valid_reduced_scope);
-	tcase_add_test(tc_core, glewlwyd_client_cred_pwd_invalid);
-	tcase_add_test(tc_core, glewlwyd_client_cred_client_unauthorized);
-	tcase_add_test(tc_core, glewlwyd_client_cred_client_invalid);
-	tcase_add_test(tc_core, glewlwyd_client_cred_scope_invalid);
-	tcase_add_test(tc_core, glewlwyd_client_cred_empty);
-	tcase_set_timeout(tc_core, 30);
-	suite_add_tcase(s, tc_core);
+  s = suite_create("Glewlwyd client credentials");
+  tc_core = tcase_create("glewlwyd_client_cred");
+  tcase_add_test(tc_core, glewlwyd_client_cred_valid);
+  tcase_add_test(tc_core, glewlwyd_client_cred_valid_reduced_scope);
+  tcase_add_test(tc_core, glewlwyd_client_cred_pwd_invalid);
+  tcase_add_test(tc_core, glewlwyd_client_cred_client_unauthorized);
+  tcase_add_test(tc_core, glewlwyd_client_cred_client_invalid);
+  tcase_add_test(tc_core, glewlwyd_client_cred_scope_invalid);
+  tcase_add_test(tc_core, glewlwyd_client_cred_empty);
+  tcase_set_timeout(tc_core, 30);
+  suite_add_tcase(s, tc_core);
 
-	return s;
+  return s;
 }
 
 int main(int argc, char *argv[])
 {
-	int number_failed;
-	Suite *s;
-	SRunner *sr;
+  int number_failed;
+  Suite *s;
+  SRunner *sr;
   
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
-	s = glewlwyd_suite();
-	sr = srunner_create(s);
+  s = glewlwyd_suite();
+  sr = srunner_create(s);
 
-	srunner_run_all(sr, CK_VERBOSE);
-	number_failed = srunner_ntests_failed(sr);
-	srunner_free(sr);
+  srunner_run_all(sr, CK_VERBOSE);
+  number_failed = srunner_ntests_failed(sr);
+  srunner_free(sr);
   
   ulfius_clean_request(&user_req);
 
-	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -26,7 +26,7 @@ START_TEST(test_glwd_auth_invalid_response_type)
   char * url = msprintf("%s/auth?response_type=invalid&login_validated=true&client_id=client1_id&redirect_uri=..%%2fapp%%2ftest-token.html&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unsupported_response_type");
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -35,7 +35,7 @@ START_TEST(test_glwd_auth_code_state_ok)
   char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=..%%2fapp%%2ftest-token.html&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "state=xyzabcd");
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -44,7 +44,7 @@ START_TEST(test_glwd_auth_code_ok_redirect_login)
   char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=..%%2fapp%%2ftest-token.html?param=client1_cb1&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html");
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -53,7 +53,7 @@ START_TEST(test_glwd_auth_code_client_invalid)
   char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client_error&redirect_uri=..%%2fapp%%2ftest-token.html?param=client1_cb1&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unauthorized_client");
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -62,7 +62,7 @@ START_TEST(test_glwd_auth_code_uri_invalid)
   char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client_error&redirect_uri=..%%2fapp%%2ftest-token.html?param=invalid&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unauthorized_client");
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -71,7 +71,7 @@ START_TEST(test_glwd_auth_code_scope_invalid)
   char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=..%%2fapp%%2ftest-token.html?param=client1_cb1&state=xyzabcd&scope=scope4", SERVER_URI);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "invalid_scope");
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -80,7 +80,7 @@ START_TEST(test_glwd_auth_code_scope_empty)
   char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=..%%2fapp%%2ftest-token.html?param=client1_cb1&state=xyzabcd", SERVER_URI);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "invalid_scope");
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -89,29 +89,29 @@ START_TEST(test_glwd_auth_code_ok_redirect_cb_with_code)
   char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=client1_id&redirect_uri=..%%2fapp%%2ftest-token.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code=");
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
 static Suite *glewlwyd_suite(void)
 {
-	Suite *s;
-	TCase *tc_core;
+  Suite *s;
+  TCase *tc_core;
 
-	s = suite_create("Glewlwyd auth_code");
-	tc_core = tcase_create("test_glwd_auth_code");
-	tcase_add_test(tc_core, test_glwd_auth_invalid_response_type);
-	tcase_add_test(tc_core, test_glwd_auth_code_ok_redirect_login);
-	tcase_add_test(tc_core, test_glwd_auth_code_state_ok);
-	tcase_add_test(tc_core, test_glwd_auth_code_client_invalid);
-	tcase_add_test(tc_core, test_glwd_auth_code_uri_invalid);
-	tcase_add_test(tc_core, test_glwd_auth_code_scope_invalid);
-	tcase_add_test(tc_core, test_glwd_auth_code_scope_empty);
-	tcase_add_test(tc_core, test_glwd_auth_code_ok_redirect_cb_with_code);
-	tcase_set_timeout(tc_core, 30);
-	suite_add_tcase(s, tc_core);
+  s = suite_create("Glewlwyd auth_code");
+  tc_core = tcase_create("test_glwd_auth_code");
+  tcase_add_test(tc_core, test_glwd_auth_invalid_response_type);
+  tcase_add_test(tc_core, test_glwd_auth_code_ok_redirect_login);
+  tcase_add_test(tc_core, test_glwd_auth_code_state_ok);
+  tcase_add_test(tc_core, test_glwd_auth_code_client_invalid);
+  tcase_add_test(tc_core, test_glwd_auth_code_uri_invalid);
+  tcase_add_test(tc_core, test_glwd_auth_code_scope_invalid);
+  tcase_add_test(tc_core, test_glwd_auth_code_scope_empty);
+  tcase_add_test(tc_core, test_glwd_auth_code_ok_redirect_cb_with_code);
+  tcase_set_timeout(tc_core, 30);
+  suite_add_tcase(s, tc_core);
 
-	return s;
+  return s;
 }
 
 int main(int argc, char *argv[])
@@ -192,5 +192,5 @@ int main(int argc, char *argv[])
   
   y_close_logs();
 
-	return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

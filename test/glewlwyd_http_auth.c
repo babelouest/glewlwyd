@@ -137,7 +137,7 @@ START_TEST(test_glwd_code_http_auth_ok)
   int res = run_simple_test(&user_req, "POST", url, NULL, NULL, NULL, &body, 200, NULL, "refresh_token", NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -146,7 +146,7 @@ START_TEST(test_glwd_auth_code_ok_redirect_cb_with_code_http_auth)
   char * url = msprintf("%s/auth?response_type=code&login_validated=true&client_id=%s&redirect_uri=../app/test-token.html?param=client1_cb1&state=xyzabcd", SERVER_URI, CLIENT);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code=");
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -155,7 +155,7 @@ START_TEST(test_glwd_implicit_valid_http_auth)
   char * url = msprintf("%s/auth?response_type=token&login_validated=true&client_id=%s&redirect_uri=../app/test-token.html?param=client1_cb1&state=xyzabcd", SERVER_URI, CLIENT);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "token=");
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -165,8 +165,8 @@ START_TEST(test_glwd_refresh_token_ok_http_auth)
   struct _u_map body;
   struct _u_request auth_req;
   struct _u_response auth_resp;
-	int res;
-	
+  int res;
+  
   ulfius_init_request(&auth_req);
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
@@ -182,7 +182,7 @@ START_TEST(test_glwd_refresh_token_ok_http_auth)
   }
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
-	
+  
   u_map_init(&body);
   u_map_put(&body, "grant_type", "refresh_token");
   u_map_put(&body, "refresh_token", refresh_token);
@@ -190,7 +190,7 @@ START_TEST(test_glwd_refresh_token_ok_http_auth)
   res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 200, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -200,7 +200,7 @@ START_TEST(test_glwd_user_refresh_token_list_all_user)
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -226,7 +226,7 @@ START_TEST(test_glwd_user_refresh_token_revoke_ok_user)
   user_req.http_url = msprintf("%s/profile/refresh_token/", SERVER_URI);
   user_req.http_verb = strdup("DELETE");
   ulfius_send_http_request(&user_req, &del_resp);
-	ck_assert_int_eq(del_resp.status, 200);
+  ck_assert_int_eq(del_resp.status, 200);
   
   ulfius_clean_response(&list_resp);
   ulfius_clean_response(&del_resp);
@@ -239,7 +239,7 @@ START_TEST(test_glwd_user_session_list_all_user)
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -267,7 +267,7 @@ START_TEST(test_glwd_user_session_revoke_ok_user)
   user_req.http_verb = strdup("DELETE");
   ulfius_send_http_request(&user_req, &del_resp);
   
-	ck_assert_int_eq(del_resp.status, 200);
+  ck_assert_int_eq(del_resp.status, 200);
   
   u_map_clean(&body);
   ulfius_clean_response(&list_resp);
