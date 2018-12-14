@@ -30,7 +30,7 @@ set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_DOWNLOAD "1.2.9")
 set(YDER_VERSION_DOWNLOAD "1.4.4")
 set(ULFIUS_VERSION_DOWNLOAD "2.5.1")
-set(HOEL_VERSION_DOWNLOAD "1.4.7")
+set(HOEL_VERSION_DOWNLOAD "1.4.8")
 
 include(GNUInstallDirs)
 include(CheckSymbolExists)
