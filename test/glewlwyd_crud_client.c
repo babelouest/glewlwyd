@@ -176,7 +176,7 @@ START_TEST(test_glwd_crud_client_connect_success)
   int res = run_simple_test(NULL, "POST", url, "new_client", "password", NULL, &body, 200, NULL, "access_token", NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -201,7 +201,7 @@ START_TEST(test_glwd_crud_client_connect_fail)
   int res = run_simple_test(NULL, "POST", url, "new_client", "password", NULL, &body, 403, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -512,5 +512,5 @@ int main(int argc, char *argv[])
   
   ulfius_clean_request(&user_req);
   
-	return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
