@@ -28,7 +28,7 @@ START_TEST(test_glwd_admin_authorization_list)
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_authorization_code, NULL, NULL);
   free(url);
   json_decref(j_authorization_code);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -40,7 +40,7 @@ START_TEST(test_glwd_admin_authorization_authorization_code)
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_authorization_code, NULL, NULL);
   free(url);
   json_decref(j_authorization_code);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -50,7 +50,7 @@ START_TEST(test_glwd_admin_authorization_not_found)
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL);
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -63,17 +63,17 @@ START_TEST(test_glwd_admin_authorization_update_authorization_code_ok)
   json_body = json_pack("{sssb}", "description", "updated description", "enabled", 0);
   res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   json_decref(json_body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
   
   res_body = json_string("updated description");
   res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, res_body, NULL, NULL);
   json_decref(res_body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
   
   json_body = json_pack("{sssb}", "description", "Authorization Code Grant - Access token: https://tools.ietf.org/html/rfc6749#section-4.1", "enabled", 1);
   res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 200, NULL, NULL, NULL);
   json_decref(json_body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
   
   free(url);
 }
@@ -88,7 +88,7 @@ START_TEST(test_glwd_admin_authorization_update_authorization_code_invalid)
   json_body = json_pack("{siss}", "description", 1, "enabled", "invalid");
   res = run_simple_test(&user_req, "PUT", url, NULL, NULL, json_body, NULL, 400, NULL, NULL, NULL);
   json_decref(json_body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
   
   free(url);
 }
@@ -96,20 +96,20 @@ END_TEST
 
 static Suite *glewlwyd_suite(void)
 {
-	Suite *s;
-	TCase *tc_core;
+  Suite *s;
+  TCase *tc_core;
 
-	s = suite_create("Glewlwyd admin authorization");
-	tc_core = tcase_create("test_glwd_admin_authorization");
-	tcase_add_test(tc_core, test_glwd_admin_authorization_list);
-	tcase_add_test(tc_core, test_glwd_admin_authorization_authorization_code);
-	tcase_add_test(tc_core, test_glwd_admin_authorization_not_found);
-	tcase_add_test(tc_core, test_glwd_admin_authorization_update_authorization_code_ok);
-	tcase_add_test(tc_core, test_glwd_admin_authorization_update_authorization_code_invalid);
-	tcase_set_timeout(tc_core, 30);
-	suite_add_tcase(s, tc_core);
+  s = suite_create("Glewlwyd admin authorization");
+  tc_core = tcase_create("test_glwd_admin_authorization");
+  tcase_add_test(tc_core, test_glwd_admin_authorization_list);
+  tcase_add_test(tc_core, test_glwd_admin_authorization_authorization_code);
+  tcase_add_test(tc_core, test_glwd_admin_authorization_not_found);
+  tcase_add_test(tc_core, test_glwd_admin_authorization_update_authorization_code_ok);
+  tcase_add_test(tc_core, test_glwd_admin_authorization_update_authorization_code_invalid);
+  tcase_set_timeout(tc_core, 30);
+  suite_add_tcase(s, tc_core);
 
-	return s;
+  return s;
 }
 
 int main(int argc, char *argv[])
@@ -157,5 +157,5 @@ int main(int argc, char *argv[])
   
   ulfius_clean_request(&user_req);
   
-	return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

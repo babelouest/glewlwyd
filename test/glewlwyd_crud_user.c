@@ -251,12 +251,14 @@ END_TEST
 START_TEST(test_glwd_crud_user_get_new_database_empty_additional_property)
 {
   char * url = msprintf("%s/user/new_user?source=database", SERVER_URI);
-  json_t * j_new_user = json_pack("{sssssssssssos[ss]}",
+  json_t * j_new_user = json_pack("{sssssssssssssos[ss]}",
                         "login", "new_user",
                         "name", "New User",
                         "email", "test@glewlwyd.domain",
                         "additional_property_name", "new_property",
                         "additional_property_value", "",
+                        "source",
+                        "database",
                         "enabled", json_true(),
                         "scope", 
                           "scope1", "scope2");
@@ -634,5 +636,5 @@ int main(int argc, char *argv[])
   
   ulfius_clean_request(&user_req);
   
-	return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
