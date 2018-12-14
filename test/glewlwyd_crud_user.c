@@ -551,7 +551,6 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_delete_new_database);
   tcase_add_test(tc_core, test_glwd_crud_user_add_ok_database_empty_additional_property);
   tcase_add_test(tc_core, test_glwd_crud_user_get_new_database_empty_additional_property);
-  getchar();
   tcase_add_test(tc_core, test_glwd_crud_user_delete_new_database_empty_additional_property);
   tcase_add_test(tc_core, test_glwd_crud_user_connect_fail_new);
 #ifndef WITHOUT_LDAP
