@@ -56,7 +56,7 @@ START_TEST(test_glwd_code_client_invalid)
   int res = run_simple_test(&user_req, "POST", url, NULL, NULL, NULL, &body, 403, NULL, "unauthorized_client", NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -75,7 +75,7 @@ START_TEST(test_glwd_code_redirect_uri_invalid)
   int res = run_simple_test(&user_req, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -94,32 +94,32 @@ START_TEST(test_glwd_code_ok)
   int res = run_simple_test(&user_req, "POST", url, NULL, NULL, NULL, &body, 200, NULL, "refresh_token", NULL);
   free(url);
   u_map_clean(&body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
 static Suite *glewlwyd_suite(void)
 {
-	Suite *s;
-	TCase *tc_core;
+  Suite *s;
+  TCase *tc_core;
 
-	s = suite_create("Glewlwyd code");
-	tc_core = tcase_create("test_glwd_code");
-	tcase_add_test(tc_core, test_glwd_code_code_invalid);
-	tcase_add_test(tc_core, test_glwd_code_client_invalid);
-	tcase_add_test(tc_core, test_glwd_code_redirect_uri_invalid);
-	tcase_add_test(tc_core, test_glwd_code_ok);
-	tcase_set_timeout(tc_core, 30);
-	suite_add_tcase(s, tc_core);
+  s = suite_create("Glewlwyd code");
+  tc_core = tcase_create("test_glwd_code");
+  tcase_add_test(tc_core, test_glwd_code_code_invalid);
+  tcase_add_test(tc_core, test_glwd_code_client_invalid);
+  tcase_add_test(tc_core, test_glwd_code_redirect_uri_invalid);
+  tcase_add_test(tc_core, test_glwd_code_ok);
+  tcase_set_timeout(tc_core, 30);
+  suite_add_tcase(s, tc_core);
 
-	return s;
+  return s;
 }
 
 int main(int argc, char *argv[])
 {
-	int number_failed = 0;
-	Suite *s;
-	SRunner *sr;
+  int number_failed = 0;
+  Suite *s;
+  SRunner *sr;
   struct _u_request auth_req, scope_req;
   struct _u_response auth_resp, code_resp, scope_resp;
   int res, do_test = 0;
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
         do_test = 1;
       } else {
         y_log_message(Y_LOG_LEVEL_DEBUG, "Error, no code given");
-		  }
+      }
       ulfius_clean_response(&code_resp);
     }
     ulfius_clean_response(&scope_resp);
@@ -203,5 +203,5 @@ int main(int argc, char *argv[])
   ulfius_clean_request(&scope_req);
   ulfius_clean_request(&user_req);
 
-	return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

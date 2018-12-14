@@ -29,7 +29,7 @@ START_TEST(test_glwd_user_refresh_token_list_all_admin)
   
   int res = run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -39,7 +39,7 @@ START_TEST(test_glwd_user_refresh_token_list_enabled_admin)
   
   int res = run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
   free(url);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -52,7 +52,7 @@ START_TEST(test_glwd_user_refresh_token_revoke_not_found_admin)
   int res = run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL);
   free(url);
   json_decref(json_body);
-	ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
@@ -78,7 +78,7 @@ START_TEST(test_glwd_user_refresh_token_revoke_ok_admin)
   admin_req.http_url = msprintf("%s/user/%s/refresh_token/", SERVER_URI, ADMIN_LOGIN);
   admin_req.http_verb = strdup("DELETE");
   ulfius_send_http_request(&admin_req, &del_resp);
-	ck_assert_int_eq(del_resp.status, 200);
+  ck_assert_int_eq(del_resp.status, 200);
   
   ulfius_clean_response(&list_resp);
   ulfius_clean_response(&del_resp);
@@ -87,19 +87,19 @@ END_TEST
 
 static Suite *glewlwyd_suite(void)
 {
-	Suite *s;
-	TCase *tc_core;
+  Suite *s;
+  TCase *tc_core;
 
-	s = suite_create("Glewlwyd user refresh_token management admin");
-	tc_core = tcase_create("test_glwd_user_refresh_token");
-	tcase_add_test(tc_core, test_glwd_user_refresh_token_list_all_admin);
-	tcase_add_test(tc_core, test_glwd_user_refresh_token_list_enabled_admin);
-	tcase_add_test(tc_core, test_glwd_user_refresh_token_revoke_not_found_admin);
-	tcase_add_test(tc_core, test_glwd_user_refresh_token_revoke_ok_admin);
-	tcase_set_timeout(tc_core, 30);
-	suite_add_tcase(s, tc_core);
+  s = suite_create("Glewlwyd user refresh_token management admin");
+  tc_core = tcase_create("test_glwd_user_refresh_token");
+  tcase_add_test(tc_core, test_glwd_user_refresh_token_list_all_admin);
+  tcase_add_test(tc_core, test_glwd_user_refresh_token_list_enabled_admin);
+  tcase_add_test(tc_core, test_glwd_user_refresh_token_revoke_not_found_admin);
+  tcase_add_test(tc_core, test_glwd_user_refresh_token_revoke_ok_admin);
+  tcase_set_timeout(tc_core, 30);
+  suite_add_tcase(s, tc_core);
 
-	return s;
+  return s;
 }
 
 int main(int argc, char *argv[])
@@ -144,5 +144,5 @@ int main(int argc, char *argv[])
   
   ulfius_clean_request(&admin_req);
   
-	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
