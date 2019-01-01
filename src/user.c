@@ -34,17 +34,19 @@ json_t * auth_check_user_credentials_scope(struct config_elements * config, cons
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password) {
   int i, res;
   json_t * j_return = NULL;
+  struct _user_module_instance * user_module;
   
-  for (i=0; i<config->user_module_instance_list_size && j_return == NULL; i++) {
-    if (config->user_module_instance_list[i] != NULL) {
-      if (config->user_module_instance_list[i]->enabled) {
-        res = config->user_module_instance_list[i]->module->user_module_check_password(username, password, config->user_module_instance_list[i]->cls);
+  for (i=0; i<pointer_list_size(config->user_module_instance_list); i++) {
+    user_module = pointer_list_get_at(config->user_module_instance_list, i);
+    if (user_module != NULL) {
+      if (user_module->enabled) {
+        res = user_module->module->user_module_check_password(username, password, user_module->cls);
         if (res == G_OK) {
           j_return = json_pack("{si}", "result", G_OK);
         } else if (res == G_ERROR_UNAUTHORIZED) {
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         } else if (res != G_ERROR_NOT_FOUND) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error, user_module_check_password for module '%s', skip", config->user_module_instance_list[i]->name);
+          y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error, user_module_check_password for module '%s', skip", user_module->name);
         }
       }
     } else {
@@ -85,16 +87,17 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
 json_t * get_user(struct config_elements * config, const char * username) {
   int i, found = 0;
   json_t * j_return = NULL, * j_user;
+  struct _user_module_instance * user_module;
   
-  for (i=0; !found && i<config->user_module_instance_list_size && j_return == NULL; i++) {
-    if (config->user_module_instance_list[i] != NULL) {
-      if (config->user_module_instance_list[i]->enabled) {
-        j_user = config->user_module_instance_list[i]->module->user_module_get(username, config->user_module_instance_list[i]->cls);
+  for (i=0; !found && i<pointer_list_size(config->user_module_instance_list) && j_return == NULL; i++) {
+    if ((user_module = pointer_list_get_at(config->user_module_instance_list, i)) != NULL) {
+      if (user_module->enabled) {
+        j_user = user_module->module->user_module_get(username, user_module->cls);
         if (check_result_value(j_user, G_OK)) {
           j_return = json_pack("{sisO}", "result", G_OK, "user", json_object_get(j_user, "user"));
           found = 1;
         } else if (!check_result_value(j_user, G_ERROR_NOT_FOUND)) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error user_module_get for username '%s' at module %s", username, config->user_module_instance_list[i]->name);
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error user_module_get for username '%s' at module %s", username, user_module->name);
         }
       }
     } else {

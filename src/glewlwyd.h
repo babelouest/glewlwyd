@@ -59,6 +59,7 @@
 
 #define GLEWLWYD_LOG_NAME "Glewlwyd"
 #define GLEWLWYD_CHECK_JWT_USERNAME "myrddin"
+#define GLEWLWYD_CHECK_JWT_SCOPE    "caledonia"
 
 // Configuration default values
 #define GLEWLWYD_DEFAULT_PORT               4593
@@ -183,6 +184,19 @@ struct _user_auth_scheme_module_instance {
   short int                         enabled;
 };
 
+struct _protocol_module {
+  char * name;
+  int (* protocol_load)(struct config_elements * config, char ** name, char ** parameters);
+  int (* protocol_unload)(struct config_elements * config);
+  int (* protocol_init)(struct config_elements * config, const char * parameters, void ** cls);
+  int (* user_module_close)(struct config_elements * config, void * cls);
+};
+
+struct _protocol_instance {
+  char * name;
+  void * cls;
+};
+
 struct config_elements {
   char *                                      config_file;
   unsigned int                                port;
@@ -206,20 +220,26 @@ struct config_elements {
   char *                                      login_url;
   char *                                      grant_url;
   char *                                      user_module_path;
-  uint                                        user_module_list_size;
-  struct _user_module **                      user_module_list;
-  uint                                        user_module_instance_list_size;
-  struct _user_module_instance **             user_module_instance_list;
+  struct _pointer_list *                      user_module_list;
+  struct _pointer_list *                      user_module_instance_list;
   char *                                      client_module_path;
-  uint                                        client_module_list_size;
-  struct _client_module **                    client_module_list;
-  uint                                        client_module_instance_list_size;
-  struct _client_module_instance **           client_module_instance_list;
+  struct _pointer_list *                      client_module_list;
+  struct _pointer_list *                      client_module_instance_list;
   char *                                      user_auth_scheme_module_path;
-  uint                                        user_auth_scheme_module_list_size;
-  struct _user_auth_scheme_module **          user_auth_scheme_module_list;
-  uint                                        user_auth_scheme_module_instance_list_size;
-  struct _user_auth_scheme_module_instance ** user_auth_scheme_module_instance_list;
+  struct _pointer_list *                      user_auth_scheme_module_list;
+  struct _pointer_list *                      user_auth_scheme_module_instance_list;
+  char *                                      plugin_path;
+  struct _pointer_list *                      plugin_list;
+  struct _pointer_list *                      plugin_instance_list;
+};
+
+struct config_protocol {
+  struct config_elements * glewlwyd_config;
+  json_t * (* glewlwyd_callback_is_user_session_valid)(struct config_protocol * config, const char * username, const char * scope_list);
+  json_t * (* glewlwyd_callback_is_user_valid)(struct config_protocol * config, const char * username, const char * password, const char * scope_list);
+  json_t * (* glewlwyd_callback_is_client_valid)(struct config_protocol * config, const char * client_id, const char * password, const char * scope_list);
+  int      (* glewlwyd_callback_add_endpoint)(struct config_protocol * config, const char * method, const char * protocol_name, const char * url, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
+  json_t * (* glewlwyd_callback_get_login_url)(struct config_protocol * config, json_t * parameters);
 };
 
 // Main functions and misc functions

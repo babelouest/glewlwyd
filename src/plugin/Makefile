@@ -1,5 +1,5 @@
 #
-# Glewlwyd authentication scheme
+# Glewlwyd potocol backend
 #
 # Makefile used to build the software
 #
@@ -20,26 +20,25 @@
 #
 
 PREFIX=/usr/local
-MODULES_TARGET=$(PREFIX)/lib/glewlwyd/user
+MODULES_TARGET=$(PREFIX)/lib/glewlwyd/protocol
 CC=gcc
 CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -I$(PREFIX)/include -Wno-pragmas $(ADDITIONALFLAGS)
-LIBS=-L$(PREFIX)/lib -lc -ljansson -lyder -lorcania -lulfius -ldl
-LDFLAGS += -Wl,-R '-Wl,-R$$ORIGIN'
+LIBS=-L$(PREFIX)/lib -lc -ljansson -lyder -lorcania -lulfius -ljwt -ldl
 
 all: release
 
-mock.o: ../glewlwyd.h mock.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) mock.c
+oauth2.o: ../glewlwyd.h oauth2.c
+	$(CC) $(CFLAGS) $(FLAGS_YDER) oauth2.c
 
-libmodmock.so: mock.o
-	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o $(LIBS)
+libprotocoloauth2.so: oauth2.o
+	$(CC) -shared -Wl,-soname,libprotocoloauth2.so -o libprotocoloauth2.so oauth2.o $(LIBS)
 
 clean:
 	rm -f *.o *.so
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: libmodmock.so
+debug: libprotocoloauth2.so
 
 release: ADDITIONALFLAGS=-O3
 
