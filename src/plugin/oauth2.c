@@ -310,6 +310,6 @@ int protocol_init(struct config_elements * config, const char * parameters, void
   return ret;
 }
 
-int user_module_close(struct config_elements * config, void * cls) {
+int protocol_close(struct config_elements * config, void * cls) {
   return G_OK;
 }

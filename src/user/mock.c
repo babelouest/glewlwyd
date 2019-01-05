@@ -73,60 +73,74 @@ int user_module_close(struct config_elements * config, void * cls) {
   return G_OK;
 }
 
-json_t * user_module_get_list(const char * pattern, uint limit, uint offset, uint * total, void * cls) {
-  return json_deep_copy((json_t *)cls);
+char ** user_module_get_list(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls) {
+  json_t * j_user;
+  size_t index;
+  char ** array_return = o_malloc(json_array_size((json_t *)cls) * sizeof(char *));
+  
+  if (array_return != NULL) {
+    *total = json_array_size((json_t *)cls);
+    json_array_foreach((json_t *)cls, index, j_user) {
+      array_return[index] = json_dumps(j_user, JSON_COMPACT);
+    }
+    *result = G_OK;
+  } else {
+    *result = G_ERROR;
+  }
+  return array_return;
 }
 
-json_t * user_module_get(const char * username, void * cls) {
-  json_t * j_user, * j_return = NULL;
+char * user_module_get(const char * username, int * result, void * cls) {
+  json_t * j_user;
   size_t index;
+  char * str_return = NULL;
   
-  if (username == NULL || !o_strlen(username)) {
-    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
-  } else {
+  if (username != NULL && o_strlen(username)) {
+    *result = G_ERROR_NOT_FOUND;
     json_array_foreach((json_t *)cls, index, j_user) {
       if (0 == o_strcmp(username, json_string_value(json_object_get(j_user, "username")))) {
-        j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
+        str_return = json_dumps(j_user, JSON_COMPACT);
+        *result = G_OK;
+        break;
       }
     }
-    if (j_return == NULL) {
-      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
-    }
+  } else {
+    *result = G_ERROR;
   }
-  return j_return;
+  return str_return;
 }
 
-int user_module_add(json_t * j_new_user, void * cls) {
-  json_t * j_user;
-  int ret;
+int user_module_add(const char * str_new_user, void * cls) {
+  json_t * j_user = json_loads(str_new_user, JSON_DECODE_ANY, NULL);
+  int ret, result;
+  char * str_user;
   
-  if (j_new_user != NULL) {
-    j_user = user_module_get(json_string_value(json_object_get(j_new_user, "username")), cls);
-    if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
-      json_array_append((json_t *)cls, j_new_user);
+  if (j_user != NULL) {
+    str_user = user_module_get(json_string_value(json_object_get(j_user, "username")), &result, cls);
+    if (result == G_ERROR_NOT_FOUND) {
+      json_array_append((json_t *)cls, j_user);
       ret = G_OK;
     } else {
       ret = G_ERROR;
     }
     json_decref(j_user);
+    o_free(str_user);
   } else {
     ret = G_ERROR_PARAM;
   }
   return ret;
 }
 
-int user_module_update(const char * username, json_t * j_updated_user, void * cls) {
-  json_t * j_copy, * j_user;
+int user_module_update(const char * username, const char * str_user, void * cls) {
+  json_t * j_user = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_element;
   size_t index;
   int ret, found = 0;
   
-  if (j_updated_user != NULL) {
-    json_array_foreach((json_t *)cls, index, j_user) {
-      if (0 == o_strcmp(username, json_string_value(json_object_get(j_user, "username")))) {
-        j_copy = json_deep_copy(j_updated_user);
-        json_object_set_new(j_copy, "username", json_string(username));
-        json_array_set((json_t *)cls, index, j_copy);
-        json_decref(j_copy);
+  if (j_user != NULL) {
+    json_array_foreach((json_t *)cls, index, j_element) {
+      if (0 == o_strcmp(username, json_string_value(json_object_get(j_element, "username")))) {
+        json_object_set_new(j_user, "username", json_string(username));
+        json_array_set((json_t *)cls, index, j_user);
         ret = G_OK;
         found = 1;
         break;
@@ -138,6 +152,7 @@ int user_module_update(const char * username, json_t * j_updated_user, void * cl
   } else {
     ret = G_ERROR_PARAM;
   }
+  json_decref(j_user);
   return ret;
 }
 
@@ -161,20 +176,20 @@ int user_module_delete(const char * username, void * cls) {
 }
 
 int user_module_check_password(const char * username, const char * password, void * cls) {
-  json_t * j_user;
-  int ret;
-  j_user = user_module_get(username, cls);
+  char * str_user;
+  int ret, result;
+  str_user = user_module_get(username, &result, cls);
   
-  if (check_result_value(j_user, G_OK)) {
+  if (result == G_OK) {
     if (0 == o_strcmp(password, "password")) {
       ret = G_OK;
     } else {
-      ret = G_ERROR;
+      ret = G_ERROR_PARAM;
     }
   } else {
     ret = G_ERROR_NOT_FOUND;
   }
-  json_decref(j_user);
+  o_free(str_user);
   return ret;
 }
 

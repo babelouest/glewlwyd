@@ -85,19 +85,22 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
 }
 
 json_t * get_user(struct config_elements * config, const char * username) {
-  int i, found = 0;
+  int i, found = 0, result;
+  char * str_user;
   json_t * j_return = NULL, * j_user;
   struct _user_module_instance * user_module;
   
   for (i=0; !found && i<pointer_list_size(config->user_module_instance_list) && j_return == NULL; i++) {
     if ((user_module = pointer_list_get_at(config->user_module_instance_list, i)) != NULL) {
       if (user_module->enabled) {
-        j_user = user_module->module->user_module_get(username, user_module->cls);
-        if (check_result_value(j_user, G_OK)) {
-          j_return = json_pack("{sisO}", "result", G_OK, "user", json_object_get(j_user, "user"));
+        str_user = user_module->module->user_module_get(username, &result, user_module->cls);
+        if (result == G_OK && str_user != NULL) {
+          j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
+          j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
+          json_decref(j_user);
           found = 1;
-        } else if (!check_result_value(j_user, G_ERROR_NOT_FOUND)) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error user_module_get for username '%s' at module %s", username, user_module->name);
+        } else if (result != G_OK && result != G_ERROR_NOT_FOUND) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error, user_module_get for module %s", user_module->name);
         }
       }
     } else {
