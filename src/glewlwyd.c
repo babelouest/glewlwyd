@@ -249,38 +249,134 @@ int main (int argc, char ** argv) {
  * Exit properly the server by closing opened connections, databases and files
  */
 void exit_server(struct config_elements ** config, int exit_value) {
+  int i;
+  
   if (config != NULL && *config != NULL) {
     /* stop framework */
     ulfius_stop_framework((*config)->instance);
     ulfius_clean_instance((*config)->instance);
     h_close_db((*config)->conn);
     h_clean_connection((*config)->conn);
-    y_close_logs();
     
     // Cleaning data
     o_free((*config)->instance);
     
+    for (i=0; i<pointer_list_size((*config)->user_module_instance_list); i++) {
+      struct _user_module_instance * instance = (struct _user_module_instance *)pointer_list_get_at((*config)->user_module_instance_list, i);
+      if (instance != NULL) {
+        if (instance->module->user_module_close((*config), instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        }
+        o_free(instance->name);
+        o_free(instance);
+      }
+    }
     pointer_list_clean((*config)->user_module_instance_list);
     o_free((*config)->user_module_instance_list);
     
+    for (i=0; i<pointer_list_size((*config)->user_module_list); i++) {
+      struct _user_module * module = (struct _user_module *)pointer_list_get_at((*config)->user_module_list, i);
+      if (module != NULL) {
+        if (module->user_module_unload((*config)) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_module_close for module '%s'", module->name);
+        }
+        if (dlclose(module->file_handle)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
+        }
+        o_free(module->name);
+        o_free(module->parameters);
+        o_free(module);
+      }
+    }
     pointer_list_clean((*config)->user_module_list);
     o_free((*config)->user_module_list);
     
+    for (i=0; i<pointer_list_size((*config)->client_module_instance_list); i++) {
+      struct _client_module_instance * instance = (struct _client_module_instance *)pointer_list_get_at((*config)->client_module_instance_list, i);
+      if (instance != NULL) {
+        if (instance->module->client_module_close((*config), instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error client_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        }
+        o_free(instance->name);
+        o_free(instance);
+      }
+    }
     pointer_list_clean((*config)->client_module_instance_list);
     o_free((*config)->client_module_instance_list);
     
+    for (i=0; i<pointer_list_size((*config)->client_module_list); i++) {
+      struct _client_module * module = (struct _client_module *)pointer_list_get_at((*config)->client_module_list, i);
+      if (module != NULL) {
+        if (module->client_module_unload((*config)) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error client_module_close for module '%s'", module->name);
+        }
+        if (dlclose(module->file_handle)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
+        }
+        o_free(module->name);
+        o_free(module->parameters);
+        o_free(module);
+      }
+    }
     pointer_list_clean((*config)->client_module_list);
     o_free((*config)->client_module_list);
     
+    for (i=0; i<pointer_list_size((*config)->user_auth_scheme_module_instance_list); i++) {
+      struct _user_auth_scheme_module_instance * instance = (struct _user_auth_scheme_module_instance *)pointer_list_get_at((*config)->user_auth_scheme_module_instance_list, i);
+      if (instance != NULL) {
+        if (instance->module->user_auth_scheme_module_close((*config), instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_auth_scheme_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        }
+        o_free(instance->name);
+        o_free(instance);
+      }
+    }
     pointer_list_clean((*config)->user_auth_scheme_module_instance_list);
     o_free((*config)->user_auth_scheme_module_instance_list);
     
+    for (i=0; i<pointer_list_size((*config)->user_auth_scheme_module_list); i++) {
+      struct _user_auth_scheme_module * module = (struct _user_auth_scheme_module *)pointer_list_get_at((*config)->user_auth_scheme_module_list, i);
+      if (module != NULL) {
+        if (module->user_auth_scheme_module_unload((*config)) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_auth_scheme_module_close for module '%s'", module->name);
+        }
+        if (dlclose(module->file_handle)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
+        }
+        o_free(module->name);
+        o_free(module->parameters);
+        o_free(module);
+      }
+    }
     pointer_list_clean((*config)->user_auth_scheme_module_list);
     o_free((*config)->user_auth_scheme_module_list);
     
+    for (i=0; i<pointer_list_size((*config)->plugin_instance_list); i++) {
+      struct _protocol_instance * instance = (struct _protocol_instance *)pointer_list_get_at((*config)->plugin_instance_list, i);
+      if (instance != NULL) {
+        if (instance->module->protocol_close((*config), instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error protocol_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        }
+        o_free(instance->name);
+        o_free(instance);
+      }
+    }
     pointer_list_clean((*config)->plugin_instance_list);
     o_free((*config)->plugin_instance_list);
     
+    for (i=0; i<pointer_list_size((*config)->user_module_list); i++) {
+      struct _protocol_module * module = (struct _protocol_module *)pointer_list_get_at((*config)->user_module_list, i);
+      if (module != NULL) {
+        if (module->protocol_unload((*config)) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error protocol_unload for module '%s'", module->name);
+        }
+        if (dlclose(module->file_handle)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
+        }
+        o_free(module->name);
+        o_free(module);
+      }
+    }
     pointer_list_clean((*config)->plugin_list);
     o_free((*config)->plugin_list);
     
@@ -322,6 +418,8 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free(*config);
     (*config) = NULL;
   }
+
+  y_close_logs();
   exit(exit_value);
 }
 
