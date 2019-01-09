@@ -93,6 +93,8 @@
 // Data tables
 #define GLEWLWYD_TABLE_USER_MODULE_INSTANCE "g_user_module_instance"
 #define GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE "g_user_auth_scheme_module_instance"
+#define GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE "g_client_module_instance"
+#define GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE "g_plugin_module_instance"
 #define GLEWLWYD_TABLE_USER_SESSION "g_user_session"
 #define GLEWLWYD_TABLE_USER_SESSION_SCHEME "g_user_session_scheme"
 #define GLEWLWYD_TABLE_SCOPE "g_scope"
@@ -184,20 +186,21 @@ struct _user_auth_scheme_module_instance {
   short int                         enabled;
 };
 
-struct _protocol_module {
-  char * name;
+struct _plugin_module {
   void * file_handle;
-  int (* protocol_load)(struct config_elements * config, char ** name, char ** parameters);
-  int (* protocol_unload)(struct config_elements * config);
-  int (* protocol_init)(struct config_elements * config, const char * parameters, void ** cls);
-  int (* protocol_close)(struct config_elements * config, void * cls);
+  char * parameters;
+  char * name;
+  int (* plugin_module_load)(struct config_elements * config, char ** name, char ** parameters);
+  int (* plugin_module_unload)(struct config_elements * config);
+  int (* plugin_module_init)(struct config_elements * config, const char * parameters, void ** cls);
+  int (* plugin_module_close)(struct config_elements * config, void * cls);
 };
 
-struct _protocol_instance {
-  char                    * name;
-  struct _protocol_module * module;
-  void                    * cls;
-  short int                 enabled;
+struct _plugin_module_instance {
+  char                  * name;
+  struct _plugin_module * module;
+  void                  * cls;
+  short int               enabled;
 };
 
 struct config_elements {
@@ -231,18 +234,18 @@ struct config_elements {
   char *                                      user_auth_scheme_module_path;
   struct _pointer_list *                      user_auth_scheme_module_list;
   struct _pointer_list *                      user_auth_scheme_module_instance_list;
-  char *                                      plugin_path;
-  struct _pointer_list *                      plugin_list;
-  struct _pointer_list *                      plugin_instance_list;
+  char *                                      plugin_module_path;
+  struct _pointer_list *                      plugin_module_list;
+  struct _pointer_list *                      plugin_module_instance_list;
 };
 
-struct config_protocol {
+struct config_plugin {
   struct config_elements * glewlwyd_config;
-  json_t * (* glewlwyd_callback_is_user_session_valid)(struct config_protocol * config, const char * username, const char * scope_list);
-  json_t * (* glewlwyd_callback_is_user_valid)(struct config_protocol * config, const char * username, const char * password, const char * scope_list);
-  json_t * (* glewlwyd_callback_is_client_valid)(struct config_protocol * config, const char * client_id, const char * password, const char * scope_list);
-  int      (* glewlwyd_callback_add_endpoint)(struct config_protocol * config, const char * method, const char * protocol_name, const char * url, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
-  json_t * (* glewlwyd_callback_get_login_url)(struct config_protocol * config, json_t * parameters);
+  json_t * (* glewlwyd_callback_is_user_session_valid)(struct config_plugin * config, const char * username, const char * scope_list);
+  json_t * (* glewlwyd_callback_is_user_valid)(struct config_plugin * config, const char * username, const char * password, const char * scope_list);
+  json_t * (* glewlwyd_callback_is_client_valid)(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list);
+  int      (* glewlwyd_callback_add_endpoint)(struct config_plugin * config, const char * method, const char * protocol_name, const char * url, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
+  json_t * (* glewlwyd_callback_get_login_url)(struct config_plugin * config, json_t * parameters);
 };
 
 // Main functions and misc functions
@@ -266,6 +269,8 @@ int    load_user_auth_scheme_module_instance_list(struct config_elements * confi
 int    init_user_auth_scheme_module_list(struct config_elements * config);
 int    init_client_module_list(struct config_elements * config);
 int    load_client_module_instance_list(struct config_elements * config);
+int    init_plugin_module_list(struct config_elements * config);
+int    load_plugin_module_instance_list(struct config_elements * config);
 struct _client_module_instance * get_client_module_instance(struct config_elements * config, const char * name);
 struct _user_module_instance * get_user_module_instance(struct config_elements * config, const char * name);
 struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * name);

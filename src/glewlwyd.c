@@ -83,9 +83,9 @@ int main (int argc, char ** argv) {
   config->user_auth_scheme_module_path = NULL;
   config->user_auth_scheme_module_list = NULL;
   config->user_auth_scheme_module_instance_list = NULL;
-  config->plugin_path = NULL;
-  config->plugin_list = NULL;
-  config->plugin_instance_list = NULL;
+  config->plugin_module_path = NULL;
+  config->plugin_module_list = NULL;
+  config->plugin_module_instance_list = NULL;
   
   config->glewlwyd_resource_config_admin = o_malloc(sizeof(struct _glewlwyd_resource_config));
   if (config->glewlwyd_resource_config_admin == NULL) {
@@ -192,6 +192,16 @@ int main (int argc, char ** argv) {
   }
   if (load_user_auth_scheme_module_instance_list(config) != G_OK) {
     fprintf(stderr, "Error loading user auth scheme modules instances\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  
+  // Initialize plugins
+  if (init_plugin_module_list(config) != G_OK) {
+    fprintf(stderr, "Error initializing plugins modules\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  if (load_plugin_module_instance_list(config) != G_OK) {
+    fprintf(stderr, "Error loading plugins modules instances\n");
     exit_server(&config, GLEWLWYD_ERROR);
   }
   
@@ -351,34 +361,35 @@ void exit_server(struct config_elements ** config, int exit_value) {
     pointer_list_clean((*config)->user_auth_scheme_module_list);
     o_free((*config)->user_auth_scheme_module_list);
     
-    for (i=0; i<pointer_list_size((*config)->plugin_instance_list); i++) {
-      struct _protocol_instance * instance = (struct _protocol_instance *)pointer_list_get_at((*config)->plugin_instance_list, i);
+    for (i=0; i<pointer_list_size((*config)->plugin_module_instance_list); i++) {
+      struct _plugin_module_instance * instance = (struct _plugin_module_instance *)pointer_list_get_at((*config)->plugin_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->module->protocol_close((*config), instance->cls) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error protocol_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        if (instance->module->plugin_module_close((*config), instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error plugin_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
         }
         o_free(instance->name);
         o_free(instance);
       }
     }
-    pointer_list_clean((*config)->plugin_instance_list);
-    o_free((*config)->plugin_instance_list);
+    pointer_list_clean((*config)->plugin_module_instance_list);
+    o_free((*config)->plugin_module_instance_list);
     
-    for (i=0; i<pointer_list_size((*config)->user_module_list); i++) {
-      struct _protocol_module * module = (struct _protocol_module *)pointer_list_get_at((*config)->user_module_list, i);
+    for (i=0; i<pointer_list_size((*config)->plugin_module_list); i++) {
+      struct _plugin_module * module = (struct _plugin_module *)pointer_list_get_at((*config)->plugin_module_list, i);
       if (module != NULL) {
-        if (module->protocol_unload((*config)) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error protocol_unload for module '%s'", module->name);
+        if (module->plugin_module_unload((*config)) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error plugin_module_unload for module '%s'", module->name);
         }
         if (dlclose(module->file_handle)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
         }
         o_free(module->name);
+        o_free(module->parameters);
         o_free(module);
       }
     }
-    pointer_list_clean((*config)->plugin_list);
-    o_free((*config)->plugin_list);
+    pointer_list_clean((*config)->plugin_module_list);
+    o_free((*config)->plugin_module_list);
     
     o_free((*config)->config_file);
     o_free((*config)->api_prefix);
@@ -393,6 +404,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->user_module_path);
     o_free((*config)->client_module_path);
     o_free((*config)->user_auth_scheme_module_path);
+    o_free((*config)->plugin_module_path);
     
     if ((*config)->static_file_config != NULL) {
       u_map_clean_full((*config)->static_file_config->mime_types);
@@ -701,7 +713,7 @@ int build_config_from_file(struct config_elements * config) {
     }
   }
 
-  if (!y_init_logs(GLEWLWYD_LOG_NAME, config->log_mode, config->log_level, config->log_file, "Starting Glewlwyd Oauth2 authentication service")) {
+  if (!y_init_logs(GLEWLWYD_LOG_NAME, config->log_mode, config->log_level, config->log_file, "Starting Glewlwyd SSO authentication service")) {
     fprintf(stderr, "Error initializing logs\n");
     exit_server(&config, GLEWLWYD_ERROR);
   }
@@ -985,6 +997,14 @@ int build_config_from_file(struct config_elements * config) {
     return 0;
   }
   
+  if (config_lookup_string(&cfg, "plugin_module_path", &str_value) == CONFIG_TRUE) {
+    config->plugin_module_path = strdup(str_value);
+  } else {
+    config_destroy(&cfg);
+    fprintf(stderr, "Error, plugin_module_path is mandatory\n");
+    return 0;
+  }
+  
   config_destroy(&cfg);
   return 1;
 }
@@ -1134,84 +1154,84 @@ int init_user_module_list(struct config_elements * config) {
           if (file_path == NULL) {
             y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error allocating resources for file_path");
             ret = G_ERROR_MEMORY;
-          }
-          
-          file_handle = dlopen(file_path, RTLD_LAZY);
-          
-          if (file_handle != NULL) {
-            cur_user_module = o_malloc(sizeof(struct _user_module));
-            if (cur_user_module != NULL) {
-              cur_user_module->name = NULL;
-              cur_user_module->parameters = NULL;
-              cur_user_module->file_handle = file_handle;
-              *(void **) (&cur_user_module->user_module_load) = dlsym(file_handle, "user_module_load");
-              *(void **) (&cur_user_module->user_module_unload) = dlsym(file_handle, "user_module_unload");
-              *(void **) (&cur_user_module->user_module_init) = dlsym(file_handle, "user_module_init");
-              *(void **) (&cur_user_module->user_module_close) = dlsym(file_handle, "user_module_close");
-              *(void **) (&cur_user_module->user_module_get_list) = dlsym(file_handle, "user_module_get_list");
-              *(void **) (&cur_user_module->user_module_get) = dlsym(file_handle, "user_module_get");
-              *(void **) (&cur_user_module->user_module_add) = dlsym(file_handle, "user_module_add");
-              *(void **) (&cur_user_module->user_module_update) = dlsym(file_handle, "user_module_update");
-              *(void **) (&cur_user_module->user_module_delete) = dlsym(file_handle, "user_module_delete");
-              *(void **) (&cur_user_module->user_module_check_password) = dlsym(file_handle, "user_module_check_password");
-              *(void **) (&cur_user_module->user_module_update_password) = dlsym(file_handle, "user_module_update_password");
-              
-              if (cur_user_module->user_module_load != NULL &&
-                  cur_user_module->user_module_unload != NULL &&
-                  cur_user_module->user_module_init != NULL &&
-                  cur_user_module->user_module_close != NULL &&
-                  cur_user_module->user_module_get_list != NULL &&
-                  cur_user_module->user_module_get != NULL &&
-                  cur_user_module->user_module_add != NULL &&
-                  cur_user_module->user_module_update != NULL &&
-                  cur_user_module->user_module_delete != NULL &&
-                  cur_user_module->user_module_check_password != NULL &&
-                  cur_user_module->user_module_update_password != NULL) {
-                if (cur_user_module->user_module_load(config, &cur_user_module->name, &cur_user_module->parameters) == G_OK) {
-                  if (module_parameters_check(cur_user_module->parameters) == G_OK) {
-                    if (pointer_list_append(config->user_module_list, (void*)cur_user_module)) {
-                      y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s - %s", file_path, cur_user_module->name);
+          } else {
+            file_handle = dlopen(file_path, RTLD_LAZY);
+            
+            if (file_handle != NULL) {
+              cur_user_module = o_malloc(sizeof(struct _user_module));
+              if (cur_user_module != NULL) {
+                cur_user_module->name = NULL;
+                cur_user_module->parameters = NULL;
+                cur_user_module->file_handle = file_handle;
+                *(void **) (&cur_user_module->user_module_load) = dlsym(file_handle, "user_module_load");
+                *(void **) (&cur_user_module->user_module_unload) = dlsym(file_handle, "user_module_unload");
+                *(void **) (&cur_user_module->user_module_init) = dlsym(file_handle, "user_module_init");
+                *(void **) (&cur_user_module->user_module_close) = dlsym(file_handle, "user_module_close");
+                *(void **) (&cur_user_module->user_module_get_list) = dlsym(file_handle, "user_module_get_list");
+                *(void **) (&cur_user_module->user_module_get) = dlsym(file_handle, "user_module_get");
+                *(void **) (&cur_user_module->user_module_add) = dlsym(file_handle, "user_module_add");
+                *(void **) (&cur_user_module->user_module_update) = dlsym(file_handle, "user_module_update");
+                *(void **) (&cur_user_module->user_module_delete) = dlsym(file_handle, "user_module_delete");
+                *(void **) (&cur_user_module->user_module_check_password) = dlsym(file_handle, "user_module_check_password");
+                *(void **) (&cur_user_module->user_module_update_password) = dlsym(file_handle, "user_module_update_password");
+                
+                if (cur_user_module->user_module_load != NULL &&
+                    cur_user_module->user_module_unload != NULL &&
+                    cur_user_module->user_module_init != NULL &&
+                    cur_user_module->user_module_close != NULL &&
+                    cur_user_module->user_module_get_list != NULL &&
+                    cur_user_module->user_module_get != NULL &&
+                    cur_user_module->user_module_add != NULL &&
+                    cur_user_module->user_module_update != NULL &&
+                    cur_user_module->user_module_delete != NULL &&
+                    cur_user_module->user_module_check_password != NULL &&
+                    cur_user_module->user_module_update_password != NULL) {
+                  if (cur_user_module->user_module_load(config, &cur_user_module->name, &cur_user_module->parameters) == G_OK) {
+                    if (module_parameters_check(cur_user_module->parameters) == G_OK) {
+                      if (pointer_list_append(config->user_module_list, (void*)cur_user_module)) {
+                        y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s - %s", file_path, cur_user_module->name);
+                      } else {
+                        cur_user_module->user_module_unload(config);
+                        dlclose(file_handle);
+                        o_free(cur_user_module);
+                        y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error pointer_list_append");
+                        ret = G_ERROR;
+                      }
                     } else {
-                      cur_user_module->user_module_unload(config);
                       dlclose(file_handle);
-                      o_free(cur_user_module);
-                      y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error pointer_list_append");
-                      ret = G_ERROR;
+                      y_log_message(Y_LOG_LEVEL_ERROR, "User module %s, parameters are incorrect, abort loading", cur_user_module->name);
+                      ret = G_ERROR_PARAM;
                     }
                   } else {
                     dlclose(file_handle);
-                    y_log_message(Y_LOG_LEVEL_ERROR, "User module %s, parameters are incorrect, abort loading", cur_user_module->name);
-                    ret = G_ERROR_PARAM;
+                    o_free(cur_user_module);
+                    y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error user_module_init for module %s", file_path);
+                    ret = G_ERROR_MEMORY;
                   }
                 } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error module %s has not all required functions", file_path);
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_load: %s", (cur_user_module->user_module_load != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_unload: %s", (cur_user_module->user_module_unload != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_init: %s", (cur_user_module->user_module_init != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_close: %s", (cur_user_module->user_module_close != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get_list: %s", (cur_user_module->user_module_get_list != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get: %s", (cur_user_module->user_module_get != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_add: %s", (cur_user_module->user_module_add != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update: %s", (cur_user_module->user_module_update != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_delete: %s", (cur_user_module->user_module_delete != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_check_password: %s", (cur_user_module->user_module_check_password != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update_password: %s", (cur_user_module->user_module_update_password != NULL?"found":"not found"));
                   dlclose(file_handle);
                   o_free(cur_user_module);
-                  y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error user_module_init for module %s", file_path);
-                  ret = G_ERROR_MEMORY;
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error module %s has not all required functions", file_path);
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_load: %s", (cur_user_module->user_module_load != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_unload: %s", (cur_user_module->user_module_unload != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_init: %s", (cur_user_module->user_module_init != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_close: %s", (cur_user_module->user_module_close != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get_list: %s", (cur_user_module->user_module_get_list != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get: %s", (cur_user_module->user_module_get != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_add: %s", (cur_user_module->user_module_add != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update: %s", (cur_user_module->user_module_update != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_delete: %s", (cur_user_module->user_module_delete != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_check_password: %s", (cur_user_module->user_module_check_password != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update_password: %s", (cur_user_module->user_module_update_password != NULL?"found":"not found"));
+                y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error allocating resources for cur_user_module");
                 dlclose(file_handle);
-                o_free(cur_user_module);
+                ret = G_ERROR_MEMORY;
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error allocating resources for cur_user_module");
-              dlclose(file_handle);
-              ret = G_ERROR_MEMORY;
+              y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error opening module file %s, reason: %s", file_path, dlerror());
             }
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error opening module file %s, reason: %s", file_path, dlerror());
           }
           o_free(file_path);
         }
@@ -1332,59 +1352,59 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
           if (file_path == NULL) {
             y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error allocating resources for file_path");
             ret = G_ERROR_MEMORY;
-          }
-          
-          file_handle = dlopen(file_path, RTLD_LAZY);
-          
-          if (file_handle != NULL) {
-            cur_user_auth_scheme_module = o_malloc(sizeof(struct _user_auth_scheme_module));
-            if (cur_user_auth_scheme_module != NULL) {
-              cur_user_auth_scheme_module->name = NULL;
-              cur_user_auth_scheme_module->file_handle = file_handle;
-              *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_load) = dlsym(file_handle, "user_auth_scheme_module_load");
-              *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_unload) = dlsym(file_handle, "user_auth_scheme_module_unload");
-              *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_init) = dlsym(file_handle, "user_auth_scheme_module_init");
-              *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_close) = dlsym(file_handle, "user_auth_scheme_module_close");
-              *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_validate) = dlsym(file_handle, "user_auth_scheme_module_validate");
-              
-              if (cur_user_auth_scheme_module->user_auth_scheme_module_load != NULL &&
-                  cur_user_auth_scheme_module->user_auth_scheme_module_unload != NULL &&
-                  cur_user_auth_scheme_module->user_auth_scheme_module_init != NULL &&
-                  cur_user_auth_scheme_module->user_auth_scheme_module_close != NULL &&
-                  cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL) {
-                if (cur_user_auth_scheme_module->user_auth_scheme_module_load(config, &cur_user_auth_scheme_module->name, &cur_user_auth_scheme_module->parameters) == G_OK) {
-                  if (pointer_list_append(config->user_auth_scheme_module_list, cur_user_auth_scheme_module)) {
-                    y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
+          } else {
+            file_handle = dlopen(file_path, RTLD_LAZY);
+            
+            if (file_handle != NULL) {
+              cur_user_auth_scheme_module = o_malloc(sizeof(struct _user_auth_scheme_module));
+              if (cur_user_auth_scheme_module != NULL) {
+                cur_user_auth_scheme_module->name = NULL;
+                cur_user_auth_scheme_module->file_handle = file_handle;
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_load) = dlsym(file_handle, "user_auth_scheme_module_load");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_unload) = dlsym(file_handle, "user_auth_scheme_module_unload");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_init) = dlsym(file_handle, "user_auth_scheme_module_init");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_close) = dlsym(file_handle, "user_auth_scheme_module_close");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_validate) = dlsym(file_handle, "user_auth_scheme_module_validate");
+                
+                if (cur_user_auth_scheme_module->user_auth_scheme_module_load != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_unload != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_init != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_close != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL) {
+                  if (cur_user_auth_scheme_module->user_auth_scheme_module_load(config, &cur_user_auth_scheme_module->name, &cur_user_auth_scheme_module->parameters) == G_OK) {
+                    if (pointer_list_append(config->user_auth_scheme_module_list, cur_user_auth_scheme_module)) {
+                      y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
+                    } else {
+                      cur_user_auth_scheme_module->user_auth_scheme_module_unload(config);
+                      dlclose(file_handle);
+                      o_free(cur_user_auth_scheme_module);
+                      y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error reallocating resources for user_auth_scheme_module_list");
+                      ret = G_ERROR_MEMORY;
+                    }
                   } else {
-                    cur_user_auth_scheme_module->user_auth_scheme_module_unload(config);
                     dlclose(file_handle);
                     o_free(cur_user_auth_scheme_module);
-                    y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error reallocating resources for user_auth_scheme_module_list");
+                    y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error user_auth_scheme_module_load for module %s", file_path);
                     ret = G_ERROR_MEMORY;
                   }
                 } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error module %s has not all required functions", file_path);
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_load: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_load != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_unload: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_unload != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_init: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_init != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_close: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_close != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_validate: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL?"found":"not found"));
                   dlclose(file_handle);
                   o_free(cur_user_auth_scheme_module);
-                  y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error user_auth_scheme_module_load for module %s", file_path);
-                  ret = G_ERROR_MEMORY;
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error module %s has not all required functions", file_path);
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_load: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_load != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_unload: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_unload != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_init: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_init != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_close: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_close != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_validate: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL?"found":"not found"));
+                y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error allocating resources for cur_user_auth_scheme_module");
                 dlclose(file_handle);
-                o_free(cur_user_auth_scheme_module);
+                ret = G_ERROR_MEMORY;
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error allocating resources for cur_user_auth_scheme_module");
-              dlclose(file_handle);
-              ret = G_ERROR_MEMORY;
+              y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error opening module file %s, reason: %s", file_path, dlerror());
             }
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error opening module file %s, reason: %s", file_path, dlerror());
           }
           o_free(file_path);
         }
@@ -1505,77 +1525,77 @@ int init_client_module_list(struct config_elements * config) {
           if (file_path == NULL) {
             y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error allocating resources for file_path");
             ret = G_ERROR_MEMORY;
-          }
-          
-          file_handle = dlopen(file_path, RTLD_LAZY);
-          
-          if (file_handle != NULL) {
-            cur_client_module = o_malloc(sizeof(struct _client_module));
-            if (cur_client_module != NULL) {
-              cur_client_module->name = NULL;
-              cur_client_module->file_handle = file_handle;
-              *(void **) (&cur_client_module->client_module_load) = dlsym(file_handle, "client_module_load");
-              *(void **) (&cur_client_module->client_module_unload) = dlsym(file_handle, "client_module_unload");
-              *(void **) (&cur_client_module->client_module_init) = dlsym(file_handle, "client_module_init");
-              *(void **) (&cur_client_module->client_module_close) = dlsym(file_handle, "client_module_close");
-              *(void **) (&cur_client_module->client_module_get_list) = dlsym(file_handle, "client_module_get_list");
-              *(void **) (&cur_client_module->client_module_get) = dlsym(file_handle, "client_module_get");
-              *(void **) (&cur_client_module->client_module_add) = dlsym(file_handle, "client_module_add");
-              *(void **) (&cur_client_module->client_module_update) = dlsym(file_handle, "client_module_update");
-              *(void **) (&cur_client_module->client_module_delete) = dlsym(file_handle, "client_module_delete");
-              *(void **) (&cur_client_module->client_module_check_password) = dlsym(file_handle, "client_module_check_password");
-              *(void **) (&cur_client_module->client_module_update_password) = dlsym(file_handle, "client_module_update_password");
-              
-              if (cur_client_module->client_module_load != NULL &&
-                  cur_client_module->client_module_unload != NULL &&
-                  cur_client_module->client_module_init != NULL &&
-                  cur_client_module->client_module_close != NULL &&
-                  cur_client_module->client_module_get_list != NULL &&
-                  cur_client_module->client_module_get != NULL &&
-                  cur_client_module->client_module_add != NULL &&
-                  cur_client_module->client_module_update != NULL &&
-                  cur_client_module->client_module_delete != NULL &&
-                  cur_client_module->client_module_check_password != NULL &&
-                  cur_client_module->client_module_update_password != NULL) {
-                if (cur_client_module->client_module_load(config, &cur_client_module->name, &cur_client_module->parameters) == G_OK) {
-                  if (pointer_list_append(config->client_module_list, cur_client_module)) {
-                    y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_client_module->name);
+          } else {
+            file_handle = dlopen(file_path, RTLD_LAZY);
+            
+            if (file_handle != NULL) {
+              cur_client_module = o_malloc(sizeof(struct _client_module));
+              if (cur_client_module != NULL) {
+                cur_client_module->name = NULL;
+                cur_client_module->file_handle = file_handle;
+                *(void **) (&cur_client_module->client_module_load) = dlsym(file_handle, "client_module_load");
+                *(void **) (&cur_client_module->client_module_unload) = dlsym(file_handle, "client_module_unload");
+                *(void **) (&cur_client_module->client_module_init) = dlsym(file_handle, "client_module_init");
+                *(void **) (&cur_client_module->client_module_close) = dlsym(file_handle, "client_module_close");
+                *(void **) (&cur_client_module->client_module_get_list) = dlsym(file_handle, "client_module_get_list");
+                *(void **) (&cur_client_module->client_module_get) = dlsym(file_handle, "client_module_get");
+                *(void **) (&cur_client_module->client_module_add) = dlsym(file_handle, "client_module_add");
+                *(void **) (&cur_client_module->client_module_update) = dlsym(file_handle, "client_module_update");
+                *(void **) (&cur_client_module->client_module_delete) = dlsym(file_handle, "client_module_delete");
+                *(void **) (&cur_client_module->client_module_check_password) = dlsym(file_handle, "client_module_check_password");
+                *(void **) (&cur_client_module->client_module_update_password) = dlsym(file_handle, "client_module_update_password");
+                
+                if (cur_client_module->client_module_load != NULL &&
+                    cur_client_module->client_module_unload != NULL &&
+                    cur_client_module->client_module_init != NULL &&
+                    cur_client_module->client_module_close != NULL &&
+                    cur_client_module->client_module_get_list != NULL &&
+                    cur_client_module->client_module_get != NULL &&
+                    cur_client_module->client_module_add != NULL &&
+                    cur_client_module->client_module_update != NULL &&
+                    cur_client_module->client_module_delete != NULL &&
+                    cur_client_module->client_module_check_password != NULL &&
+                    cur_client_module->client_module_update_password != NULL) {
+                  if (cur_client_module->client_module_load(config, &cur_client_module->name, &cur_client_module->parameters) == G_OK) {
+                    if (pointer_list_append(config->client_module_list, cur_client_module)) {
+                      y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_client_module->name);
+                    } else {
+                      cur_client_module->client_module_unload(config);
+                      dlclose(file_handle);
+                      o_free(cur_client_module);
+                      y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error reallocating resources for client_module_list");
+                      ret = G_ERROR_MEMORY;
+                    }
                   } else {
-                    cur_client_module->client_module_unload(config);
                     dlclose(file_handle);
                     o_free(cur_client_module);
-                    y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error reallocating resources for client_module_list");
+                    y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error client_module_init for module %s", file_path);
                     ret = G_ERROR_MEMORY;
                   }
                 } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error module %s has not all required functions", file_path);
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_load: %s", (cur_client_module->client_module_load != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_unload: %s", (cur_client_module->client_module_unload != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_init: %s", (cur_client_module->client_module_init != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_close: %s", (cur_client_module->client_module_close != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_get_list: %s", (cur_client_module->client_module_get_list != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_get: %s", (cur_client_module->client_module_get != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_add: %s", (cur_client_module->client_module_add != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_update: %s", (cur_client_module->client_module_update != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_delete: %s", (cur_client_module->client_module_delete != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_check_password: %s", (cur_client_module->client_module_check_password != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_update_password: %s", (cur_client_module->client_module_update_password != NULL?"found":"not found"));
                   dlclose(file_handle);
                   o_free(cur_client_module);
-                  y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error client_module_init for module %s", file_path);
-                  ret = G_ERROR_MEMORY;
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error module %s has not all required functions", file_path);
-                y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_load: %s", (cur_client_module->client_module_load != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_unload: %s", (cur_client_module->client_module_unload != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_init: %s", (cur_client_module->client_module_init != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_close: %s", (cur_client_module->client_module_close != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_get_list: %s", (cur_client_module->client_module_get_list != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_get: %s", (cur_client_module->client_module_get != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_add: %s", (cur_client_module->client_module_add != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_update: %s", (cur_client_module->client_module_update != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_delete: %s", (cur_client_module->client_module_delete != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_check_password: %s", (cur_client_module->client_module_check_password != NULL?"found":"not found"));
-                y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_update_password: %s", (cur_client_module->client_module_update_password != NULL?"found":"not found"));
+                y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error allocating resources for cur_client_module");
                 dlclose(file_handle);
-                o_free(cur_client_module);
+                ret = G_ERROR_MEMORY;
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error allocating resources for cur_client_module");
-              dlclose(file_handle);
-              ret = G_ERROR_MEMORY;
+              y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error opening module file %s, reason: %s", file_path, dlerror());
             }
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error opening module file %s, reason: %s", file_path, dlerror());
           }
           o_free(file_path);
         }
@@ -1602,14 +1622,14 @@ int load_client_module_instance_list(struct config_elements * config) {
     pointer_list_init(config->client_module_instance_list);
     j_query = json_pack("{sss[ssss]ss}",
                         "table",
-                        GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
+                        GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
                         "columns",
-                          "gumi_module AS module",
-                          "gumi_name AS name",
-                          "gumi_order AS order_by",
-                          "gumi_parameters AS parameters",
+                          "gcmi_module AS module",
+                          "gcmi_name AS name",
+                          "gcmi_order AS order_by",
+                          "gcmi_parameters AS parameters",
                         "order_by",
-                        "gumi_order");
+                        "gcmi_order");
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
@@ -1671,4 +1691,158 @@ struct _client_module_instance * get_client_module_instance(struct config_elemen
     }
   }
   return NULL;
+}
+
+int init_plugin_module_list(struct config_elements * config) {
+  int ret = G_OK;
+  struct _plugin_module * cur_plugin_module = NULL;
+  DIR * modules_directory;
+  struct dirent * in_file;
+  char * file_path;
+  void * file_handle;
+  
+  config->plugin_module_list = o_malloc(sizeof(struct _pointer_list));
+  if (config->plugin_module_list != NULL) {
+    pointer_list_init(config->plugin_module_list);
+    // read module_path and load modules
+    if (NULL == (modules_directory = opendir(config->plugin_module_path))) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error reading libraries folder %s", config->plugin_module_path);
+      ret = G_ERROR;
+    } else {
+      while ((in_file = readdir(modules_directory))) {
+        if (in_file->d_type == DT_REG) {
+          file_path = msprintf("%s/%s", config->plugin_module_path, in_file->d_name);
+          
+          if (file_path == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error allocating resources for file_path");
+            ret = G_ERROR_MEMORY;
+          } else {
+            file_handle = dlopen(file_path, RTLD_LAZY);
+            
+            if (file_handle != NULL) {
+              cur_plugin_module = o_malloc(sizeof(struct _client_module));
+              if (cur_plugin_module != NULL) {
+                cur_plugin_module->name = NULL;
+                cur_plugin_module->file_handle = file_handle;
+                *(void **) (&cur_plugin_module->plugin_module_load) = dlsym(file_handle, "plugin_module_load");
+                *(void **) (&cur_plugin_module->plugin_module_unload) = dlsym(file_handle, "plugin_module_unload");
+                *(void **) (&cur_plugin_module->plugin_module_init) = dlsym(file_handle, "plugin_module_init");
+                *(void **) (&cur_plugin_module->plugin_module_close) = dlsym(file_handle, "plugin_module_close");
+                
+                if (cur_plugin_module->plugin_module_load != NULL &&
+                    cur_plugin_module->plugin_module_unload != NULL &&
+                    cur_plugin_module->plugin_module_init != NULL &&
+                    cur_plugin_module->plugin_module_close != NULL) {
+                  if (cur_plugin_module->plugin_module_load(config, &cur_plugin_module->name, &cur_plugin_module->parameters) == G_OK) {
+                    if (pointer_list_append(config->plugin_module_list, cur_plugin_module)) {
+                      y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_plugin_module->name);
+                    } else {
+                      cur_plugin_module->plugin_module_unload(config);
+                      dlclose(file_handle);
+                      o_free(cur_plugin_module);
+                      y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error reallocating resources for client_module_list");
+                      ret = G_ERROR_MEMORY;
+                    }
+                  } else {
+                    dlclose(file_handle);
+                    o_free(cur_plugin_module);
+                    y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error client_module_init for module %s", file_path);
+                    ret = G_ERROR_MEMORY;
+                  }
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error module %s has not all required functions", file_path);
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - plugin_module_load: %s", (cur_plugin_module->plugin_module_load != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - plugin_module_unload: %s", (cur_plugin_module->plugin_module_unload != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - plugin_module_init: %s", (cur_plugin_module->plugin_module_init != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - plugin_module_close: %s", (cur_plugin_module->plugin_module_close != NULL?"found":"not found"));
+                  dlclose(file_handle);
+                  o_free(cur_plugin_module);
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error allocating resources for cur_client_module");
+                dlclose(file_handle);
+                ret = G_ERROR_MEMORY;
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error opening module file %s, reason: %s", file_path, dlerror());
+            }
+          }
+          o_free(file_path);
+        }
+      }
+      closedir(modules_directory);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error allocating resources for config->client_module_list");
+    ret = G_ERROR_MEMORY;
+  }
+  
+  return ret;
+}
+
+int load_plugin_module_instance_list(struct config_elements * config) {
+  json_t * j_query, * j_result, * j_instance;
+  int res, ret, i;
+  size_t index;
+  struct _plugin_module_instance * cur_instance;
+  struct _plugin_module * module = NULL;
+  
+  config->plugin_module_instance_list = o_malloc(sizeof(struct _pointer_list));
+  if (config->plugin_module_instance_list != NULL) {
+    pointer_list_init(config->plugin_module_instance_list);
+    j_query = json_pack("{sss[sss]}",
+                        "table",
+                        GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
+                        "columns",
+                          "gp_module AS module",
+                          "gp_name AS name",
+                          "gp_parameters AS parameters");
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      json_array_foreach(j_result, index, j_instance) {
+        module = NULL;
+        for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {
+          module = pointer_list_get_at(config->plugin_module_list, i);
+          if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
+            break;
+          } else {
+            module = NULL;
+          }
+        }
+        if (module != NULL) {
+          cur_instance = o_malloc(sizeof(struct _plugin_module_instance));
+          if (cur_instance != NULL) {
+            cur_instance->cls = NULL;
+            cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+            cur_instance->module = module;
+            if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
+              if (module->plugin_module_init(config, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
+                cur_instance->enabled = 1;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                cur_instance->enabled = 0;
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error reallocating resources for client_module_instance_list");
+              o_free(cur_instance->name);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error allocating resources for cur_instance");
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error module  %s not found", json_string_value(json_object_get(j_instance, "module")));
+        }
+      }
+      json_decref(j_result);
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error executing j_query");
+      ret = G_ERROR;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error allocating resources for config->client_module_instance_list");
+    ret = G_ERROR;
+  }
+  return ret;
 }

@@ -133,11 +133,12 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
   char * session_uid_hash = generate_hash(config, config->hash_algorithm, session_uid);
 
   if (session_uid_hash != NULL) {
-    j_query = json_pack("{sss[s]s{sssis{ssss}}}",
+    j_query = json_pack("{sss[ss]s{sssis{ssss}}}",
                         "table",
                         GLEWLWYD_TABLE_USER_SESSION,
                         "columns",
                           "gus_username",
+                          "gus_last_login",
                         "where",
                           "gus_uuid",
                           session_uid_hash,
@@ -159,6 +160,7 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
           json_array_foreach(j_result, index, j_element) {
             j_user = get_user(config, json_string_value(json_object_get(j_element, "gus_username")));
             if (check_result_value(j_user, G_OK)) {
+              json_object_set(json_object_get(j_user, "user"), "last_login", json_object_get(j_element, "gus_last_login"));
               json_array_append(json_object_get(j_return, "session"), json_object_get(j_user, "user"));
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "get_users_for_session - Error get_user");
