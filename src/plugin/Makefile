@@ -19,26 +19,26 @@
 # License along with this library.	If not, see <http://www.gnu.org/licenses/>.
 #
 
-PREFIX=/usr/local
-MODULES_TARGET=$(PREFIX)/lib/glewlwyd/protocol
+DEST=/usr/local
+MODULES_TARGET=$(DEST)/lib/glewlwyd/protocol
 CC=gcc
-CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -I$(PREFIX)/include -Wno-pragmas $(ADDITIONALFLAGS)
-LIBS=-L$(PREFIX)/lib -lc -ljansson -lyder -lorcania -lulfius -ljwt -ldl
+CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
+LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius -ljwt
 
 all: release
 
-oauth2.o: ../glewlwyd.h oauth2.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) oauth2.c
+%.o: %.c ../glewlwyd.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
-libprotocoloauth2.so: oauth2.o
-	$(CC) -shared -Wl,-soname,libprotocoloauth2.so -o libprotocoloauth2.so oauth2.o $(LIBS)
+libprotocol_oauth2.so: protocol_oauth2.o
+	$(CC) -shared -Wl,-soname,libprotocol_oauth2.so -o libprotocol_oauth2.so protocol_oauth2.o $(LIBS)
 
 clean:
 	rm -f *.o *.so
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: libprotocoloauth2.so
+debug: libprotocol_oauth2.so
 
 release: ADDITIONALFLAGS=-O3
 

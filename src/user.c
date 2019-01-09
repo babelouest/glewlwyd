@@ -61,7 +61,7 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
 
 json_t * auth_check_user_scheme(struct config_elements * config, const char * scheme_name, const char * username, json_t * scheme_parameters) {
   struct _user_auth_scheme_module_instance * scheme_instance;
-  json_t * j_return;
+  json_t * j_return = NULL;
   char * str_scheme_parameters = json_dumps(scheme_parameters, JSON_COMPACT);
   int res;
   
@@ -73,6 +73,7 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
         j_return = json_pack("{si}", "result", res);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_scheme - Error unrecognize return value for user_auth_scheme_module_validate: %d", res);
+        j_return = json_pack("{si}", "result", G_ERROR);
       }
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);

@@ -203,7 +203,7 @@ static int check_parameters (json_t * j_params) {
   }
 }
 
-int protocol_load(struct config_elements * config, char ** name, char ** parameters) {
+int plugin_module_load(struct config_elements * config, char ** name, char ** parameters) {
   int ret = G_OK;
   if (name != NULL && parameters != NULL) {
     *name = o_strdup("oauth2-glewlwyd");
@@ -213,7 +213,6 @@ int protocol_load(struct config_elements * config, char ** name, char ** paramet
                             "\"jwt-key-size\":{\"type\":\"list\",\"values\":[\"256\",\"384\",\"512\"],\"mandatory\":true},"\
                             "\"key\":{\"type\":\"string\",\"mandatory\":false},"\
                             "\"cert\":{\"type\":\"string\",\"mandatory\":false},"\
-                            "\"key\":{\"type\":\"string\",\"mandatory\":false},"\
                             "\"access-token-duration\":{\"type\":\"number\",\"mandatory\":true},"\
                             "\"refresh-token-duration\":{\"type\":\"number\",\"mandatory\":true},"\
                             "\"scope\":{\"type\":\"array\",\"mandatory\":false,\"format\":{\"name\":{\"type\":\"string\",\"mandatory\":true},"\
@@ -224,11 +223,11 @@ int protocol_load(struct config_elements * config, char ** name, char ** paramet
   return ret;
 }
 
-int protocol_unload(struct config_elements * config) {
+int plugin_module_unload(struct config_elements * config) {
   return G_OK;
 }
 
-int protocol_init(struct config_elements * config, const char * parameters, void ** cls) {
+int plugin_module_init(struct config_elements * config, const char * parameters, void ** cls) {
   int ret;
   const unsigned char * key;
   jwt_alg_t alg = 0;
@@ -310,6 +309,6 @@ int protocol_init(struct config_elements * config, const char * parameters, void
   return ret;
 }
 
-int protocol_close(struct config_elements * config, void * cls) {
+int plugin_module_close(struct config_elements * config, void * cls) {
   return G_OK;
 }

@@ -19,17 +19,16 @@
 # License along with this library.	If not, see <http://www.gnu.org/licenses/>.
 #
 
-PREFIX=/usr/local
-MODULES_TARGET=$(PREFIX)/lib/glewlwyd/user
+DEST=/usr/local
+MODULES_TARGET=$(DEST)/lib/glewlwyd/user
 CC=gcc
-CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -I$(PREFIX)/include -Wno-pragmas $(ADDITIONALFLAGS)
-LIBS=-L$(PREFIX)/lib -lc -ljansson -lyder -lorcania -lulfius -ldl
-LDFLAGS += -Wl,-R '-Wl,-R$$ORIGIN'
+CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
+LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius
 
 all: release
 
-mock.o: ../glewlwyd.h mock.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) mock.c
+%.o: %.c ../glewlwyd.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
 libmodmock.so: mock.o
 	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o $(LIBS)
