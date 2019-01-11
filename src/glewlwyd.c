@@ -48,13 +48,23 @@
  */
 int main (int argc, char ** argv) {
   struct config_elements * config = o_malloc(sizeof(struct config_elements));
+  struct config_plugin * config_p = o_malloc(sizeof(struct config_plugin));
   int res;
   
   srand(time(NULL));
-  if (config == NULL) {
+  if (config == NULL || config_p == NULL) {
     fprintf(stderr, "Memory error - config\n");
     return 1;
   }
+
+  // Init plugin config structure
+  config_p->glewlwyd_config = config;
+  config_p->glewlwyd_callback_add_plugin_endpoint = &glewlwyd_callback_add_plugin_endpoint;
+  config_p->glewlwyd_callback_remove_plugin_endpoint = &glewlwyd_callback_remove_plugin_endpoint;
+  config_p->glewlwyd_callback_is_user_session_valid = &glewlwyd_callback_is_user_session_valid;
+  config_p->glewlwyd_callback_is_user_valid = &glewlwyd_callback_is_user_valid;
+  config_p->glewlwyd_callback_is_client_valid = &glewlwyd_callback_is_client_valid;
+  config_p->glewlwyd_callback_get_login_url = &glewlwyd_callback_get_login_url;
   
   // Init config structure with default values
   config->config_file = NULL;
@@ -117,6 +127,12 @@ int main (int argc, char ** argv) {
   config->static_file_config->files_path = NULL;
   config->static_file_config->url_prefix = NULL;
   config->static_file_config->redirect_on_404 = "/";
+  config->static_file_config->map_header = o_malloc(sizeof(struct _u_map));
+  if (config->static_file_config->map_header == NULL) {
+    fprintf(stderr, "init - Error allocating resources for config->static_file_config->map_header, aborting\n");
+    return 2;
+  }
+  u_map_init(config->static_file_config->map_header);
   config->static_file_config->mime_types = o_malloc(sizeof(struct _u_map));
   if (config->static_file_config->mime_types == NULL) {
     fprintf(stderr, "init - Error allocating resources for config->static_file_config->mime_types, aborting\n");
@@ -149,60 +165,60 @@ int main (int argc, char ** argv) {
   if (!build_config_from_args(argc, argv, config)) {
     fprintf(stderr, "Error reading command-line parameters\n");
     print_help(stderr);
-    exit_server(&config, GLEWLWYD_ERROR);
+    exit_server(&config, config_p, GLEWLWYD_ERROR);
   }
   
   // Then we parse configuration file
   // They have lower priority than command line parameters
   if (!build_config_from_file(config)) {
     fprintf(stderr, "Error config file\n");
-    exit_server(&config, GLEWLWYD_ERROR);
+    exit_server(&config, config_p, GLEWLWYD_ERROR);
   }
   
   // Check if all mandatory configuration variables are present and correctly typed
   if (!check_config(config)) {
     fprintf(stderr, "Error initializing configuration\n");
-    exit_server(&config, GLEWLWYD_ERROR);
+    exit_server(&config, config_p, GLEWLWYD_ERROR);
   }
   
   // Initialize user modules
   if (init_user_module_list(config) != G_OK) {
     fprintf(stderr, "Error initializing user modules\n");
-    exit_server(&config, GLEWLWYD_ERROR);
+    exit_server(&config, config_p, GLEWLWYD_ERROR);
   }
   if (load_user_module_instance_list(config) != G_OK) {
     fprintf(stderr, "Error loading user modules instances\n");
-    exit_server(&config, GLEWLWYD_ERROR);
+    exit_server(&config, config_p, GLEWLWYD_ERROR);
   }
   
   // Initialize client modules
   if (init_client_module_list(config) != G_OK) {
     fprintf(stderr, "Error initializing client modules\n");
-    exit_server(&config, GLEWLWYD_ERROR);
+    exit_server(&config, config_p, GLEWLWYD_ERROR);
   }
   if (load_client_module_instance_list(config) != G_OK) {
     fprintf(stderr, "Error loading client modules instances\n");
-    exit_server(&config, GLEWLWYD_ERROR);
+    exit_server(&config, config_p, GLEWLWYD_ERROR);
   }
   
   // Initialize user auth scheme modules
   if (init_user_auth_scheme_module_list(config) != G_OK) {
     fprintf(stderr, "Error initializing user auth scheme modules\n");
-    exit_server(&config, GLEWLWYD_ERROR);
+    exit_server(&config, config_p, GLEWLWYD_ERROR);
   }
   if (load_user_auth_scheme_module_instance_list(config) != G_OK) {
     fprintf(stderr, "Error loading user auth scheme modules instances\n");
-    exit_server(&config, GLEWLWYD_ERROR);
+    exit_server(&config, config_p, GLEWLWYD_ERROR);
   }
   
   // Initialize plugins
-  if (init_plugin_module_list(config) != G_OK) {
+  if (init_plugin_module_list(config, config_p) != G_OK) {
     fprintf(stderr, "Error initializing plugins modules\n");
-    exit_server(&config, GLEWLWYD_ERROR);
+    exit_server(&config, config_p, GLEWLWYD_ERROR);
   }
-  if (load_plugin_module_instance_list(config) != G_OK) {
+  if (load_plugin_module_instance_list(config, config_p) != G_OK) {
     fprintf(stderr, "Error loading plugins modules instances\n");
-    exit_server(&config, GLEWLWYD_ERROR);
+    exit_server(&config, config_p, GLEWLWYD_ERROR);
   }
   
   // At this point, we declare all API endpoints and configure 
@@ -245,20 +261,20 @@ int main (int argc, char ** argv) {
     pthread_mutex_unlock(&global_handler_close_lock);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error starting glewlwyd webserver");
-    exit_server(&config, GLEWLWYD_ERROR);
+    exit_server(&config, config_p, GLEWLWYD_ERROR);
   }
   if (pthread_mutex_destroy(&global_handler_close_lock) ||
       pthread_cond_destroy(&global_handler_close_cond)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error destroying global_handler_close_lock or global_handler_close_cond");
   }
-  exit_server(&config, GLEWLWYD_STOP);
+  exit_server(&config, config_p, GLEWLWYD_STOP);
   return 0;
 }
 
 /**
  * Exit properly the server by closing opened connections, databases and files
  */
-void exit_server(struct config_elements ** config, int exit_value) {
+void exit_server(struct config_elements ** config, struct config_plugin * config_p, int exit_value) {
   int i;
   
   if (config != NULL && *config != NULL) {
@@ -364,7 +380,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     for (i=0; i<pointer_list_size((*config)->plugin_module_instance_list); i++) {
       struct _plugin_module_instance * instance = (struct _plugin_module_instance *)pointer_list_get_at((*config)->plugin_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->module->plugin_module_close((*config), instance->cls) != G_OK) {
+        if (instance->module->plugin_module_close(config_p, instance->cls) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error plugin_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
         }
         o_free(instance->name);
@@ -377,7 +393,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     for (i=0; i<pointer_list_size((*config)->plugin_module_list); i++) {
       struct _plugin_module * module = (struct _plugin_module *)pointer_list_get_at((*config)->plugin_module_list, i);
       if (module != NULL) {
-        if (module->plugin_module_unload((*config)) != G_OK) {
+        if (module->plugin_module_unload(config_p) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error plugin_module_unload for module '%s'", module->name);
         }
         if (dlclose(module->file_handle)) {
@@ -408,6 +424,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     
     if ((*config)->static_file_config != NULL) {
       u_map_clean_full((*config)->static_file_config->mime_types);
+      u_map_clean_full((*config)->static_file_config->map_header);
       o_free((*config)->static_file_config->files_path);
       o_free((*config)->static_file_config->url_prefix);
       o_free((*config)->static_file_config);
@@ -429,6 +446,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     
     o_free(*config);
     (*config) = NULL;
+    o_free(config_p);
   }
 
   y_close_logs();
@@ -464,7 +482,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
             config->config_file = o_strdup(optarg);
             if (config->config_file == NULL) {
               fprintf(stderr, "Error allocating config->config_file, exiting\n");
-              exit_server(&config, GLEWLWYD_STOP);
+              return 0;
             }
           } else {
             fprintf(stderr, "Error!\nNo config file specified\n");
@@ -488,7 +506,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
             config->api_prefix = o_strdup(optarg);
             if (config->api_prefix == NULL) {
               fprintf(stderr, "Error allocating config->api_prefix, exiting\n");
-              exit_server(&config, GLEWLWYD_STOP);
+              return 0;
             }
           } else {
             fprintf(stderr, "Error!\nNo URL prefix specified\n");
@@ -500,7 +518,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
             tmp = o_strdup(optarg);
             if (tmp == NULL) {
               fprintf(stderr, "Error allocating log_mode, exiting\n");
-              exit_server(&config, GLEWLWYD_STOP);
+              return 0;
             }
             one_log_mode = strtok(tmp, ",");
             while (one_log_mode != NULL) {
@@ -544,7 +562,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
             config->log_file = o_strdup(optarg);
             if (config->log_file == NULL) {
               fprintf(stderr, "Error allocating config->log_file, exiting\n");
-              exit_server(&config, GLEWLWYD_STOP);
+              return 0;
             }
           } else {
             fprintf(stderr, "Error!\nNo log file specified\n");
@@ -553,11 +571,11 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
           break;
         case 'h':
           print_help(stdout);
-          exit_server(&config, GLEWLWYD_STOP);
+          return 0;
           break;
         case 'v':
           fprintf(stdout, "%s\n", _GLEWLWYD_VERSION_);
-          exit_server(&config, GLEWLWYD_STOP);
+          return 0;
           break;
       }
       
@@ -715,7 +733,7 @@ int build_config_from_file(struct config_elements * config) {
 
   if (!y_init_logs(GLEWLWYD_LOG_NAME, config->log_mode, config->log_level, config->log_file, "Starting Glewlwyd SSO authentication service")) {
     fprintf(stderr, "Error initializing logs\n");
-    exit_server(&config, GLEWLWYD_ERROR);
+    return 0;
   }
   
   if (config->allow_origin == NULL) {
@@ -1693,7 +1711,7 @@ struct _client_module_instance * get_client_module_instance(struct config_elemen
   return NULL;
 }
 
-int init_plugin_module_list(struct config_elements * config) {
+int init_plugin_module_list(struct config_elements * config, struct config_plugin * config_p) {
   int ret = G_OK;
   struct _plugin_module * cur_plugin_module = NULL;
   DIR * modules_directory;
@@ -1733,11 +1751,11 @@ int init_plugin_module_list(struct config_elements * config) {
                     cur_plugin_module->plugin_module_unload != NULL &&
                     cur_plugin_module->plugin_module_init != NULL &&
                     cur_plugin_module->plugin_module_close != NULL) {
-                  if (cur_plugin_module->plugin_module_load(config, &cur_plugin_module->name, &cur_plugin_module->parameters) == G_OK) {
+                  if (cur_plugin_module->plugin_module_load(config_p, &cur_plugin_module->name, &cur_plugin_module->parameters) == G_OK) {
                     if (pointer_list_append(config->plugin_module_list, cur_plugin_module)) {
                       y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_plugin_module->name);
                     } else {
-                      cur_plugin_module->plugin_module_unload(config);
+                      cur_plugin_module->plugin_module_unload(config_p);
                       dlclose(file_handle);
                       o_free(cur_plugin_module);
                       y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error reallocating resources for client_module_list");
@@ -1780,7 +1798,7 @@ int init_plugin_module_list(struct config_elements * config) {
   return ret;
 }
 
-int load_plugin_module_instance_list(struct config_elements * config) {
+int load_plugin_module_instance_list(struct config_elements * config, struct config_plugin * config_p) {
   json_t * j_query, * j_result, * j_instance;
   int res, ret, i;
   size_t index;
@@ -1817,7 +1835,7 @@ int load_plugin_module_instance_list(struct config_elements * config) {
             cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
             cur_instance->module = module;
             if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
-              if (module->plugin_module_init(config, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
+              if (module->plugin_module_init(config_p, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
                 cur_instance->enabled = 1;
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));

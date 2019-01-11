@@ -26,6 +26,7 @@
 #define OAUTH2_SALT_LENGTH 16
 
 struct _oauth2_config {
+  struct config_plugin * glewlwyd_config;
   jwt_t * jwt_key;
   json_t * j_params;
   unsigned long access_token_duration;
@@ -33,11 +34,13 @@ struct _oauth2_config {
 };
 
 static int callback_oauth2_authorization(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_ERROR;
+  ulfius_set_string_body_response(response, 200, "grut");
+  return U_CALLBACK_CONTINUE;
 }
 
 static int callback_oauth2_token(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_ERROR;
+  ulfius_set_string_body_response(response, 200, "plop");
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
@@ -85,11 +88,11 @@ static char * random_string(char * str, size_t str_size) {
 
 static char * generate_access_token(struct _oauth2_config * config, const char * username, const char * scope_list) {
   char salt[OAUTH2_SALT_LENGTH + 1] = {0};
-  jwt_t * jwt = jwt_dup(config->jwt_key);
+  jwt_t * jwt = NULL;
   time_t now;
   char * token = NULL;
   
-  if (jwt != NULL) {
+  if ((jwt = jwt_dup(config->jwt_key)) != NULL) {
     time(&now);
     random_string(salt, OAUTH2_SALT_LENGTH);
     jwt_add_grant(jwt, "username", username);
@@ -117,7 +120,7 @@ static int jwt_autocheck(struct _oauth2_config * config) {
   int ret;
   
   if (token != NULL) {
-    if (o_strcmp("sha", json_string_value(json_object_get(config->j_params, "jwt-type")))) {
+    if (o_strcmp("sha", json_string_value(json_object_get(config->j_params, "jwt-type"))) == 0) {
       if (jwt_decode(&jwt, token, (const unsigned char *)json_string_value(json_object_get(config->j_params, "key")), json_string_length(json_object_get(config->j_params, "key")))) {
         y_log_message(Y_LOG_LEVEL_ERROR, "jwt_autocheck - oauth2 - Error jwt_decode");
         ret = G_ERROR;
@@ -144,6 +147,7 @@ static int jwt_autocheck(struct _oauth2_config * config) {
     y_log_message(Y_LOG_LEVEL_ERROR, "jwt_autocheck - oauth2 - Error generate_access_token");
     ret = G_ERROR;
   }
+  free(token);
   return ret;
 }
 
@@ -152,8 +156,6 @@ static int check_parameters (json_t * j_params) {
   size_t index;
   
   if (j_params == NULL) {
-    return G_ERROR_PARAM;
-  } else if (json_object_get(j_params, "id") == NULL || !json_is_string(json_object_get(j_params, "id")) || !json_string_length(json_object_get(j_params, "id"))) {
     return G_ERROR_PARAM;
   } else if (json_object_get(j_params, "url") == NULL || !json_is_string(json_object_get(j_params, "url")) || !json_string_length(json_object_get(j_params, "url"))) {
     return G_ERROR_PARAM;
@@ -189,7 +191,7 @@ static int check_parameters (json_t * j_params) {
         if (!json_is_object(j_element)) {
           return G_ERROR_PARAM;
         } else {
-          if (json_object_get(j_element, "name") == NULL || !json_is_string(json_object_get(j_element, "name")) || !json_string_length(json_object_get(j_params, "name"))) {
+          if (json_object_get(j_element, "name") == NULL || !json_is_string(json_object_get(j_element, "name")) || !json_string_length(json_object_get(j_element, "name"))) {
             return G_ERROR_PARAM;
           } else if (json_object_get(j_element, "rolling-refresh") != NULL && !json_is_boolean(json_object_get(j_element, "rolling-refresh"))) {
             return G_ERROR_PARAM;
@@ -203,9 +205,10 @@ static int check_parameters (json_t * j_params) {
   }
 }
 
-int plugin_module_load(struct config_elements * config, char ** name, char ** parameters) {
+int plugin_module_load(struct config_plugin * config, char ** name, char ** parameters) {
   int ret = G_OK;
   if (name != NULL && parameters != NULL) {
+    y_log_message(Y_LOG_LEVEL_INFO, "Load plugin Glewlwyd Oauth2");
     *name = o_strdup("oauth2-glewlwyd");
     *parameters = o_strdup("{\"id\":{\"type\":\"string\",\"mandatory\":true},"\
                             "\"url\":{\"type\":\"string\",\"mandatory\":true},"\
@@ -223,20 +226,21 @@ int plugin_module_load(struct config_elements * config, char ** name, char ** pa
   return ret;
 }
 
-int plugin_module_unload(struct config_elements * config) {
+int plugin_module_unload(struct config_plugin * config) {
   return G_OK;
 }
 
-int plugin_module_init(struct config_elements * config, const char * parameters, void ** cls) {
+int plugin_module_init(struct config_plugin * config, const char * parameters, void ** cls) {
   int ret;
   const unsigned char * key;
   jwt_alg_t alg = 0;
-  char * url_prefix;
   
+  y_log_message(Y_LOG_LEVEL_INFO, "Init plugin Glewlwyd Oauth2");
   *cls = o_malloc(sizeof(struct _oauth2_config));
   if (*cls != NULL) {
     ((struct _oauth2_config *)*cls)->jwt_key = NULL;
     ((struct _oauth2_config *)*cls)->j_params = json_loads(parameters, JSON_DECODE_ANY, 0);
+    ((struct _oauth2_config *)*cls)->glewlwyd_config = config;
     if (check_parameters(((struct _oauth2_config *)*cls)->j_params) == G_OK) {
       if (!jwt_new(&((struct _oauth2_config *)*cls)->jwt_key)) {
         if (0 == o_strcmp("rsa", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-type")))) {
@@ -281,13 +285,16 @@ int plugin_module_init(struct config_elements * config, const char * parameters,
             y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error jwt_autocheck");
             ret = G_ERROR_MEMORY;
           } else {
-            url_prefix = msprintf("%s/%s", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")));
             // Add endpoints
-            ulfius_add_endpoint_by_val(config->instance, "POST", url_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)config);
-            ulfius_add_endpoint_by_val(config->instance, "GET", url_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)config);
-            ulfius_add_endpoint_by_val(config->instance, "POST", url_prefix, "/token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_token, (void*)config);
-            o_free(url_prefix);
-            ret = G_OK;
+            y_log_message(Y_LOG_LEVEL_DEBUG, "Add endpoints with plugin prefix %s", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")));
+            if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)config) != G_OK || 
+               config->glewlwyd_callback_add_plugin_endpoint(config, "POST", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)config) != G_OK ||
+               config->glewlwyd_callback_add_plugin_endpoint(config, "POST", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "/token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_token, (void*)config)) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error adding endpoints");
+              ret = G_ERROR;
+            } else {
+              ret = G_OK;
+            }
           }
         }
       } else {
@@ -309,6 +316,9 @@ int plugin_module_init(struct config_elements * config, const char * parameters,
   return ret;
 }
 
-int plugin_module_close(struct config_elements * config, void * cls) {
+int plugin_module_close(struct config_plugin * config, void * cls) {
+  jwt_free(((struct _oauth2_config *)cls)->jwt_key);
+  json_decref(((struct _oauth2_config *)cls)->j_params);
+  o_free(cls);
   return G_OK;
 }

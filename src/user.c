@@ -103,6 +103,7 @@ json_t * get_user(struct config_elements * config, const char * username) {
         } else if (result != G_OK && result != G_ERROR_NOT_FOUND) {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error, user_module_get for module %s", user_module->name);
         }
+        o_free(str_user);
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error, user_module_instance %d is NULL", i);
