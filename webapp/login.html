@@ -83,8 +83,8 @@
 		</style>
 	</head>
 	<body>
-		<div class="container" id="passwordDiv">
-			<form class="form-signin" action="#" id="passwordForm" style="display: none;">
+		<div class="container" id="passwordDiv" style="display: none;">
+			<form class="form-signin" action="#" id="passwordForm">
 				<h2 class="form-signin-heading">Please sign in</h2>
 				<label class="sr-only" for="inputLogin">Login</label>
 				<input type="text" class="form-control" name="username" id="username" autofocus="" required="" placeholder="user name">
@@ -184,7 +184,7 @@ $(function () {
         }
         fillUserList(userList, currentUser);
       },
-      fail: function () {
+      error: function () {
         $("#passwordDiv").show()
         $("#userDiv").hide();
       }
