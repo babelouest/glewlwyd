@@ -91,13 +91,13 @@
 #define G_ERROR_NOT_FOUND    6
 
 // Data tables
-#define GLEWLWYD_TABLE_USER_MODULE_INSTANCE "g_user_module_instance"
+#define GLEWLWYD_TABLE_USER_MODULE_INSTANCE             "g_user_module_instance"
 #define GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE "g_user_auth_scheme_module_instance"
-#define GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE "g_client_module_instance"
-#define GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE "g_plugin_module_instance"
-#define GLEWLWYD_TABLE_USER_SESSION "g_user_session"
-#define GLEWLWYD_TABLE_USER_SESSION_SCHEME "g_user_session_scheme"
-#define GLEWLWYD_TABLE_SCOPE "g_scope"
+#define GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE           "g_client_module_instance"
+#define GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE           "g_plugin_module_instance"
+#define GLEWLWYD_TABLE_USER_SESSION                     "g_user_session"
+#define GLEWLWYD_TABLE_USER_SESSION_SCHEME              "g_user_session_scheme"
+#define GLEWLWYD_TABLE_SCOPE                            "g_scope"
 
 // Callback priority
 #define GLEWLWYD_CALLBACK_PRIORITY_ZERO           0
@@ -186,14 +186,17 @@ struct _user_auth_scheme_module_instance {
   short int                         enabled;
 };
 
+// mock declaration
+struct config_plugin;
+
 struct _plugin_module {
   void * file_handle;
   char * parameters;
   char * name;
-  int (* plugin_module_load)(struct config_elements * config, char ** name, char ** parameters);
-  int (* plugin_module_unload)(struct config_elements * config);
-  int (* plugin_module_init)(struct config_elements * config, const char * parameters, void ** cls);
-  int (* plugin_module_close)(struct config_elements * config, void * cls);
+  int (* plugin_module_load)(struct config_plugin * config, char ** name, char ** parameters);
+  int (* plugin_module_unload)(struct config_plugin * config);
+  int (* plugin_module_init)(struct config_plugin * config, const char * parameters, void ** cls);
+  int (* plugin_module_close)(struct config_plugin * config, void * cls);
 };
 
 struct _plugin_module_instance {
@@ -241,11 +244,12 @@ struct config_elements {
 
 struct config_plugin {
   struct config_elements * glewlwyd_config;
+  int      (* glewlwyd_callback_add_plugin_endpoint)(struct config_plugin * config, const char * method, const char * prefix, const char * url, int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
+  int      (* glewlwyd_callback_remove_plugin_endpoint)(struct config_plugin * config, const char * method, const char * prefix, const char * url);
   json_t * (* glewlwyd_callback_is_user_session_valid)(struct config_plugin * config, const char * username, const char * scope_list);
   json_t * (* glewlwyd_callback_is_user_valid)(struct config_plugin * config, const char * username, const char * password, const char * scope_list);
   json_t * (* glewlwyd_callback_is_client_valid)(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list);
-  int      (* glewlwyd_callback_add_endpoint)(struct config_plugin * config, const char * method, const char * protocol_name, const char * url, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
-  json_t * (* glewlwyd_callback_get_login_url)(struct config_plugin * config, json_t * parameters);
+  json_t * (* glewlwyd_callback_get_login_url)(struct config_plugin * config);
 };
 
 // Main functions and misc functions
@@ -253,7 +257,7 @@ int  build_config_from_args(int argc, char ** argv, struct config_elements * con
 int  build_config_from_file(struct config_elements * config);
 int  check_config(struct config_elements * config);
 void exit_handler(int handler);
-void exit_server(struct config_elements ** config, int exit_value);
+void exit_server(struct config_elements ** config, struct config_plugin * config_p, int exit_value);
 void print_help(FILE * output);
 char * url_decode(char *str);
 char * url_encode(char *str);
@@ -269,8 +273,8 @@ int    load_user_auth_scheme_module_instance_list(struct config_elements * confi
 int    init_user_auth_scheme_module_list(struct config_elements * config);
 int    init_client_module_list(struct config_elements * config);
 int    load_client_module_instance_list(struct config_elements * config);
-int    init_plugin_module_list(struct config_elements * config);
-int    load_plugin_module_instance_list(struct config_elements * config);
+int    init_plugin_module_list(struct config_elements * config, struct config_plugin * config_p);
+int    load_plugin_module_instance_list(struct config_elements * config, struct config_plugin * config_p);
 struct _client_module_instance * get_client_module_instance(struct config_elements * config, const char * name);
 struct _user_module_instance * get_user_module_instance(struct config_elements * config, const char * name);
 struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * name);
@@ -299,6 +303,14 @@ json_t * get_user(struct config_elements * config, const char * username);
 // Scope
 json_t * get_scope_list(struct config_elements * config);
 json_t * get_scope(struct config_elements * config, const char * scope);
+
+// Plugin functions
+int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const char * method, const char * prefix, const char * url, int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
+int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, const char * method, const char * prefix, const char * url);
+json_t * glewlwyd_callback_is_user_session_valid(struct config_plugin * config, const char * username, const char * scope_list);
+json_t * glewlwyd_callback_is_user_valid(struct config_plugin * config, const char * username, const char * password, const char * scope_list);
+json_t * glewlwyd_callback_is_client_valid(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list);
+json_t * glewlwyd_callback_get_login_url(struct config_plugin * config);
 
 // Callback functions
 
