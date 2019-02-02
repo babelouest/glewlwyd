@@ -2,9 +2,9 @@
  *
  * Static file server Ulfius callback
  *
- * Copyright 2017-2018 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2017-2019 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20181110
+ * Version 20190118
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -70,13 +70,11 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
   const char * content_type;
 
   /*
-   * Comment this if statement if you put static files url not in root, like /app
+   * Comment this if statement if you don't access static files url from root dir, like /app
    */
-  if (response->shared_data != NULL) {
+  if (request->callback_position > 0) {
     return U_CALLBACK_CONTINUE;
-  }
-  
-  if (user_data != NULL && ((struct _static_file_config *)user_data)->files_path != NULL) {
+  } else if (user_data != NULL && ((struct _static_file_config *)user_data)->files_path != NULL) {
     file_requested = o_strdup(request->http_url);
     url_dup_save = file_requested;
     

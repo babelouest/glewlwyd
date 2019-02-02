@@ -37,11 +37,18 @@ int user_auth_scheme_module_unload(struct config_elements * config) {
   return G_OK;
 }
 
-int user_auth_scheme_module_init(struct config_elements * config, void ** cls) {
+int user_auth_scheme_module_init(struct config_elements * config, const char * parameters, void ** cls) {
+  *cls = json_loads(parameters, JSON_DECODE_ANY, NULL);
   return G_OK;
 }
 
 int user_auth_scheme_module_close(struct config_elements * config, void * cls) {
+  json_decref((json_t *)cls);
+  return G_OK;
+}
+
+int user_auth_scheme_module_trigger(const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls) {
+  *scheme_trigger_response = msprintf("{\"code\":" JSON_INTEGER_FORMAT "}", json_integer_value(json_object_get((json_t *)cls, "mock-param-number")));
   return G_OK;
 }
 
@@ -50,7 +57,7 @@ int user_auth_scheme_module_validate(const char * username, const char * scheme_
   int ret;
   
   if (j_scheme != NULL) {
-    if (json_object_get(j_scheme, "code") != NULL && json_is_integer(json_object_get(j_scheme, "code")) && json_integer_value(json_object_get(j_scheme, "code")) == 42) {
+    if (json_object_get(j_scheme, "code") != NULL && json_is_integer(json_object_get(j_scheme, "code")) && json_integer_value(json_object_get(j_scheme, "code")) == json_integer_value(json_object_get((json_t *)cls, "mock-param-number"))) {
       ret = G_OK;
     } else {
       ret = G_ERROR_UNAUTHORIZED;

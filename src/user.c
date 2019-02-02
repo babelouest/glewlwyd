@@ -85,6 +85,39 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
   return j_return;
 }
 
+json_t * auth_trigger_user_scheme(struct config_elements * config, const char * scheme, const char * username, json_t * trigger_parameters) {
+  struct _user_auth_scheme_module_instance * scheme_instance;
+  json_t * j_return = NULL, * j_response = NULL;
+  char * str_scheme_parameters = json_dumps(trigger_parameters, JSON_COMPACT), * str_trigger_response = NULL;
+  int res;
+  
+  if (NULL != str_scheme_parameters) {
+    scheme_instance = get_user_auth_scheme_module_instance(config, scheme);
+    if (scheme_instance != NULL) {
+      res = scheme_instance->module->user_auth_scheme_module_trigger(username, str_scheme_parameters, &str_trigger_response, scheme_instance->cls);
+      if (res == G_OK || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM || res == G_ERROR_NOT_FOUND) {
+        j_response = json_loads(str_trigger_response, JSON_DECODE_ANY, NULL);
+        if (j_response != NULL) {
+          j_return = json_pack("{sisO}", "result", res, "trigger", j_response);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "auth_trigger_user_scheme - Error parsing trigger response into JSON format: %s", str_trigger_response);
+        }
+        json_decref(j_response);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "auth_trigger_user_scheme - Error unrecognize return value for user_auth_scheme_module_trigger: %d", res);
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      o_free(str_trigger_response);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    }
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  }
+  o_free(str_scheme_parameters);
+  return j_return;
+}
+
 json_t * get_user(struct config_elements * config, const char * username) {
   int i, found = 0, result;
   char * str_user;
