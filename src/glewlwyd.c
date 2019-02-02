@@ -61,7 +61,7 @@ int main (int argc, char ** argv) {
   config_p->glewlwyd_config = config;
   config_p->glewlwyd_callback_add_plugin_endpoint = &glewlwyd_callback_add_plugin_endpoint;
   config_p->glewlwyd_callback_remove_plugin_endpoint = &glewlwyd_callback_remove_plugin_endpoint;
-  config_p->glewlwyd_callback_is_user_session_valid = &glewlwyd_callback_is_user_session_valid;
+  config_p->glewlwyd_callback_is_session_valid = &glewlwyd_callback_is_session_valid;
   config_p->glewlwyd_callback_is_user_valid = &glewlwyd_callback_is_user_valid;
   config_p->glewlwyd_callback_is_client_valid = &glewlwyd_callback_is_client_valid;
   config_p->glewlwyd_callback_get_login_url = &glewlwyd_callback_get_login_url;
@@ -224,8 +224,11 @@ int main (int argc, char ** argv) {
   // At this point, we declare all API endpoints and configure 
   
   // Authentication
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_validate_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_auth, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/trigger/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_auth_trigger, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/schemes/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_schemes_from_scopes, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_delete_session, (void*)config);
 
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
@@ -1189,6 +1192,7 @@ int init_user_module_list(struct config_elements * config) {
                 *(void **) (&cur_user_module->user_module_get) = dlsym(file_handle, "user_module_get");
                 *(void **) (&cur_user_module->user_module_add) = dlsym(file_handle, "user_module_add");
                 *(void **) (&cur_user_module->user_module_update) = dlsym(file_handle, "user_module_update");
+                *(void **) (&cur_user_module->user_module_update_profile) = dlsym(file_handle, "user_module_update_profile");
                 *(void **) (&cur_user_module->user_module_delete) = dlsym(file_handle, "user_module_delete");
                 *(void **) (&cur_user_module->user_module_check_password) = dlsym(file_handle, "user_module_check_password");
                 *(void **) (&cur_user_module->user_module_update_password) = dlsym(file_handle, "user_module_update_password");
@@ -1201,6 +1205,7 @@ int init_user_module_list(struct config_elements * config) {
                     cur_user_module->user_module_get != NULL &&
                     cur_user_module->user_module_add != NULL &&
                     cur_user_module->user_module_update != NULL &&
+                    cur_user_module->user_module_update_profile != NULL &&
                     cur_user_module->user_module_delete != NULL &&
                     cur_user_module->user_module_check_password != NULL &&
                     cur_user_module->user_module_update_password != NULL) {
@@ -1236,6 +1241,7 @@ int init_user_module_list(struct config_elements * config) {
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get: %s", (cur_user_module->user_module_get != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_add: %s", (cur_user_module->user_module_add != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update: %s", (cur_user_module->user_module_update != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update_profile: %s", (cur_user_module->user_module_update_profile != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_delete: %s", (cur_user_module->user_module_delete != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_check_password: %s", (cur_user_module->user_module_check_password != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update_password: %s", (cur_user_module->user_module_update_password != NULL?"found":"not found"));
@@ -1383,12 +1389,14 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_init) = dlsym(file_handle, "user_auth_scheme_module_init");
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_close) = dlsym(file_handle, "user_auth_scheme_module_close");
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_validate) = dlsym(file_handle, "user_auth_scheme_module_validate");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_trigger) = dlsym(file_handle, "user_auth_scheme_module_trigger");
                 
                 if (cur_user_auth_scheme_module->user_auth_scheme_module_load != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_unload != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_init != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_close != NULL &&
-                    cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL) {
+                    cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL) {
                   if (cur_user_auth_scheme_module->user_auth_scheme_module_load(config, &cur_user_auth_scheme_module->name, &cur_user_auth_scheme_module->parameters) == G_OK) {
                     if (pointer_list_append(config->user_auth_scheme_module_list, cur_user_auth_scheme_module)) {
                       y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
@@ -1412,6 +1420,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_init: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_init != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_close: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_close != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_validate: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_trigger: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL?"found":"not found"));
                   dlclose(file_handle);
                   o_free(cur_user_auth_scheme_module);
                 }

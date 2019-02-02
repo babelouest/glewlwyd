@@ -156,6 +156,10 @@ int user_module_update(const char * username, const char * str_user, void * cls)
   return ret;
 }
 
+int user_module_update_profile(const char * username, const char * str_user, void * cls) {
+  return user_module_update(username, str_user, cls);
+}
+
 int user_module_delete(const char * username, void * cls) {
   json_t * j_user;
   size_t index;

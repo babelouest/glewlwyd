@@ -1,13 +1,13 @@
 #include "glewlwyd.h"
 
-int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const char * method, const char * prefix, const char * url, int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data) {
+int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const char * method, const char * prefix, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data) {
   int ret;
   char * p_url;
 
   if (config != NULL && config->glewlwyd_config != NULL && config->glewlwyd_config->instance != NULL && method != NULL && prefix != NULL && url != NULL && callback != NULL) {
     p_url = msprintf("%s/%s", prefix, url);
     if (p_url != NULL) {
-      if (ulfius_add_endpoint_by_val(config->glewlwyd_config->instance, method, config->glewlwyd_config->api_prefix, p_url, priority, callback, user_data) != U_OK) {
+      if (ulfius_add_endpoint_by_val(config->glewlwyd_config->instance, method, config->glewlwyd_config->api_prefix, p_url, GLEWLWYD_CALLBACK_PRIORITY_PLUGIN + priority, callback, user_data) != U_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_add_plugin_endpoint - Error ulfius_add_endpoint_by_val %s - %s/%s", method, config->glewlwyd_config->api_prefix, p_url);
         ret = G_ERROR;
       } else {
@@ -45,7 +45,7 @@ int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, cons
   return ret;
 }
 
-json_t * glewlwyd_callback_is_user_session_valid(struct config_plugin * config, const char * username, const char * scope_list) {
+json_t * glewlwyd_callback_is_session_valid(struct config_plugin * config, const char * session_id, const char * scope_list) {
   return NULL;
 }
 
