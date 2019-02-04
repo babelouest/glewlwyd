@@ -1456,16 +1456,15 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
   config->user_auth_scheme_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_auth_scheme_module_instance_list != NULL) {
     pointer_list_init(config->user_auth_scheme_module_instance_list);
-    j_query = json_pack("{sss[ssss]ss}",
+    j_query = json_pack("{sss[sssss]}",
                         "table",
                         GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                         "columns",
+                          "guasmi_id",
                           "guasmi_module AS module",
                           "guasmi_name AS name",
-                          "guasmi_order AS order_by",
-                          "guasmi_parameters AS parameters",
-                        "order_by",
-                        "guasmi_order");
+                          "guasmi_expiration",
+                          "guasmi_parameters AS parameters");
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
@@ -1485,6 +1484,8 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
             cur_instance->cls = NULL;
             cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
             cur_instance->module = module;
+            cur_instance->guasmi_id = json_integer_value(json_object_get(j_instance, "guasmi_id"));
+            cur_instance->guasmi_expiration = json_integer_value(json_object_get(j_instance, "guasmi_expiration"));
             if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
               if (module->user_auth_scheme_module_init(config, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
                 cur_instance->enabled = 1;
@@ -1516,13 +1517,13 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
   return ret;
 }
 
-struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * name) {
+struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * type, const char * name) {
   int i;
   struct _user_auth_scheme_module_instance * cur_instance;
 
   for (i=0; i<pointer_list_size(config->user_auth_scheme_module_instance_list); i++) {
     cur_instance = pointer_list_get_at(config->user_auth_scheme_module_instance_list, i);
-    if (0 == o_strcmp(cur_instance->name, name)) {
+    if (0 == o_strcmp(cur_instance->name, name) && 0 == o_strcmp(cur_instance->module->name, type)) {
       return cur_instance;
     }
   }

@@ -66,15 +66,15 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
   time(&now);
   if (j_param != NULL) {
     if (json_object_get(j_param, "username") != NULL && json_is_string(json_object_get(j_param, "username"))) {
-      if (json_object_get(j_param, "scheme") == NULL || 0 == o_strcmp(json_string_value(json_object_get(j_param, "scheme")), "password")) {
+      if (json_object_get(j_param, "scheme_type") == NULL || 0 == o_strcmp(json_string_value(json_object_get(j_param, "scheme_type")), "password")) {
         if (json_object_get(j_param, "password") != NULL && json_is_string(json_object_get(j_param, "password"))) {
           j_result = auth_check_user_credentials(config, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "password")));
           if (check_result_value(j_result, G_OK)) {
             if ((session_uid = (char *)u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY)) == NULL) {
               session_uid = rand_string(session_str_array, 128);
             }
-            if (update_session(config, session_uid, json_string_value(json_object_get(j_param, "username")), "password", GLEWLWYD_DEFAULT_SESSION_EXPIRATION_PASSWORD) != G_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error update_session");
+            if (user_session_update(config, session_uid, json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update");
               response->status = 500;
             } else {
               ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, NULL, 0, 0);
@@ -83,8 +83,8 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - Error login/password for username %s at IP Address %s", json_string_value(json_object_get(j_param, "username")), ip_source);
             }
-            if ((session_uid = (char *)u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY)) != NULL && update_session(config, session_uid, json_string_value(json_object_get(j_param, "username")), "password", 0) != G_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error update_session");
+            if ((session_uid = (char *)u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY)) != NULL && user_session_update(config, session_uid, json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update");
             } else {
               ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, NULL, 0, 0);
             }
@@ -95,13 +95,13 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
           ulfius_set_string_body_response(response, 400, "password must be a string");
         } else {
           // Refresh username to set as default
-          if (update_session(config, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY), json_string_value(json_object_get(j_param, "username")), NULL, 0) != G_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error update_session");
+          if (user_session_update(config, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY), json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update");
             response->status = 500;
           }
         }
       } else {
-        j_result = auth_check_user_scheme(config, json_string_value(json_object_get(j_param, "scheme")), json_string_value(json_object_get(j_param, "username")), j_param);
+        j_result = auth_check_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), json_object_get(j_param, "value"));
         if (check_result_value(j_result, G_ERROR_PARAM)) {
           ulfius_set_string_body_response(response, 400, "bad scheme parameters");
         } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
@@ -112,8 +112,8 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
           if ((session_uid = (char *)u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY)) == NULL) {
             session_uid = rand_string(session_str_array, 128);
           }
-          if (update_session(config, session_uid, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme")), GLEWLWYD_DEFAULT_SESSION_EXPIRATION_PASSWORD) != G_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error update_session");
+          if (user_session_update(config, session_uid, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name"))) != G_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update");
             response->status = 500;
           } else {
             ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, NULL, 0, 0);
@@ -142,7 +142,7 @@ int callback_glewlwyd_user_auth_trigger (const struct _u_request * request, stru
   if (j_param != NULL) {
     if (json_object_get(j_param, "username") != NULL && json_is_string(json_object_get(j_param, "username"))) {
       if (json_object_get(j_param, "scheme") != NULL && json_is_string(json_object_get(j_param, "scheme"))) {
-        j_result = auth_trigger_user_scheme(config, json_string_value(json_object_get(j_param, "scheme")), json_string_value(json_object_get(j_param, "username")), j_param);
+        j_result = auth_trigger_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), j_param);
         if (check_result_value(j_result, G_ERROR_PARAM)) {
           ulfius_set_string_body_response(response, 400, "bad scheme parameters");
         } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
@@ -178,13 +178,15 @@ int callback_glewlwyd_user_get_session (const struct _u_request * request, struc
       ulfius_set_json_body_response(response, 200, json_object_get(j_session, "session"));
     } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
       response->status = 404;
+      ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, "", NULL, -1, NULL, NULL, 0, 0);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_get_session - Error get_session");
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_get_session - Error user_session_get");
       response->status = 500;
     }
     json_decref(j_session);
   } else {
     response->status = 404;
+    ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, "", NULL, -1, NULL, NULL, 0, 0);
   }
   
   return U_CALLBACK_CONTINUE;
@@ -200,9 +202,9 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
     if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
       response->status = 404;
     } else if (!check_result_value(j_session, G_OK)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error get_session");
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error user_session_get");
       response->status = 500;
-    } else if (users_session_delete(config, session_uid) != G_OK) {
+    } else if (user_session_delete(config, session_uid) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error user_session_delete");
       response->status = 500;
     } else {

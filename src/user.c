@@ -59,16 +59,16 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
   return j_return;
 }
 
-json_t * auth_check_user_scheme(struct config_elements * config, const char * scheme_name, const char * username, json_t * scheme_parameters) {
+json_t * auth_check_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * scheme_value) {
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL;
-  char * str_scheme_parameters = json_dumps(scheme_parameters, JSON_COMPACT);
+  char * str_scheme_value = json_dumps(scheme_value, JSON_COMPACT);
   int res;
   
-  if (NULL != str_scheme_parameters) {
-    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+  if (NULL != str_scheme_value) {
+    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_type, scheme_name);
     if (scheme_instance != NULL) {
-      res = scheme_instance->module->user_auth_scheme_module_validate(username, str_scheme_parameters, scheme_instance->cls);
+      res = scheme_instance->module->user_auth_scheme_module_validate(username, str_scheme_value, scheme_instance->cls);
       if (res == G_OK || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM || res == G_ERROR_NOT_FOUND) {
         j_return = json_pack("{si}", "result", res);
       } else {
@@ -81,20 +81,20 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
-  o_free(str_scheme_parameters);
+  o_free(str_scheme_value);
   return j_return;
 }
 
-json_t * auth_trigger_user_scheme(struct config_elements * config, const char * scheme, const char * username, json_t * trigger_parameters) {
+json_t * auth_trigger_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * trigger_parameters) {
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL, * j_response = NULL;
-  char * str_scheme_parameters = json_dumps(trigger_parameters, JSON_COMPACT), * str_trigger_response = NULL;
+  char * str_trigger_parameters = json_dumps(trigger_parameters, JSON_COMPACT), * str_trigger_response = NULL;
   int res;
   
-  if (NULL != str_scheme_parameters) {
-    scheme_instance = get_user_auth_scheme_module_instance(config, scheme);
+  if (NULL != str_trigger_parameters) {
+    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_type, scheme_name);
     if (scheme_instance != NULL) {
-      res = scheme_instance->module->user_auth_scheme_module_trigger(username, str_scheme_parameters, &str_trigger_response, scheme_instance->cls);
+      res = scheme_instance->module->user_auth_scheme_module_trigger(username, str_trigger_parameters, &str_trigger_response, scheme_instance->cls);
       if (res == G_OK || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM || res == G_ERROR_NOT_FOUND) {
         j_response = json_loads(str_trigger_response, JSON_DECODE_ANY, NULL);
         if (j_response != NULL) {
@@ -114,7 +114,7 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
-  o_free(str_scheme_parameters);
+  o_free(str_trigger_parameters);
   return j_return;
 }
 

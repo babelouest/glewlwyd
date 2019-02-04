@@ -58,31 +58,53 @@
 						<button type="button" name="switchUser" id="switchUser" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Switch user</button>
 						<div class="dropdown-menu" aria-labelledby="switchUser" id="switchUserList"></div>
 					</div>
+					<div class="btn-group" role="group">
+						<button type="button" name="selectScheme" id="selectScheme" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select Scheme</button>
+						<div class="dropdown-menu" aria-labelledby="selectScheme" id="selectSchemeList"></div>
+					</div>
 					<button type="button" name="logoutbut" id="logoutbut" class="btn btn-primary">Log out</button>
 				</div>
 			</div>
 		</div>
-				</div>
-		<form action="#" id="passwordForm">
-						<div class="modal center fade" id="passwordModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-				<div class="modal-dialog" role="document">
-					<div class="modal-content">
-						<div class="modal-header">
-																					Please enter your username and password
-						</div>
-						<div class="modal-body">
-							<label class="sr-only" for="inputLogin">Login</label>
-							<input type="text" class="form-control" name="username" id="username" autofocus="" required="" placeholder="username">
-								<label class="sr-only" for="inputPassword">Password</label>
-							<input type="password" class="form-control" name="password" id="password" required="" placeholder="password">
-						</div>
-						<div class="modal-footer">
-							<button type="submit" name="loginbut" id="loginbut" class="btn btn-lg btn-primary btn-block">Sign in</button>
-						</div>
-					</div>
-				</div>
-			</div>
-		</form>
+    </div>
+    <form action="#" id="passwordForm">
+      <div class="modal center fade" id="passwordModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              Please enter your username and password
+            </div>
+            <div class="modal-body">
+              <label class="sr-only" for="username">Login</label>
+              <input type="text" class="form-control" name="username" id="username" autofocus="" required="" placeholder="username">
+              <label class="sr-only" for="password">Password</label>
+              <input type="password" class="form-control" name="password" id="password" required="" placeholder="password">
+            </div>
+            <div class="modal-footer">
+              <button type="submit" name="loginbut" id="loginbut" class="btn btn-lg btn-primary btn-block">Sign in</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+    <form action="#" id="mockForm">
+      <div class="modal center fade" id="mockModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              Please enter the exptected mock value for <span id="mockSchemeName"></span>
+            </div>
+            <div class="modal-body">
+              <input type="text" class="form-control" name="mockValue" id="mockValue" autofocus="" required="" placeholder="value">
+              <input type="hidden" name="mockName" id="mockName" value="">
+            </div>
+            <div class="modal-footer">
+              <button type="submit" name="mockSubmit" id="mockSubmit" class="btn btn-lg btn-primary btn-block">Validate</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
 		<script src="js/jquery.min.js"></script>
 		<script src="js/popper.min.js"></script>
 		<script src="js/bootstrap.min.js"></script>
@@ -96,6 +118,11 @@ $(function () {
 	$("#passwordForm").submit(function (e) {
 		e.preventDefault();
 		checkPassword();
+	});
+
+	$("#mockForm").submit(function (e) {
+		e.preventDefault();
+		checkMock();
 	});
 
 	$("#logoutbut").click(function () {
@@ -121,6 +148,28 @@ $(function () {
 			data: JSON.stringify(scheme),
 			contentType: "application/json; charset=utf-8",
 			success: function () {
+				init();
+			}
+		});
+	};
+
+	var checkMock = function() {
+		var scheme = {
+			scheme_type: "mock",
+      scheme_name: $("#mockName").val(),
+			username: currentUser.username,
+      value: {
+        code: $("#mockValue").val()
+      }
+		};
+
+		$.ajax({
+			type: "POST",
+			url: "api/auth/",
+			data: JSON.stringify(scheme),
+			contentType: "application/json; charset=utf-8",
+			success: function () {
+        $("#mockModal").modal('hide');
 				init();
 			}
 		});
@@ -170,16 +219,33 @@ $(function () {
 		if (!results) return null;
 		if (!results[2]) return '';
 		return decodeURIComponent(results[2].replace(/\+/g, ' '));
-	}
+	};
+  
+  var authenticateScheme = function (elt) {
+    if (elt.attr('data-type') === "mock") {
+      $("#mockSchemeName").text(elt.attr('data-display-name'));
+      $("#mockName").val(elt.attr('data-name'));
+      $("#mockModal").modal('show');
+    }
+  };
 
 	var init = function() {
 		$("#passwordModal").modal('hide');
     if (getParameterByName("scope")) {
-      console.log(getParameterByName("scope"));
       $.ajax({
         url: "api/auth/schemes/?scope=" + getParameterByName("scope"),
         success: function (res) {
-          console.log(res);
+          $("#selectSchemeList").empty();
+          for (var key in res) {
+            for (var grp in res[key].schemes) {
+              for (var sch in res[key].schemes[grp]) {
+                $("#selectSchemeList").append('<a class="dropdown-item" href="#" data-type="' + res[key].schemes[grp][sch].scheme_type + '" data-name="' + res[key].schemes[grp][sch].scheme_name + '" data-display-name="' + res[key].schemes[grp][sch].scheme_display_name + '" id="selectScheme-' + res[key].schemes[grp][sch].scheme_name + '">' + res[key].schemes[grp][sch].scheme_display_name + '</a>');
+                $("#selectScheme-" + res[key].schemes[grp][sch].scheme_name).click(function () {
+                  authenticateScheme($(this));
+                });
+              }
+            }
+          }
         }
       });
     }
