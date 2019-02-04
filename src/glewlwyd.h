@@ -71,8 +71,7 @@
 #define GLEWLWYD_DEFAULT_HASH_ALGORITHM     "SHA256"
 #define GLEWLWYD_PREFIX_BEARER              "Bearer "
 
-#define GLEWLWYD_RESET_PASSWORD_DEFAULT_SMTP_PORT        25
-#define GLEWLWYD_RESET_PASSWORD_DEFAULT_TOKEN_EXPIRATION 604800
+#define GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION 2592000
 
 #define GLEWLWYD_DEFAULT_SESSION_KEY "GLEWLWYD2_SESSION_ID"
 #define GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE 5256000 // 10 years
@@ -190,6 +189,8 @@ struct _user_auth_scheme_module {
 struct _user_auth_scheme_module_instance {
   char                            * name;
   struct _user_auth_scheme_module * module;
+  json_int_t                        guasmi_id;
+  json_int_t                        guasmi_expiration;
   void                            * cls;
   short int                         enabled;
 };
@@ -285,7 +286,7 @@ int    init_plugin_module_list(struct config_elements * config, struct config_pl
 int    load_plugin_module_instance_list(struct config_elements * config, struct config_plugin * config_p);
 struct _client_module_instance * get_client_module_instance(struct config_elements * config, const char * name);
 struct _user_module_instance * get_user_module_instance(struct config_elements * config, const char * name);
-struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * name);
+struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * type, const char * name);
 
 // Modules generic functions
 int module_parameters_check(const char * module_parameters);
@@ -294,20 +295,17 @@ int module_instance_parameters_check(const char * module_parameters, const char 
 // Validate user login/password credentials
 json_t * auth_check_user_credentials_scope(struct config_elements * config, const char * username, const char * password, const char * scope_list);
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password);
-json_t * auth_check_user_scheme(struct config_elements * config, const char * scheme, const char * username, json_t * scheme_parameters);
-json_t * auth_trigger_user_scheme(struct config_elements * config, const char * scheme, const char * username, json_t * trigger_parameters);
+json_t * auth_check_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * scheme_parameters);
+json_t * auth_trigger_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * trigger_parameters);
 
 // Session
-int update_session(struct config_elements * config, const char * session_uid, const char * username, const char * scheme_name, uint expiration);
+int user_session_update(struct config_elements * config, const char * session_uid, const char * username, const char * scheme_type, const char * scheme_name);
 json_t * get_session_for_username(struct config_elements * config, const char * session_uid, const char * username);
-json_t * get_session(struct config_elements * config, const char * session_uid);
+json_t * user_session_get(struct config_elements * config, const char * session_uid);
 json_t * get_users_for_session(struct config_elements * config, const char * session_uid);
-int users_session_delete(struct config_elements * config, const char * session_uid);
+int user_session_delete(struct config_elements * config, const char * session_uid);
 
 // User
-json_t * auth_check_user_credentials_scope(struct config_elements * config, const char * username, const char * password, const char * scope_list);
-json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password);
-json_t * auth_check_user_scheme(struct config_elements * config, const char * scheme_name, const char * username, json_t * scheme_parameters);
 json_t * get_user(struct config_elements * config, const char * username);
 
 // Scope

@@ -26,7 +26,7 @@ int user_auth_scheme_module_load(struct config_elements * config, char ** name, 
   
   if (name != NULL && parameters != NULL) {
     *name = o_strdup("mock");
-    *parameters = o_strdup("{\"mock-param-string\":{\"type\":\"string\",\"mandatory\":true},\"mock-param-number\":{\"type\":\"number\",\"mandatory\":false},\"mock-param-boolean\":{\"type\":\"boolean\",\"mandatory\":true},\"mock-param-list\":{\"type\":\"list\",\"values\":[\"elt1\",\"elt2\",\"elt3\"],\"mandatory\":true}}");
+    *parameters = o_strdup("{\"mock-value\":{\"type\":\"string\",\"mandatory\":true},\"mock-param-string\":{\"type\":\"string\",\"mandatory\":true},\"mock-param-number\":{\"type\":\"number\",\"mandatory\":false},\"mock-param-boolean\":{\"type\":\"boolean\",\"mandatory\":true},\"mock-param-list\":{\"type\":\"list\",\"values\":[\"elt1\",\"elt2\",\"elt3\"],\"mandatory\":true}}");
   } else {
     ret = G_ERROR_PARAM;
   }
@@ -57,7 +57,7 @@ int user_auth_scheme_module_validate(const char * username, const char * scheme_
   int ret;
   
   if (j_scheme != NULL) {
-    if (json_object_get(j_scheme, "code") != NULL && json_is_integer(json_object_get(j_scheme, "code")) && json_integer_value(json_object_get(j_scheme, "code")) == json_integer_value(json_object_get((json_t *)cls, "mock-param-number"))) {
+    if (json_object_get(j_scheme, "code") != NULL && json_is_string(json_object_get(j_scheme, "code")) && 0 == o_strcmp(json_string_value(json_object_get(j_scheme, "code")), json_string_value(json_object_get((json_t *)cls, "mock-value")))) {
       ret = G_OK;
     } else {
       ret = G_ERROR_UNAUTHORIZED;

@@ -442,6 +442,7 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
           json_decref(((struct _oauth2_config *)*cls)->j_params);
           jwt_free(((struct _oauth2_config *)*cls)->jwt_key);
           o_free(*cls);
+          *cls = NULL;
           y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error allocating resources for jwt_key");
           ret = G_ERROR_MEMORY;
         } else {
@@ -449,6 +450,7 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
             json_decref(((struct _oauth2_config *)*cls)->j_params);
             jwt_free(((struct _oauth2_config *)*cls)->jwt_key);
             o_free(*cls);
+            *cls = NULL;
             y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error jwt_autocheck");
             ret = G_ERROR_MEMORY;
           } else {
@@ -467,16 +469,19 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
       } else {
         json_decref(((struct _oauth2_config *)*cls)->j_params);
         o_free(*cls);
+        *cls = NULL;
         y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error allocating resources for jwt_key");
         ret = G_ERROR_MEMORY;
       }
     } else {
       o_free(*cls);
+      *cls = NULL;
       y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error parameters");
       ret = G_ERROR_MEMORY;
     }
   } else {
     o_free(*cls);
+    *cls = NULL;
     y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error allocating resources for cls");
     ret = G_ERROR_MEMORY;
   }
@@ -484,8 +489,10 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
 }
 
 int plugin_module_close(struct config_plugin * config, void * cls) {
-  jwt_free(((struct _oauth2_config *)cls)->jwt_key);
-  json_decref(((struct _oauth2_config *)cls)->j_params);
-  o_free(cls);
+  if (cls != NULL) {
+    jwt_free(((struct _oauth2_config *)cls)->jwt_key);
+    json_decref(((struct _oauth2_config *)cls)->j_params);
+    o_free(cls);
+  }
   return G_OK;
 }
