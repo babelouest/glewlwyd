@@ -42,6 +42,7 @@ struct _oauth2_config {
   unsigned long access_token_duration;
   unsigned long refresh_token_duration;
   unsigned short int auth_type_enabled[5];
+  unsigned short int use_scope;
 };
 
 static int is_authorization_type_enabled(struct _oauth2_config * config, uint authorization_type) {
@@ -52,8 +53,28 @@ static int is_authorization_type_enabled(struct _oauth2_config * config, uint au
   }
 }
 
+/**
+ * TODO
+ */
 static int is_client_valid(struct _oauth2_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * redirect_uri, unsigned short type) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "is_client_valid - Not implemented");
   return G_ERROR_UNAUTHORIZED;
+}
+
+/**
+ * TODO
+ */
+static char * generate_authorization_code(struct _oauth2_config * config, const char * username, const char * client_id, json_t * j_scope_list, const char * redirect_uri) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "generate_authorization_code - Not implemented");
+  return NULL;
+}
+
+/**
+ * TODO
+ */
+static char * get_login_callback_url(struct _oauth2_config * config, const char * client_id, const char * scope_list, const char * redirect_uri, uint authorization_type) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "get_login_callback_url - Not implemented");
+  return NULL;
 }
 
 /**
@@ -61,31 +82,28 @@ static int is_client_valid(struct _oauth2_config * config, const char * client_i
  * glewlwyd redirects to redirect_uri with a code in the uri
  * If necessary, two intermediate steps can be used: login page and grant access page
  */
-/*static int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
+static int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
   char * authorization_code = NULL, * redirect_url, * cb_encoded, * query;
-  const char * ip_source = get_ip_source(request);
-  json_t * session_payload, * j_scope;
+  json_t * session_payload;
   time_t now;
-  int client_check;
+  char * callback_url = NULL;
   
   // Check if client is allowed to perform this request
-  client_check = is_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE);
-  if (client_check == G_OK) {
+  if (is_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
     // Client is allowed to use auth_code grant with this redirection_uri
-    session_payload = session_check(config, u_map_get(request->map_cookie, config->session_key));
+    session_payload = config->glewlwyd_config->glewlwyd_callback_is_session_valid(config->glewlwyd_config, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY), u_map_get(request->map_url, "scope"));
     if (check_result_value(session_payload, G_OK)) {
       if (u_map_get(request->map_url, "login_validated") != NULL) {
         // User Session is valid and confirmed by the owner
         time(&now);
         if (config->use_scope) {
-          j_scope = auth_check_user_scope(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "scope"));
-          if (check_result_value(j_scope, G_OK)) {
+          if (json_array_size(json_object_get(json_object_get(session_payload, "session"), "scope")) > 0) {
             // User is allowed for this scope
-            if (auth_check_client_user_scope(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), json_string_value(json_object_get(j_scope, "scope"))) == G_OK) {
+            if (config->glewlwyd_config->glewlwyd_callback_is_client_granted_scopes(config->glewlwyd_config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(session_payload, "session"), "username")), u_map_get(request->map_url, "scope")) == G_OK) {
               // User has granted access to the cleaned scope list for this client
               // Generate code, generate the url and redirect to it
-              authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(j_scope, "scope")), u_map_get(request->map_url, "redirect_uri"), ip_source);
+              authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(session_payload, "session"), "username")), u_map_get(request->map_url, "client_id"), json_object_get(json_object_get(session_payload, "session"), "scope"), u_map_get(request->map_url, "redirect_uri"));
               redirect_url = msprintf("%s%scode=%s%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), authorization_code, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
               ulfius_add_header_to_response(response, "Location", redirect_url);
               o_free(redirect_url);
@@ -95,8 +113,10 @@ static int is_client_valid(struct _oauth2_config * config, const char * client_i
               // User has not granted access to the cleaned scope list for this client, redirect to grant access page
               cb_encoded = url_encode(request->http_url);
               query = generate_query_parameters(request);
-              redirect_url = msprintf("%s%s", config->grant_url, query);
+              callback_url = get_login_callback_url(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"), u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE);
+              redirect_url = config->glewlwyd_config->glewlwyd_callback_get_login_url(config->glewlwyd_config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"), callback_url);
               ulfius_add_header_to_response(response, "Location", redirect_url);
+              o_free(callback_url);
               o_free(redirect_url);
               o_free(cb_encoded);
               o_free(query);
@@ -109,10 +129,9 @@ static int is_client_valid(struct _oauth2_config * config, const char * client_i
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           }
-          json_decref(j_scope);
         } else {
           // Generate code, generate the url and redirect to it
-          authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "client_id"), NULL, u_map_get(request->map_url, "redirect_uri"), ip_source);
+          authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")), u_map_get(request->map_url, "client_id"), NULL, u_map_get(request->map_url, "redirect_uri"));
           redirect_url = msprintf("%s%scode=%s%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), authorization_code, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
@@ -123,8 +142,10 @@ static int is_client_valid(struct _oauth2_config * config, const char * client_i
         // Redirect to login page
         cb_encoded = url_encode(request->http_url);
         query = generate_query_parameters(request);
-        redirect_url = msprintf("%s%s", config->login_url, query);
+        callback_url = get_login_callback_url(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"), u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE);
+        redirect_url = config->glewlwyd_config->glewlwyd_callback_get_login_url(config->glewlwyd_config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"), callback_url);
         ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(callback_url);
         o_free(redirect_url);
         o_free(cb_encoded);
         o_free(query);
@@ -134,8 +155,10 @@ static int is_client_valid(struct _oauth2_config * config, const char * client_i
       // Redirect to login page
       cb_encoded = url_encode(request->http_url);
       query = generate_query_parameters(request);
-      redirect_url = msprintf("%s%s", config->login_url, query);
+      callback_url = get_login_callback_url(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"), u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE);
+      redirect_url = config->glewlwyd_config->glewlwyd_callback_get_login_url(config->glewlwyd_config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"), callback_url);
       ulfius_add_header_to_response(response, "Location", redirect_url);
+      o_free(callback_url);
       o_free(redirect_url);
       o_free(cb_encoded);
       o_free(query);
@@ -149,10 +172,9 @@ static int is_client_valid(struct _oauth2_config * config, const char * client_i
     ulfius_add_header_to_response(response, "Location", redirect_url);
     o_free(redirect_url);
   }
-  json_decref(j_client_check);
   
   return U_OK;
-}*/
+}
 
 static int callback_oauth2_authorization(const struct _u_request * request, struct _u_response * response, void * user_data) {
   const char * response_type = u_map_get(request->map_url, "response_type");
@@ -161,7 +183,7 @@ static int callback_oauth2_authorization(const struct _u_request * request, stru
 
   if (0 == o_strcmp("code", response_type)) {
     if (0 == o_strcasecmp("GET", request->http_verb) && is_authorization_type_enabled((struct _oauth2_config *)user_data, GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK && u_map_get(request->map_url, "redirect_uri") != NULL) {
-      //result = check_auth_type_auth_code_grant(request, response, user_data);
+      result = check_auth_type_auth_code_grant(request, response, user_data);
     } else {
       if (u_map_get(request->map_url, "redirect_uri") != NULL) {
         response->status = 302;
@@ -332,6 +354,8 @@ static int check_parameters (json_t * j_params) {
     return G_ERROR_PARAM;
   } else if (json_object_get(j_params, "auth-type-refresh-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-refresh-enabled"))) {
     return G_ERROR_PARAM;
+  } else if (json_object_get(j_params, "use-scope") == NULL || !json_is_boolean(json_object_get(j_params, "use-scope"))) {
+    return G_ERROR_PARAM;
   } else if (json_object_get(j_params, "scope") != NULL) {
     if (!json_is_array(json_object_get(j_params, "scope"))) {
       return G_ERROR_PARAM;
@@ -372,6 +396,7 @@ int plugin_module_load(struct config_plugin * config, char ** name, char ** para
                             "\"auth-type-password-enabled\":{\"type\":\"boolean\",\"mandatory\":true},"\
                             "\"auth-type-client-enabled\":{\"type\":\"boolean\",\"mandatory\":true},"\
                             "\"auth-type-refresh-enabled\":{\"type\":\"boolean\",\"mandatory\":true},"\
+                            "\"use-scope\":{\"type\":\"boolean\",\"mandatory\":true},"\
                             "\"scope\":{\"type\":\"array\",\"mandatory\":false,\"format\":{\"name\":{\"type\":\"string\",\"mandatory\":true},"\
                                                                                           "\"rolling-refresh\":{\"type\":\"boolean\",\"mandatory\":false}}}}");
   } else {
@@ -409,6 +434,7 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
       ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-password-enabled")==json_true()?1:0;
       ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-client-enabled")==json_true()?1:0;
       ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-refresh-enabled")==json_true()?1:0;
+      ((struct _oauth2_config *)*cls)->use_scope = json_object_get(((struct _oauth2_config *)*cls)->j_params, "use-scope")==json_true()?1:0;
       if (!jwt_new(&((struct _oauth2_config *)*cls)->jwt_key)) {
         if (0 == o_strcmp("rsa", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-type")))) {
           key = (const unsigned char *)json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key"));

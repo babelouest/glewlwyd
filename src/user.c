@@ -148,3 +148,15 @@ json_t * get_user(struct config_elements * config, const char * username) {
   }
   return j_return;
 }
+
+int user_has_scope(json_t * j_user, const char * scope) {
+  json_t * j_element;
+  size_t index;
+  
+  json_array_foreach(json_object_get(j_user, "scope"), index, j_element) {
+    if (0 == o_strcmp(scope, json_string_value(j_element))) {
+      return 1;
+    }
+  }
+  return 0;
+}

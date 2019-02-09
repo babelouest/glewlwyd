@@ -4,7 +4,7 @@
  *
  * Login/Logout page
  *
- * Copyright 2017-2018 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2019 Nicolas Mora <mail@babelouest.org>
  * 
  * The front-end application is under MIT Licence (MIT)
  * 
@@ -41,75 +41,82 @@
 		<link rel="stylesheet" href="css/bootstrap.min.css">
 	</head>
 	<body>
-				<div class="container">
-					<div class="card center" id="userCard" tabindex="-1" role="dialog" style="display: none;">
-			<div class="card-header">
-																			<h2>Glewlwyd SSO service</h2>
-			</div>
-			<div class="card-body">
-				<h3>You are connected as <span id="currentUser"></span></h3>
-				<label>What do you wish for?</label>
-			</div>
-			<div class="card-footer">
-				<div class="btn-group" role="group">
-					<button type="button" name="currentUsernameValid" id="currentUsernameValid" class="btn btn-primary">Continue</button>
-					<button type="button" name="profile" id="profile" class="btn btn-primary">Update profile</button>
+		<div class="container">
+			<div class="card center" id="userCard" tabindex="-1" role="dialog" style="display: none;">
+				<div class="card-header">
+					<h2>Glewlwyd SSO service</h2>
+				</div>
+				<div class="card-body">
+					<h3>You are connected as <span id="currentUser"></span></h3>
+					<label>What do you wish for?</label>
+				</div>
+				<div class="card-footer">
 					<div class="btn-group" role="group">
-						<button type="button" name="switchUser" id="switchUser" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Switch user</button>
-						<div class="dropdown-menu" aria-labelledby="switchUser" id="switchUserList"></div>
+						<button type="button" name="continueBut" id="continueBut" class="btn btn-primary">Continue</button>
+						<button type="button" name="profileBut" id="profileBut" class="btn btn-primary">Update profile</button>
+						<div class="btn-group" role="group">
+							<button type="button" name="switchUser" id="switchUser" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Change user</button>
+							<div class="dropdown-menu" aria-labelledby="switchUser" id="switchUserList"></div>
+						</div>
+						<div class="btn-group" role="group">
+							<button type="button" name="selectScheme" id="selectScheme" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select Scheme</button>
+							<div class="dropdown-menu" aria-labelledby="selectScheme" id="selectSchemeList"></div>
+						</div>
+						<button type="button" name="logoutbut" id="logoutbut" class="btn btn-primary">Log out</button>
 					</div>
-					<div class="btn-group" role="group">
-						<button type="button" name="selectScheme" id="selectScheme" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select Scheme</button>
-						<div class="dropdown-menu" aria-labelledby="selectScheme" id="selectSchemeList"></div>
-					</div>
-					<button type="button" name="logoutbut" id="logoutbut" class="btn btn-primary">Log out</button>
+				</div>
+			</div>
+			<div class="card center" id="scopesCard" tabindex="-1" role="dialog" style="display: none;">
+				<div class="card-header">
+					<h2>Scopes summary</h2>
+				</div>
+				<div class="card-body">
+					<div id="scopesSummary"></div>
 				</div>
 			</div>
 		</div>
-    </div>
-    <form action="#" id="passwordForm">
-      <div class="modal center fade" id="passwordModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              Please enter your username and password
-            </div>
-            <div class="modal-body">
-              <label class="sr-only" for="username">Login</label>
-              <input type="text" class="form-control" name="username" id="username" autofocus="" required="" placeholder="username">
-              <label class="sr-only" for="password">Password</label>
-              <input type="password" class="form-control" name="password" id="password" required="" placeholder="password">
-            </div>
-            <div class="modal-footer">
-              <button type="submit" name="loginbut" id="loginbut" class="btn btn-lg btn-primary btn-block">Sign in</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </form>
-    <form action="#" id="mockForm">
-      <div class="modal center fade" id="mockModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              Please enter the exptected mock value for <span id="mockSchemeName"></span>
-            </div>
-            <div class="modal-body">
-              <input type="text" class="form-control" name="mockValue" id="mockValue" autofocus="" required="" placeholder="value">
-              <input type="hidden" name="mockName" id="mockName" value="">
-            </div>
-            <div class="modal-footer">
-              <button type="submit" name="mockSubmit" id="mockSubmit" class="btn btn-lg btn-primary btn-block">Validate</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </form>
+		<form action="#" id="passwordForm">
+			<div class="modal center fade" id="passwordModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							Please enter your username and password
+						</div>
+						<div class="modal-body">
+							<label class="sr-only" for="username">Login</label>
+							<input type="text" class="form-control" name="username" id="username" autofocus="" required="" placeholder="username">
+							<label class="sr-only" for="password">Password</label>
+							<input type="password" class="form-control" name="password" id="password" required="" placeholder="password">
+						</div>
+						<div class="modal-footer">
+							<button type="submit" name="loginbut" id="loginbut" class="btn btn-lg btn-primary btn-block">Sign in</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+		<form action="#" id="mockForm">
+			<div class="modal center fade" id="mockModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							Please enter the exptected mock value for <span id="mockSchemeName"></span>
+						</div>
+						<div class="modal-body">
+							<input type="text" class="form-control" name="mockValue" id="mockValue" autofocus="" required="" placeholder="value">
+							<input type="hidden" name="mockName" id="mockName" value="">
+						</div>
+						<div class="modal-footer">
+							<button type="submit" name="mockSubmit" id="mockSubmit" class="btn btn-lg btn-primary btn-block">Validate</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
 		<script src="js/jquery.min.js"></script>
 		<script src="js/popper.min.js"></script>
 		<script src="js/bootstrap.min.js"></script>
 	</body>
-	
 <script>
 $(function () {
 	var currentUser = false;
@@ -156,11 +163,11 @@ $(function () {
 	var checkMock = function() {
 		var scheme = {
 			scheme_type: "mock",
-      scheme_name: $("#mockName").val(),
+			scheme_name: $("#mockName").val(),
 			username: currentUser.username,
-      value: {
-        code: $("#mockValue").val()
-      }
+			value: {
+				code: $("#mockValue").val()
+			}
 		};
 
 		$.ajax({
@@ -169,7 +176,7 @@ $(function () {
 			data: JSON.stringify(scheme),
 			contentType: "application/json; charset=utf-8",
 			success: function () {
-        $("#mockModal").modal('hide');
+				$("#mockModal").modal('hide');
 				init();
 			}
 		});
@@ -192,12 +199,13 @@ $(function () {
 	};
 
 	var fillUserList = function(userList, currentUser) {
-		$("#currentUser").html(currentUser.name);
+		currentUser?$("#currentUser").html(currentUser.name):$("#currentUser").html("Not connected");
 		$("#switchUserList").empty();
 		$("#switchUserList").append('<a class="dropdown-item" href="#" id="switchUserNew">New user</a>');
 		$("#switchUserNew").click(function () {
 			$("#passwordModal").modal('show');
 			$("#userCard").hide();
+			$("#scopesCard").hide();
 		});
 		$.each(userList, function (i, user) {
 			if (user.username === currentUser.username) {
@@ -220,39 +228,54 @@ $(function () {
 		if (!results[2]) return '';
 		return decodeURIComponent(results[2].replace(/\+/g, ' '));
 	};
-  
-  var authenticateScheme = function (elt) {
-    if (elt.attr('data-type') === "mock") {
-      $("#mockSchemeName").text(elt.attr('data-display-name'));
-      $("#mockName").val(elt.attr('data-name'));
-      $("#mockModal").modal('show');
-    }
-  };
+	
+	var authenticateScheme = function (elt) {
+		if (elt.attr('data-type') === "mock") {
+			$("#mockSchemeName").text(elt.attr('data-display-name'));
+			$("#mockName").val(elt.attr('data-name'));
+			$("#mockModal").modal('show');
+		}
+	};
 
 	var init = function() {
 		$("#passwordModal").modal('hide');
-    if (getParameterByName("scope")) {
-      $.ajax({
-        url: "api/auth/schemes/?scope=" + getParameterByName("scope"),
-        success: function (res) {
-          $("#selectSchemeList").empty();
-          for (var key in res) {
-            for (var grp in res[key].schemes) {
-              for (var sch in res[key].schemes[grp]) {
-                $("#selectSchemeList").append('<a class="dropdown-item" href="#" data-type="' + res[key].schemes[grp][sch].scheme_type + '" data-name="' + res[key].schemes[grp][sch].scheme_name + '" data-display-name="' + res[key].schemes[grp][sch].scheme_display_name + '" id="selectScheme-' + res[key].schemes[grp][sch].scheme_name + '">' + res[key].schemes[grp][sch].scheme_display_name + '</a>');
-                $("#selectScheme-" + res[key].schemes[grp][sch].scheme_name).click(function () {
-                  authenticateScheme($(this));
-                });
-              }
-            }
-          }
-        }
-      });
-    }
+		if (getParameterByName("scope")) {
+			$.ajax({
+				url: "api/auth/schemes/?scope=" + getParameterByName("scope"),
+				success: function (result) {
+					$("#selectSchemeList").empty();
+					var schemeList = {};
+					$("#scopesSummary").empty();
+					for (var scope in result) {
+						var newScope = '<div class="row"><div class="col-md-3"><h3>Scope</h3></div><div class="col-md-9">' + scope + (result[scope].available?'':' (Unavailable)') + '</div></div>';
+                                                newScope += '<div class="row"><div class="col-md-1"></div><div class="col-md-2"><h5>Password required</h5></div>' + result[scope].password_required + '</div></div>';
+						for (var grp in result[scope].schemes) {
+							newScope += '<div class="row"><div class="col-md-1"></div><div class="col-md-2"><h5>Group</h5></div><div class="col-md-9">' + grp + '</div></div>';
+							for (var sch in result[scope].schemes[grp]) {
+								newScope += '<div class="row"><div class="col-md-1"></div><div class="col-md-2"><h6>Scheme</h6></div><div class="col-md-9">' + result[scope].schemes[grp][sch].scheme_name + ' ' + (result[scope].schemes[grp][sch].scheme_authenticated?'(Authenticated)':'(Not authenticated)') + '</div></div>';
+								if (!schemeList[result[scope].schemes[grp][sch].scheme_type]) {
+									schemeList[result[scope].schemes[grp][sch].scheme_type] = [];
+								}
+								if (schemeList[result[scope].schemes[grp][sch].scheme_type].indexOf(result[scope].schemes[grp][sch].scheme_name) == -1) {
+									schemeList[result[scope].schemes[grp][sch].scheme_type].push(result[scope].schemes[grp][sch].scheme_name);
+									$("#selectSchemeList").append('<a class="dropdown-item" href="#" data-type="' + result[scope].schemes[grp][sch].scheme_type + '" data-name="' + result[scope].schemes[grp][sch].scheme_name + '" data-display-name="' + result[scope].schemes[grp][sch].scheme_display_name + '" id="selectScheme-' + result[scope].schemes[grp][sch].scheme_name + '">' + result[scope].schemes[grp][sch].scheme_display_name + '</a>');
+									$("#selectScheme-" + result[scope].schemes[grp][sch].scheme_name).click(function () {
+										authenticateScheme($(this));
+									});
+								}
+							}
+						}
+						newScope += '</div><div class="row"><div class="col-md-12"><hr/></div></div>';
+						$("#scopesSummary").append(newScope);
+					}
+				}
+			});
+		}
+		$("#userCard").show();
+		$("#scopesCard").show();
 		$.ajax({
 			url: "api/auth/",
 			success: function (res) {
-				$("#userCard").show();
 				userList = [];
 				for (var i in res) {
 					var lastLogin = new Date(res[i].last_login);
@@ -269,10 +292,17 @@ $(function () {
 				fillUserList(userList, currentUser);
 			},
 			error: function () {
-				$("#passwordModal").modal('show');
-				$("#userCard").hide();
+                          fillUserList([]);
 			}
 		});
+                if (getParameterByName("callbackUrl")) {
+                  $("#continueBut").attr("disabled", false);
+                  $("#continueBut").click(function () {
+                    window.location.href = getParameterByName("callbackUrl");
+                  });
+                } else {
+                  $("#continueBut").attr("disabled", true);
+                }
 	};
 
 	init();

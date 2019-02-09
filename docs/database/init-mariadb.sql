@@ -44,7 +44,7 @@ CREATE TABLE `g_plugin_module_instance` (
   `gp_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `gp_module` VARCHAR(128) NOT NULL,
   `gp_name` VARCHAR(128) NOT NULL,
-  `gp_parameters` TINYBLOB
+  `gp_parameters` MEDIUMBLOB
 );
 
 CREATE TABLE `g_user_session` (
@@ -102,12 +102,20 @@ CREATE TABLE `g_user_auth_scheme_group_scope` (
 INSERT INTO `g_user_module_instance` (`gumi_module`, `gumi_name`, `gumi_order`, `gumi_parameters`) VALUES ('mock', 'mock', 0, '{"mock-param-string":"str1","mock-param-number":42,"mock-param-boolean":true,"mock-param-list":"elt1"}');
 INSERT INTO `g_user_auth_scheme_module_instance` (`guasmi_module`, `guasmi_name`, `guasmi_display_name`, `guasmi_expiration`, `guasmi_parameters`) VALUES ('mock', 'mock_scheme_42', 'Mock 42', 600, '{"mock-value":"42","mock-param-string":"str1","mock-param-number":42,"mock-param-boolean":true,"mock-param-list":"elt2"}');
 INSERT INTO `g_user_auth_scheme_module_instance` (`guasmi_module`, `guasmi_name`, `guasmi_display_name`, `guasmi_expiration`, `guasmi_parameters`) VALUES ('mock', 'mock_scheme_88', 'Mock 88', 600, '{"mock-value":"88","mock-param-string":"str1","mock-param-number":88,"mock-param-boolean":true,"mock-param-list":"elt2"}');
+INSERT INTO `g_user_auth_scheme_module_instance` (`guasmi_module`, `guasmi_name`, `guasmi_display_name`, `guasmi_expiration`, `guasmi_parameters`) VALUES ('mock', 'mock_scheme_95', 'Mock 95', 300, '{"mock-value":"95","mock-param-string":"str1","mock-param-number":88,"mock-param-boolean":true,"mock-param-list":"elt2"}');
 INSERT INTO `g_client_module_instance` (`gcmi_module`, `gcmi_name`, `gcmi_order`, `gcmi_parameters`) VALUES ('mock', 'mock', 0, '{"mock-param-string":"str1","mock-param-number":42,"mock-param-boolean":true,"mock-param-list":"elt3"}');
-INSERT INTO `g_plugin_module_instance` (`gp_module`, `gp_name`, `gp_parameters`) VALUES ('oauth2-glewlwyd', 'glwd-1', '{"url":"glwd","jwt-type":"sha","jwt-key-size":"256","key":"secret","access-token-duration":3600,"refresh-token-duration":1209600,"scope":[{"name":"g_profile","rolling-refresh":true}]}');
+INSERT INTO `g_plugin_module_instance` (`gp_module`, `gp_name`, `gp_parameters`) VALUES ('oauth2-glewlwyd', 'glwd-1', '{"url":"glwd","jwt-type":"sha","jwt-key-size":"256","key":"secret","access-token-duration":3600,"refresh-token-duration":1209600,"auth-type-code-enabled":true,"auth-type-implicit-enabled":true,"auth-type-password-enabled":true,"auth-type-client-enabled":true,"auth-type-refresh-enabled":true,"use-scope":true,"scope":[{"name":"g_profile","rolling-refresh":true},{"name":"g_mock_1","rolling-refresh":true},{"name":"g_mock_2","rolling-refresh":false}]}');
 INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_requires_password`) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 1);
 INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_requires_password`) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1);
-INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_requires_password`) VALUES ('g_mock', 'Glewlwyd mock scope', 'Glewlwyd mock scope description', 0);
-INSERT INTO `g_user_auth_scheme_group` (`guasg_name`, `guasg_display_name`, `guasg_description`) VALUES ('mock_group', 'mock group', 'mock group description');
-INSERT INTO `g_user_auth_scheme_group_scope` (`guasg_id`, `gs_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group'), (SELECT `gs_id` FROM `g_scope` WHERE `gs_name` = 'g_mock'));
-INSERT INTO `g_user_auth_scheme_group_auth_scheme_module_instance` (`guasg_id`, `guasmi_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group'), (SELECT `guasmi_id` FROM `g_user_auth_scheme_module_instance` WHERE `guasmi_name` = 'mock_scheme_42'));
-INSERT INTO `g_user_auth_scheme_group_auth_scheme_module_instance` (`guasg_id`, `guasmi_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group'), (SELECT `guasmi_id` FROM `g_user_auth_scheme_module_instance` WHERE `guasmi_name` = 'mock_scheme_88'));
+INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_requires_password`) VALUES ('g_mock_1', 'Glewlwyd mock scope with password', 'Glewlwyd mock 1 scope description', 1);
+INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_requires_password`) VALUES ('g_mock_2', 'Glewlwyd mock scope without password', 'Glewlwyd mock 2 scope description', 0);
+INSERT INTO `g_user_auth_scheme_group` (`guasg_name`, `guasg_display_name`, `guasg_description`) VALUES ('mock_group_1', 'mock group 1', 'mock group description 1');
+INSERT INTO `g_user_auth_scheme_group` (`guasg_name`, `guasg_display_name`, `guasg_description`) VALUES ('mock_group_2', 'mock group 2', 'mock group description 2');
+INSERT INTO `g_user_auth_scheme_group` (`guasg_name`, `guasg_display_name`, `guasg_description`) VALUES ('mock_group_3', 'mock group 3', 'mock group description 3');
+INSERT INTO `g_user_auth_scheme_group_scope` (`guasg_id`, `gs_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group_1'), (SELECT `gs_id` FROM `g_scope` WHERE `gs_name` = 'g_mock_1'));
+INSERT INTO `g_user_auth_scheme_group_scope` (`guasg_id`, `gs_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group_2'), (SELECT `gs_id` FROM `g_scope` WHERE `gs_name` = 'g_mock_1'));
+INSERT INTO `g_user_auth_scheme_group_scope` (`guasg_id`, `gs_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group_3'), (SELECT `gs_id` FROM `g_scope` WHERE `gs_name` = 'g_mock_2'));
+INSERT INTO `g_user_auth_scheme_group_auth_scheme_module_instance` (`guasg_id`, `guasmi_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group_1'), (SELECT `guasmi_id` FROM `g_user_auth_scheme_module_instance` WHERE `guasmi_name` = 'mock_scheme_42'));
+INSERT INTO `g_user_auth_scheme_group_auth_scheme_module_instance` (`guasg_id`, `guasmi_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group_1'), (SELECT `guasmi_id` FROM `g_user_auth_scheme_module_instance` WHERE `guasmi_name` = 'mock_scheme_88'));
+INSERT INTO `g_user_auth_scheme_group_auth_scheme_module_instance` (`guasg_id`, `guasmi_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group_2'), (SELECT `guasmi_id` FROM `g_user_auth_scheme_module_instance` WHERE `guasmi_name` = 'mock_scheme_95'));
+INSERT INTO `g_user_auth_scheme_group_auth_scheme_module_instance` (`guasg_id`, `guasmi_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group_3'), (SELECT `guasmi_id` FROM `g_user_auth_scheme_module_instance` WHERE `guasmi_name` = 'mock_scheme_95'));

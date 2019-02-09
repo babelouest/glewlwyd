@@ -279,7 +279,36 @@ int user_session_update(struct config_elements * config, const char * session_ui
       o_free(last_login_clause);
       res = h_insert(config->conn, j_query, NULL);
       json_decref(j_session);
-      j_session = get_session_for_username(config, session_uid, username);
+      if (res == H_OK) {
+        j_session = get_session_for_username(config, session_uid, username);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error h_insert session");
+        j_session = json_pack("{si}", "result", G_ERROR_DB);
+      }
+    } else {
+      // Refresh session for user
+      last_login_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
+      j_query = json_pack("{sss{s{ss}}s{ssss}}",
+                          "table",
+                          GLEWLWYD_TABLE_USER_SESSION,
+                          "set",
+                            "gus_last_login",
+                              "raw",
+                              last_login_clause,
+                          "where",
+                            "gus_uuid",
+                            session_uid_hash,
+                            "gus_username",
+                            username);
+      o_free(last_login_clause);
+      res = h_update(config->conn, j_query, NULL);
+      json_decref(j_session);
+      if (res == H_OK) {
+        j_session = get_session_for_username(config, session_uid, username);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error h_update session");
+        j_session = json_pack("{si}", "result", G_ERROR_DB);
+      }
     }
     if (check_result_value(j_session, G_OK)) {
       if (scheme_name != NULL) {
