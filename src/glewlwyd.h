@@ -258,7 +258,8 @@ struct config_plugin {
   json_t * (* glewlwyd_callback_is_session_valid)(struct config_plugin * config, const char * session_id, const char * scope_list);
   json_t * (* glewlwyd_callback_is_user_valid)(struct config_plugin * config, const char * username, const char * password, const char * scope_list);
   json_t * (* glewlwyd_callback_is_client_valid)(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list);
-  json_t * (* glewlwyd_callback_get_login_url)(struct config_plugin * config);
+  int      (* glewlwyd_callback_is_client_granted_scopes)(struct config_plugin * config, const char * client_id, const char * username, const char * scope_list);
+  char   * (* glewlwyd_callback_get_login_url)(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url);
 };
 
 // Main functions and misc functions
@@ -307,6 +308,7 @@ int user_session_delete(struct config_elements * config, const char * session_ui
 
 // User
 json_t * get_user(struct config_elements * config, const char * username);
+int user_has_scope(json_t * j_user, const char * scope);
 
 // Scope
 json_t * get_scope_list(struct config_elements * config);
@@ -321,15 +323,23 @@ int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, cons
 json_t * glewlwyd_callback_is_session_valid(struct config_plugin * config, const char * session_id, const char * scope_list);
 json_t * glewlwyd_callback_is_user_valid(struct config_plugin * config, const char * username, const char * password, const char * scope_list);
 json_t * glewlwyd_callback_is_client_valid(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list);
-json_t * glewlwyd_callback_get_login_url(struct config_plugin * config);
+int glewlwyd_callback_is_client_granted_scopes(struct config_plugin * config, const char * client_id, const char * username, const char * scope_list);
+char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url);
 
 // Callback functions
+
+int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_check_admin_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_auth_trigger (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_schemes_from_scopes (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_delete_session (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_scope_delete (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_options (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_server_configuration (const struct _u_request * request, struct _u_response * response, void * user_data);

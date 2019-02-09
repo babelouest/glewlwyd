@@ -45,18 +45,42 @@ int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, cons
   return ret;
 }
 
+/**
+ * TODO
+ */
 json_t * glewlwyd_callback_is_session_valid(struct config_plugin * config, const char * session_id, const char * scope_list) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "glewlwyd_callback_is_session_valid - Not implemented");
   return NULL;
 }
 
+/**
+ * TODO
+ */
 json_t * glewlwyd_callback_is_user_valid(struct config_plugin * config, const char * username, const char * password, const char * scope_list) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "glewlwyd_callback_is_user_valid - Not implemented");
   return NULL;
 }
 
+/**
+ * TODO
+ */
 json_t * glewlwyd_callback_is_client_valid(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "glewlwyd_callback_is_client_valid - Not implemented");
   return NULL;
 }
 
-json_t * glewlwyd_callback_get_login_url(struct config_plugin * config) {
+/**
+ * TODO
+ */
+int glewlwyd_callback_is_client_granted_scopes(struct config_plugin * config, const char * client_id, const char * username, const char * scope_list) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "glewlwyd_callback_is_client_granted_scopes - Not implemented");
+  return G_ERROR;
+}
+
+/**
+ * TODO
+ */
+char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "glewlwyd_callback_get_login_url - Not implemented");
   return NULL;
 }

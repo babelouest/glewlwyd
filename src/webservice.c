@@ -56,6 +56,22 @@ int callback_default (const struct _u_request * request, struct _u_response * re
   return U_CALLBACK_CONTINUE;
 }
 
+/**
+ * TODO
+ */
+int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "callback_glewlwyd_check_user_session - Not implemented");
+  return U_CALLBACK_ERROR;
+}
+
+/**
+ * TODO
+ */
+int callback_glewlwyd_check_admin_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "callback_glewlwyd_check_admin_session - Not implemented");
+  return U_CALLBACK_ERROR;
+}
+
 int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_param = ulfius_get_json_body_request(request, NULL), * j_result = NULL;
@@ -239,4 +255,28 @@ int callback_glewlwyd_user_get_schemes_from_scopes (const struct _u_request * re
   }
   
   return U_CALLBACK_CONTINUE;
+}
+
+/**
+ * TODO
+ */
+int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "callback_glewlwyd_get_user_session_scope_grant - Not implemented");
+  return U_CALLBACK_ERROR;
+}
+
+/**
+ * TODO
+ */
+int callback_glewlwyd_set_user_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "callback_glewlwyd_set_user_scope_grant - Not implemented");
+  return U_CALLBACK_ERROR;
+}
+
+/**
+ * TODO
+ */
+int callback_glewlwyd_user_scope_delete (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "callback_glewlwyd_user_scope_delete - Not implemented");
+  return U_CALLBACK_ERROR;
 }

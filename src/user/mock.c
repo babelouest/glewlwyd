@@ -37,7 +37,7 @@ int user_module_unload(struct config_elements * config) {
 }
 
 int user_module_init(struct config_elements * config, const char * parameters, void ** cls) {
-  *cls = (void*)json_pack("[{ss ss ss s[ss]}{ss ss ss s[s]}{ss ss ss s[s]}]",
+  *cls = (void*)json_pack("[{ss ss ss s[ss]}{ss ss ss s[sss]}{ss ss ss s[ss]}{ss ss ss s[ss]}]",
                             "username", 
                             "admin", 
                             "name", 
@@ -55,6 +55,8 @@ int user_module_init(struct config_elements * config, const char * parameters, v
                             "dev@glewlwyd",
                             "scope",
                               config->glewlwyd_resource_config_profile->oauth_scope,
+                              "g_mock_1",
+                              "g_mock_2",
                             "username",
                             "bob", 
                             "name", 
@@ -62,7 +64,17 @@ int user_module_init(struct config_elements * config, const char * parameters, v
                             "email", 
                             "bob@glewlwyd",
                             "scope",
-                              config->glewlwyd_resource_config_profile->oauth_scope);
+                              config->glewlwyd_resource_config_profile->oauth_scope,
+                              "g_mock_2",
+                            "username",
+                            "sam", 
+                            "name", 
+                            "Sam the user", 
+                            "email", 
+                            "sam@glewlwyd",
+                            "scope",
+                              config->glewlwyd_resource_config_profile->oauth_scope,
+                              "g_mock_1");
   y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_init - success %s %s", config->glewlwyd_resource_config_profile->oauth_scope, config->glewlwyd_resource_config_admin->oauth_scope);
   return G_OK;
 }
@@ -198,5 +210,5 @@ int user_module_check_password(const char * username, const char * password, voi
 }
 
 int user_module_update_password(const char * username, const char * new_password, void * cls) {
-  return G_OK;
+  return G_ERROR_PARAM;
 }
