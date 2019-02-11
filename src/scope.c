@@ -39,13 +39,13 @@ json_t * get_scope_list(struct config_elements * config) {
                         "gs_name AS name",
                         "gs_display_name AS display_name",
                         "gs_description AS description",
-                        "gs_requires_password");
+                        "gs_password_required");
   res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
     json_array_foreach(j_result, index, j_element) {
-      json_object_set(j_element, "requires_password", json_integer_value(json_object_get(j_element, "gs_requires_password"))?json_true():json_false());
-      json_object_del(j_element, "gs_requires_password");
+      json_object_set(j_element, "requires_password", json_integer_value(json_object_get(j_element, "gs_password_required"))?json_true():json_false());
+      json_object_del(j_element, "gs_password_required");
     }
     j_return = json_pack("{siso}", "result", G_OK, "scope", j_result);
   } else {
@@ -58,7 +58,6 @@ json_t * get_scope_list(struct config_elements * config) {
 json_t * get_scope(struct config_elements * config, const char * scope) {
   json_t * j_query, * j_result, * j_return;
   int res;
-  char * query;
 
   j_query = json_pack("{sss[ssss]s{ss}}",
                       "table",
@@ -67,16 +66,17 @@ json_t * get_scope(struct config_elements * config, const char * scope) {
                         "gs_name AS name",
                         "gs_display_name AS display_name",
                         "gs_description AS description",
-                        "gs_requires_password",
+                        "gs_password_required",
                       "where",
                         "gs_name",
                         scope);
-  res = h_select(config->conn, j_query, &j_result, &query);
+  res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    json_object_set(json_array_get(j_result, 0), "password_required", json_integer_value(json_object_get(json_array_get(j_result, 0), "gs_requires_password"))?json_true():json_false());
-    json_object_del(json_array_get(j_result, 0), "gs_requires_password");
-    j_return = json_pack("{siso}", "result", G_OK, "scope", json_array_get(j_result, 0));
+    json_object_set(json_array_get(j_result, 0), "password_required", json_integer_value(json_object_get(json_array_get(j_result, 0), "gs_password_required"))?json_true():json_false());
+    json_object_del(json_array_get(j_result, 0), "gs_password_required");
+    j_return = json_pack("{sisO}", "result", G_OK, "scope", json_array_get(j_result, 0));
+    json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_scope - Error executing j_query");
     j_return = json_pack("{si}", "result", G_ERROR_DB);
@@ -338,4 +338,137 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
   json_decref(j_user);
   o_free(session_hash);
   return j_scheme_list;
+}
+
+json_t * get_client_user_scope_grant(struct config_elements * config, const char * client_id, const char * username, const char * scope_list) {
+  char ** scope_array = NULL;
+  json_t * j_query, * j_result = NULL, * j_return, * j_element;
+  int res, i;
+  char * scope_clause, * scope_name_list = NULL, * scope_escaped, * tmp, * username_escaped, * client_id_escaped;
+  size_t index;
+  
+  if (split_string(scope_list, " ", &scope_array) > 0) {
+    for (i=0; scope_array[i] != NULL; i++) {
+      scope_escaped = h_escape_string(config->conn, scope_array[i]);
+      if (scope_name_list == NULL) {
+        scope_name_list = msprintf("'%s'", scope_escaped);
+      } else {
+        tmp = msprintf("%s,'%s'", scope_name_list, scope_escaped);
+        o_free(scope_name_list);
+        scope_name_list = tmp;
+      }
+      o_free(scope_escaped);
+    }
+    if (scope_name_list != NULL) {
+      username_escaped = h_escape_string(config->conn, username);
+      client_id_escaped = h_escape_string(config->conn, client_id);
+      scope_clause = msprintf("IN (SELECT `gs_id` FROM `" GLEWLWYD_TABLE_CLIENT_USER_SCOPE "` WHERE `gs_id` IN (SELECT `gs_id` FROM `" GLEWLWYD_TABLE_SCOPE "` WHERE `gs_name` IN (%s)) AND `gcus_username`='%s' AND `gcus_client_id`='%s')", scope_name_list, username_escaped, client_id_escaped);
+      j_query = json_pack("{sss[ssss]s{s{ssss}}}",
+                          "table",
+                          GLEWLWYD_TABLE_SCOPE,
+                          "columns",
+                            "gs_name AS name",
+                            "gs_display_name AS display_name",
+                            "gs_description AS description",
+                            "gs_password_required",
+                          "where",
+                            "gs_id",
+                              "operator",
+                              "raw",
+                              "value",
+                              scope_clause);
+      o_free(scope_name_list);
+      o_free(username_escaped);
+      o_free(client_id_escaped);
+      o_free(scope_clause);
+      res = h_select(config->conn, j_query, &j_result, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        json_array_foreach(j_result, index, j_element) {
+          json_object_set(j_element, "password_required", json_integer_value(json_object_get(j_element, "gs_password_required"))?json_true():json_false());
+          json_object_del(j_element, "gs_password_required");
+        }
+        j_return = json_pack("{sisO}", "result", G_OK, "scope", j_result);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_client_user_scope_grant - Error executing j_query");
+        j_return = json_pack("{si}", "result", G_ERROR_DB);
+      }
+      json_decref(j_result);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_client_user_scope_grant - Error scope_name_list");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_client_user_scope_grant - Error split_string");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  free_string_array(scope_array);
+  return j_return;
+}
+
+json_t * get_granted_scopes_for_client(struct config_elements * config, json_t * j_user, const char * client_id, const char * scope_list) {
+  json_t * j_scope_list, * j_element, * j_scope, * j_client, * j_return;
+  char ** scope_array;
+  int i, found;
+  size_t index;
+
+  j_client = get_client(config, client_id);
+  if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
+    j_scope_list = get_client_user_scope_grant(config, client_id, json_string_value(json_object_get(j_user, "username")), scope_list);
+    if (check_result_value(j_scope_list, G_OK)) {
+      if (split_string(scope_list, " ", &scope_array) > 0) {
+        for (i=0; scope_array[i] != NULL; i++) {
+          found = 0;
+          json_array_foreach(json_object_get(j_scope_list, "scope"), index, j_element) {
+            if (0 == o_strcmp(json_string_value(json_object_get(j_element, "name")), scope_array[i])) {
+              json_object_set(j_element, "granted", json_true());
+              found = 1;
+            }
+          }
+          if (!found) {
+            json_array_foreach(json_object_get(j_user, "scope"), index, j_element) {
+              if (0 == o_strcmp(scope_array[i], json_string_value(j_element))) {
+                j_scope = get_scope(config, scope_array[i]);
+                if (check_result_value(j_scope, G_OK)) {
+                  json_object_set(json_object_get(j_scope, "scope"), "granted", json_false());
+                  json_array_append(json_object_get(j_scope_list, "scope"), json_object_get(j_scope, "scope"));
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - Error get_scope");
+                }
+                json_decref(j_scope);
+              }
+            }
+          }
+        }
+        j_return = json_pack("{sis{s{sOsO}sO}}",
+                              "result",
+                              G_OK,
+                              "scope",
+                                "client",
+                                  "client_id",
+                                  json_object_get(json_object_get(j_client, "client"), "client_id"),
+                                  "name",
+                                  json_object_get(json_object_get(j_client, "client"), "name"),
+                                "scope",
+                                json_object_get(j_scope_list, "scope"));
+        json_decref(j_scope_list);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - Error split_string");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - Error get_client_user_scope_grant");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_scope_list);
+  } else if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") != json_true()) {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
+    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - Error get_client");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  json_decref(j_client);
+  return j_return;
 }

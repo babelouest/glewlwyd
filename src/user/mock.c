@@ -37,13 +37,15 @@ int user_module_unload(struct config_elements * config) {
 }
 
 int user_module_init(struct config_elements * config, const char * parameters, void ** cls) {
-  *cls = (void*)json_pack("[{ss ss ss s[ss]}{ss ss ss s[sss]}{ss ss ss s[ss]}{ss ss ss s[ss]}]",
+  *cls = (void*)json_pack("[{ss ss ss so s[ss]}{ss ss ss so s[sss]}{ss ss ss so s[ss]}{ss ss ss so s[ss]}]",
                             "username", 
                             "admin", 
                             "name", 
                             "The Boss", 
                             "email", 
                             "admin@glewlwyd",
+                            "enabled",
+                            json_true(),
                             "scope",
                               config->glewlwyd_resource_config_admin->oauth_scope,
                               config->glewlwyd_resource_config_profile->oauth_scope,
@@ -53,6 +55,8 @@ int user_module_init(struct config_elements * config, const char * parameters, v
                             "Dave Lopper", 
                             "email", 
                             "dev@glewlwyd",
+                            "enabled",
+                            json_true(),
                             "scope",
                               config->glewlwyd_resource_config_profile->oauth_scope,
                               "g_mock_1",
@@ -63,6 +67,8 @@ int user_module_init(struct config_elements * config, const char * parameters, v
                             "Bob the user", 
                             "email", 
                             "bob@glewlwyd",
+                            "enabled",
+                            json_true(),
                             "scope",
                               config->glewlwyd_resource_config_profile->oauth_scope,
                               "g_mock_2",
@@ -72,6 +78,8 @@ int user_module_init(struct config_elements * config, const char * parameters, v
                             "Sam the user", 
                             "email", 
                             "sam@glewlwyd",
+                            "enabled",
+                            json_true(),
                             "scope",
                               config->glewlwyd_resource_config_profile->oauth_scope,
                               "g_mock_1");

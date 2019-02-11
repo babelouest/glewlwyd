@@ -1003,7 +1003,7 @@ json_t * get_session_list(struct config_elements * config, const char * username
 /**
  * Get a specific session
  */
-int user_session_get(struct config_elements * config, const char * username, const char * session_hash) {
+int get_user_for_session(struct config_elements * config, const char * username, const char * session_hash) {
   json_t * j_query, * j_result;
   int res, to_return;
   
@@ -1028,7 +1028,7 @@ int user_session_get(struct config_elements * config, const char * username, con
       to_return = G_ERROR_NOT_FOUND;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_session_get - Error getting session");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_user_for_session - Error getting session");
     to_return = G_ERROR_DB;
   }
   json_decref(j_result);

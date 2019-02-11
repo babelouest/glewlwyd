@@ -4,6 +4,7 @@
 -- The administration client app                         --
 -- ----------------------------------------------------- --
 
+DROP TABLE IF EXISTS `g_client_user_scope`;
 DROP TABLE IF EXISTS `g_user_auth_scheme_group_scope`;
 DROP TABLE IF EXISTS `g_user_auth_scheme_group_auth_scheme_module_instance`;
 DROP TABLE IF EXISTS `g_user_auth_scheme_group`;
@@ -55,6 +56,9 @@ CREATE TABLE `g_user_session` (
   `gus_last_login` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `gus_enabled` TINYINT(1) DEFAULT 1
 );
+CREATE INDEX `i_g_user_session_username` ON `g_user_session`(`gus_username`);
+CREATE INDEX `i_g_user_session_last_login` ON `g_user_session`(`gus_last_login`);
+CREATE INDEX `i_g_user_session_expiration` ON `g_user_session`(`gus_expiration`);
 
 CREATE TABLE `g_user_session_scheme` (
   `guss_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
@@ -66,13 +70,15 @@ CREATE TABLE `g_user_session_scheme` (
   FOREIGN KEY(`gus_id`) REFERENCES `g_user_session`(`gus_id`) ON DELETE CASCADE,
   FOREIGN KEY(`guasmi_id`) REFERENCES `g_user_auth_scheme_module_instance`(`guasmi_id`) ON DELETE CASCADE
 );
+CREATE INDEX `i_g_user_session_scheme_last_login` ON `g_user_session_scheme`(`guss_last_login`);
+CREATE INDEX `i_g_user_session_scheme_expiration` ON `g_user_session_scheme`(`guss_expiration`);
 
 CREATE TABLE `g_scope` (
   `gs_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `gs_name` VARCHAR(128) NOT NULL,
   `gs_display_name` VARCHAR(256),
   `gs_description` VARCHAR(512),
-  `gs_requires_password` TINYINT(1) DEFAULT 1,
+  `gs_password_required` TINYINT(1) DEFAULT 1,
   `gs_enabled` TINYINT(1) DEFAULT 1
 );
 
@@ -99,16 +105,26 @@ CREATE TABLE `g_user_auth_scheme_group_scope` (
   FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
 );
 
+CREATE TABLE `g_client_user_scope` (
+  `gcus_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gs_id` INT(11) NOT NULL,
+  `gcus_username` VARCHAR(256) NOT NULL,
+  `gcus_client_id` VARCHAR(256) NOT NULL,
+  FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
+);
+CREATE INDEX `i_g_client_user_scope_username` ON `g_client_user_scope`(`gcus_username`);
+CREATE INDEX `i_g_client_user_scope_client_id` ON `g_client_user_scope`(`gcus_client_id`);
+
 INSERT INTO `g_user_module_instance` (`gumi_module`, `gumi_name`, `gumi_order`, `gumi_parameters`) VALUES ('mock', 'mock', 0, '{"mock-param-string":"str1","mock-param-number":42,"mock-param-boolean":true,"mock-param-list":"elt1"}');
 INSERT INTO `g_user_auth_scheme_module_instance` (`guasmi_module`, `guasmi_name`, `guasmi_display_name`, `guasmi_expiration`, `guasmi_parameters`) VALUES ('mock', 'mock_scheme_42', 'Mock 42', 600, '{"mock-value":"42","mock-param-string":"str1","mock-param-number":42,"mock-param-boolean":true,"mock-param-list":"elt2"}');
 INSERT INTO `g_user_auth_scheme_module_instance` (`guasmi_module`, `guasmi_name`, `guasmi_display_name`, `guasmi_expiration`, `guasmi_parameters`) VALUES ('mock', 'mock_scheme_88', 'Mock 88', 600, '{"mock-value":"88","mock-param-string":"str1","mock-param-number":88,"mock-param-boolean":true,"mock-param-list":"elt2"}');
 INSERT INTO `g_user_auth_scheme_module_instance` (`guasmi_module`, `guasmi_name`, `guasmi_display_name`, `guasmi_expiration`, `guasmi_parameters`) VALUES ('mock', 'mock_scheme_95', 'Mock 95', 300, '{"mock-value":"95","mock-param-string":"str1","mock-param-number":88,"mock-param-boolean":true,"mock-param-list":"elt2"}');
 INSERT INTO `g_client_module_instance` (`gcmi_module`, `gcmi_name`, `gcmi_order`, `gcmi_parameters`) VALUES ('mock', 'mock', 0, '{"mock-param-string":"str1","mock-param-number":42,"mock-param-boolean":true,"mock-param-list":"elt3"}');
 INSERT INTO `g_plugin_module_instance` (`gp_module`, `gp_name`, `gp_parameters`) VALUES ('oauth2-glewlwyd', 'glwd-1', '{"url":"glwd","jwt-type":"sha","jwt-key-size":"256","key":"secret","access-token-duration":3600,"refresh-token-duration":1209600,"auth-type-code-enabled":true,"auth-type-implicit-enabled":true,"auth-type-password-enabled":true,"auth-type-client-enabled":true,"auth-type-refresh-enabled":true,"use-scope":true,"scope":[{"name":"g_profile","rolling-refresh":true},{"name":"g_mock_1","rolling-refresh":true},{"name":"g_mock_2","rolling-refresh":false}]}');
-INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_requires_password`) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 1);
-INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_requires_password`) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1);
-INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_requires_password`) VALUES ('g_mock_1', 'Glewlwyd mock scope with password', 'Glewlwyd mock 1 scope description', 1);
-INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_requires_password`) VALUES ('g_mock_2', 'Glewlwyd mock scope without password', 'Glewlwyd mock 2 scope description', 0);
+INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_password_required`) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 1);
+INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_password_required`) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1);
+INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_password_required`) VALUES ('g_mock_1', 'Glewlwyd mock scope with password', 'Glewlwyd mock 1 scope description', 1);
+INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_password_required`) VALUES ('g_mock_2', 'Glewlwyd mock scope without password', 'Glewlwyd mock 2 scope description', 0);
 INSERT INTO `g_user_auth_scheme_group` (`guasg_name`, `guasg_display_name`, `guasg_description`) VALUES ('mock_group_1', 'mock group 1', 'mock group description 1');
 INSERT INTO `g_user_auth_scheme_group` (`guasg_name`, `guasg_display_name`, `guasg_description`) VALUES ('mock_group_2', 'mock group 2', 'mock group description 2');
 INSERT INTO `g_user_auth_scheme_group` (`guasg_name`, `guasg_display_name`, `guasg_description`) VALUES ('mock_group_3', 'mock group 3', 'mock group description 3');
