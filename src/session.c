@@ -186,15 +186,14 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
   return j_return;
 }
 
-json_t * user_session_get(struct config_elements * config, const char * session_uid) {
-  json_t * j_query, * j_result, * j_return, * j_session, * j_element;
-  size_t index;
+json_t * get_user_for_session(struct config_elements * config, const char * session_uid) {
+  json_t * j_query, * j_result, * j_return;
   int res;
   char * expire_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?o_strdup("> NOW()"):o_strdup("> (strftime('%s','now'))");
   char * session_uid_hash = generate_hash(config, config->hash_algorithm, session_uid);
 
   if (session_uid_hash != NULL) {
-    j_query = json_pack("{sss[ss]s{sssis{ssss}}}",
+    j_query = json_pack("{sss[ss]s{sssis{ssss}}ss}",
                         "table",
                         GLEWLWYD_TABLE_USER_SESSION,
                         "columns",
@@ -209,28 +208,15 @@ json_t * user_session_get(struct config_elements * config, const char * session_
                             "operator",
                             "raw",
                             "value",
-                            expire_clause);
+                            expire_clause,
+                        "order_by",
+                        "gus_last_login DESC");
     o_free(expire_clause);
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
       if (json_array_size(j_result) > 0) {
-        j_return = json_pack("{sis[]}", "result", G_OK, "session");
-        if (j_return != NULL) {
-          json_array_foreach(j_result, index, j_element) {
-            j_session = get_session_for_username(config, session_uid, json_string_value(json_object_get(j_element, "gus_username")));
-            if (check_result_value(j_session, G_OK)) {
-              json_object_del(json_object_get(j_session, "session"), "gus_id");
-              json_array_append(json_object_get(j_return, "session"), json_object_get(j_session, "session"));
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_available_session_from_username - Error get_session_for_username for %s", json_string_value(json_object_get(j_result, "gus_username")));
-            }
-            json_decref(j_session);
-          }
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_available_session_from_username - Error allocating resources for j_return");
-          j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
-        }
+        j_return = get_user(config, json_string_value(json_object_get(json_array_get(j_result, 0), "gus_username")));
       } else {
         j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       }

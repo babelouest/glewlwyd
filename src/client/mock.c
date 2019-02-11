@@ -36,11 +36,11 @@ int client_module_unload(struct config_elements * config) {
 
 int client_module_init(struct config_elements * config, const char * parameters, void ** cls) {
   *cls = (void*)json_pack("[{ss ss ss so s[sss] s[s] s[s] so}]",
-                            "client_id", 
-                            "mock1", 
-                            "name", 
-                            "mock1", 
-                            "description", 
+                            "client_id",
+                            "mock1",
+                            "name",
+                            "Mock client 1",
+                            "description",
                             "Client mock",
                             "confidential",
                             json_false(),

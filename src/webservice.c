@@ -56,20 +56,54 @@ int callback_default (const struct _u_request * request, struct _u_response * re
   return U_CALLBACK_CONTINUE;
 }
 
-/**
- * TODO
- */
 int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  y_log_message(Y_LOG_LEVEL_DEBUG, "callback_glewlwyd_check_user_session - Not implemented");
-  return U_CALLBACK_ERROR;
+  struct config_elements * config = (struct config_elements *)user_data;
+  const char * session_uid;
+  json_t * j_user;
+  int ret;
+  
+  if ((session_uid = (char *)u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY)) != NULL) {
+    j_user = get_user_for_session(config, session_uid);
+    if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
+      response->shared_data = json_deep_copy(json_object_get(j_user, "user"));
+      json_decref(j_user);
+      ret = U_CALLBACK_CONTINUE;
+    } else {
+      json_decref(j_user);
+      ret = U_CALLBACK_UNAUTHORIZED;
+    }
+  } else {
+    ret = U_CALLBACK_UNAUTHORIZED;
+  }
+  return ret;
 }
 
-/**
- * TODO
- */
 int callback_glewlwyd_check_admin_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  y_log_message(Y_LOG_LEVEL_DEBUG, "callback_glewlwyd_check_admin_session - Not implemented");
-  return U_CALLBACK_ERROR;
+  struct config_elements * config = (struct config_elements *)user_data;
+  const char * session_uid;
+  json_t * j_user, * j_element;
+  int ret;
+  size_t index;
+  
+  if ((session_uid = (char *)u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY)) != NULL) {
+    j_user = get_user_for_session(config, session_uid);
+    if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
+      ret = U_CALLBACK_UNAUTHORIZED;
+      json_array_foreach(json_object_get(json_object_get(j_user, "user"), "scope"), index, j_element) {
+        if (0 == o_strcmp(json_string_value(j_element), config->glewlwyd_resource_config_admin->oauth_scope)) {
+          response->shared_data = json_deep_copy(json_object_get(j_user, "user"));
+          json_decref(j_user);
+          ret = U_CALLBACK_CONTINUE;
+        }
+      }
+    } else {
+      json_decref(j_user);
+      ret = U_CALLBACK_UNAUTHORIZED;
+    }
+  } else {
+    ret = U_CALLBACK_UNAUTHORIZED;
+  }
+  return ret;
 }
 
 int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -196,7 +230,7 @@ int callback_glewlwyd_user_get_session (const struct _u_request * request, struc
       response->status = 404;
       ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, "", NULL, -1, NULL, NULL, 0, 0);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_get_session - Error user_session_get");
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_get_session - Error get_user_for_session");
       response->status = 500;
     }
     json_decref(j_session);
@@ -218,7 +252,7 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
     if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
       response->status = 404;
     } else if (!check_result_value(j_session, G_OK)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error user_session_get");
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error get_user_for_session");
       response->status = 500;
     } else if (user_session_delete(config, session_uid) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error user_session_delete");
@@ -237,10 +271,9 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
 int callback_glewlwyd_user_get_schemes_from_scopes (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_result;
-  const char * scope_list = u_map_get(request->map_url, "scope");
 
-  if (scope_list != NULL) {
-    j_result = get_validated_auth_scheme_list_from_scope_list(config, scope_list, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY));
+  if (u_map_get(request->map_url, "scope") != NULL) {
+    j_result = get_validated_auth_scheme_list_from_scope_list(config, u_map_get(request->map_url, "scope"), u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY));
     if (check_result_value(j_result, G_OK)) {
       ulfius_set_json_body_response(response, 200, json_object_get(j_result, "scheme"));
     } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
@@ -257,12 +290,28 @@ int callback_glewlwyd_user_get_schemes_from_scopes (const struct _u_request * re
   return U_CALLBACK_CONTINUE;
 }
 
-/**
- * TODO
- */
 int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  y_log_message(Y_LOG_LEVEL_DEBUG, "callback_glewlwyd_get_user_session_scope_grant - Not implemented");
-  return U_CALLBACK_ERROR;
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_user = (json_t *)response->shared_data, * j_scope_list;
+  
+  if (config != NULL && j_user != NULL) {
+    j_scope_list = get_granted_scopes_for_client(config, j_user, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope_list"));
+    if (check_result_value(j_scope_list, G_OK)) {
+      ulfius_set_json_body_response(response, 200, json_object_get(j_scope_list, "scope"));
+    } else if (check_result_value(j_scope_list, G_ERROR_NOT_FOUND)) {
+      response->status = 404;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - Error get_granted_scopes_for_client");
+      response->status = 500;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - Error config or j_user is NULL");
+    response->status = 500;
+  }
+  if (j_user != NULL) {
+    json_decref(j_user);
+  }
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
