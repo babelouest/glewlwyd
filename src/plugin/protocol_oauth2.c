@@ -85,7 +85,7 @@ static char * get_login_callback_url(struct _oauth2_config * config, const char 
 static int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
   char * authorization_code = NULL, * redirect_url, * cb_encoded, * query;
-  json_t * session_payload;
+  json_t * session_payload, * scope_granted;
   time_t now;
   char * callback_url = NULL;
   
@@ -99,8 +99,9 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
         time(&now);
         if (config->use_scope) {
           if (json_array_size(json_object_get(json_object_get(session_payload, "session"), "scope")) > 0) {
-            // User is allowed for this scope
-            if (config->glewlwyd_config->glewlwyd_callback_is_client_granted_scopes(config->glewlwyd_config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(session_payload, "session"), "username")), u_map_get(request->map_url, "scope")) == G_OK) {
+            // User is allowed for these scopes
+            scope_granted = config->glewlwyd_config->glewlwyd_callback_get_client_granted_scopes(config->glewlwyd_config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(session_payload, "session"), "username")), u_map_get(request->map_url, "scope"));
+            if (check_result_value(scope_granted, G_OK)) {
               // User has granted access to the cleaned scope list for this client
               // Generate code, generate the url and redirect to it
               authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(session_payload, "session"), "username")), u_map_get(request->map_url, "client_id"), json_object_get(json_object_get(session_payload, "session"), "scope"), u_map_get(request->map_url, "redirect_uri"));
@@ -109,8 +110,8 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
               o_free(redirect_url);
               o_free(authorization_code);
               response->status = 302;
-            } else {
-              // User has not granted access to the cleaned scope list for this client, redirect to grant access page
+            } else if (check_result_value(scope_granted, G_ERROR_NOT_FOUND)) {
+              // User has not granted access to any of the scope list for this client, redirect to login access page
               cb_encoded = url_encode(request->http_url);
               query = generate_query_parameters(request);
               callback_url = get_login_callback_url(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"), u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE);
@@ -121,6 +122,9 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
               o_free(cb_encoded);
               o_free(query);
               response->status = 302;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_auth_code_grant - Error glewlwyd_callback_get_client_granted_scopes");
+              response->status = 500;
             }
           } else {
             // Scope is not allowed for this user

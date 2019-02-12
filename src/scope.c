@@ -362,7 +362,7 @@ json_t * get_client_user_scope_grant(struct config_elements * config, const char
     if (scope_name_list != NULL) {
       username_escaped = h_escape_string(config->conn, username);
       client_id_escaped = h_escape_string(config->conn, client_id);
-      scope_clause = msprintf("IN (SELECT `gs_id` FROM `" GLEWLWYD_TABLE_CLIENT_USER_SCOPE "` WHERE `gs_id` IN (SELECT `gs_id` FROM `" GLEWLWYD_TABLE_SCOPE "` WHERE `gs_name` IN (%s)) AND `gcus_username`='%s' AND `gcus_client_id`='%s')", scope_name_list, username_escaped, client_id_escaped);
+      scope_clause = msprintf("IN (SELECT `gs_id` FROM `" GLEWLWYD_TABLE_CLIENT_USER_SCOPE "` WHERE `gs_id` IN (SELECT `gs_id` FROM `" GLEWLWYD_TABLE_SCOPE "` WHERE `gs_name` IN (%s)) AND `gcus_username`='%s' AND `gcus_client_id`='%s' AND `gcus_enabled`=1)", scope_name_list, username_escaped, client_id_escaped);
       j_query = json_pack("{sss[ssss]s{s{ssss}}}",
                           "table",
                           GLEWLWYD_TABLE_SCOPE,
@@ -471,4 +471,72 @@ json_t * get_granted_scopes_for_client(struct config_elements * config, json_t *
   }
   json_decref(j_client);
   return j_return;
+}
+
+int set_granted_scopes_for_client(struct config_elements * config, json_t * j_user, const char * client_id, const char * scope_list) {
+  json_t * j_query, * j_element;
+  char * scope_clause = NULL, * scope_escaped, ** scope_array = NULL;
+  int res, ret = G_OK, i, has_granted;
+  size_t index;
+
+  j_query = json_pack("{sss{si}s{ssss}}",
+                     "table",
+                     GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
+                     "set",
+                       "gcus_enabled",
+                       0,
+                     "where",
+                       "gcus_username",
+                       json_string_value(json_object_get(j_user, "username")),
+                       "gcus_client_id",
+                       client_id);
+  res = h_update(config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (scope_list != NULL) {
+      if (split_string(scope_list, " ", &scope_array) > 0) {
+        has_granted = 0;
+        for (i=0; scope_array[i] != NULL && ret != G_ERROR_DB; i++) {
+          json_array_foreach(json_object_get(j_user, "scope"), index, j_element) {
+            if (0 == o_strcmp(scope_array[i], json_string_value(j_element)) && ret != G_ERROR_DB) {
+              has_granted = 1;
+              scope_escaped = h_escape_string(config->conn, scope_array[i]);
+              scope_clause = msprintf("(SELECT `gs_id` FROM `" GLEWLWYD_TABLE_SCOPE "` WHERE `gs_name`='%s')", scope_escaped);
+              j_query = json_pack("{sss{s{ss}ssss}}",
+                                  "table",
+                                  GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
+                                  "values",
+                                    "gs_id",
+                                      "raw",
+                                      scope_clause,
+                                    "gcus_username",
+                                    json_string_value(json_object_get(j_user, "username")),
+                                    "gcus_client_id",
+                                    client_id);
+              o_free(scope_clause);
+              res = h_insert(config->conn, j_query, NULL);
+              if (res != H_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "set_granted_scopes_for_client - Error executing j_query (2)");
+                ret = G_ERROR_DB;
+              }
+              json_decref(j_query);
+              o_free(scope_escaped);
+            }
+          }
+        }
+        if (!has_granted) {
+          ret = G_ERROR_UNAUTHORIZED;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "set_granted_scopes_for_client - Error split_string");
+      }
+      free_string_array(scope_array);
+    } else {
+      ret = G_OK;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "set_granted_scopes_for_client - Error executing j_query (1)");
+    ret = G_ERROR_DB;
+  }
+  return ret;
 }

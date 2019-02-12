@@ -53,6 +53,7 @@
 				<div class="card-footer">
 					<div class="btn-group" role="group">
 						<button type="button" name="continueBut" id="continueBut" class="btn btn-primary">Continue</button>
+						<button type="button" name="grantBut" id="grantBut" class="btn btn-primary">Grant or revoke access</button>
 						<button type="button" name="profileBut" id="profileBut" class="btn btn-primary">Update profile</button>
 						<div class="btn-group" role="group">
 							<button type="button" name="switchUser" id="switchUser" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Change user</button>
@@ -140,6 +141,21 @@ $(function () {
 				init();
 			}
 		});
+	});
+
+	$("#grantBut").click(function () {
+		var scopes = [];
+		$(".check-scope").each(function () {
+			if ($(this).prop("checked")) {
+				scopes.push(encodeURI($(this).attr("data-scope")));
+			}
+		});
+		if (getParameterByName("client_id")) {
+			$.ajax({
+				type: "PUT",
+				url: "api/auth/grant/" + encodeURI(getParameterByName("client_id")) + "/" + scopes.join("%20") + "/"
+      });
+		}
 	});
 
 	var checkPassword = function() {
@@ -236,64 +252,67 @@ $(function () {
 			$("#mockModal").modal('show');
 		}
 	};
-  
-  var fillScopeList = function (scopeList) {
-    return $.ajax({
-      url: "api/auth/schemes/?scope=" + scopeList,
-      success: function (result) {
-        $("#selectSchemeList").empty();
-        var schemeList = {};
-        $("#scopesSummary").empty();
-        for (var scope in result) {
-          var newScope = '<div class="row"><div class="col-md-3"><h3>Scope</h3></div><div class="col-md-9">' + scope + (result[scope].available?'<span id="scope-' + scope + '"></span>':' (Unavailable)') + '</div></div>';
-          newScope += '<div class="row"><div class="col-md-1"></div><div class="col-md-2"><h5>Password required</h5></div>' + result[scope].password_required + '</div></div>';
-          for (var grp in result[scope].schemes) {
-            newScope += '<div class="row"><div class="col-md-1"></div><div class="col-md-2"><h5>Group</h5></div><div class="col-md-9">' + grp + '</div></div>';
-            for (var sch in result[scope].schemes[grp]) {
-              newScope += '<div class="row"><div class="col-md-1"></div><div class="col-md-2"><h6>Scheme</h6></div><div class="col-md-9">' + result[scope].schemes[grp][sch].scheme_name + ' ' + (result[scope].schemes[grp][sch].scheme_authenticated?'(Authenticated)':'(Not authenticated)') + '</div></div>';
-              if (!schemeList[result[scope].schemes[grp][sch].scheme_type]) {
-                schemeList[result[scope].schemes[grp][sch].scheme_type] = [];
-              }
-              if (schemeList[result[scope].schemes[grp][sch].scheme_type].indexOf(result[scope].schemes[grp][sch].scheme_name) == -1) {
-                schemeList[result[scope].schemes[grp][sch].scheme_type].push(result[scope].schemes[grp][sch].scheme_name);
-                $("#selectSchemeList").append('<a class="dropdown-item" href="#" data-type="' + result[scope].schemes[grp][sch].scheme_type + '" data-name="' + result[scope].schemes[grp][sch].scheme_name + '" data-display-name="' + result[scope].schemes[grp][sch].scheme_display_name + '" id="selectScheme-' + result[scope].schemes[grp][sch].scheme_name + '">' + result[scope].schemes[grp][sch].scheme_display_name + '</a>');
-                $("#selectScheme-" + result[scope].schemes[grp][sch].scheme_name).click(function () {
-                  authenticateScheme($(this));
-                });
-              }
-            }
-          }
-          newScope += '</div><div class="row"><div class="col-md-12"><hr/></div></div>';
-          $("#scopesSummary").append(newScope);
-        }
-      }
-    });
-  };
-  
-  var getScopeGrant = function (client_id, scope_list) {
-		$.ajax({
-			url: "api/auth/grant/" + encodeURI(client_id) + "/" + encodeURI(scope_list),
-			success: function (res) {
-        for (var i in res.scope) {
-          $("#scope-"+res.scope[i].name).html((res.scope[i].granted?" (granted)":" (not granted)"));
-        }
-			},
-			error: function (err) {
+	
+	var fillScopeList = function (scopeList) {
+		return $.ajax({
+			url: "api/auth/schemes/?scope=" + scopeList,
+			success: function (result) {
+				$("#selectSchemeList").empty();
+				var schemeList = {};
+				$("#scopesSummary").empty();
+				for (var scope in result) {
+					var newScope = '<div class="row"><div class="col-md-3"><h3>Scope</h3></div><div class="col-md-7">' + scope + (result[scope].available?'<span id="scope-' + scope + '"></span>':' (Unavailable)') + '</div><div class="col-md-2"><input type="checkbox" data-scope="' + scope + '" class="form-control check-scope" id="checkScope-' + scope + '"/></div></div>';
+					newScope += '<div class="row"><div class="col-md-1"></div><div class="col-md-2"><h5>Password required</h5></div>' + result[scope].password_required + '</div></div>';
+					for (var grp in result[scope].schemes) {
+						newScope += '<div class="row"><div class="col-md-1"></div><div class="col-md-2"><h5>Group</h5></div><div class="col-md-9">' + grp + '</div></div>';
+						for (var sch in result[scope].schemes[grp]) {
+							newScope += '<div class="row"><div class="col-md-1"></div><div class="col-md-2"><h6>Scheme</h6></div><div class="col-md-9">' + result[scope].schemes[grp][sch].scheme_name + ' ' + (result[scope].schemes[grp][sch].scheme_authenticated?'(Authenticated)':'(Not authenticated)') + '</div></div>';
+							if (!schemeList[result[scope].schemes[grp][sch].scheme_type]) {
+								schemeList[result[scope].schemes[grp][sch].scheme_type] = [];
+							}
+							if (schemeList[result[scope].schemes[grp][sch].scheme_type].indexOf(result[scope].schemes[grp][sch].scheme_name) == -1) {
+								schemeList[result[scope].schemes[grp][sch].scheme_type].push(result[scope].schemes[grp][sch].scheme_name);
+								$("#selectSchemeList").append('<a class="dropdown-item" href="#" data-type="' + result[scope].schemes[grp][sch].scheme_type + '" data-name="' + result[scope].schemes[grp][sch].scheme_name + '" data-display-name="' + result[scope].schemes[grp][sch].scheme_display_name + '" id="selectScheme-' + result[scope].schemes[grp][sch].scheme_name + '">' + result[scope].schemes[grp][sch].scheme_display_name + '</a>');
+								$("#selectScheme-" + result[scope].schemes[grp][sch].scheme_name).click(function () {
+									authenticateScheme($(this));
+								});
+							}
+						}
+					}
+					newScope += '</div><div class="row"><div class="col-md-12"><hr/></div></div>';
+					$("#scopesSummary").append(newScope);
+				}
 			}
 		});
-  };
+	};
+	
+	var getScopeGrant = function (client_id, scope_list) {
+	$.ajax({
+		url: "api/auth/grant/" + encodeURI(client_id) + "/" + encodeURI(scope_list),
+		success: function (res) {
+						for (var i in res.scope) {
+							$("#scope-"+res.scope[i].name).html((res.scope[i].granted?" (granted)":" (not granted)"));
+																if (res.scope[i].granted) {
+																	$("#checkScope-" + res.scope[i].name).prop("checked", true);
+																}
+						}
+		},
+		error: function (err) {
+		}
+	});
+	};
 
 	var init = function() {
 		$("#passwordModal").modal('hide');
 		$("#userCard").show();
 		$("#scopesCard").show();
-    
+		
 		if (getParameterByName("scope")) {
-      fillScopeList(getParameterByName("scope")).done(function () {
-        getScopeGrant(getParameterByName("client_id"), getParameterByName("scope"));
-      });
+			fillScopeList(getParameterByName("scope")).done(function () {
+				getScopeGrant(getParameterByName("client_id"), getParameterByName("scope"));
+			});
 		}
-    
+		
 		$.ajax({
 			url: "api/auth/",
 			success: function (res) {
@@ -313,7 +332,7 @@ $(function () {
 				fillUserList(userList, currentUser);
 			},
 			error: function () {
-        fillUserList([]);
+				fillUserList([]);
 			}
 		});
 		if (getParameterByName("callbackUrl")) {
