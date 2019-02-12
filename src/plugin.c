@@ -72,9 +72,9 @@ json_t * glewlwyd_callback_is_client_valid(struct config_plugin * config, const 
 /**
  * TODO
  */
-int glewlwyd_callback_is_client_granted_scopes(struct config_plugin * config, const char * client_id, const char * username, const char * scope_list) {
+json_t * glewlwyd_callback_get_client_granted_scopes(struct config_plugin * config, const char * client_id, const char * username, const char * scope_list) {
   y_log_message(Y_LOG_LEVEL_DEBUG, "glewlwyd_callback_is_client_granted_scopes - Not implemented");
-  return G_ERROR;
+  return NULL;
 }
 
 /**

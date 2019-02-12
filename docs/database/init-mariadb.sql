@@ -75,7 +75,7 @@ CREATE INDEX `i_g_user_session_scheme_expiration` ON `g_user_session_scheme`(`gu
 
 CREATE TABLE `g_scope` (
   `gs_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
-  `gs_name` VARCHAR(128) NOT NULL,
+  `gs_name` VARCHAR(128) NOT NULL UNIQUE,
   `gs_display_name` VARCHAR(256),
   `gs_description` VARCHAR(512),
   `gs_password_required` TINYINT(1) DEFAULT 1,
@@ -110,6 +110,8 @@ CREATE TABLE `g_client_user_scope` (
   `gs_id` INT(11) NOT NULL,
   `gcus_username` VARCHAR(256) NOT NULL,
   `gcus_client_id` VARCHAR(256) NOT NULL,
+  `gcus_granted` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `gcus_enabled` TINYINT(1) DEFAULT 1,
   FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_client_user_scope_username` ON `g_client_user_scope`(`gcus_username`);
