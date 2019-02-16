@@ -227,12 +227,12 @@ static json_t * get_current_session(struct config_elements * config, const char 
   return j_return;
 }
 
-static json_t * get_current_user_from_session(struct config_elements * config, const char * session_id) {
+static json_t * get_current_user_from_session(struct config_elements * config, const char * session_uid) {
   char * session_hash;
   json_t * j_session, * j_return, * j_user;
 
-  if (session_id != NULL && o_strlen(session_id)) {
-    if ((session_hash = generate_hash(config, config->hash_algorithm, session_id)) != NULL) {
+  if (session_uid != NULL && o_strlen(session_uid)) {
+    if ((session_hash = generate_hash(config, config->hash_algorithm, session_uid)) != NULL) {
       j_session = get_current_session(config, session_hash);
       if (check_result_value(j_session, G_OK)) {
         j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "session"), "username")));
@@ -300,9 +300,9 @@ static int is_scheme_valid_for_session(struct config_elements * config, json_int
   return ret;
 }
 
-json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list, const char * session_id) {
-  char * session_hash = generate_hash(config, config->hash_algorithm, session_id);
-  json_t * j_scheme_list = get_auth_scheme_list_from_scope_list(config, scope_list), * j_scope, * j_scheme, * j_group, * j_user = get_current_user_from_session(config, session_id);
+json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list, const char * session_uid) {
+  char * session_hash = generate_hash(config, config->hash_algorithm, session_uid);
+  json_t * j_scheme_list = get_auth_scheme_list_from_scope_list(config, scope_list), * j_scope, * j_scheme, * j_group, * j_user = get_current_user_from_session(config, session_uid);
   const char * key_scope, * key_group;
   size_t index_scheme;
   struct _user_auth_scheme_module_instance * scheme;
@@ -310,25 +310,25 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
   if (check_result_value(j_scheme_list, G_OK)) {
     json_object_foreach(json_object_get(j_scheme_list, "scheme"), key_scope, j_scope) {
       if (check_result_value(j_user, G_OK)) {
-          json_object_set(j_scope, "password_authenticated", is_scheme_valid_for_session(config, 0, session_hash)?json_true():json_false());
-          if (user_has_scope(json_object_get(j_user, "user"), key_scope)) {
-            json_object_set(j_scope, "available", json_true());
-            json_object_foreach(json_object_get(j_scope, "schemes"), key_group, j_group) {
-              json_array_foreach(j_group, index_scheme, j_scheme) {
-                scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_type")), json_string_value(json_object_get(j_scheme, "scheme_name")));
-                if (scheme != NULL && scheme->enabled) {
-                  json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, session_hash)?json_true():json_false());
-                } else if (scheme != NULL && !scheme->enabled) {
-                  json_object_set(j_scheme, "scheme_authenticated", json_null());
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error get_user_auth_scheme_module_instance");
-                }
+        json_object_set(j_scope, "password_authenticated", is_scheme_valid_for_session(config, 0, session_hash)?json_true():json_false());
+        if (user_has_scope(json_object_get(j_user, "user"), key_scope)) {
+          json_object_set(j_scope, "available", json_true());
+          json_object_foreach(json_object_get(j_scope, "schemes"), key_group, j_group) {
+            json_array_foreach(j_group, index_scheme, j_scheme) {
+              scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_type")), json_string_value(json_object_get(j_scheme, "scheme_name")));
+              if (scheme != NULL && scheme->enabled) {
+                json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, session_hash)?json_true():json_false());
+              } else if (scheme != NULL && !scheme->enabled) {
+                json_object_set(j_scheme, "scheme_authenticated", json_null());
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error get_user_auth_scheme_module_instance");
               }
             }
-          } else {
-            json_object_set(j_scope, "available", json_false());
-            json_object_clear(json_object_get(j_scope, "schemes"));
           }
+        } else {
+          json_object_set(j_scope, "available", json_false());
+          json_object_clear(json_object_get(j_scope, "schemes"));
+        }
       } else {
         json_object_del(j_scope, "schemes");
         json_object_del(j_scope, "password_required");
@@ -443,7 +443,7 @@ json_t * get_granted_scopes_for_client(struct config_elements * config, json_t *
         j_return = json_pack("{sis{s{sOsO}sO}}",
                               "result",
                               G_OK,
-                              "scope",
+                              "grant",
                                 "client",
                                   "client_id",
                                   json_object_get(json_object_get(j_client, "client"), "client_id"),
@@ -539,4 +539,61 @@ int set_granted_scopes_for_client(struct config_elements * config, json_t * j_us
     ret = G_ERROR_DB;
   }
   return ret;
+}
+
+json_t * get_scope_list_allowed_for_session(struct config_elements * config, const char * scope_list, const char * session_uid) {
+  json_t * j_scheme_list = get_validated_auth_scheme_list_from_scope_list(config, scope_list, session_uid), * j_scope, * j_group, * j_scheme, * j_scope_allowed = NULL;
+  int ret, group_allowed, scope_allowed;
+  const char * scope, * group;
+  size_t index;
+
+  if (check_result_value(j_scheme_list, G_OK)) {
+    j_scope_allowed = json_array();
+    if (j_scope_allowed != NULL) {
+      ret = G_OK;
+      // Iterate in each scopes
+      json_object_foreach(json_object_get(j_scheme_list, "scheme"), scope, j_scope) {
+        scope_allowed = 1;
+        if (json_object_get(j_scope, "available") == json_true()) {
+          if (json_object_get(j_scope, "password_required") == json_true() && json_object_get(j_scope, "password_authenticated") == json_false()) {
+            ret = G_ERROR_UNAUTHORIZED;
+            scope_allowed = 0;
+          } else {
+            json_object_foreach(json_object_get(j_scope, "schemes"), group, j_group) {
+              group_allowed = 0;
+              json_array_foreach(j_group, index, j_scheme) {
+                if (!group_allowed && json_object_get(j_scheme, "scheme_authenticated") == json_true()) {
+                  group_allowed = 1;
+                }
+              }
+              if (!group_allowed) {
+                ret = G_ERROR_UNAUTHORIZED;
+                scope_allowed = 0;
+              }
+            }
+          }
+          if (scope_allowed) {
+            json_array_append_new(j_scope_allowed, json_string(scope));
+          }
+        }
+      }
+      if (ret == G_OK && !json_array_size(j_scope_allowed)) {
+        ret = G_ERROR_UNAUTHORIZED;
+        json_decref(j_scope_allowed);
+        j_scope_allowed = NULL;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_scope_list_allowed_for_session - Error iallocating resources for j_scope_allowed");
+      ret = G_ERROR_MEMORY;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_scope_list_allowed_for_session - Error get_validated_auth_scheme_list_from_scope_list");
+    ret = G_ERROR;
+  }
+  json_decref(j_scheme_list);
+  if (ret == G_OK) {
+    return json_pack("{sisO}", "result", ret, "scope", j_scope_allowed);
+  } else {
+    return json_pack("{si}", "result", ret);
+  }
 }

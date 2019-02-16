@@ -17,7 +17,7 @@
 #include <jansson.h>
 #include <yder.h>
 #include <orcania.h>
-#include "../glewlwyd.h"
+#include "../glewlwyd-common.h"
 
 int client_module_load(struct config_elements * config, char ** name, char ** parameters) {
   int ret = G_OK;
@@ -35,7 +35,7 @@ int client_module_unload(struct config_elements * config) {
 }
 
 int client_module_init(struct config_elements * config, const char * parameters, void ** cls) {
-  *cls = (void*)json_pack("[{ss ss ss so s[sss] s[s] s[s] so}]",
+  *cls = (void*)json_pack("[{ss ss ss so s[ssss] s[ss] s[s] so}]",
                             "client_id",
                             "mock1",
                             "name",
@@ -44,17 +44,19 @@ int client_module_init(struct config_elements * config, const char * parameters,
                             "Client mock",
                             "confidential",
                             json_false(),
-                            "authorization_types",
+                            "authorization_type",
                               "code",
                               "token",
-                              "password",
+                              "implicit",
+                              "client_credentials",
                             "redirect_uri",
-                              "https://localhost/mock",
+                              "../../test-oauth2.html?param=client1_cb1",
+                              "../../test-oauth2.html?param=client1_cb2",
                             "scopes",
-                              config->glewlwyd_resource_config_profile->oauth_scope,
+                              config->profile_scope,
                             "enabled",
                             json_true());
-  y_log_message(Y_LOG_LEVEL_DEBUG, "client_module_init - success %s %s", config->glewlwyd_resource_config_profile->oauth_scope, config->glewlwyd_resource_config_admin->oauth_scope);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "client_module_init - success %s %s", config->profile_scope, config->admin_scope);
   return G_OK;
 }
 

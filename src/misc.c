@@ -28,8 +28,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <ctype.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "glewlwyd.h"
 
@@ -85,111 +85,6 @@ const char * get_ip_source(const struct _u_request * request) {
 };
 
 /**
- * Converts a hex character to its integer value
- */
-char from_hex(char ch) {
-  return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
-}
-
-/**
- * Converts an integer value to its hex character
- */
-char to_hex(char code) {
-  static char hex[] = "0123456789abcdef";
-  return hex[code & 15];
-}
-
-/**
- * Returns a url-encoded version of str
- * IMPORTANT: be sure to o_free() the returned string after use 
- * Thanks Geek Hideout!
- * http://www.geekhideout.com/urlcode.shtml
- */
-char * url_encode(char * str) {
-  char * pstr = str, * buf = o_malloc(strlen(str) * 3 + 1), * pbuf = buf;
-  while (* pstr) {
-    if (isalnum(* pstr) || * pstr == '-' || * pstr == '_' || * pstr == '.' || * pstr == '~') 
-      * pbuf++ = * pstr;
-    else if (* pstr == ' ') 
-      * pbuf++ = '+';
-    else 
-      * pbuf++ = '%', * pbuf++ = to_hex(* pstr >> 4), * pbuf++ = to_hex(* pstr & 15);
-    pstr++;
-  }
-  * pbuf = '\0';
-  return buf;
-}
-
-/**
- * Returns a url-decoded version of str
- * IMPORTANT: be sure to o_free() the returned string after use
- * Thanks Geek Hideout!
- * http://www.geekhideout.com/urlcode.shtml
- */
-char * url_decode(char * str) {
-  char * pstr = str, * buf = o_malloc(strlen(str) + 1), * pbuf = buf;
-  while (* pstr) {
-    if (* pstr == '%') {
-      if (pstr[1] && pstr[2]) {
-        * pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
-        pstr += 2;
-      }
-    } else if (* pstr == '+') { 
-      * pbuf++ = ' ';
-    } else {
-      * pbuf++ = * pstr;
-    }
-    pstr++;
-  }
-  * pbuf = '\0';
-  return buf;
-}
-
-/**
- *
- * Generates a query string based on url and post parameters of a request
- * Returned value must be o_free'd after use
- *
- */
-char * generate_query_parameters(const struct _u_request * request) {
-  char * query = NULL, * param, * tmp, * value;
-  const char ** keys;
-  struct _u_map params;
-  int i;
-  
-  u_map_init(&params);
-  
-  keys = u_map_enum_keys(request->map_url);
-  for (i=0; keys[i] != NULL; i++) {
-    u_map_put(&params, keys[i], u_map_get(request->map_url, keys[i]));
-  }
-  
-  keys = u_map_enum_keys(request->map_post_body);
-  for (i=0; keys[i] != NULL; i++) {
-    u_map_put(&params, keys[i], u_map_get(request->map_post_body, keys[i]));
-  }
-  
-  keys = u_map_enum_keys(&params);
-  for (i=0; keys[i] != NULL; i++) {
-    value = url_encode((char *)u_map_get(request->map_url, keys[i]));
-    param = msprintf("%s=%s", keys[i], value);
-    o_free(value);
-    if (query == NULL) {
-      query = o_strdup(param);
-    } else {
-      tmp = msprintf("%s&%s", query, param);
-      o_free(query);
-      query = tmp;
-    }
-    o_free(param);
-  }
-  
-  u_map_clean(&params);
-  
-  return query;
-}
-
-/**
  *
  * Generates a random long integer between 0 and max
  *
@@ -204,6 +99,7 @@ long random_at_most(long max) {
 
   long x;
   do {
+    // TODO: Use getrandom()
    x = random();
   }
   // This is carefully written not to overflow
@@ -230,4 +126,54 @@ char * rand_string(char * str, size_t str_size) {
   } else {
     return NULL;
   }
+}
+
+char * join_json_string_array(json_t * j_array, const char * separator) {
+  char * str_result = NULL, * tmp;
+  json_t * j_element;
+  size_t index;
+  
+  if (j_array != NULL && json_is_array(j_array)) {
+    json_array_foreach(j_array, index, j_element) {
+      if (json_is_string(j_element) && json_string_length(j_element)) {
+        if (str_result == NULL) {
+          str_result = o_strdup(json_string_value(j_element));
+        } else {
+          tmp = msprintf("%s%s%s", str_result, separator, json_string_value(j_element));
+          o_free(str_result);
+          str_result = tmp;
+        }
+      }
+    }
+  }
+  return str_result;
+}
+
+/**
+ * Converts an integer value to its hex character
+ */
+char to_hex(char code) {
+  static char hex[] = "0123456789abcdef";
+  return hex[code & 15];
+}
+
+/**
+ * Returns a url-encoded version of str
+ * IMPORTANT: be sure to o_free() the returned string after use 
+ * Thanks Geek Hideout!
+ * http://www.geekhideout.com/urlcode.shtml
+ */
+char * url_encode(const char * str) {
+  char * pstr = (char *)str, * buf = o_malloc(strlen(str) * 3 + 1), * pbuf = buf;
+  while (* pstr) {
+    if (isalnum(* pstr) || * pstr == '-' || * pstr == '_' || * pstr == '.' || * pstr == '~') 
+      * pbuf++ = * pstr;
+    else if (* pstr == ' ') 
+      * pbuf++ = '+';
+    else 
+      * pbuf++ = '%', * pbuf++ = to_hex(* pstr >> 4), * pbuf++ = to_hex(* pstr & 15);
+    pstr++;
+  }
+  * pbuf = '\0';
+  return buf;
 }

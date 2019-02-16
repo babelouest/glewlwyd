@@ -57,3 +57,32 @@ json_t * get_client(struct config_elements * config, const char * client_id) {
   }
   return j_return;
 }
+
+json_t * auth_check_client_credentials(struct config_elements * config, const char * client_id, const char * password) {
+  int i, res;
+  json_t * j_return = NULL;
+  struct _client_module_instance * client_module;
+  
+  for (i=0; i<pointer_list_size(config->client_module_instance_list); i++) {
+    client_module = pointer_list_get_at(config->client_module_instance_list, i);
+    if (client_module != NULL) {
+      if (client_module->enabled) {
+        res = client_module->module->client_module_check_password(client_id, password, client_module->cls);
+        if (res == G_OK) {
+          j_return = json_pack("{si}", "result", G_OK);
+        } else if (res == G_ERROR_UNAUTHORIZED) {
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        } else if (res != G_ERROR_NOT_FOUND) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_client_credentials - Error, client_module_check_password for module '%s', skip", client_module->name);
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_client_credentials - Error, client_module_instance %d is NULL", i);
+    }
+  }
+  if (j_return == NULL) {
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  }
+  return j_return;
+}
+
