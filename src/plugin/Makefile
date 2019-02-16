@@ -27,11 +27,14 @@ LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius -ljwt
 
 all: release
 
-%.o: %.c ../glewlwyd.h
+%.o: %.c ../glewlwyd-common.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
-libprotocol_oauth2.so: protocol_oauth2.o
-	$(CC) -shared -Wl,-soname,libprotocol_oauth2.so -o libprotocol_oauth2.so protocol_oauth2.o $(LIBS)
+misc.o: ../misc.c ../glewlwyd-common.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) ../misc.c
+
+libprotocol_oauth2.so: protocol_oauth2.o misc.o
+	$(CC) -shared -Wl,-soname,libprotocol_oauth2.so -o libprotocol_oauth2.so protocol_oauth2.o misc.o $(LIBS)
 
 clean:
 	rm -f *.o *.so

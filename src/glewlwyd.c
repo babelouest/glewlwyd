@@ -1,11 +1,10 @@
 /**
  *
- * Glewlwyd OAuth2 Authorization Server
+ * Glewlwyd SSO Authorization Server
  *
  * Authentiation server
  * Users are authenticated via various backend available: database, ldap
  * Using various authentication methods available: password, OTP, send code, etc.
- * Provides Json Web Tokens (jwt)
  * 
  * main functions definitions
  * and main process start
@@ -64,12 +63,16 @@ int main (int argc, char ** argv) {
   config_p->glewlwyd_callback_is_session_valid = &glewlwyd_callback_is_session_valid;
   config_p->glewlwyd_callback_is_user_valid = &glewlwyd_callback_is_user_valid;
   config_p->glewlwyd_callback_is_client_valid = &glewlwyd_callback_is_client_valid;
+  config_p->glewlwyd_callback_get_client_granted_scopes = &glewlwyd_callback_get_client_granted_scopes;
+  config_p->glewlwyd_callback_get_plugin_external_url = &glewlwyd_callback_get_plugin_external_url;
   config_p->glewlwyd_callback_get_login_url = &glewlwyd_callback_get_login_url;
+  config_p->glewlwyd_callback_generate_hash = &glewlwyd_callback_generate_hash;
   
   // Init config structure with default values
   config->config_file = NULL;
   config->port = GLEWLWYD_DEFAULT_PORT;
   config->api_prefix = NULL;
+  config->external_url = NULL;
   config->log_mode = Y_LOG_MODE_NONE;
   config->log_level = Y_LOG_LEVEL_NONE;
   config->log_file = NULL;
@@ -83,7 +86,6 @@ int main (int argc, char ** argv) {
   config->salt_length = GLEWLWYD_DEFAULT_SALT_LENGTH;
   config->hash_algorithm = o_strdup(GLEWLWYD_DEFAULT_HASH_ALGORITHM);
   config->login_url = NULL;
-  config->grant_url = NULL;
   config->user_module_path = NULL;
   config->user_module_list = NULL;
   config->user_module_instance_list = NULL;
@@ -96,28 +98,8 @@ int main (int argc, char ** argv) {
   config->plugin_module_path = NULL;
   config->plugin_module_list = NULL;
   config->plugin_module_instance_list = NULL;
-  
-  config->glewlwyd_resource_config_admin = o_malloc(sizeof(struct _glewlwyd_resource_config));
-  if (config->glewlwyd_resource_config_admin == NULL) {
-    fprintf(stderr, "Error allocating resources for config->glewlwyd_resource_config_admin, aborting\n");
-    return 2;
-  }
-  config->glewlwyd_resource_config_admin->jwt_alg = JWT_ALG_NONE;
-  config->glewlwyd_resource_config_admin->jwt_decode_key = NULL;
-  config->glewlwyd_resource_config_admin->method = G_METHOD_HEADER;
-  config->glewlwyd_resource_config_admin->oauth_scope = NULL;
-  config->glewlwyd_resource_config_admin->realm = NULL;
-  
-  config->glewlwyd_resource_config_profile = o_malloc(sizeof(struct _glewlwyd_resource_config));
-  if (config->glewlwyd_resource_config_profile == NULL) {
-    fprintf(stderr, "Error allocating resources for config->glewlwyd_resource_config_profile, aborting\n");
-    return 2;
-  }
-  config->glewlwyd_resource_config_profile->jwt_alg = JWT_ALG_NONE;
-  config->glewlwyd_resource_config_profile->jwt_decode_key = NULL;
-  config->glewlwyd_resource_config_profile->method = G_METHOD_HEADER;
-  config->glewlwyd_resource_config_profile->oauth_scope = NULL;
-  config->glewlwyd_resource_config_profile->realm = NULL;
+  config->admin_scope = NULL;
+  config->profile_scope = NULL;
   
   config->static_file_config = o_malloc(sizeof(struct _static_file_config));
   if (config->static_file_config == NULL) {
@@ -419,6 +401,7 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
     
     o_free((*config)->config_file);
     o_free((*config)->api_prefix);
+    o_free((*config)->external_url);
     o_free((*config)->log_file);
     o_free((*config)->allow_origin);
     o_free((*config)->secure_connection_key_file);
@@ -426,7 +409,6 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
     o_free((*config)->session_key);
     o_free((*config)->hash_algorithm);
     o_free((*config)->login_url);
-    o_free((*config)->grant_url);
     o_free((*config)->user_module_path);
     o_free((*config)->client_module_path);
     o_free((*config)->user_auth_scheme_module_path);
@@ -438,20 +420,6 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
       o_free((*config)->static_file_config->files_path);
       o_free((*config)->static_file_config->url_prefix);
       o_free((*config)->static_file_config);
-    }
-    
-    if ((*config)->glewlwyd_resource_config_admin != NULL) {
-      o_free((*config)->glewlwyd_resource_config_admin->oauth_scope);
-      o_free((*config)->glewlwyd_resource_config_admin->jwt_decode_key);
-      o_free((*config)->glewlwyd_resource_config_admin->realm);
-      o_free((*config)->glewlwyd_resource_config_admin);
-    }
-    
-    if ((*config)->glewlwyd_resource_config_profile != NULL) {
-      o_free((*config)->glewlwyd_resource_config_profile->oauth_scope);
-      o_free((*config)->glewlwyd_resource_config_profile->jwt_decode_key);
-      o_free((*config)->glewlwyd_resource_config_profile->realm);
-      o_free((*config)->glewlwyd_resource_config_profile);
     }
     
     o_free(*config);
@@ -661,9 +629,9 @@ void exit_handler(int signal) {
 int build_config_from_file(struct config_elements * config) {
   
   config_t cfg;
-  config_setting_t * root = NULL, * database = NULL, * jwt = NULL, * mime_type_list = NULL, * mime_type = NULL;
+  config_setting_t * root = NULL, * database = NULL, * mime_type_list = NULL, * mime_type = NULL;
   const char * str_value = NULL, * str_value_2 = NULL, * str_value_3 = NULL, * str_value_4 = NULL, * str_value_5 = NULL;
-  int int_value = 0, int_value_2 = 0, int_value_3 = 0, int_value_4 = 0, i;
+  int int_value = 0, i;
   char * one_log_mode;
   
   config_init(&cfg);
@@ -763,6 +731,19 @@ int build_config_from_file(struct config_elements * config) {
     config->session_key = strdup(str_value);
   }
   
+  if (config_lookup_string(&cfg, "external_url", &str_value) != CONFIG_TRUE) {
+    fprintf(stderr, "external_url is mandatory, exiting\n");
+    config_destroy(&cfg);
+    return 0;
+  } else {
+    config->external_url = strdup(str_value);
+    if (config->external_url == NULL) {
+      fprintf(stderr, "Error allocating resources for config->external_url, exiting\n");
+      config_destroy(&cfg);
+      return 0;
+    }
+  }
+  
   if (config_lookup_string(&cfg, "login_url", &str_value) != CONFIG_TRUE) {
     fprintf(stderr, "login_url is mandatory, exiting\n");
     config_destroy(&cfg);
@@ -771,19 +752,6 @@ int build_config_from_file(struct config_elements * config) {
     config->login_url = strdup(str_value);
     if (config->login_url == NULL) {
       fprintf(stderr, "Error allocating resources for config->login_url, exiting\n");
-      config_destroy(&cfg);
-      return 0;
-    }
-  }
-  
-  if (config_lookup_string(&cfg, "grant_url", &str_value) != CONFIG_TRUE) {
-    fprintf(stderr, "grant_url is mandatory, exiting\n");
-    config_destroy(&cfg);
-    return 0;
-  } else {
-    config->grant_url = strdup(str_value);
-    if (config->grant_url == NULL) {
-      fprintf(stderr, "Error allocating resources for config->grant_url, exiting\n");
       config_destroy(&cfg);
       return 0;
     }
@@ -902,103 +870,13 @@ int build_config_from_file(struct config_elements * config) {
     fprintf(stderr, "Error, no database setting found\n");
     return 0;
   }
-  
-  jwt = config_setting_get_member(root, "jwt");
-  if (jwt != NULL) {
-    config_setting_lookup_bool(jwt, "use_rsa", &int_value);
-    config_setting_lookup_bool(jwt, "use_ecdsa", &int_value_2);
-    config_setting_lookup_bool(jwt, "use_sha", &int_value_3);
-    config_setting_lookup_int(jwt, "key_size", &int_value_4);
 
-    if (config_lookup_string(&cfg, "admin_scope", &str_value) == CONFIG_TRUE) {
-      config->glewlwyd_resource_config_admin->oauth_scope = strdup(str_value);
-    }
-    
-    if (config_lookup_string(&cfg, "profile_scope", &str_value) == CONFIG_TRUE) {
-      config->glewlwyd_resource_config_profile->oauth_scope = strdup(str_value);
-    }
-    
-    if (int_value_4 == 256 || int_value_4 == 384 || int_value_4 == 512) {
-      if (int_value) {
-        config_setting_lookup_string(jwt, "rsa_pub_file", &str_value);
-        if (str_value != NULL) {
-          config->glewlwyd_resource_config_admin->jwt_decode_key = get_file_content(str_value);
-          config->glewlwyd_resource_config_profile->jwt_decode_key = get_file_content(str_value);
-          if (int_value_4 == 256) {
-            config->glewlwyd_resource_config_admin->jwt_alg = JWT_ALG_RS256;
-            config->glewlwyd_resource_config_profile->jwt_alg = JWT_ALG_RS256;
-          } else if (int_value_4 == 384) {
-            config->glewlwyd_resource_config_admin->jwt_alg = JWT_ALG_RS384;
-            config->glewlwyd_resource_config_profile->jwt_alg = JWT_ALG_RS384;
-          } else if (int_value_4 == 512) {
-            config->glewlwyd_resource_config_admin->jwt_alg = JWT_ALG_RS512;
-            config->glewlwyd_resource_config_profile->jwt_alg = JWT_ALG_RS512;
-          }
-          if (config->glewlwyd_resource_config_profile->jwt_decode_key == NULL || config->glewlwyd_resource_config_admin->jwt_decode_key == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error, rsa_pub_file content incorrect\n");
-            return 0;
-          }
-        } else {
-          config_destroy(&cfg);
-          fprintf(stderr, "Error, rsa_pub_file incorrect\n");
-          return 0;
-        }
-      } else if (int_value_2) {
-        config_setting_lookup_string(jwt, "ecdsa_pub_file", &str_value);
-        if (str_value != NULL) {
-          config->glewlwyd_resource_config_admin->jwt_decode_key = get_file_content(str_value);
-          config->glewlwyd_resource_config_profile->jwt_decode_key = get_file_content(str_value);
-          if (int_value_4 == 256) {
-            config->glewlwyd_resource_config_admin->jwt_alg = JWT_ALG_ES256;
-            config->glewlwyd_resource_config_profile->jwt_alg = JWT_ALG_ES256;
-          } else if (int_value_4 == 384) {
-            config->glewlwyd_resource_config_admin->jwt_alg = JWT_ALG_ES384;
-            config->glewlwyd_resource_config_profile->jwt_alg = JWT_ALG_ES384;
-          } else if (int_value_4 == 512) {
-            config->glewlwyd_resource_config_admin->jwt_alg = JWT_ALG_ES512;
-            config->glewlwyd_resource_config_profile->jwt_alg = JWT_ALG_ES512;
-          }
-          if (config->glewlwyd_resource_config_profile->jwt_decode_key == NULL || config->glewlwyd_resource_config_admin->jwt_decode_key == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error, ecdsa_pub_file content incorrect\n");
-            return 0;
-          }
-        } else {
-          config_destroy(&cfg);
-          fprintf(stderr, "Error, ecdsa_pub_file incorrect\n");
-          return 0;
-        }
-      } else if (int_value_3) {
-        config_setting_lookup_string(jwt, "sha_secret", &str_value);
-        if (str_value != NULL) {
-          config->glewlwyd_resource_config_admin->jwt_decode_key = o_strdup(str_value);
-          config->glewlwyd_resource_config_profile->jwt_decode_key = o_strdup(str_value);
-          if (int_value_4 == 256) {
-            config->glewlwyd_resource_config_admin->jwt_alg = JWT_ALG_HS256;
-            config->glewlwyd_resource_config_profile->jwt_alg = JWT_ALG_HS256;
-          } else if (int_value_4 == 384) {
-            config->glewlwyd_resource_config_admin->jwt_alg = JWT_ALG_HS384;
-            config->glewlwyd_resource_config_profile->jwt_alg = JWT_ALG_HS384;
-          } else if (int_value_4 == 512) {
-            config->glewlwyd_resource_config_admin->jwt_alg = JWT_ALG_HS512;
-            config->glewlwyd_resource_config_profile->jwt_alg = JWT_ALG_HS512;
-          }
-        } else {
-          config_destroy(&cfg);
-          fprintf(stderr, "Error, sha_secret incorrect\n");
-          return 0;
-        }
-      } else {
-        config_destroy(&cfg);
-        fprintf(stderr, "Error, no jwt algorithm selected\n");
-        return 0;
-      }
-    } else {
-      config_destroy(&cfg);
-      fprintf(stderr, "Error, key_size incorrect, values available are 256, 384 or 512\n");
-      return 0;
-    }
+  if (config_lookup_string(&cfg, "admin_scope", &str_value) == CONFIG_TRUE) {
+    config->admin_scope = strdup(str_value);
+  }
+  
+  if (config_lookup_string(&cfg, "profile_scope", &str_value) == CONFIG_TRUE) {
+    config->profile_scope = strdup(str_value);
   }
   
   if (config_lookup_string(&cfg, "user_module_path", &str_value) == CONFIG_TRUE) {

@@ -19,7 +19,7 @@
 #include <jansson.h>
 #include <yder.h>
 #include <orcania.h>
-#include "../glewlwyd.h"
+#include "../glewlwyd-common.h"
 
 int user_module_load(struct config_elements * config, char ** name, char ** parameters) {
   int ret = G_OK;
@@ -47,8 +47,8 @@ int user_module_init(struct config_elements * config, const char * parameters, v
                             "enabled",
                             json_true(),
                             "scope",
-                              config->glewlwyd_resource_config_admin->oauth_scope,
-                              config->glewlwyd_resource_config_profile->oauth_scope,
+                              config->admin_scope,
+                              config->profile_scope,
                             "username",
                             "dev", 
                             "name", 
@@ -58,7 +58,7 @@ int user_module_init(struct config_elements * config, const char * parameters, v
                             "enabled",
                             json_true(),
                             "scope",
-                              config->glewlwyd_resource_config_profile->oauth_scope,
+                              config->profile_scope,
                               "g_mock_1",
                               "g_mock_2",
                             "username",
@@ -70,7 +70,7 @@ int user_module_init(struct config_elements * config, const char * parameters, v
                             "enabled",
                             json_true(),
                             "scope",
-                              config->glewlwyd_resource_config_profile->oauth_scope,
+                              config->profile_scope,
                               "g_mock_2",
                             "username",
                             "sam", 
@@ -81,9 +81,9 @@ int user_module_init(struct config_elements * config, const char * parameters, v
                             "enabled",
                             json_true(),
                             "scope",
-                              config->glewlwyd_resource_config_profile->oauth_scope,
+                              config->profile_scope,
                               "g_mock_1");
-  y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_init - success %s %s", config->glewlwyd_resource_config_profile->oauth_scope, config->glewlwyd_resource_config_admin->oauth_scope);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_init - success %s %s", config->profile_scope, config->admin_scope);
   return G_OK;
 }
 

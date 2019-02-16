@@ -19,7 +19,7 @@
 #include <jansson.h>
 #include <yder.h>
 #include <orcania.h>
-#include "../glewlwyd.h"
+#include "../glewlwyd-common.h"
 
 int user_auth_scheme_module_load(struct config_elements * config, char ** name, char ** parameters) {
   int ret = G_OK;

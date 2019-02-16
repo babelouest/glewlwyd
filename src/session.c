@@ -193,7 +193,7 @@ json_t * get_user_for_session(struct config_elements * config, const char * sess
   char * session_uid_hash = generate_hash(config, config->hash_algorithm, session_uid);
 
   if (session_uid_hash != NULL) {
-    j_query = json_pack("{sss[ss]s{sssis{ssss}}ss}",
+    j_query = json_pack("{sss[ss]s{sssis{ssss}}sssi}",
                         "table",
                         GLEWLWYD_TABLE_USER_SESSION,
                         "columns",
@@ -210,7 +210,9 @@ json_t * get_user_for_session(struct config_elements * config, const char * sess
                             "value",
                             expire_clause,
                         "order_by",
-                        "gus_last_login DESC");
+                        "gus_last_login DESC",
+                        "limit",
+                        1);
     o_free(expire_clause);
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
@@ -226,6 +228,8 @@ json_t * get_user_for_session(struct config_elements * config, const char * sess
       j_return = json_pack("{si}", "result", G_ERROR_DB);
     }
     o_free(session_uid_hash);
+  } else if (session_uid == NULL) {
+    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_available_session_from_username - Error generate_hash");
     j_return = json_pack("{si}", "result", G_ERROR);

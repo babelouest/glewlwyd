@@ -41,9 +41,9 @@ int callback_glewlwyd_server_configuration (const struct _u_request * request, s
                         "api_prefix", 
                         ((struct config_elements *)user_data)->api_prefix,
                         "admin_scope",
-                        ((struct config_elements *)user_data)->glewlwyd_resource_config_admin->oauth_scope,
+                        ((struct config_elements *)user_data)->admin_scope,
                         "profile_scope",
-                        ((struct config_elements *)user_data)->glewlwyd_resource_config_profile->oauth_scope);
+                        ((struct config_elements *)user_data)->profile_scope);
   ulfius_set_json_body_response(response, 200, json_body);
   json_decref(json_body);
   return U_CALLBACK_CONTINUE;
@@ -90,7 +90,7 @@ int callback_glewlwyd_check_admin_session (const struct _u_request * request, st
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       ret = U_CALLBACK_UNAUTHORIZED;
       json_array_foreach(json_object_get(json_object_get(j_user, "user"), "scope"), index, j_element) {
-        if (0 == o_strcmp(json_string_value(j_element), config->glewlwyd_resource_config_admin->oauth_scope)) {
+        if (0 == o_strcmp(json_string_value(j_element), config->admin_scope)) {
           response->shared_data = json_deep_copy(json_object_get(j_user, "user"));
           json_decref(j_user);
           ret = U_CALLBACK_CONTINUE;
@@ -137,7 +137,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update");
               response->status = 500;
             } else {
-              ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, NULL, 0, 0);
+              ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, "/", 0, 0);
             }
           } else {
             if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
@@ -146,7 +146,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             if ((session_uid = (char *)u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY)) != NULL && user_session_update(config, session_uid, json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update");
             } else {
-              ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, NULL, 0, 0);
+              ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, "/", 0, 0);
             }
             response->status = 401;
           }
@@ -176,7 +176,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update");
             response->status = 500;
           } else {
-            ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, NULL, 0, 0);
+            ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, "/", 0, 0);
           }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error auth_check_user_scheme");
@@ -307,7 +307,7 @@ int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * re
   if (config != NULL && j_user != NULL) {
     j_scope_list = get_granted_scopes_for_client(config, j_user, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope_list"));
     if (check_result_value(j_scope_list, G_OK)) {
-      ulfius_set_json_body_response(response, 200, json_object_get(j_scope_list, "scope"));
+      ulfius_set_json_body_response(response, 200, json_object_get(j_scope_list, "grant"));
     } else if (check_result_value(j_scope_list, G_ERROR_NOT_FOUND)) {
       response->status = 404;
     } else {

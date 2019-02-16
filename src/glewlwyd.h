@@ -32,7 +32,6 @@
 #define _GLEWLWYD_VERSION_ "2.0.0"
 
 #include <jansson.h>
-#include <jwt.h>
 
 #ifndef _GNU_SOURCE
  #define _GNU_SOURCE
@@ -47,19 +46,15 @@
 /** Angharad libraries **/
 #include <ulfius.h>
 #include <yder.h>
-
 #include <hoel.h>
 
-#include "glewlwyd_resource.h"
-#include "static_file_callback.h"
+#include "glewlwyd-common.h"
 
 #if MHD_VERSION < 0x00093800
   #error Libmicrohttpd version 0.9.38 minimum is required, you can download it at http://ftp.gnu.org/gnu/libmicrohttpd/
 #endif
 
 #define GLEWLWYD_LOG_NAME "Glewlwyd"
-#define GLEWLWYD_CHECK_JWT_USERNAME "myrddin"
-#define GLEWLWYD_CHECK_JWT_SCOPE    "caledonia"
 
 // Configuration default values
 #define GLEWLWYD_DEFAULT_PORT               4593
@@ -69,13 +64,11 @@
 #define GLEWLWYD_DEFAULT_ADMIN_SCOPE        "g_admin"
 #define GLEWLWYD_DEFAULT_PROFILE_SCOPE      "g_profile"
 #define GLEWLWYD_DEFAULT_HASH_ALGORITHM     "SHA256"
-#define GLEWLWYD_PREFIX_BEARER              "Bearer "
-
-#define GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION 2592000
 
 #define GLEWLWYD_DEFAULT_SESSION_KEY "GLEWLWYD2_SESSION_ID"
 #define GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE 5256000 // 10 years
 #define GLEWLWYD_DEFAULT_SESSION_EXPIRATION_PASSWORD 40320 // 4 weeks
+#define GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION 2592000
 
 #define GLEWLWYD_RUNNING  0
 #define GLEWLWYD_STOP     1
@@ -114,156 +107,6 @@
 pthread_mutex_t global_handler_close_lock;
 pthread_cond_t  global_handler_close_cond;
 
-typedef enum {
-  digest_SHA1,
-  digest_SHA224,
-  digest_SHA256,
-  digest_SHA384,
-  digest_SHA512,
-  digest_MD5,
-} digest_algorithm;
-
-struct config_elements;
-
-struct _user_module {
-  void      * file_handle;
-  char      * parameters;
-  char      * name;
-  int      (* user_module_load)(struct config_elements * config, char ** name, char ** parameters);
-  int      (* user_module_unload)(struct config_elements * config);
-  int      (* user_module_init)(struct config_elements * config, const char * parameters, void ** cls);
-  int      (* user_module_close)(struct config_elements * config, void * cls);
-  char  ** (* user_module_get_list)(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls);
-  char  *  (* user_module_get)(const char * username, int * result, void * cls);
-  int      (* user_module_add)(const char * str_new_user, void * cls);
-  int      (* user_module_update)(const char * username, const char * str_user, void * cls);
-  int      (* user_module_update_profile)(const char * username, const char * str_user, void * cls);
-  int      (* user_module_delete)(const char * username, void * cls);
-  int      (* user_module_check_password)(const char * username, const char * password, void * cls);
-  int      (* user_module_update_password)(const char * username, const char * new_password, void * cls);
-  int      (* user_module_check_scope_list)(const char * username, const char * scope_list, void * cls);
-};
-
-struct _user_module_instance {
-  char                * name;
-  struct _user_module * module;
-  void                * cls;
-  short int             enabled;
-};
-
-struct _client_module {
-  void      * file_handle;
-  char      * name;
-  char      * parameters;
-  int      (* client_module_load)(struct config_elements * config, char ** name, char ** parameters);
-  int      (* client_module_unload)(struct config_elements * config);
-  int      (* client_module_init)(struct config_elements * config, const char * parameters, void ** cls);
-  int      (* client_module_close)(struct config_elements * config, void * cls);
-  char  ** (* client_module_get_list)(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls);
-  char   * (* client_module_get)(const char * client_id, int * result, void * cls);
-  int      (* client_module_add)(const char * str_new_client, void * cls);
-  int      (* client_module_update)(const char * client_id, const char * str_client, void * cls);
-  int      (* client_module_delete)(const char * client_id, void * cls);
-  int      (* client_module_check_password)(const char * client_id, const char * password, void * cls);
-  int      (* client_module_update_password)(const char * client_id, const char * new_password, void * cls);
-  int      (* client_module_check_scope_list)(const char * client_id, const char * scope_list, void * cls);
-};
-
-struct _client_module_instance {
-  char                  * name;
-  struct _client_module * module;
-  void                  * cls;
-  short int               enabled;
-};
-
-struct _user_auth_scheme_module {
-  void      * file_handle;
-  char      * name;
-  char      * parameters;
-  int      (* user_auth_scheme_module_load)(struct config_elements * config, char ** name, char ** parameters);
-  int      (* user_auth_scheme_module_unload)(struct config_elements * config);
-  int      (* user_auth_scheme_module_init)(struct config_elements * config, const char * parameters, void ** cls);
-  int      (* user_auth_scheme_module_close)(struct config_elements * config, void * cls);
-  int      (* user_auth_scheme_module_trigger)(const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls);
-  int      (* user_auth_scheme_module_validate)(const char * username, const char * scheme_data, void * cls);
-};
-
-struct _user_auth_scheme_module_instance {
-  char                            * name;
-  struct _user_auth_scheme_module * module;
-  json_int_t                        guasmi_id;
-  json_int_t                        guasmi_expiration;
-  void                            * cls;
-  short int                         enabled;
-};
-
-// mock declaration
-struct config_plugin;
-
-struct _plugin_module {
-  void * file_handle;
-  char * parameters;
-  char * name;
-  int (* plugin_module_load)(struct config_plugin * config, char ** name, char ** parameters);
-  int (* plugin_module_unload)(struct config_plugin * config);
-  int (* plugin_module_init)(struct config_plugin * config, const char * parameters, void ** cls);
-  int (* plugin_module_close)(struct config_plugin * config, void * cls);
-};
-
-struct _plugin_module_instance {
-  char                  * name;
-  struct _plugin_module * module;
-  void                  * cls;
-  short int               enabled;
-};
-
-struct config_elements {
-  char *                                      config_file;
-  unsigned int                                port;
-  char *                                      api_prefix;
-  unsigned long                               log_mode;
-  unsigned long                               log_level;
-  char *                                      log_file;
-  struct _static_file_config *                static_file_config;
-  struct _glewlwyd_resource_config *          glewlwyd_resource_config_admin;
-  struct _glewlwyd_resource_config *          glewlwyd_resource_config_profile;
-  char *                                      allow_origin;
-  unsigned int                                use_secure_connection;
-  char *                                      secure_connection_key_file;
-  char *                                      secure_connection_pem_file;
-  struct _h_connection *                      conn;
-  struct _u_instance *                        instance;
-  char *                                      session_key;
-  unsigned int                                session_expiration;
-  unsigned int                                salt_length;
-  char *                                      hash_algorithm;
-  char *                                      login_url;
-  char *                                      grant_url;
-  char *                                      user_module_path;
-  struct _pointer_list *                      user_module_list;
-  struct _pointer_list *                      user_module_instance_list;
-  char *                                      client_module_path;
-  struct _pointer_list *                      client_module_list;
-  struct _pointer_list *                      client_module_instance_list;
-  char *                                      user_auth_scheme_module_path;
-  struct _pointer_list *                      user_auth_scheme_module_list;
-  struct _pointer_list *                      user_auth_scheme_module_instance_list;
-  char *                                      plugin_module_path;
-  struct _pointer_list *                      plugin_module_list;
-  struct _pointer_list *                      plugin_module_instance_list;
-};
-
-struct config_plugin {
-  struct config_elements * glewlwyd_config;
-  int      (* glewlwyd_callback_add_plugin_endpoint)(struct config_plugin * config, const char * method, const char * prefix, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
-  int      (* glewlwyd_callback_remove_plugin_endpoint)(struct config_plugin * config, const char * method, const char * prefix, const char * url);
-  json_t * (* glewlwyd_callback_is_session_valid)(struct config_plugin * config, const char * session_id, const char * scope_list);
-  json_t * (* glewlwyd_callback_is_user_valid)(struct config_plugin * config, const char * username, const char * password, const char * scope_list);
-  json_t * (* glewlwyd_callback_is_client_valid)(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list);
-  json_t * (* glewlwyd_callback_get_client_granted_scopes)(struct config_plugin * config, const char * client_id, const char * username, const char * scope_list);
-  char   * (* glewlwyd_callback_get_login_url)(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url);
-};
-
 // Main functions and misc functions
 int  build_config_from_args(int argc, char ** argv, struct config_elements * config);
 int  build_config_from_file(struct config_elements * config);
@@ -271,14 +114,8 @@ int  check_config(struct config_elements * config);
 void exit_handler(int handler);
 void exit_server(struct config_elements ** config, struct config_plugin * config_p, int exit_value);
 void print_help(FILE * output);
-char * url_decode(char *str);
-char * url_encode(char *str);
-char * generate_query_parameters(const struct _u_request * request);
-const char * get_ip_source(const struct _u_request * request);
-char * rand_string(char * str, size_t size);
 char * generate_hash(struct config_elements * config, const char * digest, const char * password);
 char * get_file_content(const char * file_path);
-char * generate_hash(struct config_elements * config, const char * digest, const char * password);
 int    load_user_module_instance_list(struct config_elements * config);
 int    init_user_module_list(struct config_elements * config);
 int    load_user_auth_scheme_module_instance_list(struct config_elements * config);
@@ -314,25 +151,29 @@ int user_has_scope(json_t * j_user, const char * scope);
 
 // Client
 json_t * get_client(struct config_elements * config, const char * client_id);
+json_t * auth_check_client_credentials(struct config_elements * config, const char * client_id, const char * password);
 
 // Scope
 json_t * get_scope_list(struct config_elements * config);
 json_t * get_scope(struct config_elements * config, const char * scope);
 json_t * get_auth_scheme_list_from_scope(struct config_elements * config, const char * scope);
 json_t * get_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list);
-json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list, const char * session_id);
+json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list, const char * session_uid);
 json_t * get_client_user_scope_grant(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
 json_t * get_granted_scopes_for_client(struct config_elements * config, json_t * j_user, const char * client_id, const char * scope_list);
 int set_granted_scopes_for_client(struct config_elements * config, json_t * j_user, const char * client_id, const char * scope_list);
+json_t * get_scope_list_allowed_for_session(struct config_elements * config, const char * scope_list, const char * session_uid);
 
 // Plugin functions
 int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const char * method, const char * prefix, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
 int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, const char * method, const char * prefix, const char * url);
-json_t * glewlwyd_callback_is_session_valid(struct config_plugin * config, const char * session_id, const char * scope_list);
+json_t * glewlwyd_callback_is_session_valid(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
 json_t * glewlwyd_callback_is_user_valid(struct config_plugin * config, const char * username, const char * password, const char * scope_list);
 json_t * glewlwyd_callback_is_client_valid(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list);
 json_t * glewlwyd_callback_get_client_granted_scopes(struct config_plugin * config, const char * client_id, const char * username, const char * scope_list);
 char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url);
+char * glewlwyd_callback_get_plugin_external_url(struct config_plugin * config, const char * name);
+char * glewlwyd_callback_generate_hash(struct config_plugin * config, const char * data);
 
 // Callback functions
 
