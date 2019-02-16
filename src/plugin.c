@@ -88,8 +88,10 @@ json_t * glewlwyd_callback_is_user_valid(struct config_plugin * config, const ch
 }
 
 json_t * glewlwyd_callback_is_client_valid(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list) {
-  json_t * j_return, * j_client, * j_client_credentials;
-  int password_checked = 1, scope_checked = 1;
+  json_t * j_return, * j_client, * j_client_credentials, * j_element;
+  int password_checked = 1, scope_checked = 1, i, scope_allowed;
+  char ** scope_array = NULL;
+  size_t index;
 
   if (config != NULL && client_id != NULL) {
     j_client = get_client(config->glewlwyd_config, client_id);
@@ -102,8 +104,26 @@ json_t * glewlwyd_callback_is_client_valid(struct config_plugin * config, const 
         json_decref(j_client_credentials);
       }
       if (scope_list != NULL) {
-        // TODO
-        scope_checked = 0;
+        if (split_string(scope_list, " ", &scope_array) > 0) {
+          for (i=0; scope_array[i] != NULL; i++) {
+            scope_allowed = 0;
+            json_array_foreach(json_object_get(json_object_get(j_client, "client"), "scope"), index, j_element) {
+              if (0 == o_strcmp(scope_array[i], json_string_value(j_element))) {
+                scope_allowed = 1;
+              }
+            }
+            if (!scope_allowed) {
+              scope_checked = 0;
+              j_return = json_pack("{si}", "result", G_ERROR);
+              break;
+            }
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_is_client_valid - Error get_client");
+          scope_checked = 0;
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+        free_string_array(scope_array);
       }
       if (password_checked && scope_checked) {
         j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
