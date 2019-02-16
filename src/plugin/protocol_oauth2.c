@@ -105,7 +105,7 @@ static int is_authorization_type_enabled(struct _oauth2_config * config, uint au
   return (authorization_type <= 4)?config->auth_type_enabled[authorization_type]:0;
 }
 
-static int is_client_valid(struct _oauth2_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * redirect_uri, unsigned short authorization_type) {
+static int is_client_valid(struct _oauth2_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * redirect_uri, const char * scope_list, unsigned short authorization_type) {
   json_t * j_client, * j_element;
   int ret, uri_found, authorization_type_enabled;
   size_t index;
@@ -119,7 +119,7 @@ static int is_client_valid(struct _oauth2_config * config, const char * client_i
       return G_ERROR_PARAM;
     }
   }
-  j_client = config->glewlwyd_config->glewlwyd_callback_is_client_valid(config->glewlwyd_config, client_id, client_header_password, NULL);
+  j_client = config->glewlwyd_config->glewlwyd_callback_is_client_valid(config->glewlwyd_config, client_id, client_header_password, scope_list);
   if (check_result_value(j_client, G_OK)) {
     uri_found = 0;
     json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index, j_element) {
@@ -238,7 +238,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
   size_t index;
   
   // Check if client is allowed to perform this request
-  if (is_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
+  if (is_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), u_map_get(request->map_url, "scope"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
     // Client is allowed to use auth_code grant with this redirection_uri
     if (config->use_scope) {
       if (u_map_get(request->map_url, "scope") != NULL) {

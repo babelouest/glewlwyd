@@ -35,7 +35,7 @@ int client_module_unload(struct config_elements * config) {
 }
 
 int client_module_init(struct config_elements * config, const char * parameters, void ** cls) {
-  *cls = (void*)json_pack("[{ss ss ss so s[ssss] s[ss] s[s] so}]",
+  *cls = (void*)json_pack("[{ss ss ss so s[ssss] s[ss] s[sss] so}]",
                             "client_id",
                             "mock1",
                             "name",
@@ -52,8 +52,10 @@ int client_module_init(struct config_elements * config, const char * parameters,
                             "redirect_uri",
                               "../../test-oauth2.html?param=client1_cb1",
                               "../../test-oauth2.html?param=client1_cb2",
-                            "scopes",
+                            "scope",
                               config->profile_scope,
+                              "g_mock_1",
+                              "g_mock_2",
                             "enabled",
                             json_true());
   y_log_message(Y_LOG_LEVEL_DEBUG, "client_module_init - success %s %s", config->profile_scope, config->admin_scope);
@@ -204,10 +206,10 @@ char * client_module_check_scope_list(const char * client_id, const char * scope
   
   if (res == G_OK) {
     j_client = json_loads(s_client, JSON_DECODE_ANY, NULL);
-    if (j_client != NULL && json_object_get(j_client, "scopes") != NULL && (scopes_length = split_string(scope_list, " ", &scope_array))) {
+    if (j_client != NULL && json_object_get(j_client, "scope") != NULL && (scopes_length = split_string(scope_list, " ", &scope_array))) {
       scope_target = o_malloc((scopes_length + 1) * sizeof(char *));
       if (scope_target != NULL) {
-        json_array_foreach(json_object_get(j_client, "scopes"), index, j_element) {
+        json_array_foreach(json_object_get(j_client, "scope"), index, j_element) {
           if (string_array_has_value_case((const char **)scope_array, json_string_value(j_element))) {
             scope_target[count] = (char *)json_string_value(j_element);
             scope_target[count+1] = NULL;
