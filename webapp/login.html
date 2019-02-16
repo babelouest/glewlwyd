@@ -153,7 +153,10 @@ $(function () {
 		if (getParameterByName("client_id")) {
 			$.ajax({
 				type: "PUT",
-				url: "api/auth/grant/" + encodeURI(getParameterByName("client_id")) + "/" + scopes.join("%20") + "/"
+				url: "api/auth/grant/" + encodeURI(getParameterByName("client_id")) + "/" + scopes.join("%20") + "/",
+        success: function () {
+          init();
+        }
       });
 		}
 	});
@@ -335,10 +338,10 @@ $(function () {
 				fillUserList([]);
 			}
 		});
-		if (getParameterByName("callbackUrl")) {
+		if (getParameterByName("callback_url")) {
 			$("#continueBut").attr("disabled", false);
 			$("#continueBut").click(function () {
-				window.location.href = getParameterByName("callbackUrl");
+				window.location.href = getParameterByName("callback_url") + "&g_continue";
 			});
 		} else {
 			$("#continueBut").attr("disabled", true);

@@ -255,7 +255,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
                   json_array_append(j_scope_granted, json_object_get(j_element, "name"));
                 }
               }
-              if (json_array_size(j_scope_granted)) {
+              if (json_array_size(j_scope_granted) && u_map_has_key_case(request->map_url, "g_continue")) {
                 // User has granted access to the cleaned scope list for this client
                 // Generate code, generate the url and redirect to it
                 authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), u_map_get(request->map_url, "client_id"), json_object_get(json_object_get(j_session, "session"), "scope"), u_map_get(request->map_url, "redirect_uri"));
@@ -311,7 +311,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
       }
     } else {
       j_session = config->glewlwyd_config->glewlwyd_callback_is_session_valid(config->glewlwyd_config, request, NULL);
-      if (check_result_value(j_session, G_OK)) {
+      if (check_result_value(j_session, G_OK) && u_map_has_key_case(request->map_url, "g_continue")) {
         // User has granted access to the cleaned scope list for this client
         // Generate code, generate the url and redirect to it
         authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(j_session, "session"), "username")), u_map_get(request->map_url, "client_id"), NULL, u_map_get(request->map_url, "redirect_uri"));
