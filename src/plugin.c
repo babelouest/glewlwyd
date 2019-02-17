@@ -57,9 +57,9 @@ json_t * glewlwyd_callback_is_session_valid(struct config_plugin * config, const
     if (check_result_value(j_user, G_OK)) {
       if (scope_list != NULL) {
         // For all allowed scope, check that the current session has a valid session
-        j_scope_allowed = get_scope_list_allowed_for_session(config->glewlwyd_config, scope_list, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY));
+        j_scope_allowed = get_validated_auth_scheme_list_from_scope_list(config->glewlwyd_config, scope_list, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY));
         if (check_result_value(j_scope_allowed, G_OK)) {
-          j_return = json_pack("{sis{sOsO}}", "result", G_OK, "session", "scope", json_object_get(j_scope_allowed, "scope"), "user", json_object_get(j_user, "user"));
+          j_return = json_pack("{sis{sOsO}}", "result", G_OK, "session", "scope", json_object_get(j_scope_allowed, "scheme"), "user", json_object_get(j_user, "user"));
         } else if (check_result_value(j_scope_allowed, G_ERROR_UNAUTHORIZED)) {
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }

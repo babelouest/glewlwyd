@@ -27,6 +27,7 @@
  */
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netdb.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <ctype.h>
@@ -83,6 +84,23 @@ const char * get_ip_source(const struct _u_request * request) {
   
   return ip_source;
 };
+
+char * get_client_hostname(const struct _u_request * request) {
+  const char * ip_source = get_ip_source(request);
+  char * hostname = NULL;
+  struct hostent * lh;
+  
+  if (ip_source != NULL) {
+    lh = gethostbyname(ip_source);
+    if (lh) {
+      hostname = msprintf("%s - %s", ip_source, lh->h_name);
+    } else {
+      hostname = o_strdup(ip_source);
+    }
+  }
+  
+  return hostname;
+}
 
 /**
  *
