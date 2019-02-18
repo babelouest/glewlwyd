@@ -741,7 +741,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
           } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
             // Scope is not allowed for this user
             response->status = 302;
-            redirect_url = msprintf("%s%serror=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):"")); ulfius_add_header_to_response(response, "Location", redirect_url);
+            redirect_url = msprintf("%s%serror=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           } else {
@@ -754,7 +754,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
         } else {
           // Scope is not allowed for this user
           response->status = 503;
-          redirect_url = msprintf("%s%serror=not_implemented%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):"")); ulfius_add_header_to_response(response, "Location", redirect_url);
+          redirect_url = msprintf("%s%serror=not_implemented%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -869,10 +869,108 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
 }
 
 /**
- * TODO
+ * The second more simple authorization type: client redirects user to login page, 
+ * Then if authorized, glewlwyd redirects to redirect_uri with the access_token in the uri
+ * If necessary, two intermediate steps can be used: login page and grant access page
  */
 static int check_auth_type_implicit_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_CALLBACK_ERROR;
+  struct _oauth2_config * config = (struct _oauth2_config *)user_data;
+  char * authorization_code = NULL, * redirect_url, * issued_for;
+  json_t * j_session;
+  char * access_token;
+  time_t now;
+  
+  // Check if client is allowed to perform this request
+  if (is_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), u_map_get(request->map_url, "scope"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
+    // Client is allowed to use auth_code grant with this redirection_uri
+    if (u_map_has_key(request->map_url, "g_continue")) {
+      if (config->use_scope) {
+        if (u_map_get(request->map_url, "scope") != NULL) {
+          j_session = validate_session_client_scope(config, request, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
+          if (check_result_value(j_session, G_OK)) {
+            if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_false()) {
+              // User has granted access to the cleaned scope list for this client
+              // Generate access token
+              issued_for = get_client_hostname(request);
+              if (issued_for != NULL) {
+                time(&now);
+                if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), now)) != NULL) {
+                  if (serialize_access_token(config, GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT, 0, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), now, issued_for) == G_OK) {
+                    redirect_url = msprintf("%s%saccess_token=%s&token_type=bearer&expires_in=%d%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), access_token, config->access_token_duration, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+                    ulfius_add_header_to_response(response, "Location", redirect_url);
+                    o_free(redirect_url);
+                    response->status = 302;
+                  } else {
+                    redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
+                    ulfius_add_header_to_response(response, "Location", redirect_url);
+                    o_free(redirect_url);
+                    y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_implicit_grant - Error serialize_access_token");
+                    response->status = 302;
+                  }
+                } else {
+                  redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
+                  ulfius_add_header_to_response(response, "Location", redirect_url);
+                  o_free(redirect_url);
+                  y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_implicit_grant - Error generate_access_token");
+                  response->status = 302;
+                }
+              } else {
+                redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
+                ulfius_add_header_to_response(response, "Location", redirect_url);
+                o_free(redirect_url);
+                y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_implicit_grant - Error get_client_hostname");
+                response->status = 302;
+              }
+            } else {
+              // Redirect to login page
+              redirect_url = get_login_url(config, request, "auth", u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
+              ulfius_add_header_to_response(response, "Location", redirect_url);
+              o_free(redirect_url);
+              response->status = 302;
+            }
+          } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
+            // Scope is not allowed for this user
+            response->status = 302;
+            redirect_url = msprintf("%s%serror=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+            ulfius_add_header_to_response(response, "Location", redirect_url);
+            o_free(redirect_url);
+          } else {
+            redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
+            ulfius_add_header_to_response(response, "Location", redirect_url);
+            o_free(redirect_url);
+            y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_implicit_grant - Error validate_session_client_scope");
+            response->status = 302;
+          }
+        } else {
+          // Scope is not allowed for this user
+          response->status = 503;
+          redirect_url = msprintf("%s%serror=not_implemented%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+          ulfius_add_header_to_response(response, "Location", redirect_url);
+          o_free(redirect_url);
+        }
+      } else {
+        // TODO
+        redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_implicit_grant - no scope not implemented");
+        response->status = 302;
+      }
+    } else {
+      // Redirect to login page
+      redirect_url = get_login_url(config, request, "auth", u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
+      ulfius_add_header_to_response(response, "Location", redirect_url);
+      o_free(redirect_url);
+      response->status = 302;
+    }
+  } else {
+    // client is not authorized with this redirect_uri
+    response->status = 302;
+    redirect_url = msprintf("%s%serror=unauthorized_client%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+    ulfius_add_header_to_response(response, "Location", redirect_url);
+    o_free(redirect_url);
+  }
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
