@@ -133,8 +133,12 @@ json_t * get_user(struct config_elements * config, const char * username) {
         str_user = user_module->module->user_module_get(username, &result, user_module->cls);
         if (result == G_OK && str_user != NULL) {
           j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
-          j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
-          json_decref(j_user);
+          if (j_user != NULL) {
+            j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
+            json_decref(j_user);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error json_loads");
+          }
           found = 1;
         } else if (result != G_OK && result != G_ERROR_NOT_FOUND) {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error, user_module_get for module %s", user_module->name);

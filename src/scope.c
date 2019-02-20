@@ -28,7 +28,7 @@
 #include "glewlwyd.h"
 
 json_t * get_scope_list(struct config_elements * config) {
-  json_t * j_query, * j_result, * j_return, * j_element;
+  json_t * j_query, * j_result, * j_return, * j_element, * j_scheme;
   int res;
   size_t index;
 
@@ -46,6 +46,14 @@ json_t * get_scope_list(struct config_elements * config) {
     json_array_foreach(j_result, index, j_element) {
       json_object_set(j_element, "requires_password", json_integer_value(json_object_get(j_element, "gs_password_required"))?json_true():json_false());
       json_object_del(j_element, "gs_password_required");
+      j_scheme = get_auth_scheme_list_from_scope(config, json_string_value(json_object_get(j_element, "name")));
+      if (check_result_value(j_scheme, G_OK)) {
+        json_object_set(j_element, "scheme", json_object_get(j_scheme, "scheme"));
+      } else if (check_result_value(j_scheme, G_ERROR_NOT_FOUND)) {
+        json_object_set_new(j_element, "scheme", json_object());
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_scope_list - Error get_auth_scheme_list_from_scope for scope %s", json_string_value(json_object_get(j_element, "name")));
+      }
     }
     j_return = json_pack("{siso}", "result", G_OK, "scope", j_result);
   } else {
@@ -56,7 +64,7 @@ json_t * get_scope_list(struct config_elements * config) {
 }
 
 json_t * get_scope(struct config_elements * config, const char * scope) {
-  json_t * j_query, * j_result, * j_return;
+  json_t * j_query, * j_result, * j_return, * j_scheme;
   int res;
 
   j_query = json_pack("{sss[ssss]s{ss}}",
@@ -75,8 +83,20 @@ json_t * get_scope(struct config_elements * config, const char * scope) {
   if (res == H_OK) {
     json_object_set(json_array_get(j_result, 0), "password_required", json_integer_value(json_object_get(json_array_get(j_result, 0), "gs_password_required"))?json_true():json_false());
     json_object_del(json_array_get(j_result, 0), "gs_password_required");
-    j_return = json_pack("{sisO}", "result", G_OK, "scope", json_array_get(j_result, 0));
-    json_decref(j_result);
+    j_scheme = get_auth_scheme_list_from_scope(config, scope);
+    if (check_result_value(j_scheme, G_OK)) {
+      json_object_set(json_array_get(j_result, 0), "scheme", json_object_get(j_scheme, "scheme"));
+      j_return = json_pack("{sisO}", "result", G_OK, "scope", json_array_get(j_result, 0));
+      json_decref(j_result);
+    } else if (check_result_value(j_scheme, G_ERROR_NOT_FOUND)) {
+      json_object_set_new(json_array_get(j_result, 0), "scheme", json_object());
+      j_return = json_pack("{sisO}", "result", G_OK, "scope", json_array_get(j_result, 0));
+      json_decref(j_result);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_scope - Error get_auth_scheme_list_from_scope");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_scheme);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_scope - Error executing j_query");
     j_return = json_pack("{si}", "result", G_ERROR_DB);
@@ -143,6 +163,7 @@ json_t * get_auth_scheme_list_from_scope(struct config_elements * config, const 
     y_log_message(Y_LOG_LEVEL_ERROR, "get_auth_scheme_list_from_scope - Error h_escape_string");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
+  o_free(scope_escape);
   return j_return;
 }
 
@@ -160,9 +181,9 @@ json_t * get_auth_scheme_list_from_scope_list(struct config_elements * config, c
           if (check_result_value(j_scope, G_OK)) {
             j_scheme_list = get_auth_scheme_list_from_scope(config, scope_array[i]);
             if (check_result_value(j_scheme_list, G_OK)) {
-              json_object_set(json_object_get(j_result, "scheme"), scope_array[i], json_pack("{sOsO}", "password_required", json_object_get(json_object_get(j_scope, "scope"), "password_required"), "schemes", json_object_get(j_scheme_list, "scheme")));
+              json_object_set_new(json_object_get(j_result, "scheme"), scope_array[i], json_pack("{sOsO}", "password_required", json_object_get(json_object_get(j_scope, "scope"), "password_required"), "schemes", json_object_get(j_scheme_list, "scheme")));
             } else if (check_result_value(j_scheme_list, G_ERROR_NOT_FOUND)) {
-              json_object_set(json_object_get(j_result, "scheme"), scope_array[i], json_pack("{sOs{}}", "password_required", json_object_get(json_object_get(j_scope, "scope"), "password_required"), "schemes"));
+              json_object_set_new(json_object_get(j_result, "scheme"), scope_array[i], json_pack("{sOs{}}", "password_required", json_object_get(json_object_get(j_scope, "scope"), "password_required"), "schemes"));
             }
             json_decref(j_scheme_list);
           }
@@ -244,6 +265,7 @@ static json_t * get_current_user_from_session(struct config_elements * config, c
           y_log_message(Y_LOG_LEVEL_ERROR, "get_current_user_from_session - Error get_user");
           j_return = json_pack("{si}", "result", G_ERROR);
         }
+        json_decref(j_user);
       } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
         j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       } else {
@@ -292,6 +314,7 @@ static int is_scheme_valid_for_session(struct config_elements * config, json_int
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "is_password_valid_for_session - Error executing j_query");
     }
+    json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "is_password_valid_for_session - Error get_current_session");
   }
@@ -451,11 +474,11 @@ json_t * get_granted_scopes_for_client(struct config_elements * config, json_t *
                                   json_object_get(json_object_get(j_client, "client"), "name"),
                                 "scope",
                                 json_object_get(j_scope_list, "scope"));
-        json_decref(j_scope_list);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - Error split_string");
         j_return = json_pack("{si}", "result", G_ERROR);
       }
+      free_string_array(scope_array);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - Error get_client_user_scope_grant");
       j_return = json_pack("{si}", "result", G_ERROR);
@@ -493,7 +516,7 @@ int set_granted_scopes_for_client(struct config_elements * config, json_t * j_us
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    if (scope_list != NULL) {
+    if (scope_list != NULL && o_strlen(scope_list)) {
       if (split_string(scope_list, " ", &scope_array) > 0) {
         has_granted = 0;
         for (i=0; scope_array[i] != NULL && ret != G_ERROR_DB; i++) {

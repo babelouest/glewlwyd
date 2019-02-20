@@ -40,11 +40,11 @@
 #define GLEWLWYD_PLUGIN_OAUTH2_TABLE_ACCESS_TOKEN_SCOPE  "gpg_access_token_scope"
 
 // Authorization types available
-#define GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE                  0
-#define GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT                            1
-#define GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS 2
-#define GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS                  3
-#define GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN                       4
+#define GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE                  0
+#define GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT                            1
+#define GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS 2
+#define GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS                  3
+#define GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN                       4
 
 struct _oauth2_config {
   struct config_plugin * glewlwyd_config;
@@ -84,6 +84,7 @@ static char * generate_query_parameters(struct _u_map * map_url, struct _u_map *
           o_free(query);
           query = tmp;
         }
+        o_free(param);
       }
     }
   
@@ -100,6 +101,7 @@ static char * generate_query_parameters(struct _u_map * map_url, struct _u_map *
           o_free(query);
           query = tmp;
         }
+        o_free(param);
       }
     }
   }
@@ -163,6 +165,7 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
             y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error split_string");
             ret = G_ERROR;
           }
+          free_string_array(scope_array);
         } else {
           ret = G_OK;
         }
@@ -179,6 +182,41 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
     ret = G_ERROR_PARAM;
   }
   return ret;
+}
+
+/**
+ * Generates a client_access_token from the specified parameters that are considered valid
+ */
+static char * generate_client_access_token(struct _oauth2_config * config, const char * client_id, const char * issued_for, const char * scope_list, time_t now) {
+  jwt_t * jwt;
+  char * token = NULL;
+  char salt[OAUTH2_SALT_LENGTH + 1] = {0};
+  
+  jwt = jwt_dup(config->jwt_key);
+  if (jwt != NULL) {
+    // Build jwt payload
+    rand_string(salt, OAUTH2_SALT_LENGTH);
+    jwt_add_grant(jwt, "salt", salt);
+    jwt_add_grant(jwt, "client_id", client_id);
+    jwt_add_grant(jwt, "type", "client_token");
+    if (config->use_scope && scope_list != NULL) {
+      jwt_add_grant(jwt, "scope", scope_list);
+    }
+    jwt_add_grant_int(jwt, "iat", now);
+    jwt_add_grant_int(jwt, "expires_in", config->access_token_duration);
+    token = jwt_encode_str(jwt);
+    if (token != NULL) {
+      if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS, 0, NULL, client_id, scope_list, now, issued_for) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - Error serializing token");
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - Error generating token");
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - Error cloning jwt");
+  }
+  jwt_free(jwt);
+  return token;
 }
 
 static char * generate_access_token(struct _oauth2_config * config, const char * username, const char * scope_list, time_t now) {
@@ -214,9 +252,10 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
   char * issued_at_clause, * expires_at_clause, ** scope_array = NULL;
   
   if (token_hash != NULL && username != NULL && issued_for != NULL && now > 0 && duration > 0) {
+    json_error_t error;
     issued_at_clause = config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
     expires_at_clause = config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now + duration)):msprintf("%u", (now + duration));
-    j_query = json_pack("{sss{sisosssos{ss}s{ss}sisiss}}",
+    j_query = json_pack_ex(&error, 0, "{sss{si so ss so s{ss} s{ss} sI si ss ss}}",
                         "table",
                         GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
                         "values",
@@ -342,27 +381,33 @@ static int is_client_valid(struct _oauth2_config * config, const char * client_i
   }
   j_client = config->glewlwyd_config->glewlwyd_callback_is_client_valid(config->glewlwyd_config, client_id, client_header_password, scope_list);
   if (check_result_value(j_client, G_OK)) {
-    uri_found = 0;
-    json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index, j_element) {
-      if (0 == o_strcmp(json_string_value(j_element), redirect_uri)) {
-        uri_found = 1;
-      }
-    }
-    
-    authorization_type_enabled = 0;
-    json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
-      if (authorization_type == GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE && 0 == o_strcmp(json_string_value(j_element), "code")) {
-        authorization_type_enabled = 1;
-      } else if (authorization_type == GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT && 0 == o_strcmp(json_string_value(j_element), "token")) {
-        authorization_type_enabled = 1;
-      } else if (authorization_type == GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS && 0 == o_strcmp(json_string_value(j_element), "client_credentials")) {
-        authorization_type_enabled = 1;
-      }
-    }
-    if (uri_found && authorization_type_enabled) {
-      ret = G_OK;
+    if (client_header_password != NULL && json_object_get(json_object_get(j_client, "client"), "confidential") != json_true()) {
+      ret = G_ERROR_UNAUTHORIZED;
     } else {
-      ret = G_ERROR_PARAM;
+      uri_found = 0;
+      json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index, j_element) {
+        if (0 == o_strcmp(json_string_value(j_element), redirect_uri)) {
+          uri_found = 1;
+        }
+      }
+      
+      authorization_type_enabled = 0;
+      json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
+        if (authorization_type == GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE && 0 == o_strcmp(json_string_value(j_element), "code")) {
+          authorization_type_enabled = 1;
+        } else if (authorization_type == GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT && 0 == o_strcmp(json_string_value(j_element), "token")) {
+          authorization_type_enabled = 1;
+        } else if (authorization_type == GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS  && 0 == o_strcmp(json_string_value(j_element), "password")) {
+          authorization_type_enabled = 1;
+        } else if (authorization_type == GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS && 0 == o_strcmp(json_string_value(j_element), "client_credentials")) {
+          authorization_type_enabled = 1;
+        }
+      }
+      if (uri_found && authorization_type_enabled) {
+        ret = G_OK;
+      } else {
+        ret = G_ERROR_PARAM;
+      }
     }
   } else {
     ret = G_ERROR_UNAUTHORIZED;
@@ -601,87 +646,94 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
 }
 
 static json_t * validate_session_client_scope(struct _oauth2_config * config, const struct _u_request * request, const char * client_id, const char * scope) {
-  json_t * j_session = config->glewlwyd_config->glewlwyd_callback_is_session_valid(config->glewlwyd_config, request, scope), * j_grant, * j_return, * j_scope_session, * j_scope_grant, * j_group, * j_scheme;
+  json_t * j_session, * j_grant, * j_return, * j_scope_session, * j_scope_grant, * j_group, * j_scheme;
   const char * scope_session, * group;
   char * scope_filtered = NULL, * tmp;
   size_t index;
   json_int_t scopes_authorized = 0, scopes_granted = 0;
   int group_allowed;
   
+  j_session = config->glewlwyd_config->glewlwyd_callback_is_session_valid(config->glewlwyd_config, request, scope);
   if (check_result_value(j_session, G_OK)) {
     j_grant = config->glewlwyd_config->glewlwyd_callback_get_client_granted_scopes(config->glewlwyd_config, client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), scope);
     if (check_result_value(j_grant, G_OK)) {
-      // Count and store the number of granted scopes
-      json_array_foreach(json_object_get(json_object_get(j_grant, "grant"), "scope"), index, j_scope_grant) {
-        scopes_granted += json_object_get(j_scope_grant, "granted")==json_true();
-      }
-      json_object_set_new(json_object_get(j_session, "session"), "scopes_granted", json_integer(scopes_granted));
-      
-      json_object_foreach(json_object_get(json_object_get(j_session, "session"), "scope"), scope_session, j_scope_session) {
-        // Evaluate if the scope is granted for the client
+      if (json_array_size(json_object_get(json_object_get(j_grant, "grant"), "scope"))) {
+        // Count and store the number of granted scopes
         json_array_foreach(json_object_get(json_object_get(j_grant, "grant"), "scope"), index, j_scope_grant) {
-          if (0 == o_strcmp(scope_session, json_string_value(json_object_get(j_scope_grant, "name")))) {
-            json_object_set(j_scope_session, "granted", json_object_get(j_scope_grant, "granted"));
-          }
+          scopes_granted += json_object_get(j_scope_grant, "granted")==json_true();
         }
-        
-        // Evaluate if the scope is authorized
-        if (json_object_get(j_scope_session, "available") == json_true()) {
-          if (json_object_get(j_scope_session, "password_required") == json_true() && json_object_get(j_scope_session, "password_authenticated") == json_false()) {
-            json_object_set_new(j_scope_session, "authorized", json_false());
-          } else if ((json_object_get(j_scope_session, "password_required") == json_true() && json_object_get(j_scope_session, "password_authenticated") == json_true()) || json_object_get(j_scope_session, "password_required") == json_false()) {
-            json_object_foreach(json_object_get(j_scope_session, "schemes"), group, j_group) {
-              group_allowed = 0;
-              json_array_foreach(j_group, index, j_scheme) {
-                if (!group_allowed && json_object_get(j_scheme, "scheme_authenticated") == json_true()) {
-                  group_allowed = 1;
-                }
-              }
-              if (!group_allowed) {
-                json_object_set_new(j_scope_session, "authorized", json_false());
-              }
+        json_object_set_new(json_object_get(j_session, "session"), "scopes_granted", json_integer(scopes_granted));
+      
+        json_object_foreach(json_object_get(json_object_get(j_session, "session"), "scope"), scope_session, j_scope_session) {
+          // Evaluate if the scope is granted for the client
+          json_array_foreach(json_object_get(json_object_get(j_grant, "grant"), "scope"), index, j_scope_grant) {
+            if (0 == o_strcmp(scope_session, json_string_value(json_object_get(j_scope_grant, "name")))) {
+              json_object_set(j_scope_session, "granted", json_object_get(j_scope_grant, "granted"));
             }
-            if (json_object_get(j_scope_session, "authorized") == NULL) {
-              json_object_set_new(j_scope_session, "authorized", json_true());
-              scopes_authorized++;
-              if (json_object_get(j_scope_session, "granted") == json_true()) {
-                if (scope_filtered == NULL) {
-                  scope_filtered = o_strdup(scope_session);
-                } else {
-                  tmp = msprintf("%s %s", scope_filtered, scope_session);
-                  o_free(scope_filtered);
-                  scope_filtered = tmp;
+          }
+        
+          // Evaluate if the scope is authorized
+          if (json_object_get(j_scope_session, "available") == json_true()) {
+            if (json_object_get(j_scope_session, "password_required") == json_true() && json_object_get(j_scope_session, "password_authenticated") == json_false()) {
+              json_object_set_new(j_scope_session, "authorized", json_false());
+            } else if ((json_object_get(j_scope_session, "password_required") == json_true() && json_object_get(j_scope_session, "password_authenticated") == json_true()) || json_object_get(j_scope_session, "password_required") == json_false()) {
+              json_object_foreach(json_object_get(j_scope_session, "schemes"), group, j_group) {
+                group_allowed = 0;
+                json_array_foreach(j_group, index, j_scheme) {
+                  if (!group_allowed && json_object_get(j_scheme, "scheme_authenticated") == json_true()) {
+                    group_allowed = 1;
+                  }
+                }
+                if (!group_allowed) {
+                  json_object_set_new(j_scope_session, "authorized", json_false());
                 }
               }
-            } else if (json_object_get(j_scope_session, "granted") == json_true()) {
-              json_object_set_new(json_object_get(j_session, "session"), "authorization_required", json_true());
+              if (json_object_get(j_scope_session, "authorized") == NULL) {
+                json_object_set_new(j_scope_session, "authorized", json_true());
+                scopes_authorized++;
+                if (json_object_get(j_scope_session, "granted") == json_true()) {
+                  if (scope_filtered == NULL) {
+                    scope_filtered = o_strdup(scope_session);
+                  } else {
+                    tmp = msprintf("%s %s", scope_filtered, scope_session);
+                    o_free(scope_filtered);
+                    scope_filtered = tmp;
+                  }
+                }
+              } else if (json_object_get(j_scope_session, "granted") == json_true()) {
+                json_object_set_new(json_object_get(j_session, "session"), "authorization_required", json_true());
+              }
+            } else {
+              json_object_set_new(j_scope_session, "authorized", json_false());
             }
           } else {
             json_object_set_new(j_scope_session, "authorized", json_false());
           }
-        } else {
-          json_object_set_new(j_scope_session, "authorized", json_false());
         }
-      }
-      json_object_set_new(json_object_get(j_session, "session"), "scopes_authorized", json_integer(scopes_authorized));
-      if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == NULL) {
-        json_object_set_new(json_object_get(j_session, "session"), "authorization_required", json_false());
-      }
-      if (scope_filtered != NULL) {
-        json_object_set_new(json_object_get(j_session, "session"), "scope_filtered", json_string(scope_filtered));
-        o_free(scope_filtered);
+        json_object_set_new(json_object_get(j_session, "session"), "scopes_authorized", json_integer(scopes_authorized));
+        if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == NULL) {
+          json_object_set_new(json_object_get(j_session, "session"), "authorization_required", json_false());
+        }
+        if (scope_filtered != NULL) {
+          json_object_set_new(json_object_get(j_session, "session"), "scope_filtered", json_string(scope_filtered));
+          o_free(scope_filtered);
+        } else {
+          json_object_set_new(json_object_get(j_session, "session"), "scope_filtered", json_string(""));
+          json_object_set_new(json_object_get(j_session, "session"), "authorization_required", json_false());
+        }
+        if (scopes_authorized) {
+          j_return = json_pack("{sisO}", "result", G_OK, "session", json_object_get(j_session, "session"));
+        } else {
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        }
       } else {
-        json_object_set_new(json_object_get(j_session, "session"), "scope_filtered", json_null());
-      }
-      if (scopes_authorized) {
-        j_return = json_pack("{sisO}", "result", G_OK, "session", json_object_get(j_session, "session"));
-      } else {
-        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "validate_session_client_scope - Error glewlwyd_callback_get_client_granted_scopes");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
+    json_decref(j_grant);
   } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
     j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
   } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
@@ -705,11 +757,11 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
   json_t * j_session;
   
   // Check if client is allowed to perform this request
-  if (is_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), u_map_get(request->map_url, "scope"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
+  if (is_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), u_map_get(request->map_url, "scope"), GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
     // Client is allowed to use auth_code grant with this redirection_uri
     if (u_map_has_key(request->map_url, "g_continue")) {
       if (config->use_scope) {
-        if (u_map_get(request->map_url, "scope") != NULL) {
+        if (u_map_get(request->map_url, "scope") != NULL && o_strlen(u_map_get(request->map_url, "scope"))) {
           j_session = validate_session_client_scope(config, request, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
           if (check_result_value(j_session, G_OK)) {
             if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_false()) {
@@ -738,6 +790,12 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
               o_free(redirect_url);
               response->status = 302;
             }
+          } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
+            // Redirect to login page
+            redirect_url = get_login_url(config, request, "auth", u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
+            ulfius_add_header_to_response(response, "Location", redirect_url);
+            o_free(redirect_url);
+            response->status = 302;
           } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
             // Scope is not allowed for this user
             response->status = 302;
@@ -799,15 +857,15 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
   
   if (code == NULL || client_id == NULL || redirect_uri == NULL) {
     response->status = 400;
-  } else if (is_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, redirect_uri, NULL, GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
+  } else if (is_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, redirect_uri, NULL, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
     j_code = validate_authorization_code(config, code, client_id, redirect_uri);
     if (check_result_value(j_code, G_OK)) {
       time(&now);
-      if ((refresh_token = generate_refresh_token(config, client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE, issued_for, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
-        j_refresh_token = serialize_refresh_token(config, GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpgc_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, json_integer_value(json_object_get(json_object_get(j_code, "code"), "refresh-token-duration")), json_object_get(json_object_get(j_code, "code"), "refresh-token-rolling")==json_true(), refresh_token, issued_for);
+      if ((refresh_token = generate_refresh_token(config, client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, issued_for, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
+        j_refresh_token = serialize_refresh_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpgc_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, json_integer_value(json_object_get(json_object_get(j_code, "code"), "refresh-token-duration")), json_object_get(json_object_get(j_code, "code"), "refresh-token-rolling")==json_true(), refresh_token, issued_for);
         if (check_result_value(j_refresh_token, G_OK)) {
           if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
-            if (serialize_access_token(config, GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(j_refresh_token, "gpgr_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, issued_for) == G_OK) {
+            if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(j_refresh_token, "gpgr_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, issued_for) == G_OK) {
               if (disable_authorization_code(config, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpgc_id"))) == G_OK) {
                 j_body = json_pack("{sssssssisi}",
                                       "token_type",
@@ -871,21 +929,21 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
 /**
  * The second more simple authorization type: client redirects user to login page, 
  * Then if authorized, glewlwyd redirects to redirect_uri with the access_token in the uri
- * If necessary, two intermediate steps can be used: login page and grant access page
+ * If necessary, an intermediate step can be used: login page
  */
 static int check_auth_type_implicit_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
-  char * authorization_code = NULL, * redirect_url, * issued_for;
+  char * redirect_url, * issued_for;
   json_t * j_session;
   char * access_token;
   time_t now;
   
   // Check if client is allowed to perform this request
-  if (is_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), u_map_get(request->map_url, "scope"), GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
+  if (is_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), u_map_get(request->map_url, "scope"), GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE) == G_OK) {
     // Client is allowed to use auth_code grant with this redirection_uri
     if (u_map_has_key(request->map_url, "g_continue")) {
       if (config->use_scope) {
-        if (u_map_get(request->map_url, "scope") != NULL) {
+        if (u_map_get(request->map_url, "scope") != NULL && o_strlen(u_map_get(request->map_url, "scope"))) {
           j_session = validate_session_client_scope(config, request, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
           if (check_result_value(j_session, G_OK)) {
             if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_false()) {
@@ -895,7 +953,7 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
               if (issued_for != NULL) {
                 time(&now);
                 if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), now)) != NULL) {
-                  if (serialize_access_token(config, GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT, 0, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), now, issued_for) == G_OK) {
+                  if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT, 0, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), now, issued_for) == G_OK) {
                     redirect_url = msprintf("%s%saccess_token=%s&token_type=bearer&expires_in=%d%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), access_token, config->access_token_duration, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
                     ulfius_add_header_to_response(response, "Location", redirect_url);
                     o_free(redirect_url);
@@ -914,6 +972,7 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
                   y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_implicit_grant - Error generate_access_token");
                   response->status = 302;
                 }
+                o_free(access_token);
               } else {
                 redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
                 ulfius_add_header_to_response(response, "Location", redirect_url);
@@ -921,6 +980,7 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
                 y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_implicit_grant - Error get_client_hostname");
                 response->status = 302;
               }
+              o_free(issued_for);
             } else {
               // Redirect to login page
               redirect_url = get_login_url(config, request, "auth", u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
@@ -928,6 +988,12 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
               o_free(redirect_url);
               response->status = 302;
             }
+          } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
+            // Redirect to login page
+            redirect_url = get_login_url(config, request, "auth", u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
+            ulfius_add_header_to_response(response, "Location", redirect_url);
+            o_free(redirect_url);
+            response->status = 302;
           } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
             // Scope is not allowed for this user
             response->status = 302;
@@ -941,6 +1007,7 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
             y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_implicit_grant - Error validate_session_client_scope");
             response->status = 302;
           }
+          json_decref(j_session);
         } else {
           // Scope is not allowed for this user
           response->status = 503;
@@ -973,17 +1040,108 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
   return U_CALLBACK_CONTINUE;
 }
 
+
 /**
- * TODO
+ * The more simple authorization type
+ * username and password are given in the POST parameters,
+ * the access_token and refresh_token in a json object are returned
  */
 static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_CALLBACK_ERROR;
+  struct _oauth2_config * config = (struct _oauth2_config *)user_data;
+  json_t * j_user, * j_client, * j_refresh_token, * j_body;
+  int ret = G_OK;
+  const char * username = u_map_get(request->map_post_body, "username"),
+             * password = u_map_get(request->map_post_body, "password"),
+             * scope = u_map_get(request->map_post_body, "scope"),
+             * client_id = NULL;
+  char * issued_for = get_client_hostname(request),
+       * refresh_token,
+       * access_token;
+  time_t now;
+  
+  if ((config->use_scope && scope == NULL) || username == NULL || password == NULL || issued_for == NULL) {
+    ret = G_ERROR_PARAM;
+  } else if (request->auth_basic_user != NULL && request->auth_basic_password != NULL) {
+    j_client = config->glewlwyd_config->glewlwyd_callback_is_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password, NULL);
+    if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "confidential") != json_true()) {
+      ret = G_ERROR_UNAUTHORIZED;
+    } else if (check_result_value(j_client, G_OK)) {
+      client_id = request->auth_basic_user;
+    } else if (check_result_value(j_client, G_ERROR_NOT_FOUND) || check_result_value(j_client, G_ERROR_UNAUTHORIZED)) {
+      ret = G_ERROR_UNAUTHORIZED;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - Error glewlwyd_callback_is_client_valid");
+      ret = G_ERROR;
+    }
+    json_decref(j_client);
+  }
+  if (ret == G_OK) {
+    j_user = config->glewlwyd_config->glewlwyd_callback_is_user_valid(config->glewlwyd_config, username, password, scope);
+    if (check_result_value(j_user, G_OK)) {
+      time(&now);
+      if ((refresh_token = generate_refresh_token(config, client_id, username, GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, issued_for, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), now)) != NULL) {
+        j_refresh_token = serialize_refresh_token(config, GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, 0, username, client_id, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), now, config->refresh_token_duration, config->refresh_token_rolling, refresh_token, issued_for);
+        if (check_result_value(j_refresh_token, G_OK)) {
+          if ((access_token = generate_access_token(config, username, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), now)) != NULL) {
+            if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, json_integer_value(json_object_get(j_refresh_token, "gpgr_id")), username, client_id, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), now, issued_for) == G_OK) {
+              j_body = json_pack("{sssssssisi}",
+                                 "token_type",
+                                 "bearer",
+                                 "access_token",
+                                 access_token,
+                                 "refresh_token",
+                                 refresh_token,
+                                 "iat",
+                                 now,
+                                 "expires_in",
+                                 config->access_token_duration);
+              ulfius_set_json_body_response(response, 200, j_body);
+              json_decref(j_body);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - Error serialize_access_token");
+              j_body = json_pack("{ss}", "error", "server_error");
+              ulfius_set_json_body_response(response, 500, j_body);
+              json_decref(j_body);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - Error generate_access_token");
+            j_body = json_pack("{ss}", "error", "server_error");
+            ulfius_set_json_body_response(response, 500, j_body);
+            json_decref(j_body);
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - Error serialize_refresh_token");
+          j_body = json_pack("{ss}", "error", "server_error");
+          ulfius_set_json_body_response(response, 500, j_body);
+          json_decref(j_body);
+        }
+        json_decref(j_refresh_token);
+        o_free(refresh_token);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - Error generate_refresh_token");
+        j_body = json_pack("{ss}", "error", "server_error");
+        ulfius_set_json_body_response(response, 500, j_body);
+        json_decref(j_body);
+      }
+    } else if (check_result_value(j_user, G_ERROR_NOT_FOUND) || check_result_value(j_user, G_ERROR_UNAUTHORIZED)) {
+      response->status = 403;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - glewlwyd_callback_is_user_valid");
+      response->status = 403;
+    }
+    json_decref(j_user);
+  } else {
+    response->status = 403;
+  }
+  o_free(issued_for);
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
  * TODO
  */
 static int check_auth_type_client_credentials_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - not implemented");
   return U_CALLBACK_ERROR;
 }
 
@@ -991,6 +1149,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
  * TODO
  */
 static int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - not implemented");
   return U_CALLBACK_ERROR;
 }
 
@@ -998,6 +1157,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
  * TODO
  */
 static int delete_refresh_token (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  y_log_message(Y_LOG_LEVEL_ERROR, "delete_refresh_token - not implemented");
   return U_CALLBACK_ERROR;
 }
 
@@ -1007,7 +1167,7 @@ static int callback_oauth2_authorization(const struct _u_request * request, stru
   char * redirect_url;
 
   if (0 == o_strcmp("code", response_type)) {
-    if (is_authorization_type_enabled((struct _oauth2_config *)user_data, GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE) && u_map_get(request->map_url, "redirect_uri") != NULL) {
+    if (is_authorization_type_enabled((struct _oauth2_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE) && u_map_get(request->map_url, "redirect_uri") != NULL) {
       result = check_auth_type_auth_code_grant(request, response, user_data);
     } else {
       if (u_map_get(request->map_url, "redirect_uri") != NULL) {
@@ -1020,7 +1180,7 @@ static int callback_oauth2_authorization(const struct _u_request * request, stru
       }
     }
   } else if (0 == o_strcmp("token", response_type)) {
-    if (is_authorization_type_enabled((struct _oauth2_config *)user_data, GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT) && u_map_get(request->map_url, "redirect_uri") != NULL) {
+    if (is_authorization_type_enabled((struct _oauth2_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT) && u_map_get(request->map_url, "redirect_uri") != NULL) {
       result = check_auth_type_implicit_grant(request, response, user_data);
     } else {
       if (u_map_get(request->map_url, "redirect_uri") != NULL) {
@@ -1052,11 +1212,27 @@ static int callback_oauth2_token(const struct _u_request * request, struct _u_re
   int result = U_CALLBACK_CONTINUE;
 
   if (0 == o_strcmp("authorization_code", grant_type)) {
-    if (is_authorization_type_enabled(config, GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE)) {
+    if (is_authorization_type_enabled(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE)) {
       result = check_auth_type_access_token_request(request, response, user_data);
     } else {
       response->status = 403;
     }
+  } else if (0 == o_strcmp("password", grant_type)) {
+    if (is_authorization_type_enabled(config, GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS)) {
+      result = check_auth_type_resource_owner_pwd_cred(request, response, user_data);
+    } else {
+      response->status = 403;
+    }
+  } else if (0 == o_strcmp("client_credentials", grant_type)) {
+    if (is_authorization_type_enabled(config, GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS)) {
+      result = check_auth_type_client_credentials_grant(request, response, user_data);
+    } else {
+      response->status = 403;
+    }
+  } else if (0 == o_strcmp("refresh_token", grant_type)) {
+    result = get_access_token_from_refresh(request, response, user_data);
+  } else if (0 == o_strcmp("delete_token", grant_type)) {
+    result = delete_refresh_token(request, response, user_data);
   } else {
     response->status = 400;
   }
@@ -1230,11 +1406,11 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
       } else {
         ((struct _oauth2_config *)*cls)->refresh_token_rolling = 0;
       }
-      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-code-enabled")==json_true()?1:0;
-      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUHORIZATION_TYPE_IMPLICIT] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-implicit-enabled")==json_true()?1:0;
-      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-password-enabled")==json_true()?1:0;
-      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-client-enabled")==json_true()?1:0;
-      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-refresh-enabled")==json_true()?1:0;
+      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-code-enabled")==json_true()?1:0;
+      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-implicit-enabled")==json_true()?1:0;
+      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-password-enabled")==json_true()?1:0;
+      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-client-enabled")==json_true()?1:0;
+      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-refresh-enabled")==json_true()?1:0;
       ((struct _oauth2_config *)*cls)->use_scope = json_object_get(((struct _oauth2_config *)*cls)->j_params, "use-scope")==json_true()?1:0;
       if (!jwt_new(&((struct _oauth2_config *)*cls)->jwt_key)) {
         if (0 == o_strcmp("rsa", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-type")))) {

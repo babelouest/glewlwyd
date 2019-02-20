@@ -213,7 +213,6 @@ json_t * get_user_for_session(struct config_elements * config, const char * sess
                         "gus_last_login DESC",
                         "limit",
                         1);
-    o_free(expire_clause);
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
@@ -227,13 +226,14 @@ json_t * get_user_for_session(struct config_elements * config, const char * sess
       y_log_message(Y_LOG_LEVEL_ERROR, "get_available_session_from_username - Error executing j_query");
       j_return = json_pack("{si}", "result", G_ERROR_DB);
     }
-    o_free(session_uid_hash);
   } else if (session_uid == NULL) {
     j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_available_session_from_username - Error generate_hash");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
+  o_free(session_uid_hash);
+  o_free(expire_clause);
   return j_return;
 }
 
@@ -268,6 +268,7 @@ int user_session_update(struct config_elements * config, const char * session_ui
       o_free(expiration_clause);
       o_free(last_login_clause);
       res = h_insert(config->conn, j_query, NULL);
+      json_decref(j_query);
       json_decref(j_session);
       if (res == H_OK) {
         j_session = get_session_for_username(config, session_uid, username);
@@ -292,6 +293,7 @@ int user_session_update(struct config_elements * config, const char * session_ui
                             username);
       o_free(last_login_clause);
       res = h_update(config->conn, j_query, NULL);
+      json_decref(j_query);
       json_decref(j_session);
       if (res == H_OK) {
         j_session = get_session_for_username(config, session_uid, username);
