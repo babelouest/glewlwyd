@@ -13,9 +13,9 @@
 
 #include "unit-tests.h"
 
-#define SERVER_URI "http://localhost:4593/api"
+#define SERVER_URI "http://localhost:4593/api/"
 #define USERNAME "user1"
-#define PASSWORD "MyUser1Password!"
+#define PASSWORD "password"
 #define SCOPE_LIST "scope1 scope2"
 #define CLIENT "client1_id"
 

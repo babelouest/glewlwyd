@@ -324,13 +324,15 @@ int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * re
 
 int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_user = (json_t *)response->shared_data;
+  json_t * j_user = (json_t *)response->shared_data, * j_body = ulfius_get_json_body_request(request, NULL);
   int res;
   
   if (config != NULL && j_user != NULL) {
-    res = set_granted_scopes_for_client(config, j_user, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope_list"));
+    res = set_granted_scopes_for_client(config, j_user, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(j_body, "scope")));
     if (res == G_ERROR_NOT_FOUND) {
       response->status = 404;
+    } else if (res == G_ERROR_PARAM) {
+      response->status = 400;
     } else if (res == G_ERROR_UNAUTHORIZED) {
       response->status = 401;
     } else if (res != G_OK) {
@@ -341,6 +343,6 @@ int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * re
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_session_scope_grant - Error config or j_user is NULL");
     response->status = 500;
   }
+  json_decref(j_body);
   return U_CALLBACK_CONTINUE;
 }
-

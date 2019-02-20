@@ -144,20 +144,22 @@ $(function () {
 	});
 
 	$("#grantBut").click(function () {
-		var scopes = [];
+		var scope = [];
 		$(".check-scope").each(function () {
 			if ($(this).prop("checked")) {
-				scopes.push(encodeURI($(this).attr("data-scope")));
+				scope.push(encodeURI($(this).attr("data-scope")));
 			}
 		});
 		if (getParameterByName("client_id")) {
 			$.ajax({
 				type: "PUT",
-				url: "api/auth/grant/" + encodeURI(getParameterByName("client_id")) + "/" + scopes.join("%20") + "/",
-        success: function () {
-          init();
-        }
-      });
+				data: JSON.stringify({scope: (scope.join(" ")||"")}),
+				contentType: "application/json; charset=utf-8",
+				url: "api/auth/grant/" + encodeURI(getParameterByName("client_id")) + "/",
+				success: function () {
+					init();
+				}
+			});
 		}
 	});
 

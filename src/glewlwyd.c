@@ -215,7 +215,6 @@ int main (int argc, char ** argv) {
   // Current user scope grant endpoints
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/auth/grant/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/grant/:client_id/:scope_list", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_session_scope_grant, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/auth/grant/:client_id/:scope_list", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_session_scope_grant, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/auth/grant/:client_id/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_session_scope_grant, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/auth/grant/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
 
@@ -298,7 +297,7 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
         if (module->user_module_unload((*config)) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_module_close for module '%s'", module->name);
         }
-        if (dlclose(module->file_handle)) {
+        if (0 && dlclose(module->file_handle)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
         }
         o_free(module->name);
@@ -328,9 +327,16 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
         if (module->client_module_unload((*config)) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error client_module_close for module '%s'", module->name);
         }
+/* 
+ * dlclose() makes valgrind not useful when it comes to libraries
+ * they say it's not relevant to use it anyway
+ * I'll let it here until I'm sure
+ */
+#ifndef DEBUG
         if (dlclose(module->file_handle)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
         }
+#endif
         o_free(module->name);
         o_free(module->parameters);
         o_free(module);
@@ -358,9 +364,11 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
         if (module->user_auth_scheme_module_unload((*config)) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_auth_scheme_module_close for module '%s'", module->name);
         }
+#ifndef DEBUG
         if (dlclose(module->file_handle)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
         }
+#endif
         o_free(module->name);
         o_free(module->parameters);
         o_free(module);
@@ -388,9 +396,11 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
         if (module->plugin_module_unload(config_p) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error plugin_module_unload for module '%s'", module->name);
         }
+#ifndef DEBUG
         if (dlclose(module->file_handle)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
         }
+#endif
         o_free(module->name);
         o_free(module->parameters);
         o_free(module);
@@ -401,6 +411,8 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
     
     o_free((*config)->config_file);
     o_free((*config)->api_prefix);
+    o_free((*config)->admin_scope);
+    o_free((*config)->profile_scope);
     o_free((*config)->external_url);
     o_free((*config)->log_file);
     o_free((*config)->allow_origin);
