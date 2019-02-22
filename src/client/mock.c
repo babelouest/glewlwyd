@@ -35,7 +35,7 @@ int client_module_unload(struct config_elements * config) {
 }
 
 int client_module_init(struct config_elements * config, const char * parameters, void ** cls) {
-  *cls = (void*)json_pack("[{sssssssos[ss]s[ss]s[]so}{sssssssos[s]s[s]s[]so}{sssssssos[ssss]s[s]s[ss]so}]",
+  *cls = (void*)json_pack("[{sssssssos[ss]s[ss]s[]so}{sssssssos[s]s[s]s[]so}{sssssssos[ssssss]s[s]s[ss]so}]",
                             "client_id",
                             "client1_id",
                             "name",
@@ -69,11 +69,11 @@ int client_module_init(struct config_elements * config, const char * parameters,
                             "enabled",
                             json_true(),
                             "client_id",
-                            "client1_id",
+                            "client3_id",
                             "name",
-                            "client1",
+                            "client3",
                             "description",
-                            "Client mock 1",
+                            "Client mock 3",
                             "confidential",
                             json_true(),
                             "authorization_type",
@@ -81,6 +81,8 @@ int client_module_init(struct config_elements * config, const char * parameters,
                               "token",
                               "password",
                               "client_credentials",
+                              "refresh_token",
+                              "delete_token",
                             "redirect_uri",
                               "../../test-oauth2.html?param=client3",
                             "scope",
@@ -210,10 +212,10 @@ int client_module_check_password(const char * client_id, const char * password, 
   j_client = json_loads(str_client, JSON_DECODE_ANY, NULL);
   
   if (result == G_OK) {
-    if (0 == o_strcmp(password, "password")) {
+    if (json_object_get(j_client, "confidential") == json_true() && 0 == o_strcmp(password, "password")) {
       ret = G_OK;
     } else {
-      ret = G_ERROR;
+      ret = G_ERROR_UNAUTHORIZED;
     }
   } else {
     ret = G_ERROR_NOT_FOUND;
