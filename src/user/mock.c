@@ -211,7 +211,7 @@ int user_module_check_password(const char * username, const char * password, voi
     if (0 == o_strcmp(password, "password")) {
       ret = G_OK;
     } else {
-      ret = G_ERROR_PARAM;
+      ret = G_ERROR_UNAUTHORIZED;
     }
   } else {
     ret = G_ERROR_NOT_FOUND;
