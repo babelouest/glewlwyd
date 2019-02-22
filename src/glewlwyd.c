@@ -60,9 +60,9 @@ int main (int argc, char ** argv) {
   config_p->glewlwyd_config = config;
   config_p->glewlwyd_callback_add_plugin_endpoint = &glewlwyd_callback_add_plugin_endpoint;
   config_p->glewlwyd_callback_remove_plugin_endpoint = &glewlwyd_callback_remove_plugin_endpoint;
-  config_p->glewlwyd_callback_is_session_valid = &glewlwyd_callback_is_session_valid;
-  config_p->glewlwyd_callback_is_user_valid = &glewlwyd_callback_is_user_valid;
-  config_p->glewlwyd_callback_is_client_valid = &glewlwyd_callback_is_client_valid;
+  config_p->glewlwyd_callback_check_session_valid = &glewlwyd_callback_check_session_valid;
+  config_p->glewlwyd_callback_check_user_valid = &glewlwyd_callback_check_user_valid;
+  config_p->glewlwyd_callback_check_client_valid = &glewlwyd_callback_check_client_valid;
   config_p->glewlwyd_callback_get_client_granted_scopes = &glewlwyd_callback_get_client_granted_scopes;
   config_p->glewlwyd_callback_get_plugin_external_url = &glewlwyd_callback_get_plugin_external_url;
   config_p->glewlwyd_callback_get_login_url = &glewlwyd_callback_get_login_url;
