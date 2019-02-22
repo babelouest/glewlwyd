@@ -27,13 +27,6 @@
  */
 #include "glewlwyd.h"
 
-/**
- * TODO
- */
-json_t * auth_check_user_credentials_scope(struct config_elements * config, const char * username, const char * password, const char * scope_list) {
-  return NULL;
-}
-
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password) {
   int i, res;
   json_t * j_return = NULL;
