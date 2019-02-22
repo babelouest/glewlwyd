@@ -48,7 +48,7 @@ int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, cons
   return ret;
 }
 
-json_t * glewlwyd_callback_is_session_valid(struct config_plugin * config, const struct _u_request * request, const char * scope_list) {
+json_t * glewlwyd_callback_check_session_valid(struct config_plugin * config, const struct _u_request * request, const char * scope_list) {
   json_t * j_user, * j_return, * j_scope_allowed;
   
   if (config != NULL && request != NULL) {
@@ -60,23 +60,20 @@ json_t * glewlwyd_callback_is_session_valid(struct config_plugin * config, const
         j_scope_allowed = get_validated_auth_scheme_list_from_scope_list(config->glewlwyd_config, scope_list, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY));
         if (check_result_value(j_scope_allowed, G_OK)) {
           j_return = json_pack("{sis{sOsO}}", "result", G_OK, "session", "scope", json_object_get(j_scope_allowed, "scheme"), "user", json_object_get(j_user, "user"));
-        } else if (check_result_value(j_scope_allowed, G_ERROR_UNAUTHORIZED)) {
+        } else if (check_result_value(j_scope_allowed, G_ERROR_UNAUTHORIZED) || check_result_value(j_scope_allowed, G_ERROR_NOT_FOUND)) {
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-        } else if (check_result_value(j_scope_allowed, G_ERROR_NOT_FOUND)) {
-          j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_is_session_valid - Error get_validated_auth_scheme_list_from_scope_list");
+          y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_session_valid - Error get_validated_auth_scheme_list_from_scope_list");
           j_return = json_pack("{si}", "result", G_ERROR);
         }
         json_decref(j_scope_allowed);
       } else {
-        // TODO
-        j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+        j_return = json_pack("{sis{sO}}", "result", G_OK, "session", "user", json_object_get(j_user, "user"));
       }
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_is_session_valid - Error get_user_for_session");
+      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_session_valid - Error get_user_for_session");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     json_decref(j_user);
@@ -86,7 +83,7 @@ json_t * glewlwyd_callback_is_session_valid(struct config_plugin * config, const
   return j_return;
 }
 
-json_t * glewlwyd_callback_is_user_valid(struct config_plugin * config, const char * username, const char * password, const char * scope) {
+json_t * glewlwyd_callback_check_user_valid(struct config_plugin * config, const char * username, const char * password, const char * scope) {
   json_t * j_user, * j_return, * j_auth, * j_element, * j_scope;
   int check_password, check_scope;
   char ** scope_array = NULL, * scope_list = NULL, * tmp;
@@ -121,7 +118,7 @@ json_t * glewlwyd_callback_is_user_valid(struct config_plugin * config, const ch
                   }
                 }
               } else if (!check_result_value(j_scope, G_ERROR_NOT_FOUND)) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_is_user_valid - Error get_scope");
+                y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_user_valid - Error get_scope");
               }
               json_decref(j_scope);
             }
@@ -133,7 +130,7 @@ json_t * glewlwyd_callback_is_user_valid(struct config_plugin * config, const ch
           }
           o_free(scope_list);
         } else  {
-          y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_is_user_valid - Error split_string");
+          y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_user_valid - Error split_string");
           check_scope = 0;
         }
         free_string_array(scope_array);
@@ -146,18 +143,18 @@ json_t * glewlwyd_callback_is_user_valid(struct config_plugin * config, const ch
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND) || (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") != json_true())) {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_is_user_valid - Error get_user");
+      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_user_valid - Error get_user");
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     }
     json_decref(j_user);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_is_user_valid - Error input parameters");
+    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_user_valid - Error input parameters");
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
   return j_return;
 }
 
-json_t * glewlwyd_callback_is_client_valid(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list) {
+json_t * glewlwyd_callback_check_client_valid(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list) {
   json_t * j_return, * j_client, * j_client_credentials;
   int password_checked = 1;
 
@@ -179,7 +176,7 @@ json_t * glewlwyd_callback_is_client_valid(struct config_plugin * config, const 
     } else if (check_result_value(j_client, G_ERROR_NOT_FOUND) || (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") != json_true())) {
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_is_client_valid - Error get_client");
+      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_client_valid - Error get_client");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     json_decref(j_client);
