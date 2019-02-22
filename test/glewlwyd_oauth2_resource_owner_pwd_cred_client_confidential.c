@@ -13,12 +13,12 @@
 
 #include "unit-tests.h"
 
-#define SERVER_URI "http://localhost:4593/api"
+#define SERVER_URI "http://localhost:4593/api/glwd"
 #define USERNAME "user1"
-#define PASSWORD "MyUser1Password!"
-#define SCOPE_LIST "scope1 scope2"
+#define PASSWORD "password"
+#define SCOPE_LIST "g_profile scope3"
 #define CLIENT "client3_id"
-#define CLIENT_PASSWORD "client3_password"
+#define CLIENT_PASSWORD "password"
 
 char * code;
 
@@ -114,7 +114,7 @@ START_TEST(glewlwyd_resource_owner_pwd_cred_empty)
   u_map_init(&body);
   u_map_put(&body, "grant_type", "password");
 
-  int res = run_simple_test(NULL, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
+  int res = run_simple_test(NULL, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 400, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
