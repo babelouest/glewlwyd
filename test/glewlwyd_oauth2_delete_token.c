@@ -17,15 +17,16 @@
 #define USERNAME "user1"
 #define PASSWORD "password"
 #define SCOPE_LIST "g_profile scope3"
+#define CLIENT "client1_id"
 
 char * refresh_token;
 
-START_TEST(test_glwd_refresh_token_token_invalid)
+START_TEST(test_glwd_delete_token_token_invalid)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "grant_type", "refresh_token");
+  u_map_put(&body, "grant_type", "delete_token");
   u_map_put(&body, "refresh_token", "invalid");
   
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 400, NULL, NULL, NULL);
@@ -35,15 +36,30 @@ START_TEST(test_glwd_refresh_token_token_invalid)
 }
 END_TEST
 
-START_TEST(test_glwd_refresh_token_ok)
+START_TEST(test_glwd_delete_token_ok)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
-  u_map_put(&body, "grant_type", "refresh_token");
+  u_map_put(&body, "grant_type", "delete_token");
   u_map_put(&body, "refresh_token", refresh_token);
   
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 200, NULL, NULL, NULL);
+  free(url);
+  u_map_clean(&body);
+  ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(test_glwd_delete_token_token_already_deleted)
+{
+  char * url = msprintf("%s/glwd/token/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "delete_token");
+  u_map_put(&body, "refresh_token", refresh_token);
+  
+  int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 400, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
@@ -55,10 +71,11 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd refresh token");
-  tc_core = tcase_create("test_glwd_refresh_token");
-  tcase_add_test(tc_core, test_glwd_refresh_token_token_invalid);
-  tcase_add_test(tc_core, test_glwd_refresh_token_ok);
+  s = suite_create("Glewlwyd delete token");
+  tc_core = tcase_create("test_glwd_delete_token");
+  tcase_add_test(tc_core, test_glwd_delete_token_token_invalid);
+  tcase_add_test(tc_core, test_glwd_delete_token_ok);
+  tcase_add_test(tc_core, test_glwd_delete_token_token_already_deleted);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
@@ -86,7 +103,7 @@ int main(int argc, char *argv[])
   u_map_put(auth_req.map_post_body, "password", PASSWORD);
   u_map_put(auth_req.map_post_body, "scope", SCOPE_LIST);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
-  if (res == U_OK && auth_resp.status == 200) {
+  if (res == U_OK) {
     json_t * json_body = ulfius_get_json_body_response(&auth_resp, NULL);
     refresh_token = o_strdup(json_string_value(json_object_get(json_body, "refresh_token")));
     y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USERNAME);
