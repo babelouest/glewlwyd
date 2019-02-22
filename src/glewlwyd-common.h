@@ -81,7 +81,6 @@ struct _user_module {
   int      (* user_module_delete)(const char * username, void * cls);
   int      (* user_module_check_password)(const char * username, const char * password, void * cls);
   int      (* user_module_update_password)(const char * username, const char * new_password, void * cls);
-  int      (* user_module_check_scope_list)(const char * username, const char * scope_list, void * cls);
 };
 
 struct _user_module_instance {
@@ -106,7 +105,6 @@ struct _client_module {
   int      (* client_module_delete)(const char * client_id, void * cls);
   int      (* client_module_check_password)(const char * client_id, const char * password, void * cls);
   int      (* client_module_update_password)(const char * client_id, const char * new_password, void * cls);
-  int      (* client_module_check_scope_list)(const char * client_id, const char * scope_list, void * cls);
 };
 
 struct _client_module_instance {
