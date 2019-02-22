@@ -254,6 +254,7 @@ $(function () {
 		if (elt.attr('data-type') === "mock") {
 			$("#mockSchemeName").text(elt.attr('data-display-name'));
 			$("#mockName").val(elt.attr('data-name'));
+			$("#mockValue").val("");
 			$("#mockModal").modal('show');
 		}
 	};
