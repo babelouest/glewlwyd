@@ -3,7 +3,7 @@
 #
 # Makefile used to build the software
 #
-# Copyright 2018 Nicolas Mora <mail@babelouest.org>
+# Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -23,27 +23,30 @@ LOCAL=/usr/local
 MODULES_TARGET=$(LOCAL)/lib/glewlwyd/user
 CC=gcc
 CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
-LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius
+LIBS=-lc -ldl -ljansson -lorcania -lyder
 LDFLAGS += -Wl,-R '-Wl,-R$$ORIGIN'
-
+DBFLAGS=-lhoel
+TARGET=libmoddatabase.so
 all: release
 
 %.o: %.c ../glewlwyd.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
 libmodmock.so: mock.o
-	$(CC) -shared -Wl,-soname,libmodmock.so mock.o -o libmodmock.so $(LIBS)
+	$(CC) -shared -Wl,-soname,libmodmock.so mock.o -o libmodmock.so $(LIBS) $(LDFLAGS)
 
+libmoddatabase.so: database.o
+	$(CC) -shared -Wl,-soname,libmoddatabase.so database.o -o libmoddatabase.so $(LIBS) $(LDFLAGS) $(DBFLAGS)
 clean:
 	rm -f *.o *.so
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: libmodmock.so
+debug: libmodmock.so $(TARGET)
 
 release: ADDITIONALFLAGS=-O3
 
-release:
+release: $(TARGET)
 
 install:
 	mkdir -p $(MODULES_TARGET)

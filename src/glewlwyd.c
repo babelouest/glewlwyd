@@ -1,6 +1,6 @@
 /**
  *
- * Glewlwyd SSO Authorization Server
+ * Glewlwyd SSO Server
  *
  * Authentiation server
  * Users are authenticated via various backend available: database, ldap
@@ -9,7 +9,7 @@
  * main functions definitions
  * and main process start
  *
- * Copyright 2018 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -212,11 +212,21 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/schemes/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_schemes_from_scopes, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_delete_session, (void*)config);
 
-  // Current user scope grant endpoints
+  // Grant scopes endpoints
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/auth/grant/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/grant/:client_id/:scope_list", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_session_scope_grant, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/auth/grant/:client_id/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_session_scope_grant, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/auth/grant/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+
+  // Modules check session
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session, (void*)config);
+
+  // User modules management
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/user/*", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_module_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/user/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/mod/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_user_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/user/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/mod/user/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_user_module, (void*)config);
 
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
