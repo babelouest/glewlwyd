@@ -1,6 +1,6 @@
 /**
  *
- * Glewlwyd OAuth2 Authorization Server
+ * Glewlwyd SSO Server
  *
  * Authentiation server
  * Users are authenticated via various backend available: database, ldap
@@ -9,7 +9,7 @@
  * 
  * Callback functions definition
  *
- * Copyright 2018 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -346,3 +346,24 @@ int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * re
   json_decref(j_body);
   return U_CALLBACK_CONTINUE;
 }
+
+int callback_glewlwyd_get_user_module_list (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_CALLBACK_ERROR;
+}
+
+int callback_glewlwyd_get_user_module (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_CALLBACK_ERROR;
+}
+
+int callback_glewlwyd_add_user_module (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_CALLBACK_ERROR;
+}
+
+int callback_glewlwyd_set_user_module (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_CALLBACK_ERROR;
+}
+
+int callback_glewlwyd_delete_user_module (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_CALLBACK_ERROR;
+}
+

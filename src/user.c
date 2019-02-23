@@ -1,6 +1,6 @@
 /**
  *
- * Glewlwyd OAuth2 Authorization Server
+ * Glewlwyd SSO Server
  *
  * Authentiation server
  * Users are authenticated via various backend available: database, ldap
@@ -9,7 +9,7 @@
  * 
  * user management functions definition
  *
- * Copyright 2018 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE

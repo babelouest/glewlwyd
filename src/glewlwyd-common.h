@@ -1,15 +1,15 @@
 /**
  *
- * Glewlwyd OAuth2 Authorization Server
+ * Glewlwyd SSO Server
  *
  * Authentiation server
  * Users are authenticated via various backend available: database, ldap
  * Using various authentication methods available: password, OTP, send code, etc.
  * Provides Json Web Tokens (jwt)
  * 
- * Declarations for constants and prototypes
+ * Declarations for common constants and prototypes used in Glewlwyd main program and modules
  *
- * Copyright 2018 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE

@@ -38,7 +38,13 @@ unit-tests.o: unit-tests.c unit-tests.h
 %: %.c unit-tests.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-test: test_glewlwyd_oauth2_auth_code test_glewlwyd_oauth2_code test_glewlwyd_oauth2_code_client_confidential test_glewlwyd_oauth2_implicit test_glewlwyd_oauth2_resource_owner_pwd_cred test_glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential test_glewlwyd_oauth2_client_cred test_glewlwyd_oauth2_refresh_token test_glewlwyd_oauth2_refresh_token_client_confidential test_glewlwyd_oauth2_delete_token test_glewlwyd_oauth2_delete_token_client_confidential
+test: test-oauth2
+
+test-auth: test_auth_user_pwd test_auth_user_scheme test_auth_user_grant
+
+test-crud: test_crud_scope test_crud_user test_crud_client
+
+test-oauth2: test_glewlwyd_oauth2_auth_code test_glewlwyd_oauth2_code test_glewlwyd_oauth2_code_client_confidential test_glewlwyd_oauth2_implicit test_glewlwyd_oauth2_resource_owner_pwd_cred test_glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential test_glewlwyd_oauth2_client_cred test_glewlwyd_oauth2_refresh_token test_glewlwyd_oauth2_refresh_token_client_confidential test_glewlwyd_oauth2_delete_token test_glewlwyd_oauth2_delete_token_client_confidential
 
 test_%: %
 	@-if [ "$(VERBOSE)" = "0" ]; then \
