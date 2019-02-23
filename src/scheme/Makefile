@@ -24,6 +24,7 @@ MODULES_TARGET=$(DEST)/lib/glewlwyd/user
 CC=gcc
 CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
 LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius
+TARGET=
 
 all: release
 
@@ -42,7 +43,7 @@ debug: libmodmock.so
 
 release: ADDITIONALFLAGS=-O3
 
-release:
+release: $(TARGET)
 
 install:
 	mkdir -p $(MODULES_TARGET)
