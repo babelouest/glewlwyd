@@ -26,7 +26,7 @@ CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -W
 LIBS=-lc -ldl -ljansson -lorcania -lyder
 LDFLAGS += -Wl,-R '-Wl,-R$$ORIGIN'
 DBFLAGS=-lhoel
-TARGET=libmoddatabase.so
+TARGET=libmoddatabase.so libmodldap.so libmodhttp.so
 all: release
 
 %.o: %.c ../glewlwyd.h
@@ -35,8 +35,15 @@ all: release
 libmodmock.so: mock.o
 	$(CC) -shared -Wl,-soname,libmodmock.so mock.o -o libmodmock.so $(LIBS) $(LDFLAGS)
 
-libmoddatabase.so: database.o
-	$(CC) -shared -Wl,-soname,libmoddatabase.so database.o -o libmoddatabase.so $(LIBS) $(LDFLAGS) $(DBFLAGS)
+libmoddatabase.so: ../glewlwyd-common.h database.o
+	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o $(LIBS)
+
+libmodldap.so: ../glewlwyd-common.h ldap.o
+	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o $(LIBS)
+
+libmodhttp.so: ../glewlwyd-common.h http.o
+	$(CC) -shared -Wl,-soname,libmodhttp.so -o libmodhttp.so http.o $(LIBS)
+
 clean:
 	rm -f *.o *.so
 

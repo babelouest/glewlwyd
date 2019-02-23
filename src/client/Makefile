@@ -24,25 +24,32 @@ MODULES_TARGET=$(DEST)/lib/glewlwyd/client
 CC=gcc
 CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
 LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius
+TARGET=libmoddatabase.so libmodldap.so
 
 all: release
 
-%.o: %.c ../glewlwyd.h
+%.o: %.c ../glewlwyd-common.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
-libmodmock.so: mock.o
+libmodmock.so: ../glewlwyd-common.h mock.o
 	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o $(LIBS)
+
+libmoddatabase.so: ../glewlwyd-common.h database.o
+	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o $(LIBS)
+
+libmodldap.so: ../glewlwyd-common.h ldap.o
+	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o $(LIBS)
 
 clean:
 	rm -f *.o *.so
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: libmodmock.so
+debug: libmodmock.so $(TARGET)
 
 release: ADDITIONALFLAGS=-O3
 
-release:
+release: $(TARGET)
 
 install:
 	mkdir -p $(MODULES_TARGET)
