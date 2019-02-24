@@ -325,7 +325,7 @@ static int is_scheme_valid_for_session(struct config_elements * config, json_int
 
 json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list, const char * session_uid) {
   char * session_hash = generate_hash(config, config->hash_algorithm, session_uid);
-  json_t * j_scheme_list = get_auth_scheme_list_from_scope_list(config, scope_list), * j_scope, * j_scheme, * j_group, * j_user = get_current_user_from_session(config, session_uid);
+  json_t * j_scheme_list = get_auth_scheme_list_from_scope_list(config, scope_list), * j_scope, * j_scheme, * j_group, * j_user = get_current_user_from_session(config, session_uid), * j_scheme_remove;
   const char * key_scope, * key_group;
   size_t index_scheme;
   struct _user_auth_scheme_module_instance * scheme;
@@ -337,15 +337,29 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
         if (user_has_scope(json_object_get(j_user, "user"), key_scope)) {
           json_object_set(j_scope, "available", json_true());
           json_object_foreach(json_object_get(j_scope, "schemes"), key_group, j_group) {
-            json_array_foreach(j_group, index_scheme, j_scheme) {
-              scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_type")), json_string_value(json_object_get(j_scheme, "scheme_name")));
-              if (scheme != NULL && scheme->enabled) {
-                json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, session_hash)?json_true():json_false());
-              } else if (scheme != NULL && !scheme->enabled) {
-                json_object_set(j_scheme, "scheme_authenticated", json_null());
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error get_user_auth_scheme_module_instance");
+            j_scheme_remove = json_array();
+            if (j_scheme_remove != NULL) {
+              json_array_foreach(j_group, index_scheme, j_scheme) {
+                scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_type")), json_string_value(json_object_get(j_scheme, "scheme_name")));
+                if (scheme != NULL) {
+                  if (scheme->enabled && scheme->module->user_can_use_scheme(json_string_value(json_object_get(json_object_get(j_user, "user"), "username")), scheme->cls)) {
+                    json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, session_hash)?json_true():json_false());
+                  } else {
+                    json_array_append_new(j_scheme_remove, json_integer(index_scheme));
+                  }
+                } else {
+                  json_array_append_new(j_scheme_remove, json_integer(index_scheme));
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error get_user_auth_scheme_module_instance");
+                }
               }
+              if (json_array_size(j_scheme_remove) > 0) {
+                for (index_scheme = json_array_size(j_scheme_remove) - 1; index_scheme >= 0; index_scheme--) {
+                  json_array_remove(j_group, index_scheme);
+                }
+                json_decref(j_scheme_remove);
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error allocating resources for j_scheme_remove");
             }
           }
         } else {
