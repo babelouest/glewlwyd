@@ -296,7 +296,7 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
     for (i=0; i<pointer_list_size((*config)->user_module_instance_list); i++) {
       struct _user_module_instance * instance = (struct _user_module_instance *)pointer_list_get_at((*config)->user_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->module->user_module_close((*config), instance->cls) != G_OK) {
+        if (instance->enabled && instance->module->user_module_close((*config), instance->cls) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
         }
         o_free(instance->name);
@@ -335,7 +335,7 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
     for (i=0; i<pointer_list_size((*config)->client_module_instance_list); i++) {
       struct _client_module_instance * instance = (struct _client_module_instance *)pointer_list_get_at((*config)->client_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->module->client_module_close((*config), instance->cls) != G_OK) {
+        if (instance->enabled && instance->module->client_module_close((*config), instance->cls) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error client_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
         }
         o_free(instance->name);
@@ -374,7 +374,7 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
     for (i=0; i<pointer_list_size((*config)->user_auth_scheme_module_instance_list); i++) {
       struct _user_auth_scheme_module_instance * instance = (struct _user_auth_scheme_module_instance *)pointer_list_get_at((*config)->user_auth_scheme_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->module->user_auth_scheme_module_close((*config), instance->cls) != G_OK) {
+        if (instance->enabled && instance->module->user_auth_scheme_module_close((*config), instance->cls) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_auth_scheme_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
         }
         o_free(instance->name);
@@ -408,7 +408,7 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
     for (i=0; i<pointer_list_size((*config)->plugin_module_instance_list); i++) {
       struct _plugin_module_instance * instance = (struct _plugin_module_instance *)pointer_list_get_at((*config)->plugin_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->module->plugin_module_close(config_p, instance->cls) != G_OK) {
+        if (instance->enabled && instance->module->plugin_module_close(config_p, instance->cls) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error plugin_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
         }
         o_free(instance->name);

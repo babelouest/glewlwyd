@@ -428,20 +428,28 @@ int manage_user_module(struct config_elements * config, const char * name, int a
   
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
-      if (instance->module->user_module_init(config, json_string_value(json_object_get(j_module, "parameters")), &instance->cls) == G_OK) {
-        instance->enabled = 1;
-        ret = G_OK;
+      if (!instance->enabled) {
+        if (instance->module->user_module_init(config, json_string_value(json_object_get(j_module, "parameters")), &instance->cls) == G_OK) {
+          instance->enabled = 1;
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
+          ret = G_ERROR;
+        }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
-        ret = G_ERROR;
+        ret = G_ERROR_PARAM;
       }
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
-      if (instance->module->user_module_close(config, instance->cls) == G_OK) {
-        instance->enabled = 0;
-        ret = G_OK;
+      if (instance->enabled) {
+        if (instance->module->user_module_close(config, instance->cls) == G_OK) {
+          instance->enabled = 0;
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
+          ret = G_ERROR;
+        }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
-        ret = G_ERROR;
+        ret = G_ERROR_PARAM;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error action not found");
