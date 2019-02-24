@@ -476,17 +476,24 @@ int callback_glewlwyd_delete_user_module (const struct _u_request * request, str
 int callback_glewlwyd_manage_user_module (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_search_module;
+  int res;
   
   j_search_module = get_user_module(config, u_map_get(request->map_url, "name"));
   if (check_result_value(j_search_module, G_OK)) {
     if (0 == o_strcmp("enable", u_map_get(request->map_url, "action"))) {
-      if (manage_user_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_START) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_module - Error manage_user_module");
+      res = manage_user_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_START);
+      if (res == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_module - Error manage_user_module enable");
         response->status = 500;
       }
     } else if (0 == o_strcmp("disable", u_map_get(request->map_url, "action"))) {
-      if (manage_user_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_STOP) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_module - Error manage_user_module");
+      res = manage_user_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_STOP);
+      if (res == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_module - Error manage_user_module disable");
         response->status = 500;
       }
     } else {

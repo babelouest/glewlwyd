@@ -147,6 +147,25 @@ START_TEST(test_glwd_admin_get_mod_user_set_OK)
 }
 END_TEST
 
+START_TEST(test_glwd_admin_get_mod_user_action)
+{
+  char * url = msprintf("%s/mod/user/%s/disable", SERVER_URI, MODULE_NAME);
+  
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 400, NULL, NULL, NULL), 1);
+  free(url);
+  
+  url = msprintf("%s/mod/user/%s/enable", SERVER_URI, MODULE_NAME);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 400, NULL, NULL, NULL), 1);
+  free(url);
+  
+  url = msprintf("%s/mod/user/%s/error", SERVER_URI, MODULE_NAME);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 400, NULL, NULL, NULL), 1);
+  free(url);
+}
+END_TEST
+
 START_TEST(test_glwd_admin_get_mod_user_delete_error)
 {
   char * url = msprintf("%s/mod/user/error", SERVER_URI);
@@ -179,6 +198,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_admin_get_mod_user_get);
   tcase_add_test(tc_core, test_glwd_admin_get_mod_user_set_error_param);
   tcase_add_test(tc_core, test_glwd_admin_get_mod_user_set_OK);
+  tcase_add_test(tc_core, test_glwd_admin_get_mod_user_action);
   tcase_add_test(tc_core, test_glwd_admin_get_mod_user_delete_error);
   tcase_add_test(tc_core, test_glwd_admin_get_mod_user_delete_OK);
   tcase_set_timeout(tc_core, 30);
