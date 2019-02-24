@@ -22,15 +22,16 @@
 CC=gcc
 CFLAGS=-Wall -D_REENTRANT -DDEBUG -g -O0
 LDFLAGS=-lc -lulfius -lorcania -ljansson -lyder -lcheck -lpthread -lm -lrt -lsubunit -ljwt
-TARGET=glewlwyd_oauth2_auth_code glewlwyd_oauth2_code glewlwyd_oauth2_code_client_confidential glewlwyd_oauth2_implicit glewlwyd_oauth2_resource_owner_pwd_cred glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential glewlwyd_oauth2_client_cred glewlwyd_oauth2_refresh_token glewlwyd_oauth2_refresh_token_client_confidential glewlwyd_oauth2_delete_token glewlwyd_oauth2_delete_token_client_confidential
+TARGET_ADMIN=glewlwyd_admin_mod_type glewlwyd_admin_mod_user
+TARGET_OAUTH2=glewlwyd_oauth2_auth_code glewlwyd_oauth2_code glewlwyd_oauth2_code_client_confidential glewlwyd_oauth2_implicit glewlwyd_oauth2_resource_owner_pwd_cred glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential glewlwyd_oauth2_client_cred glewlwyd_oauth2_refresh_token glewlwyd_oauth2_refresh_token_client_confidential glewlwyd_oauth2_delete_token glewlwyd_oauth2_delete_token_client_confidential
 all: test
 VERBOSE=0
 RUN=1
 
 clean:
-	rm -f *.o *.log valgrind.txt $(TARGET)
+	rm -f *.o *.log valgrind.txt $(TARGET_ADMIN) $(TARGET_OAUTH2)
 
-build: $(TARGET)
+build: $(TARGET_ADMIN) $(TARGET_OAUTH2)
 
 unit-tests.o: unit-tests.c unit-tests.h
 	$(CC) $(CFLAGS) -c unit-tests.c
@@ -38,13 +39,15 @@ unit-tests.o: unit-tests.c unit-tests.h
 %: %.c unit-tests.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-test: test-oauth2
+test: test-admin-mod test-oauth2
 
 test-auth: test_auth_user_pwd test_auth_user_scheme test_auth_user_grant
 
 test-crud: test_crud_scope test_crud_user test_crud_client
 
-test-oauth2: test_glewlwyd_oauth2_auth_code test_glewlwyd_oauth2_code test_glewlwyd_oauth2_code_client_confidential test_glewlwyd_oauth2_implicit test_glewlwyd_oauth2_resource_owner_pwd_cred test_glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential test_glewlwyd_oauth2_client_cred test_glewlwyd_oauth2_refresh_token test_glewlwyd_oauth2_refresh_token_client_confidential test_glewlwyd_oauth2_delete_token test_glewlwyd_oauth2_delete_token_client_confidential
+test-admin-mod: $(TARGET_ADMIN) test_glewlwyd_admin_mod_type test_glewlwyd_admin_mod_user
+
+test-oauth2: $(TARGET_OAUTH2) test_glewlwyd_oauth2_auth_code test_glewlwyd_oauth2_code test_glewlwyd_oauth2_code_client_confidential test_glewlwyd_oauth2_implicit test_glewlwyd_oauth2_resource_owner_pwd_cred test_glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential test_glewlwyd_oauth2_client_cred test_glewlwyd_oauth2_refresh_token test_glewlwyd_oauth2_refresh_token_client_confidential test_glewlwyd_oauth2_delete_token test_glewlwyd_oauth2_delete_token_client_confidential
 
 test_%: %
 	@-if [ "$(VERBOSE)" = "0" ]; then \

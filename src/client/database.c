@@ -31,11 +31,13 @@
 #include <orcania.h>
 #include "../glewlwyd-common.h"
 
-int client_module_load(struct config_elements * config, char ** name, char ** parameters) {
+int client_module_load(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters) {
   int ret = G_OK;
-  if (name != NULL && parameters != NULL) {
-    *name = o_strdup("mock");
-    *parameters = o_strdup("{\"mock-param-string\":{\"type\":\"string\",\"mandatory\":true},\"mock-param-number\":{\"type\":\"number\",\"mandatory\":true},\"mock-param-boolean\":{\"type\":\"boolean\",\"mandatory\":false},\"mock-param-list\":{\"type\":\"list\",\"values\":[\"elt1\",\"elt2\",\"elt3\"],\"mandatory\":true}}");
+  if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
+    *name = o_strdup("database");
+    *display_name = o_strdup("Database backend client");
+    *description = o_strdup("Module to store clients in the database");
+    *parameters = o_strdup("{}");
   } else {
     ret = G_ERROR;
   }

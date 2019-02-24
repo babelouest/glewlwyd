@@ -105,6 +105,10 @@
 #define GLEWLWYD_CALLBACK_PRIORITY_FILE           100
 #define GLEWLWYD_CALLBACK_PRIORITY_GZIP           101
 
+// Module management
+#define GLEWLWYD_MODULE_ACTION_STOP  0
+#define GLEWLWYD_MODULE_ACTION_START 1
+
 pthread_mutex_t global_handler_close_lock;
 pthread_cond_t  global_handler_close_cond;
 
@@ -139,7 +143,7 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
 json_t * auth_trigger_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * trigger_parameters);
 
 // Session
-int user_session_update(struct config_elements * config, const char * session_uid, const char * username, const char * scheme_type, const char * scheme_name);
+int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * username, const char * scheme_type, const char * scheme_name);
 json_t * get_session_for_username(struct config_elements * config, const char * session_uid, const char * username);
 json_t * get_user_for_session(struct config_elements * config, const char * session_uid);
 json_t * get_users_for_session(struct config_elements * config, const char * session_uid);
@@ -163,6 +167,18 @@ json_t * get_client_user_scope_grant(struct config_elements * config, const char
 json_t * get_granted_scopes_for_client(struct config_elements * config, json_t * j_user, const char * client_id, const char * scope_list);
 int set_granted_scopes_for_client(struct config_elements * config, json_t * j_user, const char * client_id, const char * scope_list);
 json_t * get_scope_list_allowed_for_session(struct config_elements * config, const char * scope_list, const char * session_uid);
+
+// Module types
+json_t * get_module_type_list(struct config_elements * config);
+
+// User module functions
+json_t * get_user_module_list(struct config_elements * config);
+json_t * get_user_module(struct config_elements * config, const char * name);
+json_t * is_user_module_valid(struct config_elements * config, json_t * j_module, int add);
+int add_user_module(struct config_elements * config, json_t * j_module);
+int set_user_module(struct config_elements * config, const char * name, json_t * j_module);
+int delete_user_module(struct config_elements * config, const char * name);
+int manage_user_module(struct config_elements * config, const char * name, int action);
 
 // Plugin functions
 int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const char * method, const char * prefix, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
@@ -193,11 +209,14 @@ int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * re
 int callback_glewlwyd_options (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_server_configuration (const struct _u_request * request, struct _u_response * response, void * user_data);
 
+int callback_glewlwyd_get_module_type_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+
 int callback_glewlwyd_get_user_module_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_user_module (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_add_user_module (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_set_user_module (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_user_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_manage_user_module (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 

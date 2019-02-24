@@ -32,10 +32,12 @@
 #include <hoel.h>
 #include "../glewlwyd-common.h"
 
-int user_module_load(struct config_elements * config, char ** name, char ** parameters) {
+int user_module_load(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters) {
   int ret = G_OK;
-  if (name != NULL && parameters != NULL) {
-    *name = o_strdup("database");
+  if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
+    *name = o_strdup("http");
+    *display_name = o_strdup("HTTP Basic Auth backend user");
+    *description = o_strdup("Module to authenticate users via a HTTP service with Basic Auth");
     *parameters = o_strdup("{}");
   } else {
     ret = G_ERROR;

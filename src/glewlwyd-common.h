@@ -66,21 +66,23 @@ typedef enum {
 struct config_elements;
 
 struct _user_module {
-  void      * file_handle;
-  char      * parameters;
-  char      * name;
-  int      (* user_module_load)(struct config_elements * config, char ** name, char ** parameters);
-  int      (* user_module_unload)(struct config_elements * config);
-  int      (* user_module_init)(struct config_elements * config, const char * parameters, void ** cls);
-  int      (* user_module_close)(struct config_elements * config, void * cls);
-  char  ** (* user_module_get_list)(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls);
-  char  *  (* user_module_get)(const char * username, int * result, void * cls);
-  int      (* user_module_add)(const char * str_new_user, void * cls);
-  int      (* user_module_update)(const char * username, const char * str_user, void * cls);
-  int      (* user_module_update_profile)(const char * username, const char * str_user, void * cls);
-  int      (* user_module_delete)(const char * username, void * cls);
-  int      (* user_module_check_password)(const char * username, const char * password, void * cls);
-  int      (* user_module_update_password)(const char * username, const char * new_password, void * cls);
+  void     * file_handle;
+  char     * name;
+  char     * display_name;
+  char     * description;
+  char     * parameters;
+  int     (* user_module_load)(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters);
+  int     (* user_module_unload)(struct config_elements * config);
+  int     (* user_module_init)(struct config_elements * config, const char * parameters, void ** cls);
+  int     (* user_module_close)(struct config_elements * config, void * cls);
+  char ** (* user_module_get_list)(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls);
+  char *  (* user_module_get)(const char * username, int * result, void * cls);
+  int     (* user_module_add)(const char * str_new_user, void * cls);
+  int     (* user_module_update)(const char * username, const char * str_user, void * cls);
+  int     (* user_module_update_profile)(const char * username, const char * str_user, void * cls);
+  int     (* user_module_delete)(const char * username, void * cls);
+  int     (* user_module_check_password)(const char * username, const char * password, void * cls);
+  int     (* user_module_update_password)(const char * username, const char * new_password, void * cls);
 };
 
 struct _user_module_instance {
@@ -91,20 +93,22 @@ struct _user_module_instance {
 };
 
 struct _client_module {
-  void      * file_handle;
-  char      * name;
-  char      * parameters;
-  int      (* client_module_load)(struct config_elements * config, char ** name, char ** parameters);
-  int      (* client_module_unload)(struct config_elements * config);
-  int      (* client_module_init)(struct config_elements * config, const char * parameters, void ** cls);
-  int      (* client_module_close)(struct config_elements * config, void * cls);
-  char  ** (* client_module_get_list)(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls);
-  char   * (* client_module_get)(const char * client_id, int * result, void * cls);
-  int      (* client_module_add)(const char * str_new_client, void * cls);
-  int      (* client_module_update)(const char * client_id, const char * str_client, void * cls);
-  int      (* client_module_delete)(const char * client_id, void * cls);
-  int      (* client_module_check_password)(const char * client_id, const char * password, void * cls);
-  int      (* client_module_update_password)(const char * client_id, const char * new_password, void * cls);
+  void     * file_handle;
+  char     * name;
+  char     * display_name;
+  char     * description;
+  char     * parameters;
+  int     (* client_module_load)(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters);
+  int     (* client_module_unload)(struct config_elements * config);
+  int     (* client_module_init)(struct config_elements * config, const char * parameters, void ** cls);
+  int     (* client_module_close)(struct config_elements * config, void * cls);
+  char ** (* client_module_get_list)(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls);
+  char  * (* client_module_get)(const char * client_id, int * result, void * cls);
+  int     (* client_module_add)(const char * str_new_client, void * cls);
+  int     (* client_module_update)(const char * client_id, const char * str_client, void * cls);
+  int     (* client_module_delete)(const char * client_id, void * cls);
+  int     (* client_module_check_password)(const char * client_id, const char * password, void * cls);
+  int     (* client_module_update_password)(const char * client_id, const char * new_password, void * cls);
 };
 
 struct _client_module_instance {
@@ -115,15 +119,18 @@ struct _client_module_instance {
 };
 
 struct _user_auth_scheme_module {
-  void      * file_handle;
-  char      * name;
-  char      * parameters;
-  int      (* user_auth_scheme_module_load)(struct config_elements * config, char ** name, char ** parameters);
-  int      (* user_auth_scheme_module_unload)(struct config_elements * config);
-  int      (* user_auth_scheme_module_init)(struct config_elements * config, const char * parameters, void ** cls);
-  int      (* user_auth_scheme_module_close)(struct config_elements * config, void * cls);
-  int      (* user_auth_scheme_module_trigger)(const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls);
-  int      (* user_auth_scheme_module_validate)(const char * username, const char * scheme_data, void * cls);
+  void * file_handle;
+  char * name;
+  char * display_name;
+  char * description;
+  char * parameters;
+  int (* user_auth_scheme_module_load)(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters);
+  int (* user_auth_scheme_module_unload)(struct config_elements * config);
+  int (* user_auth_scheme_module_init)(struct config_elements * config, const char * parameters, void ** cls);
+  int (* user_auth_scheme_module_close)(struct config_elements * config, void * cls);
+  int (* user_auth_scheme_module_trigger)(const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls);
+  int (* user_auth_scheme_module_validate)(const char * username, const char * scheme_data, void * cls);
+  int (* user_can_use_scheme)(const char * username, void * cls);
 };
 
 struct _user_auth_scheme_module_instance {
@@ -140,9 +147,11 @@ struct config_plugin;
 
 struct _plugin_module {
   void * file_handle;
-  char * parameters;
   char * name;
-  int (* plugin_module_load)(struct config_plugin * config, char ** name, char ** parameters);
+  char * display_name;
+  char * description;
+  char * parameters;
+  int (* plugin_module_load)(struct config_plugin * config, char ** name, char ** display_name, char ** description, char ** parameters);
   int (* plugin_module_unload)(struct config_plugin * config);
   int (* plugin_module_init)(struct config_plugin * config, const char * parameters, void ** cls);
   int (* plugin_module_close)(struct config_plugin * config, void * cls);
