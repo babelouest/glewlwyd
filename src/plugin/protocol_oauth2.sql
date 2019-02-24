@@ -13,6 +13,7 @@ CREATE TABLE `gpg_code` (
   `gpgc_code_hash` VARCHAR(512) NOT NULL,
   `gpgc_expires_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `gpgc_issued_for` VARCHAR(256), -- IP address or hostname
+  `gpgc_user_agent` VARCHAR(256),
   `gpgc_enabled` TINYINT(1) DEFAULT 1
 );
 CREATE INDEX `i_gpgc_code_hash` ON `gpg_code`(`gpgc_code_hash`);
@@ -36,6 +37,7 @@ CREATE TABLE `gpg_refresh_token` (
   `gpgr_duration` INT(11),
   `gpgr_rolling_expiration` TINYINT(1) DEFAULT 0,
   `gpgr_issued_for` VARCHAR(256), -- IP address or hostname
+  `gpgr_user_agent` VARCHAR(256),
   `gpgr_token_hash` VARCHAR(512) NOT NULL,
   `gpgr_enabled` TINYINT(1) DEFAULT 1,
   FOREIGN KEY(`gpgc_id`) REFERENCES `gpg_code`(`gpgc_id`) ON DELETE CASCADE
@@ -58,6 +60,7 @@ CREATE TABLE `gpg_access_token` (
   `gpga_client_id` VARCHAR(256),
   `gpga_issued_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `gpga_issued_for` VARCHAR(256), -- IP address or hostname
+  `gpga_user_agent` VARCHAR(256),
   FOREIGN KEY(`gpgr_id`) REFERENCES `gpg_refresh_token`(`gpgr_id`) ON DELETE CASCADE
 );
 

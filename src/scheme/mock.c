@@ -31,11 +31,13 @@
 #include <orcania.h>
 #include "../glewlwyd-common.h"
 
-int user_auth_scheme_module_load(struct config_elements * config, char ** name, char ** parameters) {
+int user_auth_scheme_module_load(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters) {
   int ret = G_OK;
   
-  if (name != NULL && parameters != NULL) {
+  if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
     *name = o_strdup("mock");
+    *display_name = o_strdup("Mock scheme module");
+    *description = o_strdup("Mock scheme module for glewlwyd tests");
     *parameters = o_strdup("{\"mock-value\":{\"type\":\"string\",\"mandatory\":true},\"mock-param-string\":{\"type\":\"string\",\"mandatory\":true},\"mock-param-number\":{\"type\":\"number\",\"mandatory\":false},\"mock-param-boolean\":{\"type\":\"boolean\",\"mandatory\":true},\"mock-param-list\":{\"type\":\"list\",\"values\":[\"elt1\",\"elt2\",\"elt3\"],\"mandatory\":true}}");
   } else {
     ret = G_ERROR_PARAM;
@@ -77,4 +79,8 @@ int user_auth_scheme_module_validate(const char * username, const char * scheme_
   }
   json_decref(j_scheme);
   return ret;
+}
+
+int user_can_use_scheme(const char * username, void * cls) {
+  return G_OK;
 }

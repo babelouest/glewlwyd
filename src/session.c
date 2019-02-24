@@ -237,7 +237,7 @@ json_t * get_user_for_session(struct config_elements * config, const char * sess
   return j_return;
 }
 
-int user_session_update(struct config_elements * config, const char * session_uid, const char * username, const char * scheme_type, const char * scheme_name) {
+int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * username, const char * scheme_type, const char * scheme_name) {
   json_t * j_query, * j_session = get_session_for_username(config, session_uid, username);
   struct _user_auth_scheme_module_instance * scheme_instance = NULL;
   int res, ret;
@@ -251,7 +251,7 @@ int user_session_update(struct config_elements * config, const char * session_ui
       // Create session for user if not exist
       expiration_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE)):msprintf("%u", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
       last_login_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
-      j_query = json_pack("{sss{sssss{ss}s{ss}}}",
+      j_query = json_pack("{sss{sssssss{ss}s{ss}}}",
                           "table",
                           GLEWLWYD_TABLE_USER_SESSION,
                           "values",
@@ -259,6 +259,8 @@ int user_session_update(struct config_elements * config, const char * session_ui
                             session_uid_hash,
                             "gus_username",
                             username,
+                            "gus_user_agent",
+                            user_agent!=NULL?user_agent:"",
                             "gus_expiration",
                               "raw",
                               expiration_clause,
@@ -279,13 +281,15 @@ int user_session_update(struct config_elements * config, const char * session_ui
     } else {
       // Refresh session for user
       last_login_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
-      j_query = json_pack("{sss{s{ss}}s{ssss}}",
+      j_query = json_pack("{sss{s{ss}ss}s{ssss}}",
                           "table",
                           GLEWLWYD_TABLE_USER_SESSION,
                           "set",
                             "gus_last_login",
                               "raw",
                               last_login_clause,
+                            "gus_user_agent",
+                            user_agent!=NULL?user_agent:"",
                           "where",
                             "gus_uuid",
                             session_uid_hash,

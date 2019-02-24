@@ -21,6 +21,7 @@ CREATE TABLE `g_user_module_instance` (
   `gumi_module` VARCHAR(128) NOT NULL,
   `gumi_order` INT(11) NOT NULL,
   `gumi_name` VARCHAR(128) NOT NULL,
+  `gumi_display_name` VARCHAR(256) DEFAULT '',
   `gumi_parameters` TINYBLOB
 );
 
@@ -29,7 +30,7 @@ CREATE TABLE `g_user_auth_scheme_module_instance` (
   `guasmi_module` VARCHAR(128) NOT NULL,
   `guasmi_expiration` INT(11) NOT NULL DEFAULT 0,
   `guasmi_name` VARCHAR(128) NOT NULL,
-  `guasmi_display_name` VARCHAR(256),
+  `guasmi_display_name` VARCHAR(256) DEFAULT '',
   `guasmi_parameters` TINYBLOB
 );
 
@@ -38,6 +39,7 @@ CREATE TABLE `g_client_module_instance` (
   `gcmi_module` VARCHAR(128) NOT NULL,
   `gcmi_order` INT(11) NOT NULL,
   `gcmi_name` VARCHAR(128) NOT NULL,
+  `gcmi_display_name` VARCHAR(256) DEFAULT '',
   `gcmi_parameters` TINYBLOB
 );
 
@@ -45,12 +47,14 @@ CREATE TABLE `g_plugin_module_instance` (
   `gp_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `gp_module` VARCHAR(128) NOT NULL,
   `gp_name` VARCHAR(128) NOT NULL,
+  `gp_display_name` VARCHAR(256) DEFAULT '',
   `gp_parameters` MEDIUMBLOB
 );
 
 CREATE TABLE `g_user_session` (
   `gus_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `gus_uuid` VARCHAR(128) NOT NULL,
+  `gus_user_agent` VARCHAR(256),
   `gus_username` VARCHAR(256) NOT NULL,
   `gus_expiration` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `gus_last_login` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -76,7 +80,7 @@ CREATE INDEX `i_g_user_session_scheme_expiration` ON `g_user_session_scheme`(`gu
 CREATE TABLE `g_scope` (
   `gs_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `gs_name` VARCHAR(128) NOT NULL UNIQUE,
-  `gs_display_name` VARCHAR(256),
+  `gs_display_name` VARCHAR(256) DEFAULT '',
   `gs_description` VARCHAR(512),
   `gs_password_required` TINYINT(1) DEFAULT 1,
   `gs_enabled` TINYINT(1) DEFAULT 1
@@ -85,7 +89,7 @@ CREATE TABLE `g_scope` (
 CREATE TABLE `g_user_auth_scheme_group` (
   `guasg_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `guasg_name` VARCHAR(128) NOT NULL,
-  `guasg_display_name` VARCHAR(256),
+  `guasg_display_name` VARCHAR(256) DEFAULT '',
   `guasg_description` VARCHAR(512)
 );
 
@@ -117,12 +121,12 @@ CREATE TABLE `g_client_user_scope` (
 CREATE INDEX `i_g_client_user_scope_username` ON `g_client_user_scope`(`gcus_username`);
 CREATE INDEX `i_g_client_user_scope_client_id` ON `g_client_user_scope`(`gcus_client_id`);
 
-INSERT INTO `g_user_module_instance` (`gumi_module`, `gumi_name`, `gumi_order`, `gumi_parameters`) VALUES ('mock', 'mock', 0, '{"mock-param-string":"str1","mock-param-number":42,"mock-param-boolean":true,"mock-param-list":"elt1"}');
+INSERT INTO `g_user_module_instance` (`gumi_module`, `gumi_name`, `gumi_display_name`, `gumi_order`, `gumi_parameters`) VALUES ('mock', 'mock', 'Mock user module', 0, '{"mock-param-string":"str1","mock-param-number":42,"mock-param-boolean":true,"mock-param-list":"elt1"}');
 INSERT INTO `g_user_auth_scheme_module_instance` (`guasmi_module`, `guasmi_name`, `guasmi_display_name`, `guasmi_expiration`, `guasmi_parameters`) VALUES ('mock', 'mock_scheme_42', 'Mock 42', 600, '{"mock-value":"42","mock-param-string":"str1","mock-param-number":42,"mock-param-boolean":true,"mock-param-list":"elt2"}');
 INSERT INTO `g_user_auth_scheme_module_instance` (`guasmi_module`, `guasmi_name`, `guasmi_display_name`, `guasmi_expiration`, `guasmi_parameters`) VALUES ('mock', 'mock_scheme_88', 'Mock 88', 600, '{"mock-value":"88","mock-param-string":"str1","mock-param-number":88,"mock-param-boolean":true,"mock-param-list":"elt2"}');
 INSERT INTO `g_user_auth_scheme_module_instance` (`guasmi_module`, `guasmi_name`, `guasmi_display_name`, `guasmi_expiration`, `guasmi_parameters`) VALUES ('mock', 'mock_scheme_95', 'Mock 95', 300, '{"mock-value":"95","mock-param-string":"str1","mock-param-number":88,"mock-param-boolean":true,"mock-param-list":"elt2"}');
-INSERT INTO `g_client_module_instance` (`gcmi_module`, `gcmi_name`, `gcmi_order`, `gcmi_parameters`) VALUES ('mock', 'mock', 0, '{"mock-param-string":"str1","mock-param-number":42,"mock-param-boolean":true,"mock-param-list":"elt3"}');
-INSERT INTO `g_plugin_module_instance` (`gp_module`, `gp_name`, `gp_parameters`) VALUES ('oauth2-glewlwyd', 'glwd-1', '{"url":"glwd","jwt-type":"sha","jwt-key-size":"256","key":"secret","access-token-duration":3600,"refresh-token-duration":1209600,"refresh-token-rolling":true,"auth-type-code-enabled":true,"auth-type-implicit-enabled":true,"auth-type-password-enabled":true,"auth-type-client-enabled":true,"auth-type-refresh-enabled":true,"scope":[{"name":"g_profile","refresh-token-rolling":true},{"name":"g_mock_1","refresh-token-rolling":true},{"name":"g_mock_2","refresh-token-rolling":false,"refresh-token-duration":7200}]}');
+INSERT INTO `g_client_module_instance` (`gcmi_module`, `gcmi_name`, `gcmi_display_name`, `gcmi_order`, `gcmi_parameters`) VALUES ('mock', 'mock', 'Mock client module', 0, '{"mock-param-string":"str1","mock-param-number":42,"mock-param-boolean":true,"mock-param-list":"elt3"}');
+INSERT INTO `g_plugin_module_instance` (`gp_module`, `gp_name`, `gp_display_name`, `gp_parameters`) VALUES ('oauth2-glewlwyd', 'glwd', 'OAuth2 Glewlwyd plugin', '{"url":"glwd","jwt-type":"sha","jwt-key-size":"256","key":"secret","access-token-duration":3600,"refresh-token-duration":1209600,"refresh-token-rolling":true,"auth-type-code-enabled":true,"auth-type-implicit-enabled":true,"auth-type-password-enabled":true,"auth-type-client-enabled":true,"auth-type-refresh-enabled":true,"scope":[{"name":"g_profile","refresh-token-rolling":true},{"name":"g_mock_1","refresh-token-rolling":true},{"name":"g_mock_2","refresh-token-rolling":false,"refresh-token-duration":7200}]}');
 INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_password_required`) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 1);
 INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_password_required`) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1);
 INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_password_required`) VALUES ('scope1', 'Glewlwyd mock scope with password', 'Glewlwyd scope 1 scope description', 1);
