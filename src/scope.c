@@ -353,10 +353,17 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
                 }
               }
               if (json_array_size(j_scheme_remove) > 0) {
-                for (index_scheme = json_array_size(j_scheme_remove) - 1; index_scheme >= 0; index_scheme--) {
-                  json_array_remove(j_group, index_scheme);
-                }
-                json_decref(j_scheme_remove);
+                index_scheme = json_array_size(j_scheme_remove);
+                do {
+                  index_scheme--;
+                  json_array_remove(j_group, json_integer_value(json_array_get(j_scheme_remove, index_scheme)));
+                } while (index_scheme != 0);
+              }
+              json_decref(j_scheme_remove);
+              if (!json_array_size(j_group)) {
+                json_object_set(j_scope, "available", json_false());
+                json_object_clear(json_object_get(j_scope, "schemes"));
+                break;
               }
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error allocating resources for j_scheme_remove");
