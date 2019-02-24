@@ -82,5 +82,9 @@ int user_auth_scheme_module_validate(const char * username, const char * scheme_
 }
 
 int user_can_use_scheme(const char * username, void * cls) {
-  return G_OK;
+  if (0 == o_strcmp(username, json_string_value(json_object_get((json_t *)cls, "mock-user-forbidden")))) {
+    return 0;
+  } else {
+    return 1;
+  }
 }
