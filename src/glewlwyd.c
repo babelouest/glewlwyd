@@ -47,26 +47,29 @@
  */
 int main (int argc, char ** argv) {
   struct config_elements * config = o_malloc(sizeof(struct config_elements));
-  struct config_plugin * config_p = o_malloc(sizeof(struct config_plugin));
   int res;
   
   srand(time(NULL));
-  if (config == NULL || config_p == NULL) {
+  if (config == NULL) {
     fprintf(stderr, "Memory error - config\n");
+    return 1;
+  } else if ((config->config_p = o_malloc(sizeof(struct config_plugin))) == NULL) {
+    fprintf(stderr, "Memory error - config_p\n");
+    o_free(config);
     return 1;
   }
 
   // Init plugin config structure
-  config_p->glewlwyd_config = config;
-  config_p->glewlwyd_callback_add_plugin_endpoint = &glewlwyd_callback_add_plugin_endpoint;
-  config_p->glewlwyd_callback_remove_plugin_endpoint = &glewlwyd_callback_remove_plugin_endpoint;
-  config_p->glewlwyd_callback_check_session_valid = &glewlwyd_callback_check_session_valid;
-  config_p->glewlwyd_callback_check_user_valid = &glewlwyd_callback_check_user_valid;
-  config_p->glewlwyd_callback_check_client_valid = &glewlwyd_callback_check_client_valid;
-  config_p->glewlwyd_callback_get_client_granted_scopes = &glewlwyd_callback_get_client_granted_scopes;
-  config_p->glewlwyd_callback_get_plugin_external_url = &glewlwyd_callback_get_plugin_external_url;
-  config_p->glewlwyd_callback_get_login_url = &glewlwyd_callback_get_login_url;
-  config_p->glewlwyd_callback_generate_hash = &glewlwyd_callback_generate_hash;
+  config->config_p->glewlwyd_config = config;
+  config->config_p->glewlwyd_callback_add_plugin_endpoint = &glewlwyd_callback_add_plugin_endpoint;
+  config->config_p->glewlwyd_callback_remove_plugin_endpoint = &glewlwyd_callback_remove_plugin_endpoint;
+  config->config_p->glewlwyd_callback_check_session_valid = &glewlwyd_callback_check_session_valid;
+  config->config_p->glewlwyd_callback_check_user_valid = &glewlwyd_callback_check_user_valid;
+  config->config_p->glewlwyd_callback_check_client_valid = &glewlwyd_callback_check_client_valid;
+  config->config_p->glewlwyd_callback_get_client_granted_scopes = &glewlwyd_callback_get_client_granted_scopes;
+  config->config_p->glewlwyd_callback_get_plugin_external_url = &glewlwyd_callback_get_plugin_external_url;
+  config->config_p->glewlwyd_callback_get_login_url = &glewlwyd_callback_get_login_url;
+  config->config_p->glewlwyd_callback_generate_hash = &glewlwyd_callback_generate_hash;
   
   // Init config structure with default values
   config->config_file = NULL;
@@ -147,60 +150,60 @@ int main (int argc, char ** argv) {
   if (!build_config_from_args(argc, argv, config)) {
     fprintf(stderr, "Error reading command-line parameters\n");
     print_help(stderr);
-    exit_server(&config, config_p, GLEWLWYD_ERROR);
+    exit_server(&config, GLEWLWYD_ERROR);
   }
   
   // Then we parse configuration file
   // They have lower priority than command line parameters
   if (!build_config_from_file(config)) {
     fprintf(stderr, "Error config file\n");
-    exit_server(&config, config_p, GLEWLWYD_ERROR);
+    exit_server(&config, GLEWLWYD_ERROR);
   }
   
   // Check if all mandatory configuration variables are present and correctly typed
   if (!check_config(config)) {
     fprintf(stderr, "Error initializing configuration\n");
-    exit_server(&config, config_p, GLEWLWYD_ERROR);
+    exit_server(&config, GLEWLWYD_ERROR);
   }
   
   // Initialize user modules
   if (init_user_module_list(config) != G_OK) {
     fprintf(stderr, "Error initializing user modules\n");
-    exit_server(&config, config_p, GLEWLWYD_ERROR);
+    exit_server(&config, GLEWLWYD_ERROR);
   }
   if (load_user_module_instance_list(config) != G_OK) {
     fprintf(stderr, "Error loading user modules instances\n");
-    exit_server(&config, config_p, GLEWLWYD_ERROR);
+    exit_server(&config, GLEWLWYD_ERROR);
   }
   
   // Initialize client modules
   if (init_client_module_list(config) != G_OK) {
     fprintf(stderr, "Error initializing client modules\n");
-    exit_server(&config, config_p, GLEWLWYD_ERROR);
+    exit_server(&config, GLEWLWYD_ERROR);
   }
   if (load_client_module_instance_list(config) != G_OK) {
     fprintf(stderr, "Error loading client modules instances\n");
-    exit_server(&config, config_p, GLEWLWYD_ERROR);
+    exit_server(&config, GLEWLWYD_ERROR);
   }
   
   // Initialize user auth scheme modules
   if (init_user_auth_scheme_module_list(config) != G_OK) {
     fprintf(stderr, "Error initializing user auth scheme modules\n");
-    exit_server(&config, config_p, GLEWLWYD_ERROR);
+    exit_server(&config, GLEWLWYD_ERROR);
   }
   if (load_user_auth_scheme_module_instance_list(config) != G_OK) {
     fprintf(stderr, "Error loading user auth scheme modules instances\n");
-    exit_server(&config, config_p, GLEWLWYD_ERROR);
+    exit_server(&config, GLEWLWYD_ERROR);
   }
   
   // Initialize plugins
-  if (init_plugin_module_list(config, config_p) != G_OK) {
+  if (init_plugin_module_list(config) != G_OK) {
     fprintf(stderr, "Error initializing plugins modules\n");
-    exit_server(&config, config_p, GLEWLWYD_ERROR);
+    exit_server(&config, GLEWLWYD_ERROR);
   }
-  if (load_plugin_module_instance_list(config, config_p) != G_OK) {
+  if (load_plugin_module_instance_list(config) != G_OK) {
     fprintf(stderr, "Error loading plugins modules instances\n");
-    exit_server(&config, config_p, GLEWLWYD_ERROR);
+    exit_server(&config, GLEWLWYD_ERROR);
   }
   
   // At this point, we declare all API endpoints and configure 
@@ -249,6 +252,14 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/mod/client/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_client_module, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/client/:name/:action", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_manage_client_module, (void*)config);
 
+  // Plugin modules management
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/plugin/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_plugin_module_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/plugin/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_plugin_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/mod/plugin/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_plugin_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/plugin/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_plugin_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/mod/plugin/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_plugin_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/plugin/:name/:action", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_manage_plugin_module, (void*)config);
+
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_ZERO, &callback_glewlwyd_options, (void*)config);
@@ -283,20 +294,20 @@ int main (int argc, char ** argv) {
     pthread_mutex_unlock(&global_handler_close_lock);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error starting glewlwyd webserver");
-    exit_server(&config, config_p, GLEWLWYD_ERROR);
+    exit_server(&config, GLEWLWYD_ERROR);
   }
   if (pthread_mutex_destroy(&global_handler_close_lock) ||
       pthread_cond_destroy(&global_handler_close_cond)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error destroying global_handler_close_lock or global_handler_close_cond");
   }
-  exit_server(&config, config_p, GLEWLWYD_STOP);
+  exit_server(&config, GLEWLWYD_STOP);
   return 0;
 }
 
 /**
  * Exit properly the server by closing opened connections, databases and files
  */
-void exit_server(struct config_elements ** config, struct config_plugin * config_p, int exit_value) {
+void exit_server(struct config_elements ** config, int exit_value) {
   int i;
   
   if (config != NULL && *config != NULL) {
@@ -424,7 +435,7 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
     for (i=0; i<pointer_list_size((*config)->plugin_module_instance_list); i++) {
       struct _plugin_module_instance * instance = (struct _plugin_module_instance *)pointer_list_get_at((*config)->plugin_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->enabled && instance->module->plugin_module_close(config_p, instance->cls) != G_OK) {
+        if (instance->enabled && instance->module->plugin_module_close((*config)->config_p, instance->cls) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error plugin_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
         }
         o_free(instance->name);
@@ -437,7 +448,7 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
     for (i=0; i<pointer_list_size((*config)->plugin_module_list); i++) {
       struct _plugin_module * module = (struct _plugin_module *)pointer_list_get_at((*config)->plugin_module_list, i);
       if (module != NULL) {
-        if (module->plugin_module_unload(config_p) != G_OK) {
+        if (module->plugin_module_unload((*config)->config_p) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error plugin_module_unload for module '%s'", module->name);
         }
 #ifndef DEBUG
@@ -480,9 +491,9 @@ void exit_server(struct config_elements ** config, struct config_plugin * config
       o_free((*config)->static_file_config);
     }
     
+    o_free((*config)->config_p);
     o_free(*config);
     (*config) = NULL;
-    o_free(config_p);
   }
 
   y_close_logs();
@@ -1667,7 +1678,7 @@ struct _client_module_instance * get_client_module_instance(struct config_elemen
   return NULL;
 }
 
-int init_plugin_module_list(struct config_elements * config, struct config_plugin * config_p) {
+int init_plugin_module_list(struct config_elements * config) {
   int ret = G_OK;
   struct _plugin_module * cur_plugin_module = NULL;
   DIR * modules_directory;
@@ -1707,11 +1718,11 @@ int init_plugin_module_list(struct config_elements * config, struct config_plugi
                     cur_plugin_module->plugin_module_unload != NULL &&
                     cur_plugin_module->plugin_module_init != NULL &&
                     cur_plugin_module->plugin_module_close != NULL) {
-                  if (cur_plugin_module->plugin_module_load(config_p, &cur_plugin_module->name, &cur_plugin_module->display_name, &cur_plugin_module->description, &cur_plugin_module->parameters) == G_OK) {
+                  if (cur_plugin_module->plugin_module_load(config->config_p, &cur_plugin_module->name, &cur_plugin_module->display_name, &cur_plugin_module->description, &cur_plugin_module->parameters) == G_OK) {
                     if (pointer_list_append(config->plugin_module_list, cur_plugin_module)) {
                       y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_plugin_module->name);
                     } else {
-                      cur_plugin_module->plugin_module_unload(config_p);
+                      cur_plugin_module->plugin_module_unload(config->config_p);
                       dlclose(file_handle);
                       o_free(cur_plugin_module);
                       y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error reallocating resources for client_module_list");
@@ -1754,7 +1765,7 @@ int init_plugin_module_list(struct config_elements * config, struct config_plugi
   return ret;
 }
 
-int load_plugin_module_instance_list(struct config_elements * config, struct config_plugin * config_p) {
+int load_plugin_module_instance_list(struct config_elements * config) {
   json_t * j_query, * j_result, * j_instance;
   int res, ret, i;
   size_t index;
@@ -1768,9 +1779,9 @@ int load_plugin_module_instance_list(struct config_elements * config, struct con
                         "table",
                         GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
                         "columns",
-                          "gp_module AS module",
-                          "gp_name AS name",
-                          "gp_parameters AS parameters");
+                          "gpmi_module AS module",
+                          "gpmi_name AS name",
+                          "gpmi_parameters AS parameters");
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
@@ -1791,7 +1802,7 @@ int load_plugin_module_instance_list(struct config_elements * config, struct con
             cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
             cur_instance->module = module;
             if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
-              if (module->plugin_module_init(config_p, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
+              if (module->plugin_module_init(config->config_p, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
                 cur_instance->enabled = 1;
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
@@ -1819,4 +1830,17 @@ int load_plugin_module_instance_list(struct config_elements * config, struct con
     ret = G_ERROR;
   }
   return ret;
+}
+
+struct _plugin_module_instance * get_plugin_module_instance(struct config_elements * config, const char * name) {
+  int i;
+  struct _plugin_module_instance * cur_instance;
+
+  for (i=0; i<pointer_list_size(config->plugin_module_instance_list); i++) {
+    cur_instance = (struct _plugin_module_instance *)pointer_list_get_at(config->plugin_module_instance_list, i);
+    if (cur_instance != NULL && 0 == o_strcmp(cur_instance->name, name)) {
+      return cur_instance;
+    }
+  }
+  return NULL;
 }

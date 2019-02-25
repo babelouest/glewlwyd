@@ -36,16 +36,19 @@ misc.o: ../misc.c ../glewlwyd-common.h
 libprotocol_oauth2.so: protocol_oauth2.o misc.o ../glewlwyd-common.h
 	$(CC) -shared -Wl,-soname,libprotocol_oauth2.so -o libprotocol_oauth2.so protocol_oauth2.o misc.o $(LIBS)
 
+libprotocol_mock.so: mock.o ../glewlwyd-common.h
+	$(CC) -shared -Wl,-soname,libprotocol_mock.so -o libprotocol_mock.so mock.o $(LIBS)
+
 clean:
 	rm -f *.o *.so
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: libprotocol_oauth2.so
+debug: libprotocol_mock.so libprotocol_oauth2.so
 
 release: ADDITIONALFLAGS=-O3
 
-release:
+release: libprotocol_oauth2.so
 
 install:
 	mkdir -p $(MODULES_TARGET)

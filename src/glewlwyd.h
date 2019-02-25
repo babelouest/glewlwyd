@@ -117,7 +117,7 @@ int  build_config_from_args(int argc, char ** argv, struct config_elements * con
 int  build_config_from_file(struct config_elements * config);
 int  check_config(struct config_elements * config);
 void exit_handler(int handler);
-void exit_server(struct config_elements ** config, struct config_plugin * config_p, int exit_value);
+void exit_server(struct config_elements ** config, int exit_value);
 void print_help(FILE * output);
 char * generate_hash(struct config_elements * config, const char * digest, const char * password);
 char * get_file_content(const char * file_path);
@@ -127,11 +127,12 @@ int    load_user_auth_scheme_module_instance_list(struct config_elements * confi
 int    init_user_auth_scheme_module_list(struct config_elements * config);
 int    init_client_module_list(struct config_elements * config);
 int    load_client_module_instance_list(struct config_elements * config);
-int    init_plugin_module_list(struct config_elements * config, struct config_plugin * config_p);
-int    load_plugin_module_instance_list(struct config_elements * config, struct config_plugin * config_p);
+int    init_plugin_module_list(struct config_elements * config);
+int    load_plugin_module_instance_list(struct config_elements * config);
 struct _client_module_instance * get_client_module_instance(struct config_elements * config, const char * name);
 struct _user_module_instance * get_user_module_instance(struct config_elements * config, const char * name);
 struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * name);
+struct _plugin_module_instance * get_plugin_module_instance(struct config_elements * config, const char * name);
 
 // Modules generic functions
 int module_parameters_check(const char * module_parameters);
@@ -198,6 +199,15 @@ int set_client_module(struct config_elements * config, const char * name, json_t
 int delete_client_module(struct config_elements * config, const char * name);
 int manage_client_module(struct config_elements * config, const char * name, int action);
 
+// Plugin module functions
+json_t * get_plugin_module_list(struct config_elements * config);
+json_t * get_plugin_module(struct config_elements * config, const char * name);
+json_t * is_plugin_module_valid(struct config_elements * config, json_t * j_module, int add);
+int add_plugin_module(struct config_elements * config, json_t * j_module);
+int set_plugin_module(struct config_elements * config, const char * name, json_t * j_module);
+int delete_plugin_module(struct config_elements * config, const char * name);
+int manage_plugin_module(struct config_elements * config, const char * name, int action);
+
 // Plugin functions
 int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const char * method, const char * prefix, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
 int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, const char * method, const char * prefix, const char * url);
@@ -249,6 +259,13 @@ int callback_glewlwyd_add_client_module (const struct _u_request * request, stru
 int callback_glewlwyd_set_client_module (const struct _u_request * request, struct _u_response * response, void * client_data);
 int callback_glewlwyd_delete_client_module (const struct _u_request * request, struct _u_response * response, void * client_data);
 int callback_glewlwyd_manage_client_module (const struct _u_request * request, struct _u_response * response, void * client_data);
+
+int callback_glewlwyd_get_plugin_module_list (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_get_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_add_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_set_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_delete_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_manage_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 

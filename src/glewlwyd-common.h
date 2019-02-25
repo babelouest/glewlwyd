@@ -198,6 +198,7 @@ struct config_elements {
   char *                                      plugin_module_path;
   struct _pointer_list *                      plugin_module_list;
   struct _pointer_list *                      plugin_module_instance_list;
+  struct config_plugin *                      config_p;
 };
 
 struct config_plugin {
