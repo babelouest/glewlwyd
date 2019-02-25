@@ -1139,3 +1139,335 @@ int manage_client_module(struct config_elements * config, const char * name, int
   json_decref(j_module);
   return ret;
 }
+
+json_t * get_plugin_module_list(struct config_elements * config) {
+  int res;
+  json_t * j_query, * j_result = NULL, * j_return, * j_parameters, * j_element;
+  size_t index;
+  struct _plugin_module_instance * cur_instance;
+  
+  j_query = json_pack("{sss[ssss]ss}",
+                      "table",
+                      GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
+                      "columns",
+                        "gpmi_module AS module",
+                        "gpmi_name AS name",
+                        "gpmi_display_name AS display_name",
+                        "gpmi_parameters",
+                      "order_by",
+                      "gpmi_module,gpmi_name");
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    json_array_foreach(j_result, index, j_element) {
+      j_parameters = json_loads(json_string_value(json_object_get(j_element, "gpmi_parameters")), JSON_DECODE_ANY, NULL);
+      if (j_parameters != NULL) {
+        json_object_set_new(j_element, "parameters", j_parameters);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module_list - Error parsing parameters for module %s", json_string_value(json_object_get(j_element, "name")));
+        json_object_set_new(j_element, "parameters", json_null());
+      }
+      json_object_del(j_element, "gpmi_parameters");
+      
+      cur_instance = get_plugin_module_instance(config, json_string_value(json_object_get(j_element, "name")));
+      if (cur_instance != NULL) {
+        json_object_set(j_element, "enabled", cur_instance->enabled?json_true():json_false());
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module_list - Error instance %s not found in app config", json_string_value(json_object_get(j_element, "name")));
+        json_object_set(j_element, "enabled", json_false());
+      }
+    }
+    j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module_list - Error executing j_query");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  json_decref(j_result);
+  return j_return;
+}
+
+json_t * get_plugin_module(struct config_elements * config, const char * name) {
+  int res;
+  json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
+  struct _plugin_module_instance * cur_instance;
+  
+  j_query = json_pack("{sss[ssss]s{ss}}",
+                      "table",
+                      GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
+                      "columns",
+                        "gpmi_module AS module",
+                        "gpmi_name AS name",
+                        "gpmi_display_name AS display_name",
+                        "gpmi_parameters",
+                      "where",
+                        "gpmi_name",
+                        name);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result) > 0) {
+      j_parameters = json_loads(json_string_value(json_object_get(json_array_get(j_result, 0), "gpmi_parameters")), JSON_DECODE_ANY, NULL);
+      if (j_parameters != NULL) {
+        json_object_set_new(json_array_get(j_result, 0), "parameters", j_parameters);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module_list - Error parsing parameters for module %s", json_string_value(json_object_get(json_array_get(j_result, 0), "name")));
+        json_object_set_new(json_array_get(j_result, 0), "parameters", json_null());
+      }
+      json_object_del(json_array_get(j_result, 0), "gpmi_parameters");
+      
+      cur_instance = get_plugin_module_instance(config, name);
+      if (cur_instance != NULL) {
+        json_object_set(json_array_get(j_result, 0), "enabled", cur_instance->enabled?json_true():json_false());
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module_list - Error instance %s not found in app config", name);
+        json_object_set(json_array_get(j_result, 0), "enabled", json_false());
+      }
+      j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module_list - Error executing j_query");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  json_decref(j_result);
+  return j_return;
+}
+
+json_t * is_plugin_module_valid(struct config_elements * config, json_t * j_module, int add) {
+  json_t * j_return, * j_cur_module, * j_error_list;
+  int i, found;
+  struct _plugin_module * module;
+  char * parameters;
+  
+  if (j_module != NULL && json_is_object(j_module)) {
+    if ((j_error_list = json_array()) != NULL) {
+      if (add) {
+        if (json_object_get(j_module, "name") != NULL && json_is_string(json_object_get(j_module, "name")) && json_string_length(json_object_get(j_module, "name")) > 0 && json_string_length(json_object_get(j_module, "name")) <= 128) {
+          j_cur_module = get_plugin_module(config, json_string_value(json_object_get(j_module, "name")));
+          if (check_result_value(j_cur_module, G_OK)) {
+            json_array_append_new(j_error_list, json_string("A module instance with this name already exist"));
+          } else if (!check_result_value(j_cur_module, G_ERROR_NOT_FOUND)) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "is_plugin_module_valid - Error json_array_append_new");
+          }
+          json_decref(j_cur_module);
+        } else {
+          json_array_append_new(j_error_list, json_string("Module instance name is mandatory and must be a non empty string of at least 128 characters"));
+        }
+        if (json_object_get(j_module, "module") != NULL && json_is_string(json_object_get(j_module, "module")) && json_string_length(json_object_get(j_module, "module")) > 0 && json_string_length(json_object_get(j_module, "module")) <= 128) {
+          found = 0;
+          for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {
+            module = (struct _plugin_module *)pointer_list_get_at(config->plugin_module_list, i);
+            if (module != NULL) {
+              if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_module, "module")))) {
+                found = 1;
+                break;
+              }
+            }
+          }
+          if (!found) {
+            json_array_append_new(j_error_list, json_string("Module name doesn't exist"));
+          }
+        } else {
+          json_array_append_new(j_error_list, json_string("Module is mandatory and must be a non empty string of at least 128 characters"));
+        }
+      }
+      if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) == 0 || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
+        json_array_append_new(j_error_list, json_string("display_name is optional and must be a non empty string of at least 256 characters"));
+      }
+      if (json_object_get(j_module, "parameters") == NULL || !json_is_object(json_object_get(j_module, "parameters"))) {
+        json_array_append_new(j_error_list, json_string("Parameters is mandatory and must be a json object of at least 16k characters"));
+      } else {
+        parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
+        if (parameters == NULL || o_strlen(parameters) > 16*1024) {
+          json_array_append_new(j_error_list, json_string("Parameters is mandatory and must be a json object of at least 16k characters"));
+        }
+        o_free(parameters);
+      }
+      if (json_array_size(j_error_list) > 0) {
+        j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error_list);
+      } else {
+        j_return = json_pack("{si}", "result", G_OK);
+      }
+      json_decref(j_error_list);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "is_plugin_module_valid - Error allocating resources for j_error_list");
+      j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+    }
+  } else {
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "errors", "module must be a JSON object");
+  }
+  return j_return;
+}
+
+int add_plugin_module(struct config_elements * config, json_t * j_module) {
+  struct _plugin_module * module;
+  struct _plugin_module_instance * cur_instance;
+  json_t * j_query;
+  int res, ret, i;
+  char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
+  
+  j_query = json_pack("{sss{sOsOsOss}}",
+                      "table",
+                      GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
+                      "values",
+                        "gpmi_module",
+                        json_object_get(j_module, "module"),
+                        "gpmi_name",
+                        json_object_get(j_module, "name"),
+                        "gpmi_display_name",
+                        json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
+                        "gpmi_parameters",
+                        parameters);
+  o_free(parameters);
+  res = h_insert(config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    module = NULL;
+    for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {
+      module = (struct _plugin_module *)pointer_list_get_at(config->plugin_module_list, i);
+      if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_module, "module")))) {
+        break;
+      } else {
+        module = NULL;
+      }
+    }
+    if (module != NULL) {
+      cur_instance = o_malloc(sizeof(struct _plugin_module_instance));
+      if (cur_instance != NULL) {
+        cur_instance->cls = NULL;
+        cur_instance->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
+        cur_instance->module = module;
+        cur_instance->enabled = 0;
+        if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
+          if (module->plugin_module_init(config->config_p, json_string_value(json_object_get(j_module, "parameters")), &cur_instance->cls) == G_OK) {
+            cur_instance->enabled = 1;
+            ret = G_OK;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
+            ret = G_ERROR;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "add_plugin_module - Error reallocating resources for plugin_module_instance_list");
+          o_free(cur_instance->name);
+          ret = G_ERROR_MEMORY;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "add_plugin_module - Error allocating resources for cur_instance");
+        ret = G_ERROR_MEMORY;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "add_plugin_module - Module '%s' not found", json_string_value(json_object_get(j_module, "module")));
+      ret = G_ERROR;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "add_plugin_module - Error executing j_query");
+    ret = G_ERROR_DB;
+  }
+  return ret;
+}
+
+int set_plugin_module(struct config_elements * config, const char * name, json_t * j_module) {
+  json_t * j_query;
+  int res, ret;
+  char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
+  
+  j_query = json_pack("{sss{sOss}s{ss}}",
+                      "table",
+                      GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
+                      "set",
+                        "gpmi_display_name",
+                        json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
+                        "gpmi_parameters",
+                        parameters,
+                      "where",
+                        "gpmi_name",
+                        name);
+  o_free(parameters);
+  res = h_update(config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    ret = G_OK;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "add_plugin_module - Error executing j_query");
+    ret = G_ERROR_DB;
+  }
+  return ret;
+}
+
+int delete_plugin_module(struct config_elements * config, const char * name) {
+  int ret, res;
+  json_t * j_query;
+  struct _plugin_module_instance * instance;
+  
+  if (manage_plugin_module(config, name, GLEWLWYD_MODULE_ACTION_STOP) == G_OK) {
+    instance = get_plugin_module_instance(config, name);
+    if (pointer_list_remove_pointer(config->plugin_module_instance_list, instance)) {
+      o_free(instance->name);
+      o_free(instance);
+      j_query = json_pack("{sss{ss}}",
+                          "table",
+                          GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
+                          "where",
+                            "gpmi_name",
+                            name);
+      res = h_delete(config->conn, j_query, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        ret = G_OK;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "delete_plugin_module - Error executing j_query");
+        ret = G_ERROR_DB;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "delete_plugin_module - Error pointer_list_remove_pointer");
+      ret = G_ERROR;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "delete_plugin_module - Error action not found");
+    ret = G_ERROR;
+  }
+  return ret;
+}
+
+int manage_plugin_module(struct config_elements * config, const char * name, int action) {
+  struct _plugin_module_instance * instance = get_plugin_module_instance(config, name);
+  json_t * j_module = get_plugin_module(config, name);
+  int ret;
+  
+  if (check_result_value(j_module, G_OK) && instance != NULL) {
+    if (action == GLEWLWYD_MODULE_ACTION_START) {
+      if (!instance->enabled) {
+        if (instance->module->plugin_module_init(config->config_p, json_string_value(json_object_get(j_module, "parameters")), &instance->cls) == G_OK) {
+          instance->enabled = 1;
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
+          ret = G_ERROR;
+        }
+      } else {
+        ret = G_ERROR_PARAM;
+      }
+    } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
+      if (instance->enabled) {
+        if (instance->module->plugin_module_close(config->config_p, instance->cls) == G_OK) {
+          instance->enabled = 0;
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
+          ret = G_ERROR;
+        }
+      } else {
+        ret = G_ERROR_PARAM;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error action not found");
+      ret = G_ERROR_PARAM;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error module not found");
+    ret = G_ERROR_PARAM;
+  }
+  json_decref(j_module);
+  return ret;
+}
