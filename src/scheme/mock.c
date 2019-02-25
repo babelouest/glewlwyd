@@ -64,12 +64,22 @@ int user_auth_scheme_module_trigger(const char * username, const char * scheme_t
   return G_OK;
 }
 
+int user_can_use_scheme(const char * username, void * cls) {
+  if (0 == o_strcmp(username, json_string_value(json_object_get((json_t *)cls, "mock-user-forbidden")))) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
 int user_auth_scheme_module_validate(const char * username, const char * scheme_data, void * cls) {
   json_t * j_scheme = json_loads(scheme_data, JSON_DECODE_ANY, NULL);
   int ret;
   
   if (j_scheme != NULL) {
-    if (json_object_get(j_scheme, "code") != NULL && json_is_string(json_object_get(j_scheme, "code")) && 0 == o_strcmp(json_string_value(json_object_get(j_scheme, "code")), json_string_value(json_object_get((json_t *)cls, "mock-value")))) {
+    if (!user_can_use_scheme(username, cls)) {
+      ret = G_ERROR_UNAUTHORIZED;
+    } else if (json_object_get(j_scheme, "code") != NULL && json_is_string(json_object_get(j_scheme, "code")) && 0 == o_strcmp(json_string_value(json_object_get(j_scheme, "code")), json_string_value(json_object_get((json_t *)cls, "mock-value")))) {
       ret = G_OK;
     } else {
       ret = G_ERROR_UNAUTHORIZED;
@@ -79,12 +89,4 @@ int user_auth_scheme_module_validate(const char * username, const char * scheme_
   }
   json_decref(j_scheme);
   return ret;
-}
-
-int user_can_use_scheme(const char * username, void * cls) {
-  if (0 == o_strcmp(username, json_string_value(json_object_get((json_t *)cls, "mock-user-forbidden")))) {
-    return 0;
-  } else {
-    return 1;
-  }
 }
