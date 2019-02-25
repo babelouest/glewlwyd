@@ -508,3 +508,301 @@ int callback_glewlwyd_manage_user_module (const struct _u_request * request, str
   json_decref(j_search_module);
   return U_CALLBACK_CONTINUE;
 }
+
+int callback_glewlwyd_get_user_auth_scheme_module_list (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data) {
+  struct config_elements * config = (struct config_elements *)user_auth_scheme_data;
+  json_t * j_module;
+  
+  j_module = get_user_auth_scheme_module_list(config);
+  if (check_result_value(j_module, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_module, "module"));
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_auth_scheme_module_list - Error get_user_auth_scheme_module_list");
+    response->status = 500;
+  }
+  json_decref(j_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_get_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data) {
+  struct config_elements * config = (struct config_elements *)user_auth_scheme_data;
+  json_t * j_module;
+  
+  j_module = get_user_auth_scheme_module(config, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_module, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_module, "module"));
+  } else if (check_result_value(j_module, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_auth_scheme_module - Error get_user_auth_scheme_module");
+    response->status = 500;
+  }
+  json_decref(j_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_add_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data) {
+  struct config_elements * config = (struct config_elements *)user_auth_scheme_data;
+  json_t * j_module, * j_module_valid;
+  
+  j_module = ulfius_get_json_body_request(request, NULL);
+  if (j_module != NULL) {
+    j_module_valid = is_user_auth_scheme_module_valid(config, j_module, 1);
+    if (check_result_value(j_module_valid, G_OK)) {
+      if (add_user_auth_scheme_module(config, j_module) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user_auth_scheme_module - Error add_user_auth_scheme_module");
+        response->status = 500;
+      }
+    } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
+      ulfius_set_json_body_response(response, 400, json_object_get(j_module_valid, "error"));
+    } else if (!check_result_value(j_module_valid, G_OK)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user_auth_scheme_module - Error is_user_auth_scheme_module_valid");
+      response->status = 500;
+    }
+    json_decref(j_module_valid);
+  } else {
+    response->status = 400;
+  }
+  json_decref(j_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_set_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data) {
+  struct config_elements * config = (struct config_elements *)user_auth_scheme_data;
+  json_t * j_module, * j_module_valid, * j_search_module;
+  
+  j_search_module = get_user_auth_scheme_module(config, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_search_module, G_OK)) {
+    j_module = ulfius_get_json_body_request(request, NULL);
+    if (j_module != NULL) {
+      j_module_valid = is_user_auth_scheme_module_valid(config, j_module, 0);
+      if (check_result_value(j_module_valid, G_OK)) {
+        if (set_user_auth_scheme_module(config, u_map_get(request->map_url, "name"), j_module) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_auth_scheme_module - Error set_user_auth_scheme_module");
+          response->status = 500;
+        }
+      } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
+        ulfius_set_json_body_response(response, 400, json_object_get(j_module_valid, "error"));
+      } else if (!check_result_value(j_module_valid, G_OK)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_auth_scheme_module - Error is_user_auth_scheme_module_valid");
+        response->status = 500;
+      }
+      json_decref(j_module_valid);
+    } else {
+      response->status = 400;
+    }
+    json_decref(j_module);
+  } else if (check_result_value(j_search_module, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_auth_scheme_module - Error get_user_auth_scheme_module");
+    response->status = 500;
+  }
+  json_decref(j_search_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_delete_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data) {
+  struct config_elements * config = (struct config_elements *)user_auth_scheme_data;
+  json_t * j_search_module;
+  
+  j_search_module = get_user_auth_scheme_module(config, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_search_module, G_OK)) {
+    if (delete_user_auth_scheme_module(config, u_map_get(request->map_url, "name")) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user_auth_scheme_module - Error delete_user_auth_scheme_module");
+      response->status = 500;
+    }
+  } else if (check_result_value(j_search_module, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user_auth_scheme_module - Error get_user_auth_scheme_module");
+    response->status = 500;
+  }
+  json_decref(j_search_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_manage_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data) {
+  struct config_elements * config = (struct config_elements *)user_auth_scheme_data;
+  json_t * j_search_module;
+  int res;
+  
+  j_search_module = get_user_auth_scheme_module(config, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_search_module, G_OK)) {
+    if (0 == o_strcmp("enable", u_map_get(request->map_url, "action"))) {
+      res = manage_user_auth_scheme_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_START);
+      if (res == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_auth_scheme_module - Error manage_user_auth_scheme_module enable");
+        response->status = 500;
+      }
+    } else if (0 == o_strcmp("disable", u_map_get(request->map_url, "action"))) {
+      res = manage_user_auth_scheme_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_STOP);
+      if (res == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_auth_scheme_module - Error manage_user_auth_scheme_module disable");
+        response->status = 500;
+      }
+    } else {
+      response->status = 400;
+    }
+  } else if (check_result_value(j_search_module, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_auth_scheme_module - Error get_user_auth_scheme_module");
+    response->status = 500;
+  }
+  json_decref(j_search_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_get_client_module_list (const struct _u_request * request, struct _u_response * response, void * client_data) {
+  struct config_elements * config = (struct config_elements *)client_data;
+  json_t * j_module;
+  
+  j_module = get_client_module_list(config);
+  if (check_result_value(j_module, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_module, "module"));
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_client_module_list - Error get_client_module_list");
+    response->status = 500;
+  }
+  json_decref(j_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_get_client_module (const struct _u_request * request, struct _u_response * response, void * client_data) {
+  struct config_elements * config = (struct config_elements *)client_data;
+  json_t * j_module;
+  
+  j_module = get_client_module(config, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_module, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_module, "module"));
+  } else if (check_result_value(j_module, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_client_module - Error get_client_module");
+    response->status = 500;
+  }
+  json_decref(j_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_add_client_module (const struct _u_request * request, struct _u_response * response, void * client_data) {
+  struct config_elements * config = (struct config_elements *)client_data;
+  json_t * j_module, * j_module_valid;
+  
+  j_module = ulfius_get_json_body_request(request, NULL);
+  if (j_module != NULL) {
+    j_module_valid = is_client_module_valid(config, j_module, 1);
+    if (check_result_value(j_module_valid, G_OK)) {
+      if (add_client_module(config, j_module) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client_module - Error add_client_module");
+        response->status = 500;
+      }
+    } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
+      ulfius_set_json_body_response(response, 400, json_object_get(j_module_valid, "error"));
+    } else if (!check_result_value(j_module_valid, G_OK)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client_module - Error is_client_module_valid");
+      response->status = 500;
+    }
+    json_decref(j_module_valid);
+  } else {
+    response->status = 400;
+  }
+  json_decref(j_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_set_client_module (const struct _u_request * request, struct _u_response * response, void * client_data) {
+  struct config_elements * config = (struct config_elements *)client_data;
+  json_t * j_module, * j_module_valid, * j_search_module;
+  
+  j_search_module = get_client_module(config, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_search_module, G_OK)) {
+    j_module = ulfius_get_json_body_request(request, NULL);
+    if (j_module != NULL) {
+      j_module_valid = is_client_module_valid(config, j_module, 0);
+      if (check_result_value(j_module_valid, G_OK)) {
+        if (set_client_module(config, u_map_get(request->map_url, "name"), j_module) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client_module - Error set_client_module");
+          response->status = 500;
+        }
+      } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
+        ulfius_set_json_body_response(response, 400, json_object_get(j_module_valid, "error"));
+      } else if (!check_result_value(j_module_valid, G_OK)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client_module - Error is_client_module_valid");
+        response->status = 500;
+      }
+      json_decref(j_module_valid);
+    } else {
+      response->status = 400;
+    }
+    json_decref(j_module);
+  } else if (check_result_value(j_search_module, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client_module - Error get_client_module");
+    response->status = 500;
+  }
+  json_decref(j_search_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_delete_client_module (const struct _u_request * request, struct _u_response * response, void * client_data) {
+  struct config_elements * config = (struct config_elements *)client_data;
+  json_t * j_search_module;
+  
+  j_search_module = get_client_module(config, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_search_module, G_OK)) {
+    if (delete_client_module(config, u_map_get(request->map_url, "name")) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_client_module - Error delete_client_module");
+      response->status = 500;
+    }
+  } else if (check_result_value(j_search_module, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_client_module - Error get_client_module");
+    response->status = 500;
+  }
+  json_decref(j_search_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_manage_client_module (const struct _u_request * request, struct _u_response * response, void * client_data) {
+  struct config_elements * config = (struct config_elements *)client_data;
+  json_t * j_search_module;
+  int res;
+  
+  j_search_module = get_client_module(config, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_search_module, G_OK)) {
+    if (0 == o_strcmp("enable", u_map_get(request->map_url, "action"))) {
+      res = manage_client_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_START);
+      if (res == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_client_module - Error manage_client_module enable");
+        response->status = 500;
+      }
+    } else if (0 == o_strcmp("disable", u_map_get(request->map_url, "action"))) {
+      res = manage_client_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_STOP);
+      if (res == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_client_module - Error manage_client_module disable");
+        response->status = 500;
+      }
+    } else {
+      response->status = 400;
+    }
+  } else if (check_result_value(j_search_module, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_client_module - Error get_client_module");
+    response->status = 500;
+  }
+  json_decref(j_search_module);
+  return U_CALLBACK_CONTINUE;
+}

@@ -131,7 +131,7 @@ int    init_plugin_module_list(struct config_elements * config, struct config_pl
 int    load_plugin_module_instance_list(struct config_elements * config, struct config_plugin * config_p);
 struct _client_module_instance * get_client_module_instance(struct config_elements * config, const char * name);
 struct _user_module_instance * get_user_module_instance(struct config_elements * config, const char * name);
-struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * type, const char * name);
+struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * name);
 
 // Modules generic functions
 int module_parameters_check(const char * module_parameters);
@@ -180,6 +180,24 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
 int delete_user_module(struct config_elements * config, const char * name);
 int manage_user_module(struct config_elements * config, const char * name, int action);
 
+// User auth scheme module functions
+json_t * get_user_auth_scheme_module_list(struct config_elements * config);
+json_t * get_user_auth_scheme_module(struct config_elements * config, const char * name);
+json_t * is_user_auth_scheme_module_valid(struct config_elements * config, json_t * j_module, int add);
+int add_user_auth_scheme_module(struct config_elements * config, json_t * j_module);
+int set_user_auth_scheme_module(struct config_elements * config, const char * name, json_t * j_module);
+int delete_user_auth_scheme_module(struct config_elements * config, const char * name);
+int manage_user_auth_scheme_module(struct config_elements * config, const char * name, int action);
+
+// Client module functions
+json_t * get_client_module_list(struct config_elements * config);
+json_t * get_client_module(struct config_elements * config, const char * name);
+json_t * is_client_module_valid(struct config_elements * config, json_t * j_module, int add);
+int add_client_module(struct config_elements * config, json_t * j_module);
+int set_client_module(struct config_elements * config, const char * name, json_t * j_module);
+int delete_client_module(struct config_elements * config, const char * name);
+int manage_client_module(struct config_elements * config, const char * name, int action);
+
 // Plugin functions
 int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const char * method, const char * prefix, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
 int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, const char * method, const char * prefix, const char * url);
@@ -217,6 +235,20 @@ int callback_glewlwyd_add_user_module (const struct _u_request * request, struct
 int callback_glewlwyd_set_user_module (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_user_module (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_manage_user_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_glewlwyd_get_user_auth_scheme_module_list (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data);
+int callback_glewlwyd_get_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data);
+int callback_glewlwyd_add_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data);
+int callback_glewlwyd_set_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data);
+int callback_glewlwyd_delete_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data);
+int callback_glewlwyd_manage_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data);
+
+int callback_glewlwyd_get_client_module_list (const struct _u_request * request, struct _u_response * response, void * client_data);
+int callback_glewlwyd_get_client_module (const struct _u_request * request, struct _u_response * response, void * client_data);
+int callback_glewlwyd_add_client_module (const struct _u_request * request, struct _u_response * response, void * client_data);
+int callback_glewlwyd_set_client_module (const struct _u_request * request, struct _u_response * response, void * client_data);
+int callback_glewlwyd_delete_client_module (const struct _u_request * request, struct _u_response * response, void * client_data);
+int callback_glewlwyd_manage_client_module (const struct _u_request * request, struct _u_response * response, void * client_data);
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 
