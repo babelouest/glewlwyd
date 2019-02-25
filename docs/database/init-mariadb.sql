@@ -44,11 +44,11 @@ CREATE TABLE `g_client_module_instance` (
 );
 
 CREATE TABLE `g_plugin_module_instance` (
-  `gp_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
-  `gp_module` VARCHAR(128) NOT NULL,
-  `gp_name` VARCHAR(128) NOT NULL,
-  `gp_display_name` VARCHAR(256) DEFAULT '',
-  `gp_parameters` MEDIUMBLOB
+  `gpmi_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gpmi_module` VARCHAR(128) NOT NULL,
+  `gpmi_name` VARCHAR(128) NOT NULL,
+  `gpmi_display_name` VARCHAR(256) DEFAULT '',
+  `gpmi_parameters` MEDIUMBLOB
 );
 
 CREATE TABLE `g_user_session` (
@@ -126,7 +126,7 @@ INSERT INTO `g_user_auth_scheme_module_instance` (`guasmi_module`, `guasmi_name`
 INSERT INTO `g_user_auth_scheme_module_instance` (`guasmi_module`, `guasmi_name`, `guasmi_display_name`, `guasmi_expiration`, `guasmi_parameters`) VALUES ('mock', 'mock_scheme_88', 'Mock 88', 600, '{"mock-value":"88","mock-user-forbidden":"user2","mock-param-string":"str1","mock-param-number":88,"mock-param-boolean":true,"mock-param-list":"elt2"}');
 INSERT INTO `g_user_auth_scheme_module_instance` (`guasmi_module`, `guasmi_name`, `guasmi_display_name`, `guasmi_expiration`, `guasmi_parameters`) VALUES ('mock', 'mock_scheme_95', 'Mock 95', 300, '{"mock-value":"95","mock-param-string":"str1","mock-param-number":88,"mock-param-boolean":true,"mock-param-list":"elt2"}');
 INSERT INTO `g_client_module_instance` (`gcmi_module`, `gcmi_name`, `gcmi_display_name`, `gcmi_order`, `gcmi_parameters`) VALUES ('mock', 'mock', 'Mock client module', 0, '{"mock-param-string":"str1","mock-param-number":42,"mock-param-boolean":true,"mock-param-list":"elt3"}');
-INSERT INTO `g_plugin_module_instance` (`gp_module`, `gp_name`, `gp_display_name`, `gp_parameters`) VALUES ('oauth2-glewlwyd', 'glwd', 'OAuth2 Glewlwyd plugin', '{"url":"glwd","jwt-type":"sha","jwt-key-size":"256","key":"secret","access-token-duration":3600,"refresh-token-duration":1209600,"refresh-token-rolling":true,"auth-type-code-enabled":true,"auth-type-implicit-enabled":true,"auth-type-password-enabled":true,"auth-type-client-enabled":true,"auth-type-refresh-enabled":true,"scope":[{"name":"g_profile","refresh-token-rolling":true},{"name":"g_mock_1","refresh-token-rolling":true},{"name":"g_mock_2","refresh-token-rolling":false,"refresh-token-duration":7200}]}');
+INSERT INTO `g_plugin_module_instance` (`gpmi_module`, `gpmi_name`, `gpmi_display_name`, `gpmi_parameters`) VALUES ('oauth2-glewlwyd', 'glwd', 'OAuth2 Glewlwyd plugin', '{"url":"glwd","jwt-type":"sha","jwt-key-size":"256","key":"secret","access-token-duration":3600,"refresh-token-duration":1209600,"refresh-token-rolling":true,"auth-type-code-enabled":true,"auth-type-implicit-enabled":true,"auth-type-password-enabled":true,"auth-type-client-enabled":true,"auth-type-refresh-enabled":true,"scope":[{"name":"g_profile","refresh-token-rolling":true},{"name":"g_mock_1","refresh-token-rolling":true},{"name":"g_mock_2","refresh-token-rolling":false,"refresh-token-duration":7200}]}');
 INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_password_required`) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 1);
 INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_password_required`) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1);
 INSERT INTO `g_scope` (`gs_name`, `gs_display_name`, `gs_description`, `gs_password_required`) VALUES ('scope1', 'Glewlwyd mock scope with password', 'Glewlwyd scope 1 scope description', 1);
