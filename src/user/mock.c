@@ -108,6 +108,10 @@ int user_module_close(struct config_elements * config, void * cls) {
   return G_OK;
 }
 
+size_t user_module_count_total(struct config_elements * config, void * cls) {
+  return json_array_size((json_t *)cls);
+}
+
 char ** user_module_get_list(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls) {
   json_t * j_user;
   size_t index;

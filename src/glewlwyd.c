@@ -1142,6 +1142,7 @@ int init_user_module_list(struct config_elements * config) {
                 *(void **) (&cur_user_module->user_module_unload) = dlsym(file_handle, "user_module_unload");
                 *(void **) (&cur_user_module->user_module_init) = dlsym(file_handle, "user_module_init");
                 *(void **) (&cur_user_module->user_module_close) = dlsym(file_handle, "user_module_close");
+                *(void **) (&cur_user_module->user_module_count_total) = dlsym(file_handle, "user_module_count_total");
                 *(void **) (&cur_user_module->user_module_get_list) = dlsym(file_handle, "user_module_get_list");
                 *(void **) (&cur_user_module->user_module_get) = dlsym(file_handle, "user_module_get");
                 *(void **) (&cur_user_module->user_module_add) = dlsym(file_handle, "user_module_add");
@@ -1155,6 +1156,7 @@ int init_user_module_list(struct config_elements * config) {
                     cur_user_module->user_module_unload != NULL &&
                     cur_user_module->user_module_init != NULL &&
                     cur_user_module->user_module_close != NULL &&
+                    cur_user_module->user_module_count_total != NULL &&
                     cur_user_module->user_module_get_list != NULL &&
                     cur_user_module->user_module_get != NULL &&
                     cur_user_module->user_module_add != NULL &&
@@ -1191,6 +1193,7 @@ int init_user_module_list(struct config_elements * config) {
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_unload: %s", (cur_user_module->user_module_unload != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_init: %s", (cur_user_module->user_module_init != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_close: %s", (cur_user_module->user_module_close != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_count_total: %s", (cur_user_module->user_module_count_total != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get_list: %s", (cur_user_module->user_module_get_list != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get: %s", (cur_user_module->user_module_get != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_add: %s", (cur_user_module->user_module_add != NULL?"found":"not found"));
@@ -1522,6 +1525,7 @@ int init_client_module_list(struct config_elements * config) {
                 *(void **) (&cur_client_module->client_module_unload) = dlsym(file_handle, "client_module_unload");
                 *(void **) (&cur_client_module->client_module_init) = dlsym(file_handle, "client_module_init");
                 *(void **) (&cur_client_module->client_module_close) = dlsym(file_handle, "client_module_close");
+                *(void **) (&cur_client_module->client_module_count_total) = dlsym(file_handle, "client_module_count_total");
                 *(void **) (&cur_client_module->client_module_get_list) = dlsym(file_handle, "client_module_get_list");
                 *(void **) (&cur_client_module->client_module_get) = dlsym(file_handle, "client_module_get");
                 *(void **) (&cur_client_module->client_module_add) = dlsym(file_handle, "client_module_add");
@@ -1534,6 +1538,7 @@ int init_client_module_list(struct config_elements * config) {
                     cur_client_module->client_module_unload != NULL &&
                     cur_client_module->client_module_init != NULL &&
                     cur_client_module->client_module_close != NULL &&
+                    cur_client_module->client_module_count_total != NULL &&
                     cur_client_module->client_module_get_list != NULL &&
                     cur_client_module->client_module_get != NULL &&
                     cur_client_module->client_module_add != NULL &&
@@ -1563,6 +1568,7 @@ int init_client_module_list(struct config_elements * config) {
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_unload: %s", (cur_client_module->client_module_unload != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_init: %s", (cur_client_module->client_module_init != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_close: %s", (cur_client_module->client_module_close != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_count_total: %s", (cur_client_module->client_module_count_total != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_get_list: %s", (cur_client_module->client_module_get_list != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_get: %s", (cur_client_module->client_module_get != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_add: %s", (cur_client_module->client_module_add != NULL?"found":"not found"));
