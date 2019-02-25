@@ -28,30 +28,37 @@
 #include "glewlwyd.h"
 
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password) {
-  int i, res;
-  json_t * j_return = NULL;
+  int res;
+  json_t * j_return = NULL, * j_module_list = get_user_module_list(config), * j_module;
   struct _user_module_instance * user_module;
+  size_t index;
   
-  for (i=0; i<pointer_list_size(config->user_module_instance_list); i++) {
-    user_module = pointer_list_get_at(config->user_module_instance_list, i);
-    if (user_module != NULL) {
-      if (user_module->enabled) {
-        res = user_module->module->user_module_check_password(username, password, user_module->cls);
-        if (res == G_OK) {
-          j_return = json_pack("{si}", "result", G_OK);
-        } else if (res == G_ERROR_UNAUTHORIZED) {
-          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-        } else if (res != G_ERROR_NOT_FOUND) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error, user_module_check_password for module '%s', skip", user_module->name);
+  if (check_result_value(j_module_list, G_OK)) {
+    json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
+      user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
+      if (user_module != NULL) {
+        if (user_module->enabled) {
+          res = user_module->module->user_module_check_password(username, password, user_module->cls);
+          if (res == G_OK) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else if (res == G_ERROR_UNAUTHORIZED) {
+            j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          } else if (res != G_ERROR_NOT_FOUND) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error, user_module_check_password for module '%s', skip", user_module->name);
+          }
         }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
       }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error, user_module_instance %d is NULL", i);
     }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error get_user_module_list");
+    j_return = json_pack("{si}", "result", G_ERROR);
   }
   if (j_return == NULL) {
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
+  json_decref(j_module_list);
   return j_return;
 }
 
@@ -62,8 +69,8 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
   int res;
   
   if (NULL != str_scheme_value) {
-    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_type, scheme_name);
-    if (scheme_instance != NULL) {
+    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+    if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
       res = scheme_instance->module->user_auth_scheme_module_validate(username, str_scheme_value, scheme_instance->cls);
       if (res == G_OK || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM || res == G_ERROR_NOT_FOUND) {
         j_return = json_pack("{si}", "result", res);
@@ -88,8 +95,8 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
   int res;
   
   if (NULL != str_trigger_parameters) {
-    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_type, scheme_name);
-    if (scheme_instance != NULL) {
+    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+    if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
       res = scheme_instance->module->user_auth_scheme_module_trigger(username, str_trigger_parameters, &str_trigger_response, scheme_instance->cls);
       if (res == G_OK || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM || res == G_ERROR_NOT_FOUND) {
         j_response = json_loads(str_trigger_response, JSON_DECODE_ANY, NULL);
