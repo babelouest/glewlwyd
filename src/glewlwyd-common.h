@@ -75,6 +75,7 @@ struct _user_module {
   int     (* user_module_unload)(struct config_elements * config);
   int     (* user_module_init)(struct config_elements * config, const char * parameters, void ** cls);
   int     (* user_module_close)(struct config_elements * config, void * cls);
+  size_t  (* user_module_count_total)(struct config_elements * config, void * cls);
   char ** (* user_module_get_list)(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls);
   char *  (* user_module_get)(const char * username, int * result, void * cls);
   int     (* user_module_add)(const char * str_new_user, void * cls);
@@ -102,6 +103,7 @@ struct _client_module {
   int     (* client_module_unload)(struct config_elements * config);
   int     (* client_module_init)(struct config_elements * config, const char * parameters, void ** cls);
   int     (* client_module_close)(struct config_elements * config, void * cls);
+  size_t  (* client_module_count_total)(struct config_elements * config, void * cls);
   char ** (* client_module_get_list)(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls);
   char  * (* client_module_get)(const char * client_id, int * result, void * cls);
   int     (* client_module_add)(const char * str_new_client, void * cls);
