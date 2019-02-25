@@ -308,7 +308,7 @@ int user_session_update(struct config_elements * config, const char * session_ui
     }
     if (check_result_value(j_session, G_OK)) {
       if (scheme_name != NULL) {
-        scheme_instance = get_user_auth_scheme_module_instance(config, scheme_type, scheme_name);
+        scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
         if (scheme_instance != NULL && scheme_instance->enabled) {
           // Disable all session schemes with this scheme instance
           j_query = json_pack("{sss{si}s{sOsI}}",

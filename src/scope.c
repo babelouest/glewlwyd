@@ -340,7 +340,7 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
             j_scheme_remove = json_array();
             if (j_scheme_remove != NULL) {
               json_array_foreach(j_group, index_scheme, j_scheme) {
-                scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_type")), json_string_value(json_object_get(j_scheme, "scheme_name")));
+                scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_name")));
                 if (scheme != NULL) {
                   if (scheme->enabled && scheme->module->user_can_use_scheme(json_string_value(json_object_get(json_object_get(j_user, "user"), "username")), scheme->cls)) {
                     json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, session_hash)?json_true():json_false());
