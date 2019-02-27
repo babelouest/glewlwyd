@@ -134,6 +134,8 @@ int main(int argc, char *argv[])
   // Getting a valid session id for authenticated http requests
   ulfius_init_request(&auth_req);
   ulfius_init_request(&user_req);
+  ulfius_init_request(&scope_req);
+  ulfius_init_response(&scope_resp);
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
   auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
@@ -146,6 +148,7 @@ int main(int argc, char *argv[])
       char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
       u_map_put(user_req.map_header, "Cookie", cookie);
       u_map_put(auth_req.map_header, "Cookie", cookie);
+      u_map_put(scope_req.map_header, "Cookie", cookie);
       o_free(cookie);
     }
     ulfius_clean_response(&auth_resp);
@@ -164,18 +167,10 @@ int main(int argc, char *argv[])
       if (res == U_OK && auth_resp.status == 200) {
         y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USERNAME);
     
-        ulfius_init_request(&scope_req);
-        ulfius_init_response(&scope_resp);
-        for (i=0; i<auth_resp.nb_cookies; i++) {
-          char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
-          u_map_put(scope_req.map_header, "Cookie", cookie);
-          free(cookie);
-        }
-    
         scope_req.http_verb = strdup("PUT");
         scope_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
         j_body = json_pack("{ss}", "scope", SCOPE_LIST);
-        ulfius_set_json_body_request(&auth_req, j_body);
+        ulfius_set_json_body_request(&scope_req, j_body);
         json_decref(j_body);
         if (ulfius_send_http_request(&scope_req, &scope_resp) != U_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
@@ -218,9 +213,9 @@ int main(int argc, char *argv[])
   }
   
   j_body = json_pack("{ss}", "scope", "");
-  ulfius_set_json_body_request(&auth_req, j_body);
+  ulfius_set_json_body_request(&scope_req, j_body);
   json_decref(j_body);
-  if (0 && ulfius_send_http_request(&auth_req, NULL) != U_OK) {
+  if (0 && ulfius_send_http_request(&scope_req, NULL) != U_OK) {
     y_log_message(Y_LOG_LEVEL_INFO, "Remove grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
   }
   
