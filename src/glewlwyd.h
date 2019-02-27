@@ -130,9 +130,13 @@ int    load_client_module_instance_list(struct config_elements * config);
 int    init_plugin_module_list(struct config_elements * config);
 int    load_plugin_module_instance_list(struct config_elements * config);
 struct _client_module_instance * get_client_module_instance(struct config_elements * config, const char * name);
+struct _client_module * get_client_module_lib(struct config_elements * config, const char * name);
 struct _user_module_instance * get_user_module_instance(struct config_elements * config, const char * name);
+struct _user_module * get_user_module_lib(struct config_elements * config, const char * name);
 struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * name);
+struct _user_auth_scheme_module * get_user_auth_scheme_module_lib(struct config_elements * config, const char * name);
 struct _plugin_module_instance * get_plugin_module_instance(struct config_elements * config, const char * name);
+struct _plugin_module * get_plugin_module_lib(struct config_elements * config, const char * name);
 
 // Modules generic functions
 int module_parameters_check(const char * module_parameters);
@@ -238,6 +242,8 @@ int callback_glewlwyd_options (const struct _u_request * request, struct _u_resp
 int callback_glewlwyd_server_configuration (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_module_type_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_export_modules_config (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_import_modules_config (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_user_module_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_user_module (const struct _u_request * request, struct _u_response * response, void * user_data);
