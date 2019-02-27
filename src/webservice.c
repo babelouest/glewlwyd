@@ -132,7 +132,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               session_uid = rand_string(session_str_array, 128);
             }
             if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update");
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (1)");
               response->status = 500;
             } else {
               ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, "/", 0, 0);
@@ -142,9 +142,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - Error login/password for username %s at IP Address %s", json_string_value(json_object_get(j_param, "username")), ip_source);
             }
             if ((session_uid = (char *)u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY)) != NULL && user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update");
-            } else {
-              ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, "/", 0, 0);
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (2)");
             }
             response->status = 401;
           }
@@ -152,35 +150,48 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
         } else if (json_object_get(j_param, "password") != NULL && !json_is_string(json_object_get(j_param, "password"))) {
           ulfius_set_string_body_response(response, 400, "password must be a string");
         } else {
-          // Refresh username to set as default
-          if (user_session_update(config, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY), u_map_get_case(request->map_header, "user-agent"), json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update");
+          j_result = get_users_for_session(config, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY));
+          if (check_result_value(j_result, G_OK)) {
+            // Refresh username to set as default
+            if (user_session_update(config, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY), u_map_get_case(request->map_header, "user-agent"), json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (3)");
+              response->status = 500;
+            }
+          } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+            response->status = 401;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error get_users_for_session");
             response->status = 500;
           }
+          json_decref(j_result);
         }
       } else {
-        j_result = auth_check_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), json_object_get(j_param, "value"));
-        if (check_result_value(j_result, G_ERROR_PARAM)) {
-          ulfius_set_string_body_response(response, 400, "bad scheme parameters");
-        } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
-          response->status = 401;
-        } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
-          response->status = 404;
-        } else if (check_result_value(j_result, G_OK)) {
-          if ((session_uid = (char *)u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY)) == NULL) {
-            session_uid = rand_string(session_str_array, 128);
-          }
-          if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name"))) != G_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update");
-            response->status = 500;
+        if (json_object_get(j_param, "scheme_type") != NULL && json_is_string(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_is_string(json_object_get(j_param, "scheme_name")) && json_object_get(j_param, "value") != NULL && json_is_object(json_object_get(j_param, "value"))) {
+          j_result = auth_check_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), json_object_get(j_param, "value"));
+          if (check_result_value(j_result, G_ERROR_PARAM)) {
+            ulfius_set_string_body_response(response, 400, "bad scheme parameters");
+          } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
+            response->status = 401;
+          } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+            response->status = 404;
+          } else if (check_result_value(j_result, G_OK)) {
+            if ((session_uid = (char *)u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY)) == NULL) {
+              session_uid = rand_string(session_str_array, 128);
+            }
+            if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name"))) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (4)");
+              response->status = 500;
+            } else {
+              ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, "/", 0, 0);
+            }
           } else {
-            ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, "/", 0, 0);
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error auth_check_user_scheme");
+            response->status = 500;
           }
+          json_decref(j_result);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error auth_check_user_scheme");
-          response->status = 500;
+          ulfius_set_string_body_response(response, 400, "scheme_type, scheme_name and value are mandatory");
         }
-        json_decref(j_result);
       }
     } else {
       ulfius_set_string_body_response(response, 400, "username is mandatory");
@@ -322,20 +333,33 @@ int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * re
 
 int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_user = (json_t *)response->shared_data, * j_body = ulfius_get_json_body_request(request, NULL);
+  json_t * j_user = (json_t *)response->shared_data, * j_body = ulfius_get_json_body_request(request, NULL), * j_client;
   int res;
   
   if (config != NULL && j_user != NULL) {
-    res = set_granted_scopes_for_client(config, j_user, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(j_body, "scope")));
-    if (res == G_ERROR_NOT_FOUND) {
-      response->status = 404;
-    } else if (res == G_ERROR_PARAM) {
+    if (json_object_get(j_body, "scope") != NULL && json_is_string(json_object_get(j_body, "scope"))) {
+      j_client = get_client(config, u_map_get(request->map_url, "client_id"));
+      if (check_result_value(j_client, G_OK)) {
+        res = set_granted_scopes_for_client(config, j_user, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(j_body, "scope")));
+        if (res == G_ERROR_NOT_FOUND) {
+          response->status = 404;
+        } else if (res == G_ERROR_PARAM) {
+          response->status = 400;
+        } else if (res == G_ERROR_UNAUTHORIZED) {
+          response->status = 401;
+        } else if (res != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_session_scope_grant - Error set_granted_scopes_for_client");
+          response->status = 500;
+        }
+      } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
+        response->status = 404;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_session_scope_grant - Error get_client");
+        response->status = 500;
+      }
+      json_decref(j_client);
+    } else {
       response->status = 400;
-    } else if (res == G_ERROR_UNAUTHORIZED) {
-      response->status = 401;
-    } else if (res != G_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_session_scope_grant - Error set_granted_scopes_for_client");
-      response->status = 500;
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_session_scope_grant - Error config or j_user is NULL");
@@ -358,6 +382,14 @@ int callback_glewlwyd_get_module_type_list (const struct _u_request * request, s
   }
   json_decref(j_module_type);
   return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_export_modules_config (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_CALLBACK_ERROR;
+}
+
+int callback_glewlwyd_import_modules_config (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_CALLBACK_ERROR;
 }
 
 int callback_glewlwyd_get_user_module_list (const struct _u_request * request, struct _u_response * response, void * user_data) {
