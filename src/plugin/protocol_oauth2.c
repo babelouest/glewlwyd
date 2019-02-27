@@ -604,7 +604,7 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
                               json_object_get(json_array_get(j_result, 0), "gpgc_id"));
         res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result_scope, NULL);
         json_decref(j_query);
-        if (res == H_OK) {
+        if (res == H_OK && json_array_size(j_result_scope) > 0) {
           if (!json_object_set_new(json_array_get(j_result, 0), "scope", json_array())) {
             json_array_foreach(j_result_scope, index, j_element) {
               if (scope_list == NULL) {
@@ -730,9 +730,9 @@ static json_t * validate_session_client_scope(struct _oauth2_config * config, co
           o_free(scope_filtered);
         } else {
           json_object_set_new(json_object_get(j_session, "session"), "scope_filtered", json_string(""));
-          json_object_set_new(json_object_get(j_session, "session"), "authorization_required", json_false());
+          json_object_set_new(json_object_get(j_session, "session"), "authorization_required", json_true());
         }
-        if (scopes_authorized) {
+        if (scopes_authorized && scopes_granted) {
           j_return = json_pack("{sisO}", "result", G_OK, "session", json_object_get(j_session, "session"));
         } else {
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
@@ -1116,7 +1116,7 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
             o_free(redirect_url);
             response->status = 302;
           }
-        } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED) || check_result_value(j_session, G_ERROR_NOT_FOUND)) {
+        } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
           // Scope is not allowed for this user
           response->status = 302;
           redirect_url = msprintf("%s%serror=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
