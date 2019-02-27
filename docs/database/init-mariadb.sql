@@ -58,6 +58,7 @@ CREATE TABLE `g_user_session` (
   `gus_username` VARCHAR(256) NOT NULL,
   `gus_expiration` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `gus_last_login` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `gus_current` TINYINT(1),
   `gus_enabled` TINYINT(1) DEFAULT 1
 );
 CREATE INDEX `i_g_user_session_username` ON `g_user_session`(`gus_username`);
