@@ -211,7 +211,7 @@ static json_t * get_current_session(struct config_elements * config, const char 
   int res;
   char * expire_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?o_strdup("> NOW()"):o_strdup("> (strftime('%s','now'))");
 
-  j_query = json_pack("{sss[ss]s{sssis{ssss}}sssi}",
+  j_query = json_pack("{sss[ss]s{sssis{ssss}si}sssi}",
                       "table",
                       GLEWLWYD_TABLE_USER_SESSION,
                       "columns",
@@ -227,8 +227,10 @@ static json_t * get_current_session(struct config_elements * config, const char 
                           "raw",
                           "value",
                           expire_clause,
+                        "gus_current",
+                        1,
                       "order_by",
-                      "gus_last_login DESC",
+                      "gus_current DESC",
                       "limit",
                       1);
   o_free(expire_clause);
