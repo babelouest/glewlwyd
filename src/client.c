@@ -86,6 +86,7 @@ json_t * auth_check_client_credentials(struct config_elements * config, const ch
     y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_client_credentials - Error get_client_module_list");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
+  json_decref(j_module_list);
   if (j_return == NULL) {
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
