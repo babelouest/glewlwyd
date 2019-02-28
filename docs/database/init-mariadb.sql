@@ -71,6 +71,7 @@ CREATE TABLE `g_user_session_scheme` (
   `guasmi_id` INT(11) DEFAULT NULL, -- NULL means scheme 'password'
   `guss_expiration` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `guss_last_login` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `guss_use_counter` INT(11) DEFAULT 0,
   `guss_enabled` TINYINT(1) DEFAULT 1,
   FOREIGN KEY(`gus_id`) REFERENCES `g_user_session`(`gus_id`) ON DELETE CASCADE,
   FOREIGN KEY(`guasmi_id`) REFERENCES `g_user_auth_scheme_module_instance`(`guasmi_id`) ON DELETE CASCADE
@@ -98,6 +99,7 @@ CREATE TABLE `g_user_auth_scheme_group_auth_scheme_module_instance` (
   `guasgasmi_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `guasg_id` INT(11) NOT NULL,
   `guasmi_id` INT(11) NOT NULL,
+  `guasgasmi_max_use` INT(11) DEFAULT 0, -- 0: unlimited
   FOREIGN KEY(`guasg_id`) REFERENCES `g_user_auth_scheme_group`(`guasg_id`) ON DELETE CASCADE,
   FOREIGN KEY(`guasmi_id`) REFERENCES `g_user_auth_scheme_module_instance`(`guasmi_id`) ON DELETE CASCADE
 );
@@ -142,4 +144,4 @@ INSERT INTO `g_user_auth_scheme_group_scope` (`guasg_id`, `gs_id`) VALUES ((SELE
 INSERT INTO `g_user_auth_scheme_group_auth_scheme_module_instance` (`guasg_id`, `guasmi_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group_1'), (SELECT `guasmi_id` FROM `g_user_auth_scheme_module_instance` WHERE `guasmi_name` = 'mock_scheme_42'));
 INSERT INTO `g_user_auth_scheme_group_auth_scheme_module_instance` (`guasg_id`, `guasmi_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group_1'), (SELECT `guasmi_id` FROM `g_user_auth_scheme_module_instance` WHERE `guasmi_name` = 'mock_scheme_88'));
 INSERT INTO `g_user_auth_scheme_group_auth_scheme_module_instance` (`guasg_id`, `guasmi_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group_2'), (SELECT `guasmi_id` FROM `g_user_auth_scheme_module_instance` WHERE `guasmi_name` = 'mock_scheme_95'));
-INSERT INTO `g_user_auth_scheme_group_auth_scheme_module_instance` (`guasg_id`, `guasmi_id`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group_3'), (SELECT `guasmi_id` FROM `g_user_auth_scheme_module_instance` WHERE `guasmi_name` = 'mock_scheme_95'));
+INSERT INTO `g_user_auth_scheme_group_auth_scheme_module_instance` (`guasg_id`, `guasmi_id`, `guasgasmi_max_use`) VALUES ((SELECT `guasg_id` FROM `g_user_auth_scheme_group` WHERE `guasg_name` = 'mock_group_3'), (SELECT `guasmi_id` FROM `g_user_auth_scheme_module_instance` WHERE `guasmi_name` = 'mock_scheme_95'), 1);
