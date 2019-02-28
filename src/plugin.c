@@ -78,25 +78,21 @@ int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, cons
 json_t * glewlwyd_callback_check_session_valid(struct config_plugin * config, const struct _u_request * request, const char * scope_list) {
   json_t * j_user, * j_return, * j_scope_allowed;
   
-  if (config != NULL && request != NULL) {
+  if (config != NULL && request != NULL && o_strlen(scope_list)) {
     j_user = get_user_for_session(config->glewlwyd_config, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY));
     // Check if session is valid
     if (check_result_value(j_user, G_OK)) {
-      if (scope_list != NULL && o_strlen(scope_list)) {
-        // For all allowed scope, check that the current session has a valid session
-        j_scope_allowed = get_validated_auth_scheme_list_from_scope_list(config->glewlwyd_config, scope_list, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY));
-        if (check_result_value(j_scope_allowed, G_OK)) {
-          j_return = json_pack("{sis{sOsO}}", "result", G_OK, "session", "scope", json_object_get(j_scope_allowed, "scheme"), "user", json_object_get(j_user, "user"));
-        } else if (check_result_value(j_scope_allowed, G_ERROR_UNAUTHORIZED) || check_result_value(j_scope_allowed, G_ERROR_NOT_FOUND)) {
-          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_session_valid - Error get_validated_auth_scheme_list_from_scope_list");
-          j_return = json_pack("{si}", "result", G_ERROR);
-        }
-        json_decref(j_scope_allowed);
+      // For all allowed scope, check that the current session has a valid session
+      j_scope_allowed = get_validated_auth_scheme_list_from_scope_list(config->glewlwyd_config, scope_list, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY));
+      if (check_result_value(j_scope_allowed, G_OK)) {
+        j_return = json_pack("{sis{sOsO}}", "result", G_OK, "session", "scope", json_object_get(j_scope_allowed, "scheme"), "user", json_object_get(j_user, "user"));
+      } else if (check_result_value(j_scope_allowed, G_ERROR_UNAUTHORIZED) || check_result_value(j_scope_allowed, G_ERROR_NOT_FOUND)) {
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       } else {
-        j_return = json_pack("{sis{sO}}", "result", G_OK, "session", "user", json_object_get(j_user, "user"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_session_valid - Error get_validated_auth_scheme_list_from_scope_list");
+        j_return = json_pack("{si}", "result", G_ERROR);
       }
+      json_decref(j_scope_allowed);
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     } else {
@@ -225,6 +221,120 @@ json_t * glewlwyd_callback_get_client_granted_scopes(struct config_plugin * conf
   }
   json_decref(j_user);
   return j_grant;
+}
+
+int glewlwyd_callback_trigger_session_used(struct config_plugin * config, const struct _u_request * request, const char * scope_list) {
+  json_t * j_session = glewlwyd_callback_check_session_valid(config, request, scope_list), * j_query, * j_scope, * j_scheme_processed, * j_group, * j_scheme;
+  char * session_uid = get_session_id(config->glewlwyd_config, request), * session_hash = NULL, * clause_session, * username_escaped, * clause_scheme, * escape_scheme_module, * escape_scheme_name;
+  int ret, res, password_processed = 0;
+  const char * key_scope, * key_group;
+  size_t index;
+
+  if (check_result_value(j_session, G_OK) || session_uid == NULL) {
+    if ((session_hash = generate_hash(config->glewlwyd_config, config->glewlwyd_config->hash_algorithm, session_uid)) != NULL) {
+      j_scheme_processed = json_object();
+      if (j_scheme_processed != NULL) {
+        ret = G_OK;
+        username_escaped = h_escape_string(config->glewlwyd_config->conn, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
+        clause_session = msprintf("IN (SELECT `gus_id` FROM `" GLEWLWYD_TABLE_USER_SESSION "` WHERE `gus_uuid`='%s' AND `gus_username`='%s' AND `gus_expiration` %s AND `gus_enabled`=1 AND `gus_current`=1)", session_hash, username_escaped, (config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?"> NOW()":"> (strftime('%s','now'))"));
+        json_object_foreach(json_object_get(json_object_get(j_session, "session"), "scope"), key_scope, j_scope) {
+          if (!password_processed && json_object_get(j_scope, "password_authenticated") == json_true()) {
+            password_processed = 1;
+            // Increment guss_use_counter for the password scheme on the specified session
+            j_query = json_pack("{sss{s{ss}}s{sOs{ssss}sis{ssss}}}",
+                                "table",
+                                GLEWLWYD_TABLE_USER_SESSION_SCHEME,
+                                "set",
+                                  "guss_use_counter",
+                                    "raw",
+                                    "(guss_use_counter + 1)",
+                                "where",
+                                  "guasmi_id",
+                                  json_null(),
+                                  "gus_id",
+                                    "operator",
+                                    "raw",
+                                    "value",
+                                    clause_session,
+                                  "guss_enabled",
+                                  1,
+                                  "guss_expiration",
+                                    "operator",
+                                    "raw",
+                                    "value",
+                                    (config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?"> NOW()":"> (strftime('%s','now'))"));
+            res = h_update(config->glewlwyd_config->conn, j_query, NULL);
+            json_decref(j_query);
+            if (res != H_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_trigger_session_used - Error h_update for password scheme");
+              ret = G_ERROR_DB;
+            }
+          }
+          json_object_foreach(json_object_get(j_scope, "schemes"), key_group, j_group) {
+            json_array_foreach(j_group, index, j_scheme) {
+              if (json_object_get(j_scheme, "scheme_authenticated") == json_true() && json_object_get(j_scheme_processed, json_string_value(json_object_get(j_scheme, "scheme_name"))) == NULL) {
+                json_object_set_new(j_scheme_processed, json_string_value(json_object_get(j_scheme, "scheme_name")), json_object());
+                // Increment guss_use_counter for the specified scheme on the specified session
+                escape_scheme_module = h_escape_string(config->glewlwyd_config->conn, json_string_value(json_object_get(j_scheme, "scheme_type")));
+                escape_scheme_name = h_escape_string(config->glewlwyd_config->conn, json_string_value(json_object_get(j_scheme, "scheme_name")));
+                clause_scheme = msprintf("IN (SELECT `guasmi_id` FROM `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE "` WHERE `guasmi_module`='%s' AND `guasmi_name`='%s')", escape_scheme_module, escape_scheme_name);
+                j_query = json_pack("{sss{s{ss}}s{s{ssss}s{ssss}sis{ssss}}}",
+                                    "table",
+                                    GLEWLWYD_TABLE_USER_SESSION_SCHEME,
+                                    "set",
+                                      "guss_use_counter",
+                                        "raw",
+                                        "(guss_use_counter + 1)",
+                                    "where",
+                                      "guasmi_id",
+                                        "operator",
+                                        "raw",
+                                        "value",
+                                        clause_scheme,
+                                      "gus_id",
+                                        "operator",
+                                        "raw",
+                                        "value",
+                                        clause_session,
+                                      "guss_enabled",
+                                      1,
+                                      "guss_expiration",
+                                        "operator",
+                                        "raw",
+                                        "value",
+                                        (config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?"> NOW()":"> (strftime('%s','now'))"));
+                o_free(clause_scheme);
+                o_free(escape_scheme_name);
+                o_free(escape_scheme_module);
+                res = h_update(config->glewlwyd_config->conn, j_query, NULL);
+                json_decref(j_query);
+                if (res != H_OK) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_trigger_session_used - Error h_update for scheme %s/%s", json_string_value(json_object_get(j_scheme, "scheme_type")), json_string_value(json_object_get(j_scheme, "scheme_name")));
+                  ret = G_ERROR_DB;
+                }
+              }
+            }
+          }
+        }
+        o_free(username_escaped);
+        o_free(clause_session);
+        json_decref(j_scheme_processed);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_trigger_session_used - Error allocating resources for j_scheme_processed");
+        ret = G_ERROR;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_trigger_session_used - Error generate_hash");
+      ret = G_ERROR;
+    }
+    o_free(session_hash);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_trigger_session_used - Error glewlwyd_callback_check_session_valid or session_uid NULL");
+    ret = G_ERROR;
+  }
+  json_decref(j_session);
+  o_free(session_uid);
+  return ret;
 }
 
 char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url) {
