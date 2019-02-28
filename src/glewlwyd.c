@@ -67,6 +67,7 @@ int main (int argc, char ** argv) {
   config->config_p->glewlwyd_callback_check_user_valid = &glewlwyd_callback_check_user_valid;
   config->config_p->glewlwyd_callback_check_client_valid = &glewlwyd_callback_check_client_valid;
   config->config_p->glewlwyd_callback_get_client_granted_scopes = &glewlwyd_callback_get_client_granted_scopes;
+  config->config_p->glewlwyd_callback_trigger_session_used = &glewlwyd_callback_trigger_session_used;
   config->config_p->glewlwyd_callback_get_plugin_external_url = &glewlwyd_callback_get_plugin_external_url;
   config->config_p->glewlwyd_callback_get_login_url = &glewlwyd_callback_get_login_url;
   config->config_p->glewlwyd_callback_generate_hash = &glewlwyd_callback_generate_hash;

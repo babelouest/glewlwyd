@@ -106,21 +106,24 @@ json_t * get_scope(struct config_elements * config, const char * scope) {
 
 json_t * get_auth_scheme_list_from_scope(struct config_elements * config, const char * scope) {
   const char * str_query_pattern = "SELECT \
-    guasg_name AS group_name, \
-    guasmi_module AS scheme_type, \
-    guasmi_name AS scheme_name, \
-    guasmi_display_name AS scheme_display_name \
-  FROM \
-    `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE "`, \
-    `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP "`, \
-    `" GLEWLWYD_TABLE_SCOPE "` \
-  WHERE \
-    `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE "`.`guasmi_id` IN (SELECT `guasmi_id` FROM `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP_AUTH_SCHEME_MODULE_INSTANCE "` WHERE `guasg_id` = `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP "`.`guasg_id`) AND \
-    `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP "`.`guasg_id` IN (SELECT `guasg_id` FROM `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP_SCOPE "` WHERE `gs_id` = `" GLEWLWYD_TABLE_SCOPE "`.`gs_id`) AND \
-    `" GLEWLWYD_TABLE_SCOPE "`.`gs_name` = '%s' \
-  ORDER BY \
-    `" GLEWLWYD_TABLE_SCOPE "`.`gs_id`, \
-    `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP "`.`guasg_id`;";
+`guasg_name` AS group_name, \
+`guasmi_module` AS scheme_type, \
+`guasmi_name` AS scheme_name, \
+`guasmi_display_name` AS scheme_display_name, \
+`guasgasmi_max_use` AS max_use \
+FROM \
+`" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP "`, \
+`" GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE "`, \
+`" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP_AUTH_SCHEME_MODULE_INSTANCE "` \
+WHERE \
+`" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP_AUTH_SCHEME_MODULE_INSTANCE "`.`guasmi_id` = `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE "`.`guasmi_id` AND \
+`" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP "`.`guasg_id` = `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP_AUTH_SCHEME_MODULE_INSTANCE "`.`guasg_id` AND \
+`" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP_AUTH_SCHEME_MODULE_INSTANCE "`.`guasg_id` IN  \
+  (SELECT `guasg_id` FROM `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP "` WHERE `guasg_id` IN  \
+    (SELECT `guasg_id` FROM `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP_SCOPE "` WHERE `gs_id`= \
+      (SELECT `gs_id` FROM `" GLEWLWYD_TABLE_SCOPE "` WHERE `gs_name`='%s'))) \
+ORDER BY \
+`" GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP "`.`guasg_id`;";
   char * scope_escape = h_escape_string(config->conn, scope), * str_query = NULL;
   json_t * j_return, * j_result = NULL, * j_element;
   int res;
@@ -139,7 +142,7 @@ json_t * get_auth_scheme_list_from_scope(struct config_elements * config, const 
                 json_object_set_new(json_object_get(j_return, "scheme"), json_string_value(json_object_get(j_element, "group_name")), json_array());
               }
               if (json_object_get(json_object_get(j_return, "scheme"), json_string_value(json_object_get(j_element, "group_name"))) != NULL) {
-                json_array_append_new(json_object_get(json_object_get(j_return, "scheme"), json_string_value(json_object_get(j_element, "group_name"))), json_pack("{ssssss}", "scheme_type", json_string_value(json_object_get(j_element, "scheme_type")), "scheme_name", json_string_value(json_object_get(j_element, "scheme_name")), "scheme_display_name", json_string_value(json_object_get(j_element, "scheme_display_name"))));
+                json_array_append_new(json_object_get(json_object_get(j_return, "scheme"), json_string_value(json_object_get(j_element, "group_name"))), json_pack("{sssssssI}", "scheme_type", json_string_value(json_object_get(j_element, "scheme_type")), "scheme_name", json_string_value(json_object_get(j_element, "scheme_name")), "scheme_display_name", json_string_value(json_object_get(j_element, "scheme_display_name")), "max_use", json_integer_value(json_object_get(j_element, "max_use"))));
               }
             }
           } else {
@@ -286,7 +289,7 @@ static json_t * get_current_user_from_session(struct config_elements * config, c
   return j_return;
 }
 
-static int is_scheme_valid_for_session(struct config_elements * config, json_int_t guasmi_id, const char * session_hash) {
+static int is_scheme_valid_for_session(struct config_elements * config, json_int_t guasmi_id, json_int_t max_use, const char * session_hash) {
   char * expire_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?o_strdup("> NOW()"):o_strdup("> (strftime('%s','now'))");
   json_t * j_query, * j_result = NULL, * j_session = get_current_session(config, session_hash);
   int res, ret = 0;
@@ -309,6 +312,9 @@ static int is_scheme_valid_for_session(struct config_elements * config, json_int
                             expire_clause,
                           "guss_enabled",
                           1);
+    if (max_use > 0) {
+      json_object_set_new(json_object_get(j_query, "where"), "guss_use_counter", json_pack("{sssI}", "operator", "<", "value", max_use));
+    }
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
@@ -335,7 +341,7 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
   if (check_result_value(j_scheme_list, G_OK)) {
     json_object_foreach(json_object_get(j_scheme_list, "scheme"), key_scope, j_scope) {
       if (check_result_value(j_user, G_OK)) {
-        json_object_set(j_scope, "password_authenticated", is_scheme_valid_for_session(config, 0, session_hash)?json_true():json_false());
+        json_object_set(j_scope, "password_authenticated", is_scheme_valid_for_session(config, 0, 0, session_hash)?json_true():json_false());
         if (user_has_scope(json_object_get(j_user, "user"), key_scope)) {
           json_object_set(j_scope, "available", json_true());
           json_object_foreach(json_object_get(j_scope, "schemes"), key_group, j_group) {
@@ -345,7 +351,7 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
                 scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_name")));
                 if (scheme != NULL) {
                   if (scheme->enabled && scheme->module->user_can_use_scheme(json_string_value(json_object_get(json_object_get(j_user, "user"), "username")), scheme->cls)) {
-                    json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, session_hash)?json_true():json_false());
+                    json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, json_integer_value(json_object_get(j_scheme, "max_use")), session_hash)?json_true():json_false());
                   } else {
                     json_array_append_new(j_scheme_remove, json_integer(index_scheme));
                   }

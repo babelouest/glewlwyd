@@ -153,6 +153,7 @@ json_t * get_session_for_username(struct config_elements * config, const char * 
 json_t * get_user_for_session(struct config_elements * config, const char * session_uid);
 json_t * get_users_for_session(struct config_elements * config, const char * session_uid);
 int user_session_delete(struct config_elements * config, const char * session_uid);
+char * get_session_id(struct config_elements * config, const struct _u_request * request);
 
 // User
 json_t * get_user(struct config_elements * config, const char * username);
@@ -219,6 +220,7 @@ json_t * glewlwyd_callback_check_session_valid(struct config_plugin * config, co
 json_t * glewlwyd_callback_check_user_valid(struct config_plugin * config, const char * username, const char * password, const char * scope_list);
 json_t * glewlwyd_callback_check_client_valid(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list);
 json_t * glewlwyd_callback_get_client_granted_scopes(struct config_plugin * config, const char * client_id, const char * username, const char * scope_list);
+int glewlwyd_callback_trigger_session_used(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
 char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url);
 char * glewlwyd_callback_get_plugin_external_url(struct config_plugin * config, const char * name);
 char * glewlwyd_callback_generate_hash(struct config_plugin * config, const char * data);

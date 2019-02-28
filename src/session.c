@@ -500,3 +500,7 @@ int user_session_delete(struct config_elements * config, const char * session_ui
   }
   return ret;
 }
+
+char * get_session_id(struct config_elements * config, const struct _u_request * request) {
+  return o_strdup(u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY));
+}
