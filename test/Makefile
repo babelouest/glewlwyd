@@ -42,7 +42,7 @@ unit-tests.o: unit-tests.c unit-tests.h
 
 test: test-admin-mod test-auth test-oauth2
 
-test-auth: test_glewlwyd_auth_password test_glewlwyd_auth_scheme test_glewlwyd_auth_grant
+test-auth: $(TARGET_AUTH) test_glewlwyd_auth_password test_glewlwyd_auth_scheme test_glewlwyd_auth_grant
 
 test-crud: 
 
