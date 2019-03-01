@@ -20,7 +20,7 @@
 #define SCHEME_NAME "mock_scheme_42"
 #define SCHEME_VALUE "42"
 
-START_TEST(test_glwd_auth_grant_error_parameters)
+START_TEST(test_glwd_auth_scheme_error_parameters)
 {
   struct _u_request req;
   struct _u_response resp;
@@ -52,7 +52,7 @@ START_TEST(test_glwd_auth_grant_error_parameters)
 }
 END_TEST
 
-START_TEST(test_glwd_auth_grant_error_login)
+START_TEST(test_glwd_auth_scheme_error_login)
 {
   struct _u_request req;
   struct _u_response resp;
@@ -73,7 +73,7 @@ START_TEST(test_glwd_auth_grant_error_login)
 }
 END_TEST
 
-START_TEST(test_glwd_auth_grant_login_success)
+START_TEST(test_glwd_auth_scheme_login_success)
 {
   struct _u_request req;
   struct _u_response resp;
@@ -94,7 +94,7 @@ START_TEST(test_glwd_auth_grant_login_success)
 }
 END_TEST
 
-START_TEST(test_glwd_auth_grant_login_multiple)
+START_TEST(test_glwd_auth_scheme_login_multiple)
 {
   struct _u_request req, auth_req;
   struct _u_response resp, auth_resp;
@@ -164,10 +164,10 @@ static Suite *glewlwyd_suite(void)
 
   s = suite_create("Glewlwyd delete token");
   tc_core = tcase_create("test_glwd_auth_scheme");
-  tcase_add_test(tc_core, test_glwd_auth_grant_error_parameters);
-  tcase_add_test(tc_core, test_glwd_auth_grant_error_login);
-  tcase_add_test(tc_core, test_glwd_auth_grant_login_success);
-  tcase_add_test(tc_core, test_glwd_auth_grant_login_multiple);
+  tcase_add_test(tc_core, test_glwd_auth_scheme_error_parameters);
+  tcase_add_test(tc_core, test_glwd_auth_scheme_error_login);
+  tcase_add_test(tc_core, test_glwd_auth_scheme_login_success);
+  tcase_add_test(tc_core, test_glwd_auth_scheme_login_multiple);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
