@@ -893,7 +893,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
   if (check_result_value(j_client, G_OK)) {
     // Client is allowed to use auth_code grant with this redirection_uri
     if (u_map_has_key(request->map_url, "g_continue")) {
-      if (u_map_get(request->map_url, "scope") != NULL && o_strlen(u_map_get(request->map_url, "scope"))) {
+      if (o_strlen(u_map_get(request->map_url, "scope"))) {
         j_session = validate_session_client_scope(config, request, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
         if (check_result_value(j_session, G_OK)) {
           if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_false()) {
@@ -1001,7 +1001,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
           if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
             if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(j_refresh_token, "gpgr_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
               if (disable_authorization_code(config, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpgc_id"))) == G_OK) {
-                j_body = json_pack("{sssssssisi}",
+                j_body = json_pack("{sssssssisiss}",
                                       "token_type",
                                       "bearer",
                                       "access_token",
@@ -1011,7 +1011,9 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                       "iat",
                                       now,
                                       "expires_in",
-                                      config->access_token_duration);
+                                      config->access_token_duration,
+                                      "scope",
+                                      json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")));
                 ulfius_set_json_body_response(response, 200, j_body);
                 json_decref(j_body);
               } else {
@@ -1091,7 +1093,7 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
               if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), now)) != NULL) {
                 if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT, 0, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
                   if (config->glewlwyd_config->glewlwyd_callback_trigger_session_used(config->glewlwyd_config, request, json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered"))) == G_OK) {
-                    redirect_url = msprintf("%s%saccess_token=%s&token_type=bearer&expires_in=%d%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), access_token, config->access_token_duration, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+                    redirect_url = msprintf("%s%saccess_token=%s&token_type=bearer&expires_in=%d&scope=%s%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), access_token, config->access_token_duration, json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
                     ulfius_add_header_to_response(response, "Location", redirect_url);
                     o_free(redirect_url);
                     response->status = 302;
