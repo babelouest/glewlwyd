@@ -220,8 +220,8 @@ struct config_plugin {
 // Misc functions
 const char * get_ip_source(const struct _u_request * request);
 char * get_client_hostname(const struct _u_request * request);
-long random_at_most(long max);
-char * rand_string(char * str, size_t size);
+unsigned char random_at_most(unsigned char max);
+char * rand_string(char * str, unsigned char str_size);
 char * join_json_string_array(json_t * j_array, const char * separator);
 char * url_encode(const char * str);
 
