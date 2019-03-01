@@ -17,6 +17,8 @@
 #define USERNAME "user1"
 #define PASSWORD "password"
 #define SCOPE_LIST "scope1 scope2"
+#define SCOPE_LIST_PARTIAL "scope1"
+#define SCOPE_LIST_MAX_USE "scope1 scope2 scope3"
 #define CLIENT "client1_id"
 
 struct _u_request user_req;
@@ -98,6 +100,457 @@ START_TEST(test_glwd_code_ok)
 }
 END_TEST
 
+START_TEST(test_glwd_code_scope_grant_partial)
+{
+  struct _u_request auth_req, code_req;
+  struct _u_response auth_resp, code_resp;
+  json_t * j_body;
+  char * cookie, * code;
+
+  ulfius_init_request(&auth_req);
+  ulfius_init_response(&auth_resp);
+  ulfius_init_request(&code_req);
+  ulfius_init_response(&code_resp);
+
+  // Authenticate with password
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{ssss}", "username", USERNAME, "password", PASSWORD);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_eq(auth_resp.nb_cookies, 1);
+
+  // Get session cookie
+  cookie = msprintf("%s=%s", auth_resp.map_cookie[0].key, auth_resp.map_cookie[0].value);
+  u_map_put(auth_req.map_header, "Cookie", cookie);
+  u_map_put(code_req.map_header, "Cookie", cookie);
+  o_free(cookie);
+  ulfius_clean_response(&auth_resp);
+
+  // Grant access to scopes
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("PUT");
+  auth_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
+  j_body = json_pack("{ss}", "scope", SCOPE_LIST_PARTIAL);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ulfius_clean_response(&auth_resp);
+
+  // Authenticate with scheme mock 42
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "code", "42");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_eq(auth_resp.nb_cookies, 1);
+  ulfius_clean_response(&auth_resp);
+
+  // Authenticate with scheme mock 95
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "code", "95");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_eq(auth_resp.nb_cookies, 1);
+  ulfius_clean_response(&auth_resp);
+
+  // Get code
+  code_req.http_verb = strdup("GET");
+  code_req.http_url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
+  ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
+  ck_assert_int_eq(code_resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "code="), NULL);
+  code = o_strdup(o_strstr(u_map_get(code_resp.map_header, "Location"), "code=")+o_strlen("code="));
+  ck_assert_ptr_ne(code, NULL);
+  ulfius_clean_response(&code_resp);
+
+  // Get refresh token from code
+  ulfius_init_response(&code_resp);
+  o_free(code_req.http_verb);
+  o_free(code_req.http_url);
+  code_req.http_verb = strdup("POST");
+  code_req.http_url = msprintf("%s/glwd/token/", SERVER_URI);
+  u_map_put(code_req.map_post_body, "grant_type", "authorization_code");
+  u_map_put(code_req.map_post_body, "client_id", CLIENT);
+  u_map_put(code_req.map_post_body, "redirect_uri", "../../test-oauth2.html?param=client1_cb1");
+  u_map_put(code_req.map_post_body, "code", code);
+  ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
+  ck_assert_int_eq(code_resp.status, 200);
+  j_body = ulfius_get_json_body_response(&code_resp, NULL);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_str_eq(json_string_value(json_object_get(j_body, "scope")), SCOPE_LIST_PARTIAL);
+  ulfius_clean_request(&code_req);
+  ulfius_clean_response(&code_resp);
+  o_free(code);
+
+  // Clean grant scopes
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("PUT");
+  auth_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
+  j_body = json_pack("{ss}", "scope", "");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+
+  ulfius_clean_request(&auth_req);
+  ulfius_clean_response(&auth_resp);
+}
+END_TEST
+
+START_TEST(test_glwd_code_scope_grant_none)
+{
+  struct _u_request auth_req, code_req;
+  struct _u_response auth_resp, code_resp;
+  json_t * j_body;
+  char * cookie;
+
+  ulfius_init_request(&auth_req);
+  ulfius_init_response(&auth_resp);
+  ulfius_init_request(&code_req);
+  ulfius_init_response(&code_resp);
+
+  // Authenticate with password
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{ssss}", "username", USERNAME, "password", PASSWORD);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_eq(auth_resp.nb_cookies, 1);
+
+  // Get session cookie
+  cookie = msprintf("%s=%s", auth_resp.map_cookie[0].key, auth_resp.map_cookie[0].value);
+  u_map_put(auth_req.map_header, "Cookie", cookie);
+  u_map_put(code_req.map_header, "Cookie", cookie);
+  o_free(cookie);
+  ulfius_clean_response(&auth_resp);
+
+  // Authenticate with scheme mock 42
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "code", "42");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_eq(auth_resp.nb_cookies, 1);
+  ulfius_clean_response(&auth_resp);
+
+  // Authenticate with scheme mock 95
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "code", "95");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_eq(auth_resp.nb_cookies, 1);
+  ulfius_clean_response(&auth_resp);
+
+  // Try to get code
+  code_req.http_verb = strdup("GET");
+  code_req.http_url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
+  ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
+  ck_assert_int_eq(code_resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "invalid_scope"), NULL);
+
+  ulfius_clean_request(&code_req);
+  ulfius_clean_response(&code_resp);
+  ulfius_clean_request(&auth_req);
+}
+END_TEST
+
+START_TEST(test_glwd_code_scope_grant_all_authorize_partial)
+{
+  struct _u_request auth_req, code_req;
+  struct _u_response auth_resp, code_resp;
+  json_t * j_body;
+  char * cookie;
+
+  ulfius_init_request(&auth_req);
+  ulfius_init_response(&auth_resp);
+  ulfius_init_request(&code_req);
+  ulfius_init_response(&code_resp);
+
+  // Authenticate with password
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{ssss}", "username", USERNAME, "password", PASSWORD);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_eq(auth_resp.nb_cookies, 1);
+
+  // Get session cookie
+  cookie = msprintf("%s=%s", auth_resp.map_cookie[0].key, auth_resp.map_cookie[0].value);
+  u_map_put(auth_req.map_header, "Cookie", cookie);
+  u_map_put(code_req.map_header, "Cookie", cookie);
+  o_free(cookie);
+  ulfius_clean_response(&auth_resp);
+
+  // Grant access to scopes
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("PUT");
+  auth_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
+  j_body = json_pack("{ss}", "scope", SCOPE_LIST);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ulfius_clean_response(&auth_resp);
+
+  // Authenticate with scheme mock 95
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "code", "95");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_eq(auth_resp.nb_cookies, 1);
+  ulfius_clean_response(&auth_resp);
+
+  // Try to get code
+  code_req.http_verb = strdup("GET");
+  code_req.http_url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
+  ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
+  ck_assert_int_eq(code_resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "login.html"), NULL);
+
+  // Clean grant scopes
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("PUT");
+  auth_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
+  j_body = json_pack("{ss}", "scope", "");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+
+  ulfius_clean_request(&auth_req);
+  ulfius_clean_response(&auth_resp);
+}
+END_TEST
+
+START_TEST(test_glwd_code_retry_with_max_use)
+{
+  struct _u_request auth_req, code_req;
+  struct _u_response auth_resp, code_resp;
+  json_t * j_body;
+  char * cookie, * code;
+
+  ulfius_init_request(&auth_req);
+  ulfius_init_response(&auth_resp);
+  ulfius_init_request(&code_req);
+  ulfius_init_response(&code_resp);
+
+  // Authenticate with password
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{ssss}", "username", USERNAME, "password", PASSWORD);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_eq(auth_resp.nb_cookies, 1);
+
+  // Get session cookie
+  cookie = msprintf("%s=%s", auth_resp.map_cookie[0].key, auth_resp.map_cookie[0].value);
+  u_map_put(auth_req.map_header, "Cookie", cookie);
+  u_map_put(code_req.map_header, "Cookie", cookie);
+  o_free(cookie);
+  ulfius_clean_response(&auth_resp);
+
+  // Grant access to scopes
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("PUT");
+  auth_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
+  j_body = json_pack("{ss}", "scope", SCOPE_LIST_MAX_USE);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ulfius_clean_response(&auth_resp);
+
+  // Authenticate with scheme mock 42
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "code", "42");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_eq(auth_resp.nb_cookies, 1);
+  ulfius_clean_response(&auth_resp);
+
+  // Authenticate with scheme mock 95
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "code", "95");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_eq(auth_resp.nb_cookies, 1);
+  ulfius_clean_response(&auth_resp);
+
+  // Authenticate with scheme mock 88
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_88", "value", "code", "88");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_eq(auth_resp.nb_cookies, 1);
+  ulfius_clean_response(&auth_resp);
+
+  // Get code
+  code_req.http_verb = strdup("GET");
+  code_req.http_url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST_MAX_USE);
+  ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
+  ck_assert_int_eq(code_resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "code="), NULL);
+  code = o_strdup(o_strstr(u_map_get(code_resp.map_header, "Location"), "code=")+o_strlen("code="));
+  ck_assert_ptr_ne(code, NULL);
+  ulfius_clean_response(&code_resp);
+
+  // Get refresh token from code
+  ulfius_init_response(&code_resp);
+  o_free(code_req.http_verb);
+  o_free(code_req.http_url);
+  code_req.http_verb = strdup("POST");
+  code_req.http_url = msprintf("%s/glwd/token/", SERVER_URI);
+  u_map_put(code_req.map_post_body, "grant_type", "authorization_code");
+  u_map_put(code_req.map_post_body, "client_id", CLIENT);
+  u_map_put(code_req.map_post_body, "redirect_uri", "../../test-oauth2.html?param=client1_cb1");
+  u_map_put(code_req.map_post_body, "code", code);
+  ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
+  ck_assert_int_eq(code_resp.status, 200);
+  j_body = ulfius_get_json_body_response(&code_resp, NULL);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_str_eq(json_string_value(json_object_get(j_body, "scope")), SCOPE_LIST_MAX_USE);
+  ulfius_clean_response(&code_resp);
+  o_free(code);
+
+  // Try to get another code with the same session but redirected to login page
+  ulfius_init_response(&code_resp);
+  o_free(code_req.http_verb);
+  o_free(code_req.http_url);
+  code_req.http_verb = strdup("GET");
+  code_req.http_url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST_MAX_USE);
+  ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
+  ck_assert_int_eq(code_resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "login.html"), NULL);
+
+  // Reauthenticate with scheme mock 88
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_88", "value", "code", "88");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_eq(auth_resp.nb_cookies, 1);
+  ulfius_clean_response(&auth_resp);
+
+  // Get another code
+  ulfius_init_response(&code_resp);
+  o_free(code_req.http_verb);
+  o_free(code_req.http_url);
+  code_req.http_verb = strdup("GET");
+  code_req.http_url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST_MAX_USE);
+  ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
+  ck_assert_int_eq(code_resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "code="), NULL);
+  code = o_strdup(o_strstr(u_map_get(code_resp.map_header, "Location"), "code=")+o_strlen("code="));
+  ck_assert_ptr_ne(code, NULL);
+  ulfius_clean_response(&code_resp);
+
+  // Get another refresh token from code
+  ulfius_init_response(&code_resp);
+  o_free(code_req.http_verb);
+  o_free(code_req.http_url);
+  code_req.http_verb = strdup("POST");
+  code_req.http_url = msprintf("%s/glwd/token/", SERVER_URI);
+  u_map_put(code_req.map_post_body, "grant_type", "authorization_code");
+  u_map_put(code_req.map_post_body, "client_id", CLIENT);
+  u_map_put(code_req.map_post_body, "redirect_uri", "../../test-oauth2.html?param=client1_cb1");
+  u_map_put(code_req.map_post_body, "code", code);
+  ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
+  ck_assert_int_eq(code_resp.status, 200);
+  j_body = ulfius_get_json_body_response(&code_resp, NULL);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_str_eq(json_string_value(json_object_get(j_body, "scope")), SCOPE_LIST_MAX_USE);
+  ulfius_clean_request(&code_req);
+  ulfius_clean_response(&code_resp);
+  o_free(code);
+
+  // Clean grant scopes
+  ulfius_init_response(&auth_resp);
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_verb = strdup("PUT");
+  auth_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
+  j_body = json_pack("{ss}", "scope", "");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+
+  ulfius_clean_request(&auth_req);
+  ulfius_clean_response(&auth_resp);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -109,6 +562,10 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_code_client_invalid);
   tcase_add_test(tc_core, test_glwd_code_redirect_uri_invalid);
   tcase_add_test(tc_core, test_glwd_code_ok);
+  tcase_add_test(tc_core, test_glwd_code_scope_grant_partial);
+  tcase_add_test(tc_core, test_glwd_code_scope_grant_none);
+  tcase_add_test(tc_core, test_glwd_code_scope_grant_all_authorize_partial);
+  tcase_add_test(tc_core, test_glwd_code_retry_with_max_use);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
