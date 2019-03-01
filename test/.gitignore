@@ -19,3 +19,4 @@ glewlwyd_admin_mod_plugin
 glewlwyd_auth_grant
 glewlwyd_auth_password
 glewlwyd_auth_scheme
+glewlwyd_auth_check_scheme
