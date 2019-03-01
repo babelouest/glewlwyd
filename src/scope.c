@@ -370,6 +370,8 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
               json_decref(j_scheme_remove);
               if (!json_array_size(j_group)) {
                 json_object_set(j_scope, "available", json_false());
+                json_object_del(j_scope, "password_required");
+                json_object_del(j_scope, "password_authenticated");
                 json_object_clear(json_object_get(j_scope, "schemes"));
                 break;
               }
@@ -379,6 +381,8 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
           }
         } else {
           json_object_set(j_scope, "available", json_false());
+          json_object_del(j_scope, "password_required");
+          json_object_del(j_scope, "password_authenticated");
           json_object_clear(json_object_get(j_scope, "schemes"));
         }
       } else {
