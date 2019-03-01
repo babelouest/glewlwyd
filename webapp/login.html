@@ -251,12 +251,30 @@ $(function () {
 	};
 	
 	var authenticateScheme = function (elt) {
-		if (elt.attr('data-type') === "mock") {
-			$("#mockSchemeName").text(elt.attr('data-display-name'));
-			$("#mockName").val(elt.attr('data-name'));
-			$("#mockValue").val("");
-			$("#mockModal").modal('show');
-		}
+		var scheme = {
+			scheme_type: "mock",
+			scheme_name: elt.attr('data-name'),
+			username: currentUser.username,
+			value: {
+				description: "This is a mock trigger"
+			}
+		};
+
+		$.ajax({
+			type: "POST",
+			url: "api/auth/scheme/trigger/",
+			data: JSON.stringify(scheme),
+			contentType: "application/json; charset=utf-8",
+			success: function () {
+        if (elt.attr('data-type') === "mock") {
+          $("#mockSchemeName").text(elt.attr('data-display-name'));
+          $("#mockName").val(elt.attr('data-name'));
+          $("#mockValue").val("");
+          $("#mockModal").modal('show');
+        }
+			}
+		});
+
 	};
 	
 	var fillScopeList = function (scopeList) {
