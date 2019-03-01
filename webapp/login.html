@@ -261,7 +261,7 @@ $(function () {
 	
 	var fillScopeList = function (scopeList) {
 		return $.ajax({
-			url: "api/auth/schemes/?scope=" + scopeList,
+			url: "api/auth/scheme/?scope=" + scopeList,
 			success: function (result) {
 				$("#selectSchemeList").empty();
 				var schemeList = {};
