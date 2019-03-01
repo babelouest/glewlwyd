@@ -1173,7 +1173,6 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
   return U_CALLBACK_CONTINUE;
 }
 
-
 /**
  * The more simple authorization type
  * username and password are given in the POST parameters,
