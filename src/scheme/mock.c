@@ -59,17 +59,24 @@ int user_auth_scheme_module_close(struct config_elements * config, void * cls) {
   return G_OK;
 }
 
-int user_auth_scheme_module_trigger(const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls) {
-  *scheme_trigger_response = msprintf("{\"code\":" JSON_INTEGER_FORMAT "}", json_integer_value(json_object_get((json_t *)cls, "mock-param-number")));
-  return G_OK;
-}
-
 int user_can_use_scheme(const char * username, void * cls) {
   if (0 == o_strcmp(username, json_string_value(json_object_get((json_t *)cls, "mock-user-forbidden")))) {
     return 0;
   } else {
     return 1;
   }
+}
+
+int user_auth_scheme_module_trigger(const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls) {
+  int ret;
+  
+  if (user_can_use_scheme(username, cls)) {
+    *scheme_trigger_response = msprintf("{\"code\":\"%s\"}", json_string_value(json_object_get((json_t *)cls, "mock-value")));
+    ret = G_OK;
+  } else {
+    ret = G_ERROR_UNAUTHORIZED;
+  }
+  return ret;
 }
 
 int user_auth_scheme_module_validate(const char * username, const char * scheme_data, void * cls) {
