@@ -48,6 +48,13 @@ START_TEST(test_glwd_auth_password_error_parameters)
   ck_assert_int_eq(resp.status, 401);
   ck_assert_int_eq(resp.nb_cookies, 0);
 
+  j_body = json_pack("{ss}", "username", "");
+  ulfius_set_json_body_request(&req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 400);
+  ck_assert_int_eq(resp.nb_cookies, 0);
+
   j_body = json_pack("{ss}", "password", PASSWORD);
   ulfius_set_json_body_request(&req, j_body);
   json_decref(j_body);
@@ -56,6 +63,13 @@ START_TEST(test_glwd_auth_password_error_parameters)
   ck_assert_int_eq(resp.nb_cookies, 0);
 
   j_body = json_pack("{sisi}", "username", 42, "password", 84);
+  ulfius_set_json_body_request(&req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 400);
+  ck_assert_int_eq(resp.nb_cookies, 0);
+
+  j_body = json_pack("{ssss}", "username", "", "password", "");
   ulfius_set_json_body_request(&req, j_body);
   json_decref(j_body);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
