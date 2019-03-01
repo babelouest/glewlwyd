@@ -31,6 +31,8 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <ctype.h>
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
 
 #include "glewlwyd.h"
 
@@ -107,36 +109,34 @@ char * get_client_hostname(const struct _u_request * request) {
  * Generates a random long integer between 0 and max
  *
  */
-long random_at_most(long max) {
-  unsigned long
-  // max <= RAND_MAX < ULONG_MAX, so this is okay.
-  num_bins = (unsigned long) max + 1,
-  num_rand = (unsigned long) RAND_MAX + 1,
+unsigned char random_at_most(unsigned char max) {
+  unsigned char
+  num_bins = (unsigned char) max + 1,
+  num_rand = (unsigned char) 0xff,
   bin_size = num_rand / num_bins,
   defect   = num_rand % num_bins;
 
-  long x;
+  unsigned char x[1];
   do {
-    // TODO: Use getrandom()
-   x = random();
+    gnutls_rnd(GNUTLS_RND_NONCE, x, sizeof(x));
   }
   // This is carefully written not to overflow
-  while (num_rand - defect <= (unsigned long)x);
+  while (num_rand - defect <= (unsigned char)x[0]);
 
   // Truncated division is intentional
-  return x/bin_size;
+  return x[0]/bin_size;
 }
 
 /**
  * Generates a random string and store it in str
  */
-char * rand_string(char * str, size_t str_size) {
+char * rand_string(char * str, unsigned char str_size) {
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   size_t n;
   
-  if (str_size > 0 && str != NULL) {
+  if (str_size && str != NULL) {
     for (n = 0; n < str_size; n++) {
-      long key = random_at_most((sizeof(charset)) - 2);
+      unsigned char key = random_at_most((sizeof(charset)) - 2);
       str[n] = charset[key];
     }
     str[str_size] = '\0';
