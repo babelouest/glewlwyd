@@ -22,7 +22,8 @@ CREATE TABLE `g_user_module_instance` (
   `gumi_order` INT(11) NOT NULL,
   `gumi_name` VARCHAR(128) NOT NULL,
   `gumi_display_name` VARCHAR(256) DEFAULT '',
-  `gumi_parameters` TINYBLOB
+  `gumi_parameters` TINYBLOB,
+  `gumi_readonly` TINYINT(1) DEFAULT 0
 );
 
 CREATE TABLE `g_user_auth_scheme_module_instance` (
@@ -40,7 +41,8 @@ CREATE TABLE `g_client_module_instance` (
   `gcmi_order` INT(11) NOT NULL,
   `gcmi_name` VARCHAR(128) NOT NULL,
   `gcmi_display_name` VARCHAR(256) DEFAULT '',
-  `gcmi_parameters` TINYBLOB
+  `gcmi_parameters` TINYBLOB,
+  `gcmi_readonly` TINYINT(1) DEFAULT 0
 );
 
 CREATE TABLE `g_plugin_module_instance` (

@@ -120,7 +120,7 @@ json_t * get_user_module_list(struct config_elements * config) {
   size_t index;
   struct _user_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[sssss]ss}",
+  j_query = json_pack("{sss[ssssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "columns",
@@ -129,6 +129,7 @@ json_t * get_user_module_list(struct config_elements * config) {
                         "gumi_display_name AS display_name",
                         "gumi_parameters",
                         "gumi_order AS order_rank",
+                        "gumi_readonly",
                       "order_by",
                       "gumi_order");
   res = h_select(config->conn, j_query, &j_result, NULL);
@@ -143,6 +144,9 @@ json_t * get_user_module_list(struct config_elements * config) {
         json_object_set_new(j_element, "parameters", json_null());
       }
       json_object_del(j_element, "gumi_parameters");
+      
+      json_object_set_new(j_element, "readonly", json_integer_value(json_object_get(j_element, "gumi_readonly"))?json_true():json_false());
+      json_object_del(j_element, "gumi_readonly");
       
       cur_instance = get_user_module_instance(config, json_string_value(json_object_get(j_element, "name")));
       if (cur_instance != NULL) {
@@ -190,6 +194,9 @@ json_t * get_user_module(struct config_elements * config, const char * name) {
         json_object_set_new(json_array_get(j_result, 0), "parameters", json_null());
       }
       json_object_del(json_array_get(j_result, 0), "gumi_parameters");
+      
+      json_object_set_new(json_array_get(j_result, 0), "readonly", json_integer_value(json_object_get(json_array_get(j_result, 0), "gumi_readonly"))?json_true():json_false());
+      json_object_del(json_array_get(j_result, 0), "gumi_readonly");
       
       cur_instance = get_user_module_instance(config, name);
       if (cur_instance != NULL) {
@@ -263,6 +270,9 @@ json_t * is_user_module_valid(struct config_elements * config, json_t * j_module
       if (json_object_get(j_module, "order_rank") != NULL && (!json_is_integer(json_object_get(j_module, "order_rank")) || json_integer_value(json_object_get(j_module, "order_rank")) < 0)) {
         json_array_append_new(j_error_list, json_string("order_rank is optional and must be a positive integer"));
       }
+      if (json_object_get(j_module, "readonly") != NULL && !json_is_boolean(json_object_get(j_module, "readonly"))) {
+        json_array_append_new(j_error_list, json_string("readonly is optional and must be a boolean"));
+      }
       if (json_array_size(j_error_list) > 0) {
         j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error_list);
       } else {
@@ -286,7 +296,7 @@ int add_user_module(struct config_elements * config, json_t * j_module) {
   int res, ret, i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOsOsOss}}",
+  j_query = json_pack("{sss{sOsOsOsOss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "values",
@@ -296,6 +306,8 @@ int add_user_module(struct config_elements * config, json_t * j_module) {
                         json_object_get(j_module, "name"),
                         "gumi_display_name",
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
+                        "gumi_readonly",
+                        json_object_get(j_module, "readonly")!=NULL?json_object_get(j_module, "readonly"):json_false(),
                         "gumi_parameters",
                         parameters);
   o_free(parameters);
@@ -371,6 +383,9 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
     json_object_set(json_object_get(j_query, "set"), "gumi_order", json_object_get(j_module, "order_rank"));
   } else {
     json_object_set_new(json_object_get(j_query, "set"), "gumi_order", json_integer(pointer_list_size(config->user_module_list)));
+  }
+  if (json_object_get(j_module, "readonly") != NULL) {
+    json_object_set_new(json_object_get(j_query, "set"), "gumi_readonly", json_object_get(j_module, "readonly")==json_true()?json_integer(1):json_integer(0));
   }
   o_free(parameters);
   res = h_update(config->conn, j_query, NULL);
@@ -799,7 +814,7 @@ json_t * get_client_module_list(struct config_elements * config) {
   size_t index;
   struct _client_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[sssss]ss}",
+  j_query = json_pack("{sss[ssssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
                       "columns",
@@ -807,6 +822,7 @@ json_t * get_client_module_list(struct config_elements * config) {
                         "gcmi_name AS name",
                         "gcmi_display_name AS display_name",
                         "gcmi_parameters",
+                        "gcmi_order AS order_rank",
                         "gcmi_order AS order_rank",
                       "order_by",
                       "gcmi_order");
@@ -822,6 +838,9 @@ json_t * get_client_module_list(struct config_elements * config) {
         json_object_set_new(j_element, "parameters", json_null());
       }
       json_object_del(j_element, "gcmi_parameters");
+      
+      json_object_set_new(j_element, "readonly", json_integer_value(json_object_get(j_element, "gcmi_readonly"))?json_true():json_false());
+      json_object_del(j_element, "gcmi_readonly");
       
       cur_instance = get_client_module_instance(config, json_string_value(json_object_get(j_element, "name")));
       if (cur_instance != NULL) {
@@ -845,7 +864,7 @@ json_t * get_client_module(struct config_elements * config, const char * name) {
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
   struct _client_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[sssss]s{ss}}",
+  j_query = json_pack("{sss[ssssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
                       "columns",
@@ -853,6 +872,7 @@ json_t * get_client_module(struct config_elements * config, const char * name) {
                         "gcmi_name AS name",
                         "gcmi_display_name AS display_name",
                         "gcmi_parameters",
+                        "gcmi_order AS order_rank",
                         "gcmi_order AS order_rank",
                       "where",
                         "gcmi_name",
@@ -869,6 +889,9 @@ json_t * get_client_module(struct config_elements * config, const char * name) {
         json_object_set_new(json_array_get(j_result, 0), "parameters", json_null());
       }
       json_object_del(json_array_get(j_result, 0), "gcmi_parameters");
+      
+      json_object_set_new(json_array_get(j_result, 0), "readonly", json_integer_value(json_object_get(json_array_get(j_result, 0), "gcmi_readonly"))?json_true():json_false());
+      json_object_del(json_array_get(j_result, 0), "gcmi_readonly");
       
       cur_instance = get_client_module_instance(config, name);
       if (cur_instance != NULL) {
@@ -942,6 +965,9 @@ json_t * is_client_module_valid(struct config_elements * config, json_t * j_modu
       if (json_object_get(j_module, "order_rank") != NULL && (!json_is_integer(json_object_get(j_module, "order_rank")) || json_integer_value(json_object_get(j_module, "order_rank")) < 0)) {
         json_array_append_new(j_error_list, json_string("order_rank is optional and must be a positive integer"));
       }
+      if (json_object_get(j_module, "readonly") != NULL && !json_is_boolean(json_object_get(j_module, "readonly"))) {
+        json_array_append_new(j_error_list, json_string("readonly is optional and must be a boolean"));
+      }
       if (json_array_size(j_error_list) > 0) {
         j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error_list);
       } else {
@@ -965,7 +991,7 @@ int add_client_module(struct config_elements * config, json_t * j_module) {
   int res, ret, i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOsOsOss}}",
+  j_query = json_pack("{sss{sOsOsOsOss}}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
                       "values",
@@ -975,6 +1001,8 @@ int add_client_module(struct config_elements * config, json_t * j_module) {
                         json_object_get(j_module, "name"),
                         "gcmi_display_name",
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
+                        "gcmi_readonly",
+                        json_object_get(j_module, "readonly")!=NULL?json_object_get(j_module, "readonly"):json_false(),
                         "gcmi_parameters",
                         parameters);
   o_free(parameters);
@@ -1050,6 +1078,9 @@ int set_client_module(struct config_elements * config, const char * name, json_t
     json_object_set(json_object_get(j_query, "set"), "gcmi_order", json_object_get(j_module, "order_rank"));
   } else {
     json_object_set_new(json_object_get(j_query, "set"), "gcmi_order", json_integer(pointer_list_size(config->client_module_list)));
+  }
+  if (json_object_get(j_module, "readonly") != NULL) {
+    json_object_set_new(json_object_get(j_query, "set"), "gcmi_readonly", json_object_get(j_module, "readonly")==json_true()?json_integer(1):json_integer(0));
   }
   o_free(parameters);
   res = h_update(config->conn, j_query, NULL);

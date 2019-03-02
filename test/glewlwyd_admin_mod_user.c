@@ -50,27 +50,31 @@ START_TEST(test_glwd_admin_get_mod_user_add_error_param)
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssssssis{ss}}", "module", "error", "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssssssisos{ss}}", "module", "error", "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "readonly", json_false(), "parameters", "mock-value", MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssisssis{ss}}", "module", MODULE_MODULE, "name", 42, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssisssisos{ss}}", "module", MODULE_MODULE, "name", 42, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "readonly", json_false(), "parameters", "mock-value", MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssssisis{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", 42, "order_rank", 0, "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssssisisos{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", 42, "order_rank", 0, "readonly", json_false(), "parameters", "mock-value", MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssssssss{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", "error", "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssssssssos{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", "error", "readonly", json_false(), "parameters", "mock-value", MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssssssis{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", -42, "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssssssisos{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", -42, "readonly", json_false(), "parameters", "mock-value", MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssssssiss}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "error");
+  j_parameters = json_pack("{sssssssisss{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "readonly", "error", "parameters", "mock-value", MODULE_NAME);
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  
+  j_parameters = json_pack("{sssssssisoss}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "readonly", json_false(), "parameters", "error");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
@@ -81,7 +85,7 @@ END_TEST
 START_TEST(test_glwd_admin_get_mod_user_add_OK)
 {
   char * url = msprintf("%s/mod/user/", SERVER_URI);
-  json_t * j_parameters = json_pack("{sssssssis{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "mock-value", MODULE_NAME);
+  json_t * j_parameters = json_pack("{sssssssisos{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "readonly", json_false(), "parameters", "mock-value", MODULE_NAME);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   free(url);
@@ -96,7 +100,7 @@ END_TEST
 START_TEST(test_glwd_admin_get_mod_user_get)
 {
   char * url = msprintf("%s/mod/user/%s", SERVER_URI, MODULE_NAME), * url_404 = msprintf("%s/mod/user/error", SERVER_URI);
-  json_t * j_parameters = json_pack("{sssssssis{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "mock-value", MODULE_NAME);
+  json_t * j_parameters = json_pack("{sssssssisos{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "readonly", json_false(), "parameters", "mock-value", MODULE_NAME);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url_404, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL), 1);
@@ -117,15 +121,19 @@ START_TEST(test_glwd_admin_get_mod_user_set_error_param)
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssis{ss}}", "display_name", MODULE_DISPLAY_NAME, "order_rank", -42, "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssisos{ss}}", "display_name", MODULE_DISPLAY_NAME, "order_rank", -42, "readonly", json_false(), "parameters", "mock-value", MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssss{ss}}", "display_name", MODULE_DISPLAY_NAME, "order_rank", "error", "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssisss{ss}}", "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "readonly", "error", "parameters", "mock-value", MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssiss}", "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "error");
+  j_parameters = json_pack("{sssssos{ss}}", "display_name", MODULE_DISPLAY_NAME, "order_rank", "error", "readonly", json_false(), "parameters", "mock-value", MODULE_NAME);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  
+  j_parameters = json_pack("{sssisoss}", "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "readonly", json_false(), "parameters", "error");
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
@@ -136,7 +144,7 @@ END_TEST
 START_TEST(test_glwd_admin_get_mod_user_set_OK)
 {
   char * url = msprintf("%s/mod/user/%s", SERVER_URI, MODULE_NAME);
-  json_t * j_parameters = json_pack("{sssis{ss}}", "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "mock-value", MODULE_NAME);
+  json_t * j_parameters = json_pack("{sssisos{ss}}", "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "readonly", json_false(), "parameters", "mock-value", MODULE_NAME);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   
