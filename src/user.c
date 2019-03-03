@@ -318,7 +318,7 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
       o_free(str_error);
       o_free(str_user);
     } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
-      j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "module is unavailable");
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error get_user_module_instance");
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
