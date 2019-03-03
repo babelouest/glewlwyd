@@ -310,7 +310,6 @@ int add_user_module(struct config_elements * config, json_t * j_module) {
                         json_object_get(j_module, "readonly")!=NULL?json_object_get(j_module, "readonly"):json_false(),
                         "gumi_parameters",
                         parameters);
-  o_free(parameters);
   if (json_object_get(j_module, "order_rank") != NULL) {
     json_object_set(json_object_get(j_query, "values"), "gumi_order", json_object_get(j_module, "order_rank"));
   } else {
@@ -337,7 +336,7 @@ int add_user_module(struct config_elements * config, json_t * j_module) {
         cur_instance->enabled = 0;
         cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
         if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
-          if (module->user_module_init(config, json_string_value(json_object_get(j_module, "parameters")), &cur_instance->cls) == G_OK) {
+          if (module->user_module_init(config, parameters, &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
           } else {
@@ -361,6 +360,7 @@ int add_user_module(struct config_elements * config, json_t * j_module) {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error executing j_query");
     ret = G_ERROR_DB;
   }
+  o_free(parameters);
   return ret;
 }
 
@@ -388,7 +388,6 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
   if (json_object_get(j_module, "readonly") != NULL) {
     json_object_set_new(json_object_get(j_query, "set"), "gumi_readonly", json_object_get(j_module, "readonly")==json_true()?json_integer(1):json_integer(0));
   }
-  o_free(parameters);
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -397,6 +396,7 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
     y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error executing j_query");
     ret = G_ERROR_DB;
   }
+  o_free(parameters);
   return ret;
 }
 
@@ -656,7 +656,6 @@ int add_user_auth_scheme_module(struct config_elements * config, json_t * j_modu
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
                         "guasmi_parameters",
                         parameters);
-  o_free(parameters);
   res = h_insert(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -677,7 +676,7 @@ int add_user_auth_scheme_module(struct config_elements * config, json_t * j_modu
         cur_instance->module = module;
         cur_instance->enabled = 0;
         if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
-          if (module->user_auth_scheme_module_init(config, json_string_value(json_object_get(j_module, "parameters")), &cur_instance->cls) == G_OK) {
+          if (module->user_auth_scheme_module_init(config, parameters, &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
           } else {
@@ -701,6 +700,7 @@ int add_user_auth_scheme_module(struct config_elements * config, json_t * j_modu
     y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error executing j_query");
     ret = G_ERROR_DB;
   }
+  o_free(parameters);
   return ret;
 }
 
@@ -1006,7 +1006,6 @@ int add_client_module(struct config_elements * config, json_t * j_module) {
                         json_object_get(j_module, "readonly")!=NULL?json_object_get(j_module, "readonly"):json_false(),
                         "gcmi_parameters",
                         parameters);
-  o_free(parameters);
   if (json_object_get(j_module, "order_rank") != NULL) {
     json_object_set(json_object_get(j_query, "values"), "gcmi_order", json_object_get(j_module, "order_rank"));
   } else {
@@ -1033,7 +1032,7 @@ int add_client_module(struct config_elements * config, json_t * j_module) {
         cur_instance->enabled = 0;
         cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
         if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
-          if (module->client_module_init(config, json_string_value(json_object_get(j_module, "parameters")), &cur_instance->cls) == G_OK) {
+          if (module->client_module_init(config, parameters, &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
           } else {
@@ -1057,6 +1056,7 @@ int add_client_module(struct config_elements * config, json_t * j_module) {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_client_module - Error executing j_query");
     ret = G_ERROR_DB;
   }
+  o_free(parameters);
   return ret;
 }
 
@@ -1352,7 +1352,6 @@ int add_plugin_module(struct config_elements * config, json_t * j_module) {
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
                         "gpmi_parameters",
                         parameters);
-  o_free(parameters);
   res = h_insert(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -1373,7 +1372,7 @@ int add_plugin_module(struct config_elements * config, json_t * j_module) {
         cur_instance->module = module;
         cur_instance->enabled = 0;
         if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
-          if (module->plugin_module_init(config->config_p, json_string_value(json_object_get(j_module, "parameters")), &cur_instance->cls) == G_OK) {
+          if (module->plugin_module_init(config->config_p, parameters, &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
           } else {
@@ -1397,6 +1396,7 @@ int add_plugin_module(struct config_elements * config, json_t * j_module) {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_plugin_module - Error executing j_query");
     ret = G_ERROR_DB;
   }
+  o_free(parameters);
   return ret;
 }
 
