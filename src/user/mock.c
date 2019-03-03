@@ -141,8 +141,8 @@ int user_module_init(struct config_elements * config, const char * parameters, v
                               "scope1",
                               "scope2",
                               "scope3");
-  json_decref(j_param);
   y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_init - success %s %s", config->profile_scope, config->admin_scope);
+  json_decref(j_param);
   return G_OK;
 }
 
@@ -164,7 +164,7 @@ char * user_module_get_list(const char * pattern, size_t offset, size_t limit, i
   if (limit > 0) {  
     if (j_array != NULL) {
       json_array_foreach((json_t *)cls, index, j_user) {
-        if (index >= offset && (offset + counter) < json_array_size((json_t *)cls) && (!o_strlen(pattern) || json_has_str_pattern_case(j_user, pattern))) {
+        if (index >= offset && (offset + counter) < json_array_size((json_t *)cls) && counter < limit && (!o_strlen(pattern) || json_has_str_pattern_case(j_user, pattern))) {
           json_array_append(j_array, j_user);
           counter++;
         }
