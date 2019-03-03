@@ -54,6 +54,10 @@
 #define GLEWLWYD_CALLBACK_PRIORITY_FILE           100
 #define GLEWLWYD_CALLBACK_PRIORITY_GZIP           101
 
+#define GLEWLWYD_IS_VALID_MODE_ADD            0
+#define GLEWLWYD_IS_VALID_MODE_UPDATE         1
+#define GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE 2
+
 typedef enum {
   digest_SHA1,
   digest_SHA224,
@@ -75,9 +79,10 @@ struct _user_module {
   int     (* user_module_unload)(struct config_elements * config);
   int     (* user_module_init)(struct config_elements * config, const char * parameters, void ** cls);
   int     (* user_module_close)(struct config_elements * config, void * cls);
-  size_t  (* user_module_count_total)(struct config_elements * config, void * cls);
-  char ** (* user_module_get_list)(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls);
+  size_t  (* user_module_count_total)(void * cls);
+  char *  (* user_module_get_list)(const char * pattern, size_t offset, size_t limit, int * result, void * cls);
   char *  (* user_module_get)(const char * username, int * result, void * cls);
+  char *  (* user_is_valid)(const char * username, const char * str_user, int mode, int * result, void * cls);
   int     (* user_module_add)(const char * str_new_user, void * cls);
   int     (* user_module_update)(const char * username, const char * str_user, void * cls);
   int     (* user_module_update_profile)(const char * username, const char * str_user, void * cls);
@@ -91,6 +96,7 @@ struct _user_module_instance {
   struct _user_module * module;
   void                * cls;
   short int             enabled;
+  short int             readonly;
 };
 
 struct _client_module {
@@ -104,7 +110,7 @@ struct _client_module {
   int     (* client_module_init)(struct config_elements * config, const char * parameters, void ** cls);
   int     (* client_module_close)(struct config_elements * config, void * cls);
   size_t  (* client_module_count_total)(struct config_elements * config, void * cls);
-  char ** (* client_module_get_list)(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls);
+  char  * (* client_module_get_list)(const char * pattern, size_t limit, size_t offset, int * result, void * cls);
   char  * (* client_module_get)(const char * client_id, int * result, void * cls);
   int     (* client_module_add)(const char * str_new_client, void * cls);
   int     (* client_module_update)(const char * client_id, const char * str_client, void * cls);
@@ -118,6 +124,7 @@ struct _client_module_instance {
   struct _client_module * module;
   void                  * cls;
   short int               enabled;
+  short int               readonly;
 };
 
 struct _user_auth_scheme_module {
