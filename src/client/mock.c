@@ -31,6 +31,36 @@
 #include <orcania.h>
 #include "../glewlwyd-common.h"
 
+static int json_has_str_pattern_case(json_t * j_source, const char * pattern) {
+  const char * key;
+  size_t index;
+  json_t * j_element;
+
+  if (j_source != NULL) {
+    if (json_is_string(j_source) && o_strcasestr(json_string_value(j_source), pattern) != NULL) {
+      return 1;
+    } else if (json_is_object(j_source)) {
+      json_object_foreach(j_source, key, j_element) {
+        if (json_has_str_pattern_case(j_element, pattern)) {
+          return 1;
+        }
+      }
+      return 0;
+    } else if (json_is_array(j_source)) {
+      json_array_foreach(j_source, index, j_element) {
+        if (json_has_str_pattern_case(j_element, pattern)) {
+          return 1;
+        }
+      }
+      return 0;
+    } else {
+      return 0;
+    }
+  } else {
+    return 0;
+  }
+}
+
 int client_module_load(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters) {
   int ret = G_OK;
   if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
@@ -118,21 +148,29 @@ size_t client_module_count_total(struct config_elements * config, void * cls) {
   return json_array_size((json_t *)cls);
 }
 
-char ** client_module_get_list(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls) {
-  json_t * j_client;
-  size_t index;
-  char ** array_return = o_malloc(json_array_size((json_t *)cls) * sizeof(char *));
-  
-  if (array_return != NULL) {
-    *total = json_array_size((json_t *)cls);
-    json_array_foreach((json_t *)cls, index, j_client) {
-      array_return[index] = json_dumps(j_client, JSON_COMPACT);
+char * client_module_get_list(const char * pattern, size_t limit, size_t offset, int * result, void * cls) {
+  json_t * j_user, * j_array = json_array();
+  size_t index, counter = 0;
+  char * to_return = NULL;
+
+  if (limit > 0) {  
+    if (j_array != NULL) {
+      json_array_foreach((json_t *)cls, index, j_user) {
+        if (index >= offset && (offset + counter) < json_array_size((json_t *)cls) && counter < limit && (!o_strlen(pattern) || json_has_str_pattern_case(j_user, pattern))) {
+          json_array_append(j_array, j_user);
+          counter++;
+        }
+      }
+      to_return = json_dumps(j_array, JSON_COMPACT);
+      *result = G_OK;
+      json_decref(j_array);
+    } else {
+      *result = G_ERROR;
     }
-    *result = G_OK;
   } else {
-    *result = G_ERROR;
+    *result = G_ERROR_PARAM;
   }
-  return array_return;
+  return to_return;
 }
 
 char * client_module_get(const char * client_id, int * result, void * cls) {
