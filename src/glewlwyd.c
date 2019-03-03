@@ -270,6 +270,13 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_user, (void*)config);
   
+  // Clients CRUD
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/client/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_client_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/client/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_client, (void*)config);
+  
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_ZERO, &callback_glewlwyd_options, (void*)config);
@@ -1544,6 +1551,7 @@ int init_client_module_list(struct config_elements * config) {
                 *(void **) (&cur_client_module->client_module_count_total) = dlsym(file_handle, "client_module_count_total");
                 *(void **) (&cur_client_module->client_module_get_list) = dlsym(file_handle, "client_module_get_list");
                 *(void **) (&cur_client_module->client_module_get) = dlsym(file_handle, "client_module_get");
+                *(void **) (&cur_client_module->client_is_valid) = dlsym(file_handle, "client_is_valid");
                 *(void **) (&cur_client_module->client_module_add) = dlsym(file_handle, "client_module_add");
                 *(void **) (&cur_client_module->client_module_update) = dlsym(file_handle, "client_module_update");
                 *(void **) (&cur_client_module->client_module_delete) = dlsym(file_handle, "client_module_delete");
@@ -1557,6 +1565,7 @@ int init_client_module_list(struct config_elements * config) {
                     cur_client_module->client_module_count_total != NULL &&
                     cur_client_module->client_module_get_list != NULL &&
                     cur_client_module->client_module_get != NULL &&
+                    cur_client_module->client_is_valid != NULL &&
                     cur_client_module->client_module_add != NULL &&
                     cur_client_module->client_module_update != NULL &&
                     cur_client_module->client_module_delete != NULL &&
@@ -1607,6 +1616,7 @@ int init_client_module_list(struct config_elements * config) {
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_count_total: %s", (cur_client_module->client_module_count_total != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_get_list: %s", (cur_client_module->client_module_get_list != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_get: %s", (cur_client_module->client_module_get != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_is_valid: %s", (cur_client_module->client_is_valid != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_add: %s", (cur_client_module->client_module_add != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_update: %s", (cur_client_module->client_module_update != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_delete: %s", (cur_client_module->client_module_delete != NULL?"found":"not found"));
