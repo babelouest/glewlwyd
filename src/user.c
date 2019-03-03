@@ -123,41 +123,6 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
   return j_return;
 }
 
-json_t * get_user(struct config_elements * config, const char * username) {
-  int i, found = 0, result;
-  char * str_user;
-  json_t * j_return = NULL, * j_user;
-  struct _user_module_instance * user_module;
-  
-  for (i=0; !found && i<pointer_list_size(config->user_module_instance_list) && j_return == NULL; i++) {
-    if ((user_module = pointer_list_get_at(config->user_module_instance_list, i)) != NULL) {
-      if (user_module->enabled) {
-        str_user = user_module->module->user_module_get(username, &result, user_module->cls);
-        if (result == G_OK && str_user != NULL) {
-          j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
-          if (j_user != NULL) {
-            j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
-            json_decref(j_user);
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error json_loads");
-          }
-          found = 1;
-        } else if (result != G_OK && result != G_ERROR_NOT_FOUND) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error, user_module_get for module %s", user_module->name);
-        }
-        o_free(str_user);
-      }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error, user_module_instance %d is NULL", i);
-      j_return = json_pack("{si}", "result", G_ERROR);
-    }
-  }
-  if (j_return == NULL) {
-    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
-  }
-  return j_return;
-}
-
 int user_has_scope(json_t * j_user, const char * scope) {
   json_t * j_element;
   size_t index;
@@ -168,4 +133,433 @@ int user_has_scope(json_t * j_user, const char * scope) {
     }
   }
   return 0;
+}
+
+json_t * get_user(struct config_elements * config, const char * username, const char * source) {
+  int found = 0, result;
+  char * str_user;
+  json_t * j_return = NULL, * j_user, * j_module_list, * j_module;
+  struct _user_module_instance * user_module;
+  size_t index;
+  
+  if (source != NULL) {
+    user_module = get_user_module_instance(config, source);
+    if (user_module != NULL) {
+      str_user = user_module->module->user_module_get(username, &result, user_module->cls);
+      if (result == G_OK && str_user != NULL) {
+        j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
+        if (j_user != NULL) {
+          j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
+          json_decref(j_user);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error json_loads");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+      } else if (result != G_OK && result != G_ERROR_NOT_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error, user_module_get for module %s", user_module->name);
+        j_return = json_pack("{si}", "result", G_ERROR);
+      } else {
+        j_return = json_pack("{si}", "result", result);
+      }
+      o_free(str_user);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    }
+  } else {
+    j_module_list = get_user_module_list(config);
+    if (check_result_value(j_module_list, G_OK)) {
+      json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
+        if (!found) {
+          user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
+          if (user_module != NULL) {
+            if (user_module->enabled) {
+              str_user = user_module->module->user_module_get(username, &result, user_module->cls);
+              if (result == G_OK && str_user != NULL) {
+                j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
+                if (j_user != NULL) {
+                  found = 1;
+                  j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
+                  json_decref(j_user);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error json_loads");
+                }
+                found = 1;
+              } else if (result != G_OK && result != G_ERROR_NOT_FOUND) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error, user_module_get for module %s", user_module->name);
+              }
+              o_free(str_user);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
+          }
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error get_user_module_list");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_module_list);
+  }
+  if (j_return == NULL) {
+    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+  }
+  return j_return;
+}
+
+json_t * get_user_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source) {
+  json_t * j_return, * j_module_list, * j_module, * j_list_parsed;
+  struct _user_module_instance * user_module;
+  char * list_result = NULL;
+  int result = G_ERROR;
+  size_t cur_offset, cur_limit, count_total, index;
+  
+  if (source != NULL) {
+    user_module = get_user_module_instance(config, source);
+    if (user_module != NULL && user_module->enabled) {
+      list_result = user_module->module->user_module_get_list(pattern, offset, limit, &result, user_module->cls);
+      if (result == G_OK) {
+        j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
+        if (j_list_parsed && json_is_array(j_list_parsed)) {
+          j_return = json_pack("{sisO}", "result", G_OK, "user", j_list_parsed);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error parsing user_module_get_list result into a JSON array");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+        json_decref(j_list_parsed);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error user_module_get_list");
+        j_return = json_pack("{si}", "result", result);
+      }
+      o_free(list_result);
+    } else if (user_module != NULL && !user_module->enabled) {
+      j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error get_user_module_instance");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+  } else {
+    j_module_list = get_user_module_list(config);
+    if (check_result_value(j_module_list, G_OK)) {
+      cur_offset = offset;
+      cur_limit = limit;
+      j_return = json_pack("{sis[]}", "result", G_OK, "user");
+      if (j_return != NULL) {
+        json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
+          user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
+          if (user_module != NULL && user_module->enabled) {
+            if ((count_total = user_module->module->user_module_count_total(user_module->cls)) > cur_offset) {
+              list_result = user_module->module->user_module_get_list(pattern, cur_offset, cur_limit, &result, user_module->cls);
+              if (result == G_OK) {
+                j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
+                if (j_list_parsed && json_is_array(j_list_parsed)) {
+                  cur_offset = 0;
+                  if (cur_limit > json_array_size(j_list_parsed)) {
+                    cur_limit -= json_array_size(j_list_parsed);
+                  } else {
+                    cur_limit = 0;
+                  }
+                  json_array_extend(json_object_get(j_return, "user"), j_list_parsed);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error parsing user_module_get_list result into a JSON array for module %s", json_string_value(json_object_get(j_module, "name")));
+                  j_return = json_pack("{si}", "result", G_ERROR);
+                }
+                json_decref(j_list_parsed);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error user_module_get_list for module %s", json_string_value(json_object_get(j_module, "name")));
+              }
+              o_free(list_result);
+            } else {
+              cur_offset -= count_total;
+            }
+          } else if (user_module == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
+          }
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error allocating resources for j_return");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error get_user_module_list");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_module_list);
+  }
+  return j_return;
+}
+
+json_t * is_user_valid(struct config_elements * config, const char * username, json_t * j_user, int add, const char * source) {
+  int found = 0, result;
+  char * str_error, * str_user;
+  json_t * j_return = NULL, * j_error_list, * j_module_list, * j_module;
+  struct _user_module_instance * user_module;
+  size_t index;
+  
+  if (source != NULL) {
+    user_module = get_user_module_instance(config, source);
+    if (user_module != NULL && user_module->enabled && !user_module->readonly) {
+      str_user = json_dumps(j_user, JSON_COMPACT);
+      str_error = user_module->module->user_is_valid(username, str_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, user_module->cls);
+      if (result == G_ERROR_PARAM && str_error != NULL) {
+        j_error_list = json_loads(str_error, JSON_DECODE_ANY, NULL);
+        if (j_error_list != NULL) {
+          j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error_list);
+          json_decref(j_error_list);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error json_loads");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+      } else if (result == G_OK) {
+        j_return = json_pack("{si}", "result", G_OK);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error user_is_valid");
+        j_return = json_pack("{si}", "result", result);
+      }
+      o_free(str_error);
+      o_free(str_user);
+    } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
+      j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error get_user_module_instance");
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    }
+  } else {
+    j_module_list = get_user_module_list(config);
+    if (check_result_value(j_module_list, G_OK)) {
+      json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
+        if (!found) {
+          user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
+          if (user_module != NULL && user_module->enabled && !user_module->readonly) {
+            found = 1;
+            str_user = json_dumps(j_user, JSON_COMPACT);
+            str_error = user_module->module->user_is_valid(username, str_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, user_module->cls);
+            if (result == G_ERROR_PARAM && str_error != NULL) {
+              j_error_list = json_loads(str_error, JSON_DECODE_ANY, NULL);
+              if (j_error_list != NULL) {
+                j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "user", j_error_list);
+                json_decref(j_error_list);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error json_loads");
+              }
+            } else if (result == G_OK) {
+              j_return = json_pack("{si}", "result", G_OK);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error, user_is_valid for module %s", user_module->name);
+              j_return = json_pack("{si}", "result", result);
+            }
+            o_free(str_error);
+            o_free(str_user);
+          } else if (user_module == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
+          }
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error get_user_module_list");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_module_list);
+    if (j_return == NULL) {
+      j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+    }
+  }
+  return j_return;
+}
+
+int add_user(struct config_elements * config, json_t * j_user, const char * source) {
+  int found = 0, result, ret;
+  char * str_user;
+  json_t * j_module_list, * j_module;
+  struct _user_module_instance * user_module;
+  size_t index;
+  
+  if (source != NULL) {
+    user_module = get_user_module_instance(config, source);
+    if (user_module != NULL && user_module->enabled && !user_module->readonly) {
+      str_user = json_dumps(j_user, JSON_COMPACT);
+      result = user_module->module->user_module_add(str_user, user_module->cls);
+      if (result == G_OK) {
+        ret = G_OK;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error user_module_add");
+        ret = result;
+      }
+      o_free(str_user);
+    } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
+      ret = G_ERROR_PARAM;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error get_user_module_instance");
+      ret = G_ERROR;
+    }
+  } else {
+    j_module_list = get_user_module_list(config);
+    if (check_result_value(j_module_list, G_OK)) {
+      json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
+        if (!found) {
+          user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
+          if (user_module != NULL && user_module->enabled && !user_module->readonly) {
+            found = 1;
+            str_user = json_dumps(j_user, JSON_COMPACT);
+            result = user_module->module->user_module_add(str_user, user_module->cls);
+            if (result == G_OK) {
+              ret = G_OK;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error user_module_add");
+              ret = result;
+            }
+            o_free(str_user);
+          } else if (user_module == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
+          }
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error get_user_module_list");
+      ret = G_ERROR;
+    }
+    json_decref(j_module_list);
+  }
+  if (!found) {
+    ret = G_ERROR_NOT_FOUND;
+  }
+  return ret;
+}
+
+int set_user(struct config_elements * config, const char * username, json_t * j_user, const char * source) {
+  int found = 0, result, ret;
+  char * str_user;
+  json_t * j_module_list, * j_module;
+  struct _user_module_instance * user_module;
+  size_t index;
+  
+  if (source != NULL) {
+    user_module = get_user_module_instance(config, source);
+    if (user_module != NULL && user_module->enabled && !user_module->readonly) {
+      o_free(user_module->module->user_module_get(username, &result, user_module->cls));
+      if (result == G_OK) {
+        str_user = json_dumps(j_user, JSON_COMPACT);
+        result = user_module->module->user_module_update(username, str_user, user_module->cls);
+        if (result == G_OK) {
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_update");
+          ret = result;
+        }
+        o_free(str_user);
+      } else if (result != G_ERROR_NOT_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_get");
+        ret = result;
+      } else {
+        ret = G_ERROR_NOT_FOUND;
+      }
+    } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
+      ret = G_ERROR_PARAM;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error get_user_module_instance");
+      ret = G_ERROR;
+    }
+  } else {
+    j_module_list = get_user_module_list(config);
+    if (check_result_value(j_module_list, G_OK)) {
+      json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
+        if (!found) {
+          user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
+          if (user_module != NULL && user_module->enabled && !user_module->readonly) {
+            found = 1;
+            o_free(user_module->module->user_module_get(username, &result, user_module->cls));
+            if (result == G_OK) {
+              str_user = json_dumps(j_user, JSON_COMPACT);
+              result = user_module->module->user_module_update(username, str_user, user_module->cls);
+              if (result == G_OK) {
+                ret = G_OK;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_update");
+                ret = result;
+              }
+              o_free(str_user);
+            } else if (result != G_ERROR_NOT_FOUND) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_get");
+            }
+          } else if (user_module == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
+          }
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error get_user_module_list");
+      ret = G_ERROR;
+    }
+    json_decref(j_module_list);
+  }
+  if (!found) {
+    ret = G_ERROR_NOT_FOUND;
+  }
+  return ret;
+}
+
+int delete_user(struct config_elements * config, const char * username, const char * source) {
+  int found = 0, result, ret;
+  json_t * j_module_list, * j_module;
+  struct _user_module_instance * user_module;
+  size_t index;
+  
+  if (source != NULL) {
+    user_module = get_user_module_instance(config, source);
+    if (user_module != NULL && user_module->enabled && !user_module->readonly) {
+      o_free(user_module->module->user_module_get(username, &result, user_module->cls));
+      if (result == G_OK) {
+        result = user_module->module->user_module_delete(username, user_module->cls);
+        if (result == G_OK) {
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error user_module_delete");
+          ret = result;
+        }
+      } else if (result != G_ERROR_NOT_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_get");
+        ret = result;
+      } else {
+        ret = G_ERROR_NOT_FOUND;
+      }
+    } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
+      ret = G_ERROR_PARAM;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error get_user_module_instance");
+      ret = G_ERROR;
+    }
+  } else {
+    j_module_list = get_user_module_list(config);
+    if (check_result_value(j_module_list, G_OK)) {
+      json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
+        if (!found) {
+          user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
+          if (user_module != NULL && user_module->enabled && !user_module->readonly) {
+            found = 1;
+            o_free(user_module->module->user_module_get(username, &result, user_module->cls));
+            if (result == G_OK) {
+              result = user_module->module->user_module_delete(username, user_module->cls);
+              if (result == G_OK) {
+                ret = G_OK;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error user_module_delete");
+                ret = result;
+              }
+            } else if (result != G_ERROR_NOT_FOUND) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error user_module_get");
+            }
+          } else if (user_module == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
+          }
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error get_user_module_list");
+      ret = G_ERROR;
+    }
+    json_decref(j_module_list);
+  }
+  if (!found) {
+    ret = G_ERROR_NOT_FOUND;
+  }
+  return ret;
 }
