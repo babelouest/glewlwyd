@@ -79,8 +79,15 @@ int client_module_unload(struct config_elements * config) {
 }
 
 int client_module_init(struct config_elements * config, const char * parameters, void ** cls) {
-  *cls = (void*)json_pack("[{sssssssos[ss]s[ss]s[]so}{sssssssos[s]s[s]s[]so}{sssssssos[ssssss]s[s]s[ss]so}]",
+  json_t * j_param = json_loads(parameters, 0, NULL);
+  if (j_param == NULL) {
+    j_param = json_pack("{ss}", "client-id-prefix", "");
+  } else if (!json_is_string(json_object_get(j_param, "client-id-prefix"))) {
+    json_object_set_new(j_param, "client-id-prefix", json_string(""));
+  }
+  *cls = (void*)json_pack("[{ss+ ss ss so s[ss] s[ss] s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so s[ssssss] s[s] s[ss] so}]",
                             "client_id",
+                            json_string_value(json_object_get(j_param, "client-id-prefix")),
                             "client1_id",
                             "name",
                             "client1",
@@ -98,6 +105,7 @@ int client_module_init(struct config_elements * config, const char * parameters,
                             "enabled",
                             json_true(),
                             "client_id",
+                            json_string_value(json_object_get(j_param, "client-id-prefix")),
                             "client2_id",
                             "name",
                             "client2",
@@ -113,6 +121,7 @@ int client_module_init(struct config_elements * config, const char * parameters,
                             "enabled",
                             json_true(),
                             "client_id",
+                            json_string_value(json_object_get(j_param, "client-id-prefix")),
                             "client3_id",
                             "name",
                             "client3",
@@ -135,6 +144,7 @@ int client_module_init(struct config_elements * config, const char * parameters,
                             "enabled",
                             json_true());
   y_log_message(Y_LOG_LEVEL_DEBUG, "client_module_init - success %s %s", config->profile_scope, config->admin_scope);
+  json_decref(j_param);
   return G_OK;
 }
 
@@ -144,16 +154,17 @@ int client_module_close(struct config_elements * config, void * cls) {
   return G_OK;
 }
 
-size_t client_module_count_total(struct config_elements * config, void * cls) {
+size_t client_module_count_total(void * cls) {
   return json_array_size((json_t *)cls);
 }
 
-char * client_module_get_list(const char * pattern, size_t limit, size_t offset, int * result, void * cls) {
-  json_t * j_user, * j_array = json_array();
+char * client_module_get_list(const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
+  json_t * j_user, * j_array;
   size_t index, counter = 0;
   char * to_return = NULL;
 
-  if (limit > 0) {  
+  if (limit > 0) {
+    j_array = json_array();
     if (j_array != NULL) {
       json_array_foreach((json_t *)cls, index, j_user) {
         if (index >= offset && (offset + counter) < json_array_size((json_t *)cls) && counter < limit && (!o_strlen(pattern) || json_has_str_pattern_case(j_user, pattern))) {
@@ -196,13 +207,47 @@ char * client_module_get(const char * client_id, int * result, void * cls) {
   return str_return;
 }
 
+char * client_is_valid(const char * client_id, const char * str_client, int mode, int * result, void * cls) {
+  json_t * j_return = NULL, * j_client;
+  char * str_return = NULL;
+
+  if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && client_id == NULL) {
+    *result = G_ERROR_PARAM;
+    j_return = json_pack("[s]", "client_id is mandatory on update mode");
+  } else {
+    j_client = json_loads(str_client, JSON_DECODE_ANY, NULL);
+    if (j_client != NULL && json_is_object(j_client)) {
+      if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
+        if (json_is_string(json_object_get(j_client, "client_id")) && json_string_length(json_object_get(j_client, "client_id")) <= 128) {
+          *result = G_OK;
+        } else {
+          *result = G_ERROR_PARAM;
+          j_return = json_pack("[s]", "client_id must be a string value of maximum 128 characters");
+        }
+      } else {
+        *result = G_OK;
+      }
+    } else {
+      *result = G_ERROR_PARAM;
+      j_return = json_pack("[s]", "client must be a JSON object");
+    }
+    json_decref(j_client);
+  }
+
+  if (j_return != NULL) {
+    str_return = json_dumps(j_return, JSON_COMPACT);
+    json_decref(j_return);
+  }
+  return str_return;
+}
+
 int client_module_add(const char * str_new_client, void * cls) {
   json_t * j_client = json_loads(str_new_client, JSON_DECODE_ANY, NULL);
   int ret, result;
   char * str_client;
   
   if (j_client != NULL) {
-    str_client = client_module_get(json_string_value(json_object_get(j_client, "username")), &result, cls);
+    str_client = client_module_get(json_string_value(json_object_get(j_client, "client_id")), &result, cls);
     if (result == G_ERROR_NOT_FOUND) {
       json_array_append((json_t *)cls, j_client);
       ret = G_OK;
