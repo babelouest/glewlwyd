@@ -224,19 +224,19 @@ json_t * get_user_list(struct config_elements * config, const char * pattern, si
         if (j_list_parsed && json_is_array(j_list_parsed)) {
           j_return = json_pack("{sisO}", "result", G_OK, "user", j_list_parsed);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error parsing user_module_get_list result into a JSON array");
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error parsing user_module_get_list result into a JSON array");
           j_return = json_pack("{si}", "result", G_ERROR);
         }
         json_decref(j_list_parsed);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error user_module_get_list");
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error user_module_get_list");
         j_return = json_pack("{si}", "result", result);
       }
       o_free(list_result);
     } else if (user_module != NULL && !user_module->enabled) {
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error get_user_module_instance");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error get_user_module_instance");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
   } else {
@@ -263,27 +263,27 @@ json_t * get_user_list(struct config_elements * config, const char * pattern, si
                   }
                   json_array_extend(json_object_get(j_return, "user"), j_list_parsed);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error parsing user_module_get_list result into a JSON array for module %s", json_string_value(json_object_get(j_module, "name")));
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error parsing user_module_get_list result into a JSON array for module %s", json_string_value(json_object_get(j_module, "name")));
                   j_return = json_pack("{si}", "result", G_ERROR);
                 }
                 json_decref(j_list_parsed);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error user_module_get_list for module %s", json_string_value(json_object_get(j_module, "name")));
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error user_module_get_list for module %s", json_string_value(json_object_get(j_module, "name")));
               }
               o_free(list_result);
             } else {
               cur_offset -= count_total;
             }
           } else if (user_module == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
           }
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error allocating resources for j_return");
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error allocating resources for j_return");
         j_return = json_pack("{si}", "result", G_ERROR);
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error get_user_module_list");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error get_user_module_list");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     json_decref(j_module_list);
@@ -521,7 +521,7 @@ int delete_user(struct config_elements * config, const char * username, const ch
           ret = result;
         }
       } else if (result != G_ERROR_NOT_FOUND) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_get");
+        y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error user_module_get");
         ret = result;
       } else {
         ret = G_ERROR_NOT_FOUND;
