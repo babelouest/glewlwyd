@@ -59,12 +59,13 @@
 
 struct _oauth2_config {
   struct config_plugin * glewlwyd_config;
-  jwt_t * jwt_key;
-  json_t * j_params;
-  unsigned long access_token_duration;
-  json_int_t refresh_token_duration;
+  jwt_t            * jwt_key;
+  json_t           * j_params;
+  unsigned long      access_token_duration;
+  json_int_t         refresh_token_duration;
   unsigned short int refresh_token_rolling;
   unsigned short int auth_type_enabled[5];
+  pthread_mutex_t    insert_lock;
 };
 
 /**
@@ -124,70 +125,75 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
   int res, ret, i;
   char * issued_at_clause, ** scope_array = NULL;
   
-  if (issued_for != NULL && now > 0) {
-    issued_at_clause = config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
-    j_query = json_pack("{sss{sisososos{ss}ssss}}",
-                        "table",
-                        GLEWLWYD_PLUGIN_OAUTH2_TABLE_ACCESS_TOKEN,
-                        "values",
-                          "gpga_authorization_type",
-                          auth_type,
-                          "gpgr_id",
-                          gpgr_id?json_integer(gpgr_id):json_null(),
-                          "gpga_username",
-                          username!=NULL?json_string(username):json_null(),
-                          "gpga_client_id",
-                          client_id!=NULL?json_string(client_id):json_null(),
-                          "gpga_issued_at",
-                            "raw",
-                            issued_at_clause,
-                          "gpga_issued_for",
-                          issued_for,
-                          "gpga_user_agent",
-                          user_agent!=NULL?user_agent:"");
-    o_free(issued_at_clause);
-    res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
-    json_decref(j_query);
-    if (res == H_OK) {
-      j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
-      if (j_last_id != NULL) {
-        if (split_string(scope_list, " ", &scope_array) > 0) {
-          j_query = json_pack("{sss[]}",
-                              "table",
-                              GLEWLWYD_PLUGIN_OAUTH2_TABLE_ACCESS_TOKEN_SCOPE,
-                              "values");
-          if (j_query != NULL) {
-            for (i=0; scope_array[i] != NULL; i++) {
-              json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpga_id", j_last_id, "gpgas_scope", scope_array[i]));
-            }
-            res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
-            json_decref(j_query);
-            if (res == H_OK) {
-              ret = G_OK;
+  if (pthread_mutex_lock(&config->insert_lock)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error pthread_mutex_lock");
+  } else {
+    if (issued_for != NULL && now > 0) {
+      issued_at_clause = config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
+      j_query = json_pack("{sss{sisososos{ss}ssss}}",
+                          "table",
+                          GLEWLWYD_PLUGIN_OAUTH2_TABLE_ACCESS_TOKEN,
+                          "values",
+                            "gpga_authorization_type",
+                            auth_type,
+                            "gpgr_id",
+                            gpgr_id?json_integer(gpgr_id):json_null(),
+                            "gpga_username",
+                            username!=NULL?json_string(username):json_null(),
+                            "gpga_client_id",
+                            client_id!=NULL?json_string(client_id):json_null(),
+                            "gpga_issued_at",
+                              "raw",
+                              issued_at_clause,
+                            "gpga_issued_for",
+                            issued_for,
+                            "gpga_user_agent",
+                            user_agent!=NULL?user_agent:"");
+      o_free(issued_at_clause);
+      res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
+        if (j_last_id != NULL) {
+          if (split_string(scope_list, " ", &scope_array) > 0) {
+            j_query = json_pack("{sss[]}",
+                                "table",
+                                GLEWLWYD_PLUGIN_OAUTH2_TABLE_ACCESS_TOKEN_SCOPE,
+                                "values");
+            if (j_query != NULL) {
+              for (i=0; scope_array[i] != NULL; i++) {
+                json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpga_id", j_last_id, "gpgas_scope", scope_array[i]));
+              }
+              res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+              json_decref(j_query);
+              if (res == H_OK) {
+                ret = G_OK;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error executing j_query (2)");
+                ret = G_ERROR_DB;
+              }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error executing j_query (2)");
-              ret = G_ERROR_DB;
+              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error json_pack");
+              ret = G_ERROR;
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error json_pack");
+            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error split_string");
             ret = G_ERROR;
           }
+          free_string_array(scope_array);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error split_string");
-          ret = G_ERROR;
+          y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error h_last_insert_id");
+          ret = G_ERROR_DB;
         }
-        free_string_array(scope_array);
+        json_decref(j_last_id);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error h_last_insert_id");
+        y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error executing j_query (1)");
         ret = G_ERROR_DB;
       }
-      json_decref(j_last_id);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error executing j_query (1)");
-      ret = G_ERROR_DB;
+      ret = G_ERROR_PARAM;
     }
-  } else {
-    ret = G_ERROR_PARAM;
+    pthread_mutex_unlock(&config->insert_lock);
   }
   return ret;
 }
@@ -253,84 +259,89 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
   int res, i;
   char * issued_at_clause, * expires_at_clause, ** scope_array = NULL;
   
-  if (token_hash != NULL && username != NULL && issued_for != NULL && now > 0 && duration > 0) {
-    json_error_t error;
-    issued_at_clause = config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
-    expires_at_clause = config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)duration)):msprintf("%u", (now + (unsigned int)duration));
-    j_query = json_pack_ex(&error, 0, "{sss{si so ss so s{ss} s{ss} sI si ss ss ss}}",
-                        "table",
-                        GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
-                        "values",
-                          "gpgr_authorization_type",
-                          auth_type,
-                          "gpgc_id",
-                          gpgc_id?json_integer(gpgc_id):json_null(),
-                          "gpgr_username",
-                          username,
-                          "gpgr_client_id",
-                          client_id!=NULL?json_string(client_id):json_null(),
-                          "gpgr_issued_at",
-                            "raw",
-                            issued_at_clause,
-                          "gpgr_expires_at",
-                            "raw",
-                            expires_at_clause,
-                          "gpgr_duration",
-                          duration,
-                          "gpgr_rolling_expiration",
-                          rolling,
-                          "gpgr_token_hash",
-                          token_hash,
-                          "gpgr_issued_for",
-                          issued_for,
-                          "gpgr_user_agent",
-                          user_agent!=NULL?user_agent:"");
-    o_free(issued_at_clause);
-    o_free(expires_at_clause);
-    res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
-    json_decref(j_query);
-    if (res == H_OK) {
-      j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
-      if (j_last_id != NULL) {
-        if (split_string(scope_list, " ", &scope_array) > 0) {
-          j_query = json_pack("{sss[]}",
-                              "table",
-                              GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN_SCOPE,
-                              "values");
-          if (j_query != NULL) {
-            for (i=0; scope_array[i] != NULL; i++) {
-              json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpgr_id", j_last_id, "gpgrs_scope", scope_array[i]));
-            }
-            res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
-            json_decref(j_query);
-            if (res == H_OK) {
-              j_return = json_pack("{sisO}", "result", G_OK, "gpgr_id", j_last_id);
+  if (pthread_mutex_lock(&config->insert_lock)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error pthread_mutex_lock");
+  } else {
+    if (token_hash != NULL && username != NULL && issued_for != NULL && now > 0 && duration > 0) {
+      json_error_t error;
+      issued_at_clause = config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
+      expires_at_clause = config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)duration)):msprintf("%u", (now + (unsigned int)duration));
+      j_query = json_pack_ex(&error, 0, "{sss{si so ss so s{ss} s{ss} sI si ss ss ss}}",
+                          "table",
+                          GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
+                          "values",
+                            "gpgr_authorization_type",
+                            auth_type,
+                            "gpgc_id",
+                            gpgc_id?json_integer(gpgc_id):json_null(),
+                            "gpgr_username",
+                            username,
+                            "gpgr_client_id",
+                            client_id!=NULL?json_string(client_id):json_null(),
+                            "gpgr_issued_at",
+                              "raw",
+                              issued_at_clause,
+                            "gpgr_expires_at",
+                              "raw",
+                              expires_at_clause,
+                            "gpgr_duration",
+                            duration,
+                            "gpgr_rolling_expiration",
+                            rolling,
+                            "gpgr_token_hash",
+                            token_hash,
+                            "gpgr_issued_for",
+                            issued_for,
+                            "gpgr_user_agent",
+                            user_agent!=NULL?user_agent:"");
+      o_free(issued_at_clause);
+      o_free(expires_at_clause);
+      res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
+        if (j_last_id != NULL) {
+          if (split_string(scope_list, " ", &scope_array) > 0) {
+            j_query = json_pack("{sss[]}",
+                                "table",
+                                GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN_SCOPE,
+                                "values");
+            if (j_query != NULL) {
+              for (i=0; scope_array[i] != NULL; i++) {
+                json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpgr_id", j_last_id, "gpgrs_scope", scope_array[i]));
+              }
+              res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+              json_decref(j_query);
+              if (res == H_OK) {
+                j_return = json_pack("{sisO}", "result", G_OK, "gpgr_id", j_last_id);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error executing j_query (2)");
+                j_return = json_pack("{si}", "result", G_ERROR_DB);
+              }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error executing j_query (2)");
-              j_return = json_pack("{si}", "result", G_ERROR_DB);
+              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error json_pack");
+              j_return = json_pack("{si}", "result", G_ERROR);
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error json_pack");
+            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error split_string");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
+          free_string_array(scope_array);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error split_string");
-          j_return = json_pack("{si}", "result", G_ERROR);
+          y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error h_last_insert_id");
+          j_return = json_pack("{si}", "result", G_ERROR_DB);
         }
-        free_string_array(scope_array);
+        json_decref(j_last_id);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error h_last_insert_id");
+        y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error executing j_query (1)");
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
-      json_decref(j_last_id);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error executing j_query (1)");
-      j_return = json_pack("{si}", "result", G_ERROR_DB);
+      j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     }
-  } else {
-    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+    o_free(token_hash);
+    pthread_mutex_unlock(&config->insert_lock);
   }
-  o_free(token_hash);
   return j_return;
 }
 
@@ -429,87 +440,92 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
   int res, i;
   time_t now;
 
-  code = o_malloc(33*sizeof(char));
-  if (code != NULL) {
-    if (rand_string(code, 32) != NULL) {
-      code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code);
-      if (code_hash != NULL) {
-        time(&now);
-        expiration_clause = config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_CODE_EXP_DEFAULT )):msprintf("%u", (now + GLEWLWYD_CODE_EXP_DEFAULT ));
-        j_query = json_pack("{sss{sssssssssssss{ss}}}",
-                            "table",
-                            GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE,
-                            "values",
-                              "gpgc_username",
-                              username,
-                              "gpgc_client_id",
-                              client_id,
-                              "gpgc_redirect_uri",
-                              redirect_uri,
-                              "gpgc_code_hash",
-                              code_hash,
-                              "gpgc_issued_for",
-                              issued_for,
-                              "gpgc_user_agent",
-                              user_agent!=NULL?user_agent:"",
-                              "gpgc_expires_at",
-                                "raw",
-                                expiration_clause);
-        o_free(expiration_clause);
-        res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
-        json_decref(j_query);
-        if (res != H_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error executing j_query (1)");
-          o_free(code);
-          code = NULL;
-        } else {
-          if (scope_list != NULL) {
-            j_code_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
-            if (j_code_id != NULL) {
-              j_query = json_pack("{sss[]}",
-                                  "table",
-                                  GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE_SCOPE,
-                                  "values");
-              if (split_string(scope_list, " ", &scope_array) > 0) {
-                for (i=0; scope_array[i] != NULL; i++) {
-                  json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpgc_id", j_code_id, "gpgcs_scope", scope_array[i]));
-                }
-                res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
-                json_decref(j_query);
-                if (res != H_OK) {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error executing j_query (2)");
+  if (pthread_mutex_lock(&config->insert_lock)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error pthread_mutex_lock");
+  } else {
+    code = o_malloc(33*sizeof(char));
+    if (code != NULL) {
+      if (rand_string(code, 32) != NULL) {
+        code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code);
+        if (code_hash != NULL) {
+          time(&now);
+          expiration_clause = config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_CODE_EXP_DEFAULT )):msprintf("%u", (now + GLEWLWYD_CODE_EXP_DEFAULT ));
+          j_query = json_pack("{sss{sssssssssssss{ss}}}",
+                              "table",
+                              GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE,
+                              "values",
+                                "gpgc_username",
+                                username,
+                                "gpgc_client_id",
+                                client_id,
+                                "gpgc_redirect_uri",
+                                redirect_uri,
+                                "gpgc_code_hash",
+                                code_hash,
+                                "gpgc_issued_for",
+                                issued_for,
+                                "gpgc_user_agent",
+                                user_agent!=NULL?user_agent:"",
+                                "gpgc_expires_at",
+                                  "raw",
+                                  expiration_clause);
+          o_free(expiration_clause);
+          res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+          json_decref(j_query);
+          if (res != H_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error executing j_query (1)");
+            o_free(code);
+            code = NULL;
+          } else {
+            if (scope_list != NULL) {
+              j_code_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
+              if (j_code_id != NULL) {
+                j_query = json_pack("{sss[]}",
+                                    "table",
+                                    GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE_SCOPE,
+                                    "values");
+                if (split_string(scope_list, " ", &scope_array) > 0) {
+                  for (i=0; scope_array[i] != NULL; i++) {
+                    json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpgc_id", j_code_id, "gpgcs_scope", scope_array[i]));
+                  }
+                  res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+                  json_decref(j_query);
+                  if (res != H_OK) {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error executing j_query (2)");
+                    o_free(code);
+                    code = NULL;
+                  }
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error split_string");
                   o_free(code);
                   code = NULL;
                 }
+                free_string_array(scope_array);
+                json_decref(j_code_id);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error split_string");
+                y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error h_last_insert_id");
                 o_free(code);
                 code = NULL;
               }
-              free_string_array(scope_array);
-              json_decref(j_code_id);
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error h_last_insert_id");
-              o_free(code);
-              code = NULL;
             }
           }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error glewlwyd_callback_generate_hash");
+          o_free(code);
+          code = NULL;
         }
+        o_free(code_hash);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error glewlwyd_callback_generate_hash");
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error rand_string");
         o_free(code);
         code = NULL;
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error rand_string");
-      o_free(code);
-      code = NULL;
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error allocating resources for code");
     }
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error allocating resources for code");
+    pthread_mutex_unlock(&config->insert_lock);
   }
 
-  o_free(code_hash);
   return code;
 }
 
@@ -1693,105 +1709,116 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
   int ret;
   const unsigned char * key;
   jwt_alg_t alg = 0;
+  pthread_mutexattr_t mutexattr;
   
   y_log_message(Y_LOG_LEVEL_INFO, "Init plugin Glewlwyd Oauth2");
   *cls = o_malloc(sizeof(struct _oauth2_config));
   if (*cls != NULL) {
-    ((struct _oauth2_config *)*cls)->jwt_key = NULL;
-    ((struct _oauth2_config *)*cls)->j_params = json_loads(parameters, JSON_DECODE_ANY, 0);
-    ((struct _oauth2_config *)*cls)->glewlwyd_config = config;
-    if (check_parameters(((struct _oauth2_config *)*cls)->j_params) == G_OK) {
-      ((struct _oauth2_config *)*cls)->access_token_duration = json_integer_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "access-token-duration"));
-      if (!((struct _oauth2_config *)*cls)->access_token_duration) {
-        ((struct _oauth2_config *)*cls)->access_token_duration = GLEWLWYD_ACCESS_TOKEN_EXP_DEFAULT;
-      }
-      ((struct _oauth2_config *)*cls)->refresh_token_duration = json_integer_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-duration"));
-      if (!((struct _oauth2_config *)*cls)->refresh_token_duration) {
-        ((struct _oauth2_config *)*cls)->refresh_token_duration = GLEWLWYD_REFRESH_TOKEN_EXP_DEFAULT;
-      }
-      if (json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-rolling") != NULL) {
-        ((struct _oauth2_config *)*cls)->refresh_token_rolling = json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-rolling")==json_true()?1:0;
-      } else {
-        ((struct _oauth2_config *)*cls)->refresh_token_rolling = 0;
-      }
-      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-code-enabled")==json_true()?1:0;
-      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-implicit-enabled")==json_true()?1:0;
-      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-password-enabled")==json_true()?1:0;
-      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-client-enabled")==json_true()?1:0;
-      ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-refresh-enabled")==json_true()?1:0;
-      if (!jwt_new(&((struct _oauth2_config *)*cls)->jwt_key)) {
-        if (0 == o_strcmp("rsa", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-type")))) {
-          key = (const unsigned char *)json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key"));
-          if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
-            alg = JWT_ALG_RS256;
-          } else if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
-            alg = JWT_ALG_RS384;
-          } else { // 512
-            alg = JWT_ALG_RS512;
-          }
-        } else if (0 == o_strcmp("ecdsa", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-type")))) {
-          key = (const unsigned char *)json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key"));
-          if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
-            alg = JWT_ALG_ES256;
-          } else if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
-            alg = JWT_ALG_ES384;
-          } else { // 512
-            alg = JWT_ALG_ES512;
-          }
-        } else { // SHA
-          key = (const unsigned char *)json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key"));
-          if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
-            alg = JWT_ALG_HS256;
-          } else if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
-            alg = JWT_ALG_HS384;
-          } else { // 512
-            alg = JWT_ALG_HS512;
-          }
+    pthread_mutexattr_init ( &mutexattr );
+    pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
+    if (pthread_mutex_init(&((struct _oauth2_config *)*cls)->insert_lock, &mutexattr) != 0 || pthread_mutex_init(&((struct _oauth2_config *)*cls)->insert_lock, &mutexattr) != 0) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init - Error initializing insert_lock or insert_cond");
+      o_free(*cls);
+      *cls = NULL;
+      ret = G_ERROR;
+    } else {
+      ((struct _oauth2_config *)*cls)->jwt_key = NULL;
+      ((struct _oauth2_config *)*cls)->j_params = json_loads(parameters, JSON_DECODE_ANY, 0);
+      ((struct _oauth2_config *)*cls)->glewlwyd_config = config;
+      if (check_parameters(((struct _oauth2_config *)*cls)->j_params) == G_OK) {
+        ((struct _oauth2_config *)*cls)->access_token_duration = json_integer_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "access-token-duration"));
+        if (!((struct _oauth2_config *)*cls)->access_token_duration) {
+          ((struct _oauth2_config *)*cls)->access_token_duration = GLEWLWYD_ACCESS_TOKEN_EXP_DEFAULT;
         }
-        if (jwt_set_alg(((struct _oauth2_config *)*cls)->jwt_key, alg, key, o_strlen((const char *)key))) {
-          json_decref(((struct _oauth2_config *)*cls)->j_params);
-          jwt_free(((struct _oauth2_config *)*cls)->jwt_key);
-          o_free(*cls);
-          *cls = NULL;
-          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error allocating resources for jwt_key");
-          ret = G_ERROR_MEMORY;
+        ((struct _oauth2_config *)*cls)->refresh_token_duration = json_integer_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-duration"));
+        if (!((struct _oauth2_config *)*cls)->refresh_token_duration) {
+          ((struct _oauth2_config *)*cls)->refresh_token_duration = GLEWLWYD_REFRESH_TOKEN_EXP_DEFAULT;
+        }
+        if (json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-rolling") != NULL) {
+          ((struct _oauth2_config *)*cls)->refresh_token_rolling = json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-rolling")==json_true()?1:0;
         } else {
-          if (jwt_autocheck(((struct _oauth2_config *)*cls)) != G_OK) {
+          ((struct _oauth2_config *)*cls)->refresh_token_rolling = 0;
+        }
+        ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-code-enabled")==json_true()?1:0;
+        ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-implicit-enabled")==json_true()?1:0;
+        ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-password-enabled")==json_true()?1:0;
+        ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-client-enabled")==json_true()?1:0;
+        ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-refresh-enabled")==json_true()?1:0;
+        if (!jwt_new(&((struct _oauth2_config *)*cls)->jwt_key)) {
+          if (0 == o_strcmp("rsa", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-type")))) {
+            key = (const unsigned char *)json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key"));
+            if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
+              alg = JWT_ALG_RS256;
+            } else if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
+              alg = JWT_ALG_RS384;
+            } else { // 512
+              alg = JWT_ALG_RS512;
+            }
+          } else if (0 == o_strcmp("ecdsa", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-type")))) {
+            key = (const unsigned char *)json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key"));
+            if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
+              alg = JWT_ALG_ES256;
+            } else if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
+              alg = JWT_ALG_ES384;
+            } else { // 512
+              alg = JWT_ALG_ES512;
+            }
+          } else { // SHA
+            key = (const unsigned char *)json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key"));
+            if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
+              alg = JWT_ALG_HS256;
+            } else if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
+              alg = JWT_ALG_HS384;
+            } else { // 512
+              alg = JWT_ALG_HS512;
+            }
+          }
+          if (jwt_set_alg(((struct _oauth2_config *)*cls)->jwt_key, alg, key, o_strlen((const char *)key))) {
             json_decref(((struct _oauth2_config *)*cls)->j_params);
             jwt_free(((struct _oauth2_config *)*cls)->jwt_key);
             o_free(*cls);
             *cls = NULL;
-            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error jwt_autocheck");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error allocating resources for jwt_key");
             ret = G_ERROR_MEMORY;
           } else {
-            // Add endpoints
-            y_log_message(Y_LOG_LEVEL_DEBUG, "Add endpoints with plugin prefix %s", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")));
-            if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)*cls) != G_OK || 
-               config->glewlwyd_callback_add_plugin_endpoint(config, "POST", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_token, (void*)*cls)) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error adding endpoints");
-              ret = G_ERROR;
+            if (jwt_autocheck(((struct _oauth2_config *)*cls)) != G_OK) {
+              json_decref(((struct _oauth2_config *)*cls)->j_params);
+              jwt_free(((struct _oauth2_config *)*cls)->jwt_key);
+              o_free(*cls);
+              *cls = NULL;
+              y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error jwt_autocheck");
+              ret = G_ERROR_MEMORY;
             } else {
-              ret = G_OK;
+              // Add endpoints
+              y_log_message(Y_LOG_LEVEL_DEBUG, "Add endpoints with plugin prefix %s", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")));
+              if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)*cls) != G_OK || 
+                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_token, (void*)*cls)) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error adding endpoints");
+                ret = G_ERROR;
+              } else {
+                ret = G_OK;
+              }
             }
           }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error allocating resources for jwt_key");
+          json_decref(((struct _oauth2_config *)*cls)->j_params);
+          o_free(*cls);
+          *cls = NULL;
+          ret = G_ERROR_MEMORY;
         }
       } else {
-        json_decref(((struct _oauth2_config *)*cls)->j_params);
+        y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error parameters");
         o_free(*cls);
         *cls = NULL;
-        y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error allocating resources for jwt_key");
         ret = G_ERROR_MEMORY;
       }
-    } else {
-      o_free(*cls);
-      *cls = NULL;
-      y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error parameters");
-      ret = G_ERROR_MEMORY;
     }
+    pthread_mutexattr_destroy(&mutexattr);
   } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error allocating resources for cls");
     o_free(*cls);
     *cls = NULL;
-    y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error allocating resources for cls");
     ret = G_ERROR_MEMORY;
   }
   return ret;
@@ -1799,6 +1826,7 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
 
 int plugin_module_close(struct config_plugin * config, void * cls) {
   if (cls != NULL) {
+    pthread_mutex_destroy(&((struct _oauth2_config *)cls)->insert_lock);
     jwt_free(((struct _oauth2_config *)cls)->jwt_key);
     json_decref(((struct _oauth2_config *)cls)->j_params);
     o_free(cls);
