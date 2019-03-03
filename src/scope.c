@@ -261,7 +261,7 @@ static json_t * get_current_user_from_session(struct config_elements * config, c
     if ((session_hash = generate_hash(config, config->hash_algorithm, session_uid)) != NULL) {
       j_session = get_current_session(config, session_hash);
       if (check_result_value(j_session, G_OK)) {
-        j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "session"), "username")));
+        j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "session"), "username")), NULL);
         if (check_result_value(j_user, G_OK)) {
           j_return = json_pack("{sisO}", "result", G_OK, "user", json_object_get(j_user, "user"));
         } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {

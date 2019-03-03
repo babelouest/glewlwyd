@@ -162,7 +162,7 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
           j_return = json_pack("{sis[]}", "result", G_OK, "session");
           if (j_return != NULL) {
             json_array_foreach(j_result, index, j_element) {
-              j_user = get_user(config, json_string_value(json_object_get(j_element, "gus_username")));
+              j_user = get_user(config, json_string_value(json_object_get(j_element, "gus_username")), NULL);
               if (check_result_value(j_user, G_OK)) {
                 json_object_set(json_object_get(j_user, "user"), "last_login", json_object_get(j_element, "gus_last_login"));
                 json_array_append(json_object_get(j_return, "session"), json_object_get(j_user, "user"));
@@ -228,7 +228,7 @@ json_t * get_user_for_session(struct config_elements * config, const char * sess
       json_decref(j_query);
       if (res == H_OK) {
         if (json_array_size(j_result) > 0) {
-          j_return = get_user(config, json_string_value(json_object_get(json_array_get(j_result, 0), "gus_username")));
+          j_return = get_user(config, json_string_value(json_object_get(json_array_get(j_result, 0), "gus_username")), NULL);
         } else {
           j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
         }
