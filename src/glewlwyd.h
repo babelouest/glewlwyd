@@ -63,6 +63,7 @@
 #define GLEWLWYD_DEFAULT_ADMIN_SCOPE        "g_admin"
 #define GLEWLWYD_DEFAULT_PROFILE_SCOPE      "g_profile"
 #define GLEWLWYD_DEFAULT_HASH_ALGORITHM     "SHA256"
+#define GLEWLWYD_DEFAULT_LIMIT_SIZE         100
 
 #define GLEWLWYD_DEFAULT_SALT_LENGTH 16
 
@@ -156,7 +157,6 @@ int user_session_delete(struct config_elements * config, const char * session_ui
 char * get_session_id(struct config_elements * config, const struct _u_request * request);
 
 // User
-json_t * get_user(struct config_elements * config, const char * username);
 int user_has_scope(json_t * j_user, const char * scope);
 
 // Client
@@ -225,6 +225,14 @@ char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char
 char * glewlwyd_callback_get_plugin_external_url(struct config_plugin * config, const char * name);
 char * glewlwyd_callback_generate_hash(struct config_plugin * config, const char * data);
 
+// User CRUD functions
+json_t * get_user_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source);
+json_t * get_user(struct config_elements * config, const char * username, const char * source);
+json_t * is_user_valid(struct config_elements * config, const char * username, json_t * j_user, int add, const char * source);
+int add_user(struct config_elements * config, json_t * j_user, const char * source);
+int set_user(struct config_elements * config, const char * username, json_t * j_user, const char * source);
+int delete_user(struct config_elements * config, const char * username, const char * source);
+
 // Callback functions
 
 int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -274,6 +282,12 @@ int callback_glewlwyd_add_plugin_module (const struct _u_request * request, stru
 int callback_glewlwyd_set_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 int callback_glewlwyd_delete_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 int callback_glewlwyd_manage_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+
+int callback_glewlwyd_get_user_list (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_get_user (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_add_user (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 
