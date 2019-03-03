@@ -336,7 +336,7 @@ int add_user_module(struct config_elements * config, json_t * j_module) {
         cur_instance->enabled = 0;
         cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
         if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
-          if (module->user_module_init(config, parameters, &cur_instance->cls) == G_OK) {
+          if (module->user_module_init(config->config_m, parameters, &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
           } else {
@@ -443,7 +443,7 @@ int manage_user_module(struct config_elements * config, const char * name, int a
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->user_module_init(config, json_string_value(json_object_get(j_module, "parameters")), &instance->cls) == G_OK) {
+        if (instance->module->user_module_init(config->config_m, json_string_value(json_object_get(j_module, "parameters")), &instance->cls) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
         } else {
@@ -455,7 +455,7 @@ int manage_user_module(struct config_elements * config, const char * name, int a
       }
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
       if (instance->enabled) {
-        if (instance->module->user_module_close(config, instance->cls) == G_OK) {
+        if (instance->module->user_module_close(config->config_m, instance->cls) == G_OK) {
           instance->enabled = 0;
           ret = G_OK;
         } else {
@@ -676,7 +676,7 @@ int add_user_auth_scheme_module(struct config_elements * config, json_t * j_modu
         cur_instance->module = module;
         cur_instance->enabled = 0;
         if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
-          if (module->user_auth_scheme_module_init(config, parameters, &cur_instance->cls) == G_OK) {
+          if (module->user_auth_scheme_module_init(config->config_m, parameters, &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
           } else {
@@ -775,7 +775,7 @@ int manage_user_auth_scheme_module(struct config_elements * config, const char *
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->user_auth_scheme_module_init(config, json_string_value(json_object_get(j_module, "parameters")), &instance->cls) == G_OK) {
+        if (instance->module->user_auth_scheme_module_init(config->config_m, json_string_value(json_object_get(j_module, "parameters")), &instance->cls) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
         } else {
@@ -787,7 +787,7 @@ int manage_user_auth_scheme_module(struct config_elements * config, const char *
       }
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
       if (instance->enabled) {
-        if (instance->module->user_auth_scheme_module_close(config, instance->cls) == G_OK) {
+        if (instance->module->user_auth_scheme_module_close(config->config_m, instance->cls) == G_OK) {
           instance->enabled = 0;
           ret = G_OK;
         } else {
@@ -1032,7 +1032,7 @@ int add_client_module(struct config_elements * config, json_t * j_module) {
         cur_instance->enabled = 0;
         cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
         if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
-          if (module->client_module_init(config, parameters, &cur_instance->cls) == G_OK) {
+          if (module->client_module_init(config->config_m, parameters, &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
           } else {
@@ -1139,7 +1139,7 @@ int manage_client_module(struct config_elements * config, const char * name, int
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->client_module_init(config, json_string_value(json_object_get(j_module, "parameters")), &instance->cls) == G_OK) {
+        if (instance->module->client_module_init(config->config_m, json_string_value(json_object_get(j_module, "parameters")), &instance->cls) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
         } else {
@@ -1151,7 +1151,7 @@ int manage_client_module(struct config_elements * config, const char * name, int
       }
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
       if (instance->enabled) {
-        if (instance->module->client_module_close(config, instance->cls) == G_OK) {
+        if (instance->module->client_module_close(config->config_m, instance->cls) == G_OK) {
           instance->enabled = 0;
           ret = G_OK;
         } else {

@@ -32,7 +32,7 @@
 #include <hoel.h>
 #include "../glewlwyd-common.h"
 
-int user_module_load(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters) {
+int user_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
   int ret = G_OK;
   if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
     *name = o_strdup("database");
@@ -45,15 +45,15 @@ int user_module_load(struct config_elements * config, char ** name, char ** disp
   return ret;
 }
 
-int user_module_unload(struct config_elements * config) {
+int user_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int user_module_init(struct config_elements * config, const char * parameters, void ** cls) {
+int user_module_init(struct config_module * config, const char * parameters, void ** cls) {
   return G_OK;
 }
 
-int user_module_close(struct config_elements * config, void * cls) {
+int user_module_close(struct config_module * config, void * cls) {
   return G_OK;
 }
 

@@ -63,7 +63,7 @@ json_t * get_session_for_username(struct config_elements * config, const char * 
   json_t * j_query, * j_result, * j_return, * j_session_scheme;
   int res;
   char * expire_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?o_strdup("> NOW()"):o_strdup("> (strftime('%s','now'))");
-  char * session_uid_hash = generate_hash(config, config->hash_algorithm, session_uid);
+  char * session_uid_hash = generate_hash(config->hash_algorithm, session_uid);
 
   if (session_uid_hash != NULL) {
     j_query = json_pack("{sss[ss]s{sssssis{ssss}}}",
@@ -132,7 +132,7 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
 
   if (session_uid != NULL && o_strlen(session_uid)) {
     expire_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?o_strdup("> NOW()"):o_strdup("> (strftime('%s','now'))");
-    session_uid_hash = generate_hash(config, config->hash_algorithm, session_uid);
+    session_uid_hash = generate_hash(config->hash_algorithm, session_uid);
     if (session_uid_hash != NULL) {
       j_query = json_pack("{sss[ss]s{sssis{ssss}}ss}",
                           "table",
@@ -199,7 +199,7 @@ json_t * get_user_for_session(struct config_elements * config, const char * sess
 
   if (session_uid != NULL && o_strlen(session_uid)) {
     expire_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?o_strdup("> NOW()"):o_strdup("> (strftime('%s','now'))");
-    session_uid_hash = generate_hash(config, config->hash_algorithm, session_uid);
+    session_uid_hash = generate_hash(config->hash_algorithm, session_uid);
     if (session_uid_hash != NULL) {
       j_query = json_pack("{sss[ss]s{sssis{ssss}si}sssi}",
                           "table",
@@ -256,7 +256,7 @@ int user_session_update(struct config_elements * config, const char * session_ui
   int res, ret;
   time_t now;
   char * expiration_clause, * last_login_clause;
-  char * session_uid_hash = generate_hash(config, config->hash_algorithm, session_uid);
+  char * session_uid_hash = generate_hash(config->hash_algorithm, session_uid);
   
   time(&now);
   if (session_uid_hash != NULL) {
@@ -470,7 +470,7 @@ int user_session_update(struct config_elements * config, const char * session_ui
 int user_session_delete(struct config_elements * config, const char * session_uid) {
   json_t * j_query;
   int res, ret;
-  char * session_uid_hash = generate_hash(config, config->hash_algorithm, session_uid);
+  char * session_uid_hash = generate_hash(config->hash_algorithm, session_uid);
 
   if (session_uid_hash != NULL) {
     j_query = json_pack("{sss{sisi}s{ss}}",

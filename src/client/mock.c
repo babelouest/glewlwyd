@@ -61,7 +61,7 @@ static int json_has_str_pattern_case(json_t * j_source, const char * pattern) {
   }
 }
 
-int client_module_load(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters) {
+int client_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
   int ret = G_OK;
   if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
     *name = o_strdup("mock");
@@ -74,11 +74,11 @@ int client_module_load(struct config_elements * config, char ** name, char ** di
   return ret;
 }
 
-int client_module_unload(struct config_elements * config) {
+int client_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int client_module_init(struct config_elements * config, const char * parameters, void ** cls) {
+int client_module_init(struct config_module * config, const char * parameters, void ** cls) {
   json_t * j_param = json_loads(parameters, 0, NULL);
   if (j_param == NULL) {
     j_param = json_pack("{ss}", "client-id-prefix", "");
@@ -148,7 +148,7 @@ int client_module_init(struct config_elements * config, const char * parameters,
   return G_OK;
 }
 
-int client_module_close(struct config_elements * config, void * cls) {
+int client_module_close(struct config_module * config, void * cls) {
   y_log_message(Y_LOG_LEVEL_DEBUG, "client_module_close - success");
   json_decref((json_t *)cls);
   return G_OK;

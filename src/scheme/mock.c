@@ -31,7 +31,7 @@
 #include <orcania.h>
 #include "../glewlwyd-common.h"
 
-int user_auth_scheme_module_load(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters) {
+int user_auth_scheme_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
   int ret = G_OK;
   
   if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
@@ -45,16 +45,16 @@ int user_auth_scheme_module_load(struct config_elements * config, char ** name, 
   return ret;
 }
 
-int user_auth_scheme_module_unload(struct config_elements * config) {
+int user_auth_scheme_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int user_auth_scheme_module_init(struct config_elements * config, const char * parameters, void ** cls) {
+int user_auth_scheme_module_init(struct config_module * config, const char * parameters, void ** cls) {
   *cls = json_loads(parameters, JSON_DECODE_ANY, NULL);
   return G_OK;
 }
 
-int user_auth_scheme_module_close(struct config_elements * config, void * cls) {
+int user_auth_scheme_module_close(struct config_module * config, void * cls) {
   json_decref((json_t *)cls);
   return G_OK;
 }

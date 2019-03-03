@@ -57,6 +57,11 @@ int main (int argc, char ** argv) {
     fprintf(stderr, "Memory error - config_p\n");
     o_free(config);
     return 1;
+  } else if ((config->config_m = o_malloc(sizeof(struct config_module))) == NULL) {
+    fprintf(stderr, "Memory error - config_m\n");
+    o_free(config->config_p);
+    o_free(config);
+    return 1;
   }
 
   // Init plugin config structure
@@ -73,6 +78,12 @@ int main (int argc, char ** argv) {
   config->config_p->glewlwyd_callback_generate_hash = &glewlwyd_callback_generate_hash;
   
   // Init config structure with default values
+  config->config_m->external_url = NULL;
+  config->config_m->login_url = NULL;
+  config->config_m->admin_scope = NULL;
+  config->config_m->profile_scope = NULL;
+  config->config_m->conn = NULL;
+  config->config_m->hash_algorithm = NULL;
   config->config_file = NULL;
   config->port = GLEWLWYD_DEFAULT_PORT;
   config->api_prefix = NULL;
@@ -167,6 +178,14 @@ int main (int argc, char ** argv) {
     exit_server(&config, GLEWLWYD_ERROR);
   }
   
+  // Initialize module config structure
+  config->config_m->external_url = config->external_url;
+  config->config_m->login_url = config->login_url;
+  config->config_m->admin_scope = config->admin_scope;
+  config->config_m->profile_scope = config->profile_scope;
+  config->config_m->conn = config->conn;
+  config->config_m->hash_algorithm = config->hash_algorithm;
+
   // Initialize user modules
   if (init_user_module_list(config) != G_OK) {
     fprintf(stderr, "Error initializing user modules\n");
@@ -340,7 +359,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     for (i=0; i<pointer_list_size((*config)->user_module_instance_list); i++) {
       struct _user_module_instance * instance = (struct _user_module_instance *)pointer_list_get_at((*config)->user_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->enabled && instance->module->user_module_close((*config), instance->cls) != G_OK) {
+        if (instance->enabled && instance->module->user_module_close((*config)->config_m, instance->cls) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
         }
         o_free(instance->name);
@@ -353,7 +372,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     for (i=0; i<pointer_list_size((*config)->user_module_list); i++) {
       struct _user_module * module = (struct _user_module *)pointer_list_get_at((*config)->user_module_list, i);
       if (module != NULL) {
-        if (module->user_module_unload((*config)) != G_OK) {
+        if (module->user_module_unload((*config)->config_m) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_module_close for module '%s'", module->name);
         }
 /* 
@@ -379,7 +398,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     for (i=0; i<pointer_list_size((*config)->client_module_instance_list); i++) {
       struct _client_module_instance * instance = (struct _client_module_instance *)pointer_list_get_at((*config)->client_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->enabled && instance->module->client_module_close((*config), instance->cls) != G_OK) {
+        if (instance->enabled && instance->module->client_module_close((*config)->config_m, instance->cls) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error client_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
         }
         o_free(instance->name);
@@ -392,7 +411,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     for (i=0; i<pointer_list_size((*config)->client_module_list); i++) {
       struct _client_module * module = (struct _client_module *)pointer_list_get_at((*config)->client_module_list, i);
       if (module != NULL) {
-        if (module->client_module_unload((*config)) != G_OK) {
+        if (module->client_module_unload((*config)->config_m) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error client_module_close for module '%s'", module->name);
         }
 /* 
@@ -418,7 +437,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     for (i=0; i<pointer_list_size((*config)->user_auth_scheme_module_instance_list); i++) {
       struct _user_auth_scheme_module_instance * instance = (struct _user_auth_scheme_module_instance *)pointer_list_get_at((*config)->user_auth_scheme_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->enabled && instance->module->user_auth_scheme_module_close((*config), instance->cls) != G_OK) {
+        if (instance->enabled && instance->module->user_auth_scheme_module_close((*config)->config_m, instance->cls) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_auth_scheme_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
         }
         o_free(instance->name);
@@ -431,7 +450,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     for (i=0; i<pointer_list_size((*config)->user_auth_scheme_module_list); i++) {
       struct _user_auth_scheme_module * module = (struct _user_auth_scheme_module *)pointer_list_get_at((*config)->user_auth_scheme_module_list, i);
       if (module != NULL) {
-        if (module->user_auth_scheme_module_unload((*config)) != G_OK) {
+        if (module->user_auth_scheme_module_unload((*config)->config_m) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_auth_scheme_module_close for module '%s'", module->name);
         }
 #ifndef DEBUG
@@ -509,6 +528,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     }
     
     o_free((*config)->config_p);
+    o_free((*config)->config_m);
     o_free(*config);
     (*config) = NULL;
   }
@@ -1125,12 +1145,12 @@ int init_user_module_list(struct config_elements * config) {
                     cur_user_module->user_module_delete != NULL &&
                     cur_user_module->user_module_check_password != NULL &&
                     cur_user_module->user_module_update_password != NULL) {
-                  if (cur_user_module->user_module_load(config, &cur_user_module->name, &cur_user_module->display_name, &cur_user_module->description, &cur_user_module->parameters) == G_OK) {
+                  if (cur_user_module->user_module_load(config->config_m, &cur_user_module->name, &cur_user_module->display_name, &cur_user_module->description, &cur_user_module->parameters) == G_OK) {
                     if (o_strlen(cur_user_module->name) && get_user_module_lib(config, cur_user_module->name) == NULL) {
                       if (pointer_list_append(config->user_module_list, (void*)cur_user_module)) {
                         y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s - %s", file_path, cur_user_module->name);
                       } else {
-                        cur_user_module->user_module_unload(config);
+                        cur_user_module->user_module_unload(config->config_m);
                         dlclose(file_handle);
                         o_free(cur_user_module->name);
                         o_free(cur_user_module->display_name);
@@ -1142,7 +1162,7 @@ int init_user_module_list(struct config_elements * config) {
                       }
                     } else {
                       y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - User module with name '%s' already present or name empty", cur_user_module->name);
-                      cur_user_module->user_module_unload(config);
+                      cur_user_module->user_module_unload(config->config_m);
                       dlclose(file_handle);
                       o_free(cur_user_module->name);
                       o_free(cur_user_module->display_name);
@@ -1244,7 +1264,7 @@ int load_user_module_instance_list(struct config_elements * config) {
             cur_instance->module = module;
             cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
             if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
-              if (module->user_module_init(config, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
+              if (module->user_module_init(config->config_m, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
                 cur_instance->enabled = 1;
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
@@ -1346,12 +1366,12 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                     cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL &&
                     cur_user_auth_scheme_module->user_can_use_scheme != NULL) {
-                  if (cur_user_auth_scheme_module->user_auth_scheme_module_load(config, &cur_user_auth_scheme_module->name, &cur_user_auth_scheme_module->display_name, &cur_user_auth_scheme_module->description, &cur_user_auth_scheme_module->parameters) == G_OK) {
+                  if (cur_user_auth_scheme_module->user_auth_scheme_module_load(config->config_m, &cur_user_auth_scheme_module->name, &cur_user_auth_scheme_module->display_name, &cur_user_auth_scheme_module->description, &cur_user_auth_scheme_module->parameters) == G_OK) {
                     if (o_strlen(cur_user_auth_scheme_module->name) && get_user_auth_scheme_module_lib(config, cur_user_auth_scheme_module->name) == NULL) {
                       if (pointer_list_append(config->user_auth_scheme_module_list, cur_user_auth_scheme_module)) {
                         y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
                       } else {
-                        cur_user_auth_scheme_module->user_auth_scheme_module_unload(config);
+                        cur_user_auth_scheme_module->user_auth_scheme_module_unload(config->config_m);
                         dlclose(file_handle);
                         o_free(cur_user_auth_scheme_module->name);
                         o_free(cur_user_auth_scheme_module->display_name);
@@ -1363,7 +1383,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                       }
                     } else {
                       y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - User auth scheme module with name '%s' already present or name empty", cur_user_auth_scheme_module->name);
-                      cur_user_auth_scheme_module->user_auth_scheme_module_unload(config);
+                      cur_user_auth_scheme_module->user_auth_scheme_module_unload(config->config_m);
                       dlclose(file_handle);
                       o_free(cur_user_auth_scheme_module->name);
                       o_free(cur_user_auth_scheme_module->display_name);
@@ -1457,7 +1477,7 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
             cur_instance->guasmi_id = json_integer_value(json_object_get(j_instance, "guasmi_id"));
             cur_instance->guasmi_expiration = json_integer_value(json_object_get(j_instance, "guasmi_expiration"));
             if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
-              if (module->user_auth_scheme_module_init(config, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
+              if (module->user_auth_scheme_module_init(config->config_m, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
                 cur_instance->enabled = 1;
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
@@ -1571,12 +1591,12 @@ int init_client_module_list(struct config_elements * config) {
                     cur_client_module->client_module_delete != NULL &&
                     cur_client_module->client_module_check_password != NULL &&
                     cur_client_module->client_module_update_password != NULL) {
-                  if (cur_client_module->client_module_load(config, &cur_client_module->name, &cur_client_module->display_name, &cur_client_module->description, &cur_client_module->parameters) == G_OK) {
+                  if (cur_client_module->client_module_load(config->config_m, &cur_client_module->name, &cur_client_module->display_name, &cur_client_module->description, &cur_client_module->parameters) == G_OK) {
                     if (o_strlen(cur_client_module->name) && get_client_module_lib(config, cur_client_module->name) == NULL) {
                       if (pointer_list_append(config->client_module_list, cur_client_module)) {
                         y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_client_module->name);
                       } else {
-                        cur_client_module->client_module_unload(config);
+                        cur_client_module->client_module_unload(config->config_m);
                         dlclose(file_handle);
                         o_free(cur_client_module->name);
                         o_free(cur_client_module->display_name);
@@ -1588,7 +1608,7 @@ int init_client_module_list(struct config_elements * config) {
                       }
                     } else {
                       y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Client module with name '%s' already present or name empty", cur_client_module->name);
-                      cur_client_module->client_module_unload(config);
+                      cur_client_module->client_module_unload(config->config_m);
                       dlclose(file_handle);
                       o_free(cur_client_module->name);
                       o_free(cur_client_module->display_name);
@@ -1689,7 +1709,7 @@ int load_client_module_instance_list(struct config_elements * config) {
             cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
             cur_instance->module = module;
             if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
-              if (module->client_module_init(config, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
+              if (module->client_module_init(config->config_m, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
                 cur_instance->enabled = 1;
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));

@@ -31,7 +31,7 @@
 #include <orcania.h>
 #include "../glewlwyd-common.h"
 
-int client_module_load(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters) {
+int client_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
   int ret = G_OK;
   if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
     *name = o_strdup("database");
@@ -44,19 +44,19 @@ int client_module_load(struct config_elements * config, char ** name, char ** di
   return ret;
 }
 
-int client_module_unload(struct config_elements * config) {
+int client_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int client_module_init(struct config_elements * config, const char * parameters, void ** cls) {
+int client_module_init(struct config_module * config, const char * parameters, void ** cls) {
   return G_OK;
 }
 
-int client_module_close(struct config_elements * config, void * cls) {
+int client_module_close(struct config_module * config, void * cls) {
   return G_OK;
 }
 
-size_t client_module_count_total(struct config_elements * config, void * cls) {
+size_t client_module_count_total(struct config_module * config, void * cls) {
   return 0;
 }
 
