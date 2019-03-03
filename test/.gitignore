@@ -23,3 +23,4 @@ glewlwyd_auth_check_scheme
 glewlwyd_auth_scheme_trigger
 
 glewlwyd_crud_user
+glewlwyd_crud_client
