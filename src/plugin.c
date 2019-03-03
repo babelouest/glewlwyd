@@ -115,7 +115,7 @@ json_t * glewlwyd_callback_check_user_valid(struct config_plugin * config, const
   size_t index;
 
   if (config != NULL && username != NULL) {
-    j_user = get_user(config->glewlwyd_config, username);
+    j_user = get_user(config->glewlwyd_config, username, NULL);
     if (check_result_value(j_user, G_OK)) {
       check_password = 1;
       if (password != NULL) {
@@ -212,7 +212,7 @@ json_t * glewlwyd_callback_check_client_valid(struct config_plugin * config, con
 }
 
 json_t * glewlwyd_callback_get_client_granted_scopes(struct config_plugin * config, const char * client_id, const char * username, const char * scope_list) {
-  json_t * j_user = get_user(config->glewlwyd_config, username), * j_grant = NULL;
+  json_t * j_user = get_user(config->glewlwyd_config, username, NULL), * j_grant = NULL;
   if (check_result_value(j_user, G_OK)) {
     j_grant = get_granted_scopes_for_client(config->glewlwyd_config, json_object_get(j_user, "user"), client_id, scope_list);
   } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)){
