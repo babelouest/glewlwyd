@@ -59,11 +59,17 @@
 
 typedef enum {
   digest_SHA1,
+  digest_SSHA1,
   digest_SHA224,
+  digest_SSHA224,
   digest_SHA256,
+  digest_SSHA256,
   digest_SHA384,
+  digest_SSHA384,
   digest_SHA512,
+  digest_SSHA512,
   digest_MD5,
+  digest_SMD5,
 } digest_algorithm;
 
 struct config_module {
@@ -72,7 +78,7 @@ struct config_module {
   const char           * admin_scope;
   const char           * profile_scope;
   struct _h_connection * conn;
-  char                 * hash_algorithm;
+  digest_algorithm       hash_algorithm;
 };
 
 struct _user_module {
@@ -200,7 +206,7 @@ struct config_elements {
   char *                                      session_key;
   unsigned int                                session_expiration;
   unsigned int                                salt_length;
-  char *                                      hash_algorithm;
+  digest_algorithm                            hash_algorithm;
   char *                                      login_url;
   char *                                      user_module_path;
   struct _pointer_list *                      user_module_list;

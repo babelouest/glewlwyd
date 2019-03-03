@@ -61,7 +61,7 @@
 #define GLEWLWYD_DEFAULT_ALLOW_ORIGIN       "*"
 #define GLEWLWYD_DEFAULT_ADMIN_SCOPE        "g_admin"
 #define GLEWLWYD_DEFAULT_PROFILE_SCOPE      "g_profile"
-#define GLEWLWYD_DEFAULT_HASH_ALGORITHM     "SHA256"
+#define GLEWLWYD_DEFAULT_HASH_ALGORITHM     digest_SHA256
 #define GLEWLWYD_DEFAULT_LIMIT_SIZE         100
 
 #define GLEWLWYD_DEFAULT_SALT_LENGTH 16
@@ -119,7 +119,7 @@ int  check_config(struct config_elements * config);
 void exit_handler(int handler);
 void exit_server(struct config_elements ** config, int exit_value);
 void print_help(FILE * output);
-char * generate_hash(const char * digest, const char * password);
+char * generate_hash(digest_algorithm digest, const char * password);
 char * get_file_content(const char * file_path);
 int    load_user_module_instance_list(struct config_elements * config);
 int    init_user_module_list(struct config_elements * config);

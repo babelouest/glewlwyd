@@ -83,7 +83,6 @@ int main (int argc, char ** argv) {
   config->config_m->admin_scope = NULL;
   config->config_m->profile_scope = NULL;
   config->config_m->conn = NULL;
-  config->config_m->hash_algorithm = NULL;
   config->config_file = NULL;
   config->port = GLEWLWYD_DEFAULT_PORT;
   config->api_prefix = NULL;
@@ -99,7 +98,7 @@ int main (int argc, char ** argv) {
   config->session_key = o_strdup(GLEWLWYD_DEFAULT_SESSION_KEY);
   config->session_expiration = GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE;
   config->salt_length = GLEWLWYD_DEFAULT_SALT_LENGTH;
-  config->hash_algorithm = o_strdup(GLEWLWYD_DEFAULT_HASH_ALGORITHM);
+  config->hash_algorithm = digest_SHA256;
   config->login_url = NULL;
   config->user_module_path = NULL;
   config->user_module_list = NULL;
@@ -512,7 +511,6 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->secure_connection_key_file);
     o_free((*config)->secure_connection_pem_file);
     o_free((*config)->session_key);
-    o_free((*config)->hash_algorithm);
     o_free((*config)->login_url);
     o_free((*config)->user_module_path);
     o_free((*config)->client_module_path);
@@ -903,19 +901,21 @@ int build_config_from_file(struct config_elements * config) {
   
   // Get token hash algorithm
   if (config_lookup_string(&cfg, "hash_algorithm", &str_value) == CONFIG_TRUE) {
-    o_free(config->hash_algorithm);
-    config->hash_algorithm = o_strdup(str_value);
-    if (config->hash_algorithm == NULL) {
-      fprintf(stderr, "Error allocating config->hash_algorithm, exiting\n");
+    if (!strcmp("SHA1", str_value)) {
+      config->hash_algorithm = digest_SHA1;
+    } else if (!strcmp("SHA224", str_value)) {
+      config->hash_algorithm = digest_SHA224;
+    } else if (!strcmp("SHA256", str_value)) {
+      config->hash_algorithm = digest_SHA256;
+    } else if (!strcmp("SHA384", str_value)) {
+      config->hash_algorithm = digest_SHA384;
+    } else if (!strcmp("SHA512", str_value)) {
+      config->hash_algorithm = digest_SHA512;
+    } else if (!strcmp("MD5", str_value)) {
+      config->hash_algorithm = digest_MD5;
+    } else {
       config_destroy(&cfg);
-      return 0;
-    } else if (config->hash_algorithm == NULL || 
-              (strcmp("SHA1", config->hash_algorithm) &&
-              strcmp("SHA256", config->hash_algorithm) &&
-              strcmp("SHA512", config->hash_algorithm) &&
-              strcmp("MD5", config->hash_algorithm))) {
-      config_destroy(&cfg);
-      fprintf(stderr, "Error token hash algorithm: %s\n", config->hash_algorithm);
+      fprintf(stderr, "Error token hash algorithm: %s\n", str_value);
       return 0;
     }
   }
