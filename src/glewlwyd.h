@@ -159,7 +159,6 @@ char * get_session_id(struct config_elements * config, const struct _u_request *
 int user_has_scope(json_t * j_user, const char * scope);
 
 // Client
-json_t * get_client(struct config_elements * config, const char * client_id);
 json_t * auth_check_client_credentials(struct config_elements * config, const char * client_id, const char * password);
 
 // Scope
@@ -232,6 +231,14 @@ int add_user(struct config_elements * config, json_t * j_user, const char * sour
 int set_user(struct config_elements * config, const char * username, json_t * j_user, const char * source);
 int delete_user(struct config_elements * config, const char * username, const char * source);
 
+// Client CRUD functions
+json_t * get_client_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source);
+json_t * get_client(struct config_elements * config, const char * client_id, const char * source);
+json_t * is_client_valid(struct config_elements * config, const char * client_id, json_t * j_client, int add, const char * source);
+int add_client(struct config_elements * config, json_t * j_client, const char * source);
+int set_client(struct config_elements * config, const char * client_id, json_t * j_client, const char * source);
+int delete_client(struct config_elements * config, const char * client_id, const char * source);
+
 // Callback functions
 
 int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -287,6 +294,12 @@ int callback_glewlwyd_get_user (const struct _u_request * request, struct _u_res
 int callback_glewlwyd_add_user (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+
+int callback_glewlwyd_get_client_list (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_add_client (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_delete_client (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 

@@ -108,9 +108,10 @@ struct _client_module {
   int     (* client_module_unload)(struct config_elements * config);
   int     (* client_module_init)(struct config_elements * config, const char * parameters, void ** cls);
   int     (* client_module_close)(struct config_elements * config, void * cls);
-  size_t  (* client_module_count_total)(struct config_elements * config, void * cls);
-  char  * (* client_module_get_list)(const char * pattern, size_t limit, size_t offset, int * result, void * cls);
+  size_t  (* client_module_count_total)(void * cls);
+  char  * (* client_module_get_list)(const char * pattern, size_t offset, size_t limit, int * result, void * cls);
   char  * (* client_module_get)(const char * client_id, int * result, void * cls);
+  char *  (* client_is_valid)(const char * username, const char * str_user, int mode, int * result, void * cls);
   int     (* client_module_add)(const char * str_new_client, void * cls);
   int     (* client_module_update)(const char * client_id, const char * str_client, void * cls);
   int     (* client_module_delete)(const char * client_id, void * cls);

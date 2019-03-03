@@ -467,7 +467,7 @@ json_t * get_granted_scopes_for_client(struct config_elements * config, json_t *
   int i, found;
   size_t index;
 
-  j_client = get_client(config, client_id);
+  j_client = get_client(config, client_id, NULL);
   if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
     j_scope_list = get_client_user_scope_grant(config, client_id, json_string_value(json_object_get(j_user, "username")), scope_list);
     if (check_result_value(j_scope_list, G_OK)) {

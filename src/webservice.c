@@ -350,7 +350,7 @@ int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * re
   
   if (config != NULL && j_user != NULL) {
     if (json_object_get(j_body, "scope") != NULL && json_is_string(json_object_get(j_body, "scope"))) {
-      j_client = get_client(config, u_map_get(request->map_url, "client_id"));
+      j_client = get_client(config, u_map_get(request->map_url, "client_id"), NULL);
       if (check_result_value(j_client, G_OK)) {
         res = set_granted_scopes_for_client(config, j_user, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(j_body, "scope")));
         if (res == G_ERROR_NOT_FOUND) {
@@ -396,10 +396,12 @@ int callback_glewlwyd_get_module_type_list (const struct _u_request * request, s
   return U_CALLBACK_CONTINUE;
 }
 
+// TODO
 int callback_glewlwyd_export_modules_config (const struct _u_request * request, struct _u_response * response, void * user_data) {
   return U_CALLBACK_ERROR;
 }
 
+// TODO
 int callback_glewlwyd_import_modules_config (const struct _u_request * request, struct _u_response * response, void * user_data) {
   return U_CALLBACK_ERROR;
 }
@@ -1139,3 +1141,141 @@ int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_
   return U_CALLBACK_CONTINUE;
 }
 
+int callback_glewlwyd_get_client_list (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_client_list;
+  size_t offset = 0, limit = GLEWLWYD_DEFAULT_LIMIT_SIZE;
+  long int l_converted = 0;
+  char * endptr = NULL;
+  
+  if (u_map_get(request->map_url, "offset") != NULL) {
+    l_converted = strtol(u_map_get(request->map_url, "offset"), &endptr, 10);
+    if (!(*endptr) && l_converted > 0) {
+      offset = (size_t)l_converted;
+    }
+  }
+  if (u_map_get(request->map_url, "limit") != NULL) {
+    l_converted = strtol(u_map_get(request->map_url, "limit"), &endptr, 10);
+    if (!(*endptr) && l_converted > 0) {
+      limit = (size_t)l_converted;
+    }
+  }
+  j_client_list = get_client_list(config, u_map_get(request->map_url, "pattern"), offset, limit, u_map_get(request->map_url, "source"));
+  if (check_result_value(j_client_list, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_client_list, "client"));
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_client_list - Error get_client_list");
+    response->status = 500;
+  }
+  json_decref(j_client_list);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_client;
+  
+  j_client = get_client(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "source"));
+  if (check_result_value(j_client, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_client, "client"));
+  } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_client - Error j_client");
+    response->status = 500;
+  }
+  json_decref(j_client);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_add_client (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_client, * j_client_valid, * j_search_client, * j_body;
+  
+  j_client = ulfius_get_json_body_request(request, NULL);
+  if (j_client != NULL) {
+    j_client_valid = is_client_valid(config, NULL, j_client, 1, u_map_get(request->map_url, "source"));
+    if (check_result_value(j_client_valid, G_OK)) {
+      j_search_client = get_client(config, json_string_value(json_object_get(j_client, "client_id")), u_map_get(request->map_url, "source"));
+      if (check_result_value(j_search_client, G_ERROR_NOT_FOUND)) {
+        if (add_client(config, j_client, u_map_get(request->map_url, "source")) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client - Error add_client");
+          response->status = 500;
+        }
+      } else if (check_result_value(j_search_client, G_OK)) {
+        j_body = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "client_id already exists");
+        ulfius_set_json_body_response(response, 400, j_body);
+        json_decref(j_body);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client - Error get_client");
+        response->status = 500;
+      }
+      json_decref(j_search_client);
+    } else if (check_result_value(j_client_valid, G_ERROR_PARAM)) {
+      ulfius_set_json_body_response(response, 400, json_object_get(j_client_valid, "client"));
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client - Error is_client_valid");
+      response->status = 500;
+    }
+    json_decref(j_client_valid);
+  } else {
+    response->status = 400;
+  }
+  json_decref(j_client);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_client, * j_client_valid, * j_search_client;
+  
+  j_search_client = get_client(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "source"));
+  if (check_result_value(j_search_client, G_OK)) {
+    j_client = ulfius_get_json_body_request(request, NULL);
+    if (j_client != NULL) {
+      j_client_valid = is_client_valid(config, u_map_get(request->map_url, "client_id"), j_client, 0, u_map_get(request->map_url, "source"));
+      if (check_result_value(j_client_valid, G_OK)) {
+        if (set_client(config, u_map_get(request->map_url, "client_id"), j_client, u_map_get(request->map_url, "source")) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client - Error set_client");
+          response->status = 500;
+        }
+      } else if (check_result_value(j_client_valid, G_ERROR_PARAM)) {
+        ulfius_set_json_body_response(response, 400, json_object_get(j_client_valid, "client"));
+      } else if (!check_result_value(j_client_valid, G_OK)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client - Error is_client_valid");
+        response->status = 500;
+      }
+      json_decref(j_client_valid);
+    } else {
+      response->status = 400;
+    }
+    json_decref(j_client);
+  } else if (check_result_value(j_search_client, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client - Error get_client");
+    response->status = 500;
+  }
+  json_decref(j_search_client);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_delete_client (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_search_client;
+  
+  j_search_client = get_client(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "source"));
+  if (check_result_value(j_search_client, G_OK)) {
+    if (delete_client(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "source")) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_client - Error set_client");
+      response->status = 500;
+    }
+  } else if (check_result_value(j_search_client, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_client - Error get_client");
+    response->status = 500;
+  }
+  json_decref(j_search_client);
+  return U_CALLBACK_CONTINUE;
+}
