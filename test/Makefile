@@ -33,7 +33,7 @@ RUN=1
 clean:
 	rm -f *.o *.log valgrind.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2)
 
-build: $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_OAUTH2)
+build: $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2)
 
 unit-tests.o: unit-tests.c unit-tests.h
 	$(CC) $(CFLAGS) -c unit-tests.c
@@ -41,7 +41,7 @@ unit-tests.o: unit-tests.c unit-tests.h
 %: %.c unit-tests.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-test: build test-admin test-auth test-oauth2
+test: build test-admin test-auth test-crud test-oauth2
 
 test-auth: $(TARGET_AUTH) test_glewlwyd_auth_password test_glewlwyd_auth_scheme test_glewlwyd_auth_grant test_glewlwyd_auth_check_scheme test_glewlwyd_auth_scheme_trigger
 
