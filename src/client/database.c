@@ -70,6 +70,10 @@ char * client_module_get(const char * client_id, int * result, void * cls) {
   return NULL;
 }
 
+char * client_is_valid(const char * client_id, const char * str_client, int mode, int * result, void * cls) {
+  return NULL;
+}
+
 int client_module_add(const char * str_new_client, void * cls) {
   return G_ERROR;
 }
