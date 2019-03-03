@@ -128,91 +128,87 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
 }
 
 /**
- * Generates a hash from the specified password, using the digest method specified
+ * Generates a hash from the specified string data, using the digest method specified
  * returned value must be 'd after user
  */
-char * generate_hash(struct config_elements * config, const char * digest, const char * password) {
+char * generate_hash(const char * digest, const char * data) {
   char * to_return = NULL, buffer[1024] = {0};
-  //char salt[GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0};
   
-  if (digest != NULL && password != NULL) {
+  if (digest != NULL && data != NULL) {
     if (!o_strcmp(digest, "SSHA")) {
-      if (generate_digest(digest_SHA1, password, 1, buffer)) {
+      if (generate_digest(digest_SHA1, data, 1, buffer)) {
         to_return = msprintf("{SSHA}%s", buffer, o_strlen(buffer));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA");
       }
     } else if (!o_strcmp(digest, "SHA1")) {
-      if (generate_digest(digest_SHA1, password, 0, buffer)) {
+      if (generate_digest(digest_SHA1, data, 0, buffer)) {
         to_return = msprintf("{SHA}%s", buffer);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
       }
     } else if (!o_strcmp(digest, "SHA224")) {
-      if (generate_digest(digest_SHA224, password, 0, buffer)) {
+      if (generate_digest(digest_SHA224, data, 0, buffer)) {
         to_return = msprintf("{SHA224}%s", buffer);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA224");
       }
     } else if (!o_strcmp(digest, "SSHA224")) {
-      if (generate_digest(digest_SHA224, password, 1, buffer)) {
+      if (generate_digest(digest_SHA224, data, 1, buffer)) {
         to_return = msprintf("{SSHA224}%s", buffer);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA224");
       }
     } else if (!o_strcmp(digest, "SHA256")) {
-      if (generate_digest(digest_SHA256, password, 0, buffer)) {
+      if (generate_digest(digest_SHA256, data, 0, buffer)) {
         to_return = msprintf("{SHA256}%s", buffer);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA256");
       }
     } else if (!o_strcmp(digest, "SSHA256")) {
-      if (generate_digest(digest_SHA256, password, 1, buffer)) {
+      if (generate_digest(digest_SHA256, data, 1, buffer)) {
         to_return = msprintf("{SSHA256}%s", buffer);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA256");
       }
     } else if (!o_strcmp(digest, "SHA384")) {
-      if (generate_digest(digest_SHA384, password, 0, buffer)) {
+      if (generate_digest(digest_SHA384, data, 0, buffer)) {
         to_return = msprintf("{SHA384}%s", buffer);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA384");
       }
     } else if (!o_strcmp(digest, "SSHA384")) {
-      if (generate_digest(digest_SHA384, password, 1, buffer)) {
+      if (generate_digest(digest_SHA384, data, 1, buffer)) {
         to_return = msprintf("{SSHA384}%s", buffer);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA384");
       }
     } else if (!o_strcmp(digest, "SHA512")) {
-      if (generate_digest(digest_SHA512, password, 0, buffer)) {
+      if (generate_digest(digest_SHA512, data, 0, buffer)) {
         to_return = msprintf("{SHA512}%s", buffer);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA512");
       }
     } else if (!o_strcmp(digest, "SSHA512")) {
-      if (generate_digest(digest_SHA512, password, 1, buffer)) {
+      if (generate_digest(digest_SHA512, data, 1, buffer)) {
         to_return = msprintf("{SSHA512}%s", buffer);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA512");
       }
     } else if (!o_strcmp(digest, "SMD5")) {
-      if (generate_digest(digest_MD5, password, 1, buffer)) {
+      if (generate_digest(digest_MD5, data, 1, buffer)) {
         to_return = msprintf("{SMD5}%s", buffer);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SMD5");
       }
     } else if (!o_strcmp(digest, "MD5")) {
-      if (generate_digest(digest_MD5, password, 0, buffer)) {
+      if (generate_digest(digest_MD5, data, 0, buffer)) {
         to_return = msprintf("{MD5}%s", buffer);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest MD5");
       }
-    } else if (!o_strcmp(digest, "CRYPT")) {
-      //rand_crypt_salt(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
-      //to_return = msprintf("{CRYPT}%s", crypt_r(password, salt, &config->auth_ldap->cur_crypt_data));
     } else {
-      to_return = o_strdup(password);
+      to_return = NULL;
     }
   }
   return to_return;
