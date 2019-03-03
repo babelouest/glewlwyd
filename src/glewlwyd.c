@@ -263,6 +263,13 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/mod/plugin/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_plugin_module, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/plugin/:name/:action", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_manage_plugin_module, (void*)config);
 
+  // Users CRUD
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_user, (void*)config);
+  
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_ZERO, &callback_glewlwyd_options, (void*)config);
@@ -1089,6 +1096,7 @@ int init_user_module_list(struct config_elements * config) {
                 *(void **) (&cur_user_module->user_module_count_total) = dlsym(file_handle, "user_module_count_total");
                 *(void **) (&cur_user_module->user_module_get_list) = dlsym(file_handle, "user_module_get_list");
                 *(void **) (&cur_user_module->user_module_get) = dlsym(file_handle, "user_module_get");
+                *(void **) (&cur_user_module->user_is_valid) = dlsym(file_handle, "user_is_valid");
                 *(void **) (&cur_user_module->user_module_add) = dlsym(file_handle, "user_module_add");
                 *(void **) (&cur_user_module->user_module_update) = dlsym(file_handle, "user_module_update");
                 *(void **) (&cur_user_module->user_module_update_profile) = dlsym(file_handle, "user_module_update_profile");
@@ -1103,6 +1111,7 @@ int init_user_module_list(struct config_elements * config) {
                     cur_user_module->user_module_count_total != NULL &&
                     cur_user_module->user_module_get_list != NULL &&
                     cur_user_module->user_module_get != NULL &&
+                    cur_user_module->user_is_valid != NULL &&
                     cur_user_module->user_module_add != NULL &&
                     cur_user_module->user_module_update != NULL &&
                     cur_user_module->user_module_update_profile != NULL &&
@@ -1154,6 +1163,7 @@ int init_user_module_list(struct config_elements * config) {
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_count_total: %s", (cur_user_module->user_module_count_total != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get_list: %s", (cur_user_module->user_module_get_list != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get: %s", (cur_user_module->user_module_get != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_is_valid: %s", (cur_user_module->user_is_valid != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_add: %s", (cur_user_module->user_module_add != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update: %s", (cur_user_module->user_module_update != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update_profile: %s", (cur_user_module->user_module_update_profile != NULL?"found":"not found"));
@@ -1195,7 +1205,7 @@ int load_user_module_instance_list(struct config_elements * config) {
   config->user_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_module_instance_list != NULL) {
     pointer_list_init(config->user_module_instance_list);
-    j_query = json_pack("{sss[ssss]ss}",
+    j_query = json_pack("{sss[sssss]ss}",
                         "table",
                         GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                         "columns",
@@ -1203,6 +1213,7 @@ int load_user_module_instance_list(struct config_elements * config) {
                           "gumi_name AS name",
                           "gumi_order AS order_by",
                           "gumi_parameters AS parameters",
+                          "gumi_readonly AS readonly",
                         "order_by",
                         "gumi_order");
     res = h_select(config->conn, j_query, &j_result, NULL);
@@ -1224,6 +1235,7 @@ int load_user_module_instance_list(struct config_elements * config) {
             cur_instance->cls = NULL;
             cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
             cur_instance->module = module;
+            cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
             if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
               if (module->user_module_init(config, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
                 cur_instance->enabled = 1;
@@ -1635,7 +1647,7 @@ int load_client_module_instance_list(struct config_elements * config) {
   config->client_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->client_module_instance_list != NULL) {
     pointer_list_init(config->client_module_instance_list);
-    j_query = json_pack("{sss[ssss]ss}",
+    j_query = json_pack("{sss[sssss]ss}",
                         "table",
                         GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
                         "columns",
@@ -1643,6 +1655,7 @@ int load_client_module_instance_list(struct config_elements * config) {
                           "gcmi_name AS name",
                           "gcmi_order AS order_by",
                           "gcmi_parameters AS parameters",
+                          "gcmi_readonly AS readonly",
                         "order_by",
                         "gcmi_order");
     res = h_select(config->conn, j_query, &j_result, NULL);
@@ -1663,6 +1676,7 @@ int load_client_module_instance_list(struct config_elements * config) {
           if (cur_instance != NULL) {
             cur_instance->cls = NULL;
             cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+            cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
             cur_instance->module = module;
             if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
               if (module->client_module_init(config, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
