@@ -5,7 +5,6 @@
  * Authentiation server
  * Users are authenticated via various backend available: database, ldap
  * Using various authentication methods available: password, OTP, send code, etc.
- * Provides Json Web Tokens (jwt)
  * 
  * Declarations for common constants and prototypes used in Glewlwyd main program and modules
  *
