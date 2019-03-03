@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
     }
     do_test = 1;
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error auth password");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication");
   }
   ulfius_clean_response(&auth_resp);
 
