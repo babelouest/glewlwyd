@@ -6,9 +6,9 @@
  * Users are authenticated via various backend available: database, ldap
  * Using various authentication methods available: password, OTP, send code, etc.
  * 
- * Legacy (Glewlwyd 1.x) OAuth2 plugin
+ * mock plugin
  * 
- * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2019 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
