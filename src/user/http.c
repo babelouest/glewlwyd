@@ -57,15 +57,19 @@ int user_module_close(struct config_elements * config, void * cls) {
   return G_OK;
 }
 
-size_t user_module_count_total(struct config_elements * config, void * cls) {
+size_t user_module_count_total(void * cls) {
   return 0;
 }
 
-char ** user_module_get_list(const char * pattern, uint limit, uint offset, uint * total, int * result, void * cls) {
+char * user_module_get_list(const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
   return NULL;
 }
 
 char * user_module_get(const char * username, int * result, void * cls) {
+  return NULL;
+}
+
+char * user_is_valid(const char * username, const char * str_user, int mode, int * result, void * cls) {
   return NULL;
 }
 
