@@ -66,7 +66,14 @@ typedef enum {
   digest_MD5,
 } digest_algorithm;
 
-struct config_elements;
+struct config_module {
+  const char           * external_url;
+  const char           * login_url;
+  const char           * admin_scope;
+  const char           * profile_scope;
+  struct _h_connection * conn;
+  char                 * hash_algorithm;
+};
 
 struct _user_module {
   void     * file_handle;
@@ -74,10 +81,10 @@ struct _user_module {
   char     * display_name;
   char     * description;
   char     * parameters;
-  int     (* user_module_load)(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters);
-  int     (* user_module_unload)(struct config_elements * config);
-  int     (* user_module_init)(struct config_elements * config, const char * parameters, void ** cls);
-  int     (* user_module_close)(struct config_elements * config, void * cls);
+  int     (* user_module_load)(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters);
+  int     (* user_module_unload)(struct config_module * config);
+  int     (* user_module_init)(struct config_module * config, const char * parameters, void ** cls);
+  int     (* user_module_close)(struct config_module * config, void * cls);
   size_t  (* user_module_count_total)(void * cls);
   char *  (* user_module_get_list)(const char * pattern, size_t offset, size_t limit, int * result, void * cls);
   char *  (* user_module_get)(const char * username, int * result, void * cls);
@@ -104,10 +111,10 @@ struct _client_module {
   char     * display_name;
   char     * description;
   char     * parameters;
-  int     (* client_module_load)(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters);
-  int     (* client_module_unload)(struct config_elements * config);
-  int     (* client_module_init)(struct config_elements * config, const char * parameters, void ** cls);
-  int     (* client_module_close)(struct config_elements * config, void * cls);
+  int     (* client_module_load)(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters);
+  int     (* client_module_unload)(struct config_module * config);
+  int     (* client_module_init)(struct config_module * config, const char * parameters, void ** cls);
+  int     (* client_module_close)(struct config_module * config, void * cls);
   size_t  (* client_module_count_total)(void * cls);
   char  * (* client_module_get_list)(const char * pattern, size_t offset, size_t limit, int * result, void * cls);
   char  * (* client_module_get)(const char * client_id, int * result, void * cls);
@@ -133,10 +140,10 @@ struct _user_auth_scheme_module {
   char * display_name;
   char * description;
   char * parameters;
-  int (* user_auth_scheme_module_load)(struct config_elements * config, char ** name, char ** display_name, char ** description, char ** parameters);
-  int (* user_auth_scheme_module_unload)(struct config_elements * config);
-  int (* user_auth_scheme_module_init)(struct config_elements * config, const char * parameters, void ** cls);
-  int (* user_auth_scheme_module_close)(struct config_elements * config, void * cls);
+  int (* user_auth_scheme_module_load)(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters);
+  int (* user_auth_scheme_module_unload)(struct config_module * config);
+  int (* user_auth_scheme_module_init)(struct config_module * config, const char * parameters, void ** cls);
+  int (* user_auth_scheme_module_close)(struct config_module * config, void * cls);
   int (* user_auth_scheme_module_trigger)(const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls);
   int (* user_auth_scheme_module_validate)(const char * username, const char * scheme_data, void * cls);
   int (* user_can_use_scheme)(const char * username, void * cls);
@@ -208,6 +215,7 @@ struct config_elements {
   struct _pointer_list *                      plugin_module_list;
   struct _pointer_list *                      plugin_module_instance_list;
   struct config_plugin *                      config_p;
+  struct config_module *                      config_m;
 };
 
 struct config_plugin {

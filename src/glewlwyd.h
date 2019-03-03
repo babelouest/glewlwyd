@@ -119,7 +119,7 @@ int  check_config(struct config_elements * config);
 void exit_handler(int handler);
 void exit_server(struct config_elements ** config, int exit_value);
 void print_help(FILE * output);
-char * generate_hash(struct config_elements * config, const char * digest, const char * password);
+char * generate_hash(const char * digest, const char * password);
 char * get_file_content(const char * file_path);
 int    load_user_module_instance_list(struct config_elements * config);
 int    init_user_module_list(struct config_elements * config);

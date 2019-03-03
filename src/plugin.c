@@ -233,7 +233,7 @@ int glewlwyd_callback_trigger_session_used(struct config_plugin * config, const 
   size_t index;
 
   if (check_result_value(j_session, G_OK) || session_uid == NULL) {
-    if ((session_hash = generate_hash(config->glewlwyd_config, config->glewlwyd_config->hash_algorithm, session_uid)) != NULL) {
+    if ((session_hash = generate_hash(config->glewlwyd_config->hash_algorithm, session_uid)) != NULL) {
       j_scheme_processed = json_object();
       if (j_scheme_processed != NULL) {
         ret = G_OK;
@@ -370,5 +370,5 @@ char * glewlwyd_callback_get_plugin_external_url(struct config_plugin * config, 
 }
 
 char * glewlwyd_callback_generate_hash(struct config_plugin * config, const char * data) {
-  return generate_hash(config->glewlwyd_config, config->glewlwyd_config->hash_algorithm, data);
+  return generate_hash(config->glewlwyd_config->hash_algorithm, data);
 }

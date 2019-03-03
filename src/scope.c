@@ -257,7 +257,7 @@ static json_t * get_current_user_from_session(struct config_elements * config, c
   json_t * j_session, * j_return, * j_user;
 
   if (session_uid != NULL && o_strlen(session_uid)) {
-    if ((session_hash = generate_hash(config, config->hash_algorithm, session_uid)) != NULL) {
+    if ((session_hash = generate_hash(config->hash_algorithm, session_uid)) != NULL) {
       j_session = get_current_session(config, session_hash);
       if (check_result_value(j_session, G_OK)) {
         j_user = get_user(config, json_string_value(json_object_get(json_object_get(j_session, "session"), "username")), NULL);
@@ -331,7 +331,7 @@ static int is_scheme_valid_for_session(struct config_elements * config, json_int
 }
 
 json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list, const char * session_uid) {
-  char * session_hash = generate_hash(config, config->hash_algorithm, session_uid);
+  char * session_hash = generate_hash(config->hash_algorithm, session_uid);
   json_t * j_scheme_list = get_auth_scheme_list_from_scope_list(config, scope_list), * j_scope, * j_scheme, * j_group, * j_user = get_current_user_from_session(config, session_uid), * j_scheme_remove;
   const char * key_scope, * key_group;
   size_t index_scheme;
