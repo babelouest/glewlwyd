@@ -157,11 +157,12 @@ size_t user_module_count_total(void * cls) {
 }
 
 char * user_module_get_list(const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
-  json_t * j_user, * j_array = json_array();
+  json_t * j_user, * j_array;
   size_t index, counter = 0;
   char * to_return = NULL;
 
-  if (limit > 0) {  
+  if (limit > 0) {
+    j_array = json_array();
     if (j_array != NULL) {
       json_array_foreach((json_t *)cls, index, j_user) {
         if (index >= offset && (offset + counter) < json_array_size((json_t *)cls) && counter < limit && (!o_strlen(pattern) || json_has_str_pattern_case(j_user, pattern))) {
