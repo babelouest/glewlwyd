@@ -335,6 +335,7 @@ int add_user_module(struct config_elements * config, json_t * j_module) {
         cur_instance->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
         cur_instance->module = module;
         cur_instance->enabled = 0;
+        cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
         if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
           if (module->user_module_init(config, json_string_value(json_object_get(j_module, "parameters")), &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
@@ -1030,6 +1031,7 @@ int add_client_module(struct config_elements * config, json_t * j_module) {
         cur_instance->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
         cur_instance->module = module;
         cur_instance->enabled = 0;
+        cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
         if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
           if (module->client_module_init(config, json_string_value(json_object_get(j_module, "parameters")), &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
