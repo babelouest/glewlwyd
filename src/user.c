@@ -145,6 +145,7 @@ json_t * get_user(struct config_elements * config, const char * username, const 
   if (source != NULL) {
     user_module = get_user_module_instance(config, source);
     if (user_module != NULL) {
+      result = G_ERROR;
       str_user = user_module->module->user_module_get(username, &result, user_module->cls);
       if (result == G_OK && str_user != NULL) {
         j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
@@ -173,6 +174,7 @@ json_t * get_user(struct config_elements * config, const char * username, const 
           user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
           if (user_module != NULL) {
             if (user_module->enabled) {
+              result = G_ERROR;
               str_user = user_module->module->user_module_get(username, &result, user_module->cls);
               if (result == G_OK && str_user != NULL) {
                 j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
@@ -210,12 +212,13 @@ json_t * get_user_list(struct config_elements * config, const char * pattern, si
   json_t * j_return, * j_module_list, * j_module, * j_list_parsed;
   struct _user_module_instance * user_module;
   char * list_result = NULL;
-  int result = G_ERROR;
+  int result;
   size_t cur_offset, cur_limit, count_total, index;
   
   if (source != NULL) {
     user_module = get_user_module_instance(config, source);
     if (user_module != NULL && user_module->enabled) {
+      result = G_ERROR;
       list_result = user_module->module->user_module_get_list(pattern, offset, limit, &result, user_module->cls);
       if (result == G_OK) {
         j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
@@ -247,6 +250,7 @@ json_t * get_user_list(struct config_elements * config, const char * pattern, si
         json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
           user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
           if (user_module != NULL && user_module->enabled) {
+            result = G_ERROR;
             if ((count_total = user_module->module->user_module_count_total(user_module->cls)) > cur_offset) {
               list_result = user_module->module->user_module_get_list(pattern, cur_offset, cur_limit, &result, user_module->cls);
               if (result == G_OK) {
@@ -299,6 +303,7 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
     user_module = get_user_module_instance(config, source);
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
       str_user = json_dumps(j_user, JSON_COMPACT);
+      result = G_ERROR;
       str_error = user_module->module->user_is_valid(username, str_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, user_module->cls);
       if (result == G_ERROR_PARAM && str_error != NULL) {
         j_error_list = json_loads(str_error, JSON_DECODE_ANY, NULL);
@@ -332,6 +337,7 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
           if (user_module != NULL && user_module->enabled && !user_module->readonly) {
             found = 1;
             str_user = json_dumps(j_user, JSON_COMPACT);
+            result = G_ERROR;
             str_error = user_module->module->user_is_valid(username, str_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, user_module->cls);
             if (result == G_ERROR_PARAM && str_error != NULL) {
               j_error_list = json_loads(str_error, JSON_DECODE_ANY, NULL);
