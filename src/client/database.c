@@ -56,7 +56,7 @@ int client_module_close(struct config_module * config, void * cls) {
   return G_OK;
 }
 
-size_t client_module_count_total(struct config_module * config, void * cls) {
+size_t client_module_count_total(const char * pattern, void * cls) {
   return 0;
 }
 

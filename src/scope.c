@@ -26,7 +26,7 @@
  */
 #include "glewlwyd.h"
 
-json_t * get_scope_list(struct config_elements * config) {
+json_t * get_scope_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit) {
   json_t * j_query, * j_result, * j_return, * j_element, * j_scheme;
   int res;
   size_t index;
