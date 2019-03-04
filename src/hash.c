@@ -31,24 +31,6 @@
 #include "glewlwyd.h"
 
 /**
- * Generates a random string and store it in str
- */
-char * rand_salt(char * str, size_t str_size) {
-    size_t n;
-    
-    if (str_size > 0 && str != NULL) {
-        for (n = 0; n < str_size; n++) {
-            int key = rand()+1;
-            str[n] = key;
-        }
-        str[str_size] = '\0';
-        return str;
-    } else {
-      return NULL;
-    }
-}
-
-/**
  * Generates a digest using the digest_algorithm specified from password and add a salt if specified, stores it in out_digest
  */
 int generate_digest(digest_algorithm digest, const char * password, int use_salt, char * out_digest) {
@@ -91,7 +73,7 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
           key_data.data = (unsigned char*)intermediate;
           sprintf(intermediate, "%s", password);
           if (use_salt) {
-            rand_salt(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+            rand_string(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
             strncat(intermediate, salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
           }
           
