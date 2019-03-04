@@ -76,7 +76,7 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
       if (result == G_OK && str_client != NULL) {
         j_client = json_loads(str_client, JSON_DECODE_ANY, NULL);
         if (j_client != NULL) {
-          j_return = json_pack("{sisO}", "result", G_OK, "client", j_client);
+          j_return = json_pack("{sisOss}", "result", G_OK, "client", j_client, "source", source);
           json_decref(j_client);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error json_loads");
@@ -106,7 +106,7 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
                 j_client = json_loads(str_client, JSON_DECODE_ANY, NULL);
                 if (j_client != NULL) {
                   found = 1;
-                  j_return = json_pack("{sisO}", "result", G_OK, "client", j_client);
+                  j_return = json_pack("{sisOss}", "result", G_OK, "client", j_client, "source", client_module->name);
                   json_decref(j_client);
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error json_loads");
@@ -358,11 +358,9 @@ int add_client(struct config_elements * config, json_t * j_client, const char * 
 }
 
 int set_client(struct config_elements * config, const char * client_id, json_t * j_client, const char * source) {
-  int found = 0, result, ret;
+  int result, ret;
   char * str_client;
-  json_t * j_module_list, * j_module;
   struct _client_module_instance * client_module;
-  size_t index;
   
   if (source != NULL) {
     client_module = get_client_module_instance(config, source);
@@ -391,49 +389,14 @@ int set_client(struct config_elements * config, const char * client_id, json_t *
       ret = G_ERROR;
     }
   } else {
-    j_module_list = get_client_module_list(config);
-    if (check_result_value(j_module_list, G_OK)) {
-      json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
-        if (!found) {
-          client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
-          if (client_module != NULL && client_module->enabled && !client_module->readonly) {
-            found = 1;
-            o_free(client_module->module->client_module_get(client_id, &result, client_module->cls));
-            if (result == G_OK) {
-              str_client = json_dumps(j_client, JSON_COMPACT);
-              result = client_module->module->client_module_update(client_id, str_client, client_module->cls);
-              if (result == G_OK) {
-                ret = G_OK;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "set_client - Error client_module_update");
-                ret = result;
-              }
-              o_free(str_client);
-            } else if (result != G_ERROR_NOT_FOUND) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "set_client - Error client_module_get");
-            }
-          } else if (client_module == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "set_client - Error, client_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
-          }
-        }
-      }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "set_client - Error get_client_module_list");
-      ret = G_ERROR;
-    }
-    json_decref(j_module_list);
-  }
-  if (!found) {
-    ret = G_ERROR_NOT_FOUND;
+    ret = G_ERROR_PARAM;
   }
   return ret;
 }
 
 int delete_client(struct config_elements * config, const char * client_id, const char * source) {
-  int found = 0, result, ret;
-  json_t * j_module_list, * j_module;
+  int result, ret;
   struct _client_module_instance * client_module;
-  size_t index;
   
   if (source != NULL) {
     client_module = get_client_module_instance(config, source);
@@ -460,38 +423,7 @@ int delete_client(struct config_elements * config, const char * client_id, const
       ret = G_ERROR;
     }
   } else {
-    j_module_list = get_client_module_list(config);
-    if (check_result_value(j_module_list, G_OK)) {
-      json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
-        if (!found) {
-          client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
-          if (client_module != NULL && client_module->enabled && !client_module->readonly) {
-            found = 1;
-            o_free(client_module->module->client_module_get(client_id, &result, client_module->cls));
-            if (result == G_OK) {
-              result = client_module->module->client_module_delete(client_id, client_module->cls);
-              if (result == G_OK) {
-                ret = G_OK;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "delete_client - Error client_module_delete");
-                ret = result;
-              }
-            } else if (result != G_ERROR_NOT_FOUND) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "delete_client - Error client_module_get");
-            }
-          } else if (client_module == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "delete_client - Error, client_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
-          }
-        }
-      }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "delete_client - Error get_client_module_list");
-      ret = G_ERROR;
-    }
-    json_decref(j_module_list);
-  }
-  if (!found) {
-    ret = G_ERROR_NOT_FOUND;
+    ret = G_ERROR_PARAM;
   }
   return ret;
 }
