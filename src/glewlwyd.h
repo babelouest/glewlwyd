@@ -93,7 +93,6 @@
 #define GLEWLWYD_TABLE_SCOPE                                              "g_scope"
 #define GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP                             "g_user_auth_scheme_group"
 #define GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP_AUTH_SCHEME_MODULE_INSTANCE "g_user_auth_scheme_group_auth_scheme_module_instance"
-#define GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP_SCOPE                       "g_user_auth_scheme_group_scope"
 #define GLEWLWYD_TABLE_CLIENT_USER_SCOPE                                  "g_client_user_scope"
 
 // Callback priority
