@@ -149,7 +149,7 @@ json_t * get_user(struct config_elements * config, const char * username, const 
       if (result == G_OK && str_user != NULL) {
         j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
         if (j_user != NULL) {
-          j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
+          j_return = json_pack("{sisOss}", "result", G_OK, "user", j_user, "source", source);
           json_decref(j_user);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error json_loads");
@@ -179,7 +179,7 @@ json_t * get_user(struct config_elements * config, const char * username, const 
                 j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
                 if (j_user != NULL) {
                   found = 1;
-                  j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
+                  j_return = json_pack("{sisOss}", "result", G_OK, "user", j_user, "source", user_module->name);
                   json_decref(j_user);
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error json_loads");
@@ -327,7 +327,7 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
       y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error get_user_module_instance");
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
-  } else {
+  } else if (add) {
     j_module_list = get_user_module_list(config);
     if (check_result_value(j_module_list, G_OK)) {
       json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
@@ -367,6 +367,8 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
     if (j_return == NULL) {
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     }
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
   return j_return;
 }
@@ -431,11 +433,9 @@ int add_user(struct config_elements * config, json_t * j_user, const char * sour
 }
 
 int set_user(struct config_elements * config, const char * username, json_t * j_user, const char * source) {
-  int found = 0, result, ret;
+  int result, ret;
   char * str_user;
-  json_t * j_module_list, * j_module;
   struct _user_module_instance * user_module;
-  size_t index;
   
   if (source != NULL) {
     user_module = get_user_module_instance(config, source);
@@ -464,49 +464,14 @@ int set_user(struct config_elements * config, const char * username, json_t * j_
       ret = G_ERROR;
     }
   } else {
-    j_module_list = get_user_module_list(config);
-    if (check_result_value(j_module_list, G_OK)) {
-      json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
-        if (!found) {
-          user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
-          if (user_module != NULL && user_module->enabled && !user_module->readonly) {
-            found = 1;
-            o_free(user_module->module->user_module_get(username, &result, user_module->cls));
-            if (result == G_OK) {
-              str_user = json_dumps(j_user, JSON_COMPACT);
-              result = user_module->module->user_module_update(username, str_user, user_module->cls);
-              if (result == G_OK) {
-                ret = G_OK;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_update");
-                ret = result;
-              }
-              o_free(str_user);
-            } else if (result != G_ERROR_NOT_FOUND) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_get");
-            }
-          } else if (user_module == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
-          }
-        }
-      }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error get_user_module_list");
-      ret = G_ERROR;
-    }
-    json_decref(j_module_list);
-  }
-  if (!found) {
-    ret = G_ERROR_NOT_FOUND;
+    ret = G_ERROR_PARAM;
   }
   return ret;
 }
 
 int delete_user(struct config_elements * config, const char * username, const char * source) {
-  int found = 0, result, ret;
-  json_t * j_module_list, * j_module;
+  int result, ret;
   struct _user_module_instance * user_module;
-  size_t index;
   
   if (source != NULL) {
     user_module = get_user_module_instance(config, source);
@@ -533,38 +498,7 @@ int delete_user(struct config_elements * config, const char * username, const ch
       ret = G_ERROR;
     }
   } else {
-    j_module_list = get_user_module_list(config);
-    if (check_result_value(j_module_list, G_OK)) {
-      json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
-        if (!found) {
-          user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
-          if (user_module != NULL && user_module->enabled && !user_module->readonly) {
-            found = 1;
-            o_free(user_module->module->user_module_get(username, &result, user_module->cls));
-            if (result == G_OK) {
-              result = user_module->module->user_module_delete(username, user_module->cls);
-              if (result == G_OK) {
-                ret = G_OK;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error user_module_delete");
-                ret = result;
-              }
-            } else if (result != G_ERROR_NOT_FOUND) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error user_module_get");
-            }
-          } else if (user_module == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
-          }
-        }
-      }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error get_user_module_list");
-      ret = G_ERROR;
-    }
-    json_decref(j_module_list);
-  }
-  if (!found) {
-    ret = G_ERROR_NOT_FOUND;
+    ret = G_ERROR_PARAM;
   }
   return ret;
 }
