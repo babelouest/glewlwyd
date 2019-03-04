@@ -162,8 +162,6 @@ int user_has_scope(json_t * j_user, const char * scope);
 json_t * auth_check_client_credentials(struct config_elements * config, const char * client_id, const char * password);
 
 // Scope
-json_t * get_scope_list(struct config_elements * config);
-json_t * get_scope(struct config_elements * config, const char * scope);
 json_t * get_auth_scheme_list_from_scope(struct config_elements * config, const char * scope);
 json_t * get_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list);
 json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list, const char * session_uid);
@@ -239,6 +237,14 @@ int add_client(struct config_elements * config, json_t * j_client, const char * 
 int set_client(struct config_elements * config, const char * client_id, json_t * j_client, const char * source);
 int delete_client(struct config_elements * config, const char * client_id, const char * source);
 
+// Scope CRUD functions
+json_t * get_scope_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit);
+json_t * get_scope(struct config_elements * config, const char * scope);
+json_t * is_scope_valid(struct config_elements * config, const char * scope, json_t * j_scope, int add);
+int add_scope(struct config_elements * config, json_t * j_scope);
+int set_scope(struct config_elements * config, const char * scope, json_t * j_scope);
+int delete_scope(struct config_elements * config, const char * scope);
+
 // Callback functions
 
 int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -300,6 +306,12 @@ int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_r
 int callback_glewlwyd_add_client (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 int callback_glewlwyd_delete_client (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+
+int callback_glewlwyd_get_scope_list (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_get_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_set_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 

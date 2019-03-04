@@ -152,30 +152,56 @@ int user_module_close(struct config_module * config, void * cls) {
   return G_OK;
 }
 
-size_t user_module_count_total(void * cls) {
-  return json_array_size((json_t *)cls);
+size_t user_module_count_total(const char * pattern, void * cls) {
+  json_t * j_user;
+  size_t index, total;
+
+  if (o_strlen(pattern)) {
+    total = 0;
+    json_array_foreach((json_t *)cls, index, j_user) {
+      if (json_has_str_pattern_case(j_user, pattern)) {
+        total++;
+      }
+    }
+  } else {
+    total = json_array_size((json_t *)cls);
+  }
+  return total;
 }
 
 char * user_module_get_list(const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
-  json_t * j_user, * j_array;
+  json_t * j_user, * j_array, * j_pattern_array;
   size_t index, counter = 0;
   char * to_return = NULL;
 
-  if (limit > 0) {
-    j_array = json_array();
-    if (j_array != NULL) {
+  if (limit) {
+    if (o_strlen(pattern)) {
+      j_pattern_array = json_array();
       json_array_foreach((json_t *)cls, index, j_user) {
-        if (index >= offset && (offset + counter) < json_array_size((json_t *)cls) && counter < limit && (!o_strlen(pattern) || json_has_str_pattern_case(j_user, pattern))) {
-          json_array_append(j_array, j_user);
-          counter++;
+        if (json_has_str_pattern_case(j_user, pattern)) {
+          json_array_append(j_pattern_array, j_user);
         }
       }
-      to_return = json_dumps(j_array, JSON_COMPACT);
-      *result = G_OK;
-      json_decref(j_array);
+    } else {
+      j_pattern_array = json_copy((json_t *)cls);
+    }
+    j_array = json_array();
+    if (j_array != NULL) {
+      if (json_array_size(j_pattern_array)) {
+        json_array_foreach(j_pattern_array, index, j_user) {
+          if (index >= offset && (offset + counter) < json_array_size((json_t *)cls) && counter < limit && (!o_strlen(pattern) || json_has_str_pattern_case(j_user, pattern))) {
+            json_array_append(j_array, j_user);
+            counter++;
+          }
+        }
+        to_return = json_dumps(j_array, JSON_COMPACT);
+        *result = G_OK;
+        json_decref(j_array);
+      }
     } else {
       *result = G_ERROR;
     }
+    json_decref(j_pattern_array);
   } else {
     *result = G_ERROR_PARAM;
   }

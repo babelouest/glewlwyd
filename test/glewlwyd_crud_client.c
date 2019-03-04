@@ -139,6 +139,67 @@ START_TEST(test_glwd_crud_client_delete_OK)
 }
 END_TEST
 
+START_TEST(test_glwd_crud_client_list_pattern)
+{
+  json_t * j_result;
+  int res;
+  struct _u_response resp;
+  
+  o_free(admin_req.http_url);
+  o_free(admin_req.http_verb);
+  
+  ulfius_init_response(&resp);
+  admin_req.http_url = msprintf("%s/client/?pattern=client1", SERVER_URI);
+  admin_req.http_verb = o_strdup("GET");
+  res = ulfius_send_http_request(&admin_req, &resp);
+  ck_assert_int_eq(res, U_OK);
+  j_result = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_int_eq(json_array_size(j_result), 1);
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 0), "client_id")), "client1_id");
+  o_free(admin_req.http_url);
+  o_free(admin_req.http_verb);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  admin_req.http_url = msprintf("%s/client/?limit=2&pattern=client", SERVER_URI);
+  admin_req.http_verb = o_strdup("GET");
+  res = ulfius_send_http_request(&admin_req, &resp);
+  ck_assert_int_eq(res, U_OK);
+  j_result = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_int_eq(json_array_size(j_result), 2);
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 0), "client_id")), "client1_id");
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "client_id")), "client2_id");
+  o_free(admin_req.http_url);
+  o_free(admin_req.http_verb);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  admin_req.http_url = msprintf("%s/client/?pattern=error", SERVER_URI);
+  admin_req.http_verb = o_strdup("GET");
+  res = ulfius_send_http_request(&admin_req, &resp);
+  ck_assert_int_eq(res, U_OK);
+  j_result = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_int_eq(json_array_size(j_result), 0);
+  o_free(admin_req.http_url);
+  o_free(admin_req.http_verb);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  admin_req.http_url = msprintf("%s/client/?pattern=client&limit=2&offset=1", SERVER_URI);
+  admin_req.http_verb = o_strdup("GET");
+  res = ulfius_send_http_request(&admin_req, &resp);
+  ck_assert_int_eq(res, U_OK);
+  j_result = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_int_eq(json_array_size(j_result), 2);
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 0), "client_id")), "client2_id");
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "client_id")), "client3_id");
+  o_free(admin_req.http_url);
+  o_free(admin_req.http_verb);
+  ulfius_clean_response(&resp);
+  
+}
+END_TEST
+
 START_TEST(test_glwd_crud_client_list_limit)
 {
   json_t * j_result;
@@ -256,6 +317,67 @@ START_TEST(test_glwd_crud_client_list_page_multiple_source)
 }
 END_TEST
 
+START_TEST(test_glwd_crud_client_list_pattern_multiple_source)
+{
+  json_t * j_result;
+  int res;
+  struct _u_response resp;
+
+  o_free(admin_req.http_url);
+  o_free(admin_req.http_verb);
+  
+  ulfius_init_response(&resp);
+  admin_req.http_url = msprintf("%s/client/?pattern=client1", SERVER_URI);
+  admin_req.http_verb = o_strdup("GET");
+  res = ulfius_send_http_request(&admin_req, &resp);
+  ck_assert_int_eq(res, U_OK);
+  j_result = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_int_eq(json_array_size(j_result), 3);
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 0), "client_id")), "client1_id");
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "client_id")), "mock1-client1_id");
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 2), "client_id")), "mock2-client1_id");
+  o_free(admin_req.http_url);
+  o_free(admin_req.http_verb);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  admin_req.http_url = msprintf("%s/client/?offset=1&pattern=client1", SERVER_URI);
+  admin_req.http_verb = o_strdup("GET");
+  res = ulfius_send_http_request(&admin_req, &resp);
+  ck_assert_int_eq(res, U_OK);
+  j_result = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_int_eq(json_array_size(j_result), 2);
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 0), "client_id")), "mock1-client1_id");
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "client_id")), "mock2-client1_id");
+  o_free(admin_req.http_url);
+  o_free(admin_req.http_verb);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  admin_req.http_url = msprintf("%s/client/?offset=1&pattern=client1&limit=1", SERVER_URI);
+  admin_req.http_verb = o_strdup("GET");
+  res = ulfius_send_http_request(&admin_req, &resp);
+  ck_assert_int_eq(res, U_OK);
+  j_result = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_int_eq(json_array_size(j_result), 1);
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 0), "client_id")), "mock1-client1_id");
+  o_free(admin_req.http_url);
+  o_free(admin_req.http_verb);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  admin_req.http_url = msprintf("%s/client/?pattern=error", SERVER_URI);
+  admin_req.http_verb = o_strdup("GET");
+  res = ulfius_send_http_request(&admin_req, &resp);
+  ck_assert_int_eq(res, U_OK);
+  j_result = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_int_eq(json_array_size(j_result), 0);
+  o_free(admin_req.http_url);
+  o_free(admin_req.http_verb);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
 START_TEST(test_glwd_crud_client_list_delete_user_module_instances)
 {
   char * url = msprintf("%s/mod/client/%s", SERVER_URI, MODULE_NAME_1);
@@ -284,8 +406,10 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_client_delete_error);
   tcase_add_test(tc_core, test_glwd_crud_client_delete_OK);
   tcase_add_test(tc_core, test_glwd_crud_client_list_limit);
+  tcase_add_test(tc_core, test_glwd_crud_client_list_pattern);
   tcase_add_test(tc_core, test_glwd_crud_client_list_add_user_module_instances);
   tcase_add_test(tc_core, test_glwd_crud_client_list_page_multiple_source);
+  tcase_add_test(tc_core, test_glwd_crud_client_list_pattern_multiple_source);
   tcase_add_test(tc_core, test_glwd_crud_client_list_delete_user_module_instances);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);

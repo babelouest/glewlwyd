@@ -57,7 +57,7 @@ int user_module_close(struct config_module * config, void * cls) {
   return G_OK;
 }
 
-size_t user_module_count_total(void * cls) {
+size_t user_module_count_total(const char * pattern, void * cls) {
   return 0;
 }
 

@@ -1279,3 +1279,23 @@ int callback_glewlwyd_delete_client (const struct _u_request * request, struct _
   json_decref(j_search_client);
   return U_CALLBACK_CONTINUE;
 }
+
+int callback_glewlwyd_get_scope_list (const struct _u_request * request, struct _u_response * response, void * plugin_data) {
+  return U_CALLBACK_ERROR;
+}
+
+int callback_glewlwyd_get_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data) {
+  return U_CALLBACK_ERROR;
+}
+
+int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data) {
+  return U_CALLBACK_ERROR;
+}
+
+int callback_glewlwyd_set_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data) {
+  return U_CALLBACK_ERROR;
+}
+
+int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data) {
+  return U_CALLBACK_ERROR;
+}

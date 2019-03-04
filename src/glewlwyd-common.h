@@ -91,7 +91,7 @@ struct _user_module {
   int     (* user_module_unload)(struct config_module * config);
   int     (* user_module_init)(struct config_module * config, const char * parameters, void ** cls);
   int     (* user_module_close)(struct config_module * config, void * cls);
-  size_t  (* user_module_count_total)(void * cls);
+  size_t  (* user_module_count_total)(const char * pattern, void * cls);
   char *  (* user_module_get_list)(const char * pattern, size_t offset, size_t limit, int * result, void * cls);
   char *  (* user_module_get)(const char * username, int * result, void * cls);
   char *  (* user_is_valid)(const char * username, const char * str_user, int mode, int * result, void * cls);
@@ -121,7 +121,7 @@ struct _client_module {
   int     (* client_module_unload)(struct config_module * config);
   int     (* client_module_init)(struct config_module * config, const char * parameters, void ** cls);
   int     (* client_module_close)(struct config_module * config, void * cls);
-  size_t  (* client_module_count_total)(void * cls);
+  size_t  (* client_module_count_total)(const char * pattern, void * cls);
   char  * (* client_module_get_list)(const char * pattern, size_t offset, size_t limit, int * result, void * cls);
   char  * (* client_module_get)(const char * client_id, int * result, void * cls);
   char *  (* client_is_valid)(const char * username, const char * str_user, int mode, int * result, void * cls);
