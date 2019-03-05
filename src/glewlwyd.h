@@ -84,16 +84,16 @@
 #define G_ERROR_NOT_FOUND    6
 
 // Data tables
-#define GLEWLWYD_TABLE_USER_MODULE_INSTANCE                               "g_user_module_instance"
-#define GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE                   "g_user_auth_scheme_module_instance"
-#define GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE                             "g_client_module_instance"
-#define GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE                             "g_plugin_module_instance"
-#define GLEWLWYD_TABLE_USER_SESSION                                       "g_user_session"
-#define GLEWLWYD_TABLE_USER_SESSION_SCHEME                                "g_user_session_scheme"
-#define GLEWLWYD_TABLE_SCOPE                                              "g_scope"
-#define GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP                             "g_user_auth_scheme_group"
-#define GLEWLWYD_TABLE_USER_AUTH_SCHEME_GROUP_AUTH_SCHEME_MODULE_INSTANCE "g_user_auth_scheme_group_auth_scheme_module_instance"
-#define GLEWLWYD_TABLE_CLIENT_USER_SCOPE                                  "g_client_user_scope"
+#define GLEWLWYD_TABLE_USER_MODULE_INSTANCE                    "g_user_module_instance"
+#define GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE        "g_user_auth_scheme_module_instance"
+#define GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE                  "g_client_module_instance"
+#define GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE                  "g_plugin_module_instance"
+#define GLEWLWYD_TABLE_USER_SESSION                            "g_user_session"
+#define GLEWLWYD_TABLE_USER_SESSION_SCHEME                     "g_user_session_scheme"
+#define GLEWLWYD_TABLE_SCOPE                                   "g_scope"
+#define GLEWLWYD_TABLE_SCOPE_GROUP                             "g_scope_group"
+#define GLEWLWYD_TABLE_SCOPE_GROUP_AUTH_SCHEME_MODULE_INSTANCE "g_scope_group_auth_scheme_module_instance"
+#define GLEWLWYD_TABLE_CLIENT_USER_SCOPE                       "g_client_user_scope"
 
 // Callback priority
 #define GLEWLWYD_CALLBACK_PRIORITY_ZERO           0
