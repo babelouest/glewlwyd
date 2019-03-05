@@ -55,7 +55,7 @@ json_t * get_scope_list(struct config_elements * config, const char * pattern, s
   json_decref(j_query);
   if (res == H_OK) {
     json_array_foreach(j_result, index, j_element) {
-      json_object_set(j_element, "requires_password", json_integer_value(json_object_get(j_element, "gs_password_required"))?json_true():json_false());
+      json_object_set(j_element, "password_required", json_integer_value(json_object_get(j_element, "gs_password_required"))?json_true():json_false());
       json_object_del(j_element, "gs_password_required");
       j_scheme = get_auth_scheme_list_from_scope(config, json_string_value(json_object_get(j_element, "name")));
       if (check_result_value(j_scheme, G_OK)) {
@@ -669,17 +669,246 @@ json_t * get_scope_list_allowed_for_session(struct config_elements * config, con
 }
 
 json_t * is_scope_valid(struct config_elements * config, const char * scope, json_t * j_scope, int add) {
-  return NULL;
+  json_t * j_return, * j_array, * j_group, * j_scheme, * j_module;
+  size_t index;
+  const char * key;
+  char * message;
+
+  if (json_is_object(j_scope)) {
+    j_array = json_array();
+    if (j_array != NULL) {
+      if (add) {
+        if (!json_is_string(json_object_get(j_scope, "name")) || !json_string_length(json_object_get(j_scope, "name")) || json_string_length(json_object_get(j_scope, "name")) > 128) {
+          json_array_append_new(j_array, json_string("name is mandatory and must be string between 1 and 128 characters"));
+        }
+      }
+      if (json_object_get(j_scope, "display_name") != NULL && (!json_is_string(json_object_get(j_scope, "display_name")) || !json_string_length(json_object_get(j_scope, "display_name")) || json_string_length(json_object_get(j_scope, "display_name")) > 256)) {
+        json_array_append_new(j_array, json_string("display_name is optional and must be string between 1 and 256 characters"));
+      }
+      if (json_object_get(j_scope, "description") != NULL && (!json_is_string(json_object_get(j_scope, "description")) || !json_string_length(json_object_get(j_scope, "description")) || json_string_length(json_object_get(j_scope, "description")) > 512)) {
+        json_array_append_new(j_array, json_string("description is optional and must be string between 1 and 512 characters"));
+      }
+      if (json_object_get(j_scope, "password_required") != NULL && !json_is_boolean(json_object_get(j_scope, "password_required"))) {
+        json_array_append_new(j_array, json_string("password_required is optional and must be a boolean"));
+      }
+      if (json_object_get(j_scope, "scheme") != NULL && !json_is_object(json_object_get(j_scope, "scheme"))) {
+        json_array_append_new(j_array, json_string("scheme is optional and must be a JSON object"));
+      } else {
+        json_object_foreach(json_object_get(j_scope, "scheme"), key, j_group) {
+          if (!json_is_array(j_group) || !json_array_size(j_group)) {
+            json_array_append_new(j_array, json_string("scheme group must be a non empty JSON array"));
+          } else {
+            json_array_foreach(j_group, index, j_scheme) {
+              if (!json_is_object(j_scheme) || !json_object_size(j_scheme)) {
+                json_array_append_new(j_array, json_string("scheme must be a non empty JSON object"));
+              } else {
+                if (!json_is_string(json_object_get(j_scheme, "scheme_name")) || !json_string_length(json_object_get(j_scheme, "scheme_name"))) {
+                  json_array_append_new(j_array, json_string("scheme_name must be a non empty string"));
+                } else {
+                  j_module = get_user_auth_scheme_module(config, json_string_value(json_object_get(j_scheme, "scheme_name")));
+                  if (check_result_value(j_module, G_ERROR_NOT_FOUND)) {
+                    message = msprintf("scheme_name '%s' does not exist", json_string_value(json_object_get(j_scheme, "scheme_name")));
+                    json_array_append_new(j_array, json_string(message));
+                    o_free(message);
+                  } else if (!check_result_value(j_module, G_OK)) {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "is_scope_valid - Error get_user_auth_scheme_module");
+                  }
+                  json_decref(j_module);
+                  if (json_object_get(j_scheme, "max_use") != NULL && (!json_is_integer(json_object_get(j_scheme, "max_use")) || json_integer_value(json_object_get(j_scheme, "max_use")) < 0)) {
+                    json_array_append_new(j_array, json_string("max_use must be a zero or positive integer"));
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      if (json_array_size(j_array)) {
+        j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_array);
+      } else {
+        j_return = json_pack("{si}", "result", G_OK);
+      }
+      json_decref(j_array);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "is_scope_valid - Error allocating resources for j_array");
+      j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+    }
+  } else {
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Parameter must be a JSON object");
+  }
+  return j_return;
+}
+
+static int add_scope_scheme_groups(struct config_elements * config, const char * scope, json_t * j_scheme) {
+  json_t * j_query, * j_scope_group, * j_scope_group_id, * j_scheme_module;
+  int res, ret = G_OK;
+  char * scope_escaped, * scope_clause, * scheme_escaped, * scheme_module_clause;
+  const char * group_name;
+  size_t index;
+
+  scope_escaped = h_escape_string(config->conn, scope);
+  scope_clause = msprintf("(SELECT `gs_id` FROM `" GLEWLWYD_TABLE_SCOPE "` WHERE `gs_name`='%s')", scope_escaped);
+
+  json_object_foreach(j_scheme, group_name, j_scope_group) {
+    j_query = json_pack("{sss{s{ss}ss}}",
+                        "table",
+                        GLEWLWYD_TABLE_SCOPE_GROUP,
+                        "values",
+                          "gs_id",
+                            "raw",
+                            scope_clause,
+                          "gsg_name",
+                          group_name);
+    res = h_insert(config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      j_scope_group_id = h_last_insert_id(config->conn);
+      if (j_scope_group_id != NULL && json_integer_value(j_scope_group_id) > 0) {
+        json_array_foreach(j_scope_group, index, j_scheme_module) {
+          scheme_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_scheme_module, "scheme_name")));
+          scheme_module_clause = msprintf("(SELECT `guasmi_id` FROM `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE "` WHERE `guasmi_name`='%s')", scheme_escaped);
+          j_query = json_pack("{sss{sOs{ss}sI}}",
+                              "table",
+                              GLEWLWYD_TABLE_SCOPE_GROUP_AUTH_SCHEME_MODULE_INSTANCE,
+                              "values",
+                                "gsg_id",
+                                j_scope_group_id,
+                                "guasmi_id",
+                                  "raw",
+                                  scheme_module_clause,
+                                "gsgasmi_max_use",
+                                json_object_get(j_scheme_module, "max_use")!=NULL?json_integer_value(json_object_get(j_scheme_module, "max_use")):0);
+          o_free(scheme_module_clause);
+          o_free(scheme_escaped);
+          res = h_insert(config->conn, j_query, NULL);
+          json_decref(j_query);
+          if (res != H_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "add_scope_scheme_groups - Error executing j_query (2)");
+            ret = G_ERROR_DB;
+          }
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "add_scope_scheme_groups - Error h_last_insert_id");
+        ret = G_ERROR_DB;
+      }
+      json_decref(j_scope_group_id);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "add_scope_scheme_groups - Error executing j_query (1)");
+      ret = G_ERROR_DB;
+    }
+  }
+  o_free(scope_escaped);
+  o_free(scope_clause);
+  return ret;
 }
 
 int add_scope(struct config_elements * config, json_t * j_scope) {
-  return G_ERROR;
+  json_t * j_query;
+  int res, ret;
+
+  j_query = json_pack("{sss{sOsOsOsi}}",
+                      "table",
+                      GLEWLWYD_TABLE_SCOPE,
+                      "values",
+                        "gs_name",
+                        json_object_get(j_scope, "name"),
+                        "gs_display_name",
+                        json_object_get(j_scope, "display_name")!=NULL?json_object_get(j_scope, "display_name"):json_null(),
+                        "gs_description",
+                        json_object_get(j_scope, "description")!=NULL?json_object_get(j_scope, "description"):json_null(),
+                        "gs_password_required",
+                        json_object_get(j_scope, "password_required")==json_false()?0:1);
+  res = h_insert(config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_object_get(j_scope, "scheme") != NULL && json_object_size(json_object_get(j_scope, "scheme"))) {
+      if (add_scope_scheme_groups(config, json_string_value(json_object_get(j_scope, "name")), json_object_get(j_scope, "scheme")) == G_OK) {
+        ret = G_OK;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "add_scope - Error add_scope_scheme_groups");
+        ret = G_ERROR;
+      }
+    } else {
+      ret = G_OK;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "add_scope - Error executing j_query");
+    ret = G_ERROR_DB;
+  }
+  return ret;
 }
 
 int set_scope(struct config_elements * config, const char * scope, json_t * j_scope) {
-  return G_ERROR;
+  json_t * j_query;
+  char * scope_escaped, * scope_clause;
+  int res, ret;
+
+  scope_escaped = h_escape_string(config->conn, scope);
+  scope_clause = msprintf("IN (SELECT `gs_id` FROM `" GLEWLWYD_TABLE_SCOPE "` WHERE `gs_name`='%s')", scope_escaped);
+  j_query = json_pack("{sss{s{ssss}}}",
+                      "table",
+                      GLEWLWYD_TABLE_SCOPE_GROUP,
+                      "where",
+                        "gs_id",
+                          "operator",
+                          "raw",
+                          "value",
+                          scope_clause);
+  o_free(scope_clause);
+  o_free(scope_escaped);
+  res = h_delete(config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    j_query = json_pack("{sss{sOsOsi}s{ss}}",
+                        "table",
+                        GLEWLWYD_TABLE_SCOPE,
+                        "set",
+                          "gs_display_name",
+                          json_object_get(j_scope, "display_name")!=NULL?json_object_get(j_scope, "display_name"):json_null(),
+                          "gs_description",
+                          json_object_get(j_scope, "description")!=NULL?json_object_get(j_scope, "description"):json_null(),
+                          "gs_password_required",
+                          json_object_get(j_scope, "password_required")==json_false()?0:1,
+                        "where",
+                          "gs_name",
+                          scope);
+    res = h_update(config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      if (add_scope_scheme_groups(config, scope, json_object_get(j_scope, "scheme")) == G_OK) {
+        ret = G_OK;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "set_scope - Error add_scope_scheme_groups");
+        ret = G_ERROR;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "set_scope - Error executing j_query (2)");
+      ret = G_ERROR_DB;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "set_scope - Error executing j_query (1)");
+    ret = G_ERROR_DB;
+  }
+  return ret;
 }
 
 int delete_scope(struct config_elements * config, const char * scope) {
-  return G_ERROR;
+  json_t * j_query;
+  int res, ret;
+
+  j_query = json_pack("{sss{ss}}",
+                      "table",
+                      GLEWLWYD_TABLE_SCOPE,
+                      "where",
+                        "gs_name",
+                        scope);
+  res = h_delete(config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    ret = G_OK;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "delete_scope - Error executing j_query");
+    ret = G_ERROR_DB;
+  }
+  return ret;
 }

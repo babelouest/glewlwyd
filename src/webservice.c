@@ -1335,7 +1335,7 @@ int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_re
   if (j_scope != NULL) {
     j_scope_valid = is_scope_valid(config, NULL, j_scope, 1);
     if (check_result_value(j_scope_valid, G_OK)) {
-      j_search_scope = get_scope(config, json_string_value(json_object_get(j_scope, "scope")));
+      j_search_scope = get_scope(config, json_string_value(json_object_get(j_scope, "name")));
       if (check_result_value(j_search_scope, G_ERROR_NOT_FOUND)) {
         if (add_scope(config, j_scope) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_scope - Error add_scope");
@@ -1351,7 +1351,7 @@ int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_re
       }
       json_decref(j_search_scope);
     } else if (check_result_value(j_scope_valid, G_ERROR_PARAM)) {
-      ulfius_set_json_body_response(response, 400, json_object_get(j_scope_valid, "scope"));
+      ulfius_set_json_body_response(response, 400, json_object_get(j_scope_valid, "error"));
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_scope - Error is_scope_valid");
       response->status = 500;
@@ -1379,7 +1379,7 @@ int callback_glewlwyd_set_scope (const struct _u_request * request, struct _u_re
           response->status = 500;
         }
       } else if (check_result_value(j_scope_valid, G_ERROR_PARAM)) {
-        ulfius_set_json_body_response(response, 400, json_object_get(j_scope_valid, "scope"));
+        ulfius_set_json_body_response(response, 400, json_object_get(j_scope_valid, "error"));
       } else if (!check_result_value(j_scope_valid, G_OK)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_scope - Error is_scope_valid");
         response->status = 500;
