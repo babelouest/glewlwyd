@@ -23,9 +23,9 @@
 #define GROUP1_DESC "Group1 description"
 #define GROUP2 "group2"
 #define GROUP2_DESC "Group2 description"
-#define SCHEME1 "mock42"
-#define SCHEME2 "mock88"
-#define SCHEME3 "mock95"
+#define SCHEME1 "mock_scheme_42"
+#define SCHEME2 "mock_scheme_88"
+#define SCHEME3 "mock_scheme_95"
 
 struct _u_request admin_req;
 
@@ -55,51 +55,51 @@ START_TEST(test_glwd_crud_scope_add_error_param)
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("[{ss}]", "scope", SCOPE);
+  j_parameters = json_pack("[{ss}]", "name", SCOPE);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{si}", "scope", 42);
+  j_parameters = json_pack("{si}", "name", 42);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssi}", "scope", SCOPE, "display_name", 42);
+  j_parameters = json_pack("{sssi}", "name", SCOPE, "display_name", 42);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssssi}", "scope", SCOPE, "display_name", NAME, "description", 42);
+  j_parameters = json_pack("{sssssi}", "name", SCOPE, "display_name", NAME, "description", 42);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssssi}", "scope", SCOPE, "display_name", NAME, "description", DESCRIPTION, "requires_password", 42);
+  j_parameters = json_pack("{sssssi}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", 42);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{ss ss so s[]}", "scope", SCOPE, "display_name", NAME, "description", DESCRIPTION, "requires_password", json_true(), "scheme");
+  j_parameters = json_pack("{ss ss ss so s[]}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{ss ss so s{s{}}}", "scope", SCOPE, "display_name", NAME, "description", DESCRIPTION, "requires_password", json_true(), "scheme", GROUP1);
+  j_parameters = json_pack("{ss ss ss so s{s{}}}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme", GROUP1);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{ss ss so s{s[]}}", "scope", SCOPE, "display_name", NAME, "description", DESCRIPTION, "requires_password", json_true(), "scheme", GROUP1);
+  j_parameters = json_pack("{ss ss ss so s{s[]}}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme", GROUP1);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{ss ss so s{s[{sisi}]}}", "scope", SCOPE, "display_name", NAME, "description", DESCRIPTION, "requires_password", json_true(), "scheme", GROUP1, "scheme_name", 42, "max_use", 0);
+  j_parameters = json_pack("{ss ss ss so s{s[{sisi}]}}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme", GROUP1, "scheme_name", 42, "max_use", 0);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{ss ss so s{s[{ssss}]}}", "scope", SCOPE, "display_name", NAME, "description", DESCRIPTION, "requires_password", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "max_use", "error");
+  j_parameters = json_pack("{ss ss ss so s{s[{ssss}]}}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "max_use", "error");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{ss ss so s{s[{ss}]}}", "scope", SCOPE, "display_name", NAME, "description", DESCRIPTION, "requires_password", json_true(), "scheme", GROUP1, "scheme_name", "error");
+  j_parameters = json_pack("{ss ss ss so s{s[{ss}]}}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme", GROUP1, "scheme_name", "error");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{ss ss so s{s[{sssi}]}}", "scope", SCOPE, "display_name", NAME, "description", DESCRIPTION, "requires_password", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "max_use", -1);
+  j_parameters = json_pack("{ss ss ss so s{s[{sssi}]}}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "max_use", -1);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
@@ -110,7 +110,7 @@ END_TEST
 START_TEST(test_glwd_crud_scope_add_OK)
 {
   char * url = msprintf("%s/scope/", SERVER_URI);
-  json_t * j_parameters = json_pack("{ss ss so s{s[{sssi}]}}", "scope", SCOPE, "display_name", NAME, "description", DESCRIPTION, "requires_password", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "max_use", 0);
+  json_t * j_parameters = json_pack("{ss ss ss so s{s[{sssssssi}]}}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "scheme_display_name", "Mock 42", "scheme_type", "mock", "max_use", 0);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   free(url);
@@ -136,7 +136,7 @@ END_TEST
 START_TEST(test_glwd_crud_scope_get)
 {
   char * url = msprintf("%s/scope/%s", SERVER_URI, SCOPE), * url_404 = msprintf("%s/mod/scope/error", SERVER_URI);
-  json_t * j_parameters = json_pack("{ss ss so s{s[{sssssssi}]}}", "scope", SCOPE, "display_name", NAME, "description", DESCRIPTION, "requires_password", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "scheme_type", "mock", "scheme_display_name", "Mock 42", "max_use", 0);
+  json_t * j_parameters = json_pack("{ss ss ss so s{s[{sssssssi}]}}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "scheme_display_name", "Mock 42", "scheme_type", "mock", "max_use", 0);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url_404, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL), 1);
@@ -149,11 +149,12 @@ END_TEST
 START_TEST(test_glwd_crud_scope_set_OK)
 {
   char * url = msprintf("%s/scope/%s", SERVER_URI, SCOPE);
-  json_t * j_parameters = json_pack("{ss so s{s[{sssi}]s[{sssi}{sssi}]}}", "display_name", NAME "-new", "description", DESCRIPTION "-new", "requires_password", json_false(), "scheme", GROUP1 "-new", "scheme_name", SCHEME1, "max_use", 0, GROUP2, "scheme_name", SCHEME2, "max_use", 1, "scheme_name", SCHEME3, "max_use", 0);
+  json_t * j_parameters = json_pack("{ss ss so s{s[{sssi}]s[{sssi}{sssi}]}}", "display_name", NAME "-new", "description", DESCRIPTION "-new", "password_required", json_false(), "scheme", GROUP1 "-new", "scheme_name", SCHEME1, "max_use", 0, GROUP2, "scheme_name", SCHEME2, "max_use", 1, "scheme_name", SCHEME3, "max_use", 0);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   
-  json_object_set_new(j_parameters, "scope", json_string(SCOPE));
+  json_object_set_new(j_parameters, "name", json_string(SCOPE));
+  json_object_set_new(j_parameters, "scheme", json_pack("{s[{sssssssi}]s[{sssssssi}{sssssssi}]}", GROUP1 "-new", "scheme_name", SCHEME1, "scheme_type", "mock", "scheme_display_name", "Mock 42", "max_use", 0, GROUP2, "scheme_name", SCHEME2, "scheme_type", "mock", "scheme_display_name", "Mock 88", "max_use", 1, "scheme_name", SCHEME3, "scheme_type", "mock", "scheme_display_name", "Mock 95", "max_use", 0));
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
   free(url);
   json_decref(j_parameters);
