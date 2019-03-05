@@ -95,6 +95,10 @@ START_TEST(test_glwd_crud_scope_add_error_param)
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
+  j_parameters = json_pack("{ss ss so s{s[{ss}]}}", "scope", SCOPE, "display_name", NAME, "description", DESCRIPTION, "requires_password", json_true(), "scheme", GROUP1, "scheme_name", "error");
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  
   j_parameters = json_pack("{ss ss so s{s[{sssi}]}}", "scope", SCOPE, "display_name", NAME, "description", DESCRIPTION, "requires_password", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "max_use", -1);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
