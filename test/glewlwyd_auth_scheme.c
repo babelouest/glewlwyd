@@ -106,7 +106,7 @@ START_TEST(test_glwd_auth_scheme_login_multiple)
   ulfius_init_request(&auth_req);
   ulfius_init_response(&auth_resp);
 
-  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  auth_req.http_url = msprintf("%s/profile/", SERVER_URI);
   ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
   ck_assert_int_eq(auth_resp.status, 404);
   ulfius_clean_response(&auth_resp);
