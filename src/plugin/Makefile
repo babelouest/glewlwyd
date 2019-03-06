@@ -20,7 +20,7 @@
 #
 
 DEST=/usr/local
-MODULES_TARGET=$(DEST)/lib/glewlwyd/protocol
+MODULES_TARGET=$(DEST)/lib/glewlwyd/plugin
 CC=gcc
 CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
 LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius -ljwt
