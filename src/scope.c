@@ -65,6 +65,7 @@ json_t * get_scope_list(struct config_elements * config, const char * pattern, s
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_scope_list - Error get_auth_scheme_list_from_scope for scope %s", json_string_value(json_object_get(j_element, "name")));
       }
+      json_decref(j_scheme);
     }
     j_return = json_pack("{siso}", "result", G_OK, "scope", j_result);
   } else {
@@ -75,7 +76,7 @@ json_t * get_scope_list(struct config_elements * config, const char * pattern, s
 }
 
 json_t * get_scope(struct config_elements * config, const char * scope) {
-  json_t * j_query, * j_result, * j_return, * j_scheme;
+  json_t * j_query, * j_result = NULL, * j_return, * j_scheme;
   int res;
 
   j_query = json_pack("{sss[ssss]s{ss}}",
@@ -99,11 +100,9 @@ json_t * get_scope(struct config_elements * config, const char * scope) {
       if (check_result_value(j_scheme, G_OK)) {
         json_object_set(json_array_get(j_result, 0), "scheme", json_object_get(j_scheme, "scheme"));
         j_return = json_pack("{sisO}", "result", G_OK, "scope", json_array_get(j_result, 0));
-        json_decref(j_result);
       } else if (check_result_value(j_scheme, G_ERROR_NOT_FOUND)) {
         json_object_set_new(json_array_get(j_result, 0), "scheme", json_object());
         j_return = json_pack("{sisO}", "result", G_OK, "scope", json_array_get(j_result, 0));
-        json_decref(j_result);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_scope - Error get_auth_scheme_list_from_scope");
         j_return = json_pack("{si}", "result", G_ERROR);
@@ -116,6 +115,7 @@ json_t * get_scope(struct config_elements * config, const char * scope) {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_scope - Error executing j_query");
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
+  json_decref(j_result);
   return j_return;
 }
 
