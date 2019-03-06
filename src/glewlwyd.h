@@ -154,6 +154,9 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
 int user_session_delete(struct config_elements * config, const char * session_uid);
 char * get_session_id(struct config_elements * config, const struct _u_request * request);
 
+// Profile
+json_t * user_set_profile(struct config_elements * config, const char * username, json_t * j_profile);
+
 // User
 int user_has_scope(json_t * j_user, const char * scope);
 
@@ -252,9 +255,11 @@ int callback_glewlwyd_close_check_session (const struct _u_request * request, st
 
 int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_auth_trigger (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_user_get_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_schemes_from_scopes (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_delete_session (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_glewlwyd_user_get_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_update_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -263,8 +268,6 @@ int callback_glewlwyd_options (const struct _u_request * request, struct _u_resp
 int callback_glewlwyd_server_configuration (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_module_type_list (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_export_modules_config (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_import_modules_config (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_user_module_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_user_module (const struct _u_request * request, struct _u_response * response, void * user_data);
