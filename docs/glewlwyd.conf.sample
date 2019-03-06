@@ -84,6 +84,8 @@ log_file="/tmp/glewlwyd.log"
 use_scope=true
 
 # refresh token expiration in seconds, default is 2 weeks
+# Mea Culpa, there is a typo in the property name, it should be called 'refresh_token_expiration'
+# I formally apologize to the Oxford Dictionary Secret Society
 refresh_token_expiation=1209600
 
 # access token expiration in seconds, default is 1 hour
