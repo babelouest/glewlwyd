@@ -80,6 +80,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
             }
           } else {
             // Scope is not allowed for this user
+            y_log_message(Y_LOG_LEVEL_DEBUG, "Glewlwyd authorization_code - Scope list '%s' is not allowed for the user '%s'", u_map_get(request->map_url, "scope"), json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")));
             response->status = 302;
             redirect_url = msprintf("%s%serror=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (state!=NULL?"&state=":""), (state!=NULL?state:""));
             ulfius_add_header_to_response(response, "Location", redirect_url);
@@ -120,6 +121,7 @@ int check_auth_type_auth_code_grant (const struct _u_request * request, struct _
     json_decref(session_payload);
   } else {
     // client is not authorized with this redirect_uri
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Glewlwyd authorization_code - unauthorized client '%s'", u_map_get(request->map_url, "client_id"));
     response->status = 302;
     redirect_url = msprintf("%s%serror=unauthorized_client%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (state!=NULL?"&state=":""), (state!=NULL?state:""));
     ulfius_add_header_to_response(response, "Location", redirect_url);
@@ -214,6 +216,7 @@ int check_auth_type_access_token_request (const struct _u_request * request, str
     }
     json_decref(j_validate);
   } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Glewlwyd code - unauthorized client '%s'", u_map_get(request->map_post_body, "client_id"));
     json_body = json_pack("{ss}", "error", "unauthorized_client");
     ulfius_set_json_body_response(response, 403, json_body);
   }
@@ -277,6 +280,7 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
               }
             } else {
               // Scope is not allowed for this user
+              y_log_message(Y_LOG_LEVEL_DEBUG, "Glewlwyd token - Scope list '%s' is not allowed for the user '%s'", u_map_get(request->map_url, "scope"), json_string_value(json_object_get(json_object_get(session_payload, "grants"), "username")));
               response->status = 302;
               redirect_url = msprintf("%s%serror=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), (state!=NULL?"&state=":""), (state!=NULL?state:""));
               ulfius_add_header_to_response(response, "Location", redirect_url);
@@ -322,6 +326,7 @@ int check_auth_type_implicit_grant (const struct _u_request * request, struct _u
     json_decref(session_payload);
   } else {
     // client is not authorized with this redirect_uri
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Glewlwyd token - unauthorized client '%s'", u_map_get(request->map_url, "client_id"));
     response->status = 302;
     redirect_url = msprintf("%s%serror=unauthorized_client%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), (state!=NULL?"&state=":""), (state!=NULL?state:""));
     ulfius_add_header_to_response(response, "Location", redirect_url);
@@ -432,11 +437,11 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
         access_token = generate_client_access_token(config, request->auth_basic_user, ip_source, json_string_value(json_object_get(j_scope_list, "scope")), now);
         if (access_token != NULL) {
           json_body = json_pack("{sssssisO}",
-                                          "access_token", access_token,
-                                          "token_type", "bearer",
-                                          "expires_in", config->access_token_expiration,
-                                          "scope",
-                                          json_object_get(j_scope_list, "scope"));
+                                "access_token", access_token,
+                                "token_type", "bearer",
+                                "expires_in", config->access_token_expiration,
+                                "scope",
+                                json_object_get(j_scope_list, "scope"));
           o_free(access_token);
           ulfius_set_json_body_response(response, 200, json_body);
         } else {
@@ -453,9 +458,9 @@ int check_auth_type_client_credentials_grant (const struct _u_request * request,
       access_token = generate_client_access_token(config, request->auth_basic_user, ip_source, NULL, now);
       if (access_token != NULL) {
         json_body = json_pack("{sssssi}",
-                                        "access_token", access_token,
-                                        "token_type", "bearer",
-                                        "expires_in", config->access_token_expiration);
+                              "access_token", access_token,
+                              "token_type", "bearer",
+                              "expires_in", config->access_token_expiration);
         ulfius_set_json_body_response(response, 200, json_body);
         o_free(access_token);
       } else {

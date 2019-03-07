@@ -48,6 +48,7 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
       // If client is confidential and auth type can require credentials, check its credentials
       if (json_object_get(json_object_get(j_client, "client"), "confidential") != json_true() && auth_type == GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS) {
         // A client can not request authorization type client_credentials if it's not confidential
+        y_log_message(Y_LOG_LEVEL_DEBUG, "Glewlwyd client_check - A client can not request authorization type client_credentials if it's not confidential");
         j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       } else if (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true() &&
           (auth_type == GLEWLWYD_AUHORIZATION_TYPE_AUTHORIZATION_CODE_ACCESS_TOKEN ||
@@ -55,10 +56,12 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
           auth_type == GLEWLWYD_AUHORIZATION_TYPE_CLIENT_CREDENTIALS ||
           auth_type == GLEWLWYD_AUHORIZATION_TYPE_REFRESH_TOKEN)) {
         if (o_strcmp(client_id, client_id_header) != 0) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "Glewlwyd client_check - client_id parameter is different from client_id in basic auth header");
           j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         } else {
           j_auth = auth_check_client_credentials(config, client_id_header, client_password_header);
           if (!check_result_value(j_auth, G_OK)) {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "Glewlwyd client_check - invalid password for client '%s'", client_id_header);
             j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
           }
           json_decref(j_auth);
@@ -110,6 +113,12 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
           }
         }
         
+        if (!redirect_uri_allowed) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "Glewlwyd client_check - redirect_uri '%s' is not allowed for the client '%s'", redirect_uri, json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id")));
+        }
+        if (!auth_type_allowed) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "Glewlwyd client_check - authentication type '%s' is not allowed for the client '%s'", auth_type_str, json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id")));
+        }
         // Final check, is everything ok?
         if (!redirect_uri_allowed || !auth_type_allowed) {
           j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
@@ -118,10 +127,12 @@ json_t * client_check(struct config_elements * config, const char * client_id, c
         }
       }
     } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "Glewlwyd client_check - client_id '%s' does not exist", client_id);
       j_res = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
     json_decref(j_client);
   } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Glewlwyd client_check - client_id is NULL");
     j_res = json_pack("{si}", "result", G_ERROR_PARAM);
   }
   
