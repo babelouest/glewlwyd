@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 1.4.10
+
+- Fix bug on state value sent back not url re-encoded
+
 ## 1.4.9
 
 - Small bugfixes
