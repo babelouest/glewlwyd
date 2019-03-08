@@ -1,0 +1,20 @@
+{
+	"taliesinApiUrl": "http://localhost:8576/api",
+	"angharadApiUrl": "http://localhost:2473/api",
+	"benoicPrefix": "benoic",
+	"carleonPrefix": "carleon",
+	"storageType": "local", 
+	"useWebsocket": true,
+	"oauth2Config": {
+		"enabled": true,
+		"storageType": "local", 
+		"responseType": "code", 
+		"serverUrl": "http://localhost:4593/api", 
+		"authUrl": "auth", 
+		"tokenUrl": "token", 
+		"clientId": "taliesin", 
+		"redirectUri": "http://localhost:8576/", 
+		"scope": "taliesin taliesin_admin angharad g_profile",
+		"profileUrl": "profile"
+	}
+}
