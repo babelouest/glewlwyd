@@ -8,3 +8,4 @@
 *.so
 valgrind.txt
 glewlwyd
+webapp/test-*.html
