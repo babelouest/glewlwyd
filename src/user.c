@@ -250,7 +250,7 @@ json_t * get_user_list(struct config_elements * config, const char * pattern, si
           user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
           if (user_module != NULL && user_module->enabled) {
             result = G_ERROR;
-            if ((count_total = user_module->module->user_module_count_total(pattern, user_module->cls)) > cur_offset) {
+            if ((count_total = user_module->module->user_module_count_total(pattern, user_module->cls)) > cur_offset && cur_limit) {
               list_result = user_module->module->user_module_get_list(pattern, cur_offset, cur_limit, &result, user_module->cls);
               if (result == G_OK) {
                 j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
