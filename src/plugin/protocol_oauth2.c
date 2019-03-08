@@ -126,7 +126,7 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
   char * issued_at_clause, ** scope_array = NULL;
   
   if (pthread_mutex_lock(&config->insert_lock)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error pthread_mutex_lock");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_access_token - Error pthread_mutex_lock");
   } else {
     if (issued_for != NULL && now > 0) {
       issued_at_clause = config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
@@ -169,25 +169,25 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
               if (res == H_OK) {
                 ret = G_OK;
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error executing j_query (2)");
+                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_access_token - Error executing j_query (2)");
                 ret = G_ERROR_DB;
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error json_pack");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_access_token - Error json_pack");
               ret = G_ERROR;
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error split_string");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_access_token - Error split_string");
             ret = G_ERROR;
           }
           free_string_array(scope_array);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error h_last_insert_id");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_access_token - Error h_last_insert_id");
           ret = G_ERROR_DB;
         }
         json_decref(j_last_id);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - Error executing j_query (1)");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_access_token - Error executing j_query (1)");
         ret = G_ERROR_DB;
       }
     } else {
@@ -218,10 +218,10 @@ static char * generate_client_access_token(struct _oauth2_config * config, const
     jwt_add_grant_int(jwt, "expires_in", config->access_token_duration);
     token = jwt_encode_str(jwt);
     if (token == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - Error generating token");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_client_access_token - Error generating token");
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - Error cloning jwt");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_client_access_token - Error cloning jwt");
   }
   jwt_free(jwt);
   return token;
@@ -244,10 +244,10 @@ static char * generate_access_token(struct _oauth2_config * config, const char *
     }
     token = jwt_encode_str(jwt);
     if (token == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - oauth2 - Error jwt_encode_str");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_access_token - oauth2 - Error jwt_encode_str");
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - oauth2 - Error jwt_dup");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_access_token - oauth2 - Error jwt_dup");
   }
   jwt_free(jwt);
   return token;
@@ -260,7 +260,7 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
   char * issued_at_clause, * expires_at_clause, ** scope_array = NULL;
   
   if (pthread_mutex_lock(&config->insert_lock)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error pthread_mutex_lock");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_refresh_token - Error pthread_mutex_lock");
   } else {
     if (token_hash != NULL && username != NULL && issued_for != NULL && now > 0 && duration > 0) {
       json_error_t error;
@@ -315,25 +315,25 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
               if (res == H_OK) {
                 j_return = json_pack("{sisO}", "result", G_OK, "gpgr_id", j_last_id);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error executing j_query (2)");
+                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_refresh_token - Error executing j_query (2)");
                 j_return = json_pack("{si}", "result", G_ERROR_DB);
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error json_pack");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_refresh_token - Error json_pack");
               j_return = json_pack("{si}", "result", G_ERROR);
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error split_string");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_refresh_token - Error split_string");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
           free_string_array(scope_array);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error h_last_insert_id");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_refresh_token - Error h_last_insert_id");
           j_return = json_pack("{si}", "result", G_ERROR_DB);
         }
         json_decref(j_last_id);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - Error executing j_query (1)");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_refresh_token - Error executing j_query (1)");
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else {
@@ -365,10 +365,10 @@ static char * generate_refresh_token(struct _oauth2_config * config, const char 
     }
     token = jwt_encode_str(jwt);
     if (token == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "generate_refresh_token - generating token");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_refresh_token - generating token");
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "generate_refresh_token - Error cloning jwt");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_refresh_token - Error cloning jwt");
   }
   jwt_free(jwt);
   return token;
@@ -384,13 +384,16 @@ static json_t * check_client_valid(struct _oauth2_config * config, const char * 
   size_t index;
   
   if (client_id == NULL) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error client_id is NULL");
     return json_pack("{si}", "result", G_ERROR_PARAM);
   } else if (client_header_login != NULL && 0 != o_strcmp(client_header_login, client_id)) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, client_id specified is different from client_id in the basic auth header");
     return json_pack("{si}", "result", G_ERROR_PARAM);
   }
   j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, client_id, client_header_password, scope_list);
   if (check_result_value(j_client, G_OK)) {
     if (client_header_password != NULL && json_object_get(json_object_get(j_client, "client"), "confidential") != json_true()) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, confidential client must be authentified with its password");
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     } else {
       if (redirect_uri != NULL) {
@@ -421,6 +424,12 @@ static json_t * check_client_valid(struct _oauth2_config * config, const char * 
           uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
         }
       }
+      if (!uri_found) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, callback_uri '%s' is invalid for the client '%s'", redirect_uri, client_id);
+      }
+      if (!authorization_type_enabled) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, authorization type is not enabled for the client '%s'", client_id);
+      }
       if (uri_found && authorization_type_enabled) {
         j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
       } else {
@@ -428,6 +437,7 @@ static json_t * check_client_valid(struct _oauth2_config * config, const char * 
       }
     }
   } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, client '%s' is invalid", client_id);
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   json_decref(j_client);
@@ -441,7 +451,7 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
   time_t now;
 
   if (pthread_mutex_lock(&config->insert_lock)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error pthread_mutex_lock");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_authorization_code - Error pthread_mutex_lock");
   } else {
     code = o_malloc(33*sizeof(char));
     if (code != NULL) {
@@ -473,7 +483,7 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
           res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
           json_decref(j_query);
           if (res != H_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error executing j_query (1)");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_authorization_code - Error executing j_query (1)");
             o_free(code);
             code = NULL;
           } else {
@@ -491,37 +501,37 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
                   res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
                   json_decref(j_query);
                   if (res != H_OK) {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error executing j_query (2)");
+                    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_authorization_code - Error executing j_query (2)");
                     o_free(code);
                     code = NULL;
                   }
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error split_string");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_authorization_code - Error split_string");
                   o_free(code);
                   code = NULL;
                 }
                 free_string_array(scope_array);
                 json_decref(j_code_id);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error h_last_insert_id");
+                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_authorization_code - Error h_last_insert_id");
                 o_free(code);
                 code = NULL;
               }
             }
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error glewlwyd_callback_generate_hash");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_authorization_code - Error glewlwyd_callback_generate_hash");
           o_free(code);
           code = NULL;
         }
         o_free(code_hash);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error rand_string");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_authorization_code - Error rand_string");
         o_free(code);
         code = NULL;
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - Error allocating resources for code");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_authorization_code - Error allocating resources for code");
     }
     pthread_mutex_unlock(&config->insert_lock);
   }
@@ -570,7 +580,7 @@ static int disable_authorization_code(struct _oauth2_config * config, json_int_t
   if (res == H_OK) {
     return G_OK;
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "disable_authorization_code - Error executing j_query");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 disable_authorization_code - Error executing j_query");
     return G_ERROR_DB;
   }
 }
@@ -648,11 +658,11 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
             j_return = json_pack("{sisO}", "result", G_OK, "code", json_array_get(j_result, 0));
             o_free(scope_list);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error allocating resources for json_array()");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error allocating resources for json_array()");
             j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error executing j_query (2)");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error executing j_query (2)");
           j_return = json_pack("{si}", "result", G_ERROR_DB);
         }
         json_decref(j_result_scope);
@@ -660,12 +670,12 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
         j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error executing j_query (1)");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error executing j_query (1)");
       j_return = json_pack("{si}", "result", G_ERROR_DB);
     }
     json_decref(j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - Error glewlwyd_callback_generate_hash");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error glewlwyd_callback_generate_hash");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
   o_free(code_hash);
@@ -757,7 +767,7 @@ static json_t * validate_session_client_scope(struct _oauth2_config * config, co
         j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "validate_session_client_scope - Error glewlwyd_callback_get_client_granted_scopes");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_session_client_scope - Error glewlwyd_callback_get_client_granted_scopes");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     json_decref(j_grant);
@@ -766,7 +776,7 @@ static json_t * validate_session_client_scope(struct _oauth2_config * config, co
   } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "validate_session_client_scope - Error glewlwyd_callback_check_session_valid");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_session_client_scope - Error glewlwyd_callback_check_session_valid");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
   json_decref(j_session);
@@ -831,12 +841,12 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
               }
               j_return = json_pack("{sisO}", "result", G_OK, "token", json_array_get(j_result, 0));
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "validate_refresh_token - Error json_object_set_new");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_refresh_token - Error json_object_set_new");
               j_return = json_pack("{si}", "result", G_ERROR);
             }
             json_decref(j_result_scope);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "validate_refresh_token - Error executing j_query (2)");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_refresh_token - Error executing j_query (2)");
             j_return = json_pack("{si}", "result", G_ERROR_DB);
           }
           json_decref(j_query);
@@ -845,11 +855,11 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
         }
         json_decref(j_result);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "validate_refresh_token - Error executing j_query (1)");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_refresh_token - Error executing j_query (1)");
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "validate_refresh_token - Error glewlwyd_callback_generate_hash");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_refresh_token - Error glewlwyd_callback_generate_hash");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     o_free(token_hash);
@@ -889,7 +899,7 @@ static int update_refresh_token(struct _oauth2_config * config, json_int_t gpgr_
   if (res == H_OK) {
     ret = G_OK;
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "update_refresh_token - Error executing j_query");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 update_refresh_token - Error executing j_query");
     ret = G_ERROR_DB;
   }
   return ret;
@@ -902,9 +912,16 @@ static int update_refresh_token(struct _oauth2_config * config, json_int_t gpgr_
  */
 static int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
-  char * authorization_code = NULL, * redirect_url, * issued_for;
+  char * authorization_code = NULL, * redirect_url, * issued_for, * state_param = NULL, * state_encoded;
   json_t * j_session, * j_client = check_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), u_map_get(request->map_url, "scope"), GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE);
   
+  if (u_map_get(request->map_url, "state") != NULL) {
+    state_encoded = url_encode(u_map_get(request->map_url, "state"));
+    state_param = msprintf("&state=%s", state_encoded);
+    o_free(state_encoded);
+  } else {
+    state_param = o_strdup("");
+  }
   // Check if client is allowed to perform this request
   if (check_result_value(j_client, G_OK)) {
     // Client is allowed to use auth_code grant with this redirection_uri
@@ -919,7 +936,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
             if (issued_for != NULL) {
               if (config->glewlwyd_config->glewlwyd_callback_trigger_session_used(config->glewlwyd_config, request, json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered"))) == G_OK) {
                 authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), u_map_get(request->map_url, "redirect_uri"), issued_for, u_map_get_case(request->map_header, "user-agent"));
-                redirect_url = msprintf("%s%scode=%s%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), authorization_code, (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+                redirect_url = msprintf("%s%scode=%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), authorization_code, state_param);
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 response->status = 302;
                 o_free(redirect_url);
@@ -929,14 +946,14 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
                 redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
-                y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_auth_code_grant - Error glewlwyd_callback_trigger_session_used");
+                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_auth_code_grant - Error glewlwyd_callback_trigger_session_used");
                 response->status = 302;
               }
             } else {
               redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
               ulfius_add_header_to_response(response, "Location", redirect_url);
               o_free(redirect_url);
-              y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_auth_code_grant - Error get_client_hostname");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_auth_code_grant - Error get_client_hostname");
               response->status = 302;
             }
           } else {
@@ -955,21 +972,23 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
         } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
           // Scope is not allowed for this user
           response->status = 302;
-          redirect_url = msprintf("%s%serror=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_auth_code_grant - scope list '%s' is invalid for user '%s'", u_map_get(request->map_url, "scope"), json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
+          redirect_url = msprintf("%s%serror=invalid_scope%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         } else {
           redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_auth_code_grant - Error validate_session_client_scope");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_auth_code_grant - Error validate_session_client_scope");
           response->status = 302;
         }
         json_decref(j_session);
       } else {
         // Scope is not allowed for this user
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_auth_code_grant - scope list is missing or empty");
         response->status = 302;
-        redirect_url = msprintf("%s%serror=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+        redirect_url = msprintf("%s%serror=invalid_scope%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       }
@@ -981,12 +1000,13 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
       response->status = 302;
     }
   } else {
-    // client is not authorized with this redirect_uri
+    // client is not authorized
     response->status = 302;
     redirect_url = msprintf("%s%serror=unauthorized_client%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
     ulfius_add_header_to_response(response, "Location", redirect_url);
     o_free(redirect_url);
   }
+  o_free(state_param);
   json_decref(j_client);
   return U_CALLBACK_CONTINUE;
 }
@@ -1033,26 +1053,26 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                 ulfius_set_json_body_response(response, 200, j_body);
                 json_decref(j_body);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - Error disable_authorization_code");
+                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error disable_authorization_code");
                 j_body = json_pack("{ss}", "error", "server_error");
                 ulfius_set_json_body_response(response, 500, j_body);
                 json_decref(j_body);
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - Error serialize_access_token");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error serialize_access_token");
               j_body = json_pack("{ss}", "error", "server_error");
               ulfius_set_json_body_response(response, 500, j_body);
               json_decref(j_body);
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - Error generate_access_token");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error generate_access_token");
             j_body = json_pack("{ss}", "error", "server_error");
             ulfius_set_json_body_response(response, 500, j_body);
             json_decref(j_body);
           }
           o_free(access_token);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - Error serialize_refresh_token");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error serialize_refresh_token");
           j_body = json_pack("{ss}", "error", "server_error");
           ulfius_set_json_body_response(response, 500, j_body);
           json_decref(j_body);
@@ -1060,7 +1080,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
         json_decref(j_refresh_token);
         o_free(refresh_token);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - Error generate_refresh_token");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error generate_refresh_token");
         j_body = json_pack("{ss}", "error", "server_error");
         ulfius_set_json_body_response(response, 500, j_body);
         json_decref(j_body);
@@ -1088,16 +1108,23 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
  */
 static int check_auth_type_implicit_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
-  char * redirect_url, * issued_for;
+  char * redirect_url, * issued_for, * state_encoded = NULL, * state_param = NULL;
   json_t * j_session, * j_client = check_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), u_map_get(request->map_url, "scope"), GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE);
   char * access_token;
   time_t now;
   
+  if (u_map_get(request->map_url, "state") != NULL) {
+    state_encoded = url_encode(u_map_get(request->map_url, "state"));
+    state_param = msprintf("&state=%s", state_encoded);
+    o_free(state_encoded);
+  } else {
+    state_param = o_strdup("");
+  }
   // Check if client is allowed to perform this request
   if (check_result_value(j_client, G_OK)) {
     // Client is allowed to use auth_code grant with this redirection_uri
     if (u_map_has_key(request->map_url, "g_continue")) {
-      if (u_map_get(request->map_url, "scope") != NULL && o_strlen(u_map_get(request->map_url, "scope"))) {
+      if (o_strlen(u_map_get(request->map_url, "scope"))) {
         j_session = validate_session_client_scope(config, request, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
         if (check_result_value(j_session, G_OK)) {
           if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_false()) {
@@ -1109,7 +1136,7 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
               if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), now)) != NULL) {
                 if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT, 0, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
                   if (config->glewlwyd_config->glewlwyd_callback_trigger_session_used(config->glewlwyd_config, request, json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered"))) == G_OK) {
-                    redirect_url = msprintf("%s%saccess_token=%s&token_type=bearer&expires_in=%d&scope=%s%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), access_token, config->access_token_duration, json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+                    redirect_url = msprintf("%s%saccess_token=%s&token_type=bearer&expires_in=%d&scope=%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '#')!=NULL?"&":"#"), access_token, config->access_token_duration, json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), state_param);
                     ulfius_add_header_to_response(response, "Location", redirect_url);
                     o_free(redirect_url);
                     response->status = 302;
@@ -1117,21 +1144,21 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
                     redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
                     ulfius_add_header_to_response(response, "Location", redirect_url);
                     o_free(redirect_url);
-                    y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_implicit_grant - Error glewlwyd_callback_trigger_session_used");
+                    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_implicit_grant - Error glewlwyd_callback_trigger_session_used");
                     response->status = 302;
                   }
                 } else {
                   redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
                   ulfius_add_header_to_response(response, "Location", redirect_url);
                   o_free(redirect_url);
-                  y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_implicit_grant - Error serialize_access_token");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_implicit_grant - Error serialize_access_token");
                   response->status = 302;
                 }
               } else {
                 redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
-                y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_implicit_grant - Error generate_access_token");
+                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_implicit_grant - Error generate_access_token");
                 response->status = 302;
               }
               o_free(access_token);
@@ -1139,7 +1166,7 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
               redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
               ulfius_add_header_to_response(response, "Location", redirect_url);
               o_free(redirect_url);
-              y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_implicit_grant - Error get_client_hostname");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_implicit_grant - Error get_client_hostname");
               response->status = 302;
             }
             o_free(issued_for);
@@ -1152,22 +1179,23 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
           }
         } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
           // Scope is not allowed for this user
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_implicit_grant - Scope list '%s' is not allowed for user '%s'", u_map_get(request->map_url, "scope"), json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
           response->status = 302;
-          redirect_url = msprintf("%s%serror=invalid_scope%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+          redirect_url = msprintf("%s%serror=invalid_scope%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         } else {
           redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_implicit_grant - Error validate_session_client_scope");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_implicit_grant - Error validate_session_client_scope");
           response->status = 302;
         }
         json_decref(j_session);
       } else {
-        // Scope is not allowed for this user
+        // Empty scope is not allowed
         response->status = 302;
-        redirect_url = msprintf("%s%serror=not_implemented%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+        redirect_url = msprintf("%s%serror=invalid_scope%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       }
@@ -1179,12 +1207,13 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
       response->status = 302;
     }
   } else {
-    // client is not authorized with this redirect_uri
+    // client is not authorized
     response->status = 302;
     redirect_url = msprintf("%s%serror=unauthorized_client%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
     ulfius_add_header_to_response(response, "Location", redirect_url);
     o_free(redirect_url);
   }
+  o_free(state_param);
   json_decref(j_client);
   return U_CALLBACK_CONTINUE;
 }
@@ -1218,7 +1247,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
     } else if (check_result_value(j_client, G_ERROR_NOT_FOUND) || check_result_value(j_client, G_ERROR_UNAUTHORIZED)) {
       ret = G_ERROR_PARAM;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - Error glewlwyd_callback_check_client_valid");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - Error glewlwyd_callback_check_client_valid");
       ret = G_ERROR;
     }
     json_decref(j_client);
@@ -1248,20 +1277,20 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
               ulfius_set_json_body_response(response, 200, j_body);
               json_decref(j_body);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - Error serialize_access_token");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - Error serialize_access_token");
               j_body = json_pack("{ss}", "error", "server_error");
               ulfius_set_json_body_response(response, 500, j_body);
               json_decref(j_body);
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - Error generate_access_token");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - Error generate_access_token");
             j_body = json_pack("{ss}", "error", "server_error");
             ulfius_set_json_body_response(response, 500, j_body);
             json_decref(j_body);
           }
           o_free(access_token);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - Error serialize_refresh_token");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - Error serialize_refresh_token");
           j_body = json_pack("{ss}", "error", "server_error");
           ulfius_set_json_body_response(response, 500, j_body);
           json_decref(j_body);
@@ -1269,15 +1298,16 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
         json_decref(j_refresh_token);
         o_free(refresh_token);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - Error generate_refresh_token");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - Error generate_refresh_token");
         j_body = json_pack("{ss}", "error", "server_error");
         ulfius_set_json_body_response(response, 500, j_body);
         json_decref(j_body);
       }
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND) || check_result_value(j_user, G_ERROR_UNAUTHORIZED)) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_resource_owner_pwd_cred - Error user '%s'", username);
       response->status = 403;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - glewlwyd_callback_check_user_valid");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - glewlwyd_callback_check_user_valid");
       response->status = 403;
     }
     json_decref(j_user);
@@ -1302,7 +1332,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
   time_t now;
 
   if (issued_for == NULL) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant  - Error get_client_hostname");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_client_credentials_grant  - Error get_client_hostname");
     response->status = 500;
   } else if (request->auth_basic_user != NULL && request->auth_basic_password != NULL && o_strlen(u_map_get(request->map_post_body, "scope")) > 0) {
     j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "scope"));
@@ -1339,11 +1369,11 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
               ulfius_set_json_body_response(response, 200, json_body);
               json_decref(json_body);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - Error serialize_access_token");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_client_credentials_grant - Error serialize_access_token");
               response->status = 500;
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - Error generate_client_access_token");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_client_credentials_grant - Error generate_client_access_token");
             response->status = 500;
           }
           o_free(access_token);
@@ -1351,15 +1381,17 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
           o_free(scope_allowed);
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - Error split_string");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_client_credentials_grant - Error split_string");
         response->status = 500;
       }
       free_string_array(scope_array);
     } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_client_credentials_grant - Error client_d '%s' invalid", request->auth_basic_user);
       response->status = 403;
     }
     json_decref(j_client);
   } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_client_credentials_grant - Error invalid input parameters. client_id: '%s', scope: '%s'", request->auth_basic_user, u_map_get(request->map_post_body, "scope"));
     response->status = 403;
   }
   o_free(issued_for);
@@ -1385,6 +1417,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
         if (!check_result_value(j_client, G_OK)) {
           has_issues = 1;
         } else if (request->auth_basic_user == NULL && request->auth_basic_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 get_access_token_from_refresh - client '%s' is invalid or is not confidential", request->auth_basic_user);
           has_issues = 1;
         }
         json_decref(j_client);
@@ -1393,11 +1426,11 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
       issued_for = get_client_hostname(request);
       scope_joined = join_json_string_array(json_object_get(json_object_get(j_refresh, "token"), "scope"), " ");
       if (scope_joined == NULL) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error join_json_string_array");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 get_access_token_from_refresh - Error join_json_string_array");
         has_error = 1;
       }
       if (update_refresh_token(config, json_integer_value(json_object_get(json_object_get(j_refresh, "token"), "gpgr_id")), (json_object_get(json_object_get(j_refresh, "token"), "rolling_expiration") == json_true())?json_integer_value(json_object_get(json_object_get(j_refresh, "token"), "duration")):0, 0, now) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error update_refresh_token");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 get_access_token_from_refresh - Error update_refresh_token");
         has_error = 1;
       }
       if (!has_error && !has_issues) {
@@ -1411,11 +1444,11 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
             ulfius_set_json_body_response(response, 200, json_body);
             json_decref(json_body);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error serialize_access_token");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 get_access_token_from_refresh - Error serialize_access_token");
             response->status = 500;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error generate_client_access_token");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 get_access_token_from_refresh - Error generate_client_access_token");
           response->status = 500;
         }
         o_free(access_token);
@@ -1426,14 +1459,16 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
       }
       o_free(issued_for);
     } else if (check_result_value(j_refresh, G_ERROR_NOT_FOUND)) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 get_access_token_from_refresh - Error token not found");
       response->status = 400;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - Error validate_refresh_token");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 get_access_token_from_refresh - Error validate_refresh_token");
       response->status = 500;
     }
     json_decref(j_refresh);
     o_free(scope_joined);
   } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 get_access_token_from_refresh - Error token empty or missing");
     response->status = 400;
   }
   return U_CALLBACK_CONTINUE;
@@ -1456,8 +1491,10 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
         j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, NULL, NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN);
         if (!check_result_value(j_client, G_OK)) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 delete_refresh_token - client '%s' is invalid", request->auth_basic_user);
           has_issues = 1;
         } else if (request->auth_basic_user == NULL && request->auth_basic_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 delete_refresh_token - client '%s' is invalid or is not confidential", request->auth_basic_user);
           has_issues = 1;
         }
         json_decref(j_client);
@@ -1466,7 +1503,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
         time(&now);
         issued_for = get_client_hostname(request);
         if (update_refresh_token(config, json_integer_value(json_object_get(json_object_get(j_refresh, "token"), "gpgr_id")), 0, 1, now) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "delete_refresh_token - Error update_refresh_token");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 delete_refresh_token - Error update_refresh_token");
           response->status = 500;
         }
         o_free(issued_for);
@@ -1474,13 +1511,15 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
         response->status = 400;
       }
     } else if (check_result_value(j_refresh, G_ERROR_NOT_FOUND)) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 delete_refresh_token - token invalid");
       response->status = 400;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "delete_refresh_token - Error validate_refresh_token");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 delete_refresh_token - Error validate_refresh_token");
       response->status = 500;
     }
     json_decref(j_refresh);
   } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 delete_refresh_token - token missing or empty");
     response->status = 400;
   }
   return U_CALLBACK_CONTINUE;
@@ -1489,15 +1528,22 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
 static int callback_oauth2_authorization(const struct _u_request * request, struct _u_response * response, void * user_data) {
   const char * response_type = u_map_get(request->map_url, "response_type");
   int result = U_CALLBACK_CONTINUE;
-  char * redirect_url;
+  char * redirect_url, * state_encoded = NULL, * state_param = NULL;
 
+  if (u_map_get(request->map_url, "state") != NULL) {
+    state_encoded = url_encode(u_map_get(request->map_url, "state"));
+    state_param = msprintf("&state=%s", state_encoded);
+    o_free(state_encoded);
+  } else {
+    state_param = o_strdup("");
+  }
   if (0 == o_strcmp("code", response_type)) {
     if (is_authorization_type_enabled((struct _oauth2_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE) && u_map_get(request->map_url, "redirect_uri") != NULL) {
       result = check_auth_type_auth_code_grant(request, response, user_data);
     } else {
       if (u_map_get(request->map_url, "redirect_uri") != NULL) {
         response->status = 302;
-        redirect_url = msprintf("%s#error=unsupported_response_type%s%s", u_map_get(request->map_url, "redirect_uri"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+        redirect_url = msprintf("%s#error=unsupported_response_type%s", u_map_get(request->map_url, "redirect_uri"), state_param);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       } else {
@@ -1510,7 +1556,7 @@ static int callback_oauth2_authorization(const struct _u_request * request, stru
     } else {
       if (u_map_get(request->map_url, "redirect_uri") != NULL) {
         response->status = 302;
-        redirect_url = msprintf("%s#error=unsupported_response_type%s%s", u_map_get(request->map_url, "redirect_uri"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+        redirect_url = msprintf("%s#error=unsupported_response_type%s", u_map_get(request->map_url, "redirect_uri"), state_param);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       } else {
@@ -1520,13 +1566,14 @@ static int callback_oauth2_authorization(const struct _u_request * request, stru
   } else {
     if (u_map_get(request->map_url, "redirect_uri") != NULL) {
       response->status = 302;
-      redirect_url = msprintf("%s#error=unsupported_response_type%s%s", u_map_get(request->map_url, "redirect_uri"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
+      redirect_url = msprintf("%s#error=unsupported_response_type%s", u_map_get(request->map_url, "redirect_uri"), state_param);
       ulfius_add_header_to_response(response, "Location", redirect_url);
       o_free(redirect_url);
     } else {
       response->status = 403;
     }
   }
+  o_free(state_param);
 
   return result;
 }
@@ -1575,10 +1622,10 @@ static int jwt_autocheck(struct _oauth2_config * config) {
   if (token != NULL) {
     if (o_strcmp("sha", json_string_value(json_object_get(config->j_params, "jwt-type"))) == 0) {
       if (jwt_decode(&jwt, token, (const unsigned char *)json_string_value(json_object_get(config->j_params, "key")), json_string_length(json_object_get(config->j_params, "key")))) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "jwt_autocheck - oauth2 - Error jwt_decode");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 jwt_autocheck - oauth2 - Error jwt_decode");
         ret = G_ERROR;
       } else if (jwt_get_alg(jwt) != jwt_get_alg(config->jwt_key)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "jwt_autocheck - oauth2 - Error algorithm don't match");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 jwt_autocheck - oauth2 - Error algorithm don't match");
         ret = G_ERROR;
       } else {
         ret = G_OK;
@@ -1586,10 +1633,10 @@ static int jwt_autocheck(struct _oauth2_config * config) {
       jwt_free(jwt);
     } else {
       if (jwt_decode(&jwt, token, (const unsigned char *)json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "jwt_autocheck - oauth2 - Error jwt_decode");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 jwt_autocheck - oauth2 - Error jwt_decode");
         ret = G_ERROR;
       } else if (jwt_get_alg(jwt) != jwt_get_alg(config->jwt_key)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "jwt_autocheck - oauth2 - Error algorithm don't match");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 jwt_autocheck - oauth2 - Error algorithm don't match");
         ret = G_ERROR;
       } else {
         ret = G_OK;
@@ -1597,7 +1644,7 @@ static int jwt_autocheck(struct _oauth2_config * config) {
       jwt_free(jwt);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "jwt_autocheck - oauth2 - Error generate_access_token");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 jwt_autocheck - oauth2 - Error generate_access_token");
     ret = G_ERROR;
   }
   free(token);
@@ -1717,7 +1764,7 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
     pthread_mutexattr_init ( &mutexattr );
     pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
     if (pthread_mutex_init(&((struct _oauth2_config *)*cls)->insert_lock, &mutexattr) != 0 || pthread_mutex_init(&((struct _oauth2_config *)*cls)->insert_lock, &mutexattr) != 0) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init - Error initializing insert_lock or insert_cond");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 plugin_module_init - Error initializing insert_lock or insert_cond");
       o_free(*cls);
       *cls = NULL;
       ret = G_ERROR;
@@ -1778,7 +1825,7 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
             jwt_free(((struct _oauth2_config *)*cls)->jwt_key);
             o_free(*cls);
             *cls = NULL;
-            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error allocating resources for jwt_key");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for jwt_key");
             ret = G_ERROR_MEMORY;
           } else {
             if (jwt_autocheck(((struct _oauth2_config *)*cls)) != G_OK) {
@@ -1786,14 +1833,14 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
               jwt_free(((struct _oauth2_config *)*cls)->jwt_key);
               o_free(*cls);
               *cls = NULL;
-              y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error jwt_autocheck");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error jwt_autocheck");
               ret = G_ERROR_MEMORY;
             } else {
               // Add endpoints
               y_log_message(Y_LOG_LEVEL_DEBUG, "Add endpoints with plugin prefix %s", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")));
               if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)*cls) != G_OK || 
                  config->glewlwyd_callback_add_plugin_endpoint(config, "POST", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_token, (void*)*cls)) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error adding endpoints");
+                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error adding endpoints");
                 ret = G_ERROR;
               } else {
                 ret = G_OK;
@@ -1801,14 +1848,14 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
             }
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error allocating resources for jwt_key");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for jwt_key");
           json_decref(((struct _oauth2_config *)*cls)->j_params);
           o_free(*cls);
           *cls = NULL;
           ret = G_ERROR_MEMORY;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error parameters");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error parameters");
         o_free(*cls);
         *cls = NULL;
         ret = G_ERROR_MEMORY;
@@ -1816,7 +1863,7 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
     }
     pthread_mutexattr_destroy(&mutexattr);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oauth2 - Error allocating resources for cls");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for cls");
     o_free(*cls);
     *cls = NULL;
     ret = G_ERROR_MEMORY;
