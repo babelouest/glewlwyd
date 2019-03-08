@@ -177,7 +177,7 @@ json_t * get_client_list(struct config_elements * config, const char * pattern, 
           client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
           if (client_module != NULL && client_module->enabled) {
             result = G_ERROR;
-            if ((count_total = client_module->module->client_module_count_total(pattern, client_module->cls)) > cur_offset) {
+            if ((count_total = client_module->module->client_module_count_total(pattern, client_module->cls)) > cur_offset && cur_limit) {
               list_result = client_module->module->client_module_get_list(pattern, cur_offset, cur_limit, &result, client_module->cls);
               if (result == G_OK) {
                 j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
