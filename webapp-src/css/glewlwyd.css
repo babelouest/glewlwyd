@@ -1,0 +1,118 @@
+@media (max-width: 767px) {
+   .gwd-menu-title {
+      display: none;
+   }
+}
+
+.gwd-menu-title {
+  margin-left: 5px;
+}
+
+.top-buffer {
+  margin-top:5px;
+}
+
+.tag {
+  margin-right:5px;
+}
+
+.redirect-uri {
+  margin-bottom:5px;
+}
+
+.gl-table-title {
+	display: none;
+}
+
+.well .table-hover>tbody>tr:hover>td, 
+.well .table-hover>tbody>tr:hover>th {
+    background-color: #fff;
+}
+
+.table tbody tr > td.warning {
+  background-color: #fcf8e3 !important;
+}
+
+.hide-overflow
+{
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    width:100%;
+    display:block;
+}
+
+.paddingRight {
+  padding-right: 5px;
+}
+
+.paddingLeft {
+  padding-left: 5px;
+}
+
+/* 
+Max width before this PARTICULAR table gets nasty
+This query will take effect for any screen smaller than 760px
+and also iPads specifically.
+*/
+@media 
+only screen and (max-width: 767px),
+(min-device-width: 768px) and (max-device-width: 1024px)  {
+
+	/* Force table to not be like tables anymore */
+	table, thead, tbody, th, td, tr { 
+		display: block; 
+	}
+
+	/* Hide table headers (but not display: none;, for accessibility) */
+	thead tr { 
+		position: absolute;
+		top: -9999px;
+		left: -9999px;
+	}
+
+	tr { border: 1px solid #ccc; }
+
+	td { 
+		/* Behave  like a "row" */
+		border: none;
+		border-bottom: 1px solid #eee; 
+		position: relative;
+		padding-left: 50%; 
+	}
+
+	td:before { 
+		/* Now like a table header */
+		position: absolute;
+		/* Top/left values mimic padding */
+		top: 6px;
+		left: 6px;
+		width: 45%; 
+		padding-right: 10px; 
+		white-space: nowrap;
+	}
+	
+	.gl-table-title {
+		display:inline;
+		font-weight: bold;
+	}
+	
+}
+
+/* Smartphones (portrait and landscape) ----------- */
+@media only screen
+and (min-device-width : 320px)
+and (max-device-width : 480px) {
+	body { 
+		padding: 0; 
+		margin: 0; 
+		width: 320px; 
+		}
+	}
+
+/* iPads (portrait and landscape) ----------- */
+@media only screen and (min-device-width: 768px) and (max-device-width: 1024px) {
+	body { 
+		width: 495px; 
+	}
+}
