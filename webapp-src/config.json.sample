@@ -1,20 +1,6 @@
 {
-	"taliesinApiUrl": "http://localhost:8576/api",
-	"angharadApiUrl": "http://localhost:2473/api",
-	"benoicPrefix": "benoic",
-	"carleonPrefix": "carleon",
-	"storageType": "local", 
-	"useWebsocket": true,
-	"oauth2Config": {
-		"enabled": true,
-		"storageType": "local", 
-		"responseType": "code", 
-		"serverUrl": "http://localhost:4593/api", 
-		"authUrl": "auth", 
-		"tokenUrl": "token", 
-		"clientId": "taliesin", 
-		"redirectUri": "http://localhost:8576/", 
-		"scope": "taliesin taliesin_admin angharad g_profile",
-		"profileUrl": "profile"
-	}
+	"GlewlwydApiUrl": "http://localhost:4593/api",
+  "ProfileUrl": "http://localhost:4593/profile.html",
+  "AdminUrl": "http://localhost:4593/index.html",
+  "LoginUrl": "http://localhost:4593/login.html"
 }
