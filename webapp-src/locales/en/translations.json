@@ -1,0 +1,31 @@
+{
+  "glewlwyd-sso-title": "Glewlwyd Single Sign-On service",
+  "select-lang": "Language",
+  "login": {
+    "hello": "Hello {{name}}!",
+    "enter-login-password": "Please enter your login and password",
+    "login": "Login",
+    "login-placeholder": "Your username",
+    "password": "Password",
+    "password-placeholder": "Your password",
+    "btn-ok": "OK",
+    "sign-in-title": "Click here to validate your login and password",
+    "error-login": "Authentication error",
+    "continue": "Continue",
+    "continue-title": "Continue to client application",
+    "login-another": "Change user",
+    "login-another-new": "New user",
+    "update-profile": "Profile page",
+    "logout": "Logout",
+    "grant-title": "The client {{client}} requires acces to the following scopes",
+    "grant": "Grant access",
+    "grant-change-title": "Change grant scope for client",
+    "grant-change": "Grant",
+    "scheme-list-show": "Show authentication factors",
+    "enter-mock-scheme-value": "Enter mock scheme value",
+    "mock-value-label": "Mock value",
+    "mock-value-button-title": "This shouldn't be so hard",
+    "wish-message": "What do you wish for?",
+    "error-mock-value": "Error mock value"
+  }
+}
