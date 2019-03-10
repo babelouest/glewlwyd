@@ -1393,7 +1393,7 @@ int callback_glewlwyd_user_get_profile (const struct _u_request * request, struc
     if (check_result_value(j_session, G_OK)) {
       ulfius_set_json_body_response(response, 200, json_object_get(j_session, "session"));
     } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
-      response->status = 404;
+      response->status = 401;
       ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, "", NULL, -1, NULL, NULL, 0, 0);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_get_session - Error get_user_for_session");
@@ -1401,7 +1401,7 @@ int callback_glewlwyd_user_get_profile (const struct _u_request * request, struc
     }
     json_decref(j_session);
   } else {
-    response->status = 404;
+    response->status = 401;
     ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, "", NULL, -1, NULL, NULL, 0, 0);
   }
   o_free(session_uid);
