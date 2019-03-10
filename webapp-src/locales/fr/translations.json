@@ -1,0 +1,31 @@
+{
+  "glewlwyd-sso-title": "Service d'authentification unique Glewlwyd",
+  "select-lang": "Langage",
+  "login": {
+    "hello": "Bonjour {{name}}!",
+    "enter-login-password": "Veuillez entrer votre nom d'utilisateur et votre mot de passe",
+    "login": "Nom d'utilisateur",
+    "login-placeholder": "Votre nom d'utlisateur",
+    "password": "Mot de passe",
+    "password-placeholder": "Votre mot de passe",
+    "btn-ok": "Valider",
+    "sign-in-title": "Cliquer ici pour valider votre nom d'utilisateur et mot de passe",
+    "error-login": "Erreur lors de l'authentification",
+    "continue": "Continuer",
+    "continue-title": "Continuer vers l'application cliente",
+    "login-another": "Changer d'utilisateur",
+    "login-another-new": "Nouvel utilisateur",
+    "update-profile": "Page de profil",
+    "logout": "Se déconnecter",
+    "grant-title": "Le client {{client}} demande les droits d'accès suivants",
+    "grant": "Autoriser l'accès",
+    "grant-change-title": "Changer l'accès aux droits pour le client",
+    "grant-change": "Droit d'accès",
+    "scheme-list-show": "Montrer les facteurs d'authentification",
+    "enter-mock-scheme-value": "Entrer la valeur factice",
+    "mock-value-label": "Valeur factice",
+    "mock-value-button-title": "Ça ne devrait pas être si dur que ça...",
+    "wish-message": "Que souhaitez-vous faire?",
+    "error-mock-value": "Erreur de la valeur factice"
+  }
+}
