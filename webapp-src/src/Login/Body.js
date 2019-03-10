@@ -15,13 +15,10 @@ class Body extends Component {
       client: props.client,
       scope: props.scope,
       scheme: props.scheme,
-      showGrant: false
+      showGrant: props.showGrant
     };
     
     messageDispatcher.subscribe('Body', (message) => {
-      if (message === 'GrantScope') {
-        this.setState({showGrant: !this.state.showGrant});
-      }
     });
   }
   
@@ -32,17 +29,11 @@ class Body extends Component {
       client: nextProps.client,
       scope: nextProps.scope,
       scheme: nextProps.scheme,
-      showGrant: false
+      showGrant: nextProps.showGrant
     });
   }
 
 	render() {
-    var content = "";
-    if (this.state.showGrant) {
-      content = <GrantScope config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope}/>
-    } else {
-      content = <SchemeAuth config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser} client={this.state.client}/>
-    }
 		return (
       <div>
         <div className="row">
@@ -55,7 +46,16 @@ class Body extends Component {
             <hr/>
           </div>
         </div>
-        {content}
+        <div id="carouselBody" className="carousel slide" data-ride="carousel">
+          <div className="carousel-inner">
+            <div className={"carousel-item" + (this.state.showGrant?" active":"")}>
+              <GrantScope config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope}/>
+            </div>
+            <div className={"carousel-item" + (!this.state.showGrant?" active":"")}>
+              <SchemeAuth config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser} client={this.state.client}/>
+            </div>
+          </div>
+        </div>
       </div>
 		);
 	}

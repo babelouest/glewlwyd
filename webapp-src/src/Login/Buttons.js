@@ -10,7 +10,10 @@ class Buttons extends Component {
       config: props.config,
       userList: props.userList,
       currentUser: props.currentUser,
-      disableContinue: true
+      disableContinue: true,
+      showGrant: props.showGrant,
+      bGrantTitle: props.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
+      bGrant: props.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change")
     };
 
     this.clickProfile = this.clickProfile.bind(this);
@@ -27,7 +30,14 @@ class Buttons extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setState({userList: nextProps.userList, currentUser: nextProps.currentUser, config: nextProps.config});
+    this.setState({
+      userList: nextProps.userList,
+      currentUser: nextProps.currentUser,
+      config: nextProps.config,
+      showGrant: nextProps.showGrant,
+      bGrantTitle: nextProps.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
+      bGrant: nextProps.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change")
+    });
   }
 
   clickProfile() {
@@ -38,11 +48,14 @@ class Buttons extends Component {
     apiManager.glewlwydRequest("/auth/", "DELETE")
     .then(() => {
       messageDispatcher.sendMessage('App', 'InitProfile');
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
     });
   }
   
   clickGrant() {
-    messageDispatcher.sendMessage('Body', 'GrantScope');
+    messageDispatcher.sendMessage('App', 'ToggleGrant');
   }
   
   clickContinue() {
@@ -59,18 +72,17 @@ class Buttons extends Component {
       apiManager.glewlwydRequest("/auth/", "POST", {username: user})
       .then(() => {
         messageDispatcher.sendMessage('App', 'InitProfile');
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
       });
     }
   }
 
 	render() {
-    var bContinue = "";
     var bAnother = "";
-    var bGrant = "";
-    if (this.state.config.params.callback_url) {
-      bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")} disabled={this.state.disableContinue}>{i18next.t("login.continue")}</button>;
-      bGrant = <button type="button" className="btn btn-primary" onClick={this.clickGrant} title={i18next.t("login.grant-change-title")}>{i18next.t("login.grant-change")}</button>;
-    }
+    var bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")} disabled={this.state.disableContinue}>{i18next.t("login.continue")}</button>;
+    var bGrant = <button type="button" className="btn btn-primary" onClick={this.clickGrant} title={this.state.bGrantTitle}>{this.state.bGrant}</button>;
     if (this.state.currentUser) {
       var userList = [];
       this.state.userList.forEach((user, index) => {

@@ -14,10 +14,12 @@ class SchemeAuth extends Component {
       scheme: props.scheme,
       currentUser: props.currentUser,
       curSchemeForm: false,
-      canContinue: !props.scheme
+      canContinue: !props.scheme,
+      show: props.show
     };
     
     this.parseSchemes = this.parseSchemes.bind(this);
+    this.handleSelectScheme = this.handleSelectScheme.bind(this);
     
     this.parseSchemes();
   }
@@ -28,7 +30,8 @@ class SchemeAuth extends Component {
       client: nextProps.client,
       scheme: nextProps.scheme,
       currentUser: nextProps.currentUser,
-      canContinue: !nextProps.scheme
+      canContinue: !nextProps.scheme,
+      show: nextProps.show
     }, () => {
       this.parseSchemes();
     });
@@ -52,6 +55,9 @@ class SchemeAuth extends Component {
             } else if (!grpIsAuth && !schemeForm) {
               schemeForm = scheme;
             }
+            if (grpIsAuth && !!schemeForm) {
+              schemeForm = false;
+            }
           });
           curGroup.isAuth = grpIsAuth;
           if (!grpIsAuth) {
@@ -66,10 +72,12 @@ class SchemeAuth extends Component {
     if (canContinue) {
       messageDispatcher.sendMessage('Buttons', 'enableContinue');
     }
-    console.log("plop", {scheme: newScheme, canContinue: canContinue, curSchemeForm: schemeForm});
-    this.setState({scheme: newScheme, canContinue: canContinue, curSchemeForm: schemeForm}, () => {
-      console.log("scheme");
-    });
+    this.setState({scheme: newScheme, canContinue: canContinue, curSchemeForm: schemeForm});
+  }
+  
+  handleSelectScheme(e, scheme) {
+    e.preventDefault();
+    this.setState({curSchemeForm: scheme});
   }
 
   render() {
@@ -93,7 +101,7 @@ class SchemeAuth extends Component {
               if (scheme.scheme_authenticated) {
                 schemeList.push(<li className="list-group-item" key={"scheme-"+index}><span className="badge badge-success">{scheme.scheme_display_name}</span></li>);
               } else {
-                schemeList.push(<li className="list-group-item" key={"scheme-"+index}><span className="badge badge-secondary">{scheme.scheme_display_name}</span></li>);
+                schemeList.push(<li className="list-group-item" key={"scheme-"+index}><a className="badge badge-secondary" href="#" onClick={(e) => this.handleSelectScheme(e, scheme)}>{scheme.scheme_display_name}</a></li>);
               }
             });
             groupList.push(<li className="list-inline-item" key={"group-"+iGroup}>
@@ -117,7 +125,6 @@ class SchemeAuth extends Component {
       }
       var schemeForm = "";
       var separator = "";
-      console.log(this.state.curSchemeForm);
       if (this.state.curSchemeForm) {
         schemeForm = <SchemeAuthForm config={this.state.config} scheme={this.state.curSchemeForm} currentUser={this.state.currentUser}/>;
         separator = <div className="row">
