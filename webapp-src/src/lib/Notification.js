@@ -31,18 +31,14 @@ class Notification extends Component {
   }
   
   render() {
-    if (this.state.show) {
-      return (
-        <div class={"alert alert-dismissible fade show alert-" + this.state.type} role="alert">
-          {this.state.message}
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-      );
-    } else {
-      return ("");
-    }
+    return (
+      <div className={"alert alert-dismissible fade alert-" + this.state.type + (this.state.show?" show":"")} role="alert">
+        {this.state.message}
+        <button type="button" className="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    );
   }
 }
 

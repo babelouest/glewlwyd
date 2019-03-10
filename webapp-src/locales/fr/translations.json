@@ -1,6 +1,7 @@
 {
   "glewlwyd-sso-title": "Service d'authentification unique Glewlwyd",
   "select-lang": "Langage",
+  "error-api-connect": "Erreur de connexion à l'API Glewlwyd",
   "login": {
     "hello": "Bonjour {{name}}!",
     "enter-login-password": "Veuillez entrer votre nom d'utilisateur et votre mot de passe",
@@ -11,21 +12,30 @@
     "btn-ok": "Valider",
     "sign-in-title": "Cliquer ici pour valider votre nom d'utilisateur et mot de passe",
     "error-login": "Erreur lors de l'authentification",
+    "error-change-user-api": "Erreur lors du changement d'utilisateur",
+    "error-scheme-scope-api": "Erreur lors de la récupération des méthodes d'authentification pour les droits d'accès",
     "continue": "Continuer",
     "continue-title": "Continuer vers l'application cliente",
     "login-another": "Changer d'utilisateur",
     "login-another-new": "Nouvel utilisateur",
     "update-profile": "Page de profil",
     "logout": "Se déconnecter",
+    "error-delete-session": "Erreur lors de la déconnexion",
     "grant-title": "Le client {{client}} demande les droits d'accès suivants",
     "grant": "Autoriser l'accès",
     "grant-change-title": "Changer l'accès aux droits pour le client",
     "grant-change": "Droit d'accès",
+    "grant-auth-title": "Autoriser tous les accès pour le client",
+    "grant-auth": "Autoriser",
+    "error-set-grant": "Erreur lors de l'enregistrement des droits au client",
+    "error-grant-api": "Erreur lors de l'enregistrement de l'autorisation",
     "scheme-list-show": "Montrer les facteurs d'authentification",
     "enter-mock-scheme-value": "Entrer la valeur factice",
     "mock-value-label": "Valeur factice",
+    "error-mock-expected": "La réponse est {{value}}",
     "mock-value-button-title": "Ça ne devrait pas être si dur que ça...",
     "wish-message": "Que souhaitez-vous faire?",
-    "error-mock-value": "Erreur de la valeur factice"
+    "error-mock-value": "Erreur de la valeur factice",
+    "error-mock-trigger": "Erreur lors du déclenchement de la valeur factice"
   }
 }

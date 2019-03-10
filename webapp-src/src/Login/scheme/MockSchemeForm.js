@@ -48,6 +48,9 @@ class MockSchemeForm extends Component {
       apiManager.glewlwydRequest("/auth/scheme/trigger/", "POST", scheme)
       .then((res) => {
         this.setState({triggerResult: res.code});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-mock-trigger")});
       });
     }
   }
@@ -84,7 +87,7 @@ class MockSchemeForm extends Component {
         </div>
         <div className="form-group">
           <label htmlFor="mockValue">{i18next.t("login.mock-value-label")}</label>
-          <input type="text" className="form-control" name="mockValue" id="mockValue" autoFocus="" required="" placeholder={this.state.triggerResult||""} value={this.state.mockValue} onChange={this.handleChangeMockValue}/>
+          <input type="text" className="form-control" name="mockValue" id="mockValue" autoFocus="" required="" placeholder={i18next.t("login.error-mock-expected", {value: (this.state.triggerResult||"")})} value={this.state.mockValue} onChange={this.handleChangeMockValue}/>
         </div>
         <button type="submit" name="mockbut" id="mockbut" className="btn btn-primary" onClick={(e) => this.validateMockValue(e)} title={i18next.t("login.mock-value-button-title")}>{i18next.t("login.btn-ok")}</button>
       </form>

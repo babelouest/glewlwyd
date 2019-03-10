@@ -21,12 +21,11 @@ class App extends Component {
       scope: [],
       scheme: false,
       client: false,
-      hasGranted: true
+      showGrant: true
     };
 
     this.initProfile = this.initProfile.bind(this);
     this.checkClientScope = this.checkClientScope.bind(this);
-    this.newUser = this.newUser.bind(this);
     this.changeLang = this.changeLang.bind(this);
 
     this.initProfile();
@@ -36,6 +35,8 @@ class App extends Component {
         this.initProfile();
       } else if (message == "NewUser") {
         this.setState({newUser: true});
+      } else if (message == "ToggleGrant") {
+        this.setState({showGrant: !this.state.showGrant});
       }
     });
   }
@@ -57,6 +58,9 @@ class App extends Component {
       });
     })
     .fail((error) => {
+      if (error.status != 401) {
+        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("error-api-connect")});
+      }
       this.setState({newUser: true, currentUser: false, userList: [], loaded: true});
     });
   }
@@ -66,37 +70,32 @@ class App extends Component {
     .then((res) => {
       var scopeGranted = [];
       var scopeGrantedDetails = {};
-      var hasGranted = false;
+      var showGrant = true;
       res.scope.forEach((scope) => {
         if (scope.granted) {
-          hasGranted = true;
+          showGrant = false;
           scopeGranted.push(scope.name);
           scopeGrantedDetails[scope.name] = scope;
         }
       });
-      if (!hasGranted) {
-        this.setState({client: res.client, scope: res.scope, hasGranted: hasGranted});
+      if (showGrant) {
+        this.setState({client: res.client, scope: res.scope, showGrant: showGrant});
       } else {
         apiManager.glewlwydRequest("/auth/scheme/?scope=" + scopeGranted.join(" "))
         .then((schemeRes) => {
           for (var scope in schemeRes) {
             schemeRes[scope].details = scopeGrantedDetails[scope];
           }
-          this.setState({client: res.client, scope: res.scope, scheme: schemeRes, hasGranted: hasGranted});
+          this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant});
+        })
+        .fail((error) => {
+          messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
         });
       }
+    })
+    .fail((error) => {
+      messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-grant-api")});
     });
-  }
-
-  newUser(username) {
-    if (username) {
-      apiManager.glewlwydRequest("/auth", "POST", {username: username})
-      .then(() => {
-        this.initProfile();
-      });
-    } else {
-      this.setState({newUser: true});
-    }
   }
 
   changeLang(e, lang) {
@@ -112,7 +111,7 @@ class App extends Component {
       if (this.state.newUser) {
         body = <PasswordForm config={this.state.config} callbackInitProfile={this.initProfile}/>;
       } else {
-        body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} hasGranted={this.state.hasGranted}/>;
+        body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} showGrant={this.state.showGrant}/>;
       }
     }
     var langList = [];
@@ -143,7 +142,7 @@ class App extends Component {
             {body}
           </div>
           <div className="card-footer">
-            <Buttons config={this.state.config} currentUser={this.state.currentUser} userList={this.state.userList}/>
+            <Buttons config={this.state.config} currentUser={this.state.currentUser} userList={this.state.userList} showGrant={this.state.showGrant}/>
           </div>
         </div>
         <Notification/>

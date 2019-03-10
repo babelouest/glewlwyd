@@ -11,7 +11,8 @@ class GrantScope extends Component {
       config: props.config,
       currentUser: props.currentUser,
       client: props.client,
-      scope: props.scope
+      scope: props.scope,
+      show: props.show
     };
     
     this.handleToggleGrantScope = this.handleToggleGrantScope.bind(this);
@@ -22,7 +23,7 @@ class GrantScope extends Component {
 	}
   
   componentWillReceiveProps(nextProps) {
-    this.setState({config: nextProps.config, currentUser: nextProps.currentUser, client: nextProps.client, scope: nextProps.scope});
+    this.setState({config: nextProps.config, currentUser: nextProps.currentUser, client: nextProps.client, scope: nextProps.scope, show: nextProps.show});
   }
 
   handleToggleGrantScope(scope) {
@@ -45,6 +46,9 @@ class GrantScope extends Component {
     apiManager.glewlwydRequest("/auth/grant/" + encodeURI(this.state.client.client_id), "PUT", {scope: scopeList.join(" ")})
     .then(() => {
       messageDispatcher.sendMessage('App', 'InitProfile');
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-set-grant")});
     });
   }
   
@@ -61,11 +65,6 @@ class GrantScope extends Component {
     });
     return (
     <div>
-      <div className="row">
-        <div className="col-md-12">
-          <hr/>
-        </div>
-      </div>
       <div className="row">
         <div className="col-md-12">
           <h4>{i18next.t("login.grant-title", {client: this.state.client.name})}</h4>
