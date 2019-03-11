@@ -3,7 +3,7 @@
   "select-lang": "Language",
   "error-api-connect": "Error connecting to Glewlwyd API",
   "login": {
-    "hello": "Hello {{name}}!",
+    "hello": "Hello {{name}}",
     "enter-login-password": "Please enter your login and password",
     "login": "Login",
     "login-placeholder": "Your username",
@@ -18,6 +18,7 @@
     "continue-title": "Continue to client application",
     "login-another": "Change user",
     "login-another-new": "New user",
+    "login-handle": "Manage",
     "update-profile": "Profile page",
     "logout": "Logout",
     "error-delete-session": "Error disconnecting",

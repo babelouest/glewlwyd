@@ -38,7 +38,7 @@ class SchemeAuth extends Component {
   }
   
   parseSchemes() {
-    var canContinue = !this.state.scheme;
+    var canContinue = true;
     var schemeForm = false;
     var newScheme = this.state.scheme;
     for (var scope in newScheme) {
@@ -69,9 +69,7 @@ class SchemeAuth extends Component {
         canContinue = false;
       }
     }
-    if (canContinue) {
-      messageDispatcher.sendMessage('Buttons', 'enableContinue');
-    }
+    messageDispatcher.sendMessage('Buttons', {value: "enableContinue", canContinue: canContinue});
     this.setState({scheme: newScheme, canContinue: canContinue, curSchemeForm: schemeForm});
   }
   

@@ -21,7 +21,8 @@ class App extends Component {
       scope: [],
       scheme: false,
       client: false,
-      showGrant: true
+      showGrant: true,
+      showGrantAsterisk: false,
     };
 
     this.initProfile = this.initProfile.bind(this);
@@ -71,22 +72,25 @@ class App extends Component {
       var scopeGranted = [];
       var scopeGrantedDetails = {};
       var showGrant = true;
+      var showGrantAsterisk = false;
       res.scope.forEach((scope) => {
         if (scope.granted) {
           showGrant = false;
           scopeGranted.push(scope.name);
           scopeGrantedDetails[scope.name] = scope;
+        } else {
+          showGrantAsterisk = true;
         }
       });
       if (showGrant) {
-        this.setState({client: res.client, scope: res.scope, showGrant: showGrant});
+        this.setState({client: res.client, scope: res.scope, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk});
       } else {
         apiManager.glewlwydRequest("/auth/scheme/?scope=" + scopeGranted.join(" "))
         .then((schemeRes) => {
           for (var scope in schemeRes) {
             schemeRes[scope].details = scopeGrantedDetails[scope];
           }
-          this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant});
+          this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk});
         })
         .fail((error) => {
           messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
@@ -129,7 +133,7 @@ class App extends Component {
             <div className="float-right">
               <div className="dropdown">
                 <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  {i18next.t("select-lang")}
+                  <i className="fas fa-globe-africa"></i> {i18next.t("select-lang")}
                 </button>
                 <div className="dropdown-menu" aria-labelledby="dropdownLang">
                   {langList}
@@ -142,7 +146,7 @@ class App extends Component {
             {body}
           </div>
           <div className="card-footer">
-            <Buttons config={this.state.config} currentUser={this.state.currentUser} userList={this.state.userList} showGrant={this.state.showGrant}/>
+            <Buttons config={this.state.config} currentUser={this.state.currentUser} userList={this.state.userList} showGrant={this.state.showGrant} showGrantAsterisk={this.state.showGrantAsterisk}/>
           </div>
         </div>
         <Notification/>
