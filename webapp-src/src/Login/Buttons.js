@@ -13,7 +13,8 @@ class Buttons extends Component {
       disableContinue: true,
       showGrant: props.showGrant,
       bGrantTitle: props.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
-      bGrant: props.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change")
+      bGrant: props.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change"),
+      showGrantAsterisk: props.showGrantAsterisk
     };
 
     this.clickProfile = this.clickProfile.bind(this);
@@ -23,8 +24,8 @@ class Buttons extends Component {
     this.newUser = this.newUser.bind(this);
     
     messageDispatcher.subscribe('Buttons', (message) => {
-      if (message === "enableContinue") {
-        this.setState({disableContinue: false});
+      if (message.value === "enableContinue") {
+        this.setState({disableContinue: !message.canContinue});
       }
     });
   }
@@ -36,7 +37,8 @@ class Buttons extends Component {
       config: nextProps.config,
       showGrant: nextProps.showGrant,
       bGrantTitle: nextProps.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
-      bGrant: nextProps.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change")
+      bGrant: nextProps.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change"),
+      showGrantAsterisk: nextProps.showGrantAsterisk
     });
   }
 
@@ -80,9 +82,16 @@ class Buttons extends Component {
   }
 
 	render() {
-    var bAnother = "";
-    var bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")} disabled={this.state.disableContinue}>{i18next.t("login.continue")}</button>;
-    var bGrant = <button type="button" className="btn btn-primary" onClick={this.clickGrant} title={this.state.bGrantTitle}>{this.state.bGrant}</button>;
+    var bAnother = "", asterisk = "";
+    var bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")} disabled={this.state.disableContinue}>
+      <i className="fas fa-play btn-icon"></i>{i18next.t("login.continue")}
+    </button>;
+    var bGrant = <button type="button" className="btn btn-primary" onClick={this.clickGrant} title={this.state.bGrantTitle}>
+      <i className="fas fa-user-cog btn-icon"></i>{this.state.bGrant}
+    </button>;
+    if (this.state.showGrantAsterisk) {
+      asterisk = <small><i className="fas fa-asterisk btn-icon-right"></i></small>;
+    }
     if (this.state.currentUser) {
       var userList = [];
       this.state.userList.forEach((user, index) => {
@@ -96,7 +105,7 @@ class Buttons extends Component {
       <div className="btn-group" role="group">
         <div className="dropdown">
           <button className="btn btn-primary dropdown-toggle" type="button" id="selectNewUser" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            {i18next.t("login.login-another")}
+            <i className="fas fa-users btn-icon"></i>{i18next.t("login.login-another")}
           </button>
           <div className="dropdown-menu" aria-labelledby="selectNewUser">
             <a className="dropdown-item" href="#" onClick={(e) => this.newUser(e, false)}>{i18next.t("login.login-another-new")}</a>
@@ -105,15 +114,33 @@ class Buttons extends Component {
           </div>
         </div>
       </div>;
-    }
-    if (this.state.currentUser) {
   		return (
-        <div className="btn-group" role="group">
-          {bContinue}
-          <button type="button" className="btn btn-primary" onClick={this.clickProfile}>{i18next.t("login.update-profile")}</button>
-          {bAnother}
-          {bGrant}
-          <button type="button" className="btn btn-primary" onClick={this.clickLogout}>{i18next.t("login.logout")}</button>
+        <div>
+          <div className="btn-group" role="group">
+            {bContinue}
+            <button type="button" className="btn btn-primary" onClick={this.clickLogout}>
+              <i className="fas fa-sign-out-alt btn-icon"></i>{i18next.t("login.logout")}
+            </button>
+          </div>
+          <hr/>
+          <div className="btn-group" role="group">
+            <div className="btn-group" role="group">
+              <div className="dropdown">
+                <button className="btn btn-primary dropdown-toggle" type="button" id="selectNewUser" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i className="fas fa-user-cog btn-icon"></i>{i18next.t("login.login-handle")}{asterisk}
+                </button>
+                <div className="dropdown-menu" aria-labelledby="selectNewUser">
+                  <a className="dropdown-item" href="#" onClick={this.clickGrant} alt={this.state.bGrantTitle}>
+                    {this.state.bGrant}
+                    {asterisk}
+                  </a>
+                  <div className="dropdown-divider"></div>
+                  <a className="dropdown-item" href="#" onClick={this.clickProfile}>{i18next.t("login.update-profile")}</a>
+                </div>
+              </div>
+            </div>
+            {bAnother}
+          </div>
         </div>
   		);
     } else {
