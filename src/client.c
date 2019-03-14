@@ -76,7 +76,8 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
       if (result == G_OK && str_client != NULL) {
         j_client = json_loads(str_client, JSON_DECODE_ANY, NULL);
         if (j_client != NULL) {
-          j_return = json_pack("{sisOss}", "result", G_OK, "client", j_client, "source", source);
+          json_object_set_new(j_client, "source", json_string(source));
+          j_return = json_pack("{sisO}", "result", G_OK, "client", j_client);
           json_decref(j_client);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error json_loads");
@@ -105,8 +106,8 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
               if (result == G_OK && str_client != NULL) {
                 j_client = json_loads(str_client, JSON_DECODE_ANY, NULL);
                 if (j_client != NULL) {
-                  found = 1;
-                  j_return = json_pack("{sisOss}", "result", G_OK, "client", j_client, "source", client_module->name);
+                  json_object_set_new(j_client, "source", json_string(client_module->name));
+                  j_return = json_pack("{sisO}", "result", G_OK, "client", j_client);
                   json_decref(j_client);
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error json_loads");
@@ -135,7 +136,7 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
 }
 
 json_t * get_client_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source) {
-  json_t * j_return, * j_module_list, * j_module, * j_list_parsed;
+  json_t * j_return, * j_module_list, * j_module, * j_list_parsed, * j_element;
   struct _client_module_instance * client_module;
   char * list_result = NULL;
   int result;
@@ -149,6 +150,9 @@ json_t * get_client_list(struct config_elements * config, const char * pattern, 
       if (result == G_OK) {
         j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
         if (j_list_parsed && json_is_array(j_list_parsed)) {
+          json_array_foreach(j_list_parsed, index, j_element) {
+            json_object_set_new(j_element, "source", json_string(client_module->name));
+          }
           j_return = json_pack("{sisO}", "result", G_OK, "client", j_list_parsed);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error parsing client_module_get_list result into a JSON array");
@@ -182,6 +186,9 @@ json_t * get_client_list(struct config_elements * config, const char * pattern, 
               if (result == G_OK) {
                 j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
                 if (j_list_parsed && json_is_array(j_list_parsed)) {
+                  json_array_foreach(j_list_parsed, index, j_element) {
+                    json_object_set_new(j_element, "source", json_string(client_module->name));
+                  }
                   cur_offset = 0;
                   if (cur_limit > json_array_size(j_list_parsed)) {
                     cur_limit -= json_array_size(j_list_parsed);
