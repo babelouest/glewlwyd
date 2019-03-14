@@ -87,7 +87,7 @@ class SchemeAuth extends Component {
         if (curScope.isAuth) {
           scopeList.push(
           <li className="list-group-item" key={"scope-"+iScope}>
-            <h3><span className="badge badge-success">{curScope.details.display_name}</span></h3>
+            <h3><span className="badge badge-success">{curScope.display_name}</span></h3>
           </li>
           );
         } else {
@@ -112,7 +112,7 @@ class SchemeAuth extends Component {
           }
           scopeList.push(
             <li className="list-group-item" key={"scope-"+iScope}>
-              <h3><span className="badge badge-secondary">{curScope.details.display_name}</span></h3>
+              <h3><span className="badge badge-secondary">{curScope.display_name}</span></h3>
               <ul className="list-inline">
                 {groupList}
               </ul>
