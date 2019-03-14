@@ -467,7 +467,7 @@ int user_session_update(struct config_elements * config, const char * session_ui
   return ret;
 }
 
-int user_session_delete(struct config_elements * config, const char * session_uid) {
+int user_session_delete(struct config_elements * config, const char * session_uid, const char * username) {
   json_t * j_query;
   int res, ret;
   char * session_uid_hash = generate_hash(config->hash_algorithm, session_uid);
@@ -484,6 +484,9 @@ int user_session_delete(struct config_elements * config, const char * session_ui
                         "where",
                           "gus_uuid",
                           session_uid_hash);
+    if (username != NULL) {
+      json_object_set_new(json_object_get(j_query, "where"), "gus_username", json_string(username));
+    }
     o_free(session_uid_hash);
     res = h_update(config->conn, j_query, NULL);
     json_decref(j_query);
@@ -501,5 +504,5 @@ int user_session_delete(struct config_elements * config, const char * session_ui
 }
 
 char * get_session_id(struct config_elements * config, const struct _u_request * request) {
-  return o_strdup(u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY));
+  return o_strdup(u_map_get(request->map_cookie, config->session_key));
 }
