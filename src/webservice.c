@@ -246,8 +246,9 @@ int callback_glewlwyd_user_auth_trigger (const struct _u_request * request, stru
 
 int callback_glewlwyd_user_delete_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_session;
+  json_t * j_session, * j_cur_session;
   char * session_uid = get_session_id(config, request);
+  size_t index;
   
   if (session_uid != NULL && o_strlen(session_uid)) {
     j_session = get_users_for_session(config, session_uid);
@@ -256,15 +257,32 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
     } else if (!check_result_value(j_session, G_OK)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error get_user_for_session");
       response->status = 500;
-    } else if (user_session_delete(config, session_uid) != G_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error user_session_delete");
-      response->status = 500;
     } else {
-      ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, "", NULL, -1, NULL, NULL, 0, 0);
+      if (u_map_get(request->map_url, "username") != NULL) {
+        json_array_foreach(json_object_get(j_session, "session"), index, j_cur_session) {
+          if (0 == o_strcmp(u_map_get(request->map_url, "username"), json_string_value(json_object_get(j_cur_session, "username")))) {
+            if (user_session_delete(config, session_uid, u_map_get(request->map_url, "username")) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error user_session_delete");
+              response->status = 500;
+            } else {
+              if (!json_array_size(json_object_get(j_session, "session"))) {
+                ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, "", NULL, -1, NULL, NULL, 0, 0);
+              }
+            }
+          }
+        }
+      } else {
+        if (user_session_delete(config, session_uid, NULL) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error user_session_delete");
+          response->status = 500;
+        } else {
+          ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, "", NULL, -1, NULL, NULL, 0, 0);
+        }
+      }
     }
     json_decref(j_session);
   } else {
-    response->status = 404;
+    response->status = 401;
   }
   o_free(session_uid);
   
@@ -1058,9 +1076,9 @@ int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_res
   if (check_result_value(j_search_user, G_OK)) {
     j_user = ulfius_get_json_body_request(request, NULL);
     if (j_user != NULL) {
-      j_user_valid = is_user_valid(config, u_map_get(request->map_url, "username"), j_user, 0, json_string_value(json_object_get(j_search_user, "source")));
+      j_user_valid = is_user_valid(config, u_map_get(request->map_url, "username"), j_user, 0, json_string_value(json_object_get(json_object_get(j_search_user, "user"), "source")));
       if (check_result_value(j_user_valid, G_OK)) {
-        if (set_user(config, u_map_get(request->map_url, "username"), j_user, json_string_value(json_object_get(j_search_user, "source"))) != G_OK) {
+        if (set_user(config, u_map_get(request->map_url, "username"), j_user, json_string_value(json_object_get(json_object_get(j_search_user, "user"), "source"))) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user - Error set_user");
           response->status = 500;
         }
@@ -1091,8 +1109,8 @@ int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_
   
   j_search_user = get_user(config, u_map_get(request->map_url, "username"), u_map_get(request->map_url, "source"));
   if (check_result_value(j_search_user, G_OK)) {
-    if (delete_user(config, u_map_get(request->map_url, "username"), json_string_value(json_object_get(j_search_user, "source"))) != G_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user - Error set_user");
+    if (delete_user(config, u_map_get(request->map_url, "username"), json_string_value(json_object_get(json_object_get(j_search_user, "user"), "source"))) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user - Error delete_user");
       response->status = 500;
     }
   } else if (check_result_value(j_search_user, G_ERROR_NOT_FOUND)) {
@@ -1197,9 +1215,9 @@ int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_r
   if (check_result_value(j_search_client, G_OK)) {
     j_client = ulfius_get_json_body_request(request, NULL);
     if (j_client != NULL) {
-      j_client_valid = is_client_valid(config, u_map_get(request->map_url, "client_id"), j_client, 0, json_string_value(json_object_get(j_search_client, "source")));
+      j_client_valid = is_client_valid(config, u_map_get(request->map_url, "client_id"), j_client, 0, json_string_value(json_object_get(json_object_get(j_search_client, "client"), "source")));
       if (check_result_value(j_client_valid, G_OK)) {
-        if (set_client(config, u_map_get(request->map_url, "client_id"), j_client, json_string_value(json_object_get(j_search_client, "source"))) != G_OK) {
+        if (set_client(config, u_map_get(request->map_url, "client_id"), j_client, json_string_value(json_object_get(json_object_get(j_search_client, "client"), "source"))) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client - Error set_client");
           response->status = 500;
         }
@@ -1230,8 +1248,8 @@ int callback_glewlwyd_delete_client (const struct _u_request * request, struct _
   
   j_search_client = get_client(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "source"));
   if (check_result_value(j_search_client, G_OK)) {
-    if (delete_client(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(j_search_client, "source"))) != G_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_client - Error set_client");
+    if (delete_client(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(j_search_client, "client"), "source"))) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_client - Error delete_client");
       response->status = 500;
     }
   } else if (check_result_value(j_search_client, G_ERROR_NOT_FOUND)) {
@@ -1370,7 +1388,7 @@ int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u
   j_search_scope = get_scope(config, u_map_get(request->map_url, "scope"));
   if (check_result_value(j_search_scope, G_OK)) {
     if (delete_scope(config, u_map_get(request->map_url, "scope")) != G_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_scope - Error set_scope");
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_scope - Error delete_scope");
       response->status = 500;
     }
   } else if (check_result_value(j_search_scope, G_ERROR_NOT_FOUND)) {
