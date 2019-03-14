@@ -347,62 +347,70 @@ static int is_scheme_valid_for_session(struct config_elements * config, json_int
 
 json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list, const char * session_uid) {
   char * session_hash = generate_hash(config->hash_algorithm, session_uid);
-  json_t * j_scheme_list = get_auth_scheme_list_from_scope_list(config, scope_list), * j_scope, * j_scheme, * j_group, * j_user = get_current_user_from_session(config, session_uid), * j_scheme_remove;
+  json_t * j_scheme_list = get_auth_scheme_list_from_scope_list(config, scope_list), * j_cur_scope, * j_scope, * j_scheme, * j_group, * j_user = get_current_user_from_session(config, session_uid), * j_scheme_remove;
   const char * key_scope, * key_group;
   size_t index_scheme;
   struct _user_auth_scheme_module_instance * scheme;
   
   if (check_result_value(j_scheme_list, G_OK)) {
-    json_object_foreach(json_object_get(j_scheme_list, "scheme"), key_scope, j_scope) {
-      if (check_result_value(j_user, G_OK)) {
-        json_object_set(j_scope, "password_authenticated", is_scheme_valid_for_session(config, 0, 0, session_hash)?json_true():json_false());
-        if (user_has_scope(json_object_get(j_user, "user"), key_scope)) {
-          json_object_set(j_scope, "available", json_true());
-          json_object_foreach(json_object_get(j_scope, "schemes"), key_group, j_group) {
-            j_scheme_remove = json_array();
-            if (j_scheme_remove != NULL) {
-              json_array_foreach(j_group, index_scheme, j_scheme) {
-                scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_name")));
-                if (scheme != NULL) {
-                  if (scheme->enabled && scheme->module->user_can_use_scheme(json_string_value(json_object_get(json_object_get(j_user, "user"), "username")), scheme->cls)) {
-                    json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, json_integer_value(json_object_get(j_scheme, "max_use")), session_hash)?json_true():json_false());
+    json_object_foreach(json_object_get(j_scheme_list, "scheme"), key_scope, j_cur_scope) {
+      j_scope = get_scope(config, key_scope);
+      if (check_result_value(j_scope, G_OK)) {
+        if (check_result_value(j_user, G_OK)) {
+          json_object_set(j_cur_scope, "display_name", json_object_get(json_object_get(j_scope, "scope"), "display_name"));
+          json_object_set(j_cur_scope, "description", json_object_get(json_object_get(j_scope, "scope"), "description"));
+          json_object_set(j_cur_scope, "password_authenticated", is_scheme_valid_for_session(config, 0, 0, session_hash)?json_true():json_false());
+          if (user_has_scope(json_object_get(j_user, "user"), key_scope)) {
+            json_object_set(j_cur_scope, "available", json_true());
+            json_object_foreach(json_object_get(j_cur_scope, "schemes"), key_group, j_group) {
+              j_scheme_remove = json_array();
+              if (j_scheme_remove != NULL) {
+                json_array_foreach(j_group, index_scheme, j_scheme) {
+                  scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_name")));
+                  if (scheme != NULL) {
+                    if (scheme->enabled && scheme->module->user_can_use_scheme(json_string_value(json_object_get(json_object_get(j_user, "user"), "username")), scheme->cls)) {
+                      json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, json_integer_value(json_object_get(j_scheme, "max_use")), session_hash)?json_true():json_false());
+                    } else {
+                      json_array_append_new(j_scheme_remove, json_integer(index_scheme));
+                    }
                   } else {
                     json_array_append_new(j_scheme_remove, json_integer(index_scheme));
+                    y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error get_user_auth_scheme_module_instance");
                   }
-                } else {
-                  json_array_append_new(j_scheme_remove, json_integer(index_scheme));
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error get_user_auth_scheme_module_instance");
                 }
+                if (json_array_size(j_scheme_remove) > 0) {
+                  index_scheme = json_array_size(j_scheme_remove);
+                  do {
+                    index_scheme--;
+                    json_array_remove(j_group, json_integer_value(json_array_get(j_scheme_remove, index_scheme)));
+                  } while (index_scheme != 0);
+                }
+                json_decref(j_scheme_remove);
+                if (!json_array_size(j_group)) {
+                  json_object_set(j_cur_scope, "available", json_false());
+                  json_object_del(j_cur_scope, "password_required");
+                  json_object_del(j_cur_scope, "password_authenticated");
+                  json_object_clear(json_object_get(j_cur_scope, "schemes"));
+                  break;
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error allocating resources for j_scheme_remove");
               }
-              if (json_array_size(j_scheme_remove) > 0) {
-                index_scheme = json_array_size(j_scheme_remove);
-                do {
-                  index_scheme--;
-                  json_array_remove(j_group, json_integer_value(json_array_get(j_scheme_remove, index_scheme)));
-                } while (index_scheme != 0);
-              }
-              json_decref(j_scheme_remove);
-              if (!json_array_size(j_group)) {
-                json_object_set(j_scope, "available", json_false());
-                json_object_del(j_scope, "password_required");
-                json_object_del(j_scope, "password_authenticated");
-                json_object_clear(json_object_get(j_scope, "schemes"));
-                break;
-              }
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error allocating resources for j_scheme_remove");
             }
+          } else {
+            json_object_set(j_cur_scope, "available", json_false());
+            json_object_del(j_cur_scope, "password_required");
+            json_object_del(j_cur_scope, "password_authenticated");
+            json_object_clear(json_object_get(j_cur_scope, "schemes"));
           }
         } else {
-          json_object_set(j_scope, "available", json_false());
-          json_object_del(j_scope, "password_required");
-          json_object_del(j_scope, "password_authenticated");
-          json_object_clear(json_object_get(j_scope, "schemes"));
+          json_object_del(j_cur_scope, "schemes");
+          json_object_del(j_cur_scope, "password_required");
         }
       } else {
-        json_object_del(j_scope, "schemes");
-        json_object_del(j_scope, "password_required");
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error get_scope");
       }
+      json_decref(j_scope);
     }
   }
   json_decref(j_user);
