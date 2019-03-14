@@ -14,7 +14,7 @@ class MessageDispatcher {
     if (dest[0] === "broadcast") {
       // Broadcast message
       this.subscriberList.forEach((subscriberCb, name) => {
-        subscriberCb(message);
+        subscriberCb({type: "broadcast", message: message});
       });
     } else {
       for (var name in this.subscriberList) {

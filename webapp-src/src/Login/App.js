@@ -27,6 +27,7 @@ class App extends Component {
 
     this.initProfile = this.initProfile.bind(this);
     this.checkClientScope = this.checkClientScope.bind(this);
+    this.checkScopeScheme = this.checkScopeScheme.bind(this);
     this.changeLang = this.changeLang.bind(this);
 
     this.initProfile();
@@ -55,6 +56,10 @@ class App extends Component {
       this.setState(newState, () => {
         if (this.state.config.params.client_id && this.state.config.params.scope) {
           this.checkClientScope(this.state.config.params.client_id, this.state.config.params.scope);
+        } else if (this.state.config.params.scope) {
+          this.checkScopeScheme(this.state.config.params.scope);
+        } else {
+          this.setState({showGrant: false, showGrantAsterisk: false});
         }
       });
     })
@@ -87,9 +92,6 @@ class App extends Component {
       } else {
         apiManager.glewlwydRequest("/auth/scheme/?scope=" + scopeGranted.join(" "))
         .then((schemeRes) => {
-          for (var scope in schemeRes) {
-            schemeRes[scope].details = scopeGrantedDetails[scope];
-          }
           this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk});
         })
         .fail((error) => {
@@ -99,6 +101,16 @@ class App extends Component {
     })
     .fail((error) => {
       messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-grant-api")});
+    });
+  }
+  
+  checkScopeScheme(scopeList) {
+    apiManager.glewlwydRequest("/auth/scheme/?scope=" + scopeList)
+    .then((schemeRes) => {
+      this.setState({scope: scopeList.split(" "), scheme: schemeRes, showGrant: false, showGrantAsterisk: false});
+    })
+    .fail((error) => {
+      messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
     });
   }
 

@@ -62,7 +62,7 @@ class Buttons extends Component {
   
   clickContinue() {
     if (this.state.config.params.callback_url) {
-      document.location.href = this.state.config.params.callback_url+"&g_continue";
+      document.location.href = this.state.config.params.callback_url + (this.state.config.params.callback_url.indexOf("?")>0?"&g_continue":"?g_continue");
     }
   }
 
