@@ -151,7 +151,7 @@ int user_session_update(struct config_elements * config, const char * session_ui
 json_t * get_session_for_username(struct config_elements * config, const char * session_uid, const char * username);
 json_t * get_user_for_session(struct config_elements * config, const char * session_uid);
 json_t * get_users_for_session(struct config_elements * config, const char * session_uid);
-int user_session_delete(struct config_elements * config, const char * session_uid);
+int user_session_delete(struct config_elements * config, const char * session_uid, const char * username);
 char * get_session_id(struct config_elements * config, const struct _u_request * request);
 
 // Profile
