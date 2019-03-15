@@ -140,7 +140,7 @@ json_t * get_client_list(struct config_elements * config, const char * pattern, 
   struct _client_module_instance * client_module;
   char * list_result = NULL;
   int result;
-  size_t cur_offset, cur_limit, count_total, index;
+  size_t cur_offset, cur_limit, count_total, index, index_c;
   
   if (source != NULL) {
     client_module = get_client_module_instance(config, source);
@@ -186,7 +186,7 @@ json_t * get_client_list(struct config_elements * config, const char * pattern, 
               if (result == G_OK) {
                 j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
                 if (j_list_parsed && json_is_array(j_list_parsed)) {
-                  json_array_foreach(j_list_parsed, index, j_element) {
+                  json_array_foreach(j_list_parsed, index_c, j_element) {
                     json_object_set_new(j_element, "source", json_string(client_module->name));
                   }
                   cur_offset = 0;
