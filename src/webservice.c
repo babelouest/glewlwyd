@@ -136,7 +136,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (1)");
               response->status = 500;
             } else {
-              ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, "/", 0, 0);
+              ulfius_add_cookie_to_response(response, config->session_key, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, "/", 0, 0);
             }
             o_free(session_uid);
           } else {
@@ -157,7 +157,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
           j_result = get_users_for_session(config, session_uid);
           if (check_result_value(j_result, G_OK)) {
             // Refresh username to set as default
-            if (user_session_update(config, u_map_get(request->map_cookie, GLEWLWYD_DEFAULT_SESSION_KEY), u_map_get_case(request->map_header, "user-agent"), json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
+            if (user_session_update(config, u_map_get(request->map_cookie, config->session_key), u_map_get_case(request->map_header, "user-agent"), json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (3)");
               response->status = 500;
             }
@@ -187,7 +187,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (4)");
               response->status = 500;
             } else {
-              ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, "/", 0, 0);
+              ulfius_add_cookie_to_response(response, config->session_key, session_uid, NULL, GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE, NULL, "/", 0, 0);
             }
             o_free(session_uid);
           } else {
@@ -266,7 +266,7 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
               response->status = 500;
             } else {
               if (!json_array_size(json_object_get(j_session, "session"))) {
-                ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, "", NULL, -1, NULL, NULL, 0, 0);
+                ulfius_add_cookie_to_response(response, config->session_key, "", NULL, -1, NULL, NULL, 0, 0);
               }
             }
           }
@@ -276,7 +276,7 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error user_session_delete");
           response->status = 500;
         } else {
-          ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, "", NULL, -1, NULL, NULL, 0, 0);
+          ulfius_add_cookie_to_response(response, config->session_key, "", NULL, -1, NULL, NULL, 0, 0);
         }
       }
     }
@@ -1412,7 +1412,7 @@ int callback_glewlwyd_user_get_profile (const struct _u_request * request, struc
       ulfius_set_json_body_response(response, 200, json_object_get(j_session, "session"));
     } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
       response->status = 401;
-      ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, "", NULL, -1, NULL, NULL, 0, 0);
+      ulfius_add_cookie_to_response(response, config->session_key, "", NULL, -1, NULL, NULL, 0, 0);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_get_session - Error get_user_for_session");
       response->status = 500;
@@ -1420,7 +1420,7 @@ int callback_glewlwyd_user_get_profile (const struct _u_request * request, struc
     json_decref(j_session);
   } else {
     response->status = 401;
-    ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, "", NULL, -1, NULL, NULL, 0, 0);
+    ulfius_add_cookie_to_response(response, config->session_key, "", NULL, -1, NULL, NULL, 0, 0);
   }
   o_free(session_uid);
   
@@ -1456,7 +1456,7 @@ int callback_glewlwyd_user_update_profile (const struct _u_request * request, st
     json_decref(j_session);
   } else {
     response->status = 404;
-    ulfius_add_cookie_to_response(response, GLEWLWYD_DEFAULT_SESSION_KEY, "", NULL, -1, NULL, NULL, 0, 0);
+    ulfius_add_cookie_to_response(response, config->session_key, "", NULL, -1, NULL, NULL, 0, 0);
   }
   o_free(session_uid);
   
