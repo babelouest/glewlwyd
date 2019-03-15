@@ -213,7 +213,7 @@ json_t * get_user_list(struct config_elements * config, const char * pattern, si
   struct _user_module_instance * user_module;
   char * list_result = NULL;
   int result;
-  size_t cur_offset, cur_limit, count_total, index;
+  size_t cur_offset, cur_limit, count_total, index, index_u;
   
   if (source != NULL) {
     user_module = get_user_module_instance(config, source);
@@ -259,7 +259,7 @@ json_t * get_user_list(struct config_elements * config, const char * pattern, si
               if (result == G_OK) {
                 j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
                 if (j_list_parsed && json_is_array(j_list_parsed)) {
-                  json_array_foreach(j_list_parsed, index, j_element) {
+                  json_array_foreach(j_list_parsed, index_u, j_element) {
                     json_object_set_new(j_element, "source", json_string(user_module->name));
                   }
                   cur_offset = 0;
@@ -522,7 +522,7 @@ json_t * user_set_profile(struct config_elements * config, const char * username
   char * str_module_result, * str_profile;
 
   if (check_result_value(j_user, G_OK)) {
-    user_module = get_user_module_instance(config, json_string_value(json_object_get(j_user, "source")));
+    user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
       str_profile = json_dumps(j_profile, JSON_COMPACT);
       str_module_result = user_module->module->user_module_update_profile(username, str_profile, user_module->cls);
