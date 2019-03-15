@@ -23,7 +23,7 @@ struct _u_request user_req;
 
 START_TEST(test_glwd_auth_profile_get_error)
 {
-  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "profile/", NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "profile/", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
 }
 END_TEST
 

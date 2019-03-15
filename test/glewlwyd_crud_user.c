@@ -365,7 +365,7 @@ static Suite *glewlwyd_suite(void)
 
   s = suite_create("Glewlwyd CRUD user");
   tc_core = tcase_create("test_glwd_crud_user");
-  tcase_add_test(tc_core, test_glwd_crud_user_get_list);
+  /*tcase_add_test(tc_core, test_glwd_crud_user_get_list);
   tcase_add_test(tc_core, test_glwd_crud_user_add_error_json);
   tcase_add_test(tc_core, test_glwd_crud_user_add_error_param);
   tcase_add_test(tc_core, test_glwd_crud_user_add_OK);
@@ -375,7 +375,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_crud_user_delete_error);
   tcase_add_test(tc_core, test_glwd_crud_user_delete_OK);
   tcase_add_test(tc_core, test_glwd_crud_user_list_limit);
-  tcase_add_test(tc_core, test_glwd_crud_user_list_pattern);
+  tcase_add_test(tc_core, test_glwd_crud_user_list_pattern);*/
   tcase_add_test(tc_core, test_glwd_crud_user_list_add_user_module_instances);
   tcase_add_test(tc_core, test_glwd_crud_user_list_page_multiple_source);
   tcase_add_test(tc_core, test_glwd_crud_user_list_pattern_multiple_source);
