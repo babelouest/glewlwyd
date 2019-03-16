@@ -43,25 +43,25 @@ class Users extends Component {
 
   handleChangeSearchPattern (e) {
     var users = this.state.users;
-    users.pattern = e.target.value;
+    users.searchPattern = e.target.value;
     this.setState({users: users});
   }
 
   searchUsers (e) {
     e.preventDefault();
-    messageDispatcher.sendMessage('App', {type: "search", role: "user", pattern: this.state.users.pattern, offset: this.state.users.offset, limit: this.state.users.limit});
+    messageDispatcher.sendMessage('App', {type: "search", role: "user", searchPattern: this.state.users.searchPattern, offset: this.state.users.offset, limit: this.state.users.limit});
   }
 
   navigate(e, direction) {
     if (direction > 0) {
-      messageDispatcher.sendMessage('App', {type: "search", role: "user", pattern: this.state.users.pattern, offset: this.state.users.offset+this.state.users.limit, limit: this.state.users.limit});
+      messageDispatcher.sendMessage('App', {type: "search", role: "user", searchPattern: this.state.users.searchPattern, offset: this.state.users.offset+this.state.users.limit, limit: this.state.users.limit});
     } else if (this.state.users.offset) {
-      messageDispatcher.sendMessage('App', {type: "search", role: "user", pattern: this.state.users.pattern, offset: this.state.users.offset-this.state.users.limit, limit: this.state.users.limit});
+      messageDispatcher.sendMessage('App', {type: "search", role: "user", searchPattern: this.state.users.searchPattern, offset: this.state.users.offset-this.state.users.limit, limit: this.state.users.limit});
     }
   }
 
   navigatePerPage(e, limit) {
-    messageDispatcher.sendMessage('App', {type: "search", role: "user", pattern: this.state.users.pattern, offset: this.state.users.offset, limit: limit});
+    messageDispatcher.sendMessage('App', {type: "search", role: "user", pattern: this.state.users.searchPattern, offset: this.state.users.offset, limit: limit});
   }
   
 	render() {
@@ -95,7 +95,7 @@ class Users extends Component {
           <th colSpan="4">
             <form className="form-inline" onSubmit={(e) => this.searchUsers(e)}>
               <div className="input-group mr-sm-2">
-                <input className="form-control" type="search" placeholder={i18next.t("admin.nav-search-placeholder")} aria-label="Search" onChange={this.handleChangeSearchPattern} value={this.state.users.pattern||""}/>
+                <input className="form-control" type="search" placeholder={i18next.t("admin.nav-search-placeholder")} aria-label="Search" onChange={this.handleChangeSearchPattern} value={this.state.users.searchPattern||""}/>
                 <button className="btn btn-secondary my-sm-0" type="submit" title={i18next.t("admin.nav-search-title")} onClick={(e) => this.searchUsers(e)}>{i18next.t("admin.nav-search")}</button>
               </div>
               <div className="btn-group" role="group">
