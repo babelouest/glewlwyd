@@ -43,25 +43,25 @@ class Clients extends Component {
 
   handleChangeSearchPattern (e) {
     var clients = this.state.clients;
-    clients.pattern = e.target.value;
+    clients.searchPattern = e.target.value;
     this.setState({clients: clients});
   }
 
   searchClients (e) {
     e.preventDefault();
-    messageDispatcher.sendMessage('App', {type: "search", role: "client", pattern: this.state.clients.pattern, offset: this.state.clients.offset, limit: this.state.clients.limit});
+    messageDispatcher.sendMessage('App', {type: "search", role: "client", searchPattern: this.state.clients.searchPattern, offset: this.state.clients.offset, limit: this.state.clients.limit});
   }
 
   navigate(e, direction) {
     if (direction > 0) {
-      messageDispatcher.sendMessage('App', {type: "search", role: "client", pattern: this.state.clients.pattern, offset: this.state.clients.offset+this.state.clients.limit, limit: this.state.clients.limit});
+      messageDispatcher.sendMessage('App', {type: "search", role: "client", searchPattern: this.state.clients.searchPattern, offset: this.state.clients.offset+this.state.clients.limit, limit: this.state.clients.limit});
     } else if (this.state.clients.offset) {
-      messageDispatcher.sendMessage('App', {type: "search", role: "client", pattern: this.state.clients.pattern, offset: this.state.clients.offset-this.state.clients.limit, limit: this.state.clients.limit});
+      messageDispatcher.sendMessage('App', {type: "search", role: "client", searchPattern: this.state.clients.searchPattern, offset: this.state.clients.offset-this.state.clients.limit, limit: this.state.clients.limit});
     }
   }
 
   navigatePerPage(e, limit) {
-    messageDispatcher.sendMessage('App', {type: "search", role: "client", pattern: this.state.clients.pattern, offset: this.state.clients.offset, limit: limit});
+    messageDispatcher.sendMessage('App', {type: "search", role: "client", searchPattern: this.state.clients.searchPattern, offset: this.state.clients.offset, limit: limit});
   }
   
 	render() {
@@ -73,7 +73,7 @@ class Clients extends Component {
         <td>{client.name||""}</td>
         <td>{(client.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
         <td>
-          <div className="btn-group" role="group">
+          <div className="btn-group pull-right" role="group">
             <button type="button" className="btn btn-secondary" onClick={(e) => this.editClient(e, client)} title={i18next.t("admin.client-edit")}>
               <i className="fas fa-edit"></i>
             </button>
@@ -94,7 +94,7 @@ class Clients extends Component {
           <th colSpan="3">
             <form className="form-inline" onSubmit={(e) => this.searchClients(e)}>
               <div className="input-group mr-sm-2">
-                <input className="form-control" type="search" placeholder={i18next.t("admin.nav-search-placeholder")} aria-label="Search" onChange={this.handleChangeSearchPattern} value={this.state.clients.pattern||""}/>
+                <input className="form-control" type="search" placeholder={i18next.t("admin.nav-search-placeholder")} aria-label="Search" onChange={this.handleChangeSearchPattern} value={this.state.clients.searchPattern||""}/>
                 <button className="btn btn-secondary my-sm-0" type="submit" title={i18next.t("admin.nav-search-title")} onClick={(e) => this.searchClients(e)}>{i18next.t("admin.nav-search")}</button>
               </div>
               <div className="btn-group" role="group">
@@ -142,7 +142,7 @@ class Clients extends Component {
       <tbody>
         {clients}
         <tr>
-          <td colSpan="6">
+          <td colSpan="5">
             {i18next.t("admin.nav-footer", {offset: this.state.clients.offset, limit: this.state.clients.limit})}
           </td>
         </tr>

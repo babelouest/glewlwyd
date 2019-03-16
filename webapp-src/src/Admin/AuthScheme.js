@@ -2,22 +2,22 @@ import React, { Component } from 'react';
 
 import messageDispatcher from '../lib/MessageDispatcher';
 
-class AuthSchemes extends Component {
+class AuthScheme extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
     }
 
-    messageDispatcher.subscribe('AuthSchemes', (message) => {
+    messageDispatcher.subscribe('AuthScheme', (message) => {
     });
   }
   
 	render() {
 		return (
-"AuthSchemes"
+"AuthScheme"
 		);
 	}
 }
 
-export default AuthSchemes;
+export default AuthScheme;

@@ -13,8 +13,9 @@ import Clients from './Clients';
 import Scopes from './Scopes';
 import UsersMod from './UsersMod';
 import ClientsMod from './ClientsMod';
-import AuthSchemes from './AuthSchemes';
+import AuthScheme from './AuthScheme';
 import Plugins from './Plugins';
+import ScopeEdit from './ScopeEdit';
 
 class App extends Component {
   constructor(props) {
@@ -24,14 +25,19 @@ class App extends Component {
       config: props.config,
       curNav: "users",
       loggedIn: false,
-      users: {list: [], offset: 0, limit: 20, pattern: false},
+      users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
       curUser: false,
-      clients: {list: [], offset: 0, limit: 20, pattern: false},
+      clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
       curClient: false,
-      scopes: {list: [], offset: 0, limit: 20, pattern: false},
+      scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
       curScope: false,
       confirmModal: {title: "", message: ""},
-      editModal: {title: "", pattern: [], data: {}, callback: false, add: false}
+      editModal: {title: "", pattern: [], data: {}, callback: false, validateCallback: false, add: false},
+      scopeModal: {title: "", data: {name: "", display_name: "", description: "", password_required: true, scheme: {}}, callback: false, add: false},
+      modUsers: [],
+      modClients: [],
+      modSchemes: [],
+      modPlugins: []
     }
 
     messageDispatcher.subscribe('App', (message) => {
@@ -78,7 +84,8 @@ class App extends Component {
             title: i18next.t("admin.edit-user-title", {user: message.user.name}),
             pattern: this.state.config.pattern.user,
             data: message.user,
-            callback: this.confirmEditUser
+            callback: this.confirmEditUser,
+            validateCallback: this.validateUser
           }
           this.setState({editModal: editModal}, () => {
             $("#editModal").modal({keyboard: false, show: true});
@@ -88,20 +95,20 @@ class App extends Component {
             title: i18next.t("admin.edit-client-title", {client: message.client.name}),
             pattern: this.state.config.pattern.client,
             data: message.client,
-            callback: this.confirmEditClient
+            callback: this.confirmEditClient,
+            validateCallback: this.validateClient
           }
           this.setState({editModal: editModal}, () => {
             $("#editModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'scope') {
-          var editModal = {
+          var scopeModal = {
             title: i18next.t("admin.edit-scope-title", {scope: message.scope.scope}),
-            pattern: this.state.config.pattern.scope,
             data: message.scope,
             callback: this.confirmEditScope
           }
-          this.setState({editModal: editModal}, () => {
-            $("#editModal").modal({keyboard: false, show: true});
+          this.setState({scopeModal: scopeModal}, () => {
+            $("#editScopeModal").modal({keyboard: false, show: true});
           });
         }
       } else if (message.type === 'add') {
@@ -111,6 +118,7 @@ class App extends Component {
             pattern: this.state.config.pattern.user,
             data: {},
             callback: this.confirmAddUser,
+            validateCallback: this.validateUser,
             add: true
           }
           this.setState({editModal: editModal}, () => {
@@ -122,27 +130,27 @@ class App extends Component {
             pattern: this.state.config.pattern.client,
             data: {},
             callback: this.confirmAddClient,
+            validateCallback: this.validateClient,
             add: true
           }
           this.setState({editModal: editModal}, () => {
             $("#editModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'scope') {
-          var editModal = {
+          var scopeModal = {
             title: i18next.t("admin.add-scope-title"),
-            pattern: this.state.config.pattern.scope,
-            data: {},
+            data: {name: "", display_name: "", description: "", password_required: true, scheme: {}},
             callback: this.confirmAddScope,
             add: true
           }
-          this.setState({editModal: editModal}, () => {
-            $("#editModal").modal({keyboard: false, show: true});
+          this.setState({scopeModal: scopeModal}, () => {
+            $("#editScopeModal").modal({keyboard: false, show: true});
           });
         }
       } else if (message.type === 'search') {
         if (message.role === 'user') {
           var users = this.state.users;
-          users.pattern = message.pattern;
+          users.searchPattern = message.searchPattern;
           users.offset = message.offset;
           users.limit = message.limit;
           this.setState({users: users}, () => {
@@ -150,7 +158,7 @@ class App extends Component {
           });
         } else if (message.role === 'client') {
           var clients = this.state.clients;
-          clients.pattern = message.pattern;
+          clients.searchPattern = message.searchPattern;
           clients.offset = message.offset;
           clients.limit = message.limit;
           this.setState({clients: clients}, () => {
@@ -158,7 +166,7 @@ class App extends Component {
           });
         } else if (message.role === 'scope') {
           var scopes = this.state.scopes;
-          scopes.pattern = message.pattern;
+          scopes.searchPattern = message.searchPattern;
           scopes.offset = message.offset;
           scopes.limit = message.limit;
           this.setState({scopes: scopes}, () => {
@@ -174,16 +182,23 @@ class App extends Component {
     this.confirmDeleteUser = this.confirmDeleteUser.bind(this);
     this.confirmEditUser = this.confirmEditUser.bind(this);
     this.confirmAddUser = this.confirmAddUser.bind(this);
+    this.validateUser = this.validateUser.bind(this);
 
     this.fetchClients = this.fetchClients.bind(this);
     this.confirmDeleteClient = this.confirmDeleteClient.bind(this);
     this.confirmEditClient = this.confirmEditClient.bind(this);
     this.confirmAddClient = this.confirmAddClient.bind(this);
+    this.validateClient = this.validateClient.bind(this);
 
     this.fetchScopes = this.fetchScopes.bind(this);
     this.confirmDeleteScope = this.confirmDeleteScope.bind(this);
     this.confirmEditScope = this.confirmEditScope.bind(this);
     this.confirmAddScope = this.confirmAddScope.bind(this);
+    
+    this.fetchUserMods = this.fetchUserMods.bind(this);
+    this.fetchClientMods = this.fetchClientMods.bind(this);
+    this.fetchAuthSchemes = this.fetchAuthSchemes.bind(this);
+    this.fetchPlugins = this.fetchPlugins.bind(this);
     
     this.fetchApi();
   }
@@ -195,9 +210,17 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-profile")});
       } else {
         this.setState({loggedIn: true}, () => {
-          this.fetchUsers();
-          this.fetchClients();
-          this.fetchScopes();
+          this.fetchUsers()
+          .always(() => {
+            this.fetchClients()
+            .always(() => {
+              this.fetchScopes();
+            });
+            this.fetchUserMods();
+            this.fetchClientMods();
+            this.fetchAuthSchemes();
+            this.fetchPlugins();
+          });
         });
       }
     })
@@ -209,32 +232,78 @@ class App extends Component {
   }
 
   fetchUsers() {
-    return apiManager.glewlwydRequest("/user?offset=" + this.state.users.offset + "&limit=" + this.state.users.limit + (this.state.users.pattern?"&pattern="+this.state.users.pattern:""))
+    return apiManager.glewlwydRequest("/user?offset=" + this.state.users.offset + "&limit=" + this.state.users.limit + (this.state.users.searchPattern?"&pattern="+this.state.users.searchPattern:""))
     .then((users) => {
       var curUsers = this.state.users;
       curUsers.list = users;
+      curUsers.pattern = this.state.config.pattern.user;
       this.setState({users: curUsers});
     });
   }
 
   fetchClients() {
-    return apiManager.glewlwydRequest("/client?offset=" + this.state.clients.offset + "&limit=" + this.state.clients.limit + (this.state.clients.pattern?"&pattern="+this.state.clients.pattern:""))
+    return apiManager.glewlwydRequest("/client?offset=" + this.state.clients.offset + "&limit=" + this.state.clients.limit + (this.state.clients.searchPattern?"&pattern="+this.state.clients.searchPattern:""))
     .then((clients) => {
       var curClients = this.state.clients;
       curClients.list = clients;
+      curClients.pattern = this.state.config.pattern.client;
       this.setState({clients: curClients});
     });
   }
 
   fetchScopes() {
-    return apiManager.glewlwydRequest("/scope?offset=" + this.state.scopes.offset + "&limit=" + this.state.scopes.limit + (this.state.scopes.pattern?"&pattern="+this.state.scopes.pattern:""))
+    return apiManager.glewlwydRequest("/scope?offset=" + this.state.scopes.offset + "&limit=" + this.state.scopes.limit + (this.state.scopes.searchPattern?"&pattern="+this.state.scopes.searchPattern:""))
     .then((scopes) => {
       var curScopes = this.state.scopes;
+      var scopeList = [];
+      var users = this.state.users;
+      var clients = this.state.clients;
       curScopes.list = scopes;
-      this.setState({scopes: curScopes});
+      scopes.forEach((scope) => {
+        scopeList.push(scope.name);
+      });
+      users.pattern.forEach((pat) => {
+        if (pat.name === "scope") {
+          pat.listElements = scopeList;
+        }
+      });
+      clients.pattern.forEach((pat) => {
+        if (pat.name === "scope") {
+          pat.listElements = scopeList;
+        }
+      });
+      this.setState({scopes: curScopes, users: users, clients: clients});
     });
   }
 
+  fetchUserMods () {
+    return apiManager.glewlwydRequest("/mod/user")
+    .then((modUsers) => {
+      this.setState({modUsers: modUsers});
+    });
+  }
+  
+  fetchClientMods () {
+    return apiManager.glewlwydRequest("/mod/client")
+    .then((modClients) => {
+      this.setState({modClients: modClients});
+    });
+  }
+  
+  fetchAuthSchemes () {
+    return apiManager.glewlwydRequest("/mod/scheme")
+    .then((modSchemes) => {
+      this.setState({modSchemes: modSchemes});
+    });
+  }
+  
+  fetchPlugins () {
+    return apiManager.glewlwydRequest("/mod/plugin")
+    .then((modPlugins) => {
+      this.setState({modPlugins: modPlugins});
+    });
+  }
+  
   confirmDeleteUser(result) {
     if (result) {
       apiManager.glewlwydRequest("/user/" + encodeURI(this.state.curUser.username), "DELETE")
@@ -244,9 +313,9 @@ class App extends Component {
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-user")});
       })
-      .done(() => {
+      .always(() => {
         this.fetchUsers()
-        .done(() => {
+        .always(() => {
           this.setState({confirmModal: {title: "", message: ""}}, () => {
             $("#confirmModal").modal("hide");
           });
@@ -268,9 +337,9 @@ class App extends Component {
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-client")});
       })
-      .done(() => {
+      .always(() => {
         this.fetchUsers()
-        .done(() => {
+        .always(() => {
           this.setState({confirmModal: {title: "", message: ""}}, () => {
             $("#confirmModal").modal("hide");
           });
@@ -295,9 +364,9 @@ class App extends Component {
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-set-user")});
       })
-      .done(() => {
+      .always(() => {
         this.fetchUsers()
-        .done(() => {
+        .always(() => {
           this.setState({editModal: {title: "", pattern: [], data: {}, callback: false}}, () => {
             $("#editModal").modal("hide");
           });
@@ -319,9 +388,9 @@ class App extends Component {
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-set-client")});
       })
-      .done(() => {
+      .always(() => {
         this.fetchUsers()
-        .done(() => {
+        .always(() => {
           this.setState({editModal: {title: "", pattern: [], data: {}, callback: false}}, () => {
             $("#editModal").modal("hide");
           });
@@ -339,30 +408,20 @@ class App extends Component {
 
   confirmAddUser(result, user) {
     if (result) {
-      apiManager.glewlwydRequest("/user/" + encodeURI(user.username))
+      apiManager.glewlwydRequest("/user/", "POST", user)
       .then(() => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-already-exists")});
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-user")});
       })
-      .fail((error) => {
-        if (error.status === 404) {
-          apiManager.glewlwydRequest("/user/", "POST", user)
-          .then(() => {
-            messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-user")});
-          })
-          .fail(() => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-user")});
-          })
-          .done(() => {
-            this.fetchUsers()
-            .done(() => {
-              this.setState({editModal: {title: "", pattern: [], data: {}, callback: false, add: false}}, () => {
-                $("#editModal").modal("hide");
-              });
-            });
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-user")});
+      })
+      .always(() => {
+        this.fetchUsers()
+        .always(() => {
+          this.setState({editModal: {title: "", pattern: [], data: {}, callback: false, add: false}}, () => {
+            $("#editModal").modal("hide");
           });
-        } else {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-user")});
-        }
+        });
       });
     } else {
       this.setState({editModal: {title: "", pattern: [], data: {}, callback: false, add: false}}, () => {
@@ -386,9 +445,9 @@ class App extends Component {
           .fail(() => {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-client")});
           })
-          .done(() => {
-            this.fetchUsers()
-            .done(() => {
+          .always(() => {
+            this.fetchClients()
+            .always(() => {
               this.setState({editModal: {title: "", pattern: [], data: {}, callback: false, add: false}}, () => {
                 $("#editModal").modal("hide");
               });
@@ -406,6 +465,85 @@ class App extends Component {
   }
 
   confirmAddScope(result, scope) {
+  }
+
+  validateUser(user, confirmData, add, cb) {
+    var result = true, data = {};
+    if (add) {
+      if (user.password || confirmData.password) {
+        if (user.password !== confirmData.password) {
+          result = false;
+          data["password"] = i18next.t("admin.user-password-error-match");
+        } else if (user.password.length < 8) {
+          result = false;
+          data["password"] = i18next.t("admin.user-password-error-invalid");
+        }
+      } else if (!user.password) {
+        result = false;
+        data["password"] = i18next.t("admin.user-password-mandatory");
+      }
+      if (!user.username) {
+        result = false;
+        data["username"] = i18next.t("admin.user-username-mandatory");
+        cb(result, data);
+      } else {
+        apiManager.glewlwydRequest("/user/" + encodeURI(user.username))
+        .then(() => {
+          result = false;
+          data["username"] = i18next.t("admin.user-username-exists");
+        })
+        .always(() => {
+          cb(result, data);
+        });
+      }
+    } else {
+      if (user.password || confirmData.password) {
+        if (user.password !== confirmData.password) {
+          result = false;
+          data["password"] = i18next.t("admin.user-password-error-match");
+        } else if (user.password.length < 8) {
+          result = false;
+          data["password"] = i18next.t("admin.user-password-error-invalid");
+        }
+      }
+      cb(result, data);
+    }
+  }
+
+  validateClient(client, confirmData, add, cb) {
+    var result = true, data = {};
+    if (client.confidential) {
+      if (client.password || confirmData.password) {
+        if (client.password !== confirmData.password) {
+          result = false;
+          data["password"] = i18next.t("admin.user-password-error-match");
+        } else if (client.password.length < 8) {
+          result = false;
+          data["password"] = i18next.t("admin.user-password-error-invalid");
+        }
+      } else if (!client.password && add) {
+        result = false;
+        data["password"] = i18next.t("admin.user-password-mandatory");
+      }
+    }
+    if (add) {
+      if (!client.client_id) {
+        result = false;
+        data["client_id"] = i18next.t("admin.client-client-id-mandatory");
+        cb(result, data);
+      } else {
+        apiManager.glewlwydRequest("/client/" + encodeURI(client.client_id))
+        .then(() => {
+          result = false;
+          data["client_id"] = i18next.t("admin.client-client-id-exists");
+        })
+        .always(() => {
+          cb(result, data);
+        });
+      }
+    } else {
+      cb(result, data);
+    }
   }
 
 	render() {
@@ -435,7 +573,7 @@ class App extends Component {
                   <ClientsMod />
                 </div>
                 <div className={"carousel-item" + (this.state.curNav==="auth-schemes"?" active":"")}>
-                  <AuthSchemes />
+                  <AuthScheme />
                 </div>
                 <div className={"carousel-item" + (this.state.curNav==="plugins"?" active":"")}>
                   <Plugins />
@@ -445,7 +583,8 @@ class App extends Component {
           </div>
         </div>
         <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
-        <Edit title={this.state.editModal.title} pattern={this.state.editModal.pattern} data={this.state.editModal.data} callback={this.state.editModal.callback} add={this.state.editModal.add} />
+        <Edit title={this.state.editModal.title} pattern={this.state.editModal.pattern} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
+        <ScopeEdit scope={this.state.scopeModal.data} add={this.state.scopeModal.add} modSchemes={this.state.modSchemes} callback={this.state.scopeModal.callback} />
       </div>
 		);
 	}
