@@ -124,8 +124,7 @@ json_t * get_auth_scheme_list_from_scope(struct config_elements * config, const 
 `gsg_name` AS group_name, \
 `guasmi_module` AS scheme_type, \
 `guasmi_name` AS scheme_name, \
-`guasmi_display_name` AS scheme_display_name, \
-`gsgasmi_max_use` AS max_use \
+`guasmi_display_name` AS scheme_display_name \
 FROM \
 `" GLEWLWYD_TABLE_SCOPE_GROUP "`, \
 `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE "`, \
@@ -156,7 +155,7 @@ ORDER BY \
                 json_object_set_new(json_object_get(j_return, "scheme"), json_string_value(json_object_get(j_element, "group_name")), json_array());
               }
               if (json_object_get(json_object_get(j_return, "scheme"), json_string_value(json_object_get(j_element, "group_name"))) != NULL) {
-                json_array_append_new(json_object_get(json_object_get(j_return, "scheme"), json_string_value(json_object_get(j_element, "group_name"))), json_pack("{sssssssI}", "scheme_type", json_string_value(json_object_get(j_element, "scheme_type")), "scheme_name", json_string_value(json_object_get(j_element, "scheme_name")), "scheme_display_name", json_string_value(json_object_get(j_element, "scheme_display_name")), "max_use", json_integer_value(json_object_get(j_element, "max_use"))));
+                json_array_append_new(json_object_get(json_object_get(j_return, "scheme"), json_string_value(json_object_get(j_element, "group_name"))), json_pack("{ssssss}", "scheme_type", json_string_value(json_object_get(j_element, "scheme_type")), "scheme_name", json_string_value(json_object_get(j_element, "scheme_name")), "scheme_display_name", json_string_value(json_object_get(j_element, "scheme_display_name"))));
               }
             }
           } else {
@@ -369,7 +368,7 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
                   scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_name")));
                   if (scheme != NULL) {
                     if (scheme->enabled && scheme->module->user_can_use_scheme(json_string_value(json_object_get(json_object_get(j_user, "user"), "username")), scheme->cls)) {
-                      json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, json_integer_value(json_object_get(j_scheme, "max_use")), session_hash)?json_true():json_false());
+                      json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, scheme->guasmi_max_use, session_hash)?json_true():json_false());
                     } else {
                       json_array_append_new(j_scheme_remove, json_integer(index_scheme));
                     }
@@ -722,9 +721,6 @@ json_t * is_scope_valid(struct config_elements * config, const char * scope, jso
                     y_log_message(Y_LOG_LEVEL_ERROR, "is_scope_valid - Error get_user_auth_scheme_module");
                   }
                   json_decref(j_module);
-                  if (json_object_get(j_scheme, "max_use") != NULL && (!json_is_integer(json_object_get(j_scheme, "max_use")) || json_integer_value(json_object_get(j_scheme, "max_use")) < 0)) {
-                    json_array_append_new(j_array, json_string("max_use must be a zero or positive integer"));
-                  }
                 }
               }
             }
@@ -775,7 +771,7 @@ static int add_scope_scheme_groups(struct config_elements * config, const char *
         json_array_foreach(j_scope_group, index, j_scheme_module) {
           scheme_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_scheme_module, "scheme_name")));
           scheme_module_clause = msprintf("(SELECT `guasmi_id` FROM `" GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE "` WHERE `guasmi_name`='%s')", scheme_escaped);
-          j_query = json_pack("{sss{sOs{ss}sI}}",
+          j_query = json_pack("{sss{sOs{ss}}}",
                               "table",
                               GLEWLWYD_TABLE_SCOPE_GROUP_AUTH_SCHEME_MODULE_INSTANCE,
                               "values",
@@ -783,9 +779,7 @@ static int add_scope_scheme_groups(struct config_elements * config, const char *
                                 j_scope_group_id,
                                 "guasmi_id",
                                   "raw",
-                                  scheme_module_clause,
-                                "gsgasmi_max_use",
-                                json_object_get(j_scheme_module, "max_use")!=NULL?json_integer_value(json_object_get(j_scheme_module, "max_use")):0);
+                                  scheme_module_clause);
           o_free(scheme_module_clause);
           o_free(scheme_escaped);
           res = h_insert(config->conn, j_query, NULL);

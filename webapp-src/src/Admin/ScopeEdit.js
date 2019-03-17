@@ -69,7 +69,7 @@ class ScopeEdit extends Component {
       }
       group = "" + i;
     }
-    var newScheme = {scheme_name: scheme_name, max_use: 0}
+    var newScheme = {scheme_name: scheme_name}
     this.state.modSchemes.forEach((modScheme) => {
       if (modScheme.scheme_name === scheme_name) {
         newScheme.scheme_type = modScheme.scheme_type;
@@ -109,9 +109,6 @@ class ScopeEdit extends Component {
       var iScheme = 0;
       this.state.scope.scheme[groupName].forEach((scheme, index) => {
         var maxUse = "";
-        if (scheme.max_use) {
-          maxUse = " (" + scheme.max_use + ")";
-        }
         // Add badge or
         if (schemeList.length) {
           schemeList.push(<span className="badge badge-secondary btn-icon-right" key={iScheme++}>{i18next.t("admin.or")}</span>);

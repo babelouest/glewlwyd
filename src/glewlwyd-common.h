@@ -160,6 +160,7 @@ struct _user_auth_scheme_module_instance {
   struct _user_auth_scheme_module * module;
   json_int_t                        guasmi_id;
   json_int_t                        guasmi_expiration;
+  json_int_t                        guasmi_max_use;
   void                            * cls;
   short int                         enabled;
 };
