@@ -80,7 +80,7 @@ json_t * glewlwyd_callback_check_session_valid(struct config_plugin * config, co
   char * session_uid = get_session_id(config->glewlwyd_config, request);
   
   if (config != NULL && request != NULL && o_strlen(scope_list)) {
-    j_user = get_user_for_session(config->glewlwyd_config, session_uid);
+    j_user = get_current_user_for_session(config->glewlwyd_config, session_uid);
     // Check if session is valid
     if (check_result_value(j_user, G_OK)) {
       // For all allowed scope, check that the current session has a valid session
@@ -97,7 +97,7 @@ json_t * glewlwyd_callback_check_session_valid(struct config_plugin * config, co
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_session_valid - Error get_user_for_session");
+      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_session_valid - Error get_current_user_for_session");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     json_decref(j_user);

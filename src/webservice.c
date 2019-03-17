@@ -62,7 +62,7 @@ int callback_glewlwyd_check_user_session (const struct _u_request * request, str
   int ret;
   
   if ((session_uid = get_session_id(config, request)) != NULL) {
-    j_user = get_user_for_session(config, session_uid);
+    j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       response->shared_data = json_deep_copy(json_object_get(j_user, "user"));
       ret = U_CALLBACK_CONTINUE;
@@ -85,13 +85,17 @@ int callback_glewlwyd_check_admin_session (const struct _u_request * request, st
   size_t index;
   
   if ((session_uid = get_session_id(config, request)) != NULL) {
-    j_user = get_user_for_session(config, session_uid);
+    j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       ret = U_CALLBACK_UNAUTHORIZED;
       json_array_foreach(json_object_get(json_object_get(j_user, "user"), "scope"), index, j_element) {
         if (0 == o_strcmp(json_string_value(j_element), config->admin_scope)) {
-          response->shared_data = json_deep_copy(json_object_get(j_user, "user"));
-          ret = U_CALLBACK_CONTINUE;
+          if (is_scope_list_valid_for_session(config, config->admin_scope, session_uid) == G_OK) {
+            response->shared_data = json_deep_copy(json_object_get(j_user, "user"));
+            ret = U_CALLBACK_CONTINUE;
+          } else {
+            ret = U_CALLBACK_UNAUTHORIZED;
+          }
         }
       }
     } else {
@@ -255,7 +259,7 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
     if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
       response->status = 404;
     } else if (!check_result_value(j_session, G_OK)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error get_user_for_session");
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error get_current_user_for_session");
       response->status = 500;
     } else {
       if (u_map_get(request->map_url, "username") != NULL) {
@@ -1414,7 +1418,7 @@ int callback_glewlwyd_user_get_profile (const struct _u_request * request, struc
       response->status = 401;
       ulfius_add_cookie_to_response(response, config->session_key, "", NULL, -1, NULL, NULL, 0, 0);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_get_session - Error get_user_for_session");
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_get_session - Error get_current_user_for_session");
       response->status = 500;
     }
     json_decref(j_session);
@@ -1433,7 +1437,7 @@ int callback_glewlwyd_user_update_profile (const struct _u_request * request, st
   char * session_uid = get_session_id(config, request);
 
   if (session_uid != NULL && o_strlen(session_uid)) {
-    j_session = get_user_for_session(config, session_uid);
+    j_session = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_session, G_OK)) {
       j_profile = ulfius_get_json_body_request(request, NULL);
       if (j_profile != NULL && json_is_object(j_profile)) {
@@ -1450,7 +1454,7 @@ int callback_glewlwyd_user_update_profile (const struct _u_request * request, st
       }
       json_decref(j_profile);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_update_profile - Error get_user_for_session");
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_update_profile - Error get_current_user_for_session");
       response->status = 500;
     }
     json_decref(j_session);

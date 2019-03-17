@@ -344,6 +344,41 @@ static int is_scheme_valid_for_session(struct config_elements * config, json_int
   return ret;
 }
 
+int is_scope_list_valid_for_session(struct config_elements * config, const char * scope_list, const char * session_uid) {
+  json_t * j_validated_scope_list = get_validated_auth_scheme_list_from_scope_list(config, scope_list, session_uid), * j_scope, * j_group, * j_scheme;
+  int ret = G_OK, ret_group;
+  size_t index_scope, index_scheme;
+  const char * key_group;
+  
+  if (check_result_value(j_validated_scope_list, G_OK)) {
+    json_array_foreach(json_object_get(j_validated_scope_list, "scheme"), index_scope, j_scope) {
+      if (ret == G_OK) {
+        if (json_object_get(j_scope, "password_required") == json_true() && json_object_get(j_scope, "password_authenticated") == json_false()) {
+          ret = G_ERROR_UNAUTHORIZED;
+        } else {
+          json_object_foreach(json_object_get(j_scope, "schemes"), key_group, j_group) {
+            ret_group = G_ERROR_UNAUTHORIZED;
+            json_array_foreach(j_group, index_scheme, j_scheme) {
+              if (json_object_get(j_scheme, "scheme_authenticated") == json_true()) {
+                ret_group = G_OK;
+              }
+            }
+            if (ret_group == G_ERROR_UNAUTHORIZED) {
+              ret = G_ERROR_UNAUTHORIZED;
+            }
+          }
+        }
+      }
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "is_scope_list_valid_for_session - Error get_validated_auth_scheme_list_from_scope_list");
+    ret = G_ERROR;
+  }
+  json_decref(j_validated_scope_list);
+  
+  return ret;
+}
+
 json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list, const char * session_uid) {
   char * session_hash = generate_hash(config->hash_algorithm, session_uid);
   json_t * j_scheme_list = get_auth_scheme_list_from_scope_list(config, scope_list), * j_cur_scope, * j_scope, * j_scheme, * j_group, * j_user = get_current_user_from_session(config, session_uid), * j_scheme_remove;
