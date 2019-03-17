@@ -353,7 +353,7 @@ int is_scope_list_valid_for_session(struct config_elements * config, const char 
   if (check_result_value(j_validated_scope_list, G_OK)) {
     json_array_foreach(json_object_get(j_validated_scope_list, "scheme"), index_scope, j_scope) {
       if (ret == G_OK) {
-        if (json_object_get(j_scope, "password_required") == json_true() && json_object_get(j_scope, "password_authenticated") == json_false()) {
+        if (json_object_get(j_scope, "available") == json_true() && json_object_get(j_scope, "password_required") == json_true() && json_object_get(j_scope, "password_authenticated") == json_false()) {
           ret = G_ERROR_UNAUTHORIZED;
         } else {
           json_object_foreach(json_object_get(j_scope, "schemes"), key_group, j_group) {
