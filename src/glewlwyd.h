@@ -149,7 +149,7 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
 // Session
 int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * username, const char * scheme_type, const char * scheme_name);
 json_t * get_session_for_username(struct config_elements * config, const char * session_uid, const char * username);
-json_t * get_user_for_session(struct config_elements * config, const char * session_uid);
+json_t * get_current_user_for_session(struct config_elements * config, const char * session_uid);
 json_t * get_users_for_session(struct config_elements * config, const char * session_uid);
 int user_session_delete(struct config_elements * config, const char * session_uid, const char * username);
 char * get_session_id(struct config_elements * config, const struct _u_request * request);
@@ -167,6 +167,7 @@ json_t * auth_check_client_credentials(struct config_elements * config, const ch
 json_t * get_auth_scheme_list_from_scope(struct config_elements * config, const char * scope);
 json_t * get_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list);
 json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list, const char * session_uid);
+int is_scope_list_valid_for_session(struct config_elements * config, const char * scope_list, const char * session_uid);
 json_t * get_client_user_scope_grant(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
 json_t * get_granted_scopes_for_client(struct config_elements * config, json_t * j_user, const char * client_id, const char * scope_list);
 int set_granted_scopes_for_client(struct config_elements * config, json_t * j_user, const char * client_id, const char * scope_list);

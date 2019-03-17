@@ -192,7 +192,7 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
   return j_return;
 }
 
-json_t * get_user_for_session(struct config_elements * config, const char * session_uid) {
+json_t * get_current_user_for_session(struct config_elements * config, const char * session_uid) {
   json_t * j_query, * j_result, * j_return;
   int res;
   char * expire_clause, * session_uid_hash;
