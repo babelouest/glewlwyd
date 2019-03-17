@@ -2,11 +2,12 @@
 
 ## 2.0.0
 
-- Massive rework for the better
+- Massive rework for the better good
 - Introduction of modules to handle different backend users, clients and authentication scheme
   - Backends: Database, LDAP or HTTP authentication
   - Schemes: password, HOTP/TOTP, e-mail verification
 - Introduction of modules to handle different authentication frameworks (OAuth2, OpenID, SAML, etc.)
+- Introduction of plugins to handle authentication workflows (OAuth2, OpenID connect, SAML, etc.)
 
 ## 1.4.9
 
