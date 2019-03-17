@@ -1,8 +1,8 @@
-# Glewlwyd Oauth 2 authentication server
+# Glewlwyd SSO server
 
 [![Build Status](https://travis-ci.com/babelouest/glewlwyd.svg?branch=master)](https://travis-ci.com/babelouest/glewlwyd)
 
-Single Sign On [Oauth 2](https://oauth.net/2/) authentication server.
+Single Sign On authentication server.
 
 This is the development branch for the next release 2.0. The next release is currently under development.
 
