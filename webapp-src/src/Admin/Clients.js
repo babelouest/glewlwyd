@@ -74,10 +74,10 @@ class Clients extends Component {
         <td>{(client.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
         <td>
           <div className="btn-group pull-right" role="group">
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.editClient(e, client)} title={i18next.t("admin.client-edit")}>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.editClient(e, client)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
             </button>
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteClient(e, client)} title={i18next.t("admin.client-delete")}>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteClient(e, client)} title={i18next.t("admin.delete")}>
               <i className="fas fa-trash"></i>
             </button>
           </div>

@@ -75,10 +75,10 @@ class Users extends Component {
         <td>{(user.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
         <td>
           <div className="btn-group" role="group">
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.editUser(e, user)} title={i18next.t("admin.user-edit")}>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.editUser(e, user)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
             </button>
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteUser(e, user)} title={i18next.t("admin.user-delete")}>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteUser(e, user)} title={i18next.t("admin.delete")}>
               <i className="fas fa-trash"></i>
             </button>
           </div>

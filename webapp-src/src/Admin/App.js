@@ -11,11 +11,12 @@ import Navbar from './Navbar';
 import Users from './Users';
 import Clients from './Clients';
 import Scopes from './Scopes';
-import UsersMod from './UsersMod';
-import ClientsMod from './ClientsMod';
+import UserMod from './UserMod';
+import ClientMod from './ClientMod';
 import AuthScheme from './AuthScheme';
-import Plugins from './Plugins';
+import Plugin from './Plugin';
 import ScopeEdit from './ScopeEdit';
+import UserModEdit from './UserModEdit';
 
 class App extends Component {
   constructor(props) {
@@ -35,9 +36,14 @@ class App extends Component {
       editModal: {title: "", pattern: [], data: {}, callback: false, validateCallback: false, add: false},
       scopeModal: {title: "", data: {name: "", display_name: "", description: "", password_required: true, scheme: {}}, callback: false, add: false},
       modUsers: [],
+      UserModModal: {title: "", data: {}, modTypes: [], add: false, callback: false},
       modClients: [],
+      ClientModModal: {title: "", data: {}, modTypes: [], add: false, callback: false},
       modSchemes: [],
-      modPlugins: []
+      SchemeModModal: {title: "", data: {}, modTypes: [], add: false, callback: false},
+      modPlugins: [],
+      PluginModModal: {title: "", data: {}, modTypes: [], add: false, callback: false},
+      modTypes: {user: [], client: [], scheme: [], plugin: []}
     }
 
     messageDispatcher.subscribe('App', (message) => {
@@ -195,6 +201,7 @@ class App extends Component {
     this.confirmEditScope = this.confirmEditScope.bind(this);
     this.confirmAddScope = this.confirmAddScope.bind(this);
     
+    this.fetchModTypes = this.fetchModTypes.bind(this);
     this.fetchUserMods = this.fetchUserMods.bind(this);
     this.fetchClientMods = this.fetchClientMods.bind(this);
     this.fetchAuthSchemes = this.fetchAuthSchemes.bind(this);
@@ -216,6 +223,7 @@ class App extends Component {
             .always(() => {
               this.fetchScopes();
             });
+            this.fetchModTypes();
             this.fetchUserMods();
             this.fetchClientMods();
             this.fetchAuthSchemes();
@@ -280,6 +288,14 @@ class App extends Component {
     return apiManager.glewlwydRequest("/mod/user")
     .then((modUsers) => {
       this.setState({modUsers: modUsers});
+    });
+  }
+  
+
+  fetchModTypes () {
+    return apiManager.glewlwydRequest("/mod/type")
+    .then((modTypes) => {
+      this.setState({modTypes: modTypes});
     });
   }
   
@@ -353,6 +369,27 @@ class App extends Component {
   }
 
   confirmDeleteScope(result) {
+    if (result) {
+      apiManager.glewlwydRequest("/scope/" + encodeURI(this.state.curScope.name), "DELETE")
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-scope")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-scope")});
+      })
+      .always(() => {
+        this.fetchScopes()
+        .always(() => {
+          this.setState({confirmModal: {title: "", message: ""}}, () => {
+            $("#confirmModal").modal("hide");
+          });
+        });
+      });
+    } else {
+      this.setState({confirmModal: {title: "", message: ""}}, () => {
+        $("#confirmModal").modal("hide");
+      });
+    }
   }
 
   confirmEditUser(result, user) {
@@ -404,6 +441,27 @@ class App extends Component {
   }
 
   confirmEditScope(result, scope) {
+    if (result) {
+      apiManager.glewlwydRequest("/scope/" + encodeURI(scope.name), "PUT", scope)
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-set-scope")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-set-scope")});
+      })
+      .always(() => {
+        this.fetchScopes()
+        .always(() => {
+          this.setState({scopeModal: {data: {}, callback: false}}, () => {
+            $("#editScopeModal").modal("hide");
+          });
+        });
+      });
+    } else {
+      this.setState({scopeModal: {data: {}, callback: false}}, () => {
+        $("#editScopeModal").modal("hide");
+      });
+    }
   }
 
   confirmAddUser(result, user) {
@@ -431,40 +489,39 @@ class App extends Component {
   }
 
   confirmAddClient(result, client) {
-    if (result) {
-      apiManager.glewlwydRequest("/client/" + encodeURI(client.client_id))
-      .then(() => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-already-exists")});
-      })
-      .fail((error) => {
-        if (error.status === 404) {
-          apiManager.glewlwydRequest("/client/", "POST", client)
-          .then(() => {
-            messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-client")});
-          })
-          .fail(() => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-client")});
-          })
-          .always(() => {
-            this.fetchClients()
-            .always(() => {
-              this.setState({editModal: {title: "", pattern: [], data: {}, callback: false, add: false}}, () => {
-                $("#editModal").modal("hide");
-              });
-            });
-          });
-        } else {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-client")});
-        }
+    apiManager.glewlwydRequest("/client/", "POST", client)
+    .then(() => {
+      messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-client")});
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-client")});
+    })
+    .always(() => {
+      this.fetchClients()
+      .always(() => {
+        this.setState({editModal: {title: "", pattern: [], data: {}, callback: false, add: false}}, () => {
+          $("#editModal").modal("hide");
+        });
       });
-    } else {
-      this.setState({editModal: {title: "", pattern: [], data: {}, callback: false, add: false}}, () => {
-        $("#editModal").modal("hide");
-      });
-    }
+    });
   }
 
   confirmAddScope(result, scope) {
+    apiManager.glewlwydRequest("/scope/", "POST", scope)
+    .then(() => {
+      messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-scope")});
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-scope")});
+    })
+    .always(() => {
+      this.fetchScopes()
+      .always(() => {
+        this.setState({scopeModal: {data: {}, callback: false}}, () => {
+          $("#editScopeModal").modal("hide");
+        });
+      });
+    });
   }
 
   validateUser(user, confirmData, add, cb) {
@@ -567,16 +624,16 @@ class App extends Component {
                   <Scopes config={this.state.config} scopes={this.state.scopes} />
                 </div>
                 <div className={"carousel-item" + (this.state.curNav==="users-mod"?" active":"")}>
-                  <UsersMod />
+                  <UserMod mods={this.state.modUsers} />
                 </div>
                 <div className={"carousel-item" + (this.state.curNav==="clients-mod"?" active":"")}>
-                  <ClientsMod />
+                  <ClientMod />
                 </div>
                 <div className={"carousel-item" + (this.state.curNav==="auth-schemes"?" active":"")}>
                   <AuthScheme />
                 </div>
                 <div className={"carousel-item" + (this.state.curNav==="plugins"?" active":"")}>
-                  <Plugins />
+                  <Plugin />
                 </div>
               </div>
             </div>
@@ -585,6 +642,7 @@ class App extends Component {
         <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
         <Edit title={this.state.editModal.title} pattern={this.state.editModal.pattern} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
         <ScopeEdit scope={this.state.scopeModal.data} add={this.state.scopeModal.add} modSchemes={this.state.modSchemes} callback={this.state.scopeModal.callback} />
+        <UserModEdit title={this.state.UserModModal.title} mod={this.state.UserModModal.data} add={this.state.UserModModal.add} modTypes={this.state.modTypes.user} callback={this.state.UserModModal.callback} />
       </div>
 		);
 	}
