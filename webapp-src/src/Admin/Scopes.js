@@ -16,9 +16,6 @@ class Scopes extends Component {
       limit: 20
     }
 
-    messageDispatcher.subscribe('Scopes', (message) => {
-    });
-
     this.addScope = this.addScope.bind(this);
     this.editScope = this.editScope.bind(this);
     this.deleteScope = this.deleteScope.bind(this);
@@ -76,10 +73,10 @@ class Scopes extends Component {
         <td>{scope.description||""}</td>
         <td>
           <div className="btn-group" role="group">
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.editScope(e, scope)} title={i18next.t("admin.scope-edit")}>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.editScope(e, scope)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
             </button>
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteScope(e, scope)} title={i18next.t("admin.scope-delete")}>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteScope(e, scope)} title={i18next.t("admin.delete")}>
               <i className="fas fa-trash"></i>
             </button>
           </div>

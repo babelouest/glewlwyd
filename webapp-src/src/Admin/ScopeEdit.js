@@ -9,7 +9,7 @@ class ScopeEdit extends Component {
       scope: props.scope,
       add: props.add,
       modSchemes: props.modSchemes,
-      cb: props.cb
+      callback: props.callback
     }
 
     this.closeModal = this.closeModal.bind(this);
@@ -26,12 +26,24 @@ class ScopeEdit extends Component {
       scope: nextProps.scope,
       add: nextProps.add,
       modSchemes: nextProps.modSchemes,
-      cb: nextProps.cb
+      callback: nextProps.callback
     });
   }
 
   closeModal(e, result) {
-    if (this.state.cb) {
+    var scope = this.state.scope;
+    if (result) {
+      if (this.state.callback) {
+        if (scope.name) {
+          if (!scope.display_name) {
+            delete(scope.display_name);
+          }
+          if (!scope.description) {
+            delete(scope.description);
+          }
+          this.state.callback(result, scope);
+        }
+      }
     }
   }
   
@@ -68,12 +80,13 @@ class ScopeEdit extends Component {
         i++;
       }
       group = "" + i;
+      scope.scheme[group] = [];
     }
     var newScheme = {scheme_name: scheme_name}
     this.state.modSchemes.forEach((modScheme) => {
-      if (modScheme.scheme_name === scheme_name) {
-        newScheme.scheme_type = modScheme.scheme_type;
-        newScheme.scheme_display_name = modScheme.scheme_display_name;
+      if (modScheme.name === scheme_name) {
+        newScheme.scheme_type = modScheme.module;
+        newScheme.scheme_display_name = modScheme.display_name;
       }
     });
     scope.scheme[group].push(newScheme);
@@ -141,7 +154,6 @@ class ScopeEdit extends Component {
       }
       groupList.push(<div className="card" style={{width: 18 + 'rem'}} key={i++}>
         <div className="card-body">
-          <h5 className="card-title">{groupName}</h5>
           {schemeList}
         </div>
       </div>);
@@ -174,15 +186,15 @@ class ScopeEdit extends Component {
             <form className="needs-validation" noValidate>
               <div className="form-group">
                 <label htmlFor="scope-name">{i18next.t("admin.scope-name")}</label>
-                <input type="text" className="form-control" id="scope-name" placeholder={i18next.t("admin.scope-name-ph")} value={this.state.scope.name} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
+                <input type="text" className="form-control" id="scope-name" placeholder={i18next.t("admin.scope-name-ph")} maxLength="128" value={this.state.scope.name} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
               </div>
               <div className="form-group">
                 <label htmlFor="scope-display-name">{i18next.t("admin.scope-display-name")}</label>
-                <input type="text" className="form-control" id="scope-display-name" placeholder={i18next.t("admin.scope-display-name-ph")} value={this.state.scope.display_name} onChange={(e) => this.changeDisplayName(e)}/>
+                <input type="text" className="form-control" id="scope-display-name" placeholder={i18next.t("admin.scope-display-name-ph")} maxLength="256" value={this.state.scope.display_name} onChange={(e) => this.changeDisplayName(e)}/>
               </div>
               <div className="form-group">
                 <label htmlFor="scope-description">{i18next.t("admin.scope-description")}</label>
-                <input type="text" className="form-control" id="scope-description" placeholder={i18next.t("admin.scope-description-ph")} value={this.state.scope.description} onChange={(e) => this.changeDescription(e)}/>
+                <input type="text" className="form-control" id="scope-description" placeholder={i18next.t("admin.scope-description-ph")} maxLength="512" value={this.state.scope.description} onChange={(e) => this.changeDescription(e)}/>
               </div>
               <hr/>
               <div className="form-group">

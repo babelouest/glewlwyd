@@ -2,22 +2,22 @@ import React, { Component } from 'react';
 
 import messageDispatcher from '../lib/MessageDispatcher';
 
-class Plugins extends Component {
+class ClientMod extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
     }
 
-    messageDispatcher.subscribe('Plugins', (message) => {
+    messageDispatcher.subscribe('ClientsMod', (message) => {
     });
   }
   
 	render() {
 		return (
-"Plugins"
+"ClientsMod"
 		);
 	}
 }
 
-export default Plugins;
+export default ClientMod;
