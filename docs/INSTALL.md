@@ -44,14 +44,14 @@ Then, you must initialise your database, setup your jwt key and setup your `glew
 You can install Glewlwyd with a pre-compiled package available in the [release pages](https://github.com/babelouest/glewlwyd/releases/latest/). The package files `glewlwyd-full_*` contain the package libraries of `orcania`, `yder`, `ulfius` and `hoel` pre-compiled for `glewlwyd`, plus `glewlwyd` package. To install a pre-compiled package, you need to have installed the following libraries:
 
 ```
-libmicrohttpd
-libjansson
+libmicrohttpd >= 0.9.38
+libjansson >= 2.4
 libcurl-gnutls
 uuid
 libldap2
 libmariadbclient
 libsqlite3
-libconfig
+libconfig >= 1.4
 libgnutls
 libssl
 ```
@@ -110,14 +110,14 @@ You must install the following libraries including their header files:
 
 ```
 libsystemd
-libmicrohttpd
-libjansson
+libmicrohttpd >= 0.9.38
+libjansson >= 2.4
 libcurl-gnutls
 uuid
 libldap2
 libmariadbclient
 libsqlite3
-libconfig
+libconfig >= 1.4
 libgnutls
 libssl
 libsystemd
