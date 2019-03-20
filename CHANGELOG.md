@@ -3,6 +3,7 @@
 ## 1.4.10
 
 - Fix bug on state value sent back not url re-encoded
+- Check libconfig >= 1.4
 
 ## 1.4.9
 
