@@ -68,7 +68,7 @@ class ClientMod extends Component {
     <table className="table table-responsive table-striped">
       <thead>
         <tr>
-          <th colSpan="4">
+          <th colSpan="5">
             <h4>{i18next.t("admin.client-mod-list-title")}</h4>
           </th>
           <th colSpan="1">

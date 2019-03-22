@@ -66,7 +66,7 @@ class Plugin extends Component {
     <table className="table table-responsive table-striped">
       <thead>
         <tr>
-          <th colSpan="4">
+          <th colSpan="3">
             <h4>{i18next.t("admin.scheme-mod-list-title")}</h4>
           </th>
           <th colSpan="1">
