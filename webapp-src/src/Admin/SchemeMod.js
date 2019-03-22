@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 
 import messageDispatcher from '../lib/MessageDispatcher';
 
-class Plugin extends Component {
+class SchemeMod extends Component {
   constructor(props) {
     super(props);
 
@@ -26,15 +26,15 @@ class Plugin extends Component {
   }
 
   addMod(e) {
-    messageDispatcher.sendMessage('App', {type: "add", role: "plugin"});
+    messageDispatcher.sendMessage('App', {type: "add", role: "schemeMod"});
   }
 
   editMod(e, mod) {
-    messageDispatcher.sendMessage('App', {type: "edit", role: "plugin", mod: mod});
+    messageDispatcher.sendMessage('App', {type: "edit", role: "schemeMod", mod: mod});
   }
 
   deleteMod(e, mod) {
-    messageDispatcher.sendMessage('App', {type: "delete", role: "plugin", mod: mod});
+    messageDispatcher.sendMessage('App', {type: "delete", role: "schemeMod", mod: mod});
   }
 
 	render() {
@@ -97,4 +97,4 @@ class Plugin extends Component {
 	}
 }
 
-export default Plugin;
+export default SchemeMod;

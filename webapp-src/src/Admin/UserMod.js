@@ -10,7 +10,7 @@ class UserMod extends Component {
       config: props.config,
       mods: props.mods,
       curMod: {},
-      add: false
+      types: props.types
     }
 
     this.addMod = this.addMod.bind(this);
@@ -20,7 +20,8 @@ class UserMod extends Component {
   
   componentWillReceiveProps(nextProps) {
     this.setState({
-      mods: nextProps.mods
+      mods: nextProps.mods,
+      types: nextProps.types
     });
   }
 
@@ -39,17 +40,24 @@ class UserMod extends Component {
 	render() {
     var mods = [];
     this.state.mods.forEach((mod, index) => {
+      var module = "";
+      this.state.types.forEach((type) => {
+        if (mod.module === type.name) {
+          module = type.display_name;
+        }
+      });
       mods.push(<tr key={index}>
         <td>{mod.order_rank}</td>
+        <td>{module}</td>
         <td>{mod.name}</td>
         <td>{mod.display_name||""}</td>
         <td>{(mod.readonly?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
         <td>
           <div className="btn-group" role="group">
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.editScope(e, mod)} title={i18next.t("admin.edit")}>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.editMod(e, mod)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
             </button>
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteScope(e, mod)} title={i18next.t("admin.delete")}>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteMod(e, mod)} title={i18next.t("admin.delete")}>
               <i className="fas fa-trash"></i>
             </button>
           </div>
@@ -60,13 +68,21 @@ class UserMod extends Component {
     <table className="table table-responsive table-striped">
       <thead>
         <tr>
-          <th colSpan="5">
+          <th colSpan="4">
             <h4>{i18next.t("admin.user-mod-list-title")}</h4>
+          </th>
+          <th colSpan="1">
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.addMod(e)} title={i18next.t("admin.add")}>
+              <i className="fas fa-plus"></i>
+            </button>
           </th>
         </tr>
         <tr>
           <th>
             {i18next.t("admin.order")}
+          </th>
+          <th>
+            {i18next.t("admin.type")}
           </th>
           <th>
             {i18next.t("admin.name")}
