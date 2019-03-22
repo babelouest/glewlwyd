@@ -13,10 +13,11 @@ import Clients from './Clients';
 import Scopes from './Scopes';
 import UserMod from './UserMod';
 import ClientMod from './ClientMod';
-import AuthScheme from './AuthScheme';
+import SchemeMod from './SchemeMod';
 import Plugin from './Plugin';
 import ScopeEdit from './ScopeEdit';
-import UserModEdit from './UserModEdit';
+import ModEdit from './ModEdit';
+import PluginEdit from './PluginEdit';
 
 class App extends Component {
   constructor(props) {
@@ -35,16 +36,56 @@ class App extends Component {
       confirmModal: {title: "", message: ""},
       editModal: {title: "", pattern: [], data: {}, callback: false, validateCallback: false, add: false},
       scopeModal: {title: "", data: {name: "", display_name: "", description: "", password_required: true, scheme: {}}, callback: false, add: false},
+      curMod: false,
       modUsers: [],
-      UserModModal: {title: "", data: {}, modTypes: [], add: false, callback: false},
+      ModModal: {title: "", role: false, data: {}, types: [], add: false, callback: false},
       modClients: [],
-      ClientModModal: {title: "", data: {}, modTypes: [], add: false, callback: false},
       modSchemes: [],
-      SchemeModModal: {title: "", data: {}, modTypes: [], add: false, callback: false},
-      modPlugins: [],
-      PluginModModal: {title: "", data: {}, modTypes: [], add: false, callback: false},
+      plugins: [],
+      PluginModal: {title: "", data: {}, types: [], add: false, callback: false},
       modTypes: {user: [], client: [], scheme: [], plugin: []}
     }
+    
+    this.fetchApi = this.fetchApi.bind(this);
+
+    this.fetchUsers = this.fetchUsers.bind(this);
+    this.confirmDeleteUser = this.confirmDeleteUser.bind(this);
+    this.confirmEditUser = this.confirmEditUser.bind(this);
+    this.confirmAddUser = this.confirmAddUser.bind(this);
+    this.validateUser = this.validateUser.bind(this);
+
+    this.fetchClients = this.fetchClients.bind(this);
+    this.confirmDeleteClient = this.confirmDeleteClient.bind(this);
+    this.confirmEditClient = this.confirmEditClient.bind(this);
+    this.confirmAddClient = this.confirmAddClient.bind(this);
+    this.validateClient = this.validateClient.bind(this);
+
+    this.fetchScopes = this.fetchScopes.bind(this);
+    this.confirmDeleteScope = this.confirmDeleteScope.bind(this);
+    this.confirmEditScope = this.confirmEditScope.bind(this);
+    this.confirmAddScope = this.confirmAddScope.bind(this);
+    
+    this.fetchModTypes = this.fetchModTypes.bind(this);
+    this.fetchUserMods = this.fetchUserMods.bind(this);
+    this.fetchClientMods = this.fetchClientMods.bind(this);
+    this.fetchSchemeMods = this.fetchSchemeMods.bind(this);
+    this.fetchPlugins = this.fetchPlugins.bind(this);
+    
+    this.confirmAddUserMod = this.confirmAddUserMod.bind(this);
+    this.confirmEditUserMod = this.confirmEditUserMod.bind(this);
+    this.confirmDeleteUserMod = this.confirmDeleteUserMod.bind(this);
+    
+    this.confirmAddClientMod = this.confirmAddClientMod.bind(this);
+    this.confirmEditClientMod = this.confirmEditClientMod.bind(this);
+    this.confirmDeleteClientMod = this.confirmDeleteClientMod.bind(this);
+    
+    this.confirmAddSchemeMod = this.confirmAddSchemeMod.bind(this);
+    this.confirmEditSchemeMod = this.confirmEditSchemeMod.bind(this);
+    this.confirmDeleteSchemeMod = this.confirmDeleteSchemeMod.bind(this);
+
+    this.confirmAddPluginMod = this.confirmAddPluginMod.bind(this);
+    this.confirmEditPluginMod = this.confirmEditPluginMod.bind(this);
+    this.confirmDeletePluginMod = this.confirmDeletePluginMod.bind(this);
 
     messageDispatcher.subscribe('App', (message) => {
       if (message.type === 'nav') {
@@ -83,6 +124,42 @@ class App extends Component {
           this.setState({confirmModal: confirmModal, curScope: message.scope}, () => {
             $("#confirmModal").modal({keyboard: false, show: true});
           });
+        } else if (message.role === 'userMod') {
+          var confirmModal = {
+            title: i18next.t("admin.confirm-delete-mod-title", {mod: message.mod.display_name}),
+            message: i18next.t("admin.confirm-delete-mod", {mod: message.mod.display_name}),
+            callback: this.confirmDeleteUserMod
+          }
+          this.setState({confirmModal: confirmModal, curMod: message.mod}, () => {
+            $("#confirmModal").modal({keyboard: false, show: true});
+          });
+        } else if (message.role === 'clientMod') {
+          var confirmModal = {
+            title: i18next.t("admin.confirm-delete-mod-title", {mod: message.mod.display_name}),
+            message: i18next.t("admin.confirm-delete-mod", {mod: message.mod.display_name}),
+            callback: this.confirmDeleteClientMod
+          }
+          this.setState({confirmModal: confirmModal, curMod: message.mod}, () => {
+            $("#confirmModal").modal({keyboard: false, show: true});
+          });
+        } else if (message.role === 'schemeMod') {
+          var confirmModal = {
+            title: i18next.t("admin.confirm-delete-mod-title", {mod: message.mod.display_name}),
+            message: i18next.t("admin.confirm-delete-mod", {mod: message.mod.display_name}),
+            callback: this.confirmDeleteSchemeMod
+          }
+          this.setState({confirmModal: confirmModal, curMod: message.mod}, () => {
+            $("#confirmModal").modal({keyboard: false, show: true});
+          });
+        } else if (message.role === 'plugin') {
+          var confirmModal = {
+            title: i18next.t("admin.confirm-delete-mod-title", {mod: message.mod.display_name}),
+            message: i18next.t("admin.confirm-delete-mod", {mod: message.mod.display_name}),
+            callback: this.confirmDeletePluginMod
+          }
+          this.setState({confirmModal: confirmModal, curMod: message.mod}, () => {
+            $("#confirmModal").modal({keyboard: false, show: true});
+          });
         }
       } else if (message.type === 'edit') {
         if (message.role === 'user') {
@@ -115,6 +192,49 @@ class App extends Component {
           }
           this.setState({scopeModal: scopeModal}, () => {
             $("#editScopeModal").modal({keyboard: false, show: true});
+          });
+        } else if (message.role === 'userMod') {
+          var ModModal = {
+            title: i18next.t("admin.edit-mod-title", {mod: message.mod.display_name}),
+            data: message.mod,
+            role: "user",
+            types: this.state.modTypes.user,
+            callback: this.confirmEditUserMod
+          }
+          this.setState({ModModal: ModModal}, () => {
+            $("#editModModal").modal({keyboard: false, show: true});
+          });
+        } else if (message.role === 'clientMod') {
+          var ModModal = {
+            title: i18next.t("admin.edit-mod-title", {mod: message.mod.display_name}),
+            data: message.mod,
+            types: this.state.modTypes.client,
+            role: "client",
+            callback: this.confirmEditClientMod
+          }
+          this.setState({ModModal: ModModal}, () => {
+            $("#editModModal").modal({keyboard: false, show: true});
+          });
+        } else if (message.role === 'schemeMod') {
+          var ModModal = {
+            title: i18next.t("admin.edit-mod-title", {mod: message.mod.display_name}),
+            data: message.mod,
+            types: this.state.modTypes.scheme,
+            role: "scheme",
+            callback: this.confirmEditSchemeMod
+          }
+          this.setState({ModModal: ModModal}, () => {
+            $("#editModModal").modal({keyboard: false, show: true});
+          });
+        } else if (message.role === 'plugin') {
+          var PluginModal = {
+            title: i18next.t("admin.edit-mod-title", {mod: message.mod.display_name}),
+            data: message.mod,
+            types: this.state.modTypes.plugin,
+            callback: this.confirmEditPluginMod
+          }
+          this.setState({PluginModal: PluginModal}, () => {
+            $("#editPluginModal").modal({keyboard: false, show: true});
           });
         }
       } else if (message.type === 'add') {
@@ -152,6 +272,53 @@ class App extends Component {
           this.setState({scopeModal: scopeModal}, () => {
             $("#editScopeModal").modal({keyboard: false, show: true});
           });
+        } else if (message.role === 'userMod') {
+          var ModModal = {
+            title: i18next.t("admin.add-mod-title"),
+            data: {parameters: {}},
+            types: this.state.modTypes.user,
+            role: "user",
+            callback: this.confirmAddUserMod,
+            add: true
+          }
+          this.setState({ModModal: ModModal}, () => {
+            $("#editModModal").modal({keyboard: false, show: true});
+          });
+        } else if (message.role === 'clientMod') {
+          var ModModal = {
+            title: i18next.t("admin.add-mod-title"),
+            data: {parameters: {}},
+            types: this.state.modTypes.client,
+            role: "user",
+            callback: this.confirmAddClientMod,
+            add: true
+          }
+          this.setState({ModModal: ModModal}, () => {
+            $("#editModModal").modal({keyboard: false, show: true});
+          });
+        } else if (message.role === 'schemeMod') {
+          var ModModal = {
+            title: i18next.t("admin.add-mod-title"),
+            data: {parameters: {}},
+            types: this.state.modTypes.scheme,
+            role: "scheme",
+            callback: this.confirmAddSchemeMod,
+            add: true
+          }
+          this.setState({ModModal: ModModal}, () => {
+            $("#editModModal").modal({keyboard: false, show: true});
+          });
+        } else if (message.role === 'plugin') {
+          var PluginModal = {
+            title: i18next.t("admin.add-mod-title"),
+            data: {parameters: {}},
+            types: this.state.modTypes.plugin,
+            callback: this.confirmAddPluginMod,
+            add: true
+          }
+          this.setState({PluginModal: PluginModal}, () => {
+            $("#editPluginModal").modal({keyboard: false, show: true});
+          });
         }
       } else if (message.type === 'search') {
         if (message.role === 'user') {
@@ -182,31 +349,6 @@ class App extends Component {
       }
     });
     
-    this.fetchApi = this.fetchApi.bind(this);
-
-    this.fetchUsers = this.fetchUsers.bind(this);
-    this.confirmDeleteUser = this.confirmDeleteUser.bind(this);
-    this.confirmEditUser = this.confirmEditUser.bind(this);
-    this.confirmAddUser = this.confirmAddUser.bind(this);
-    this.validateUser = this.validateUser.bind(this);
-
-    this.fetchClients = this.fetchClients.bind(this);
-    this.confirmDeleteClient = this.confirmDeleteClient.bind(this);
-    this.confirmEditClient = this.confirmEditClient.bind(this);
-    this.confirmAddClient = this.confirmAddClient.bind(this);
-    this.validateClient = this.validateClient.bind(this);
-
-    this.fetchScopes = this.fetchScopes.bind(this);
-    this.confirmDeleteScope = this.confirmDeleteScope.bind(this);
-    this.confirmEditScope = this.confirmEditScope.bind(this);
-    this.confirmAddScope = this.confirmAddScope.bind(this);
-    
-    this.fetchModTypes = this.fetchModTypes.bind(this);
-    this.fetchUserMods = this.fetchUserMods.bind(this);
-    this.fetchClientMods = this.fetchClientMods.bind(this);
-    this.fetchAuthSchemes = this.fetchAuthSchemes.bind(this);
-    this.fetchPlugins = this.fetchPlugins.bind(this);
-    
     this.fetchApi();
   }
   
@@ -226,7 +368,7 @@ class App extends Component {
             this.fetchModTypes();
             this.fetchUserMods();
             this.fetchClientMods();
-            this.fetchAuthSchemes();
+            this.fetchSchemeMods();
             this.fetchPlugins();
           });
         });
@@ -306,7 +448,7 @@ class App extends Component {
     });
   }
   
-  fetchAuthSchemes () {
+  fetchSchemeMods () {
     return apiManager.glewlwydRequest("/mod/scheme")
     .then((modSchemes) => {
       this.setState({modSchemes: modSchemes});
@@ -315,8 +457,8 @@ class App extends Component {
   
   fetchPlugins () {
     return apiManager.glewlwydRequest("/mod/plugin")
-    .then((modPlugins) => {
-      this.setState({modPlugins: modPlugins});
+    .then((plugins) => {
+      this.setState({plugins: plugins});
     });
   }
   
@@ -489,39 +631,47 @@ class App extends Component {
   }
 
   confirmAddClient(result, client) {
-    apiManager.glewlwydRequest("/client/", "POST", client)
-    .then(() => {
-      messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-client")});
-    })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-client")});
-    })
-    .always(() => {
-      this.fetchClients()
+    if (result) {
+      apiManager.glewlwydRequest("/client/", "POST", client)
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-client")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-client")});
+      })
       .always(() => {
-        this.setState({editModal: {title: "", pattern: [], data: {}, callback: false, add: false}}, () => {
-          $("#editModal").modal("hide");
+        this.fetchClients()
+        .always(() => {
+          this.setState({editModal: {title: "", pattern: [], data: {}, callback: false, add: false}}, () => {
+            $("#editModal").modal("hide");
+          });
         });
       });
-    });
+    } else {
+      $("#editModal").modal("hide");
+    }
   }
 
   confirmAddScope(result, scope) {
-    apiManager.glewlwydRequest("/scope/", "POST", scope)
-    .then(() => {
-      messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-scope")});
-    })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-scope")});
-    })
-    .always(() => {
-      this.fetchScopes()
+    if (result) {
+      apiManager.glewlwydRequest("/scope/", "POST", scope)
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-scope")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-scope")});
+      })
       .always(() => {
-        this.setState({scopeModal: {data: {}, callback: false}}, () => {
-          $("#editScopeModal").modal("hide");
+        this.fetchScopes()
+        .always(() => {
+          this.setState({scopeModal: {data: {}, callback: false}}, () => {
+            $("#editScopeModal").modal("hide");
+          });
         });
       });
-    });
+    } else {
+      $("#editScopeModal").modal("hide");
+    }
   }
 
   validateUser(user, confirmData, add, cb) {
@@ -602,6 +752,284 @@ class App extends Component {
       cb(result, data);
     }
   }
+  
+  confirmAddUserMod(result, mod) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/user/", "POST", mod)
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-mod")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
+      })
+      .always(() => {
+        this.fetchUserMods()
+        .always(() => {
+          this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            $("#editModModal").modal("hide");
+            this.fetchUsers();
+          });
+        });
+      });
+    } else {
+      $("#editModModal").modal("hide");
+    }
+  }
+
+  confirmEditUserMod(result, mod) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name), "PUT", mod)
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+      })
+      .always(() => {
+        this.fetchUserMods()
+        .always(() => {
+          this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            $("#editModModal").modal("hide");
+            this.fetchUsers();
+          });
+        });
+      });
+    } else {
+      $("#editModModal").modal("hide");
+    }
+  }
+
+  confirmDeleteUserMod(result) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/user/" + encodeURI(this.state.curMod.name), "DELETE")
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-mod")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-mod")});
+      })
+      .always(() => {
+        this.fetchUserMods()
+        .always(() => {
+          this.setState({confirmModal: {title: "", message: ""}}, () => {
+            $("#confirmModal").modal("hide");
+            this.fetchUsers();
+          });
+        });
+      });
+    } else {
+      this.setState({confirmModal: {title: "", message: ""}}, () => {
+        $("#confirmModal").modal("hide");
+      });
+    }
+  }
+
+  confirmAddClientMod(result, mod) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/client/", "POST", mod)
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-mod")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
+      })
+      .always(() => {
+        this.fetchClientMods()
+        .always(() => {
+          this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            $("#editModModal").modal("hide");
+            this.fetchClients();
+          });
+        });
+      });
+    } else {
+      $("#editModModal").modal("hide");
+    }
+  }
+
+  confirmEditClientMod(result, mod) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name), "PUT", mod)
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+      })
+      .always(() => {
+        this.fetchClientMods()
+        .always(() => {
+          this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            $("#editModModal").modal("hide");
+            this.fetchClients();
+          });
+        });
+      });
+    } else {
+      $("#editModModal").modal("hide");
+    }
+  }
+
+  confirmDeleteClientMod(result) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/client/" + encodeURI(this.state.curMod.name), "DELETE")
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-mod")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-mod")});
+      })
+      .always(() => {
+        this.fetchClientMods()
+        .always(() => {
+          this.setState({confirmModal: {title: "", message: ""}}, () => {
+            $("#confirmModal").modal("hide");
+            this.fetchClients();
+          });
+        });
+      });
+    } else {
+      this.setState({confirmModal: {title: "", message: ""}}, () => {
+        $("#confirmModal").modal("hide");
+      });
+    }
+  }
+
+  confirmAddSchemeMod(result, mod) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/scheme/", "POST", mod)
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-mod")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
+      })
+      .always(() => {
+        this.fetchSchemeMods()
+        .always(() => {
+          this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            $("#editModModal").modal("hide");
+          });
+        });
+      });
+    } else {
+      $("#editModModal").modal("hide");
+    }
+  }
+
+  confirmEditSchemeMod(result, mod) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(mod.name), "PUT", mod)
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+      })
+      .always(() => {
+        this.fetchSchemeMods()
+        .always(() => {
+          this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            $("#editModModal").modal("hide");
+          });
+        });
+      });
+    } else {
+      $("#editModModal").modal("hide");
+    }
+  }
+
+  confirmDeleteSchemeMod(result) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(this.state.curMod.name), "DELETE")
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-mod")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-mod")});
+      })
+      .always(() => {
+        this.fetchSchemeMods()
+        .always(() => {
+          this.setState({confirmModal: {title: "", message: ""}}, () => {
+            $("#confirmModal").modal("hide");
+          });
+        });
+      });
+    } else {
+      this.setState({confirmModal: {title: "", message: ""}}, () => {
+        $("#confirmModal").modal("hide");
+      });
+    }
+  }
+
+  confirmAddPluginMod(result, mod) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/plugin/", "POST", mod)
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-mod")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
+      })
+      .always(() => {
+        this.fetchPlugins()
+        .always(() => {
+          this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            $("#editPluginModal").modal("hide");
+          });
+        });
+      });
+    } else {
+      $("#editPluginModal").modal("hide");
+    }
+  }
+
+  confirmEditPluginMod(result, mod) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name), "PUT", mod)
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+      })
+      .always(() => {
+        this.fetchPlugins()
+        .always(() => {
+          this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            $("#editPluginModal").modal("hide");
+          });
+        });
+      });
+    } else {
+      $("#editPluginModal").modal("hide");
+    }
+  }
+
+  confirmDeletePluginMod(result) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(this.state.curMod.name), "DELETE")
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-mod")});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-mod")});
+      })
+      .always(() => {
+        this.fetchPlugins()
+        .always(() => {
+          this.setState({confirmModal: {title: "", message: ""}}, () => {
+            $("#confirmModal").modal("hide");
+          });
+        });
+      });
+    } else {
+      this.setState({confirmModal: {title: "", message: ""}}, () => {
+        $("#confirmModal").modal("hide");
+      });
+    }
+  }
 
 	render() {
 		return (
@@ -624,16 +1052,16 @@ class App extends Component {
                   <Scopes config={this.state.config} scopes={this.state.scopes} />
                 </div>
                 <div className={"carousel-item" + (this.state.curNav==="users-mod"?" active":"")}>
-                  <UserMod mods={this.state.modUsers} />
+                  <UserMod mods={this.state.modUsers} types={this.state.modTypes.user} />
                 </div>
                 <div className={"carousel-item" + (this.state.curNav==="clients-mod"?" active":"")}>
-                  <ClientMod />
+                  <ClientMod mods={this.state.modClients} types={this.state.modTypes.client} />
                 </div>
                 <div className={"carousel-item" + (this.state.curNav==="auth-schemes"?" active":"")}>
-                  <AuthScheme />
+                  <SchemeMod mods={this.state.modSchemes} types={this.state.modTypes.scheme} />
                 </div>
                 <div className={"carousel-item" + (this.state.curNav==="plugins"?" active":"")}>
-                  <Plugin />
+                  <Plugin mods={this.state.plugins} types={this.state.modTypes.plugin}/>
                 </div>
               </div>
             </div>
@@ -642,7 +1070,8 @@ class App extends Component {
         <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
         <Edit title={this.state.editModal.title} pattern={this.state.editModal.pattern} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
         <ScopeEdit scope={this.state.scopeModal.data} add={this.state.scopeModal.add} modSchemes={this.state.modSchemes} callback={this.state.scopeModal.callback} />
-        <UserModEdit title={this.state.UserModModal.title} mod={this.state.UserModModal.data} add={this.state.UserModModal.add} modTypes={this.state.modTypes.user} callback={this.state.UserModModal.callback} />
+        <ModEdit title={this.state.ModModal.title} role={this.state.ModModal.role} mod={this.state.ModModal.data} add={this.state.ModModal.add} types={this.state.ModModal.types} callback={this.state.ModModal.callback} />
+        <PluginEdit title={this.state.PluginModal.title} mod={this.state.PluginModal.data} add={this.state.PluginModal.add} types={this.state.PluginModal.types} callback={this.state.PluginModal.callback} />
       </div>
 		);
 	}
