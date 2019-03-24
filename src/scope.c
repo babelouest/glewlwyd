@@ -404,8 +404,13 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
                   scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_name")));
                   if (scheme != NULL) {
                     if (scheme->enabled && (can_use_scheme = scheme->module->user_can_use_scheme(json_string_value(json_object_get(json_object_get(j_user, "user"), "username")), scheme->cls)) != GLEWLWYD_IS_NOT_AVAILABLE) {
-                      json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, scheme->guasmi_max_use, session_hash)?json_true():json_false());
-                      json_object_set(j_scheme, "scheme_registered", (can_use_scheme==GLEWLWYD_IS_REGISTERED?json_true():json_false()));
+                      if (can_use_scheme==GLEWLWYD_IS_REGISTERED) {
+                        json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, scheme->guasmi_max_use, session_hash)?json_true():json_false());
+                        json_object_set(j_scheme, "scheme_registered", json_true());
+                      } else {
+                        json_object_set(j_scheme, "scheme_authenticated", json_false());
+                        json_object_set(j_scheme, "scheme_registered", json_false());
+                      }
                     } else {
                       json_array_append_new(j_scheme_remove, json_integer(index_scheme));
                     }
