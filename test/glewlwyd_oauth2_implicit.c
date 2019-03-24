@@ -499,9 +499,9 @@ int main(int argc, char *argv[])
   int number_failed = 0;
   Suite *s;
   SRunner *sr;
-  struct _u_request auth_req, scope_req;
+  struct _u_request auth_req, scope_req, register_req;
   struct _u_response auth_resp, scope_resp;
-  json_t * j_body;
+  json_t * j_body, * j_register;
   int res, do_test = 0, i;
   char * url;
   
@@ -511,6 +511,8 @@ int main(int argc, char *argv[])
   ulfius_init_request(&auth_req);
   ulfius_init_request(&user_req);
   ulfius_init_request(&scope_req);
+  ulfius_init_request(&register_req);
+  ulfius_init_response(&scope_resp);
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
   auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
@@ -524,15 +526,25 @@ int main(int argc, char *argv[])
       u_map_put(user_req.map_header, "Cookie", cookie);
       u_map_put(auth_req.map_header, "Cookie", cookie);
       u_map_put(scope_req.map_header, "Cookie", cookie);
+      u_map_put(register_req.map_header, "Cookie", cookie);
       o_free(cookie);
     }
     ulfius_clean_response(&auth_resp);
     ulfius_init_response(&auth_resp);
+    
+    j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "register", json_true());
+    run_simple_test(&register_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+    
     j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "code", "42");
     ulfius_set_json_body_request(&auth_req, j_body);
     json_decref(j_body);
     res = ulfius_send_http_request(&auth_req, &auth_resp);
     if (res == U_OK && auth_resp.status == 200) {
+      j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "register", json_true());
+      run_simple_test(&register_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+      json_decref(j_register);
+      
       ulfius_clean_response(&auth_resp);
       ulfius_init_response(&auth_resp);
       j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "code", "95");
@@ -542,19 +554,12 @@ int main(int argc, char *argv[])
       if (res == U_OK && auth_resp.status == 200) {
         y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USERNAME);
     
-        ulfius_init_response(&scope_resp);
-        for (i=0; i<auth_resp.nb_cookies; i++) {
-          char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
-          u_map_put(scope_req.map_header, "Cookie", cookie);
-          free(cookie);
-        }
-    
         scope_req.http_verb = strdup("PUT");
         scope_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
         j_body = json_pack("{ss}", "scope", SCOPE_LIST);
         ulfius_set_json_body_request(&scope_req, j_body);
         json_decref(j_body);
-        if (ulfius_send_http_request(&scope_req, &scope_resp) != U_OK || scope_resp.status != 200) {
+        if (ulfius_send_http_request(&scope_req, &scope_resp) != U_OK) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "Grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
         } else {
           do_test = 1;
@@ -578,12 +583,20 @@ int main(int argc, char *argv[])
     srunner_run_all(sr, CK_VERBOSE);
     number_failed = srunner_ntests_failed(sr);
     srunner_free(sr);
+    
+    j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "register", json_false());
+    run_simple_test(&register_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+    
+    j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "register", json_false());
+    run_simple_test(&register_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
   }
   
   j_body = json_pack("{ss}", "scope", "");
   ulfius_set_json_body_request(&scope_req, j_body);
   json_decref(j_body);
-  if (0 && ulfius_send_http_request(&scope_req, NULL) != U_OK) {
+  if (ulfius_send_http_request(&scope_req, NULL) != U_OK) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "Remove grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
   }
   
@@ -594,6 +607,7 @@ int main(int argc, char *argv[])
   ulfius_clean_request(&auth_req);
   ulfius_clean_request(&user_req);
   ulfius_clean_request(&scope_req);
+  ulfius_clean_request(&register_req);
   
   y_close_logs();
 

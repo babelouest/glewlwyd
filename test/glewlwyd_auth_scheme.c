@@ -19,6 +19,7 @@
 #define SCHEME_TYPE "mock"
 #define SCHEME_NAME "mock_scheme_42"
 #define SCHEME_VALUE "42"
+#define PASSWORD "password"
 
 START_TEST(test_glwd_auth_scheme_error_parameters)
 {
@@ -84,13 +85,14 @@ START_TEST(test_glwd_auth_scheme_login_success)
 
   req.http_verb = strdup("POST");
   req.http_url = msprintf("%s/auth/", SERVER_URI);
-
+  
   j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "code", SCHEME_VALUE);
   ulfius_set_json_body_request(&req, j_body);
   json_decref(j_body);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   ck_assert_int_eq(resp.nb_cookies, 1);
+  
 }
 END_TEST
 
@@ -176,18 +178,69 @@ static Suite *glewlwyd_suite(void)
 
 int main(int argc, char *argv[])
 {
-  int number_failed;
+  int number_failed = 0;
   Suite *s;
   SRunner *sr;
+  struct _u_request auth_req, user_req, user2_req;
+  struct _u_response auth_resp;
+  json_t * j_body, * j_register;
+  int res, do_test = 0, i;
   
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
-  s = glewlwyd_suite();
-  sr = srunner_create(s);
+  // Getting a valid session id for authenticated http requests
+  ulfius_init_request(&auth_req);
+  ulfius_init_request(&user_req);
+  ulfius_init_request(&user2_req);
+  ulfius_init_response(&auth_resp);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{ssss}", "username", USERNAME, "password", PASSWORD);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  res = ulfius_send_http_request(&auth_req, &auth_resp);
+  if (res == U_OK && auth_resp.status == 200) {
+    for (i=0; i<auth_resp.nb_cookies; i++) {
+      char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
+      u_map_put(user_req.map_header, "Cookie", cookie);
+      u_map_put(user2_req.map_header, "Cookie", cookie);
+      o_free(cookie);
+    }
+    
+    j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_true());
+    run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+    j_register = json_pack("{sssssss{so}}", "username", USERNAME2, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_true());
+    run_simple_test(&user2_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
 
-  srunner_run_all(sr, CK_VERBOSE);
-  number_failed = srunner_ntests_failed(sr);
-  srunner_free(sr);
+    do_test = 1;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication");
+  }
+  ulfius_clean_response(&auth_resp);
+
+  if (do_test) {
+    s = glewlwyd_suite();
+    sr = srunner_create(s);
+
+    srunner_run_all(sr, CK_VERBOSE);
+    number_failed = srunner_ntests_failed(sr);
+    srunner_free(sr);
+    
+    j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_false());
+    run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+    j_register = json_pack("{sssssss{so}}", "username", USERNAME2, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_false());
+    run_simple_test(&user2_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+  }
   
-  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  ulfius_clean_request(&auth_req);
+  ulfius_clean_request(&user_req);
+  ulfius_clean_request(&user2_req);
+  
+  y_close_logs();
+
+  return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
