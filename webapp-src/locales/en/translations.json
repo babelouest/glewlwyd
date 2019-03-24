@@ -145,7 +145,13 @@
     "mod-type-select": "Choose a type",
     "mod-readonly": "Read only",
     "client-mod-list-title": "Client modules",
-    "scheme-mod-list-title": "Authentication schemes modules"
+    "scheme-mod-list-title": "Authentication schemes modules",
+    "mod-username-prefix": "Username prefix",
+    "mod-username-prefix-ph": "Ex: plop",
+    "mod-client-id-prefix": "Client ID prefix",
+    "mod-client-id-prefix-ph": "Ex: grut",
+    "mod-scheme-value": "Mock value",
+    "mod-scheme-value-ph": "Ex: 42"
   },
   "modal": {
     "close": "Close",

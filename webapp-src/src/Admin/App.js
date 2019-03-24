@@ -275,7 +275,7 @@ class App extends Component {
         } else if (message.role === 'userMod') {
           var ModModal = {
             title: i18next.t("admin.add-mod-title"),
-            data: {parameters: {}},
+            data: {order_rank: this.state.modUsers.length, parameters: {}},
             types: this.state.modTypes.user,
             role: "user",
             callback: this.confirmAddUserMod,
@@ -287,9 +287,9 @@ class App extends Component {
         } else if (message.role === 'clientMod') {
           var ModModal = {
             title: i18next.t("admin.add-mod-title"),
-            data: {parameters: {}},
+            data: {order_rank: this.state.modUsers.length, parameters: {}},
             types: this.state.modTypes.client,
-            role: "user",
+            role: "client",
             callback: this.confirmAddClientMod,
             add: true
           }
@@ -433,7 +433,6 @@ class App extends Component {
     });
   }
   
-
   fetchModTypes () {
     return apiManager.glewlwydRequest("/mod/type")
     .then((modTypes) => {

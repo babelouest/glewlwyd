@@ -145,7 +145,13 @@
     "mod-type-select": "Choisir un type",
     "mod-readonly": "Lecture seule",
     "client-mod-list-title": "Modules clients",
-    "scheme-mod-list-title": "Modules de schémas d'authentification"
+    "scheme-mod-list-title": "Modules de schémas d'authentification",
+    "mod-username-prefix": "Préfixe de nom d'utlisateur",
+    "mod-username-prefix-ph": "Ex: plop",
+    "mod-client-id-prefix": "Préfixe d'identifiant client",
+    "mod-client-id-prefix-ph": "Ex: grut",
+    "mod-scheme-value": "Valeur factice",
+    "mod-scheme-value-ph": "Ex: 42"
   },
   "modal": {
     "close": "Fermer",
