@@ -135,7 +135,7 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
 {
   struct _u_request auth_req, check_req;
   struct _u_response auth_resp, check_resp;
-  json_t * j_body, * j_element, * j_group;
+  json_t * j_body, * j_element, * j_group, * j_register;
   char * cookie;
   const char * key;
 
@@ -208,6 +208,10 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
     }
   }
   json_decref(j_body);
+  
+  j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "register", json_true());
+  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_register);
 
   // Authenticate scheme mock 42
   auth_req.http_verb = strdup("POST");
@@ -265,6 +269,14 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
   }
   json_decref(j_body);
 
+  j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "register", json_false());
+  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_register);
+
+  j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_88", "value", "register", json_true());
+  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_register);
+
   // Authenticate scheme mock 88
   auth_req.http_verb = strdup("POST");
   auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
@@ -321,6 +333,14 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
   }
   json_decref(j_body);
 
+  j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_88", "value", "register", json_false());
+  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_register);
+
+  j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "register", json_true());
+  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_register);
+
   // Authenticate scheme mock 95
   auth_req.http_verb = strdup("POST");
   auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
@@ -376,6 +396,10 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
     }
   }
   json_decref(j_body);
+
+  j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "register", json_false());
+  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_register);
 
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);

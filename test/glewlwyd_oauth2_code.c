@@ -577,9 +577,9 @@ int main(int argc, char *argv[])
   int number_failed = 0;
   Suite *s;
   SRunner *sr;
-  struct _u_request auth_req, scope_req;
+  struct _u_request auth_req, scope_req, register_req;
   struct _u_response auth_resp, scope_resp, code_resp;
-  json_t * j_body;
+  json_t * j_body, * j_register;
   int res, do_test = 0, i;
   char * url;
   
@@ -589,6 +589,7 @@ int main(int argc, char *argv[])
   ulfius_init_request(&auth_req);
   ulfius_init_request(&user_req);
   ulfius_init_request(&scope_req);
+  ulfius_init_request(&register_req);
   ulfius_init_response(&auth_resp);
   ulfius_init_response(&scope_resp);
   auth_req.http_verb = strdup("POST");
@@ -603,15 +604,26 @@ int main(int argc, char *argv[])
       u_map_put(user_req.map_header, "Cookie", cookie);
       u_map_put(auth_req.map_header, "Cookie", cookie);
       u_map_put(scope_req.map_header, "Cookie", cookie);
+      u_map_put(register_req.map_header, "Cookie", cookie);
       o_free(cookie);
     }
     ulfius_clean_response(&auth_resp);
     ulfius_init_response(&auth_resp);
+    
+    j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "register", json_true());
+    run_simple_test(&register_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+    
     j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "code", "42");
     ulfius_set_json_body_request(&auth_req, j_body);
     json_decref(j_body);
     res = ulfius_send_http_request(&auth_req, &auth_resp);
     if (res == U_OK && auth_resp.status == 200) {
+      
+      j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "register", json_true());
+      run_simple_test(&register_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+      json_decref(j_register);
+    
       ulfius_clean_response(&auth_resp);
       ulfius_init_response(&auth_resp);
       j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "code", "95");
@@ -664,6 +676,15 @@ int main(int argc, char *argv[])
     srunner_run_all(sr, CK_VERBOSE);
     number_failed = srunner_ntests_failed(sr);
     srunner_free(sr);
+
+    j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "register", json_false());
+    run_simple_test(&register_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+    
+    j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "register", json_false());
+    run_simple_test(&register_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+    
   }
   
   j_body = json_pack("{ss}", "scope", "");
@@ -679,6 +700,8 @@ int main(int argc, char *argv[])
   
   ulfius_clean_request(&auth_req);
   ulfius_clean_request(&user_req);
+  ulfius_clean_request(&scope_req);
+  ulfius_clean_request(&register_req);
   
   y_close_logs();
 
