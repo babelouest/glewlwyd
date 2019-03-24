@@ -57,6 +57,10 @@
 #define GLEWLWYD_IS_VALID_MODE_UPDATE         1
 #define GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE 2
 
+#define GLEWLWYD_IS_NOT_AVAILABLE 0
+#define GLEWLWYD_IS_AVAILABLE     1
+#define GLEWLWYD_IS_REGISTERED    2
+
 typedef enum {
   digest_SHA1,
   digest_SSHA1,
@@ -72,14 +76,7 @@ typedef enum {
   digest_SMD5,
 } digest_algorithm;
 
-struct config_module {
-  const char           * external_url;
-  const char           * login_url;
-  const char           * admin_scope;
-  const char           * profile_scope;
-  struct _h_connection * conn;
-  digest_algorithm       hash_algorithm;
-};
+struct config_module;
 
 struct _user_module {
   void     * file_handle;
@@ -94,6 +91,7 @@ struct _user_module {
   size_t  (* user_module_count_total)(const char * pattern, void * cls);
   char *  (* user_module_get_list)(const char * pattern, size_t offset, size_t limit, int * result, void * cls);
   char *  (* user_module_get)(const char * username, int * result, void * cls);
+  char *  (* user_module_get_profile)(const char * username, int * result, void * cls);
   char *  (* user_is_valid)(const char * username, const char * str_user, int mode, int * result, void * cls);
   int     (* user_module_add)(const char * str_new_user, void * cls);
   char *  (* user_module_update)(const char * username, const char * str_user, void * cls);
@@ -151,6 +149,7 @@ struct _user_auth_scheme_module {
   int (* user_auth_scheme_module_init)(struct config_module * config, const char * parameters, void ** cls);
   int (* user_auth_scheme_module_close)(struct config_module * config, void * cls);
   int (* user_auth_scheme_module_trigger)(const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls);
+  int (* user_auth_scheme_module_register)(const char * username, const char * scheme_data, char ** scheme_data_response, void * cls);
   int (* user_auth_scheme_module_validate)(const char * username, const char * scheme_data, void * cls);
   int (* user_can_use_scheme)(const char * username, void * cls);
 };
@@ -237,6 +236,25 @@ struct config_plugin {
   char   * (* glewlwyd_callback_get_plugin_external_url)(struct config_plugin * config, const char * name);
   char   * (* glewlwyd_callback_get_login_url)(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url);
   char   * (* glewlwyd_callback_generate_hash)(struct config_plugin * config, const char * data);
+  
+  // Client CRUD
+  json_t * (* glewlwyd_callback_get_user_list)(struct config_plugin * config, const char * pattern, size_t offset, size_t limit, const char * source);
+  json_t * (* glewlwyd_callback_get_user)(struct config_plugin * config, const char * username, const char * source);
+  int (* add_user)(struct config_plugin * config, json_t * j_user, const char * source);
+  int (* set_user)(struct config_plugin * config, const char * username, json_t * j_user, const char * source);
+  int (* delete_user)(struct config_plugin * config, const char * username, const char * source);
+};
+
+struct config_module {
+  const char              * external_url;
+  const char              * login_url;
+  const char              * admin_scope;
+  const char              * profile_scope;
+  struct _h_connection    * conn;
+  digest_algorithm          hash_algorithm;
+  struct config_elements  * glewlwyd_config;
+  char                 * (* glewlwyd_callback_get_user)(struct config_module * config, const char * username, int * result);
+  int                    (* glewlwyd_callback_set_user)(struct config_module * config, const char * username, const char * str_user);
 };
 
 // Misc functions

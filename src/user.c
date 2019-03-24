@@ -122,6 +122,41 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
   return j_return;
 }
 
+json_t * auth_register_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * trigger_parameters) {
+  struct _user_auth_scheme_module_instance * scheme_instance;
+  json_t * j_return = NULL, * j_response = NULL;
+  char * str_trigger_parameters = json_dumps(trigger_parameters, JSON_COMPACT), * str_register_response = NULL;
+  int res;
+  
+  if (NULL != str_trigger_parameters) {
+    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+    if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
+      res = scheme_instance->module->user_auth_scheme_module_register(username, str_trigger_parameters, &str_register_response, scheme_instance->cls);
+      if (res == G_OK) {
+        j_response = json_loads(str_register_response, JSON_DECODE_ANY, NULL);
+        if (j_response != NULL) {
+          j_return = json_pack("{sisO}", "result", res, "register", j_response);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_user_scheme - Error parsing register response into JSON format: %s", str_register_response);
+        }
+        json_decref(j_response);
+      } else if (res != G_ERROR) {
+        j_return = json_pack("{si}", "result", res);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_user_scheme - Error unrecognize return value for user_auth_scheme_module_register: %d", res);
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      o_free(str_register_response);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    }
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  }
+  o_free(str_trigger_parameters);
+  return j_return;
+}
+
 int user_has_scope(json_t * j_user, const char * scope) {
   json_t * j_element;
   size_t index;
@@ -557,4 +592,40 @@ json_t * user_set_profile(struct config_elements * config, const char * username
   }
   json_decref(j_user);
   return j_return;
+}
+
+char * glewlwyd_callback_get_user(struct config_module * config, const char * username, int * result) {
+  char * str_user = NULL;
+  json_t * j_user = get_user(config->glewlwyd_config, username, NULL);
+  
+  if (check_result_value(j_user, G_OK)) {
+    str_user = json_dumps(json_object_get(j_user, "user"), JSON_COMPACT);
+    *result = G_OK;
+  } else {
+    *result = G_ERROR;
+    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_get_user - Error get_user");
+  }
+  json_decref(j_user);
+  return str_user;
+}
+
+int glewlwyd_callback_set_user(struct config_module * config, const char * username, const char * str_user) {
+  json_t * j_user_data = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_user;
+  int ret;
+  
+  if (j_user_data != NULL) {
+    j_user = get_user(config->glewlwyd_config, username, NULL);
+    if (check_result_value(j_user, G_OK)) {
+      ret = set_user(config->glewlwyd_config, username, j_user_data, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_set_user - Error get_user");
+      ret = G_ERROR;
+    }
+    json_decref(j_user);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_set_user - Error json_loads");
+    ret = G_ERROR_PARAM;
+  }
+  json_decref(j_user_data);
+  return ret;
 }
