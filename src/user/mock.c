@@ -228,6 +228,10 @@ char * user_module_get(const char * username, int * result, void * cls) {
   return str_return;
 }
 
+char * user_module_get_profile(const char * username, int * result, void * cls) {
+  return user_module_get(username, result, cls);
+}
+
 char * user_is_valid(const char * username, const char * str_user, int mode, int * result, void * cls) {
   json_t * j_return = NULL, * j_user;
   char * str_return = NULL;

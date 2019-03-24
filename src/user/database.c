@@ -69,6 +69,10 @@ char * user_module_get(const char * username, int * result, void * cls) {
   return NULL;
 }
 
+char * user_module_get_profile(const char * username, int * result, void * cls) {
+  return NULL;
+}
+
 char * user_is_valid(const char * username, const char * str_user, int mode, int * result, void * cls) {
   return NULL;
 }
