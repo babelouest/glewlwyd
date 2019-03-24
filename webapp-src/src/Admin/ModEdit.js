@@ -25,7 +25,6 @@ class ModEdit extends Component {
     this.changeDisplayName = this.changeDisplayName.bind(this);
     this.changeType = this.changeType.bind(this);
     this.toggleReadonly = this.toggleReadonly.bind(this);
-    this.changeParameters = this.changeParameters.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -93,12 +92,6 @@ class ModEdit extends Component {
     this.setState({mod: mod});
   }
   
-  changeParameters(parameters, parametersValid) {
-    var mod = this.state.mod;
-    mod.parameters = parameters;
-    this.setState({mod: mod, parametersValid: parametersValid});
-  }
-  
 	render() {
     var typeList = [];
     var modType;
@@ -161,7 +154,7 @@ class ModEdit extends Component {
                 <span className={"error-input" + (this.state.typeInvalidMessage?"":" hidden")}>{this.state.typeInvalidMessage}</span>
               </div>
               {readonly}
-              <ModEditParameters mod={this.state.mod} role={this.state.role} changeParameters={this.changeParameters} />
+              <ModEditParameters mod={this.state.mod} role={this.state.role} />
             </form>
           </div>
           <div className="modal-footer">

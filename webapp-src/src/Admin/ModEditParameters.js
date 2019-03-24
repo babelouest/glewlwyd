@@ -1,24 +1,30 @@
 import React, { Component } from 'react';
 
+import MockParams from './MockParams';
+
 class ModEditParameters extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
       mod: props.mod,
-      changeParameters: props.changeParameters
+      role: props.role
     };
   }
   
   componentWillReceiveProps(nextProps) {
     this.setState({
       mod: nextProps.mod,
-      changeParameters: nextProps.changeParameters
+      role: nextProps.role
     });
   }
   
   render() {
-    return ("");
+    if (this.state.mod.module === "mock") {
+      return <MockParams mod={this.state.mod} role={this.state.role} />
+    } else {
+      return ("");
+    }
   }
 }
 
