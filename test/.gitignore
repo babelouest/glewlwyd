@@ -21,6 +21,7 @@ glewlwyd_auth_password
 glewlwyd_auth_scheme
 glewlwyd_auth_check_scheme
 glewlwyd_auth_scheme_trigger
+glewlwyd_auth_scheme_register
 glewlwyd_auth_profile
 
 glewlwyd_crud_user
