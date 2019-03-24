@@ -63,6 +63,10 @@
 							<button type="button" name="selectScheme" id="selectScheme" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Select Scheme</button>
 							<div class="dropdown-menu" aria-labelledby="selectScheme" id="selectSchemeList"></div>
 						</div>
+						<div class="btn-group" role="group">
+							<button type="button" name="registerScheme" id="registerScheme" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">(de)register Scheme</button>
+							<div class="dropdown-menu" aria-labelledby="registerScheme" id="registerSchemeList"></div>
+						</div>
 						<button type="button" name="logoutbut" id="logoutbut" class="btn btn-primary">Log out</button>
 					</div>
 				</div>
@@ -274,14 +278,35 @@ $(function () {
         }
 			}
 		});
-
 	};
+  
+  var registerScheme = function (elt, register) {
+		var scheme = {
+			scheme_type: "mock",
+			scheme_name: elt.attr('data-name'),
+			username: currentUser.username,
+			value: {
+				register: !register
+			}
+		};
+
+		$.ajax({
+			type: "POST",
+			url: "api/auth/scheme/register/",
+			data: JSON.stringify(scheme),
+			contentType: "application/json; charset=utf-8",
+			success: function () {
+        init();
+			}
+		});
+  };
 	
 	var fillScopeList = function (scopeList) {
 		return $.ajax({
 			url: "api/auth/scheme/?scope=" + scopeList,
 			success: function (result) {
 				$("#selectSchemeList").empty();
+				$("#registerSchemeList").empty();
 				var schemeList = {};
 				$("#scopesSummary").empty();
 				for (var scope in result) {
@@ -300,6 +325,10 @@ $(function () {
 								$("#selectScheme-" + result[scope].schemes[grp][sch].scheme_name).click(function () {
 									authenticateScheme($(this));
 								});
+								$("#registerSchemeList").append('<a class="dropdown-item' + (result[scope].schemes[grp][sch].scheme_registered?' active':'') + '" href="#" data-type="' + result[scope].schemes[grp][sch].scheme_type + '" data-name="' + result[scope].schemes[grp][sch].scheme_name + '" data-display-name="' + result[scope].schemes[grp][sch].scheme_display_name + '" id="registerScheme-' + result[scope].schemes[grp][sch].scheme_name + '">' + result[scope].schemes[grp][sch].scheme_display_name + '</a>');
+								$("#registerScheme-" + result[scope].schemes[grp][sch].scheme_name).click(function () {
+									registerScheme($(this), result[scope].schemes[grp][sch].scheme_registered);
+								});
 							}
 						}
 					}
@@ -314,12 +343,12 @@ $(function () {
 	$.ajax({
 		url: "api/auth/grant/" + encodeURI(client_id) + "/" + encodeURI(scope_list),
 		success: function (res) {
-						for (var i in res.scope) {
-							$("#scope-"+res.scope[i].name).html((res.scope[i].granted?" (granted)":" (not granted)"));
-																if (res.scope[i].granted) {
-																	$("#checkScope-" + res.scope[i].name).prop("checked", true);
-																}
-						}
+      for (var i in res.scope) {
+        $("#scope-"+res.scope[i].name).html((res.scope[i].granted?" (granted)":" (not granted)"));
+        if (res.scope[i].granted) {
+          $("#checkScope-" + res.scope[i].name).prop("checked", true);
+        }
+      }
 		},
 		error: function (err) {
 		}
