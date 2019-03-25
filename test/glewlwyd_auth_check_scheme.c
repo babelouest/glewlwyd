@@ -304,7 +304,7 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
       j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_1");
       ck_assert_int_eq(json_array_size(j_group), 2);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_42");
-      ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_true());
+      ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 1), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 1), "scheme_authenticated"), json_true());
 
@@ -368,9 +368,9 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
       j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_1");
       ck_assert_int_eq(json_array_size(j_group), 2);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_42");
-      ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_true());
+      ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 1), "scheme_name")), "mock_scheme_88");
-      ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 1), "scheme_authenticated"), json_true());
+      ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 1), "scheme_authenticated"), json_false());
 
       j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_2");
       ck_assert_int_eq(json_array_size(j_group), 1);
@@ -389,7 +389,7 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
       j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_4");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_88");
-      ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_true());
+      ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
     } else {
       // This should not happen, end test
       ck_assert_int_eq(0, 1);
