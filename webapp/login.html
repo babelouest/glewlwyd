@@ -280,13 +280,13 @@ $(function () {
 		});
 	};
   
-  var registerScheme = function (elt, register) {
+  var registerScheme = function (elt) {
 		var scheme = {
 			scheme_type: "mock",
 			scheme_name: elt.attr('data-name'),
 			username: currentUser.username,
 			value: {
-				register: !register
+				register: (elt.attr('data-registered')==='true'?false:true)
 			}
 		};
 
@@ -325,9 +325,9 @@ $(function () {
 								$("#selectScheme-" + result[scope].schemes[grp][sch].scheme_name).click(function () {
 									authenticateScheme($(this));
 								});
-								$("#registerSchemeList").append('<a class="dropdown-item' + (result[scope].schemes[grp][sch].scheme_registered?' active':'') + '" href="#" data-type="' + result[scope].schemes[grp][sch].scheme_type + '" data-name="' + result[scope].schemes[grp][sch].scheme_name + '" data-display-name="' + result[scope].schemes[grp][sch].scheme_display_name + '" id="registerScheme-' + result[scope].schemes[grp][sch].scheme_name + '">' + result[scope].schemes[grp][sch].scheme_display_name + '</a>');
+								$("#registerSchemeList").append('<a class="dropdown-item' + (result[scope].schemes[grp][sch].scheme_registered?' active':'') + '" href="#" data-type="' + result[scope].schemes[grp][sch].scheme_type + '" data-name="' + result[scope].schemes[grp][sch].scheme_name + '" data-display-name="' + result[scope].schemes[grp][sch].scheme_display_name + '" data-registered="' + result[scope].schemes[grp][sch].scheme_registered + '" id="registerScheme-' + result[scope].schemes[grp][sch].scheme_name + '">' + result[scope].schemes[grp][sch].scheme_display_name + '</a>');
 								$("#registerScheme-" + result[scope].schemes[grp][sch].scheme_name).click(function () {
-									registerScheme($(this), result[scope].schemes[grp][sch].scheme_registered);
+									registerScheme($(this));
 								});
 							}
 						}
