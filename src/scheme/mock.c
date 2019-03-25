@@ -77,7 +77,7 @@ int user_can_use_scheme(const char * username, void * cls) {
     j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
     if (j_user != NULL) {
       key_mock = msprintf("mock-%s", json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")));
-      if (json_object_get(j_user, key_mock) != NULL) {
+      if (json_is_object(json_object_get(j_user, key_mock))) {
         ret = GLEWLWYD_IS_REGISTERED;
       } else {
         ret = GLEWLWYD_IS_AVAILABLE;
@@ -108,7 +108,7 @@ int user_auth_scheme_module_register(const char * username, const char * registe
       if (json_object_get(j_data, "register") == json_true()) {
         json_object_set_new(j_user, key_mock, json_pack("{si}", "counter", 0));
       } else {
-        json_object_del(j_user, key_mock);
+        json_object_set(j_user, key_mock, json_null());
       }
       str_user_set = json_dumps(j_user, JSON_COMPACT);
       ret = ((struct mock_config *)cls)->config->glewlwyd_callback_set_user(((struct mock_config *)cls)->config, username, str_user_set);
