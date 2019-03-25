@@ -280,11 +280,10 @@ int user_module_add(const char * str_new_user, void * cls) {
   return ret;
 }
 
-char * user_module_update(const char * username, const char * str_user, void * cls) {
-  json_t * j_user = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_element, * j_return = NULL, * j_property;
+int user_module_update(const char * username, const char * str_user, void * cls) {
+  json_t * j_user = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_element, * j_property;
   size_t index;
-  int found = 0;
-  char * str_return = NULL;
+  int found = 0, ret;
   const char * key;
   
   if (j_user != NULL && json_is_object(j_user)) {
@@ -294,24 +293,22 @@ char * user_module_update(const char * username, const char * str_user, void * c
         json_object_foreach(j_user, key, j_property) {
           json_object_set(j_element, key, j_property);
         }
-        j_return = json_pack("{si}", "result", G_OK);
+        ret = G_OK;
         found = 1;
         break;
       }
     }
     if (!found) {
-      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+      ret = G_ERROR_NOT_FOUND;
     }
   } else {
-    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "profile must be a JSON object");
+    ret = G_ERROR_PARAM;
   }
   json_decref(j_user);
-  str_return = json_dumps(j_return, JSON_COMPACT);
-  json_decref(j_return);
-  return str_return;
+  return ret;
 }
 
-char * user_module_update_profile(const char * username, const char * str_user, void * cls) {
+int user_module_update_profile(const char * username, const char * str_user, void * cls) {
   return user_module_update(username, str_user, cls);
 }
 
