@@ -81,12 +81,12 @@ int user_module_add(const char * str_new_user, void * cls) {
   return G_OK;
 }
 
-char * user_module_update(const char * username, const char * str_user, void * cls) {
-  return NULL;
+int user_module_update(const char * username, const char * str_user, void * cls) {
+  return G_OK;
 }
 
-char * user_module_update_profile(const char * username, const char * str_user, void * cls) {
-  return NULL;
+int user_module_update_profile(const char * username, const char * str_user, void * cls) {
+  return G_OK;
 }
 
 int user_module_delete(const char * username, void * cls) {

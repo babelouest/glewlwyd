@@ -476,9 +476,8 @@ int add_user(struct config_elements * config, json_t * j_user, const char * sour
 
 int set_user(struct config_elements * config, const char * username, json_t * j_user, const char * source) {
   int result, ret;
-  char * str_user, * str_result;
+  char * str_user;
   struct _user_module_instance * user_module;
-  json_t * j_result;
   
   if (source != NULL) {
     user_module = get_user_module_instance(config, source);
@@ -486,18 +485,11 @@ int set_user(struct config_elements * config, const char * username, json_t * j_
       o_free(user_module->module->user_module_get(username, &result, user_module->cls));
       if (result == G_OK) {
         str_user = json_dumps(j_user, JSON_COMPACT);
-        str_result = user_module->module->user_module_update(username, str_user, user_module->cls);
-        if (str_result != NULL) {
-          j_result = json_loads(str_result, JSON_DECODE_ANY, NULL);
-          if (check_result_value(j_result, G_OK)) {
-            ret = G_OK;
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_update");
-            ret = result;
-          }
-          json_decref(j_result);
+        ret = user_module->module->user_module_update(username, str_user, user_module->cls);
+        if (ret != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_update");
+          ret = result;
         }
-        o_free(str_result);
         o_free(str_user);
       } else if (result != G_ERROR_NOT_FOUND) {
         y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_get");
@@ -552,31 +544,17 @@ int delete_user(struct config_elements * config, const char * username, const ch
 }
 
 json_t * user_set_profile(struct config_elements * config, const char * username, json_t * j_profile) {
-  json_t * j_user = get_user(config, username, NULL), * j_return, * j_module_result;
+  json_t * j_user = get_user(config, username, NULL), * j_return;
   struct _user_module_instance * user_module;
-  char * str_module_result, * str_profile;
+  char * str_profile;
+  int ret;
 
   if (check_result_value(j_user, G_OK)) {
     user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
       str_profile = json_dumps(j_profile, JSON_COMPACT);
-      str_module_result = user_module->module->user_module_update_profile(username, str_profile, user_module->cls);
-      if (str_module_result != NULL) {
-        j_module_result = json_loads(str_module_result, JSON_DECODE_ANY, NULL);
-        if (check_result_value(j_module_result, G_OK)) {
-          j_return = json_pack("{si}", "result", G_OK);
-        } else if (check_result_value(j_module_result, G_ERROR_PARAM)) {
-          j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_module_result, "error"));
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_set_profile - Error user_module_update_profile");
-          j_return = json_pack("{si}", "result", G_ERROR);
-        }
-        json_decref(j_module_result);
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_set_profile - Error user_module_update_profile returns NULL");
-        j_return = json_pack("{si}", "result", G_ERROR);
-      }
-      o_free(str_module_result);
+      ret = user_module->module->user_module_update_profile(username, str_profile, user_module->cls);
+      j_return = json_pack("{si}", "result", ret);
       o_free(str_profile);
     } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "profile update is not allowed");

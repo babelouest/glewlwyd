@@ -94,8 +94,8 @@ struct _user_module {
   char *  (* user_module_get_profile)(const char * username, int * result, void * cls);
   char *  (* user_is_valid)(const char * username, const char * str_user, int mode, int * result, void * cls);
   int     (* user_module_add)(const char * str_new_user, void * cls);
-  char *  (* user_module_update)(const char * username, const char * str_user, void * cls);
-  char *  (* user_module_update_profile)(const char * username, const char * str_user, void * cls);
+  int     (* user_module_update)(const char * username, const char * str_user, void * cls);
+  int     (* user_module_update_profile)(const char * username, const char * str_user, void * cls);
   int     (* user_module_delete)(const char * username, void * cls);
   int     (* user_module_check_password)(const char * username, const char * password, void * cls);
   int     (* user_module_update_password)(const char * username, const char * new_password, void * cls);
