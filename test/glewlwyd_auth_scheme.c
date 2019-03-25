@@ -147,7 +147,6 @@ START_TEST(test_glwd_auth_scheme_login_multiple)
   ck_assert_int_eq(resp.nb_cookies, 1);
   ulfius_clean_response(&resp);
   
-  sleep(2);
   ulfius_init_response(&auth_resp);
   ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
   ck_assert_int_eq(auth_resp.status, 200);
@@ -181,7 +180,7 @@ int main(int argc, char *argv[])
   int number_failed = 0;
   Suite *s;
   SRunner *sr;
-  struct _u_request auth_req, user_req, user2_req;
+  struct _u_request auth_req, user_req;
   struct _u_response auth_resp;
   json_t * j_body, * j_register;
   int res, do_test = 0, i;
@@ -191,7 +190,6 @@ int main(int argc, char *argv[])
   // Getting a valid session id for authenticated http requests
   ulfius_init_request(&auth_req);
   ulfius_init_request(&user_req);
-  ulfius_init_request(&user2_req);
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
   auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
@@ -203,15 +201,19 @@ int main(int argc, char *argv[])
     for (i=0; i<auth_resp.nb_cookies; i++) {
       char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
       u_map_put(user_req.map_header, "Cookie", cookie);
-      u_map_put(user2_req.map_header, "Cookie", cookie);
       o_free(cookie);
     }
     
     j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_true());
     run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
     json_decref(j_register);
+
+    j_register = json_pack("{ssss}", "username", USERNAME2, "password", PASSWORD);
+    run_simple_test(&user_req, "POST", SERVER_URI "/auth/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+
     j_register = json_pack("{sssssss{so}}", "username", USERNAME2, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_true());
-    run_simple_test(&user2_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
     json_decref(j_register);
 
     do_test = 1;
@@ -231,14 +233,14 @@ int main(int argc, char *argv[])
     j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_false());
     run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
     json_decref(j_register);
+    
     j_register = json_pack("{sssssss{so}}", "username", USERNAME2, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_false());
-    run_simple_test(&user2_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
     json_decref(j_register);
   }
   
   ulfius_clean_request(&auth_req);
   ulfius_clean_request(&user_req);
-  ulfius_clean_request(&user2_req);
   
   y_close_logs();
 
