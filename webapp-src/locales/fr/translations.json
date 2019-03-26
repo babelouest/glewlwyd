@@ -66,6 +66,7 @@
     "or": "Ou",
     "readonly": "Lecture seule",
     "order": "Rang",
+    "move-up": "Monter",
     "confirm-delete-user-title": "Suppression de l'utilisateur {{user}}",
     "confirm-delete-user": "Êtes-vous sûr de vouloir supprimer l'utilisateur {{name}} ({{username}})",
     "success-api-delete-user": "Utilisateur supprimé",

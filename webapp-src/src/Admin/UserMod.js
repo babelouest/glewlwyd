@@ -37,15 +37,27 @@ class UserMod extends Component {
     messageDispatcher.sendMessage('App', {type: "delete", role: "userMod", mod: mod});
   }
 
+  moveModUp(e, mod, previousMod) {
+    mod.order_rank--;
+    previousMod.order_rank++;
+    messageDispatcher.sendMessage('App', {type: "swap", role: "clientMod", mod: mod, previousMod: previousMod});
+  }
+
 	render() {
     var mods = [];
     this.state.mods.forEach((mod, index) => {
-      var module = "";
+      var module = "", buttonUp = "";
       this.state.types.forEach((type) => {
         if (mod.module === type.name) {
           module = type.display_name;
         }
       });
+      if (index) {
+        buttonUp = 
+          <button type="button" className="btn btn-secondary" onClick={(e) => this.moveModUp(e, mod, this.state.mods[index - 1])} title={i18next.t("admin.move-up")}>
+            <i className="fas fa-sort-up"></i>
+          </button>
+      }
       mods.push(<tr key={index}>
         <td>{mod.order_rank}</td>
         <td>{module}</td>
@@ -60,6 +72,7 @@ class UserMod extends Component {
             <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteMod(e, mod)} title={i18next.t("admin.delete")}>
               <i className="fas fa-trash"></i>
             </button>
+            {buttonUp}
           </div>
         </td>
       </tr>);

@@ -320,6 +320,38 @@ class App extends Component {
             $("#editPluginModal").modal({keyboard: false, show: true});
           });
         }
+      } else if (message.type === 'swap') {
+        if (message.role === 'userMod') {
+          apiManager.glewlwydRequest("/mod/user/" + encodeURI(message.mod.name), "PUT", message.mod)
+          .then(() => {
+            return apiManager.glewlwydRequest("/mod/user/" + encodeURI(message.previousMod.name), "PUT", message.previousMod.mod)
+            .fail(() => {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+            })
+          })
+          .fail(() => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+          })
+          .always(() => {
+            this.fetchUserMods()
+            this.fetchUsers();
+          });
+        } else if (message.role === 'clientMod') {
+          apiManager.glewlwydRequest("/mod/client/" + encodeURI(message.mod.name), "PUT", message.mod)
+          .then(() => {
+            return apiManager.glewlwydRequest("/mod/client/" + encodeURI(message.previousMod.name), "PUT", message.previousMod)
+            .fail(() => {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+            })
+          })
+          .fail(() => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+          })
+          .always(() => {
+            this.fetchClientMods()
+            this.fetchClients();
+          });
+        }
       } else if (message.type === 'search') {
         if (message.role === 'user') {
           var users = this.state.users;
