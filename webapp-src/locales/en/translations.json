@@ -66,6 +66,7 @@
     "or": "Or",
     "readonly": "Read only",
     "order": "Order",
+    "move-up": "Move up",
     "confirm-delete-user-title": "Delete {{user}}",
     "confirm-delete-user": "Are you sure you want to delete {{name}} ({{username}})",
     "success-api-delete-user": "User deleted succesfully",
