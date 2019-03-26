@@ -32,10 +32,10 @@
 #include <hoel.h>
 #include "../glewlwyd-common.h"
 
-struct parameters {
+struct mod_parameters {
   int use_glewlwyd_connection;
   struct _h_connection * conn;
-}
+};
 
 int user_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
   int ret = G_OK;
@@ -64,7 +64,7 @@ int user_module_unload(struct config_module * config) {
 }
 
 int user_module_init(struct config_module * config, const char * parameters, void ** cls) {
-  json_t * j_params = json_loads(parameters, JSON_ENCODE_ANY);
+  json_t * j_params = json_loads(parameters, JSON_DECODE_ANY, NULL);
   int ret;
   
   if (j_params != NULL) {
@@ -73,10 +73,10 @@ int user_module_init(struct config_module * config, const char * parameters, voi
       ret = G_ERROR_PARAM;
     } else {
       if (json_object_get(j_params, "use-glewlwyd-connection") != json_false()) {
-        *cls = o_malloc(sizeof(struct parameters));
+        *cls = o_malloc(sizeof(struct mod_parameters));
         if (*cls != NULL) {
-          ((struct parameters *)*cls)->use_glewlwyd_connection = 0;
-          ((struct parameters *)*cls)->conn = config->conn;
+          ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 0;
+          ((struct mod_parameters *)*cls)->conn = config->conn;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error allocating resources for cls");
           ret = G_ERROR_MEMORY;
@@ -94,8 +94,8 @@ int user_module_init(struct config_module * config, const char * parameters, voi
 }
 
 int user_module_close(struct config_module * config, void * cls) {
-  if (((struct parameters *)cls)->use_glewlwyd_connection) {
-    if (h_close_db(((struct parameters *)cls)->conn) != H_OK) {
+  if (((struct mod_parameters *)cls)->use_glewlwyd_connection) {
+    if (h_close_db(((struct mod_parameters *)cls)->conn) != H_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_close database - Error h_close_db");
       return G_ERROR_DB;
     } else {
