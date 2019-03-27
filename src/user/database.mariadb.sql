@@ -34,7 +34,6 @@ CREATE TABLE `g_user_property` (
   `gup_value_tiny` VARCHAR(512) DEFAULT NULL,
   `gup_value_small` BLOB DEFAULT NULL,
   `gup_value_medium` MEDIUMBLOB DEFAULT NULL,
-  `gup_value_long` LONGBLOB DEFAULT NULL,
   FOREIGN KEY(`gu_id`) REFERENCES `g_user`(`gu_id`) ON DELETE CASCADE
 );
 CREATE INDEX `i_g_user_property_name` ON `g_user_property`(`gup_name`);
