@@ -89,7 +89,3 @@ int client_module_delete(const char * client_id, void * cls) {
 int client_module_check_password(const char * client_id, const char * password, void * cls) {
   return G_ERROR;
 }
-
-int client_module_update_password(const char * client_id, const char * new_password, void * cls) {
-  return G_ERROR;
-}
