@@ -22,7 +22,7 @@
 CC=gcc
 CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius -lhoel -lgnutls -lconfig -ljwt
-OBJECTS=glewlwyd.o misc.o static_file_callback.o webservice.o hash.o session.o user.o scope.o plugin.o client.o module.o
+OBJECTS=glewlwyd.o misc.o static_file_callback.o webservice.o session.o user.o scope.o plugin.o client.o module.o
 PREFIX=/usr/local
 CONFIG_FILE=../glewlwyd2.conf
 
