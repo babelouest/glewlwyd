@@ -32,14 +32,10 @@
 #include <hoel.h>
 #include "../glewlwyd-common.h"
 
-#define G_TABLE_USER_PROPERTY "g_user_property"
-#define G_TABLE_USER_SCOPE_USER "g_user_scope_user"
-#define G_TABLE_USER_SCOPE "g_user_scope"
 #define G_TABLE_USER "g_user"
-
-#define G_TYPE_STRING 0
-#define G_TYPE_NUMBER 0
-#define G_TYPE_BOOLEAN 0
+#define G_TABLE_USER_SCOPE "g_user_scope"
+#define G_TABLE_USER_SCOPE_USER "g_user_scope_user"
+#define G_TABLE_USER_PROPERTY "g_user_property"
 
 struct mod_parameters {
   int use_glewlwyd_connection;
@@ -63,83 +59,145 @@ static int append_user_properties(struct mod_parameters * param, json_t * j_user
   int res, ret;
   size_t index;
   
-  j_query = json_pack("{sss[sssss]s{sO}}",
-                      "table",
-                      G_TABLE_USER_PROPERTY,
-                      "columns",
-                        "gup_name AS name",
-                        "gup_value_tiny AS value_tiny",
-                        "gup_value_small AS value_small",
-                        "gup_value_medium AS value_medium",
-                        "gup_value_long AS value_long",
-                      "where",
-                        "gu_id",
-                        json_object_get(j_user, "gu_id"));
-  res = h_select(param->conn, j_query, &j_result, NULL);
-  json_decref(j_query);
-  if (res == H_OK) {
-    json_array_foreach(j_result, index, j_element) {
-      j_param_config = json_object_get(json_object_get(param->j_params, "data-format"), json_string_value(json_object_get(j_element, "name")));
-      if ((!profile && json_object_get(j_param_config, "read") != json_false()) || (profile && json_object_get(j_param_config, "profile-read") != json_false())) {
-        if (json_object_get(j_element, "value_tiny") != json_null()) {
-          if (json_object_get(j_param_config, "multiple") == json_true()) {
-            if (json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))) == NULL) {
-              json_object_set_new(j_user, json_string_value(json_object_get(j_element, "name")), json_array());
+  if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
+    j_query = json_pack("{sss[ssss]s{sO}}",
+                        "table",
+                        G_TABLE_USER_PROPERTY,
+                        "columns",
+                          "gup_name AS name",
+                          "gup_value_tiny AS value_tiny",
+                          "gup_value_small AS value_small",
+                          "gup_value_medium AS value_medium",
+                        "where",
+                          "gu_id",
+                          json_object_get(j_user, "gu_id"));
+    res = h_select(param->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      json_array_foreach(j_result, index, j_element) {
+        j_param_config = json_object_get(json_object_get(param->j_params, "data-format"), json_string_value(json_object_get(j_element, "name")));
+        if ((!profile && json_object_get(j_param_config, "read") != json_false()) || (profile && json_object_get(j_param_config, "profile-read") != json_false())) {
+          if (json_object_get(j_element, "value_tiny") != json_null()) {
+            if (json_object_get(j_param_config, "multiple") == json_true()) {
+              if (json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))) == NULL) {
+                json_object_set_new(j_user, json_string_value(json_object_get(j_element, "name")), json_array());
+              }
+              json_array_append(json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))), json_object_get(j_element, "value_tiny"));
+            } else {
+              json_object_set(j_user, json_string_value(json_object_get(j_element, "name")), json_object_get(j_element, "value_tiny"));
             }
-            json_array_append(json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))), json_object_get(j_element, "value_tiny"));
-          } else {
-            json_object_set(j_user, json_string_value(json_object_get(j_element, "name")), json_object_get(j_element, "value_tiny"));
-          }
-        } else if (json_object_get(j_element, "value_small") != json_null()) {
-          if (json_object_get(j_param_config, "multiple") == json_true()) {
-            if (json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))) == NULL) {
-              json_object_set_new(j_user, json_string_value(json_object_get(j_element, "name")), json_array());
+          } else if (json_object_get(j_element, "value_small") != json_null()) {
+            if (json_object_get(j_param_config, "multiple") == json_true()) {
+              if (json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))) == NULL) {
+                json_object_set_new(j_user, json_string_value(json_object_get(j_element, "name")), json_array());
+              }
+              json_array_append(json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))), json_object_get(j_element, "value_small"));
+            } else {
+              json_object_set(j_user, json_string_value(json_object_get(j_element, "name")), json_object_get(j_element, "value_small"));
             }
-            json_array_append(json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))), json_object_get(j_element, "value_small"));
-          } else {
-            json_object_set(j_user, json_string_value(json_object_get(j_element, "name")), json_object_get(j_element, "value_small"));
-          }
-        } else if (json_object_get(j_element, "value_medium") != json_null()) {
-          if (json_object_get(j_param_config, "multiple") == json_true()) {
-            if (json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))) == NULL) {
-              json_object_set_new(j_user, json_string_value(json_object_get(j_element, "name")), json_array());
+          } else if (json_object_get(j_element, "value_medium") != json_null()) {
+            if (json_object_get(j_param_config, "multiple") == json_true()) {
+              if (json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))) == NULL) {
+                json_object_set_new(j_user, json_string_value(json_object_get(j_element, "name")), json_array());
+              }
+              json_array_append(json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))), json_object_get(j_element, "value_medium"));
+            } else {
+              json_object_set(j_user, json_string_value(json_object_get(j_element, "name")), json_object_get(j_element, "value_medium"));
             }
-            json_array_append(json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))), json_object_get(j_element, "value_medium"));
           } else {
-            json_object_set(j_user, json_string_value(json_object_get(j_element, "name")), json_object_get(j_element, "value_medium"));
-          }
-        } else if (json_object_get(j_element, "value_long") != json_null()) {
-          if (json_object_get(j_param_config, "multiple") == json_true()) {
-            if (json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))) == NULL) {
-              json_object_set_new(j_user, json_string_value(json_object_get(j_element, "name")), json_array());
+            if (json_object_get(j_param_config, "multiple") == json_true()) {
+              if (json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))) == NULL) {
+                json_object_set_new(j_user, json_string_value(json_object_get(j_element, "name")), json_array());
+              }
+              json_array_append(json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))), json_null());
+            } else {
+              json_object_set(j_user, json_string_value(json_object_get(j_element, "name")), json_null());
             }
-            json_array_append(json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))), json_object_get(j_element, "value_long"));
-          } else {
-            json_object_set(j_user, json_string_value(json_object_get(j_element, "name")), json_object_get(j_element, "value_long"));
-          }
-        } else {
-          if (json_object_get(j_param_config, "multiple") == json_true()) {
-            if (json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))) == NULL) {
-              json_object_set_new(j_user, json_string_value(json_object_get(j_element, "name")), json_array());
-            }
-            json_array_append(json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))), json_null());
-          } else {
-            json_object_set(j_user, json_string_value(json_object_get(j_element, "name")), json_null());
           }
         }
       }
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "append_user_properties database - Error executing j_query");
+      ret = G_ERROR_DB;
     }
-    ret = G_OK;
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "append_user_properties database - Error executing j_query");
-    ret = G_ERROR_DB;
+    j_query = json_pack("{sss[ssss]s{sO}}",
+                        "table",
+                        G_TABLE_USER_PROPERTY,
+                        "columns",
+                          "gup_name AS name",
+                          "gup_value AS value",
+                        "where",
+                          "gu_id",
+                          json_object_get(j_user, "gu_id"));
+    res = h_select(param->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      json_array_foreach(j_result, index, j_element) {
+        j_param_config = json_object_get(json_object_get(param->j_params, "data-format"), json_string_value(json_object_get(j_element, "name")));
+        if ((!profile && json_object_get(j_param_config, "read") != json_false()) || (profile && json_object_get(j_param_config, "profile-read") != json_false())) {
+          if (json_object_get(j_element, "value") != json_null()) {
+            if (json_object_get(j_param_config, "multiple") == json_true()) {
+              if (json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))) == NULL) {
+                json_object_set_new(j_user, json_string_value(json_object_get(j_element, "name")), json_array());
+              }
+              json_array_append(json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))), json_object_get(j_element, "value"));
+            } else {
+              json_object_set(j_user, json_string_value(json_object_get(j_element, "name")), json_object_get(j_element, "value"));
+            }
+          } else {
+            if (json_object_get(j_param_config, "multiple") == json_true()) {
+              if (json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))) == NULL) {
+                json_object_set_new(j_user, json_string_value(json_object_get(j_element, "name")), json_array());
+              }
+              json_array_append(json_object_get(j_user, json_string_value(json_object_get(j_element, "name"))), json_null());
+            } else {
+              json_object_set(j_user, json_string_value(json_object_get(j_element, "name")), json_null());
+            }
+          }
+        }
+      }
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "append_user_properties database - Error executing j_query");
+      ret = G_ERROR_DB;
+    }
   }
   return ret;
 }
 
+static json_t * database_user_scope_get(struct mod_parameters * param, json_int_t gu_id) {
+  json_t * j_query, * j_result, * j_return;
+  int res;
+  char * scope_clause = msprintf("IN (SELECT `gus_id` from `" G_TABLE_USER_SCOPE_USER "` WHERE `gu_id` = %"JSON_INTEGER_FORMAT")", gu_id);
+  
+  j_query = json_pack("{sss[s]s{s{ssss}}}",
+                      "table",
+                      G_TABLE_USER_SCOPE,
+                      "columns",
+                        "gus_name AS name",
+                      "where",
+                        "operator",
+                        "raw",
+                        "value",
+                        scope_clause);
+  o_free(scope_clause);
+  res = h_select(param->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    j_return = json_pack("{sisO}", "result", G_OK, "scope", j_result);
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "database_user_scope_get database - Error executing j_query");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  return j_return;
+}
+
 static char * database_user_get(const char * username, int * result, void * cls, int profile) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_query, * j_result;
+  json_t * j_query, * j_result, * j_scope;
   int res;
   char * str_result = NULL;
   
@@ -159,21 +217,29 @@ static char * database_user_get(const char * username, int * result, void * cls,
   json_decref(j_query);
   if (res == H_OK) {
     if (json_array_size(j_result)) {
-      json_object_set(json_array_get(j_result, 0), "enabled", (json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_enabled"))?json_true():json_false()));
-      if (append_user_properties(param, json_array_get(j_result, 0), profile) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_count_total database - Error append_user_properties");
+      j_scope = database_user_scope_get(param, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")));
+      if (check_result_value(j_scope, G_OK)) {
+        json_object_set(json_array_get(j_result, 0), "scope", json_object_get(j_scope, "scope"));
+        json_object_set(json_array_get(j_result, 0), "enabled", (json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_enabled"))?json_true():json_false()));
+        if (append_user_properties(param, json_array_get(j_result, 0), profile) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "database_user_get database - Error append_user_properties");
+        }
+        json_object_del(json_array_get(j_result, 0), "gu_enabled");
+        json_object_del(json_array_get(j_result, 0), "gu_id");
+        str_result = json_dumps(j_result, JSON_COMPACT);
+        *result = G_OK;
+      } else {
+        *result = G_ERROR;
+        y_log_message(Y_LOG_LEVEL_ERROR, "database_user_get database - Error database_user_scope_get");
       }
-      json_object_del(json_array_get(j_result, 0), "gu_enabled");
-      json_object_del(json_array_get(j_result, 0), "gu_id");
-      str_result = json_dumps(j_result, JSON_COMPACT);
-      *result = G_OK;
+      json_decref(j_scope);
     } else {
       *result = G_ERROR_NOT_FOUND;
     }
     json_decref(j_result);
   } else {
     *result = G_ERROR_DB;
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_count_total database - Error executing j_query");
+    y_log_message(Y_LOG_LEVEL_ERROR, "database_user_get database - Error executing j_query");
   }
   return str_result;
 }
@@ -226,9 +292,6 @@ static json_t * is_user_database_parameters_valid(json_t * j_params) {
             if (0 == o_strcmp(field, "username") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "email") || 0 == o_strcmp(field, "enabled") || 0 == o_strcmp(field, "password")) {
               json_array_append_new(j_error, json_string("data-format can not have settings for properties 'username', 'name', 'email', 'enabled' or 'password'"));
             } else {
-              if (json_object_get(j_element, "format") != NULL && (!json_is_string(json_object_get(j_element, "format")) || (0 != o_strcmp(json_string_value(json_object_get(j_element, "format")), "string") && 0 != o_strcmp(json_string_value(json_object_get(j_element, "format")), "number") && 0 != o_strcmp(json_string_value(json_object_get(j_element, "format")), "boolean")))) {
-                json_array_append_new(j_error, json_string("format is optional and must be one of the following values: 'string', 'number', 'boolean' (default: 'string')"));
-              }
               if (json_object_get(j_element, "multiple") != NULL && !json_is_boolean(json_object_get(j_element, "multiple"))) {
                 json_array_append_new(j_error, json_string("multiple is optional and must be a boolean (default: false)"));
               }
@@ -321,10 +384,7 @@ static char * get_password_clause_check(struct mod_parameters * param, const cha
 }
 
 static json_t * get_property_value_db(struct mod_parameters * param, json_t * j_property, json_int_t gu_id) {
-  if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
-    // TODO
-    return NULL;
-  } else if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
+  if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
     if (json_string_length(j_property) < 512) {
       return json_pack("{sIsO}", "gup_value_tiny", gu_id, j_property);
     } else if (json_string_length(j_property) < 16*1024) {
@@ -333,8 +393,7 @@ static json_t * get_property_value_db(struct mod_parameters * param, json_t * j_
       return json_pack("{sIsO}", "gup_value_medium", gu_id, j_property);
     }
   } else {
-    // TODO
-    return NULL;
+    return json_pack("{sIsO}", "gup_value", gu_id, j_property);;
   }
 }
 
@@ -389,6 +448,107 @@ static int save_user_properties(struct mod_parameters * param, json_t * j_user, 
   return ret;
 }
 
+static int save_user_scope(struct mod_parameters * param, json_t * j_scope, json_int_t gu_id) {
+  json_t * j_query, * j_result, * j_element, * j_new_scope_id;
+  int res, ret;
+  char * scope_clause;
+  size_t index;
+  
+  j_query = json_pack("{sss{sI}}", "table", G_TABLE_USER_SCOPE_USER, "where", "gu_id", gu_id);
+  res = h_delete(param->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    ret = G_OK;
+    if (json_is_array(j_scope)) {
+      json_array_foreach(j_scope, index, j_element) {
+        j_query = json_pack("{sss[s]s{sO}}",
+                            "table",
+                            G_TABLE_USER_SCOPE,
+                            "columns",
+                              "gus_id",
+                            "where",
+                              "gus_name",
+                              j_element);
+        res = h_select(param->conn, j_query, &j_result, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          if (json_array_size(j_result)) {
+            j_query = json_pack("{sss{sIsO}}",
+                                "table",
+                                G_TABLE_USER_SCOPE_USER,
+                                "values",
+                                  "gu_id",
+                                  gu_id,
+                                  "gus_id",
+                                  json_object_get(json_array_get(j_result, 0), "gus_id"));
+            res = h_insert(param->conn, j_query, NULL);
+            json_decref(j_query);
+            if (res != H_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "save_user_scope database - Error executing j_query insert scope_user (1)");
+            }
+          } else {
+            j_query = json_pack("{sss{sO}}",
+                                "table",
+                                G_TABLE_USER_SCOPE,
+                                "values",
+                                  "gus_name",
+                                  j_element);
+            res = h_insert(param->conn, j_query, NULL);
+            json_decref(j_query);
+            if (res == H_OK) {
+              j_new_scope_id = h_last_insert_id(param->conn);
+              if (j_new_scope_id != NULL) {
+                j_query = json_pack("{sss{sIsO}}",
+                                    "table",
+                                    G_TABLE_USER_SCOPE_USER,
+                                    "values",
+                                      "gu_id",
+                                      gu_id,
+                                      "gus_id",
+                                      j_new_scope_id);
+                res = h_insert(param->conn, j_query, NULL);
+                json_decref(j_query);
+                if (res != H_OK) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "save_user_scope database - Error executing j_query insert scope_user (2)");
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "save_user_scope database - Error h_last_insert_id");
+              }
+              json_decref(j_new_scope_id);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "save_user_scope database - Error executing j_query insert scope");
+            }
+          }
+          json_decref(j_result);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "save_user_scope database - Error executing j_query select scope");
+        }
+      }
+    }
+    scope_clause = msprintf("NOT IN (SELECT DISTINCT(`gus_id`) FROM `" G_TABLE_USER_SCOPE_USER "`)");
+    j_query = json_pack("{sss{s{ssss}}}",
+                        "table",
+                        G_TABLE_USER_SCOPE,
+                        "where",
+                          "gus_id",
+                            "operator",
+                            "raw",
+                            "value",
+                            scope_clause);
+    o_free(scope_clause);
+    res = h_delete(param->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "save_user_scope database - Error executing j_query delete empty scopes");
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "save_user_scope database - Error executing j_query delete");
+    ret = G_ERROR_DB;
+  }
+  
+  return ret;
+}
+
 int user_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
   int ret = G_OK;
   if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
@@ -407,7 +567,6 @@ int user_module_load(struct config_module * config, char ** name, char ** displa
                              "\"postgre-conninfo\":{\"type\":\"string\",\"mandatory\":false},"
                              "\"data-format\":{"
                               "\"field-name\":{"
-                                "\"format\":{\"type\":\"list\",\"values\":[\"string\",\"number\",\"boolean\"],\"default\":\"string\"},"
                                 "\"multiple\":{\"type\":\"boolean\",\"default\":false},"
                                 "\"read\":{\"type\":\"boolean\",\"default\":true},"
                                 "\"write\":{\"type\":\"boolean\",\"default\":true},"
@@ -575,7 +734,7 @@ char * user_module_get_profile(const char * username, int * result, void * cls) 
 char * user_is_valid(const char * username, const char * str_user, int mode, int * result, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_user = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_result = NULL, * j_element, * j_format, * j_value;
-  char * str_result = NULL, * message, p_type;
+  char * str_result = NULL, * message;
   int res;
   size_t index;
   const char * property;
@@ -630,62 +789,27 @@ char * user_is_valid(const char * username, const char * str_user, int mode, int
       }
       json_object_foreach(j_user, property, j_element) {
         if (0 != o_strcmp(property, "username") && 0 != o_strcmp(property, "name") && 0 != o_strcmp(property, "email") && 0 != o_strcmp(property, "enabled") && 0 != o_strcmp(property, "password")) {
-          if ((j_format = json_object_get(json_object_get(param->j_params, "data-format"), property)) != NULL) {
-            if (0 == o_strcmp("number", json_string_value(json_object_get(j_format, "format")))) {
-              p_type = G_TYPE_NUMBER;
-            } else if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_format, "format")))) {
-              p_type = G_TYPE_BOOLEAN;
+          j_format = json_object_get(json_object_get(param->j_params, "data-format"), property);
+          if (json_object_get(j_format, "multiple") == json_true()) {
+            if (!json_is_array(j_element)) {
+              *result = G_ERROR_PARAM;
+              message = msprintf("%s must be an array", property);
+              json_array_append_new(j_result, json_string(message));
+              o_free(message);
             } else {
-              p_type = G_TYPE_STRING;
-            }
-            if (json_object_get(j_format, "multiple") == json_true()) {
-              if (!json_is_array(j_element)) {
-                *result = G_ERROR_PARAM;
-                message = msprintf("%s must be an array", property);
-                json_array_append_new(j_result, json_string(message));
-                o_free(message);
-              } else {
-                json_array_foreach(j_element, index, j_value) {
-                  if (p_type == G_TYPE_NUMBER && !json_is_number(j_value)) {
-                    *result = G_ERROR_PARAM;
-                    message = msprintf("%s must contain number values", property);
-                    json_array_append_new(j_result, json_string(message));
-                    o_free(message);
-                  } else if (p_type == G_TYPE_BOOLEAN && !json_is_boolean(j_value)) {
-                    *result = G_ERROR_PARAM;
-                    message = msprintf("%s must contain boolean values", property);
-                    json_array_append_new(j_result, json_string(message));
-                    o_free(message);
-                  } else if (p_type == G_TYPE_STRING && !json_is_string(j_value)) {
-                    *result = G_ERROR_PARAM;
-                    message = msprintf("%s must contain string values", property);
-                    json_array_append_new(j_result, json_string(message));
-                    o_free(message);
-                  }
+              json_array_foreach(j_element, index, j_value) {
+                if (!json_is_string(j_value) || json_string_length(j_value) > 16*1024*1024) {
+                  *result = G_ERROR_PARAM;
+                  message = msprintf("%s must contain a string value of at least 16M characters", property);
+                  json_array_append_new(j_result, json_string(message));
+                  o_free(message);
                 }
-              }
-            } else {
-              if (p_type == G_TYPE_NUMBER && !json_is_number(j_value)) {
-                *result = G_ERROR_PARAM;
-                message = msprintf("%s must contain number values", property);
-                json_array_append_new(j_result, json_string(message));
-                o_free(message);
-              } else if (p_type == G_TYPE_BOOLEAN && !json_is_boolean(j_value)) {
-                *result = G_ERROR_PARAM;
-                message = msprintf("%s must contain boolean values", property);
-                json_array_append_new(j_result, json_string(message));
-                o_free(message);
-              } else if (p_type == G_TYPE_STRING && !json_is_string(j_value)) {
-                *result = G_ERROR_PARAM;
-                message = msprintf("%s must contain string values", property);
-                json_array_append_new(j_result, json_string(message));
-                o_free(message);
               }
             }
           } else {
-            if (!json_is_string(j_element)) {
+            if (!json_is_string(j_element) || json_string_length(j_element) > 16*1024*1024) {
               *result = G_ERROR_PARAM;
-              message = msprintf("%s must be a string", property);
+              message = msprintf("%s must contain a string value of at least 16M characters", property);
               json_array_append_new(j_result, json_string(message));
               o_free(message);
             }
@@ -731,7 +855,7 @@ int user_module_add(const char * str_new_user, void * cls) {
       json_object_set(json_object_get(j_query, "values"), "gu_email", json_object_get(j_user, "email"));
     }
     if (json_object_get(j_user, "enabled") != NULL) {
-      json_object_set(json_object_get(j_query, "values"), "gu_enabled", json_object_get(j_user, "enabled"));
+      json_object_set_new(json_object_get(j_query, "values"), "gu_enabled", json_object_get(j_user, "enabled")==json_false()?json_integer(0):json_integer(1));
     }
     res = h_insert(param->conn, j_query, NULL);
     json_decref(j_query);
@@ -739,6 +863,9 @@ int user_module_add(const char * str_new_user, void * cls) {
       j_gu_id = h_last_insert_id(param->conn);
       if (save_user_properties(param, j_user, json_integer_value(j_gu_id), 0) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_properties");
+        ret = G_ERROR_DB;
+      } else if (save_user_scope(param, json_object_get(j_user, "scope"), json_integer_value(j_gu_id)) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_scope");
         ret = G_ERROR_DB;
       } else {
         ret = G_OK;
@@ -787,7 +914,7 @@ int user_module_update(const char * username, const char * str_user, void * cls)
         json_object_set(json_object_get(j_query, "set"), "gu_email", json_object_get(j_user, "email"));
       }
       if (json_object_get(j_user, "enabled") != NULL) {
-        json_object_set(json_object_get(j_query, "set"), "gu_enabled", json_object_get(j_user, "enabled"));
+        json_object_set_new(json_object_get(j_query, "values"), "gu_enabled", json_object_get(j_user, "enabled")==json_false()?json_integer(0):json_integer(1));
       }
       if (json_object_size(json_object_get(j_query, "set"))) {
         res = h_update(param->conn, j_query, NULL);
@@ -798,6 +925,9 @@ int user_module_update(const char * username, const char * str_user, void * cls)
       if (res == H_OK) {
         if (save_user_properties(param, j_user, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), 0) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_properties");
+          ret = G_ERROR_DB;
+        } else if (save_user_scope(param, json_object_get(j_user, "scope"), json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id"))) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_scope");
           ret = G_ERROR_DB;
         } else {
           ret = G_OK;
@@ -915,7 +1045,7 @@ int user_module_check_password(const char * username, const char * password, voi
     if (json_array_size(j_result)) {
       ret = G_OK;
     } else {
-      ret = G_ERROR_NOT_FOUND;
+      ret = G_ERROR_UNAUTHORIZED;
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_check_password database - Error executing j_query");
