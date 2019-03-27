@@ -6,8 +6,9 @@ DROP TABLE IF EXISTS `g_user`;
 CREATE TABLE `g_user` (
   `gu_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
   `gu_username` VARCHAR(128) NOT NULL UNIQUE,
-  `gu_display_name` VARCHAR(256) DEFAULT '',
+  `gu_name` VARCHAR(256) DEFAULT '',
   `gu_email` VARCHAR(512),
+  `gu_enabled` TINYINT(1) DEFAULT 1,
   `gu_password` VARCHAR(256)
 );
 
