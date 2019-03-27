@@ -287,7 +287,7 @@ class App extends Component {
         } else if (message.role === 'clientMod') {
           var ModModal = {
             title: i18next.t("admin.add-mod-title"),
-            data: {order_rank: this.state.modUsers.length, parameters: {}},
+            data: {order_rank: this.state.modClients.length, parameters: {}},
             types: this.state.modTypes.client,
             role: "client",
             callback: this.confirmAddClientMod,
@@ -324,7 +324,7 @@ class App extends Component {
         if (message.role === 'userMod') {
           apiManager.glewlwydRequest("/mod/user/" + encodeURI(message.mod.name), "PUT", message.mod)
           .then(() => {
-            return apiManager.glewlwydRequest("/mod/user/" + encodeURI(message.previousMod.name), "PUT", message.previousMod.mod)
+            return apiManager.glewlwydRequest("/mod/user/" + encodeURI(message.previousMod.name), "PUT", message.previousMod)
             .fail(() => {
               messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
             })

@@ -40,7 +40,7 @@ class UserMod extends Component {
   moveModUp(e, mod, previousMod) {
     mod.order_rank--;
     previousMod.order_rank++;
-    messageDispatcher.sendMessage('App', {type: "swap", role: "clientMod", mod: mod, previousMod: previousMod});
+    messageDispatcher.sendMessage('App', {type: "swap", role: "userMod", mod: mod, previousMod: previousMod});
   }
 
 	render() {
