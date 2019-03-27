@@ -127,7 +127,6 @@ struct _client_module {
   int     (* client_module_update)(const char * client_id, const char * str_client, void * cls);
   int     (* client_module_delete)(const char * client_id, void * cls);
   int     (* client_module_check_password)(const char * client_id, const char * password, void * cls);
-  int     (* client_module_update_password)(const char * client_id, const char * new_password, void * cls);
 };
 
 struct _client_module_instance {

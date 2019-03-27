@@ -1607,7 +1607,6 @@ int init_client_module_list(struct config_elements * config) {
                 *(void **) (&cur_client_module->client_module_update) = dlsym(file_handle, "client_module_update");
                 *(void **) (&cur_client_module->client_module_delete) = dlsym(file_handle, "client_module_delete");
                 *(void **) (&cur_client_module->client_module_check_password) = dlsym(file_handle, "client_module_check_password");
-                *(void **) (&cur_client_module->client_module_update_password) = dlsym(file_handle, "client_module_update_password");
                 
                 if (cur_client_module->client_module_load != NULL &&
                     cur_client_module->client_module_unload != NULL &&
@@ -1620,8 +1619,7 @@ int init_client_module_list(struct config_elements * config) {
                     cur_client_module->client_module_add != NULL &&
                     cur_client_module->client_module_update != NULL &&
                     cur_client_module->client_module_delete != NULL &&
-                    cur_client_module->client_module_check_password != NULL &&
-                    cur_client_module->client_module_update_password != NULL) {
+                    cur_client_module->client_module_check_password != NULL) {
                   if (cur_client_module->client_module_load(config->config_m, &cur_client_module->name, &cur_client_module->display_name, &cur_client_module->description, &cur_client_module->parameters) == G_OK) {
                     if (o_strlen(cur_client_module->name) && get_client_module_lib(config, cur_client_module->name) == NULL) {
                       if (pointer_list_append(config->client_module_list, cur_client_module)) {
@@ -1672,7 +1670,6 @@ int init_client_module_list(struct config_elements * config) {
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_update: %s", (cur_client_module->client_module_update != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_delete: %s", (cur_client_module->client_module_delete != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_check_password: %s", (cur_client_module->client_module_check_password != NULL?"found":"not found"));
-                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_update_password: %s", (cur_client_module->client_module_update_password != NULL?"found":"not found"));
                   dlclose(file_handle);
                   o_free(cur_client_module);
                 }
