@@ -1499,3 +1499,7 @@ int callback_glewlwyd_user_update_profile (const struct _u_request * request, st
   return U_CALLBACK_CONTINUE;
 }
 
+// TODO
+int callback_glewlwyd_user_update_password (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_CALLBACK_ERROR;
+}

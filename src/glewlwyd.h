@@ -265,6 +265,7 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
 
 int callback_glewlwyd_user_get_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_update_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_update_password (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
