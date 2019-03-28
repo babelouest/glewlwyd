@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 
 import MockParams from './MockParams';
+import DatabaseParams from './DatabaseParams';
 
 class ModEditParameters extends Component {
   constructor(props) {
@@ -22,6 +23,8 @@ class ModEditParameters extends Component {
   render() {
     if (this.state.mod.module === "mock") {
       return <MockParams mod={this.state.mod} role={this.state.role} />
+    } else if (this.state.mod.module === "database") {
+      return <DatabaseParams mod={this.state.mod} role={this.state.role} />
     } else {
       return ("");
     }

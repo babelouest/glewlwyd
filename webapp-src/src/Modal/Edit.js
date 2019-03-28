@@ -7,6 +7,7 @@ class Edit extends Component {
     this.state = {
       title: props.title,
       pattern: props.pattern,
+      source: props.source,
       data: props.data,
       cb: props.callback,
       validateCb: props.validateCallback,
@@ -18,6 +19,7 @@ class Edit extends Component {
     }
 
     this.closeModal = this.closeModal.bind(this);
+    this.changeSource = this.changeSource.bind(this);
     this.editElt = this.editElt.bind(this);
     this.changeElt = this.changeElt.bind(this);
     this.toggleBooleanElt = this.toggleBooleanElt.bind(this);
@@ -40,6 +42,7 @@ class Edit extends Component {
     this.setState({
       title: nextProps.title,
       pattern: nextProps.pattern,
+      source: nextProps.source,
       data: nextProps.data,
       cb: nextProps.callback,
       validateCb: nextProps.validateCallback,
@@ -73,6 +76,12 @@ class Edit extends Component {
         this.state.cb(result, {});
       }
     }
+  }
+  
+  changeSource(e, source) {
+    var data = this.state.data;
+    data.source = source;
+    this.setState({data: data});
   }
 
   editElt(pattern, elt, key) {
@@ -289,13 +298,30 @@ class Edit extends Component {
   }
   
 	render() {
-    var editLines = [];
+    var editLines = [], sourceLine = [], curSource = false;
     this.state.pattern.forEach((pat, index) => {
       var line = this.editElt(pat, this.state.data[pat.name], index);
       if (line) {
         editLines.push(line);
       }
     });
+    this.state.source.forEach((source, index) => {
+      if ((!curSource && !source.readonly) || source.name === this.state.data.source) {
+        curSource = source.name;
+      }
+      sourceLine.push(<a className="dropdown-item" key={index} href="#" onClick={(e) => this.changeSource(e, source.name)}>{source.display_name}</a>);
+    });
+    var sourceJsx = <div className="form-group">
+      <label htmlFor="modal-source">{i18next.t("admin.source")}</label>
+      <button className="btn btn-secondary btn-sm dropdown-toggle" type="button" id="modal-source" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+       {curSource||i18next.t("admin.source-dropdown")}
+      </button>
+      <div className="dropdown">
+        <div className="dropdown-menu" aria-labelledby="modal-source">
+          {sourceLine}
+        </div>
+      </div>
+    </div>
 		return (
     <div className="modal fade" id="editModal" tabIndex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
       <div className="modal-dialog" role="document">
@@ -308,6 +334,7 @@ class Edit extends Component {
           </div>
           <div className="modal-body">
             <form className="needs-validation" noValidate>
+              {sourceJsx}
               {editLines}
             </form>
           </div>
