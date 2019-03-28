@@ -340,7 +340,7 @@ int add_user_module(struct config_elements * config, json_t * j_module) {
             cur_instance->enabled = 1;
             ret = G_OK;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
+            y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
             ret = G_ERROR;
           }
         } else {

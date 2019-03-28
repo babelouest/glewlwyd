@@ -14,8 +14,7 @@ CREATE TABLE `g_client` (
 
 CREATE TABLE `g_client_scope` (
   `gcs_id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `gcs_name` TEXT NOT NULL UNIQUE,
-  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE
+  `gcs_name` TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE `g_client_scope_client` (

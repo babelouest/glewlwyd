@@ -477,9 +477,9 @@ int client_module_load(struct config_module * config, char ** name, char ** disp
                              "\"data-format\":{"
                               "\"field-name\":{"
                                 "\"format\":{\"type\":\"list\",\"values\":[\"string\",\"number\",\"boolean\"],\"default\":\"string\"},"
-                                "\"multiple\":{\"type\":\"boolean\",\"default\":false},"
+                                "\"multiple\":{\"type\":\"boolean\",\"default\":false}"
                               "}"
-                             "},"
+                             "}"
                            "}");
   } else {
     ret = G_ERROR;
@@ -516,6 +516,7 @@ int client_module_init(struct config_module * config, const char * parameters, v
             ((struct mod_parameters *)*cls)->conn = h_connect_pgsql(json_string_value(json_object_get(j_params, "postgre-conninfo")));
           }
         }
+        ret = G_OK;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error allocating resources for cls");
         ret = G_ERROR_MEMORY;
