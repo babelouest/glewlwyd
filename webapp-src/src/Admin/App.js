@@ -34,7 +34,7 @@ class App extends Component {
       scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
       curScope: false,
       confirmModal: {title: "", message: ""},
-      editModal: {title: "", pattern: [], data: {}, callback: false, validateCallback: false, add: false},
+      editModal: {title: "", pattern: [], source: [], data: {}, callback: false, validateCallback: false, add: false},
       scopeModal: {title: "", data: {name: "", display_name: "", description: "", password_required: true, scheme: {}}, callback: false, add: false},
       curMod: false,
       modUsers: [],
@@ -166,6 +166,7 @@ class App extends Component {
           var editModal = {
             title: i18next.t("admin.edit-user-title", {user: message.user.name}),
             pattern: this.state.config.pattern.user,
+            source: this.state.modUsers,
             data: message.user,
             callback: this.confirmEditUser,
             validateCallback: this.validateUser
@@ -178,6 +179,7 @@ class App extends Component {
             title: i18next.t("admin.edit-client-title", {client: message.client.name}),
             pattern: this.state.config.pattern.client,
             data: message.client,
+            source: this.state.modClients,
             callback: this.confirmEditClient,
             validateCallback: this.validateClient
           }
@@ -242,6 +244,7 @@ class App extends Component {
           var editModal = {
             title: i18next.t("admin.add-user-title"),
             pattern: this.state.config.pattern.user,
+            source: this.state.modUsers,
             data: {},
             callback: this.confirmAddUser,
             validateCallback: this.validateUser,
@@ -254,6 +257,7 @@ class App extends Component {
           var editModal = {
             title: i18next.t("admin.add-client-title"),
             pattern: this.state.config.pattern.client,
+            source: this.state.modClients,
             data: {},
             callback: this.confirmAddClient,
             validateCallback: this.validateClient,
@@ -577,13 +581,13 @@ class App extends Component {
       .always(() => {
         this.fetchUsers()
         .always(() => {
-          this.setState({editModal: {title: "", pattern: [], data: {}, callback: false}}, () => {
+          this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
             $("#editModal").modal("hide");
           });
         });
       });
     } else {
-      this.setState({editModal: {title: "", pattern: [], data: {}, callback: false}}, () => {
+      this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
         $("#editModal").modal("hide");
       });
     }
@@ -601,13 +605,13 @@ class App extends Component {
       .always(() => {
         this.fetchUsers()
         .always(() => {
-          this.setState({editModal: {title: "", pattern: [], data: {}, callback: false}}, () => {
+          this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
             $("#editModal").modal("hide");
           });
         });
       });
     } else {
-      this.setState({editModal: {title: "", pattern: [], data: {}, callback: false}}, () => {
+      this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
         $("#editModal").modal("hide");
       });
     }
@@ -639,7 +643,8 @@ class App extends Component {
 
   confirmAddUser(result, user) {
     if (result) {
-      apiManager.glewlwydRequest("/user/", "POST", user)
+      var source = (user.source?"?source="+user.source:"");
+      apiManager.glewlwydRequest("/user/" + source, "POST", user)
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-user")});
       })
@@ -649,13 +654,13 @@ class App extends Component {
       .always(() => {
         this.fetchUsers()
         .always(() => {
-          this.setState({editModal: {title: "", pattern: [], data: {}, callback: false, add: false}}, () => {
+          this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, add: false}}, () => {
             $("#editModal").modal("hide");
           });
         });
       });
     } else {
-      this.setState({editModal: {title: "", pattern: [], data: {}, callback: false, add: false}}, () => {
+      this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, add: false}}, () => {
         $("#editModal").modal("hide");
       });
     }
@@ -663,7 +668,8 @@ class App extends Component {
 
   confirmAddClient(result, client) {
     if (result) {
-      apiManager.glewlwydRequest("/client/", "POST", client)
+      var source = (user.source?"?source="+user.source:"");
+      apiManager.glewlwydRequest("/client/" + source, "POST", client)
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-client")});
       })
@@ -673,13 +679,15 @@ class App extends Component {
       .always(() => {
         this.fetchClients()
         .always(() => {
-          this.setState({editModal: {title: "", pattern: [], data: {}, callback: false, add: false}}, () => {
+          this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, add: false}}, () => {
             $("#editModal").modal("hide");
           });
         });
       });
     } else {
-      $("#editModal").modal("hide");
+      this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, add: false}}, () => {
+        $("#editModal").modal("hide");
+      });
     }
   }
 
@@ -1099,7 +1107,7 @@ class App extends Component {
           </div>
         </div>
         <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
-        <Edit title={this.state.editModal.title} pattern={this.state.editModal.pattern} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
+        <Edit title={this.state.editModal.title} pattern={this.state.editModal.pattern} source={this.state.editModal.source} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
         <ScopeEdit scope={this.state.scopeModal.data} add={this.state.scopeModal.add} modSchemes={this.state.modSchemes} callback={this.state.scopeModal.callback} />
         <ModEdit title={this.state.ModModal.title} role={this.state.ModModal.role} mod={this.state.ModModal.data} add={this.state.ModModal.add} types={this.state.ModModal.types} callback={this.state.ModModal.callback} />
         <PluginEdit title={this.state.PluginModal.title} mod={this.state.PluginModal.data} add={this.state.PluginModal.add} types={this.state.PluginModal.types} callback={this.state.PluginModal.callback} />
