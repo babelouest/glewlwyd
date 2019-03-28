@@ -14,8 +14,7 @@ CREATE TABLE `g_user` (
 
 CREATE TABLE `g_user_scope` (
   `gus_id` INTEGER PRIMARY KEY AUTOINCREMENT,
-  `gus_name` TEXT NOT NULL UNIQUE,
-  FOREIGN KEY(`gu_id`) REFERENCES `g_user`(`gu_id`) ON DELETE CASCADE
+  `gus_name` TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE `g_user_scope_user` (

@@ -571,9 +571,9 @@ int user_module_load(struct config_module * config, char ** name, char ** displa
                                 "\"read\":{\"type\":\"boolean\",\"default\":true},"
                                 "\"write\":{\"type\":\"boolean\",\"default\":true},"
                                 "\"profile-read\":{\"type\":\"boolean\",\"default\":false},"
-                                "\"profile-write\":{\"type\":\"boolean\",\"default\":false},"
+                                "\"profile-write\":{\"type\":\"boolean\",\"default\":false}"
                               "}"
-                             "},"
+                             "}"
                            "}");
   } else {
     ret = G_ERROR;
@@ -610,6 +610,7 @@ int user_module_init(struct config_module * config, const char * parameters, voi
             ((struct mod_parameters *)*cls)->conn = h_connect_pgsql(json_string_value(json_object_get(j_params, "postgre-conninfo")));
           }
         }
+        ret = G_OK;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error allocating resources for cls");
         ret = G_ERROR_MEMORY;
