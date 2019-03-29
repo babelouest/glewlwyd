@@ -29,20 +29,23 @@ DBFLAGS=-lhoel
 TARGET=libmoddatabase.so libmodldap.so libmodhttp.so
 all: release
 
+misc.o: ../misc.c ../glewlwyd-common.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) ../misc.c
+
 %.o: %.c ../glewlwyd.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
-libmodmock.so: mock.o
-	$(CC) -shared -Wl,-soname,libmodmock.so mock.o -o libmodmock.so $(LIBS) $(LDFLAGS)
+libmodmock.so: mock.o misc.o
+	$(CC) -shared -Wl,-soname,libmodmock.so mock.o misc.o -o libmodmock.so $(LIBS) $(LDFLAGS)
 
-libmoddatabase.so: ../glewlwyd-common.h database.o
-	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o $(LIBS)
+libmoddatabase.so: ../glewlwyd-common.h database.o misc.o
+	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o misc.o $(LIBS)
 
-libmodldap.so: ../glewlwyd-common.h ldap.o
-	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o $(LIBS)
+libmodldap.so: ../glewlwyd-common.h ldap.o misc.o
+	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o misc.o $(LIBS)
 
-libmodhttp.so: ../glewlwyd-common.h http.o
-	$(CC) -shared -Wl,-soname,libmodhttp.so -o libmodhttp.so http.o $(LIBS)
+libmodhttp.so: ../glewlwyd-common.h http.o misc.o
+	$(CC) -shared -Wl,-soname,libmodhttp.so -o libmodhttp.so http.o misc.o $(LIBS)
 
 clean:
 	rm -f *.o *.so
