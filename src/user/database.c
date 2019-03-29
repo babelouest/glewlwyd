@@ -625,6 +625,7 @@ int user_module_init(struct config_module * config, const char * parameters, voi
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error is_user_database_parameters_valid");
       ret = G_ERROR;
     }
+    json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error parsing parameters");
     ret = G_ERROR_PARAM;
@@ -1040,6 +1041,7 @@ int user_module_check_password(const char * username, const char * password, voi
                           "raw",
                           "value",
                           clause);
+  o_free(clause);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
