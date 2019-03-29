@@ -307,16 +307,16 @@ class Edit extends Component {
     });
     this.state.source.forEach((source, index) => {
       if ((!curSource && !source.readonly) || source.name === this.state.data.source) {
-        curSource = source.name;
+        curSource = source.display_name;
       }
       sourceLine.push(<a className="dropdown-item" key={index} href="#" onClick={(e) => this.changeSource(e, source.name)}>{source.display_name}</a>);
     });
     var sourceJsx = <div className="form-group">
       <label htmlFor="modal-source">{i18next.t("admin.source")}</label>
-      <button className="btn btn-secondary btn-sm dropdown-toggle" type="button" id="modal-source" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-       {curSource||i18next.t("admin.source-dropdown")}
-      </button>
       <div className="dropdown">
+        <button className="btn btn-secondary btn-sm dropdown-toggle" type="button" id="modal-source" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+         {curSource||i18next.t("admin.source-dropdown")}
+        </button>
         <div className="dropdown-menu" aria-labelledby="modal-source">
           {sourceLine}
         </div>
