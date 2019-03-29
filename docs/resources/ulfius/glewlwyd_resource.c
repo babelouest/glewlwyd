@@ -30,6 +30,17 @@
 #include "glewlwyd_resource.h"
 
 /**
+ * Check if the result json object has a "result" element that is equal to value
+ */
+static int check_result_value(json_t * result, const int value) {
+  return (result != NULL && 
+          json_is_object(result) && 
+          json_object_get(result, "result") != NULL && 
+          json_is_integer(json_object_get(result, "result")) && 
+          json_integer_value(json_object_get(result, "result")) == value);
+}
+
+/**
  * check if bearer token has some of the specified scope
  */
 int callback_check_glewlwyd_access_token (const struct _u_request * request, struct _u_response * response, void * user_data) {
