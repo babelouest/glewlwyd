@@ -237,11 +237,12 @@ struct config_plugin {
   char   * (* glewlwyd_callback_generate_hash)(struct config_plugin * config, const char * data);
   
   // Client CRUD
-  json_t * (* glewlwyd_callback_get_user_list)(struct config_plugin * config, const char * pattern, size_t offset, size_t limit, const char * source);
-  json_t * (* glewlwyd_callback_get_user)(struct config_plugin * config, const char * username, const char * source);
-  int (* add_user)(struct config_plugin * config, json_t * j_user, const char * source);
-  int (* set_user)(struct config_plugin * config, const char * username, json_t * j_user, const char * source);
-  int (* delete_user)(struct config_plugin * config, const char * username, const char * source);
+  json_t * (* glewlwyd_callback_get_user_list)(struct config_plugin * config, const char * pattern, size_t offset, size_t limit);
+  json_t * (* glewlwyd_callback_get_user)(struct config_plugin * config, const char * username);
+  json_t * (* glewlwyd_callback_get_user_profile)(struct config_plugin * config, const char * username);
+  int (* add_user)(struct config_plugin * config, json_t * j_user);
+  int (* set_user)(struct config_plugin * config, const char * username, json_t * j_user);
+  int (* delete_user)(struct config_plugin * config, const char * username);
 };
 
 struct config_module {
@@ -265,5 +266,9 @@ char * join_json_string_array(json_t * j_array, const char * separator);
 char * url_encode(const char * str);
 int generate_digest(digest_algorithm digest, const char * password, int use_salt, char * out_digest);
 char * generate_hash(digest_algorithm digest, const char * password);
+/**
+ * Check if the result json object has a "result" element that is equal to value
+ */
+int check_result_value(json_t * result, const int value);
 
 #endif

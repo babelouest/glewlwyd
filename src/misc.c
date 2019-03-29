@@ -239,7 +239,9 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
           sprintf(intermediate, "%s", password);
           if (use_salt) {
             rand_string(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
-            strncat(intermediate, salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+            // gcc9 doesn't like strncat
+            memcpy(intermediate, salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+            intermediate[GLEWLWYD_DEFAULT_SALT_LENGTH] = '\0';
           }
           
           key_data.size = o_strlen(intermediate);
@@ -374,4 +376,15 @@ char * generate_hash(digest_algorithm digest, const char * data) {
     }
   }
   return to_return;
+}
+
+/**
+ * Check if the result json object has a "result" element that is equal to value
+ */
+int check_result_value(json_t * result, const int value) {
+  return (result != NULL && 
+          json_is_object(result) && 
+          json_object_get(result, "result") != NULL && 
+          json_is_integer(json_object_get(result, "result")) && 
+          json_integer_value(json_object_get(result, "result")) == value);
 }

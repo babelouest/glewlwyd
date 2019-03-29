@@ -543,6 +543,44 @@ int delete_user(struct config_elements * config, const char * username, const ch
   return ret;
 }
 
+json_t * user_get_profile(struct config_elements * config, const char * username) {
+  json_t * j_user = get_user(config, username, NULL), * j_return, * j_profile;
+  struct _user_module_instance * user_module;
+  char * str_profile;
+  int result;
+
+  if (check_result_value(j_user, G_OK)) {
+    user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
+    if (user_module != NULL && user_module->enabled) {
+      str_profile = user_module->module->user_module_get_profile(username, &result, user_module->cls);
+      if (result == G_OK) {
+        j_profile = json_loads(str_profile, JSON_DECODE_ANY, NULL);
+        if (j_profile != NULL) {
+          j_return = json_pack("{sisO}", "result", G_OK, "profile", j_profile);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_get_profile - Error parsing profile result");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+        json_decref(j_profile);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_get_profile - Error user_module_get_profile");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      o_free(str_profile);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_get_profile - Error get_user_module_instance");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+  } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_get_profile - Error get_user");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  json_decref(j_user);
+  return j_return;
+}
+
 json_t * user_set_profile(struct config_elements * config, const char * username, json_t * j_profile) {
   json_t * j_user = get_user(config, username, NULL), * j_return;
   struct _user_module_instance * user_module;
@@ -570,6 +608,38 @@ json_t * user_set_profile(struct config_elements * config, const char * username
   }
   json_decref(j_user);
   return j_return;
+}
+
+int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char * new_password) {
+  json_t * j_user = get_user(config, username, NULL);
+  struct _user_module_instance * user_module;
+  int ret;
+
+  if (check_result_value(j_user, G_OK)) {
+    user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
+    if (user_module != NULL && user_module->enabled && !user_module->readonly) {
+      if ((ret = user_module->module->user_module_check_password(username, old_password, user_module->cls)) == G_OK) {
+        ret = user_module->module->user_module_update_password(username, new_password, user_module->cls);
+      } else if (ret == G_ERROR_UNAUTHORIZED) {
+        ret = G_ERROR_PARAM;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_set_profile - Error user_module_check_password");
+        ret = G_ERROR;
+      }
+    } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
+      ret = G_ERROR_PARAM;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_set_profile - Error get_user_module_instance");
+      ret = G_ERROR;
+    }
+  } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+    ret = G_ERROR_NOT_FOUND;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_set_profile - Error get_user");
+    ret = G_ERROR;
+  }
+  json_decref(j_user);
+  return ret;
 }
 
 char * glewlwyd_callback_get_user(struct config_module * config, const char * username, int * result) {
