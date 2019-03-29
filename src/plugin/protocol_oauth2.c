@@ -32,6 +32,7 @@
 #include <orcania.h>
 #include <ulfius.h>
 #include "../glewlwyd-common.h"
+#include "../../docs/resources/ulfius/glewlwyd_resource.h"
 
 #define OAUTH2_SALT_LENGTH 16
 
@@ -58,14 +59,15 @@
 #define GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN                        5
 
 struct _oauth2_config {
-  struct config_plugin * glewlwyd_config;
-  jwt_t            * jwt_key;
-  json_t           * j_params;
-  unsigned long      access_token_duration;
-  json_int_t         refresh_token_duration;
-  unsigned short int refresh_token_rolling;
-  unsigned short int auth_type_enabled[5];
-  pthread_mutex_t    insert_lock;
+  struct config_plugin             * glewlwyd_config;
+  jwt_t                            * jwt_key;
+  json_t                           * j_params;
+  unsigned long                      access_token_duration;
+  json_int_t                         refresh_token_duration;
+  unsigned short int                 refresh_token_rolling;
+  unsigned short int                 auth_type_enabled[5];
+  pthread_mutex_t                    insert_lock;
+  struct _glewlwyd_resource_config * glewlwyd_resource_config;
 };
 
 /**
@@ -1611,6 +1613,26 @@ static int callback_oauth2_token(const struct _u_request * request, struct _u_re
   return result;
 }
 
+static int callback_oauth2_get_profile(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _oauth2_config * config = (struct _oauth2_config *)user_data;
+  json_t * j_profile = config->glewlwyd_config->glewlwyd_callback_get_user_profile(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")));
+  
+  if (check_result_value(j_profile, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_profile, "profile"));
+  } else {
+    response->status = 404;
+  }
+  json_decref(j_profile);
+  return U_CALLBACK_CONTINUE;
+}
+
+static int callback_oauth2_clean(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  if (response->shared_data != NULL) {
+    json_decref((json_t *)response->shared_data);
+  }
+  return U_CALLBACK_COMPLETE;
+}
+
 static int jwt_autocheck(struct _oauth2_config * config) {
   time_t now;
   char * token;
@@ -1772,93 +1794,109 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
       ((struct _oauth2_config *)*cls)->jwt_key = NULL;
       ((struct _oauth2_config *)*cls)->j_params = json_loads(parameters, JSON_DECODE_ANY, 0);
       ((struct _oauth2_config *)*cls)->glewlwyd_config = config;
-      if (check_parameters(((struct _oauth2_config *)*cls)->j_params) == G_OK) {
-        ((struct _oauth2_config *)*cls)->access_token_duration = json_integer_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "access-token-duration"));
-        if (!((struct _oauth2_config *)*cls)->access_token_duration) {
-          ((struct _oauth2_config *)*cls)->access_token_duration = GLEWLWYD_ACCESS_TOKEN_EXP_DEFAULT;
-        }
-        ((struct _oauth2_config *)*cls)->refresh_token_duration = json_integer_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-duration"));
-        if (!((struct _oauth2_config *)*cls)->refresh_token_duration) {
-          ((struct _oauth2_config *)*cls)->refresh_token_duration = GLEWLWYD_REFRESH_TOKEN_EXP_DEFAULT;
-        }
-        if (json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-rolling") != NULL) {
-          ((struct _oauth2_config *)*cls)->refresh_token_rolling = json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-rolling")==json_true()?1:0;
-        } else {
-          ((struct _oauth2_config *)*cls)->refresh_token_rolling = 0;
-        }
-        ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-code-enabled")==json_true()?1:0;
-        ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-implicit-enabled")==json_true()?1:0;
-        ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-password-enabled")==json_true()?1:0;
-        ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-client-enabled")==json_true()?1:0;
-        ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-refresh-enabled")==json_true()?1:0;
-        if (!jwt_new(&((struct _oauth2_config *)*cls)->jwt_key)) {
-          if (0 == o_strcmp("rsa", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-type")))) {
-            key = (const unsigned char *)json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key"));
-            if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
-              alg = JWT_ALG_RS256;
-            } else if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
-              alg = JWT_ALG_RS384;
-            } else { // 512
-              alg = JWT_ALG_RS512;
-            }
-          } else if (0 == o_strcmp("ecdsa", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-type")))) {
-            key = (const unsigned char *)json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key"));
-            if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
-              alg = JWT_ALG_ES256;
-            } else if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
-              alg = JWT_ALG_ES384;
-            } else { // 512
-              alg = JWT_ALG_ES512;
-            }
-          } else { // SHA
-            key = (const unsigned char *)json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key"));
-            if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
-              alg = JWT_ALG_HS256;
-            } else if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
-              alg = JWT_ALG_HS384;
-            } else { // 512
-              alg = JWT_ALG_HS512;
-            }
+      ((struct _oauth2_config *)*cls)->glewlwyd_resource_config = o_malloc(sizeof(struct _glewlwyd_resource_config));
+      if (((struct _oauth2_config *)*cls)->glewlwyd_resource_config != NULL) {
+        ((struct _oauth2_config *)*cls)->glewlwyd_resource_config->method = G_METHOD_HEADER;
+        ((struct _oauth2_config *)*cls)->glewlwyd_resource_config->oauth_scope = config->glewlwyd_config->profile_scope;
+        ((struct _oauth2_config *)*cls)->glewlwyd_resource_config->realm = NULL;
+        if (check_parameters(((struct _oauth2_config *)*cls)->j_params) == G_OK) {
+          ((struct _oauth2_config *)*cls)->access_token_duration = json_integer_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "access-token-duration"));
+          if (!((struct _oauth2_config *)*cls)->access_token_duration) {
+            ((struct _oauth2_config *)*cls)->access_token_duration = GLEWLWYD_ACCESS_TOKEN_EXP_DEFAULT;
           }
-          if (jwt_set_alg(((struct _oauth2_config *)*cls)->jwt_key, alg, key, o_strlen((const char *)key))) {
-            json_decref(((struct _oauth2_config *)*cls)->j_params);
-            jwt_free(((struct _oauth2_config *)*cls)->jwt_key);
-            o_free(*cls);
-            *cls = NULL;
-            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for jwt_key");
-            ret = G_ERROR_MEMORY;
+          ((struct _oauth2_config *)*cls)->refresh_token_duration = json_integer_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-duration"));
+          if (!((struct _oauth2_config *)*cls)->refresh_token_duration) {
+            ((struct _oauth2_config *)*cls)->refresh_token_duration = GLEWLWYD_REFRESH_TOKEN_EXP_DEFAULT;
+          }
+          if (json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-rolling") != NULL) {
+            ((struct _oauth2_config *)*cls)->refresh_token_rolling = json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-rolling")==json_true()?1:0;
           } else {
-            if (jwt_autocheck(((struct _oauth2_config *)*cls)) != G_OK) {
+            ((struct _oauth2_config *)*cls)->refresh_token_rolling = 0;
+          }
+          ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-code-enabled")==json_true()?1:0;
+          ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-implicit-enabled")==json_true()?1:0;
+          ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-password-enabled")==json_true()?1:0;
+          ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-client-enabled")==json_true()?1:0;
+          ((struct _oauth2_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN] = json_object_get(((struct _oauth2_config *)*cls)->j_params, "auth-type-refresh-enabled")==json_true()?1:0;
+          if (!jwt_new(&((struct _oauth2_config *)*cls)->jwt_key)) {
+            if (0 == o_strcmp("rsa", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-type")))) {
+              key = (const unsigned char *)json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key"));
+              if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
+                alg = JWT_ALG_RS256;
+              } else if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
+                alg = JWT_ALG_RS384;
+              } else { // 512
+                alg = JWT_ALG_RS512;
+              }
+            } else if (0 == o_strcmp("ecdsa", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-type")))) {
+              key = (const unsigned char *)json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key"));
+              if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
+                alg = JWT_ALG_ES256;
+              } else if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
+                alg = JWT_ALG_ES384;
+              } else { // 512
+                alg = JWT_ALG_ES512;
+              }
+            } else { // SHA
+              key = (const unsigned char *)json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key"));
+              if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
+                alg = JWT_ALG_HS256;
+              } else if (0 == o_strcmp("256", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-key-size")))) {
+                alg = JWT_ALG_HS384;
+              } else { // 512
+                alg = JWT_ALG_HS512;
+              }
+            }
+            if (jwt_set_alg(((struct _oauth2_config *)*cls)->jwt_key, alg, key, o_strlen((const char *)key))) {
               json_decref(((struct _oauth2_config *)*cls)->j_params);
               jwt_free(((struct _oauth2_config *)*cls)->jwt_key);
               o_free(*cls);
               *cls = NULL;
-              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error jwt_autocheck");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for jwt_key");
               ret = G_ERROR_MEMORY;
             } else {
-              // Add endpoints
-              y_log_message(Y_LOG_LEVEL_DEBUG, "Add endpoints with plugin prefix %s", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")));
-              if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)*cls) != G_OK || 
-                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_token, (void*)*cls)) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error adding endpoints");
-                ret = G_ERROR;
+              if (jwt_autocheck(((struct _oauth2_config *)*cls)) != G_OK) {
+                json_decref(((struct _oauth2_config *)*cls)->j_params);
+                jwt_free(((struct _oauth2_config *)*cls)->jwt_key);
+                o_free(*cls);
+                *cls = NULL;
+                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error jwt_autocheck");
+                ret = G_ERROR_MEMORY;
               } else {
-                ret = G_OK;
+                ((struct _oauth2_config *)*cls)->glewlwyd_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "cert")));
+                ((struct _oauth2_config *)*cls)->glewlwyd_resource_config->jwt_alg = alg;
+                // Add endpoints
+                y_log_message(Y_LOG_LEVEL_DEBUG, "Add endpoints with plugin prefix %s", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")));
+                if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)*cls) != G_OK || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "POST", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_token, (void*)*cls) || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "profile/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_access_token, ((struct _oauth2_config *)*cls)->glewlwyd_resource_config) || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_get_profile, (void*)*cls) || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "profile/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oauth2_clean, NULL)) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error adding endpoints");
+                  ret = G_ERROR;
+                } else {
+                  ret = G_OK;
+                }
               }
             }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for jwt_key");
+            json_decref(((struct _oauth2_config *)*cls)->j_params);
+            o_free(*cls);
+            *cls = NULL;
+            ret = G_ERROR_MEMORY;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for jwt_key");
-          json_decref(((struct _oauth2_config *)*cls)->j_params);
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error parameters");
           o_free(*cls);
           *cls = NULL;
           ret = G_ERROR_MEMORY;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error parameters");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 plugin_module_init - Error initializing glewlwyd_resource_config");
         o_free(*cls);
         *cls = NULL;
-        ret = G_ERROR_MEMORY;
+        ret = G_ERROR;
       }
     }
     pthread_mutexattr_destroy(&mutexattr);
@@ -1876,6 +1914,8 @@ int plugin_module_close(struct config_plugin * config, void * cls) {
     pthread_mutex_destroy(&((struct _oauth2_config *)cls)->insert_lock);
     jwt_free(((struct _oauth2_config *)cls)->jwt_key);
     json_decref(((struct _oauth2_config *)cls)->j_params);
+    o_free(((struct _oauth2_config *)cls)->glewlwyd_resource_config->oauth_scope);
+    o_free(((struct _oauth2_config *)cls)->glewlwyd_resource_config);
     o_free(cls);
   }
   return G_OK;
