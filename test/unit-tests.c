@@ -27,6 +27,55 @@ void print_response(struct _u_response * response) {
     json_decref(json_body);
   }
 }
+/**
+ * json_t * json_search(json_t * haystack, json_t * needle)
+ * jansson library addon
+ * Look for an occurence of needle within haystack
+ * If needle is present in haystack, return the reference to the json_t * that is equal to needle
+ * If needle is not found, return NULL
+ */
+json_t * json_search(json_t * haystack, json_t * needle) {
+  json_t * value1 = NULL, * value2 = NULL;
+  size_t index = 0;
+  const char * key = NULL;
+
+  if (!haystack || !needle)
+    return NULL;
+
+  if (haystack == needle)
+    return haystack;
+
+  // If both haystack and needle are the same type, test them
+  if (json_typeof(haystack) == json_typeof(needle))
+    if (json_equal(haystack, needle))
+      return haystack;
+
+  // If they are not equals, test json_search in haystack elements recursively if it's an array or an object
+  if (json_is_array(haystack)) {
+    json_array_foreach(haystack, index, value1) {
+      if (json_equal(value1, needle)) {
+        return value1;
+      } else {
+        value2 = json_search(value1, needle);
+        if (value2 != NULL) {
+          return value2;
+        }
+      }
+    }
+  } else if (json_is_object(haystack)) {
+    json_object_foreach(haystack, key, value1) {
+      if (json_equal(value1, needle)) {
+        return value1;
+      } else {
+        value2 = json_search(value1, needle);
+        if (value2 != NULL) {
+          return value2;
+        }
+      }
+    }
+  }
+  return NULL;
+}
 
 int test_request(struct _u_request * req, long int expected_status, json_t * expected_json_body, const char * exptected_string_body, const char * expected_redirect_uri_contains) {
   int res, to_return = 0;
