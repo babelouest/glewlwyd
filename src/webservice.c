@@ -1439,13 +1439,22 @@ int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u
 
 int callback_glewlwyd_user_get_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_session;
+  json_t * j_session, * j_profile;
   char * session_uid = get_session_id(config, request);
   
   if (session_uid != NULL && o_strlen(session_uid)) {
-    j_session = get_users_for_session(config, session_uid);
+    j_session = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_session, G_OK)) {
-      ulfius_set_json_body_response(response, 200, json_object_get(j_session, "session"));
+      j_profile = user_get_profile(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "username")));
+      if (check_result_value(j_profile, G_OK)) {
+        ulfius_set_json_body_response(response, 200, json_object_get(j_profile, "profile"));
+      } else if (check_result_value(j_profile, G_ERROR_NOT_FOUND)) {
+        response->status = 404;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_get_session - Error user_get_profile");
+        response->status = 500;
+      }
+      json_decref(j_profile);
     } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
       response->status = 401;
       ulfius_add_cookie_to_response(response, config->session_key, "", NULL, -1, NULL, NULL, 0, 0);
@@ -1485,21 +1494,47 @@ int callback_glewlwyd_user_update_profile (const struct _u_request * request, st
         response->status = 400;
       }
       json_decref(j_profile);
+    } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
+      response->status = 401;
+      ulfius_add_cookie_to_response(response, config->session_key, "", NULL, -1, NULL, NULL, 0, 0);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_update_profile - Error get_current_user_for_session");
       response->status = 500;
     }
     json_decref(j_session);
   } else {
-    response->status = 404;
-    ulfius_add_cookie_to_response(response, config->session_key, "", NULL, -1, NULL, NULL, 0, 0);
+    response->status = 401;
   }
   o_free(session_uid);
   
   return U_CALLBACK_CONTINUE;
 }
 
-// TODO
 int callback_glewlwyd_user_update_password (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_CALLBACK_ERROR;
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_session;
+  char * session_uid = get_session_id(config, request);
+  int res;
+
+  if (session_uid != NULL && o_strlen(session_uid)) {
+    j_session = get_current_user_for_session(config, session_uid);
+    if (check_result_value(j_session, G_OK)) {
+      if ((res = user_update_password(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "username")), json_string_value(json_object_get(json_object_get(j_session, "user"), "old_password")), json_string_value(json_object_get(json_object_get(j_session, "user"), "password")))) == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_update_password - Error user_update_password");
+        response->status = 500;
+      }
+    } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
+      response->status = 401;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_update_password - Error get_current_user_for_session");
+      response->status = 500;
+    }
+    json_decref(j_session);
+  } else {
+    response->status = 401;
+  }
+  o_free(session_uid);
+  
+  return U_CALLBACK_CONTINUE;
 }

@@ -156,6 +156,8 @@ char * get_session_id(struct config_elements * config, const struct _u_request *
 
 // Profile
 json_t * user_set_profile(struct config_elements * config, const char * username, json_t * j_profile);
+json_t * user_get_profile(struct config_elements * config, const char * username);
+int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char * new_password);
 
 // User
 int user_has_scope(json_t * j_user, const char * scope);
