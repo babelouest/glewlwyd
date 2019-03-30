@@ -349,8 +349,7 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
       if (result == G_ERROR_PARAM && str_error != NULL) {
         j_error_list = json_loads(str_error, JSON_DECODE_ANY, NULL);
         if (j_error_list != NULL) {
-          j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error_list);
-          json_decref(j_error_list);
+          j_return = json_pack("{siso}", "result", G_ERROR_PARAM, "error", j_error_list);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error json_loads");
           j_return = json_pack("{si}", "result", G_ERROR);
@@ -383,8 +382,7 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
             if (result == G_ERROR_PARAM && str_error != NULL) {
               j_error_list = json_loads(str_error, JSON_DECODE_ANY, NULL);
               if (j_error_list != NULL) {
-                j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "user", j_error_list);
-                json_decref(j_error_list);
+                j_return = json_pack("{siso}", "result", G_ERROR_PARAM, "user", j_error_list);
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error json_loads");
               }
@@ -407,10 +405,10 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
     }
     json_decref(j_module_list);
     if (j_return == NULL) {
-      j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "user", "no writeable source");
     }
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "user", "source parameter is mandatory");
   }
   return j_return;
 }
@@ -435,6 +433,7 @@ int add_user(struct config_elements * config, json_t * j_user, const char * sour
       }
       o_free(str_user);
     } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error module %s not allowed", user_module->name);
       ret = G_ERROR_PARAM;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error get_user_module_instance");
@@ -467,9 +466,9 @@ int add_user(struct config_elements * config, json_t * j_user, const char * sour
       ret = G_ERROR;
     }
     json_decref(j_module_list);
-  }
-  if (!found) {
-    ret = G_ERROR_NOT_FOUND;
+    if (!found) {
+      ret = G_ERROR_NOT_FOUND;
+    }
   }
   return ret;
 }
