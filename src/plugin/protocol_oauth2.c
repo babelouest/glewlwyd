@@ -1914,7 +1914,6 @@ int plugin_module_close(struct config_plugin * config, void * cls) {
     pthread_mutex_destroy(&((struct _oauth2_config *)cls)->insert_lock);
     jwt_free(((struct _oauth2_config *)cls)->jwt_key);
     json_decref(((struct _oauth2_config *)cls)->j_params);
-    o_free(((struct _oauth2_config *)cls)->glewlwyd_resource_config->oauth_scope);
     o_free(((struct _oauth2_config *)cls)->glewlwyd_resource_config);
     o_free(cls);
   }
