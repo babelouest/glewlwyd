@@ -42,25 +42,19 @@ class PluginEdit extends Component {
   }
 
   closeModal(e, result) {
-    console.log("grut 0");
     if (this.state.callback) {
-      console.log("grut 1");
       if (result) {
-        console.log("grut 2");
         if (this.state.add && !this.state.mod.name) {
           this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-mandatory"), typeInvalidMessage: false});
         } else if (!this.state.mod.module) {
           this.setState({nameInvalid: false, nameInvalidMessage: false, typeInvalidMessage: i18next.t("admin.error-mod-type-mandatory")});
         } else if (this.state.parametersValid) {
           if (this.state.add) {
-            console.log("grut 3");
             apiManager.glewlwydRequest("/mod/user/" + encodeURI(this.state.mod.name), "GET")
             .then(() => {
-              console.log("grut 4");
               this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-exist"), typeInvalidMessage: false});
             })
             .fail(() => {
-              console.log("grut 5");
               this.state.callback(result, this.state.mod);
             });
           } else {
@@ -68,7 +62,6 @@ class PluginEdit extends Component {
           }
         }
       } else {
-        console.log("grut 6");
         this.state.callback(result);
       }
     }
