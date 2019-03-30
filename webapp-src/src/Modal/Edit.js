@@ -230,6 +230,9 @@ class Edit extends Component {
     e.preventDefault();
     if (value) {
       var data = this.state.data;
+      if (!data[name]) {
+        data[name] = [];
+      }
       data[name].push(value);
       this.setState({data: data});
     } else {
