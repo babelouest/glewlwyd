@@ -967,6 +967,7 @@ int client_module_check_password(const char * client_id, const char * password, 
                           "raw",
                           "value",
                           clause);
+  o_free(clause);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
