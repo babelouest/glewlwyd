@@ -750,3 +750,25 @@ int glewlwyd_module_callback_set_user(struct config_module * config, const char 
   json_decref(j_user_data);
   return ret;
 }
+
+int glewlwyd_module_callback_check_user_password(struct config_module * config, const char * username, const char * password) {
+  int ret;
+  json_t * j_user, * j_result;
+  
+  j_user = get_user(config->glewlwyd_config, username, NULL);
+  if (check_result_value(j_user, G_OK)) {
+    j_result = auth_check_user_credentials(config->glewlwyd_config, username, password);
+    if (json_is_integer(json_object_get(j_result, "result"))) {
+      ret = json_integer_value(json_object_get(j_result, "result"));
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_module_callback_check_user_password - Error auth_check_user_credentials");
+      ret = G_ERROR;
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_module_callback_check_user_password - Error get_user");
+    ret = G_ERROR;
+  }
+  json_decref(j_user);
+  return ret;
+}
