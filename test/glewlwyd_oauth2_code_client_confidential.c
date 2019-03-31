@@ -35,10 +35,10 @@ START_TEST(test_glwd_code_code_invalid)
   u_map_put(&body, "redirect_uri", REDIRECT_URI);
   u_map_put(&body, "code", "invalid");
   
-  free(user_req.http_verb);
+  o_free(user_req.http_verb);
   user_req.http_verb = NULL;
   int res = run_simple_test(&user_req, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -54,10 +54,10 @@ START_TEST(test_glwd_code_client_invalid)
   u_map_put(&body, "redirect_uri", REDIRECT_URI);
   u_map_put(&body, "code", code);
   
-  free(user_req.http_verb);
+  o_free(user_req.http_verb);
   user_req.http_verb = NULL;
   int res = run_simple_test(&user_req, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 403, NULL, "unauthorized_client", NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -73,10 +73,10 @@ START_TEST(test_glwd_code_redirect_uri_invalid)
   u_map_put(&body, "redirect_uri", "invalid");
   u_map_put(&body, "code", code);
   
-  free(user_req.http_verb);
+  o_free(user_req.http_verb);
   user_req.http_verb = NULL;
   int res = run_simple_test(&user_req, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -92,10 +92,10 @@ START_TEST(test_glwd_code_ok)
   u_map_put(&body, "redirect_uri", REDIRECT_URI);
   u_map_put(&body, "code", code);
   
-  free(user_req.http_verb);
+  o_free(user_req.http_verb);
   user_req.http_verb = NULL;
   int res = run_simple_test(&user_req, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 200, NULL, "refresh_token", NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
   
   url = msprintf("%s/auth/", SERVER_URI);
   run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   
   ulfius_clean_request(&auth_req);
   ulfius_clean_request(&user_req);

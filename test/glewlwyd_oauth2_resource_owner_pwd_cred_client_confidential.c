@@ -33,7 +33,7 @@ START_TEST(glewlwyd_resource_owner_pwd_cred_valid)
   u_map_put(&body, "password", PASSWORD);
 
   int res = run_simple_test(NULL, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 200, NULL, "refresh_token", NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -50,7 +50,7 @@ START_TEST(glewlwyd_resource_owner_pwd_cred_pwd_invalid)
   u_map_put(&body, "password", "invalid");
 
   int res = run_simple_test(NULL, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -67,7 +67,7 @@ START_TEST(glewlwyd_resource_owner_pwd_cred_user_invalid)
   u_map_put(&body, "password", PASSWORD);
 
   int res = run_simple_test(NULL, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -84,7 +84,7 @@ START_TEST(glewlwyd_resource_owner_pwd_cred_client_invalid)
   u_map_put(&body, "password", PASSWORD);
 
   int res = run_simple_test(NULL, "POST", url, CLIENT, "invalid", NULL, &body, 400, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -101,7 +101,7 @@ START_TEST(glewlwyd_resource_owner_pwd_cred_scope_invalid)
   u_map_put(&body, "password", PASSWORD);
 
   int res = run_simple_test(NULL, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -115,7 +115,7 @@ START_TEST(glewlwyd_resource_owner_pwd_cred_empty)
   u_map_put(&body, "grant_type", "password");
 
   int res = run_simple_test(NULL, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 400, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }

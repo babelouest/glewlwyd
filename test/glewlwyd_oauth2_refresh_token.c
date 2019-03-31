@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
   number_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
   
-  free(refresh_token);
+  o_free(refresh_token);
   
   return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

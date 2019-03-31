@@ -31,7 +31,7 @@ START_TEST(test_glwd_refresh_token_token_invalid)
   u_map_put(&body, "refresh_token", "invalid");
   
   int res = run_simple_test(NULL, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 400, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -46,7 +46,7 @@ START_TEST(test_glwd_refresh_token_client_invalid)
   u_map_put(&body, "refresh_token", refresh_token);
   
   int res = run_simple_test(NULL, "POST", url, CLIENT, "invalid", NULL, &body, 400, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -61,7 +61,7 @@ START_TEST(test_glwd_refresh_token_no_client)
   u_map_put(&body, "refresh_token", refresh_token);
   
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 400, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -76,7 +76,7 @@ START_TEST(test_glwd_refresh_token_ok)
   u_map_put(&body, "refresh_token", refresh_token);
   
   int res = run_simple_test(NULL, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 200, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
   number_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
   
-  free(refresh_token);
+  o_free(refresh_token);
   
   return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

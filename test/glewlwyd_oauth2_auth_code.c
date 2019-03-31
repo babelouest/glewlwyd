@@ -25,7 +25,7 @@ START_TEST(test_glwd_auth_invalid_response_type)
 {
   char * url = msprintf("%s/glwd/auth?response_type=invalid&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oauth2.html&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unsupported_response_type");
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -34,7 +34,7 @@ START_TEST(test_glwd_auth_code_state_ok)
 {
   char * url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oauth2.html&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "state=xyzabcd");
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -43,7 +43,7 @@ START_TEST(test_glwd_auth_code_ok_redirect_login)
 {
   char * url = msprintf("%s/glwd/auth?response_type=code&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oauth2.html?param=client1_cb1&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html");
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -52,7 +52,7 @@ START_TEST(test_glwd_auth_code_client_invalid)
 {
   char * url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=client_error&redirect_uri=..%%2f..%%2ftest-oauth2.html?param=client1_cb1&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unauthorized_client");
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -61,7 +61,7 @@ START_TEST(test_glwd_auth_code_uri_invalid)
 {
   char * url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=client_error&redirect_uri=..%%2f..%%2ftest-oauth2.html?param=invalid&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unauthorized_client");
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -70,7 +70,7 @@ START_TEST(test_glwd_auth_code_scope_invalid)
 {
   char * url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oauth2.html?param=client1_cb1&state=xyzabcd&scope=scope4", SERVER_URI);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "invalid_scope");
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -79,7 +79,7 @@ START_TEST(test_glwd_auth_code_scope_empty)
 {
   char * url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oauth2.html?param=client1_cb1&state=xyzabcd", SERVER_URI);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "invalid_scope");
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -88,7 +88,7 @@ START_TEST(test_glwd_auth_code_ok_redirect_cb_with_code)
 {
   char * url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oauth2.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code=");
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
   
   url = msprintf("%s/auth/", SERVER_URI);
   run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   
   ulfius_clean_request(&auth_req);
   ulfius_clean_request(&user_req);
