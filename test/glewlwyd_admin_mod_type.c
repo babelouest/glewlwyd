@@ -24,7 +24,7 @@ START_TEST(test_glwd_admin_get_mod_types)
   char * url = msprintf("%s/mod/type/", SERVER_URI);
   
   int res = run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST

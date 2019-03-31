@@ -27,7 +27,7 @@ START_TEST(test_glwd_admin_get_mod_user_get_list)
   char * url = msprintf("%s/mod/user/", SERVER_URI);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
 }
 END_TEST
 
@@ -36,7 +36,7 @@ START_TEST(test_glwd_admin_get_mod_user_add_error_json)
   char * url = msprintf("%s/mod/user/", SERVER_URI);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, NULL, NULL, 400, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
 }
 END_TEST
 
@@ -78,7 +78,7 @@ START_TEST(test_glwd_admin_get_mod_user_add_error_param)
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  free(url);
+  o_free(url);
 }
 END_TEST
 
@@ -88,11 +88,11 @@ START_TEST(test_glwd_admin_get_mod_user_add_OK)
   json_t * j_parameters = json_pack("{sssssssisos{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "readonly", json_false(), "parameters", "mock-value", MODULE_NAME);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
   
   url = msprintf("%s/mod/user/%s", SERVER_URI, MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
-  free(url);
+  o_free(url);
   json_decref(j_parameters);
 }
 END_TEST
@@ -104,7 +104,7 @@ START_TEST(test_glwd_admin_get_mod_user_get)
   
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url_404, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
   json_decref(j_parameters);
 }
 END_TEST
@@ -137,7 +137,7 @@ START_TEST(test_glwd_admin_get_mod_user_set_error_param)
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  free(url);
+  o_free(url);
 }
 END_TEST
 
@@ -150,7 +150,7 @@ START_TEST(test_glwd_admin_get_mod_user_set_OK)
   
   url = msprintf("%s/mod/user/%s", SERVER_URI, MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
-  free(url);
+  o_free(url);
   json_decref(j_parameters);
 }
 END_TEST
@@ -161,16 +161,16 @@ START_TEST(test_glwd_admin_get_mod_user_action)
   
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 400, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
   
   url = msprintf("%s/mod/user/%s/enable", SERVER_URI, MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 400, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
   
   url = msprintf("%s/mod/user/%s/error", SERVER_URI, MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 400, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
 }
 END_TEST
 
@@ -179,7 +179,7 @@ START_TEST(test_glwd_admin_get_mod_user_delete_error)
   char * url = msprintf("%s/mod/user/error", SERVER_URI);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
 }
 END_TEST
 
@@ -188,7 +188,7 @@ START_TEST(test_glwd_admin_get_mod_user_delete_OK)
   char * url = msprintf("%s/mod/user/%s", SERVER_URI, MODULE_NAME);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
 }
 END_TEST
 

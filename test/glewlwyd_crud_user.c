@@ -35,7 +35,7 @@ START_TEST(test_glwd_crud_user_get_list)
   char * url = msprintf("%s/user/", SERVER_URI);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
 }
 END_TEST
 
@@ -44,7 +44,7 @@ START_TEST(test_glwd_crud_user_add_error_json)
   char * url = msprintf("%s/user/", SERVER_URI);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, NULL, NULL, 400, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
 }
 END_TEST
 
@@ -64,7 +64,7 @@ START_TEST(test_glwd_crud_user_add_error_param)
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  free(url);
+  o_free(url);
 }
 END_TEST
 
@@ -74,11 +74,11 @@ START_TEST(test_glwd_crud_user_add_OK)
   json_t * j_parameters = json_pack("{sssssss[ss]}", "username", NEW_USERNAME, "name", NEW_NAME, "email", NEW_EMAIL, "scope", NEW_SCOPE_1, NEW_SCOPE_2);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
   
   url = msprintf("%s/user/%s", SERVER_URI, NEW_USERNAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
-  free(url);
+  o_free(url);
   json_decref(j_parameters);
 }
 END_TEST
@@ -89,7 +89,7 @@ START_TEST(test_glwd_crud_user_add_already_present)
   json_t * j_parameters = json_pack("{ss}", "username", NEW_USERNAME);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
   json_decref(j_parameters);
 }
 END_TEST
@@ -101,7 +101,7 @@ START_TEST(test_glwd_crud_user_get)
   
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url_404, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
   json_decref(j_parameters);
 }
 END_TEST
@@ -115,7 +115,7 @@ START_TEST(test_glwd_crud_user_set_OK)
   
   json_object_set_new(j_parameters, "username", json_string(NEW_USERNAME));
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
-  free(url);
+  o_free(url);
   json_decref(j_parameters);
 }
 END_TEST
@@ -125,7 +125,7 @@ START_TEST(test_glwd_crud_user_delete_error)
   char * url = msprintf("%s/user/error", SERVER_URI);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
 }
 END_TEST
 
@@ -134,7 +134,7 @@ START_TEST(test_glwd_crud_user_delete_OK)
   char * url = msprintf("%s/user/%s", SERVER_URI, NEW_USERNAME);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
 }
 END_TEST
 
@@ -258,7 +258,7 @@ START_TEST(test_glwd_crud_user_list_add_user_module_instances)
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   j_parameters = json_pack("{sssssssisos{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME_2, "display_name", MODULE_DISPLAY_NAME, "order_rank", 2, "readonly", json_true(), "parameters", "username-prefix", MODULE_PREFIX_2);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
   json_decref(j_parameters);
 }
 END_TEST
@@ -351,10 +351,10 @@ START_TEST(test_glwd_crud_user_list_delete_user_module_instances)
 {
   char * url = msprintf("%s/mod/user/%s", SERVER_URI, MODULE_NAME_1);
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
   url = msprintf("%s/mod/user/%s", SERVER_URI, MODULE_NAME_2);
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
-  free(url);
+  o_free(url);
 }
 END_TEST
 

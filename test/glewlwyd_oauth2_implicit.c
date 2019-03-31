@@ -28,7 +28,7 @@ START_TEST(test_glwd_implicit_redirect_login)
 {
   char * url = msprintf("%s/glwd/auth?response_type=token&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html");
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -37,7 +37,7 @@ START_TEST(test_glwd_implicit_valid)
 {
   char * url = msprintf("%s/glwd/auth?response_type=token&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "token=");
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -46,7 +46,7 @@ START_TEST(test_glwd_implicit_client_invalid)
 {
   char * url = msprintf("%s/glwd/auth?response_type=token&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, "invalid", SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=unauthorized_client");
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -55,7 +55,7 @@ START_TEST(test_glwd_implicit_redirect_uri_invalid)
 {
   char * url = msprintf("%s/glwd/auth?response_type=token&g_continue&client_id=%s&redirect_uri=invalid&state=xyzabcd&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=unauthorized_client");
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -64,7 +64,7 @@ START_TEST(test_glwd_implicit_scope_invalid)
 {
   char * url = msprintf("%s/glwd/auth?response_type=token&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, CLIENT, "scope4");
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_scope");
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -73,7 +73,7 @@ START_TEST(test_glwd_implicit_empty)
 {
   char * url = msprintf("%s/glwd/auth?response_type=token&state=xyzabcd&g_continue", SERVER_URI);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -614,7 +614,7 @@ int main(int argc, char *argv[])
   
   url = msprintf("%s/auth/", SERVER_URI);
   run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   
   ulfius_clean_request(&auth_req);
   ulfius_clean_request(&user_req);

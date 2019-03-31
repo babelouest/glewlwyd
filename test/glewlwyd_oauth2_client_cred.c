@@ -30,7 +30,7 @@ START_TEST(glewlwyd_client_cred_valid)
   u_map_put(&body, "scope", SCOPE_LIST);
   
   int res = run_simple_test(NULL, "POST", url, CLIENT_ID, CLIENT_PASSWORD, NULL, &body, 200, NULL, "access_token", NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -45,7 +45,7 @@ START_TEST(glewlwyd_client_cred_valid_reduced_scope)
   u_map_put(&body, "scope", SCOPE_LIST " scope1");
   
   int res = run_simple_test(NULL, "POST", url, CLIENT_ID, CLIENT_PASSWORD, NULL, &body, 200, NULL, "scope\":\"scope2 scope3\"", NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -60,7 +60,7 @@ START_TEST(glewlwyd_client_cred_pwd_invalid)
   u_map_put(&body, "scope", SCOPE_LIST);
   
   int res = run_simple_test(NULL, "POST", url, CLIENT_ID, "invalid", NULL, &body, 403, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -75,7 +75,7 @@ START_TEST(glewlwyd_client_cred_client_unauthorized)
   u_map_put(&body, "scope", SCOPE_LIST);
   
   int res = run_simple_test(NULL, "POST", url, "client1_id", CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -90,7 +90,7 @@ START_TEST(glewlwyd_client_cred_client_invalid)
   u_map_put(&body, "scope", SCOPE_LIST);
   
   int res = run_simple_test(NULL, "POST", url, "invalid", CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -105,7 +105,7 @@ START_TEST(glewlwyd_client_cred_scope_invalid)
   u_map_put(&body, "scope", "scope4");
   
   int res = run_simple_test(NULL, "POST", url, CLIENT_ID, CLIENT_PASSWORD, NULL, &body, 400, NULL, "scope_invalid", NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -120,7 +120,7 @@ START_TEST(glewlwyd_client_cred_empty)
   u_map_put(&body, "scope", SCOPE_LIST);
   
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
