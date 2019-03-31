@@ -76,6 +76,12 @@ int main (int argc, char ** argv) {
   config->config_p->glewlwyd_callback_get_plugin_external_url = &glewlwyd_callback_get_plugin_external_url;
   config->config_p->glewlwyd_callback_get_login_url = &glewlwyd_callback_get_login_url;
   config->config_p->glewlwyd_callback_generate_hash = &glewlwyd_callback_generate_hash;
+  config->config_p->glewlwyd_plugin_callback_get_user_list = &glewlwyd_plugin_callback_get_user_list;
+  config->config_p->glewlwyd_plugin_callback_get_user = &glewlwyd_plugin_callback_get_user;
+  config->config_p->glewlwyd_plugin_callback_get_user_profile = &glewlwyd_plugin_callback_get_user_profile;
+  config->config_p->glewlwyd_plugin_callback_add_user = &glewlwyd_plugin_callback_add_user;
+  config->config_p->glewlwyd_plugin_callback_set_user = &glewlwyd_plugin_callback_set_user;
+  config->config_p->glewlwyd_plugin_callback_delete_user = &glewlwyd_plugin_callback_delete_user;
   
   // Init config structure with default values
   config->config_m->external_url = NULL;
@@ -84,8 +90,8 @@ int main (int argc, char ** argv) {
   config->config_m->profile_scope = NULL;
   config->config_m->conn = NULL;
   config->config_m->glewlwyd_config = config;
-  config->config_m->glewlwyd_callback_get_user = &glewlwyd_callback_get_user;
-  config->config_m->glewlwyd_callback_set_user = &glewlwyd_callback_set_user;
+  config->config_m->glewlwyd_module_callback_get_user = &glewlwyd_module_callback_get_user;
+  config->config_m->glewlwyd_module_callback_set_user = &glewlwyd_module_callback_set_user;
   config->config_file = NULL;
   config->port = GLEWLWYD_DEFAULT_PORT;
   config->api_prefix = NULL;
