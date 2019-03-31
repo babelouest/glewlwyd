@@ -829,7 +829,58 @@ int user_module_delete(const char * username, void * cls) {
 }
 
 int user_module_check_password(const char * username, const char * password, void * cls) {
-  return G_OK;
+  json_t * j_params = (json_t *)cls;
+  LDAP * ldap = connect_ldap_server(j_params);
+  LDAPMessage * entry, * answer;
+  int ldap_result, result_login, result;
+  char * user_dn = NULL;
+  
+  int  scope = LDAP_SCOPE_ONELEVEL;
+  char * filter = NULL;
+  char * attrs[] = {"memberOf", NULL, NULL};
+  int attrsonly = 0;
+  char * ldap_mech = LDAP_SASL_SIMPLE;
+  struct berval cred;
+  struct berval *servcred;
+
+  if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
+    scope = LDAP_SCOPE_SUBTREE;
+  } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
+    scope = LDAP_SCOPE_CHILDREN;
+  }
+  if (ldap != NULL) {
+    // Connection successful, doing ldap search
+    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), json_string_value(json_object_get(j_params, "username-property")), username);
+    if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
+      result = G_ERROR;
+    } else {
+      // Looping in results, staring at offset, until the end of the list
+      if (ldap_count_entries(ldap, answer) > 0) {
+        // Testing the first result to username with the given password
+        entry = ldap_first_entry(ldap, answer);
+        user_dn = ldap_get_dn(ldap, entry);
+        cred.bv_val = (char *)password;
+        cred.bv_len = strlen(password);
+        result_login = ldap_sasl_bind_s(ldap, user_dn, ldap_mech, &cred, NULL, NULL, &servcred);
+        ldap_memfree(user_dn);
+        if (result_login == LDAP_SUCCESS) {
+          result = G_OK;
+        } else {
+          result = G_ERROR_UNAUTHORIZED;
+        }
+      } else {
+        result = G_ERROR_NOT_FOUND;
+      }
+    }
+    
+    o_free(filter);
+    ldap_msgfree(answer);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error connect_ldap_server");
+    result = G_ERROR;
+  }
+  return result;
 }
 
 int user_module_update_password(const char * username, const char * new_password, void * cls) {
