@@ -243,6 +243,80 @@ json_t * get_user(struct config_elements * config, const char * username, const 
   return j_return;
 }
 
+json_t * get_user_profile(struct config_elements * config, const char * username, const char * source) {
+  int found = 0, result;
+  char * str_user;
+  json_t * j_return = NULL, * j_user, * j_module_list, * j_module;
+  struct _user_module_instance * user_module;
+  size_t index;
+  
+  if (source != NULL) {
+    user_module = get_user_module_instance(config, source);
+    if (user_module != NULL) {
+      result = G_ERROR;
+      str_user = user_module->module->user_module_get_profile(username, &result, user_module->cls);
+      if (result == G_OK && str_user != NULL) {
+        j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
+        if (j_user != NULL) {
+          json_object_set_new(j_user, "source", json_string(source));
+          j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
+          json_decref(j_user);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_user_profile - Error json_loads");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+      } else if (result != G_OK && result != G_ERROR_NOT_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_profile - Error, user_module_get for module %s", user_module->name);
+        j_return = json_pack("{si}", "result", G_ERROR);
+      } else {
+        j_return = json_pack("{si}", "result", result);
+      }
+      o_free(str_user);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    }
+  } else {
+    j_module_list = get_user_module_list(config);
+    if (check_result_value(j_module_list, G_OK)) {
+      json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
+        if (!found) {
+          user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
+          if (user_module != NULL) {
+            if (user_module->enabled) {
+              result = G_ERROR;
+              str_user = user_module->module->user_module_get_profile(username, &result, user_module->cls);
+              if (result == G_OK && str_user != NULL) {
+                j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
+                if (j_user != NULL) {
+                  json_object_set_new(j_user, "source", json_string(user_module->name));
+                  j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error json_loads");
+                }
+                json_decref(j_user);
+                found = 1;
+              } else if (result != G_OK && result != G_ERROR_NOT_FOUND) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_user_profile - Error, user_module_get for module %s", user_module->name);
+              }
+              o_free(str_user);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_user_profile - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
+          }
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_user_profile - Error get_user_module_list");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_module_list);
+  }
+  if (j_return == NULL) {
+    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+  }
+  return j_return;
+}
+
 json_t * get_user_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source) {
   json_t * j_return, * j_module_list, * j_module, * j_list_parsed, * j_element;
   struct _user_module_instance * user_module;
@@ -641,7 +715,7 @@ int user_update_password(struct config_elements * config, const char * username,
   return ret;
 }
 
-char * glewlwyd_callback_get_user(struct config_module * config, const char * username, int * result) {
+char * glewlwyd_module_callback_get_user(struct config_module * config, const char * username, int * result) {
   char * str_user = NULL;
   json_t * j_user = get_user(config->glewlwyd_config, username, NULL);
   
@@ -656,7 +730,7 @@ char * glewlwyd_callback_get_user(struct config_module * config, const char * us
   return str_user;
 }
 
-int glewlwyd_callback_set_user(struct config_module * config, const char * username, const char * str_user) {
+int glewlwyd_module_callback_set_user(struct config_module * config, const char * username, const char * str_user) {
   json_t * j_user_data = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_user;
   int ret;
   

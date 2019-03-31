@@ -236,13 +236,13 @@ struct config_plugin {
   char   * (* glewlwyd_callback_get_login_url)(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url);
   char   * (* glewlwyd_callback_generate_hash)(struct config_plugin * config, const char * data);
   
-  // Client CRUD
-  json_t * (* glewlwyd_callback_get_user_list)(struct config_plugin * config, const char * pattern, size_t offset, size_t limit);
-  json_t * (* glewlwyd_callback_get_user)(struct config_plugin * config, const char * username);
-  json_t * (* glewlwyd_callback_get_user_profile)(struct config_plugin * config, const char * username);
-  int (* add_user)(struct config_plugin * config, json_t * j_user);
-  int (* set_user)(struct config_plugin * config, const char * username, json_t * j_user);
-  int (* delete_user)(struct config_plugin * config, const char * username);
+  // User CRUD
+  json_t * (* glewlwyd_plugin_callback_get_user_list)(struct config_plugin * config, const char * pattern, size_t offset, size_t limit);
+  json_t * (* glewlwyd_plugin_callback_get_user)(struct config_plugin * config, const char * username);
+  json_t * (* glewlwyd_plugin_callback_get_user_profile)(struct config_plugin * config, const char * username);
+  int      (* glewlwyd_plugin_callback_add_user)(struct config_plugin * config, json_t * j_user);
+  int      (* glewlwyd_plugin_callback_set_user)(struct config_plugin * config, const char * username, json_t * j_user);
+  int      (* glewlwyd_plugin_callback_delete_user)(struct config_plugin * config, const char * username);
 };
 
 struct config_module {
@@ -253,8 +253,8 @@ struct config_module {
   struct _h_connection    * conn;
   digest_algorithm          hash_algorithm;
   struct config_elements  * glewlwyd_config;
-  char                 * (* glewlwyd_callback_get_user)(struct config_module * config, const char * username, int * result);
-  int                    (* glewlwyd_callback_set_user)(struct config_module * config, const char * username, const char * str_user);
+  char                 * (* glewlwyd_module_callback_get_user)(struct config_module * config, const char * username, int * result);
+  int                    (* glewlwyd_module_callback_set_user)(struct config_module * config, const char * username, const char * str_user);
 };
 
 // Misc functions

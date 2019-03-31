@@ -72,7 +72,7 @@ int user_can_use_scheme(const char * username, void * cls) {
   json_t * j_user;
   int ret, result;
 
-  str_user = ((struct mock_config *)cls)->config->glewlwyd_callback_get_user(((struct mock_config *)cls)->config, username, &result);
+  str_user = ((struct mock_config *)cls)->config->glewlwyd_module_callback_get_user(((struct mock_config *)cls)->config, username, &result);
   if (result == G_OK) {
     j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
     if (j_user != NULL) {
@@ -99,7 +99,7 @@ int user_auth_scheme_module_register(const char * username, const char * registe
   char * str_user = NULL, * str_user_set, * key_mock;
   json_t * j_user, * j_data;
   
-  str_user = ((struct mock_config *)cls)->config->glewlwyd_callback_get_user(((struct mock_config *)cls)->config, username, &result);
+  str_user = ((struct mock_config *)cls)->config->glewlwyd_module_callback_get_user(((struct mock_config *)cls)->config, username, &result);
   if (result == G_OK) {
     j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
     j_data = json_loads(register_data, JSON_DECODE_ANY, NULL);
@@ -111,7 +111,7 @@ int user_auth_scheme_module_register(const char * username, const char * registe
         json_object_set(j_user, key_mock, json_null());
       }
       str_user_set = json_dumps(j_user, JSON_COMPACT);
-      ret = ((struct mock_config *)cls)->config->glewlwyd_callback_set_user(((struct mock_config *)cls)->config, username, str_user_set);
+      ret = ((struct mock_config *)cls)->config->glewlwyd_module_callback_set_user(((struct mock_config *)cls)->config, username, str_user_set);
       if (ret == G_OK) {
         *register_response = msprintf("{\"register-code\":\"%s\"}", json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")));
       }
@@ -150,14 +150,14 @@ int user_auth_scheme_module_validate(const char * username, const char * scheme_
     if (user_can_use_scheme(username, cls) != GLEWLWYD_IS_REGISTERED) {
       ret = G_ERROR_UNAUTHORIZED;
     } else if (json_object_get(j_scheme, "code") != NULL && json_is_string(json_object_get(j_scheme, "code")) && 0 == o_strcmp(json_string_value(json_object_get(j_scheme, "code")), json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")))) {
-      str_user = ((struct mock_config *)cls)->config->glewlwyd_callback_get_user(((struct mock_config *)cls)->config, username, &result);
+      str_user = ((struct mock_config *)cls)->config->glewlwyd_module_callback_get_user(((struct mock_config *)cls)->config, username, &result);
       if (result == G_OK) {
         j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
         if (j_user != NULL) {
           key_mock = msprintf("mock-%s", json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")));
           json_object_set_new(j_user, key_mock, json_pack("{si}", "counter", json_integer_value(json_object_get(json_object_get(j_user, key_mock), "counter")) + 1));
           str_user_set = json_dumps(j_user, JSON_COMPACT);
-          ret = ((struct mock_config *)cls)->config->glewlwyd_callback_set_user(((struct mock_config *)cls)->config, username, str_user_set);
+          ret = ((struct mock_config *)cls)->config->glewlwyd_module_callback_set_user(((struct mock_config *)cls)->config, username, str_user_set);
           o_free(str_user_set);
           o_free(key_mock);
         } else {

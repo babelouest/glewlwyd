@@ -179,11 +179,11 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
         }
         json_decref(j_result);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_session_for_username - Error executing j_query");
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_users_for_session - Error executing j_query");
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_session_for_username - Error generate_hash");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_users_for_session - Error generate_hash");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
   } else {
@@ -233,13 +233,13 @@ json_t * get_current_user_for_session(struct config_elements * config, const cha
         }
         json_decref(j_result);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_session_for_username - Error executing j_query");
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_current_user_for_session - Error executing j_query");
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else if (session_uid == NULL) {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_session_for_username - Error generate_hash");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_current_user_for_session - Error generate_hash");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     o_free(session_uid_hash);

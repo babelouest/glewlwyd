@@ -372,3 +372,28 @@ char * glewlwyd_callback_get_plugin_external_url(struct config_plugin * config, 
 char * glewlwyd_callback_generate_hash(struct config_plugin * config, const char * data) {
   return generate_hash(config->glewlwyd_config->hash_algorithm, data);
 }
+
+json_t * glewlwyd_plugin_callback_get_user_list(struct config_plugin * config, const char * pattern, size_t offset, size_t limit) {
+  return get_user_list(config->glewlwyd_config, pattern, offset, limit, NULL);
+}
+
+json_t * glewlwyd_plugin_callback_get_user(struct config_plugin * config, const char * username) {
+  return get_user(config->glewlwyd_config, username, NULL);
+}
+
+json_t * glewlwyd_plugin_callback_get_user_profile(struct config_plugin * config, const char * username) {
+  return get_user_profile(config->glewlwyd_config, username, NULL);
+}
+
+int glewlwyd_plugin_callback_add_user(struct config_plugin * config, json_t * j_user) {
+  return add_user(config->glewlwyd_config, j_user, NULL);
+}
+
+int glewlwyd_plugin_callback_set_user(struct config_plugin * config, const char * username, json_t * j_user) {
+  return set_user(config->glewlwyd_config, username, j_user, NULL);
+}
+
+int glewlwyd_plugin_callback_delete_user(struct config_plugin * config, const char * username) {
+  return delete_user(config->glewlwyd_config, username, NULL);
+}
+
