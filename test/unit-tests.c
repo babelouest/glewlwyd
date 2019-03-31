@@ -20,7 +20,7 @@ void print_response(struct _u_response * response) {
     if (json_body != NULL) {
       dump_json = json_dumps(json_body, JSON_INDENT(2));
       fprintf(stderr,"Json body:\n%s\n\n", dump_json);
-      free(dump_json);
+      o_free(dump_json);
     } else {
       fprintf(stderr,"String body: %.*s\n\n", (int)response->binary_body_length, (char *)response->binary_body);
     }
@@ -46,7 +46,7 @@ json_t * json_search(json_t * haystack, json_t * needle) {
     return haystack;
 
   // If both haystack and needle are the same type, test them
-  if (json_typeof(haystack) == json_typeof(needle))
+  if (json_typeof(haystack) == json_typeof(needle) && !json_is_object(haystack))
     if (json_equal(haystack, needle))
       return haystack;
 
@@ -61,6 +61,17 @@ json_t * json_search(json_t * haystack, json_t * needle) {
           return value2;
         }
       }
+    }
+  } else if (json_is_object(haystack) && json_is_object(needle)) {
+    int same = 1;
+    json_object_foreach(needle, key, value1) {
+      value2 = json_object_get(haystack, key);
+      if (!json_equal(value1, value2)) {
+        same = 0;
+      }
+    }
+    if (same) {
+      return haystack;
     }
   } else if (json_is_object(haystack)) {
     json_object_foreach(haystack, key, value1) {
@@ -96,8 +107,8 @@ int test_request(struct _u_request * req, long int expected_status, json_t * exp
         fprintf(stderr,"##########################\nError json (%s %s)\n", req->http_verb, req->http_url);
         fprintf(stderr,"Expected result in response:\n%s\nWhile response is:\n%s\n", dump_expected, dump_response);
         fprintf(stderr,"##########################\n\n");
-        free(dump_expected);
-        free(dump_response);
+        o_free(dump_expected);
+        o_free(dump_response);
       } else {
         to_return = 1;
       }
