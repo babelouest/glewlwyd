@@ -99,6 +99,7 @@ static char * escape_ldap(const char * input) {
 
 static json_t * is_user_ldap_parameters_valid(json_t * j_params) {
   json_t * j_return, * j_error = json_array(), * j_element;
+  size_t index;
   const char * field;
   
   if (j_error != NULL) {
@@ -138,21 +139,20 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params) {
       if (json_object_get(j_params, "scope-property") == NULL || !json_is_string(json_object_get(j_params, "scope-property")) || !json_string_length(json_object_get(j_params, "scope-property"))) {
         json_array_append_new(j_error, json_string("scope-property is mandatory and must be a string"));
       }
-      if (json_object_get(j_params, "scope-property-match-correspondence") != NULL && !json_is_object(json_object_get(j_params, "scope-property-match-correspondence"))) {
-        json_array_append_new(j_error, json_string("scope-property-match-correspondence is optional and must be a JSON object with the format {string:string}"));
-      } else if (json_object_get(j_params, "scope-property-match-correspondence") != NULL) {
-        json_object_foreach(json_object_get(j_params, "scope-property-match-correspondence"), field, j_element) {
-          if (!json_is_string(j_element) || !json_string_length(j_element)) {
-            json_array_append_new(j_error, json_string("scope-property-match-correspondence is optional and must be a JSON object with the format {string:string}"));
+      if (json_object_get(j_params, "scope-match") != NULL && !json_is_array(json_object_get(j_params, "scope-match"))) {
+        json_array_append_new(j_error, json_string("scope-match is optional and must be a JSON array"));
+      } else if (json_object_get(j_params, "scope-match") != NULL) {
+        json_array_foreach(json_object_get(j_params, "scope-property-match-correspondence"), index, j_element) {
+          if (!json_is_string(json_object_get(j_element, "ldap-value"))) {
+            json_array_append_new(j_error, json_string("ldap-value is mandatory and must be a string"));
+          }
+          if (!json_is_string(json_object_get(j_element, "scope-value"))) {
+            json_array_append_new(j_error, json_string("scope-value is mandatory and must be a string"));
+          }
+          if (!json_is_string(json_object_get(j_element, "match")) || 0 != o_strcmp("equals", json_string_value(json_object_get(j_element, "match"))) || 0 != o_strcmp("contains", json_string_value(json_object_get(j_element, "match"))) || 0 != o_strcmp("startswith", json_string_value(json_object_get(j_element, "match"))) || 0 != o_strcmp("endswith", json_string_value(json_object_get(j_element, "match")))) {
+            json_array_append_new(j_error, json_string("match is mandatory and must have one of the following values: 'equals', 'contains', 'startswith', 'endswith'"));
           }
         }
-      }
-      if (json_object_get(j_params, "scope-property-match") != NULL && !json_is_string(json_object_get(j_params, "scope-property-match"))) {
-        json_array_append_new(j_error, json_string("scope-property-match is optional and must be a string (default: 'equals')"));
-      } else if (json_object_get(j_params, "scope-property-match") == NULL) {
-        json_object_set_new(j_params, "scope-property-match", json_string("equals"));
-      } else if (0 == o_strcmp("equals", json_string_value(json_object_get(j_params, "scope-property-match"))) || 0 == o_strcmp("contains", json_string_value(json_object_get(j_params, "scope-property-match"))) || 0 == o_strcmp("starts-with", json_string_value(json_object_get(j_params, "scope-property-match"))) || 0 == o_strcmp("ends-with", json_string_value(json_object_get(j_params, "scope-property-match")))) {
-        json_array_append_new(j_error, json_string("scope-property-match must have one of the following values: 'equals', 'contains', 'starts-with', 'ends-with'"));
       }
       if (json_object_get(j_params, "name-property") != NULL && !json_is_string(json_object_get(j_params, "name-property"))) {
         json_array_append_new(j_error, json_string("name-property is optional and must be a string"));
@@ -166,9 +166,6 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params) {
       if (json_object_get(j_params, "password-property") != NULL && !json_is_string(json_object_get(j_params, "password-property"))) {
         json_array_append_new(j_error, json_string("password-property is optional and must be a string"));
       }
-      if (json_object_get(j_params, "password-property") != NULL && !json_is_string(json_object_get(j_params, "password-property"))) {
-        json_array_append_new(j_error, json_string("password-property is optional and must be a string"));
-      }
       if (json_object_get(j_params, "object-class") != NULL && !json_is_string(json_object_get(j_params, "object-class"))) {
         json_array_append_new(j_error, json_string("object-class is optional and must be a string"));
       }
@@ -178,7 +175,7 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params) {
         } else {
           json_object_foreach(json_object_get(j_params, "data-format"), field, j_element) {
             if (0 == o_strcmp(field, "username") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "email") || 0 == o_strcmp(field, "enabled") || 0 == o_strcmp(field, "password")) {
-              json_array_append_new(j_error, json_string("data-format can not have settings for properties 'username', 'name', 'email', 'enabled' or 'password'"));
+              json_array_append_new(j_error, json_string("data-format can not have settings for properties 'username', 'name', 'email', 'enabled', 'scope' or 'password'"));
             } else {
               if (json_object_get(j_element, "property") == NULL || !json_is_string(json_object_get(j_element, "property")) || !json_string_length(json_object_get(j_element, "property"))) {
                 json_array_append_new(j_error, json_string("property is mandatory and must be a non empty string"));
