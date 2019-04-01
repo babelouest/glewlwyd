@@ -51,7 +51,7 @@ class ModEdit extends Component {
           this.setState({nameInvalid: false, nameInvalidMessage: false, typeInvalidMessage: i18next.t("admin.error-mod-type-mandatory")});
         } else if (this.state.parametersValid) {
           if (this.state.add) {
-            apiManager.glewlwydRequest("/mod/user/" + encodeURI(this.state.mod.name), "GET")
+            apiManager.glewlwydRequest("/mod/" + this.state.role + "/" + encodeURI(this.state.mod.name), "GET")
             .then(() => {
               this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-exist"), typeInvalidMessage: false});
             })
