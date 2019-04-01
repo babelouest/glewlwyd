@@ -25,6 +25,9 @@ var initApp = () => {
       apiManager.setConfig(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix);
       var config = Object.assign({params: {scope: getParameterByName("scope"), client_id: getParameterByName("client_id"), callback_url: getParameterByName("callback_url")}}, frontEndConfig, serverConfig);
       ReactDOM.render(<App config={config} />, document.getElementById('root'));
+    })
+    .fail((error) => {
+      ReactDOM.render(<App config={false} />, document.getElementById('root'));
     });
   });
 }

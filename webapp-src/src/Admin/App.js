@@ -385,7 +385,9 @@ class App extends Component {
       }
     });
     
-    this.fetchApi();
+    if (this.state.config) {
+      this.fetchApi();
+    }
   }
   
   fetchApi() {
