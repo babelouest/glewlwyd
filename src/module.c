@@ -140,7 +140,7 @@ json_t * get_user_module_list(struct config_elements * config) {
       if (j_parameters != NULL) {
         json_object_set_new(j_element, "parameters", j_parameters);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_module_list - Error parsing parameters for module %s", json_string_value(json_object_get(j_element, "name")));
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_module_list - Error parsing parameters for module %s %s", json_string_value(json_object_get(j_element, "name")), json_string_value(json_object_get(j_element, "gumi_parameters")));
         json_object_set_new(j_element, "parameters", json_null());
       }
       json_object_del(j_element, "gumi_parameters");
@@ -190,7 +190,7 @@ json_t * get_user_module(struct config_elements * config, const char * name) {
       if (j_parameters != NULL) {
         json_object_set_new(json_array_get(j_result, 0), "parameters", j_parameters);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_module_list - Error parsing parameters for module %s", json_string_value(json_object_get(json_array_get(j_result, 0), "name")));
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_module - Error parsing parameters for module %s", json_string_value(json_object_get(json_array_get(j_result, 0), "name")));
         json_object_set_new(json_array_get(j_result, 0), "parameters", json_null());
       }
       json_object_del(json_array_get(j_result, 0), "gumi_parameters");
@@ -202,7 +202,7 @@ json_t * get_user_module(struct config_elements * config, const char * name) {
       if (cur_instance != NULL) {
         json_object_set(json_array_get(j_result, 0), "enabled", cur_instance->enabled?json_true():json_false());
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_module_list - Error instance %s not found in app config", name);
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_module - Error instance %s not found in app config", name);
         json_object_set(json_array_get(j_result, 0), "enabled", json_false());
       }
       j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
@@ -210,7 +210,7 @@ json_t * get_user_module(struct config_elements * config, const char * name) {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_user_module_list - Error executing j_query");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_user_module - Error executing j_query");
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   json_decref(j_result);
