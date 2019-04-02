@@ -98,7 +98,7 @@ static char * escape_ldap(const char * input) {
 }
 
 static json_t * is_user_ldap_parameters_valid(json_t * j_params) {
-  json_t * j_return, * j_error = json_array(), * j_element;
+  json_t * j_return, * j_error = json_array(), * j_element, * j_element_p;
   size_t index;
   const char * field;
   
@@ -133,11 +133,23 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params) {
       if (json_object_get(j_params, "filter") == NULL || !json_is_string(json_object_get(j_params, "filter")) || !json_string_length(json_object_get(j_params, "filter"))) {
         json_array_append_new(j_error, json_string("filter is mandatory and must be a string"));
       }
-      if (json_object_get(j_params, "username-property") == NULL || !json_is_string(json_object_get(j_params, "username-property")) || !json_string_length(json_object_get(j_params, "username-property"))) {
-        json_array_append_new(j_error, json_string("username-property is mandatory and must be a string"));
+      if (json_object_get(j_params, "username-property") == NULL || !json_is_string(json_object_get(j_params, "username-property")) || !json_string_length(json_object_get(j_params, "username-property")) || !json_is_array(json_object_get(j_params, "username-property"))) {
+        json_array_append_new(j_error, json_string("username-property is mandatory and must be a string or an array of string"));
+      } else if (json_is_array(json_object_get(j_params, "username-property"))) {
+        json_array_foreach(json_object_get(j_params, "username-property"), index, j_element) {
+          if (!json_is_string(j_element)) {
+            json_array_append_new(j_error, json_string("username-property is mandatory and must be a string or an array of string"));
+          }
+        }
       }
-      if (json_object_get(j_params, "scope-property") == NULL || !json_is_string(json_object_get(j_params, "scope-property")) || !json_string_length(json_object_get(j_params, "scope-property"))) {
-        json_array_append_new(j_error, json_string("scope-property is mandatory and must be a string"));
+      if (json_object_get(j_params, "scope-property") == NULL || !json_is_string(json_object_get(j_params, "scope-property")) || !json_string_length(json_object_get(j_params, "scope-property")) || !json_is_array(json_object_get(j_params, "scope-property"))) {
+        json_array_append_new(j_error, json_string("scope-property is mandatory and must be a string or an array of string"));
+      } else if (json_is_array(json_object_get(j_params, "scope-property"))) {
+        json_array_foreach(json_object_get(j_params, "scope-property"), index, j_element) {
+          if (!json_is_string(j_element)) {
+            json_array_append_new(j_error, json_string("scope-property is mandatory and must be a string or an array of string"));
+          }
+        }
       }
       if (json_object_get(j_params, "scope-match") != NULL && !json_is_array(json_object_get(j_params, "scope-match"))) {
         json_array_append_new(j_error, json_string("scope-match is optional and must be a JSON array"));
@@ -154,17 +166,32 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params) {
           }
         }
       }
-      if (json_object_get(j_params, "name-property") != NULL && !json_is_string(json_object_get(j_params, "name-property"))) {
-        json_array_append_new(j_error, json_string("name-property is optional and must be a string"));
+      if (json_object_get(j_params, "name-property") != NULL && (!json_is_string(json_object_get(j_params, "name-property")) || !json_is_array(json_object_get(j_params, "name-property")))) {
+        json_array_append_new(j_error, json_string("name-property is optional and must be a string or an array of string"));
+      } else if (json_is_array(json_object_get(j_params, "name-property"))) {
+        json_array_foreach(json_object_get(j_params, "name-property"), index, j_element) {
+          if (!json_is_string(j_element)) {
+            json_array_append_new(j_error, json_string("name-property is optional and must be a string or an array of string"));
+          }
+        }
       }
       if (json_object_get(j_params, "email-property") != NULL && !json_is_string(json_object_get(j_params, "email-property"))) {
         json_array_append_new(j_error, json_string("email-property is optional and must be a string"));
+      } else if (json_is_array(json_object_get(j_params, "name-property"))) {
+        json_array_foreach(json_object_get(j_params, "name-property"), index, j_element) {
+          if (!json_is_string(j_element)) {
+            json_array_append_new(j_error, json_string("name-property is optional and must be a string or an array of string"));
+          }
+        }
       }
       if (json_object_get(j_params, "rdn-property") != NULL && !json_is_string(json_object_get(j_params, "rdn-property"))) {
         json_array_append_new(j_error, json_string("rdn-property is optional and must be a string"));
       }
       if (json_object_get(j_params, "password-property") != NULL && !json_is_string(json_object_get(j_params, "password-property"))) {
         json_array_append_new(j_error, json_string("password-property is optional and must be a string"));
+      }
+      if (json_object_get(j_params, "password-algorithm") != NULL && (!json_is_string(json_object_get(j_params, "password-algorithm")) || (0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SSHA") && 0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SHA") && 0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SMD5") && 0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "MD5") && 0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "PLAIN")))) {
+        json_array_append_new(j_error, json_string("password-property is optional and must have one of the following values: 'SSHA', 'SHA', 'SMD5', 'MD5' or 'PLAIN'"));
       }
       if (json_object_get(j_params, "object-class") != NULL && !json_is_string(json_object_get(j_params, "object-class"))) {
         json_array_append_new(j_error, json_string("object-class is optional and must be a string"));
@@ -177,8 +204,14 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params) {
             if (0 == o_strcmp(field, "username") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "email") || 0 == o_strcmp(field, "enabled") || 0 == o_strcmp(field, "password")) {
               json_array_append_new(j_error, json_string("data-format can not have settings for properties 'username', 'name', 'email', 'enabled', 'scope' or 'password'"));
             } else {
-              if (json_object_get(j_element, "property") == NULL || !json_is_string(json_object_get(j_element, "property")) || !json_string_length(json_object_get(j_element, "property"))) {
-                json_array_append_new(j_error, json_string("property is mandatory and must be a non empty string"));
+              if (json_object_get(j_element, "property") == NULL || !json_is_string(json_object_get(j_element, "property")) || !json_string_length(json_object_get(j_element, "property")) || !json_is_array(json_object_get(j_element, "property"))) {
+                json_array_append_new(j_error, json_string("property is mandatory and must be a non empty string or an array of string"));
+              } else if (json_is_array(json_object_get(j_element, "property"))) {
+                json_array_foreach(json_object_get(j_element, "property"), index, j_element_p) {
+                  if (!json_is_string(j_element_p)) {
+                    json_array_append_new(j_error, json_string("property is mandatory and must be a non empty string or an array of string"));
+                  }
+                }
               }
               if (json_object_get(j_element, "multiple") != NULL && !json_is_boolean(json_object_get(j_element, "multiple"))) {
                 json_array_append_new(j_error, json_string("multiple is optional and must be a boolean (default: false)"));
@@ -270,7 +303,17 @@ static char * get_ldap_filter_pattern(json_t * j_params, const char * pattern) {
   return filter;
 }
 
-static char ** get_ldap_attributes(json_t * j_params, int profile, json_t * j_properties) {
+static const char * get_read_property(json_t * j_params, const char * property) {
+  if (json_is_string(json_object_get(j_params, property))) {
+    return json_string_value(json_object_get(j_params, property));
+  } else if (json_is_array(json_object_get(j_params, property))) {
+    return json_string_value(json_array_get(json_object_get(j_params, property), 0));
+  } else {
+    return NULL;
+  }
+}
+
+static char ** get_ldap_read_attributes(json_t * j_params, int profile, json_t * j_properties) {
   char ** attrs = NULL;
   size_t i, nb_attrs = 2; // Username, Scope
   json_t * j_element;
@@ -287,24 +330,47 @@ static char ** get_ldap_attributes(json_t * j_params, int profile, json_t * j_pr
     attrs = o_malloc((nb_attrs + 1) * sizeof(char *));
     if (attrs != NULL) {
       attrs[nb_attrs] = NULL;
-      attrs[0] = (char*)json_string_value(json_object_get(j_params, "username-property"));
-      json_object_set(j_properties, "username", json_object_get(j_params, "username-property"));
-      attrs[1] = (char*)json_string_value(json_object_get(j_params, "scope-property"));
-      json_object_set(j_properties, "scope", json_object_get(j_params, "scope-property"));
+      attrs[0] = (char*)get_read_property(j_params, "username-property");
+      json_object_set(j_properties, "username", json_string(get_read_property(j_params, "username-property")));
+      attrs[1] = (char*)get_read_property(j_params, "scope-property");
+      json_object_set(j_properties, "scope", json_string(get_read_property(j_params, "scope-property")));
+      i = 2;
+      if (json_object_get(j_params, "name-property") != NULL) {
+        attrs[i++] = (char*)get_read_property(j_params, "name-property");
+        json_object_set(j_properties, "name", json_string(get_read_property(j_params, "name-property")));
+      }
+      if (json_object_get(j_params, "email-property") != NULL) {
+        attrs[i++] = (char*)get_read_property(j_params, "email-property");
+        json_object_set(j_properties, "email", json_string(get_read_property(j_params, "email-property")));
+      }
       if (json_object_get(j_params, "data-format") != NULL) {
-        i = 2;
         json_object_foreach(json_object_get(j_params, "data-format"), field, j_element) {
-          attrs[i++] = (char*)json_string_value(json_object_get(j_element, "property"));
-          json_object_set(j_properties, field, json_object_get(j_element, "property"));
+          if ((!profile && json_object_get(j_element, "read") != json_false()) || (profile && json_object_get(j_element, "profile-read") == json_true())) {
+            attrs[i++] = (char*)get_read_property(j_element, "property");
+            json_object_set(j_properties, field, json_string(get_read_property(j_element, "property")));
+          }
         }
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_attributes - Error allocating resources for attrs");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_read_attributes - Error allocating resources for attrs");
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_attributes - Error j_properties is not an empty JSON object");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_read_attributes - Error j_properties is not an empty JSON object");
   }
   return attrs;
+}
+
+// TODO
+static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int profile, int add, json_t * j_mod_value_free_array) {
+  LDAPMod ** mods = NULL;
+  size_t nb_attr = 0;
+  
+  if (j_mod_value_free_array != NULL) {
+    // Count attrs
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error j_mod_value_free_array is NULL");
+  }
+  return mods;
 }
 
 static json_t * get_scope_from_ldap(json_t * j_params, const char * ldap_scope_value) {
@@ -367,6 +433,16 @@ static json_t * get_user_from_result(json_t * j_params, json_t * j_properties_us
   return j_user;
 }
 
+// TODO
+static char * get_user_dn_from_username(json_t * j_params, LDAP * ldap, const char * username) {
+  return NULL;
+}
+
+// TODO
+static digest_algorithm get_digest_algorithm(json_t * j_params) {
+  return digest_MD5;
+}
+
 int user_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
   int ret = G_OK;
   if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
@@ -383,12 +459,14 @@ int user_module_load(struct config_module * config, char ** name, char ** displa
                            "\"filter\":{\"type\":\"string\",\"mandatory\":true},"
                            "\"username-property\":{\"type\":\"string\",\"mandatory\":true},"
                            "\"scope-property\":{\"type\":\"string\",\"mandatory\":true},"
-                           "\"scope-property-match\":{\"type\":\"string\",\"mandatory\":false},"
+                           "\"scope-match\":[{\"ldap-value\":{\"type\":\"string\",\"mandatory\":true}},"
+                                            "{\"scope-value\":{\"type\":\"string\",\"mandatory\":true}},"
+                                            "{\"match\":{\"type\":\"list\",\"mandatory\":true,\"values\":[\"equals\",\"contains\",\"startswith\",\"endswith\"]}}],"
                            "\"name-property\":{\"type\":\"string\",\"mandatory\":false},"
                            "\"email-property\":{\"type\":\"string\",\"mandatory\":false},"
                            "\"rdn-property\":{\"type\":\"string\",\"mandatory\":false},"
                            "\"password-property\":{\"type\":\"string\",\"mandatory\":false},"
-                           "\"password-algorithm\":{\"type\":\"string\",\"mandatory\":false},"
+                           "\"password-algorithm\":{\"type\":\"list\",\"mandatory\":false,\"values\":[\"SSHA\",\"SHA\",\"SMD5\",\"MD5\",\"PLAIN\"]},"
                            "\"object-class\":{\"type\":\"string\",\"mandatory\":false},"
                            "\"data-format\":{"
                             "\"field-name\":{"
@@ -502,7 +580,7 @@ char * user_module_get_list(const char * pattern, size_t offset, size_t limit, i
   if (ldap != NULL) {
     // Connection successful, doing ldap search
     filter = get_ldap_filter_pattern(j_params, pattern);
-    attrs = get_ldap_attributes(j_params, 0, (j_properties_user = json_object()));
+    attrs = get_ldap_read_attributes(j_params, 0, (j_properties_user = json_object()));
     j_user_list = json_array();
     do {
       *result = G_OK;
@@ -627,7 +705,7 @@ char * user_module_get(const char * username, int * result, void * cls) {
   if (ldap != NULL) {
     // Connection successful, doing ldap search
     filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), json_string_value(json_object_get(j_params, "username-property")), username);
-    attrs = get_ldap_attributes(j_params, 0, (j_properties_user = json_object()));
+    attrs = get_ldap_read_attributes(j_params, 0, (j_properties_user = json_object()));
     if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
       *result = G_ERROR;
@@ -651,6 +729,7 @@ char * user_module_get(const char * username, int * result, void * cls) {
     o_free(attrs);
     o_free(filter);
     ldap_msgfree(answer);
+    ldap_unbind_ext(ldap, NULL, NULL);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error connect_ldap_server");
     *result = G_ERROR;
@@ -678,7 +757,7 @@ char * user_module_get_profile(const char * username, int * result, void * cls) 
   if (ldap != NULL) {
     // Connection successful, doing ldap search
     filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), json_string_value(json_object_get(j_params, "username-property")), username);
-    attrs = get_ldap_attributes(j_params, 1, (j_properties_user = json_object()));
+    attrs = get_ldap_read_attributes(j_params, 1, (j_properties_user = json_object()));
     if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
       *result = G_ERROR;
@@ -702,6 +781,7 @@ char * user_module_get_profile(const char * username, int * result, void * cls) 
     o_free(attrs);
     o_free(filter);
     ldap_msgfree(answer);
+    ldap_unbind_ext(ldap, NULL, NULL);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error connect_ldap_server");
     *result = G_ERROR;
@@ -810,19 +890,191 @@ char * user_is_valid(const char * username, const char * str_user, int mode, int
 }
 
 int user_module_add(const char * str_new_user, void * cls) {
-  return G_OK;
+  json_t * j_params = (json_t *)cls, * j_user, * j_mod_value_free_array = NULL, * j_element;
+  LDAP * ldap = connect_ldap_server(j_params);
+  int ret, i, result;
+  LDAPMod ** mods = NULL;
+  char * new_dn;
+  size_t index;
+  
+  if (ldap != NULL) {
+    j_user = json_loads(str_new_user, JSON_DECODE_ANY, NULL);
+    if (j_user != NULL) {
+      mods = get_ldap_write_mod(j_params, j_user, 0, 1, (j_mod_value_free_array = json_array()));
+      if (mods != NULL) {
+        new_dn = msprintf("%s=%s,%s", json_string_value(json_object_get(j_params, "rdn-property")), json_string_value(json_object_get(j_user, "username")), json_string_value(json_object_get(j_params, "base-search")));
+        if (new_dn != NULL) {
+          if ((result = ldap_add_ext_s(ldap, new_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add ldap - Error adding new user %s in the ldap backend: %s", new_dn, ldap_err2string(result));
+            ret = G_ERROR;
+          } else {
+            ret = G_OK;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add ldap - Error allocating resources for new_dn");
+          ret = G_ERROR;
+        }
+        json_array_foreach(j_mod_value_free_array, index, j_element) {
+          for (i=0; mods[index]->mod_values[i] != NULL; i++) {
+            o_free(mods[index]->mod_values[i]);
+          }
+        }
+        json_decref(j_mod_value_free_array);
+        for (i=0; mods[i] != NULL; i++) {
+          o_free(mods[i]->mod_values);
+          o_free(mods[i]);
+        }
+        o_free(mods);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add ldap - Error get_ldap_write_mod");
+        ret = G_ERROR;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add ldap - Error parsing user into JSON");
+      ret = G_ERROR;
+    }
+    json_decref(j_user);
+    ldap_unbind_ext(ldap, NULL, NULL);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add ldap - Error connect_ldap_server");
+    ret = G_ERROR;
+  }
+  return ret;
 }
 
 int user_module_update(const char * username, const char * str_user, void * cls) {
-  return G_OK;
+  json_t * j_params = (json_t *)cls, * j_user, * j_mod_value_free_array, * j_element;
+  LDAP * ldap = connect_ldap_server(j_params);
+  int ret, i, result;
+  LDAPMod ** mods = NULL;
+  char * cur_dn;
+  size_t index;
+  
+  if (ldap != NULL) {
+    j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
+    if (j_user != NULL) {
+      mods = get_ldap_write_mod(j_params, j_user, 0, 0, (j_mod_value_free_array = json_array()));
+      if (mods != NULL) {
+        cur_dn = get_user_dn_from_username(j_params, ldap, username);
+        if (cur_dn != NULL) {
+          if ((result = ldap_modify_ext_s(ldap, cur_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error setting new user %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
+            ret = G_ERROR;
+          } else {
+            ret = G_OK;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update ldap - Error get_user_dn_from_username");
+          ret = G_ERROR;
+        }
+        o_free(cur_dn);
+        json_array_foreach(j_mod_value_free_array, index, j_element) {
+          for (i=0; mods[index]->mod_values[i] != NULL; i++) {
+            o_free(mods[index]->mod_values[i]);
+          }
+        }
+        json_decref(j_mod_value_free_array);
+        for (i=0; mods[i] != NULL; i++) {
+          o_free(mods[i]->mod_values);
+          o_free(mods[i]);
+        }
+        o_free(mods);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update ldap - Error get_ldap_write_mod");
+        ret = G_ERROR;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update ldap - Error parsing user into JSON");
+      ret = G_ERROR;
+    }
+    json_decref(j_user);
+    ldap_unbind_ext(ldap, NULL, NULL);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update ldap - Error connect_ldap_server");
+    ret = G_ERROR;
+  }
+  return ret;
 }
 
 int user_module_update_profile(const char * username, const char * str_user, void * cls) {
-  return G_OK;
+  json_t * j_params = (json_t *)cls, * j_user, * j_mod_value_free_array, * j_element;
+  LDAP * ldap = connect_ldap_server(j_params);
+  int ret, i, result;
+  LDAPMod ** mods = NULL;
+  char * cur_dn;
+  size_t index;
+  
+  if (ldap != NULL) {
+    j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
+    if (j_user != NULL) {
+      mods = get_ldap_write_mod(j_params, j_user, 1, 0, (j_mod_value_free_array = json_array()));
+      if (mods != NULL) {
+        cur_dn = get_user_dn_from_username(j_params, ldap, username);
+        if (cur_dn != NULL) {
+          if ((result = ldap_modify_ext_s(ldap, cur_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error setting new user %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
+            ret = G_ERROR;
+          } else {
+            ret = G_OK;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update ldap - Error get_user_dn_from_username");
+          ret = G_ERROR;
+        }
+        o_free(cur_dn);
+        json_array_foreach(j_mod_value_free_array, index, j_element) {
+          for (i=0; mods[index]->mod_values[i] != NULL; i++) {
+            o_free(mods[index]->mod_values[i]);
+          }
+        }
+        for (i=0; mods[i] != NULL; i++) {
+          o_free(mods[i]->mod_values);
+          o_free(mods[i]);
+        }
+        o_free(mods);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update ldap - Error get_ldap_write_mod");
+        ret = G_ERROR;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update ldap - Error parsing user into JSON");
+      ret = G_ERROR;
+    }
+    json_decref(j_user);
+    ldap_unbind_ext(ldap, NULL, NULL);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update ldap - Error connect_ldap_server");
+    ret = G_ERROR;
+  }
+  return ret;
 }
 
 int user_module_delete(const char * username, void * cls) {
-  return G_OK;
+  json_t * j_params = (json_t *)cls;
+  LDAP * ldap = connect_ldap_server(j_params);
+  int ret, result;
+  char * cur_dn;
+  
+  if (ldap != NULL) {
+    cur_dn = get_user_dn_from_username(j_params, ldap, username);
+    if (cur_dn != NULL) {
+      if ((result = ldap_delete_ext_s(ldap, cur_dn, NULL, NULL)) != LDAP_SUCCESS) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error setting new user %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
+        ret = G_ERROR;
+      } else {
+        ret = G_OK;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update ldap - Error get_user_dn_from_username");
+      ret = G_ERROR;
+    }
+    o_free(cur_dn);
+    ldap_unbind_ext(ldap, NULL, NULL);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update ldap - Error connect_ldap_server");
+    ret = G_ERROR;
+  }
+  return ret;
 }
 
 int user_module_check_password(const char * username, const char * password, void * cls) {
@@ -849,10 +1101,9 @@ int user_module_check_password(const char * username, const char * password, voi
     // Connection successful, doing ldap search
     filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), json_string_value(json_object_get(j_params, "username-property")), username);
     if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_check_password ldap - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
       result = G_ERROR;
     } else {
-      // Looping in results, staring at offset, until the end of the list
       if (ldap_count_entries(ldap, answer) > 0) {
         // Testing the first result to username with the given password
         entry = ldap_first_entry(ldap, answer);
@@ -873,13 +1124,52 @@ int user_module_check_password(const char * username, const char * password, voi
     
     o_free(filter);
     ldap_msgfree(answer);
+    ldap_unbind_ext(ldap, NULL, NULL);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error connect_ldap_server");
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_check_password ldap - Error connect_ldap_server");
     result = G_ERROR;
   }
   return result;
 }
 
 int user_module_update_password(const char * username, const char * new_password, void * cls) {
-  return G_ERROR_PARAM;
+  json_t * j_params = (json_t *)cls;
+  LDAP * ldap = connect_ldap_server(j_params);
+  int ret, result;
+  LDAPMod * mods[2] = {NULL, NULL};
+  char * cur_dn;
+  
+  if (ldap != NULL) {
+    mods[0] = o_malloc(sizeof(LDAPMod));
+    if (mods[0] != NULL) {
+      mods[0]->mod_values = o_malloc(2 * sizeof(char *));
+      mods[0]->mod_op     = LDAP_MOD_REPLACE;
+      mods[0]->mod_type   = (char *)json_string_value(json_object_get(j_params, "password-property"));
+      mods[0]->mod_values[0] = generate_hash(get_digest_algorithm(j_params), new_password);
+      cur_dn = get_user_dn_from_username(j_params, ldap, username);
+      if (cur_dn != NULL) {
+        if ((result = ldap_modify_ext_s(ldap, cur_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password ldap - Error setting new user %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
+          ret = G_ERROR;
+        } else {
+          ret = G_OK;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password ldap - Error get_user_dn_from_username");
+        ret = G_ERROR;
+      }
+      o_free(cur_dn);
+      o_free(mods[0]->mod_values[0]);
+      o_free(mods[0]->mod_values);
+      o_free(mods[0]);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password ldap - Error allocating resources for mods");
+      ret = G_ERROR;
+    }
+    ldap_unbind_ext(ldap, NULL, NULL);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password ldap - Error connect_ldap_server");
+    ret = G_ERROR;
+  }
+  return ret;
 }
