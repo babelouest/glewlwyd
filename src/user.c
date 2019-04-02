@@ -61,7 +61,7 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
   return j_return;
 }
 
-json_t * auth_check_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * scheme_value) {
+json_t * auth_check_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * scheme_value, const struct _u_request * request) {
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL;
   char * str_scheme_value = json_dumps(scheme_value, JSON_COMPACT);
@@ -70,7 +70,7 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
   if (NULL != str_scheme_value) {
     scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
     if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
-      res = scheme_instance->module->user_auth_scheme_module_validate(username, str_scheme_value, scheme_instance->cls);
+      res = scheme_instance->module->user_auth_scheme_module_validate(username, str_scheme_value, scheme_instance->cls, request);
       if (res == G_OK || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM || res == G_ERROR_NOT_FOUND) {
         j_return = json_pack("{si}", "result", res);
       } else {
@@ -87,7 +87,7 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
   return j_return;
 }
 
-json_t * auth_trigger_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * trigger_parameters) {
+json_t * auth_trigger_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * trigger_parameters, const struct _u_request * request) {
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL, * j_response = NULL;
   char * str_trigger_parameters = json_dumps(trigger_parameters, JSON_COMPACT), * str_trigger_response = NULL;
@@ -96,7 +96,7 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
   if (NULL != str_trigger_parameters) {
     scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
     if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
-      res = scheme_instance->module->user_auth_scheme_module_trigger(username, str_trigger_parameters, &str_trigger_response, scheme_instance->cls);
+      res = scheme_instance->module->user_auth_scheme_module_trigger(username, str_trigger_parameters, &str_trigger_response, scheme_instance->cls, request);
       if (res == G_OK) {
         j_response = json_loads(str_trigger_response, JSON_DECODE_ANY, NULL);
         if (j_response != NULL) {
@@ -122,16 +122,16 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
   return j_return;
 }
 
-json_t * auth_register_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * trigger_parameters) {
+json_t * auth_register_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * register_parameters, const struct _u_request * request) {
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL, * j_response = NULL;
-  char * str_trigger_parameters = json_dumps(trigger_parameters, JSON_COMPACT), * str_register_response = NULL;
+  char * str_trigger_parameters = json_dumps(register_parameters, JSON_COMPACT), * str_register_response = NULL;
   int res;
   
   if (NULL != str_trigger_parameters) {
     scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
     if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
-      res = scheme_instance->module->user_auth_scheme_module_register(username, str_trigger_parameters, &str_register_response, scheme_instance->cls);
+      res = scheme_instance->module->user_auth_scheme_module_register(username, str_trigger_parameters, &str_register_response, scheme_instance->cls, request);
       if (res == G_OK) {
         j_response = json_loads(str_register_response, JSON_DECODE_ANY, NULL);
         if (j_response != NULL) {

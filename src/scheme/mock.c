@@ -94,7 +94,7 @@ int user_can_use_scheme(const char * username, void * cls) {
   return ret;
 }
 
-int user_auth_scheme_module_register(const char * username, const char * register_data, char ** register_response, void * cls) {
+int user_auth_scheme_module_register(const char * username, const char * register_data, char ** register_response, void * cls, const void * http_request) {
   int ret, result = G_ERROR;
   char * str_user = NULL, * str_user_set, * key_mock;
   json_t * j_user, * j_data;
@@ -129,7 +129,7 @@ int user_auth_scheme_module_register(const char * username, const char * registe
   return ret;
 }
 
-int user_auth_scheme_module_trigger(const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls) {
+int user_auth_scheme_module_trigger(const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls, const void * http_request) {
   int ret;
   
   if (user_can_use_scheme(username, cls) == GLEWLWYD_IS_REGISTERED) {
@@ -141,7 +141,7 @@ int user_auth_scheme_module_trigger(const char * username, const char * scheme_t
   return ret;
 }
 
-int user_auth_scheme_module_validate(const char * username, const char * scheme_data, void * cls) {
+int user_auth_scheme_module_validate(const char * username, const char * scheme_data, void * cls, const void * http_request) {
   json_t * j_scheme = json_loads(scheme_data, JSON_DECODE_ANY, NULL), * j_user;
   char * str_user = NULL, * str_user_set, * key_mock;
   int ret, result = G_ERROR;
