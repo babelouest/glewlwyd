@@ -74,6 +74,7 @@ typedef enum {
   digest_SSHA512,
   digest_MD5,
   digest_SMD5,
+  digest_PLAIN
 } digest_algorithm;
 
 struct config_module;
@@ -147,9 +148,9 @@ struct _user_auth_scheme_module {
   int (* user_auth_scheme_module_unload)(struct config_module * config);
   int (* user_auth_scheme_module_init)(struct config_module * config, const char * parameters, void ** cls);
   int (* user_auth_scheme_module_close)(struct config_module * config, void * cls);
-  int (* user_auth_scheme_module_trigger)(const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls);
-  int (* user_auth_scheme_module_register)(const char * username, const char * scheme_data, char ** scheme_data_response, void * cls);
-  int (* user_auth_scheme_module_validate)(const char * username, const char * scheme_data, void * cls);
+  int (* user_auth_scheme_module_trigger)(const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls, const void * http_request);
+  int (* user_auth_scheme_module_register)(const char * username, const char * scheme_data, char ** scheme_data_response, void * cls, const void * http_request);
+  int (* user_auth_scheme_module_validate)(const char * username, const char * scheme_data, void * cls, const void * http_request);
   int (* user_can_use_scheme)(const char * username, void * cls);
 };
 
