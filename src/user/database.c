@@ -1055,7 +1055,7 @@ int user_module_check_password(const char * username, const char * password, voi
   json_t * j_query, * j_result;
   char * clause = get_password_clause_check(param, password);
   
-  j_query = json_pack("{sss[s]s{sss{s{ssss}}}}",
+  j_query = json_pack("{sss[s]s{sss{ssss}}}",
                       "table",
                       G_TABLE_USER,
                       "columns",
