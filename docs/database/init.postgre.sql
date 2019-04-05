@@ -1,5 +1,5 @@
 -- ----------------------------------------------------- --
---              Mariadb/Mysql Database                   --
+--                PostgreSQL Database                    --
 -- Initialize Glewlwyd Database for the backend server   --
 -- The administration client app                         --
 -- ----------------------------------------------------- --
@@ -16,7 +16,7 @@ DROP TABLE IF EXISTS `g_client_module_instance`;
 DROP TABLE IF EXISTS `g_user_session`;
 
 CREATE TABLE `g_user_module_instance` (
-  `gumi_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gumi_id` SERIAL PRIMARY KEY,
   `gumi_module` VARCHAR(128) NOT NULL,
   `gumi_order` INT(11) NOT NULL,
   `gumi_name` VARCHAR(128) NOT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE `g_user_module_instance` (
 );
 
 CREATE TABLE `g_user_auth_scheme_module_instance` (
-  `guasmi_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `guasmi_id` SERIAL PRIMARY KEY,
   `guasmi_module` VARCHAR(128) NOT NULL,
   `guasmi_expiration` INT(11) NOT NULL DEFAULT 0,
   `guasmi_max_use` INT(11) DEFAULT 0, -- 0: unlimited
@@ -36,7 +36,7 @@ CREATE TABLE `g_user_auth_scheme_module_instance` (
 );
 
 CREATE TABLE `g_client_module_instance` (
-  `gcmi_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gcmi_id` SERIAL PRIMARY KEY,
   `gcmi_module` VARCHAR(128) NOT NULL,
   `gcmi_order` INT(11) NOT NULL,
   `gcmi_name` VARCHAR(128) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE `g_client_module_instance` (
 );
 
 CREATE TABLE `g_plugin_module_instance` (
-  `gpmi_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gpmi_id` SERIAL PRIMARY KEY,
   `gpmi_module` VARCHAR(128) NOT NULL,
   `gpmi_name` VARCHAR(128) NOT NULL,
   `gpmi_display_name` VARCHAR(256) DEFAULT '',
@@ -54,12 +54,13 @@ CREATE TABLE `g_plugin_module_instance` (
 );
 
 CREATE TABLE `g_user_session` (
-  `gus_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
-  `gus_uuid` VARCHAR(128) NOT NULL,
+  `gus_id` SERIAL PRIMARY KEY,
+  `gus_session_hash` VARCHAR(128) NOT NULL,
   `gus_user_agent` VARCHAR(256),
+  `gus_issued_for` VARCHAR(256), -- IP address or hostname
   `gus_username` VARCHAR(256) NOT NULL,
-  `gus_expiration` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `gus_last_login` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `gus_expiration` TIMESTAMP NOT NULL DEFAULT NOW(),
+  `gus_last_login` TIMESTAMP NOT NULL DEFAULT NOW(),
   `gus_current` TINYINT(1),
   `gus_enabled` TINYINT(1) DEFAULT 1
 );
@@ -68,11 +69,11 @@ CREATE INDEX `i_g_user_session_last_login` ON `g_user_session`(`gus_last_login`)
 CREATE INDEX `i_g_user_session_expiration` ON `g_user_session`(`gus_expiration`);
 
 CREATE TABLE `g_user_session_scheme` (
-  `guss_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `guss_id` SERIAL PRIMARY KEY,
   `gus_id` INT(11) NOT NULL,
   `guasmi_id` INT(11) DEFAULT NULL, -- NULL means scheme 'password'
-  `guss_expiration` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `guss_last_login` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `guss_expiration` TIMESTAMP NOT NULL DEFAULT NOW(),
+  `guss_last_login` TIMESTAMP NOT NULL DEFAULT NOW(),
   `guss_use_counter` INT(11) DEFAULT 0,
   `guss_enabled` TINYINT(1) DEFAULT 1,
   FOREIGN KEY(`gus_id`) REFERENCES `g_user_session`(`gus_id`) ON DELETE CASCADE,
@@ -82,7 +83,7 @@ CREATE INDEX `i_g_user_session_scheme_last_login` ON `g_user_session_scheme`(`gu
 CREATE INDEX `i_g_user_session_scheme_expiration` ON `g_user_session_scheme`(`guss_expiration`);
 
 CREATE TABLE `g_scope` (
-  `gs_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gs_id` SERIAL PRIMARY KEY,
   `gs_name` VARCHAR(128) NOT NULL UNIQUE,
   `gs_display_name` VARCHAR(256) DEFAULT '',
   `gs_description` VARCHAR(512),
@@ -91,14 +92,14 @@ CREATE TABLE `g_scope` (
 );
 
 CREATE TABLE `g_scope_group` (
-  `gsg_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gsg_id` SERIAL PRIMARY KEY,
   `gs_id` INT(11),
   `gsg_name` VARCHAR(128) NOT NULL,
   FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
 );
 
 CREATE TABLE `g_scope_group_auth_scheme_module_instance` (
-  `gsgasmi_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gsgasmi_id` SERIAL PRIMARY KEY,
   `gsg_id` INT(11) NOT NULL,
   `guasmi_id` INT(11) NOT NULL,
   FOREIGN KEY(`gsg_id`) REFERENCES `g_scope_group`(`gsg_id`) ON DELETE CASCADE,
@@ -106,11 +107,11 @@ CREATE TABLE `g_scope_group_auth_scheme_module_instance` (
 );
 
 CREATE TABLE `g_client_user_scope` (
-  `gcus_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gcus_id` SERIAL PRIMARY KEY,
   `gs_id` INT(11) NOT NULL,
   `gcus_username` VARCHAR(256) NOT NULL,
   `gcus_client_id` VARCHAR(256) NOT NULL,
-  `gcus_granted` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `gcus_granted` TIMESTAMP NOT NULL DEFAULT NOW(),
   `gcus_enabled` TINYINT(1) DEFAULT 1,
   FOREIGN KEY(`gs_id`) REFERENCES `g_scope`(`gs_id`) ON DELETE CASCADE
 );
