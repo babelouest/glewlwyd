@@ -556,7 +556,7 @@ int client_module_close(struct config_module * config, void * cls) {
   return ret;
 }
 
-size_t client_module_count_total(const char * pattern, void * cls) {
+size_t client_module_count_total(struct config_module * config, const char * pattern, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result = NULL;
   int res;
@@ -584,7 +584,7 @@ size_t client_module_count_total(const char * pattern, void * cls) {
   return ret;
 }
 
-char * client_module_get_list(const char * pattern, size_t limit, size_t offset, int * result, void * cls) {
+char * client_module_get_list(struct config_module * config, const char * pattern, size_t limit, size_t offset, int * result, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result, * j_element;
   int res;
@@ -659,7 +659,7 @@ static json_t * database_client_scope_get(struct mod_parameters * param, json_in
   return j_return;
 }
 
-char * client_module_get(const char * client_id, int * result, void * cls) {
+char * client_module_get(struct config_module * config, const char * client_id, int * result, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result, * j_scope;
   int res;
@@ -709,7 +709,7 @@ char * client_module_get(const char * client_id, int * result, void * cls) {
   return str_result;
 }
 
-char * client_is_valid(const char * client_id, const char * str_client, int mode, int * result, void * cls) {
+char * client_is_valid(struct config_module * config, const char * client_id, const char * str_client, int mode, int * result, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_client = json_loads(str_client, JSON_DECODE_ANY, NULL), * j_result = NULL, * j_element, * j_format, * j_value;
   char * str_result = NULL, * message;
@@ -726,7 +726,7 @@ char * client_is_valid(const char * client_id, const char * str_client, int mode
           *result = G_ERROR_PARAM;
           json_array_append_new(j_result, json_string("client_id is mandatory and must be a string of at least 128 characters"));
         } else {
-          o_free(client_module_get(json_string_value(json_object_get(j_client, "client_id")), &res, cls));
+          o_free(client_module_get(config, json_string_value(json_object_get(j_client, "client_id")), &res, cls));
           if (res == G_OK) {
             *result = G_ERROR_PARAM;
             json_array_append_new(j_result, json_string("client_id already exist"));
@@ -807,7 +807,7 @@ char * client_is_valid(const char * client_id, const char * str_client, int mode
   return str_result;
 }
 
-int client_module_add(const char * str_new_client, void * cls) {
+int client_module_add(struct config_module * config, const char * str_new_client, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_client = json_loads(str_new_client, JSON_DECODE_ANY, NULL), * j_query, * j_gc_id;
   int res, ret;
@@ -861,7 +861,7 @@ int client_module_add(const char * str_new_client, void * cls) {
   return ret;
 }
 
-int client_module_update(const char * client_id, const char * str_client, void * cls) {
+int client_module_update(struct config_module * config, const char * client_id, const char * str_client, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_client = json_loads(str_client, JSON_DECODE_ANY, NULL), * j_query, * j_result = NULL;
   int res, ret;
@@ -926,7 +926,7 @@ int client_module_update(const char * client_id, const char * str_client, void *
   return ret;
 }
 
-int client_module_delete(const char * client_id, void * cls) {
+int client_module_delete(struct config_module * config, const char * client_id, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query;
   int res, ret;
@@ -948,13 +948,13 @@ int client_module_delete(const char * client_id, void * cls) {
   return ret;
 }
 
-int client_module_check_password(const char * client_id, const char * password, void * cls) {
+int client_module_check_password(struct config_module * config, const char * client_id, const char * password, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   int ret, res;
   json_t * j_query, * j_result;
   char * clause = get_password_clause_check(param, password);
   
-  j_query = json_pack("{sss[s]s{sss{s{ssss}}}}",
+  j_query = json_pack("{sss[s]s{sss{ssss}}}",
                       "table",
                       G_TABLE_CLIENT,
                       "columns",

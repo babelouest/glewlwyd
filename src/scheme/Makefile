@@ -34,6 +34,12 @@ all: release
 libmodmock.so: mock.o
 	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o $(LIBS)
 
+libmodemail.so: mock.o
+	$(CC) -shared -Wl,-soname,libmodemail.so -o libmodemail.so email.o $(LIBS)
+
+libmodwebauthn.so: mock.o
+	$(CC) -shared -Wl,-soname,libmodwebauthn.so -o libmodwebauthn.so webauthn.o $(LIBS)
+
 clean:
 	rm -f *.o *.so
 

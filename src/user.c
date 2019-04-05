@@ -37,7 +37,7 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
       user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
       if (user_module != NULL) {
         if (user_module->enabled) {
-          res = user_module->module->user_module_check_password(username, password, user_module->cls);
+          res = user_module->module->user_module_check_password(config->config_m, username, password, user_module->cls);
           if (res == G_OK) {
             j_return = json_pack("{si}", "result", G_OK);
           } else if (res == G_ERROR_UNAUTHORIZED) {
@@ -70,7 +70,7 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
   if (NULL != str_scheme_value) {
     scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
     if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
-      res = scheme_instance->module->user_auth_scheme_module_validate(username, str_scheme_value, scheme_instance->cls, request);
+      res = scheme_instance->module->user_auth_scheme_module_validate(config->config_m, request, username, str_scheme_value, scheme_instance->cls);
       if (res == G_OK || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM || res == G_ERROR_NOT_FOUND) {
         j_return = json_pack("{si}", "result", res);
       } else {
@@ -96,7 +96,7 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
   if (NULL != str_trigger_parameters) {
     scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
     if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
-      res = scheme_instance->module->user_auth_scheme_module_trigger(username, str_trigger_parameters, &str_trigger_response, scheme_instance->cls, request);
+      res = scheme_instance->module->user_auth_scheme_module_trigger(config->config_m, request, username, str_trigger_parameters, &str_trigger_response, scheme_instance->cls);
       if (res == G_OK) {
         j_response = json_loads(str_trigger_response, JSON_DECODE_ANY, NULL);
         if (j_response != NULL) {
@@ -131,7 +131,7 @@ json_t * auth_register_user_scheme(struct config_elements * config, const char *
   if (NULL != str_trigger_parameters) {
     scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
     if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
-      res = scheme_instance->module->user_auth_scheme_module_register(username, str_trigger_parameters, &str_register_response, scheme_instance->cls, request);
+      res = scheme_instance->module->user_auth_scheme_module_register(config->config_m, request, username, str_trigger_parameters, &str_register_response, scheme_instance->cls);
       if (res == G_OK) {
         j_response = json_loads(str_register_response, JSON_DECODE_ANY, NULL);
         if (j_response != NULL) {
@@ -154,6 +154,36 @@ json_t * auth_register_user_scheme(struct config_elements * config, const char *
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
   o_free(str_trigger_parameters);
+  return j_return;
+}
+
+json_t * auth_register_get_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, const struct _u_request * request) {
+  struct _user_auth_scheme_module_instance * scheme_instance;
+  json_t * j_return = NULL, * j_response = NULL;
+  char * str_register_response = NULL;
+  int result = G_ERROR;
+  
+    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+    if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
+      str_register_response = scheme_instance->module->user_auth_scheme_module_register_get(config->config_m, request, username, &result, scheme_instance->cls);
+      if (result == G_OK) {
+        j_response = json_loads(str_register_response, JSON_DECODE_ANY, NULL);
+        if (j_response != NULL) {
+          j_return = json_pack("{sisO}", "result", G_OK, "register", j_response);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_get_user_scheme - Error parsing register response into JSON format: %s", str_register_response);
+        }
+        json_decref(j_response);
+      } else if (result != G_ERROR) {
+        j_return = json_pack("{si}", "result", result);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_get_user_scheme - Error unrecognize return value for user_auth_scheme_module_register_get: %d", result);
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      o_free(str_register_response);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    }
   return j_return;
 }
 
@@ -180,7 +210,7 @@ json_t * get_user(struct config_elements * config, const char * username, const 
     user_module = get_user_module_instance(config, source);
     if (user_module != NULL) {
       result = G_ERROR;
-      str_user = user_module->module->user_module_get(username, &result, user_module->cls);
+      str_user = user_module->module->user_module_get(config->config_m, username, &result, user_module->cls);
       if (result == G_OK && str_user != NULL) {
         j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
         if (j_user != NULL) {
@@ -210,7 +240,7 @@ json_t * get_user(struct config_elements * config, const char * username, const 
           if (user_module != NULL) {
             if (user_module->enabled) {
               result = G_ERROR;
-              str_user = user_module->module->user_module_get(username, &result, user_module->cls);
+              str_user = user_module->module->user_module_get(config->config_m, username, &result, user_module->cls);
               if (result == G_OK && str_user != NULL) {
                 j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
                 if (j_user != NULL) {
@@ -254,7 +284,7 @@ json_t * get_user_profile(struct config_elements * config, const char * username
     user_module = get_user_module_instance(config, source);
     if (user_module != NULL) {
       result = G_ERROR;
-      str_user = user_module->module->user_module_get_profile(username, &result, user_module->cls);
+      str_user = user_module->module->user_module_get_profile(config->config_m, username, &result, user_module->cls);
       if (result == G_OK && str_user != NULL) {
         j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
         if (j_user != NULL) {
@@ -284,7 +314,7 @@ json_t * get_user_profile(struct config_elements * config, const char * username
           if (user_module != NULL) {
             if (user_module->enabled) {
               result = G_ERROR;
-              str_user = user_module->module->user_module_get_profile(username, &result, user_module->cls);
+              str_user = user_module->module->user_module_get_profile(config->config_m, username, &result, user_module->cls);
               if (result == G_OK && str_user != NULL) {
                 j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
                 if (j_user != NULL) {
@@ -328,7 +358,7 @@ json_t * get_user_list(struct config_elements * config, const char * pattern, si
     user_module = get_user_module_instance(config, source);
     if (user_module != NULL && user_module->enabled) {
       result = G_ERROR;
-      list_result = user_module->module->user_module_get_list(pattern, offset, limit, &result, user_module->cls);
+      list_result = user_module->module->user_module_get_list(config->config_m, pattern, offset, limit, &result, user_module->cls);
       if (result == G_OK) {
         j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
         if (j_list_parsed && json_is_array(j_list_parsed)) {
@@ -363,8 +393,8 @@ json_t * get_user_list(struct config_elements * config, const char * pattern, si
           user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
           if (user_module != NULL && user_module->enabled) {
             result = G_ERROR;
-            if ((count_total = user_module->module->user_module_count_total(pattern, user_module->cls)) > cur_offset && cur_limit) {
-              list_result = user_module->module->user_module_get_list(pattern, cur_offset, cur_limit, &result, user_module->cls);
+            if ((count_total = user_module->module->user_module_count_total(config->config_m, pattern, user_module->cls)) > cur_offset && cur_limit) {
+              list_result = user_module->module->user_module_get_list(config->config_m, pattern, cur_offset, cur_limit, &result, user_module->cls);
               if (result == G_OK) {
                 j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
                 if (j_list_parsed && json_is_array(j_list_parsed)) {
@@ -419,7 +449,7 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
       str_user = json_dumps(j_user, JSON_COMPACT);
       result = G_ERROR;
-      str_error = user_module->module->user_is_valid(username, str_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, user_module->cls);
+      str_error = user_module->module->user_is_valid(config->config_m, username, str_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, user_module->cls);
       if (result == G_ERROR_PARAM && str_error != NULL) {
         j_error_list = json_loads(str_error, JSON_DECODE_ANY, NULL);
         if (j_error_list != NULL) {
@@ -452,7 +482,7 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
             found = 1;
             str_user = json_dumps(j_user, JSON_COMPACT);
             result = G_ERROR;
-            str_error = user_module->module->user_is_valid(username, str_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, user_module->cls);
+            str_error = user_module->module->user_is_valid(config->config_m, username, str_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, user_module->cls);
             if (result == G_ERROR_PARAM && str_error != NULL) {
               j_error_list = json_loads(str_error, JSON_DECODE_ANY, NULL);
               if (j_error_list != NULL) {
@@ -498,7 +528,7 @@ int add_user(struct config_elements * config, json_t * j_user, const char * sour
     user_module = get_user_module_instance(config, source);
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
       str_user = json_dumps(j_user, JSON_COMPACT);
-      result = user_module->module->user_module_add(str_user, user_module->cls);
+      result = user_module->module->user_module_add(config->config_m, str_user, user_module->cls);
       if (result == G_OK) {
         ret = G_OK;
       } else {
@@ -522,7 +552,7 @@ int add_user(struct config_elements * config, json_t * j_user, const char * sour
           if (user_module != NULL && user_module->enabled && !user_module->readonly) {
             found = 1;
             str_user = json_dumps(j_user, JSON_COMPACT);
-            result = user_module->module->user_module_add(str_user, user_module->cls);
+            result = user_module->module->user_module_add(config->config_m, str_user, user_module->cls);
             if (result == G_OK) {
               ret = G_OK;
             } else {
@@ -555,10 +585,10 @@ int set_user(struct config_elements * config, const char * username, json_t * j_
   if (source != NULL) {
     user_module = get_user_module_instance(config, source);
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
-      o_free(user_module->module->user_module_get(username, &result, user_module->cls));
+      o_free(user_module->module->user_module_get(config->config_m, username, &result, user_module->cls));
       if (result == G_OK) {
         str_user = json_dumps(j_user, JSON_COMPACT);
-        ret = user_module->module->user_module_update(username, str_user, user_module->cls);
+        ret = user_module->module->user_module_update(config->config_m, username, str_user, user_module->cls);
         if (ret != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_update");
           ret = result;
@@ -589,9 +619,9 @@ int delete_user(struct config_elements * config, const char * username, const ch
   if (source != NULL) {
     user_module = get_user_module_instance(config, source);
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
-      o_free(user_module->module->user_module_get(username, &result, user_module->cls));
+      o_free(user_module->module->user_module_get(config->config_m, username, &result, user_module->cls));
       if (result == G_OK) {
-        result = user_module->module->user_module_delete(username, user_module->cls);
+        result = user_module->module->user_module_delete(config->config_m, username, user_module->cls);
         if (result == G_OK) {
           ret = G_OK;
         } else {
@@ -625,7 +655,7 @@ json_t * user_get_profile(struct config_elements * config, const char * username
   if (check_result_value(j_user, G_OK)) {
     user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
     if (user_module != NULL && user_module->enabled) {
-      str_profile = user_module->module->user_module_get_profile(username, &result, user_module->cls);
+      str_profile = user_module->module->user_module_get_profile(config->config_m, username, &result, user_module->cls);
       if (result == G_OK) {
         j_profile = json_loads(str_profile, JSON_DECODE_ANY, NULL);
         if (j_profile != NULL) {
@@ -664,7 +694,7 @@ json_t * user_set_profile(struct config_elements * config, const char * username
     user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
       str_profile = json_dumps(j_profile, JSON_COMPACT);
-      ret = user_module->module->user_module_update_profile(username, str_profile, user_module->cls);
+      ret = user_module->module->user_module_update_profile(config->config_m, username, str_profile, user_module->cls);
       j_return = json_pack("{si}", "result", ret);
       o_free(str_profile);
     } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
@@ -691,8 +721,8 @@ int user_update_password(struct config_elements * config, const char * username,
   if (check_result_value(j_user, G_OK)) {
     user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
-      if ((ret = user_module->module->user_module_check_password(username, old_password, user_module->cls)) == G_OK) {
-        ret = user_module->module->user_module_update_password(username, new_password, user_module->cls);
+      if ((ret = user_module->module->user_module_check_password(config->config_m, username, old_password, user_module->cls)) == G_OK) {
+        ret = user_module->module->user_module_update_password(config->config_m, username, new_password, user_module->cls);
       } else if (ret == G_ERROR_UNAUTHORIZED) {
         ret = G_ERROR_PARAM;
       } else {

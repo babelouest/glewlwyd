@@ -238,7 +238,7 @@ int glewlwyd_callback_trigger_session_used(struct config_plugin * config, const 
       if (j_scheme_processed != NULL) {
         ret = G_OK;
         username_escaped = h_escape_string(config->glewlwyd_config->conn, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
-        clause_session = msprintf("IN (SELECT `gus_id` FROM `" GLEWLWYD_TABLE_USER_SESSION "` WHERE `gus_uuid`='%s' AND `gus_username`='%s' AND `gus_expiration` %s AND `gus_enabled`=1 AND `gus_current`=1)", session_hash, username_escaped, (config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?"> NOW()":"> (strftime('%s','now'))"));
+        clause_session = msprintf("IN (SELECT `gus_id` FROM `" GLEWLWYD_TABLE_USER_SESSION "` WHERE `gus_session_hash`='%s' AND `gus_username`='%s' AND `gus_expiration` %s AND `gus_enabled`=1 AND `gus_current`=1)", session_hash, username_escaped, SWITCH_DB_TYPE(config->glewlwyd_config->conn->type, "> NOW()", "> (strftime('%s','now'))", "> NOW()"));
         json_object_foreach(json_object_get(json_object_get(j_session, "session"), "scope"), key_scope, j_scope) {
           if (!password_processed && json_object_get(j_scope, "password_authenticated") == json_true()) {
             password_processed = 1;
@@ -264,7 +264,7 @@ int glewlwyd_callback_trigger_session_used(struct config_plugin * config, const 
                                     "operator",
                                     "raw",
                                     "value",
-                                    (config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?"> NOW()":"> (strftime('%s','now'))"));
+                                    SWITCH_DB_TYPE(config->glewlwyd_config->conn->type, "> NOW()", "> (strftime('%s','now'))", "> NOW()"));
             res = h_update(config->glewlwyd_config->conn, j_query, NULL);
             json_decref(j_query);
             if (res != H_OK) {
@@ -304,7 +304,7 @@ int glewlwyd_callback_trigger_session_used(struct config_plugin * config, const 
                                         "operator",
                                         "raw",
                                         "value",
-                                        (config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB?"> NOW()":"> (strftime('%s','now'))"));
+                                        SWITCH_DB_TYPE(config->glewlwyd_config->conn->type, "> NOW()", "> (strftime('%s','now'))", "> NOW()"));
                 o_free(clause_scheme);
                 o_free(escape_scheme_name);
                 o_free(escape_scheme_module);

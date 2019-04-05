@@ -225,8 +225,15 @@ json_t * get_auth_scheme_list_from_scope_list(struct config_elements * config, c
 static json_t * get_current_session(struct config_elements * config, const char * session_hash) {
   json_t * j_query, * j_result = NULL, * j_return;
   int res;
-  char * expire_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?o_strdup("> NOW()"):o_strdup("> (strftime('%s','now'))");
+  char * expire_clause;
 
+  if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+    expire_clause = o_strdup("> NOW()");
+  } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+    expire_clause = o_strdup("> NOW()");
+  } else { // HOEL_DB_TYPE_SQLITE
+    expire_clause = o_strdup("> (strftime('%s','now'))");
+  }
   j_query = json_pack("{sss[ss]s{sssis{ssss}si}sssi}",
                       "table",
                       GLEWLWYD_TABLE_USER_SESSION,
@@ -234,7 +241,7 @@ static json_t * get_current_session(struct config_elements * config, const char 
                         "gus_id",
                         "gus_username AS username",
                       "where",
-                        "gus_uuid",
+                        "gus_session_hash",
                         session_hash,
                         "gus_enabled",
                         1,
@@ -303,10 +310,17 @@ static json_t * get_current_user_from_session(struct config_elements * config, c
 }
 
 static int is_scheme_valid_for_session(struct config_elements * config, json_int_t guasmi_id, json_int_t max_use, const char * session_hash) {
-  char * expire_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?o_strdup("> NOW()"):o_strdup("> (strftime('%s','now'))");
+  char * expire_clause;
   json_t * j_query, * j_result = NULL, * j_session = get_current_session(config, session_hash);
   int res, ret = 0;
 
+  if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+    expire_clause = o_strdup("> NOW()");
+  } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+    expire_clause = o_strdup("> NOW()");
+  } else { // HOEL_DB_TYPE_SQLITE
+    expire_clause = o_strdup("> (strftime('%s','now'))");
+  }
   if (check_result_value(j_session, G_OK)) {
     j_query = json_pack("{sss[s]s{sOsos{ssss}si}}",
                         "table",
@@ -403,7 +417,7 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
                 json_array_foreach(j_group, index_scheme, j_scheme) {
                   scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_name")));
                   if (scheme != NULL) {
-                    if (scheme->enabled && (can_use_scheme = scheme->module->user_can_use_scheme(json_string_value(json_object_get(json_object_get(j_user, "user"), "username")), scheme->cls)) != GLEWLWYD_IS_NOT_AVAILABLE) {
+                    if (scheme->enabled && (can_use_scheme = scheme->module->user_can_use_scheme(config->config_m, json_string_value(json_object_get(json_object_get(j_user, "user"), "username")), scheme->cls)) != GLEWLWYD_IS_NOT_AVAILABLE) {
                       if (can_use_scheme == GLEWLWYD_IS_REGISTERED) {
                         json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, scheme->guasmi_max_use, session_hash)?json_true():json_false());
                         json_object_set(j_scheme, "scheme_registered", json_true());

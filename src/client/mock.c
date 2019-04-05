@@ -154,7 +154,7 @@ int client_module_close(struct config_module * config, void * cls) {
   return G_OK;
 }
 
-size_t client_module_count_total(const char * pattern, void * cls) {
+size_t client_module_count_total(struct config_module * config, const char * pattern, void * cls) {
   size_t index, total;
   json_t * j_user;
 
@@ -171,7 +171,7 @@ size_t client_module_count_total(const char * pattern, void * cls) {
   return total;
 }
 
-char * client_module_get_list(const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
+char * client_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
   json_t * j_user, * j_array, * j_array_pattern;
   size_t index, counter = 0;
   char * to_return = NULL;
@@ -208,7 +208,7 @@ char * client_module_get_list(const char * pattern, size_t offset, size_t limit,
   return to_return;
 }
 
-char * client_module_get(const char * client_id, int * result, void * cls) {
+char * client_module_get(struct config_module * config, const char * client_id, int * result, void * cls) {
   json_t * j_client, * j_copy;
   size_t index;
   char * str_return = NULL;
@@ -231,7 +231,7 @@ char * client_module_get(const char * client_id, int * result, void * cls) {
   return str_return;
 }
 
-char * client_is_valid(const char * client_id, const char * str_client, int mode, int * result, void * cls) {
+char * client_is_valid(struct config_module * config, const char * client_id, const char * str_client, int mode, int * result, void * cls) {
   json_t * j_return = NULL, * j_client;
   char * str_return = NULL;
 
@@ -265,13 +265,13 @@ char * client_is_valid(const char * client_id, const char * str_client, int mode
   return str_return;
 }
 
-int client_module_add(const char * str_new_client, void * cls) {
+int client_module_add(struct config_module * config, const char * str_new_client, void * cls) {
   json_t * j_client = json_loads(str_new_client, JSON_DECODE_ANY, NULL);
   int ret, result;
   char * str_client;
   
   if (j_client != NULL) {
-    str_client = client_module_get(json_string_value(json_object_get(j_client, "client_id")), &result, cls);
+    str_client = client_module_get(config, json_string_value(json_object_get(j_client, "client_id")), &result, cls);
     if (result == G_ERROR_NOT_FOUND) {
       json_array_append((json_t *)cls, j_client);
       ret = G_OK;
@@ -286,7 +286,7 @@ int client_module_add(const char * str_new_client, void * cls) {
   return ret;
 }
 
-int client_module_update(const char * client_id, const char * str_client, void * cls) {
+int client_module_update(struct config_module * config, const char * client_id, const char * str_client, void * cls) {
   json_t * j_client = json_loads(str_client, JSON_DECODE_ANY, NULL), * j_element;
   size_t index;
   int ret, found = 0;
@@ -311,7 +311,7 @@ int client_module_update(const char * client_id, const char * str_client, void *
   return ret;
 }
 
-int client_module_delete(const char * client_id, void * cls) {
+int client_module_delete(struct config_module * config, const char * client_id, void * cls) {
   json_t * j_client;
   size_t index;
   int ret, found = 0;
@@ -330,10 +330,10 @@ int client_module_delete(const char * client_id, void * cls) {
   return ret;
 }
 
-int client_module_check_password(const char * client_id, const char * password, void * cls) {
+int client_module_check_password(struct config_module * config, const char * client_id, const char * password, void * cls) {
   json_t * j_client;
   int ret, result;
-  char * str_client = client_module_get(client_id, &result, cls);
+  char * str_client = client_module_get(config, client_id, &result, cls);
   j_client = json_loads(str_client, JSON_DECODE_ANY, NULL);
   
   if (result == G_OK) {

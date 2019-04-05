@@ -29,14 +29,21 @@
 json_t * get_session_scheme(struct config_elements * config, json_int_t gus_id) {
   json_t * j_query, * j_result, * j_return;
   int res;
-  char * expire_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?o_strdup("> NOW()"):o_strdup("> (strftime('%s','now'))");
+  char * expire_clause;
   
+  if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+    expire_clause = o_strdup("> NOW()");
+  } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+    expire_clause = o_strdup("> NOW()");
+  } else { // HOEL_DB_TYPE_SQLITE
+    expire_clause = o_strdup("> (strftime('%s','now'))");
+  }
   j_query = json_pack("{sss[ss]s{sIsis{ssss}}}",
                       "table",
                       GLEWLWYD_TABLE_USER_SESSION_SCHEME,
                       "columns",
                         "guasmi_id",
-                        "UNIX_TIMESTAMP(`guss_expiration`) AS expiration",
+                        SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(guss_expiration) AS expiration", "guss_expiration AS expiration", "EXTRACT(EPOCH FROM guss_expiration) AS expiration"),
                       "where",
                         "gus_id",
                         gus_id,
@@ -62,18 +69,25 @@ json_t * get_session_scheme(struct config_elements * config, json_int_t gus_id) 
 json_t * get_session_for_username(struct config_elements * config, const char * session_uid, const char * username) {
   json_t * j_query, * j_result, * j_return, * j_session_scheme;
   int res;
-  char * expire_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?o_strdup("> NOW()"):o_strdup("> (strftime('%s','now'))");
+  char * expire_clause;
   char * session_uid_hash = generate_hash(config->hash_algorithm, session_uid);
 
+  if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+    expire_clause = o_strdup("> NOW()");
+  } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+    expire_clause = o_strdup("> NOW()");
+  } else { // HOEL_DB_TYPE_SQLITE
+    expire_clause = o_strdup("> (strftime('%s','now'))");
+  }
   if (session_uid_hash != NULL) {
     j_query = json_pack("{sss[ss]s{sssssis{ssss}}}",
                         "table",
                         GLEWLWYD_TABLE_USER_SESSION,
                         "columns",
                           "gus_id",
-                          "UNIX_TIMESTAMP(`gus_expiration`) AS expiration",
+                          SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gus_expiration) AS expiration", "gus_expiration AS expiration", "EXTRACT(EPOCH FROM gus_expiration) AS expiration"),
                         "where",
-                          "gus_uuid",
+                          "gus_session_hash",
                           session_uid_hash,
                           "gus_username",
                           username,
@@ -131,7 +145,13 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
   char * expire_clause, * session_uid_hash;
 
   if (session_uid != NULL && o_strlen(session_uid)) {
-    expire_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?o_strdup("> NOW()"):o_strdup("> (strftime('%s','now'))");
+    if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+      expire_clause = o_strdup("> NOW()");
+    } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+      expire_clause = o_strdup("> NOW()");
+    } else { // HOEL_DB_TYPE_SQLITE
+      expire_clause = o_strdup("> (strftime('%s','now'))");
+    }
     session_uid_hash = generate_hash(config->hash_algorithm, session_uid);
     if (session_uid_hash != NULL) {
       j_query = json_pack("{sss[ss]s{sssis{ssss}}ss}",
@@ -141,7 +161,7 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
                             "gus_username",
                             "gus_last_login",
                           "where",
-                            "gus_uuid",
+                            "gus_session_hash",
                             session_uid_hash,
                             "gus_enabled",
                             1,
@@ -198,7 +218,13 @@ json_t * get_current_user_for_session(struct config_elements * config, const cha
   char * expire_clause, * session_uid_hash;
 
   if (session_uid != NULL && o_strlen(session_uid)) {
-    expire_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?o_strdup("> NOW()"):o_strdup("> (strftime('%s','now'))");
+    if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+      expire_clause = o_strdup("> NOW()");
+    } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+      expire_clause = o_strdup("> NOW()");
+    } else { // HOEL_DB_TYPE_SQLITE
+      expire_clause = o_strdup("> (strftime('%s','now'))");
+    }
     session_uid_hash = generate_hash(config->hash_algorithm, session_uid);
     if (session_uid_hash != NULL) {
       j_query = json_pack("{sss[ss]s{sssis{ssss}si}sssi}",
@@ -206,9 +232,9 @@ json_t * get_current_user_for_session(struct config_elements * config, const cha
                           GLEWLWYD_TABLE_USER_SESSION,
                           "columns",
                             "gus_username",
-                            "UNIX_TIMESTAMP(`gus_expiration`) AS expiration",
+                            SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gus_expiration) AS expiration", "gus_expiration AS expiration", "EXTRACT(EPOCH FROM gus_expiration) AS expiration"),
                           "where",
-                            "gus_uuid",
+                            "gus_session_hash",
                             session_uid_hash,
                             "gus_enabled",
                             1,
@@ -268,19 +294,31 @@ int user_session_update(struct config_elements * config, const char * session_ui
                             "gus_current",
                             0,
                           "where",
-                            "gus_uuid",
+                            "gus_session_hash",
                             session_uid_hash);
       res = h_update(config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
         // Create session for user if not exist
-        expiration_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE)):msprintf("%u", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
-        last_login_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
+        if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+          expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
+        } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+          expiration_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
+        } else { // HOEL_DB_TYPE_SQLITE
+          expiration_clause = msprintf("%u", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
+        }
+        if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+          last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+        } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+          last_login_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now));
+        } else { // HOEL_DB_TYPE_SQLITE
+          last_login_clause = msprintf("%u", (now));
+        }
         j_query = json_pack("{sss{sssssss{ss}s{ss}si}}",
                             "table",
                             GLEWLWYD_TABLE_USER_SESSION,
                             "values",
-                              "gus_uuid",
+                              "gus_session_hash",
                               session_uid_hash,
                               "gus_username",
                               username,
@@ -317,13 +355,19 @@ int user_session_update(struct config_elements * config, const char * session_ui
                             "gus_current",
                             0,
                           "where",
-                            "gus_uuid",
+                            "gus_session_hash",
                             session_uid_hash);
       res = h_update(config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
         // Refresh session for user
-        last_login_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
+        if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+          last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+        } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+          last_login_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now));
+        } else { // HOEL_DB_TYPE_SQLITE
+          last_login_clause = msprintf("%u", (now));
+        }
         j_query = json_pack("{sss{s{ss}sssi}s{ssss}}",
                             "table",
                             GLEWLWYD_TABLE_USER_SESSION,
@@ -336,7 +380,7 @@ int user_session_update(struct config_elements * config, const char * session_ui
                               "gus_current",
                               1,
                             "where",
-                              "gus_uuid",
+                              "gus_session_hash",
                               session_uid_hash,
                               "gus_username",
                               username);
@@ -375,8 +419,20 @@ int user_session_update(struct config_elements * config, const char * session_ui
           json_decref(j_query);
           if (res == H_OK) {
             // Set session scheme for this scheme with the timeout
-            expiration_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)scheme_instance->guasmi_expiration)):msprintf("%u", (now + (unsigned int)scheme_instance->guasmi_expiration));
-            last_login_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
+            if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+              expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)scheme_instance->guasmi_expiration));
+            } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+              expiration_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now + (unsigned int)scheme_instance->guasmi_expiration));
+            } else { // HOEL_DB_TYPE_SQLITE
+              expiration_clause = msprintf("%u", (now + (unsigned int)scheme_instance->guasmi_expiration));
+            }
+            if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+              last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+            } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+              last_login_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now));
+            } else { // HOEL_DB_TYPE_SQLITE
+              last_login_clause = msprintf("%u", (now));
+            }
             j_query = json_pack("{sss{sOsIs{ss}s{ss}}}",
                                 "table",
                                 GLEWLWYD_TABLE_USER_SESSION_SCHEME,
@@ -424,8 +480,20 @@ int user_session_update(struct config_elements * config, const char * session_ui
         json_decref(j_query);
         if (res == H_OK) {
           // Set session scheme password with the timeout
-          expiration_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION)):msprintf("%u", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
-          last_login_clause = config->conn->type==HOEL_DB_TYPE_MARIADB?msprintf("FROM_UNIXTIME(%u)", (now)):msprintf("%u", (now));
+          if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+            expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
+          } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+            expiration_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
+          } else { // HOEL_DB_TYPE_SQLITE
+            expiration_clause = msprintf("%u", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
+          }
+          if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+            last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+          } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+            last_login_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now));
+          } else { // HOEL_DB_TYPE_SQLITE
+            last_login_clause = msprintf("%u", (now));
+          }
           j_query = json_pack("{sss{sOsns{ss}s{ss}}}",
                               "table",
                               GLEWLWYD_TABLE_USER_SESSION_SCHEME,
@@ -482,7 +550,7 @@ int user_session_delete(struct config_elements * config, const char * session_ui
                           "gus_current",
                           0,
                         "where",
-                          "gus_uuid",
+                          "gus_session_hash",
                           session_uid_hash);
     if (username != NULL) {
       json_object_set_new(json_object_get(j_query, "where"), "gus_username", json_string(username));
@@ -505,4 +573,90 @@ int user_session_delete(struct config_elements * config, const char * session_ui
 
 char * get_session_id(struct config_elements * config, const struct _u_request * request) {
   return o_strdup(u_map_get(request->map_cookie, config->session_key));
+}
+
+json_t * get_user_session_list(struct config_elements * config, const char * username, size_t offset, size_t limit, const char * sort) {
+  json_t * j_query, * j_result, * j_return, * j_element;
+  int res;
+  size_t index;
+  
+  j_query = json_pack("{sss[sssssss]s{ss}sisi}",
+                      "table",
+                      GLEWLWYD_TABLE_USER_SESSION,
+                      "columns",
+                        "gus_session_hash AS session_hash",
+                        "gus_user_agent AS user_agent",
+                        "gus_issued_for AS issued_for",
+                        SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gus_expiration) AS expiration", "gus_expiration AS expiration", "EXTRACT(EPOCH FROM gus_expiration) AS expiration"),
+                        SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gus_last_login) AS last_login", "gus_last_login AS last_login", "EXTRACT(EPOCH FROM gus_last_login) AS last_login"),
+                        "gus_enabled",
+                      "where",
+                        "gus_username",
+                        username,
+                      "offset",
+                      offset,
+                      "limit",
+                      limit);
+  if (sort != NULL) {
+    json_object_set_new(j_query, "order_by", json_string(sort));
+  }
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    json_array_foreach(j_result, index, j_element) {
+      json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "gus_enabled"))?json_true():json_false());
+      json_object_del(j_element, "gus_enabled");
+    }
+    j_return = json_pack("{sisO}", "result", G_OK, "session", j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_session_delete - Error executing j_query");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  return j_return;
+}
+
+int delete_user_session_from_hash(struct config_elements * config, const char * username, const char * session_hash) {
+  json_t * j_query, * j_result;
+  int res, ret;
+  
+  j_query = json_pack("{sss[s]s{ssss}}",
+                      "table",
+                      GLEWLWYD_TABLE_USER_SESSION,
+                      "columns",
+                        "gus_id",
+                      "where",
+                        "gus_session_hash",
+                        session_hash,
+                        "gus_username",
+                        username);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result)) {
+      j_query = json_pack("{sss{si}s{sO}}",
+                          "table",
+                          GLEWLWYD_TABLE_USER_SESSION,
+                          "set",
+                            "gus_enabled",
+                            0,
+                          "where",
+                            "gus_id",
+                            json_object_get(json_array_get(j_result, 0), "gus_id"));
+      res = h_update(config->conn, j_query, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        ret = G_OK;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_session_from_hash - Error executing j_query (2)");
+        ret = G_ERROR_DB;
+      }
+    } else {
+      ret = G_ERROR_NOT_FOUND;
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_session_from_hash - Error executing j_query (1)");
+    ret = G_ERROR_DB;
+  }
+  return ret;
 }
