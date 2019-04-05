@@ -239,19 +239,28 @@ int main (int argc, char ** argv) {
   
   // Authentication
   ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_auth, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/scheme/register/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/auth/scheme/register/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/scheme/register/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_auth_register, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/scheme/register/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/scheme/register/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_auth_register_get, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/auth/scheme/register/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/scheme/trigger/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_auth_trigger, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/scheme/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_schemes_from_scopes, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_delete_session, (void*)config);
 
   // User profile
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/password", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/password", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_password, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/password", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile/session", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_session_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile/session", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/profile/session/:session_hash", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/profile/session/:session_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/profile/session/:session_hash", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
 
   // Grant scopes endpoints
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/auth/grant/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
@@ -956,7 +965,6 @@ int build_config_from_file(struct config_elements * config) {
     if (config_setting_lookup_string(database, "type", &str_value) == CONFIG_TRUE) {
       if (0) {
         // I know, this is for the code below to work
-#ifdef _HOEL_SQLITE
       } else if (0 == strncmp(str_value, "sqlite3", strlen("sqlite3"))) {
         if (config_setting_lookup_string(database, "path", &str_value_2) == CONFIG_TRUE) {
           config->conn = h_connect_sqlite(str_value_2);
@@ -976,8 +984,6 @@ int build_config_from_file(struct config_elements * config) {
           fprintf(stderr, "Error, no sqlite database specified\n");
           return 0;
         }
-#endif
-#ifdef _HOEL_MARIADB
       } else if (0 == strncmp(str_value, "mariadb", strlen("mariadb"))) {
         config_setting_lookup_string(database, "host", &str_value_2);
         config_setting_lookup_string(database, "user", &str_value_3);
@@ -990,7 +996,14 @@ int build_config_from_file(struct config_elements * config) {
           config_destroy(&cfg);
           return 0;
         }
-#endif
+      } else if (0 == strncmp(str_value, "postgre", strlen("postgre"))) {
+        config_setting_lookup_string(database, "conninfo", &str_value_2);
+        config->conn = h_connect_pgsql(str_value_2);
+        if (config->conn == NULL) {
+          fprintf(stderr, "Error opening postgre database %s\n", str_value_5);
+          config_destroy(&cfg);
+          return 0;
+        }
       } else {
         config_destroy(&cfg);
         fprintf(stderr, "Error, database type unknown\n");
@@ -1389,6 +1402,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_init) = dlsym(file_handle, "user_auth_scheme_module_init");
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_close) = dlsym(file_handle, "user_auth_scheme_module_close");
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_register) = dlsym(file_handle, "user_auth_scheme_module_register");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_register_get) = dlsym(file_handle, "user_auth_scheme_module_register_get");
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_validate) = dlsym(file_handle, "user_auth_scheme_module_validate");
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_trigger) = dlsym(file_handle, "user_auth_scheme_module_trigger");
                 *(void **) (&cur_user_auth_scheme_module->user_can_use_scheme) = dlsym(file_handle, "user_can_use_scheme");
@@ -1398,6 +1412,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                     cur_user_auth_scheme_module->user_auth_scheme_module_init != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_close != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_register != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_register_get != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL &&
                     cur_user_auth_scheme_module->user_can_use_scheme != NULL) {
@@ -1444,6 +1459,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_init: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_init != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_close: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_close != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_register: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_register != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_register_get: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_register_get != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_validate: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_trigger: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_can_use_scheme: %s", (cur_user_auth_scheme_module->user_can_use_scheme != NULL?"found":"not found"));

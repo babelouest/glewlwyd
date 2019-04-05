@@ -62,7 +62,6 @@
 #define GLEWLWYD_DEFAULT_ADMIN_SCOPE        "g_admin"
 #define GLEWLWYD_DEFAULT_PROFILE_SCOPE      "g_profile"
 #define GLEWLWYD_DEFAULT_HASH_ALGORITHM     digest_SHA256
-#define GLEWLWYD_DEFAULT_LIMIT_SIZE         100
 
 #define GLEWLWYD_DEFAULT_SALT_LENGTH 16
 
@@ -94,15 +93,6 @@
 #define GLEWLWYD_TABLE_SCOPE_GROUP                             "g_scope_group"
 #define GLEWLWYD_TABLE_SCOPE_GROUP_AUTH_SCHEME_MODULE_INSTANCE "g_scope_group_auth_scheme_module_instance"
 #define GLEWLWYD_TABLE_CLIENT_USER_SCOPE                       "g_client_user_scope"
-
-// Callback priority
-#define GLEWLWYD_CALLBACK_PRIORITY_ZERO           0
-#define GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION 1
-#define GLEWLWYD_CALLBACK_PRIORITY_APPLICATION    2
-#define GLEWLWYD_CALLBACK_PRIORITY_CLOSE          3
-#define GLEWLWYD_CALLBACK_PRIORITY_PLUGIN         4
-#define GLEWLWYD_CALLBACK_PRIORITY_FILE           100
-#define GLEWLWYD_CALLBACK_PRIORITY_GZIP           101
 
 // Module management
 #define GLEWLWYD_MODULE_ACTION_STOP  0
@@ -144,6 +134,7 @@ int module_instance_parameters_check(const char * module_parameters, const char 
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password);
 json_t * auth_check_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * scheme_parameters, const struct _u_request * request);
 json_t * auth_register_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * trigger_parameters, const struct _u_request * request);
+json_t * auth_register_get_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, const struct _u_request * request);
 json_t * auth_trigger_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * register_parameters, const struct _u_request * request);
 
 // Session
@@ -153,6 +144,8 @@ json_t * get_current_user_for_session(struct config_elements * config, const cha
 json_t * get_users_for_session(struct config_elements * config, const char * session_uid);
 int user_session_delete(struct config_elements * config, const char * session_uid, const char * username);
 char * get_session_id(struct config_elements * config, const struct _u_request * request);
+json_t * get_user_session_list(struct config_elements * config, const char * username, size_t offset, size_t limit, const char * sort);
+int delete_user_session_from_hash(struct config_elements * config, const char * username, const char * session_hash);
 
 // Profile
 json_t * user_set_profile(struct config_elements * config, const char * username, json_t * j_profile);
@@ -268,6 +261,7 @@ int callback_glewlwyd_close_check_session (const struct _u_request * request, st
 
 int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_auth_register (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_auth_register_get (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_auth_trigger (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_schemes_from_scopes (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_delete_session (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -275,6 +269,8 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
 int callback_glewlwyd_user_get_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_update_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_update_password (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_get_session_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);

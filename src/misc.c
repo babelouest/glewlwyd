@@ -129,7 +129,7 @@ unsigned char random_at_most(unsigned char max) {
 /**
  * Generates a random string and store it in str
  */
-char * rand_string(char * str, unsigned char str_size) {
+char * rand_string(char * str, size_t str_size) {
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   size_t n;
   
@@ -142,6 +142,22 @@ char * rand_string(char * str, unsigned char str_size) {
     return str;
   } else {
     return NULL;
+  }
+}
+
+int rand_code(char * str, size_t str_size) {
+  const char charset[] = "0123456789";
+  size_t n;
+  
+  if (str_size && str != NULL) {
+    for (n = 0; n < str_size; n++) {
+      unsigned char key = random_at_most((sizeof(charset)) - 2);
+      str[n] = charset[key];
+    }
+    str[str_size] = '\0';
+    return 1;
+  } else {
+    return 0;
   }
 }
 

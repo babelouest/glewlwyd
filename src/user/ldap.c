@@ -216,6 +216,9 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params) {
               if (json_object_get(j_element, "multiple") != NULL && !json_is_boolean(json_object_get(j_element, "multiple"))) {
                 json_array_append_new(j_error, json_string("multiple is optional and must be a boolean (default: false)"));
               }
+              if (json_object_get(j_element, "convert") != NULL && 0 != o_strcmp("base64", json_string_value(json_object_get(j_element, "convert")))) {
+                json_array_append_new(j_error, json_string("convert is optional and must have one of the following values: 'base64'"));
+              }
               if (json_object_get(j_element, "read") != NULL && !json_is_boolean(json_object_get(j_element, "read"))) {
                 json_array_append_new(j_error, json_string("read is optional and must be a boolean (default: true)"));
               }
@@ -876,7 +879,7 @@ int user_module_close(struct config_module * config, void * cls) {
   return G_OK;
 }
 
-size_t user_module_count_total(const char * pattern, void * cls) {
+size_t user_module_count_total(struct config_module * config, const char * pattern, void * cls) {
   json_t * j_params = (json_t *)cls;
   LDAP * ldap = connect_ldap_server(j_params);
   LDAPMessage * answer = NULL;
@@ -895,7 +898,6 @@ size_t user_module_count_total(const char * pattern, void * cls) {
     if ((result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(result));
     } else {
-      // Looping in results, staring at offset, until the end of the list
       counter = ldap_count_entries(ldap, answer);
     }
     ldap_msgfree(answer);
@@ -905,7 +907,7 @@ size_t user_module_count_total(const char * pattern, void * cls) {
   return counter;
 }
 
-char * user_module_get_list(const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
+char * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
   json_t * j_params = (json_t *)cls, * j_properties_user = NULL, * j_user_list, * j_user;
   LDAP * ldap = connect_ldap_server(j_params);
   LDAPMessage * entry;
@@ -1038,7 +1040,7 @@ char * user_module_get_list(const char * pattern, size_t offset, size_t limit, i
   return str_result;
 }
 
-char * user_module_get(const char * username, int * result, void * cls) {
+char * user_module_get(struct config_module * config, const char * username, int * result, void * cls) {
   json_t * j_params = (json_t *)cls, * j_properties_user = NULL, * j_user;
   LDAP * ldap = connect_ldap_server(j_params);
   LDAPMessage * entry, * answer;
@@ -1090,7 +1092,7 @@ char * user_module_get(const char * username, int * result, void * cls) {
   return str_result;
 }
 
-char * user_module_get_profile(const char * username, int * result, void * cls) {
+char * user_module_get_profile(struct config_module * config, const char * username, int * result, void * cls) {
   json_t * j_params = (json_t *)cls, * j_properties_user = NULL, * j_user;
   LDAP * ldap = connect_ldap_server(j_params);
   LDAPMessage * entry, * answer;
@@ -1115,7 +1117,6 @@ char * user_module_get_profile(const char * username, int * result, void * cls) 
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
       *result = G_ERROR;
     } else {
-      // Looping in results, staring at offset, until the end of the list
       if (ldap_count_entries(ldap, answer) > 0) {
         entry = ldap_first_entry(ldap, answer);
         j_user = get_user_from_result(j_params, j_properties_user, ldap, entry);
@@ -1142,7 +1143,7 @@ char * user_module_get_profile(const char * username, int * result, void * cls) 
   return str_result;
 }
 
-char * user_is_valid(const char * username, const char * str_user, int mode, int * result, void * cls) {
+char * user_is_valid(struct config_module * config, const char * username, const char * str_user, int mode, int * result, void * cls) {
   json_t * j_params = (json_t *)cls;
   json_t * j_user = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_result = NULL, * j_element, * j_format, * j_value;
   char * str_result = NULL, * message;
@@ -1159,7 +1160,7 @@ char * user_is_valid(const char * username, const char * str_user, int mode, int
           *result = G_ERROR_PARAM;
           json_array_append_new(j_result, json_string("username is mandatory and must be a non empty string"));
         } else {
-          o_free(user_module_get(json_string_value(json_object_get(j_user, "username")), &res, cls));
+          o_free(user_module_get(config, json_string_value(json_object_get(j_user, "username")), &res, cls));
           if (res == G_OK) {
             *result = G_ERROR_PARAM;
             json_array_append_new(j_result, json_string("username already exist"));
@@ -1242,7 +1243,7 @@ char * user_is_valid(const char * username, const char * str_user, int mode, int
   return str_result;
 }
 
-int user_module_add(const char * str_new_user, void * cls) {
+int user_module_add(struct config_module * config, const char * str_new_user, void * cls) {
   json_t * j_params = (json_t *)cls, * j_user, * j_mod_value_free_array = NULL, * j_element;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, i, result;
@@ -1295,7 +1296,7 @@ int user_module_add(const char * str_new_user, void * cls) {
   return ret;
 }
 
-int user_module_update(const char * username, const char * str_user, void * cls) {
+int user_module_update(struct config_module * config, const char * username, const char * str_user, void * cls) {
   json_t * j_params = (json_t *)cls, * j_user, * j_mod_value_free_array, * j_element;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, i, result;
@@ -1349,7 +1350,7 @@ int user_module_update(const char * username, const char * str_user, void * cls)
   return ret;
 }
 
-int user_module_update_profile(const char * username, const char * str_user, void * cls) {
+int user_module_update_profile(struct config_module * config, const char * username, const char * str_user, void * cls) {
   json_t * j_params = (json_t *)cls, * j_user, * j_mod_value_free_array, * j_element;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, i, result;
@@ -1402,7 +1403,7 @@ int user_module_update_profile(const char * username, const char * str_user, voi
   return ret;
 }
 
-int user_module_delete(const char * username, void * cls) {
+int user_module_delete(struct config_module * config, const char * username, void * cls) {
   json_t * j_params = (json_t *)cls;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, result;
@@ -1430,7 +1431,7 @@ int user_module_delete(const char * username, void * cls) {
   return ret;
 }
 
-int user_module_check_password(const char * username, const char * password, void * cls) {
+int user_module_check_password(struct config_module * config, const char * username, const char * password, void * cls) {
   json_t * j_params = (json_t *)cls;
   LDAP * ldap = connect_ldap_server(j_params);
   LDAPMessage * entry, * answer;
@@ -1485,7 +1486,7 @@ int user_module_check_password(const char * username, const char * password, voi
   return result;
 }
 
-int user_module_update_password(const char * username, const char * new_password, void * cls) {
+int user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls) {
   json_t * j_params = (json_t *)cls;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, result;

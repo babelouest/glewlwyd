@@ -152,7 +152,7 @@ int user_module_close(struct config_module * config, void * cls) {
   return G_OK;
 }
 
-size_t user_module_count_total(const char * pattern, void * cls) {
+size_t user_module_count_total(struct config_module * config, const char * pattern, void * cls) {
   json_t * j_user;
   size_t index, total;
 
@@ -169,7 +169,7 @@ size_t user_module_count_total(const char * pattern, void * cls) {
   return total;
 }
 
-char * user_module_get_list(const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
+char * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
   json_t * j_user, * j_array, * j_pattern_array;
   size_t index, counter = 0;
   char * to_return = NULL;
@@ -208,7 +208,7 @@ char * user_module_get_list(const char * pattern, size_t offset, size_t limit, i
   return to_return;
 }
 
-char * user_module_get(const char * username, int * result, void * cls) {
+char * user_module_get(struct config_module * config, const char * username, int * result, void * cls) {
   json_t * j_user;
   size_t index;
   char * str_return = NULL;
@@ -228,11 +228,11 @@ char * user_module_get(const char * username, int * result, void * cls) {
   return str_return;
 }
 
-char * user_module_get_profile(const char * username, int * result, void * cls) {
-  return user_module_get(username, result, cls);
+char * user_module_get_profile(struct config_module * config, const char * username, int * result, void * cls) {
+  return user_module_get(config, username, result, cls);
 }
 
-char * user_is_valid(const char * username, const char * str_user, int mode, int * result, void * cls) {
+char * user_is_valid(struct config_module * config, const char * username, const char * str_user, int mode, int * result, void * cls) {
   json_t * j_return = NULL, * j_user;
   char * str_return = NULL;
 
@@ -266,7 +266,7 @@ char * user_is_valid(const char * username, const char * str_user, int mode, int
   return str_return;
 }
 
-int user_module_add(const char * str_new_user, void * cls) {
+int user_module_add(struct config_module * config, const char * str_new_user, void * cls) {
   json_t * j_user = json_loads(str_new_user, JSON_DECODE_ANY, NULL);
   int ret;
   
@@ -280,7 +280,7 @@ int user_module_add(const char * str_new_user, void * cls) {
   return ret;
 }
 
-int user_module_update(const char * username, const char * str_user, void * cls) {
+int user_module_update(struct config_module * config, const char * username, const char * str_user, void * cls) {
   json_t * j_user = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_element, * j_property;
   size_t index;
   int found = 0, ret;
@@ -308,11 +308,11 @@ int user_module_update(const char * username, const char * str_user, void * cls)
   return ret;
 }
 
-int user_module_update_profile(const char * username, const char * str_user, void * cls) {
-  return user_module_update(username, str_user, cls);
+int user_module_update_profile(struct config_module * config, const char * username, const char * str_user, void * cls) {
+  return user_module_update(config, username, str_user, cls);
 }
 
-int user_module_delete(const char * username, void * cls) {
+int user_module_delete(struct config_module * config, const char * username, void * cls) {
   json_t * j_user;
   size_t index;
   int ret, found = 0;
@@ -331,10 +331,10 @@ int user_module_delete(const char * username, void * cls) {
   return ret;
 }
 
-int user_module_check_password(const char * username, const char * password, void * cls) {
+int user_module_check_password(struct config_module * config, const char * username, const char * password, void * cls) {
   char * str_user;
   int ret, result;
-  str_user = user_module_get(username, &result, cls);
+  str_user = user_module_get(config, username, &result, cls);
   
   if (result == G_OK) {
     if (0 == o_strcmp(password, "password")) {
@@ -349,6 +349,6 @@ int user_module_check_password(const char * username, const char * password, voi
   return ret;
 }
 
-int user_module_update_password(const char * username, const char * new_password, void * cls) {
+int user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls) {
   return G_ERROR_PARAM;
 }

@@ -37,7 +37,7 @@ json_t * auth_check_client_credentials(struct config_elements * config, const ch
       client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
       if (client_module != NULL) {
         if (client_module->enabled) {
-          res = client_module->module->client_module_check_password(client_id, password, client_module->cls);
+          res = client_module->module->client_module_check_password(config->config_m, client_id, password, client_module->cls);
           if (res == G_OK) {
             j_return = json_pack("{si}", "result", G_OK);
           } else if (res == G_ERROR_UNAUTHORIZED) {
@@ -72,7 +72,7 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
     client_module = get_client_module_instance(config, source);
     if (client_module != NULL) {
       result = G_ERROR;
-      str_client = client_module->module->client_module_get(client_id, &result, client_module->cls);
+      str_client = client_module->module->client_module_get(config->config_m, client_id, &result, client_module->cls);
       if (result == G_OK && str_client != NULL) {
         j_client = json_loads(str_client, JSON_DECODE_ANY, NULL);
         if (j_client != NULL) {
@@ -102,7 +102,7 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
           if (client_module != NULL) {
             if (client_module->enabled) {
               result = G_ERROR;
-              str_client = client_module->module->client_module_get(client_id, &result, client_module->cls);
+              str_client = client_module->module->client_module_get(config->config_m, client_id, &result, client_module->cls);
               if (result == G_OK && str_client != NULL) {
                 j_client = json_loads(str_client, JSON_DECODE_ANY, NULL);
                 if (j_client != NULL) {
@@ -146,7 +146,7 @@ json_t * get_client_list(struct config_elements * config, const char * pattern, 
     client_module = get_client_module_instance(config, source);
     if (client_module != NULL && client_module->enabled) {
       result = G_ERROR;
-      list_result = client_module->module->client_module_get_list(pattern, offset, limit, &result, client_module->cls);
+      list_result = client_module->module->client_module_get_list(config->config_m, pattern, offset, limit, &result, client_module->cls);
       if (result == G_OK) {
         j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
         if (j_list_parsed && json_is_array(j_list_parsed)) {
@@ -181,8 +181,8 @@ json_t * get_client_list(struct config_elements * config, const char * pattern, 
           client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
           if (client_module != NULL && client_module->enabled) {
             result = G_ERROR;
-            if ((count_total = client_module->module->client_module_count_total(pattern, client_module->cls)) > cur_offset && cur_limit) {
-              list_result = client_module->module->client_module_get_list(pattern, cur_offset, cur_limit, &result, client_module->cls);
+            if ((count_total = client_module->module->client_module_count_total(config->config_m, pattern, client_module->cls)) > cur_offset && cur_limit) {
+              list_result = client_module->module->client_module_get_list(config->config_m, pattern, cur_offset, cur_limit, &result, client_module->cls);
               if (result == G_OK) {
                 j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
                 if (j_list_parsed && json_is_array(j_list_parsed)) {
@@ -237,7 +237,7 @@ json_t * is_client_valid(struct config_elements * config, const char * client_id
     if (client_module != NULL && client_module->enabled && !client_module->readonly) {
       str_client = json_dumps(j_client, JSON_COMPACT);
       result = G_ERROR;
-      str_error = client_module->module->client_is_valid(client_id, str_client, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, client_module->cls);
+      str_error = client_module->module->client_is_valid(config->config_m, client_id, str_client, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, client_module->cls);
       if (result == G_ERROR_PARAM && str_error != NULL) {
         j_error_list = json_loads(str_error, JSON_DECODE_ANY, NULL);
         if (j_error_list != NULL) {
@@ -271,7 +271,7 @@ json_t * is_client_valid(struct config_elements * config, const char * client_id
             found = 1;
             str_client = json_dumps(j_client, JSON_COMPACT);
             result = G_ERROR;
-            str_error = client_module->module->client_is_valid(client_id, str_client, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, client_module->cls);
+            str_error = client_module->module->client_is_valid(config->config_m, client_id, str_client, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, client_module->cls);
             if (result == G_ERROR_PARAM && str_error != NULL) {
               j_error_list = json_loads(str_error, JSON_DECODE_ANY, NULL);
               if (j_error_list != NULL) {
@@ -316,7 +316,7 @@ int add_client(struct config_elements * config, json_t * j_client, const char * 
     client_module = get_client_module_instance(config, source);
     if (client_module != NULL && client_module->enabled && !client_module->readonly) {
       str_client = json_dumps(j_client, JSON_COMPACT);
-      result = client_module->module->client_module_add(str_client, client_module->cls);
+      result = client_module->module->client_module_add(config->config_m, str_client, client_module->cls);
       if (result == G_OK) {
         ret = G_OK;
       } else {
@@ -339,7 +339,7 @@ int add_client(struct config_elements * config, json_t * j_client, const char * 
           if (client_module != NULL && client_module->enabled && !client_module->readonly) {
             found = 1;
             str_client = json_dumps(j_client, JSON_COMPACT);
-            result = client_module->module->client_module_add(str_client, client_module->cls);
+            result = client_module->module->client_module_add(config->config_m, str_client, client_module->cls);
             if (result == G_OK) {
               ret = G_OK;
             } else {
@@ -372,10 +372,10 @@ int set_client(struct config_elements * config, const char * client_id, json_t *
   if (source != NULL) {
     client_module = get_client_module_instance(config, source);
     if (client_module != NULL && client_module->enabled && !client_module->readonly) {
-      o_free(client_module->module->client_module_get(client_id, &result, client_module->cls));
+      o_free(client_module->module->client_module_get(config->config_m, client_id, &result, client_module->cls));
       if (result == G_OK) {
         str_client = json_dumps(j_client, JSON_COMPACT);
-        result = client_module->module->client_module_update(client_id, str_client, client_module->cls);
+        result = client_module->module->client_module_update(config->config_m, client_id, str_client, client_module->cls);
         if (result == G_OK) {
           ret = G_OK;
         } else {
@@ -408,9 +408,9 @@ int delete_client(struct config_elements * config, const char * client_id, const
   if (source != NULL) {
     client_module = get_client_module_instance(config, source);
     if (client_module != NULL && client_module->enabled && !client_module->readonly) {
-      o_free(client_module->module->client_module_get(client_id, &result, client_module->cls));
+      o_free(client_module->module->client_module_get(config->config_m, client_id, &result, client_module->cls));
       if (result == G_OK) {
-        result = client_module->module->client_module_delete(client_id, client_module->cls);
+        result = client_module->module->client_module_delete(config->config_m, client_id, client_module->cls);
         if (result == G_OK) {
           ret = G_OK;
         } else {

@@ -666,7 +666,7 @@ int user_module_close(struct config_module * config, void * cls) {
   return ret;
 }
 
-size_t user_module_count_total(const char * pattern, void * cls) {
+size_t user_module_count_total(struct config_module * config, const char * pattern, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result = NULL;
   int res;
@@ -694,7 +694,7 @@ size_t user_module_count_total(const char * pattern, void * cls) {
   return ret;
 }
 
-char * user_module_get_list(const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
+char * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result, * j_element, * j_scope;
   int res;
@@ -748,15 +748,15 @@ char * user_module_get_list(const char * pattern, size_t offset, size_t limit, i
   return str_result;
 }
 
-char * user_module_get(const char * username, int * result, void * cls) {
+char * user_module_get(struct config_module * config, const char * username, int * result, void * cls) {
   return database_user_get(username, result, cls, 0);
 }
 
-char * user_module_get_profile(const char * username, int * result, void * cls) {
+char * user_module_get_profile(struct config_module * config, const char * username, int * result, void * cls) {
   return database_user_get(username, result, cls, 1);
 }
 
-char * user_is_valid(const char * username, const char * str_user, int mode, int * result, void * cls) {
+char * user_is_valid(struct config_module * config, const char * username, const char * str_user, int mode, int * result, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_user = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_result = NULL, * j_element, * j_format, * j_value;
   char * str_result = NULL, * message;
@@ -773,7 +773,7 @@ char * user_is_valid(const char * username, const char * str_user, int mode, int
           *result = G_ERROR_PARAM;
           json_array_append_new(j_result, json_string("username is mandatory and must be a string of at least 128 characters"));
         } else {
-          o_free(user_module_get(json_string_value(json_object_get(j_user, "username")), &res, cls));
+          o_free(user_module_get(config, json_string_value(json_object_get(j_user, "username")), &res, cls));
           if (res == G_OK) {
             *result = G_ERROR_PARAM;
             json_array_append_new(j_result, json_string("username already exist"));
@@ -858,7 +858,7 @@ char * user_is_valid(const char * username, const char * str_user, int mode, int
   return str_result;
 }
 
-int user_module_add(const char * str_new_user, void * cls) {
+int user_module_add(struct config_module * config, const char * str_new_user, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_user = json_loads(str_new_user, JSON_DECODE_ANY, NULL), * j_query, * j_gu_id;
   int res, ret;
@@ -912,7 +912,7 @@ int user_module_add(const char * str_new_user, void * cls) {
   return ret;
 }
 
-int user_module_update(const char * username, const char * str_user, void * cls) {
+int user_module_update(struct config_module * config, const char * username, const char * str_user, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_user = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_query, * j_result = NULL;
   int res, ret;
@@ -977,7 +977,7 @@ int user_module_update(const char * username, const char * str_user, void * cls)
   return ret;
 }
 
-int user_module_update_profile(const char * username, const char * str_user, void * cls) {
+int user_module_update_profile(struct config_module * config, const char * username, const char * str_user, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_user = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_query, * j_result = NULL;
   int res, ret;
@@ -1027,7 +1027,7 @@ int user_module_update_profile(const char * username, const char * str_user, voi
   return ret;
 }
 
-int user_module_delete(const char * username, void * cls) {
+int user_module_delete(struct config_module * config, const char * username, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query;
   int res, ret;
@@ -1049,7 +1049,7 @@ int user_module_delete(const char * username, void * cls) {
   return ret;
 }
 
-int user_module_check_password(const char * username, const char * password, void * cls) {
+int user_module_check_password(struct config_module * config, const char * username, const char * password, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   int ret, res;
   json_t * j_query, * j_result;
@@ -1084,7 +1084,7 @@ int user_module_check_password(const char * username, const char * password, voi
   return ret;
 }
 
-int user_module_update_password(const char * username, const char * new_password, void * cls) {
+int user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query;
   int res, ret;

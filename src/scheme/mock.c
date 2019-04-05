@@ -31,11 +31,43 @@
 #include <orcania.h>
 #include "../glewlwyd-common.h"
 
+/**
+ * 
+ * Config structure specific for the module
+ * An instance of this structure will be created in the init function
+ * and passed as void * parameter in each function
+ * So every function will have access to the module configuration
+ * 
+ */
 struct mock_config {
   json_t * j_param;
-  struct config_module * config;
 };
 
+/**
+ * 
+ * user_auth_scheme_module_load
+ * 
+ * Executed once when Glewlwyd service is loaded
+ * Used to identify the module and to show its parameters on init
+ * You can also use it to load resources that are required once for all
+ * instance modules for example
+ * 
+ * @return value: G_OK on success, another value on error
+ *                On error, the module will not be available
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter name: must return an allocated char * value containing the name
+ *                  of the module, must be unique to identify the module
+ * @parameter display_name: must return an allocated char * value containing the
+ *                          display_name (long name) of the module
+ * @parameter description: must return an allocated char * value containing the
+ *                         description of the module
+ * @parameter parameters: must return an allocated char * value containing the
+ *                        expected parameters when calling user_auth_scheme_module_init
+ *                        in JSON stringified format
+ * 
+ */
 int user_auth_scheme_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
   int ret = G_OK;
   
@@ -50,29 +82,91 @@ int user_auth_scheme_module_load(struct config_module * config, char ** name, ch
   return ret;
 }
 
+/**
+ * 
+ * user_auth_scheme_module_unload
+ * 
+ * Executed once when Glewlwyd service is stopped
+ * You can also use it to release resources that are required once for all
+ * instance modules for example
+ * 
+ * @return value: G_OK on success, another value on error
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * 
+ */
 int user_auth_scheme_module_unload(struct config_module * config) {
   return G_OK;
 }
 
+/**
+ * 
+ * user_auth_scheme_module_init
+ * 
+ * Initialize an instance of this module declared in Glewlwyd service.
+ * If required, you must dynamically allocate a pointer to the configuration
+ * for this instance and pass it to *cls
+ * 
+ * @return value: G_OK on success, another value on error
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter: parameters used to initialize an instance in JSON stringified format
+ * @parameter cls: must return an allocated void * pointer that will be sent back
+ *                 as void * in all module functions
+ * 
+ */
 int user_auth_scheme_module_init(struct config_module * config, const char * parameters, void ** cls) {
   *cls = o_malloc(sizeof(struct mock_config));
   ((struct mock_config *)*cls)->j_param = json_loads(parameters, JSON_DECODE_ANY, NULL);
-  ((struct mock_config *)*cls)->config = config;
   return G_OK;
 }
 
+/**
+ * 
+ * user_auth_scheme_module_close
+ * 
+ * Close an instance of this module declared in Glewlwyd service.
+ * You must free the memory previously allocated in
+ * the user_auth_scheme_module_init function as void * cls
+ * 
+ * @return value: G_OK on success, another value on error
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
+ * 
+ */
 int user_auth_scheme_module_close(struct config_module * config, void * cls) {
   json_decref(((struct mock_config *)cls)->j_param);
   o_free(cls);
   return G_OK;
 }
 
-int user_can_use_scheme(const char * username, void * cls) {
+/**
+ * 
+ * user_auth_scheme_can_use
+ * 
+ * Validate if the user is allowed to use this scheme prior to the
+ * authentication or registration
+ * 
+ * @return value: GLEWLWYD_IS_REGISTERED - User can use scheme and has registered
+ *                GLEWLWYD_IS_AVAILABLE - User can use scheme but hasn't registered
+ *                GLEWLWYD_IS_NOT_AVAILABLE - User can't use scheme
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter username: username to identify the user
+ * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
+ * 
+ */
+int user_auth_scheme_can_use(struct config_module * config, const char * username, void * cls) {
   char * str_user = NULL, * key_mock;
   json_t * j_user;
   int ret, result;
 
-  str_user = ((struct mock_config *)cls)->config->glewlwyd_module_callback_get_user(((struct mock_config *)cls)->config, username, &result);
+  str_user = config->glewlwyd_module_callback_get_user(config, username, &result);
   if (result == G_OK) {
     j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
     if (j_user != NULL) {
@@ -94,12 +188,32 @@ int user_can_use_scheme(const char * username, void * cls) {
   return ret;
 }
 
-int user_auth_scheme_module_register(const char * username, const char * register_data, char ** register_response, void * cls, const void * http_request) {
+/**
+ * 
+ * user_auth_scheme_module_register
+ * 
+ * Register the scheme for a user
+ * Ex: add a certificate, add new TOTP values, etc.
+ * 
+ * @return value: G_OK on success, another value on error
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter http_request: the original struct _u_request from the API, must be casted to be available
+ * @parameter username: username to identify the user
+ * @parameter register_data: additional data used to register the scheme for the user
+ *                           in JSON stringified format
+ * @parameter register_response: must return an allocated char * value containing the
+ *                               response of the registration in JSON stringified format
+ * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
+ * 
+ */
+int user_auth_scheme_module_register(struct config_module * config, const void * http_request, const char * username, const char * register_data, char ** register_response, void * cls) {
   int ret, result = G_ERROR;
   char * str_user = NULL, * str_user_set, * key_mock;
   json_t * j_user, * j_data;
   
-  str_user = ((struct mock_config *)cls)->config->glewlwyd_module_callback_get_user(((struct mock_config *)cls)->config, username, &result);
+  str_user = config->glewlwyd_module_callback_get_user(config, username, &result);
   if (result == G_OK) {
     j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
     j_data = json_loads(register_data, JSON_DECODE_ANY, NULL);
@@ -111,7 +225,7 @@ int user_auth_scheme_module_register(const char * username, const char * registe
         json_object_set(j_user, key_mock, json_null());
       }
       str_user_set = json_dumps(j_user, JSON_COMPACT);
-      ret = ((struct mock_config *)cls)->config->glewlwyd_module_callback_set_user(((struct mock_config *)cls)->config, username, str_user_set);
+      ret = config->glewlwyd_module_callback_set_user(config, username, str_user_set);
       if (ret == G_OK) {
         *register_response = msprintf("{\"register-code\":\"%s\"}", json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")));
       }
@@ -129,10 +243,76 @@ int user_auth_scheme_module_register(const char * username, const char * registe
   return ret;
 }
 
-int user_auth_scheme_module_trigger(const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls, const void * http_request) {
+/**
+ * 
+ * user_auth_scheme_module_register_get
+ * 
+ * Get the registration value(s) of the scheme for a user
+ * 
+ * @return value: Registration value for the user in JSON stringified format
+ * as a dynamically allocated char *.
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter http_request: the original struct _u_request from the API, must be casted to be available
+ * @parameter username: username to identify the user
+ * @parameter result: used to set the result of the function, must G_OK on success, another value on error
+ * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
+ * 
+ */
+char * user_auth_scheme_module_register_get(struct config_module * config, const void * http_request, const char * username, int * result, void * cls) {
+  int res;
+  json_t * j_user, * j_register;
+  char * str_result = NULL, * str_user, * key_mock;
+  
+  str_user = config->glewlwyd_module_callback_get_user(config, username, &res);
+  if (res == G_OK) {
+    j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
+    if (j_user != NULL) {
+      key_mock = msprintf("mock-%s", json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")));
+      if ((j_register = json_object_get(j_user, key_mock)) != NULL) {
+        str_result = json_dumps(j_register, JSON_COMPACT);
+        json_decref(j_register);
+        *result = G_OK;
+      } else {
+        *result = G_ERROR_UNAUTHORIZED;
+      }
+      o_free(key_mock);
+    } else {
+      *result = G_ERROR;
+    }
+    json_decref(j_user);
+  } else {
+    *result = G_ERROR_NOT_FOUND;
+  }
+  o_free(str_user);
+  return str_result;
+}
+
+/**
+ * 
+ * user_auth_scheme_module_trigger
+ * 
+ * Trigger the scheme for a user
+ * Ex: send the code to a device, generate a challenge, etc.
+ * 
+ * @return value: G_OK on success, another value on error
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter http_request: the original struct _u_request from the API, must be casted to be available
+ * @parameter username: username to identify the user
+ * @parameter scheme_trigger: data sent to trigger the scheme for the user
+ *                           in JSON stringified format
+ * @parameter register_response: must return an allocated char * value containing the
+ *                               response of the trigger in JSON stringified format
+ * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
+ * 
+ */
+int user_auth_scheme_module_trigger(struct config_module * config, const void * http_request, const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls) {
   int ret;
   
-  if (user_can_use_scheme(username, cls) == GLEWLWYD_IS_REGISTERED) {
+  if (user_auth_scheme_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
     *scheme_trigger_response = msprintf("{\"code\":\"%s\"}", json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")));
     ret = G_OK;
   } else {
@@ -141,23 +321,44 @@ int user_auth_scheme_module_trigger(const char * username, const char * scheme_t
   return ret;
 }
 
-int user_auth_scheme_module_validate(const char * username, const char * scheme_data, void * cls, const void * http_request) {
+/**
+ * 
+ * user_auth_scheme_module_validate
+ * 
+ * Validate the scheme for a user
+ * Ex: check the code sent to a device, verify the challenge, etc.
+ * 
+ * @return value: G_OK on success
+ *                G_ERROR_UNAUTHORIZED if validation fails
+ *                G_ERROR_PARAM if error in parameters
+ *                G_ERROR on another error
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter http_request: the original struct _u_request from the API, must be casted to be available
+ * @parameter username: username to identify the user
+ * @parameter scheme_data: data sent to validate the scheme for the user
+ *                           in JSON stringified format
+ * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
+ * 
+ */
+int user_auth_scheme_module_validate(struct config_module * config, const void * http_request, const char * username, const char * scheme_data, void * cls) {
   json_t * j_scheme = json_loads(scheme_data, JSON_DECODE_ANY, NULL), * j_user;
   char * str_user = NULL, * str_user_set, * key_mock;
   int ret, result = G_ERROR;
   
   if (j_scheme != NULL) {
-    if (user_can_use_scheme(username, cls) != GLEWLWYD_IS_REGISTERED) {
+    if (user_auth_scheme_can_use(config, username, cls) != GLEWLWYD_IS_REGISTERED) {
       ret = G_ERROR_UNAUTHORIZED;
     } else if (json_object_get(j_scheme, "code") != NULL && json_is_string(json_object_get(j_scheme, "code")) && 0 == o_strcmp(json_string_value(json_object_get(j_scheme, "code")), json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")))) {
-      str_user = ((struct mock_config *)cls)->config->glewlwyd_module_callback_get_user(((struct mock_config *)cls)->config, username, &result);
+      str_user = config->glewlwyd_module_callback_get_user(config, username, &result);
       if (result == G_OK) {
         j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
         if (j_user != NULL) {
           key_mock = msprintf("mock-%s", json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")));
           json_object_set_new(j_user, key_mock, json_pack("{si}", "counter", json_integer_value(json_object_get(json_object_get(j_user, key_mock), "counter")) + 1));
           str_user_set = json_dumps(j_user, JSON_COMPACT);
-          ret = ((struct mock_config *)cls)->config->glewlwyd_module_callback_set_user(((struct mock_config *)cls)->config, username, str_user_set);
+          ret = config->glewlwyd_module_callback_set_user(config, username, str_user_set);
           o_free(str_user_set);
           o_free(key_mock);
         } else {
