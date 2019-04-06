@@ -225,6 +225,7 @@ json_t * user_module_get(struct config_module * config, const char * username, v
     json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {
       if (0 == o_strcmp(username, json_string_value(json_object_get(j_user, "username")))) {
         j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
+        break;
       }
     }
     if (j_return == NULL) {
