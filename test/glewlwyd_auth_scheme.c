@@ -230,8 +230,16 @@ int main(int argc, char *argv[])
     number_failed = srunner_ntests_failed(sr);
     srunner_free(sr);
     
+    j_register = json_pack("{ss}", "username", USERNAME);
+    run_simple_test(&user_req, "POST", SERVER_URI "/auth/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+    
     j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_false());
     run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+    
+    j_register = json_pack("{ss}", "username", USERNAME2);
+    run_simple_test(&user_req, "POST", SERVER_URI "/auth/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
     json_decref(j_register);
     
     j_register = json_pack("{sssssss{so}}", "username", USERNAME2, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_false());

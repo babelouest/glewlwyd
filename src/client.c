@@ -72,8 +72,8 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
     if (client_module != NULL) {
       j_client = client_module->module->client_module_get(config->config_m, client_id, client_module->cls);
       if (check_result_value(j_client, G_OK)) {
-        json_object_set_new(j_client, "source", json_string(source));
-        j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
+        json_object_set_new(json_object_get(j_client, "client"), "source", json_string(source));
+        j_return = json_incref(j_client);
       } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
         j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       } else {
@@ -94,8 +94,8 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
             if (client_module->enabled) {
               j_client = client_module->module->client_module_get(config->config_m, client_id, client_module->cls);
               if (check_result_value(j_client, G_OK)) {
-                json_object_set_new(j_client, "source", json_string(source));
-                j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
+                json_object_set_new(json_object_get(j_client, "client"), "source", json_string(client_module->name));
+                j_return = json_incref(j_client);
               } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
                 j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
               } else {
@@ -133,10 +133,10 @@ json_t * get_client_list(struct config_elements * config, const char * pattern, 
       result = G_ERROR;
       j_list_parsed = client_module->module->client_module_get_list(config->config_m, pattern, offset, limit, client_module->cls);
       if (check_result_value(j_list_parsed, G_OK)) {
-        json_array_foreach(j_list_parsed, index, j_element) {
+        json_array_foreach(json_object_get(j_list_parsed, "list"), index, j_element) {
           json_object_set_new(j_element, "source", json_string(client_module->name));
         }
-        j_return = json_pack("{sisO}", "result", G_OK, "client", j_list_parsed);
+        j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_list_parsed, "list"));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error client_module_get_list");
         j_return = json_pack("{si}", "result", result);
@@ -162,16 +162,16 @@ json_t * get_client_list(struct config_elements * config, const char * pattern, 
             if ((count_total = client_module->module->client_module_count_total(config->config_m, pattern, client_module->cls)) > cur_offset && cur_limit) {
               j_list_parsed = client_module->module->client_module_get_list(config->config_m, pattern, cur_offset, cur_limit, client_module->cls);
               if (check_result_value(j_list_parsed, G_OK)) {
-                json_array_foreach(j_list_parsed, index_c, j_element) {
+                json_array_foreach(json_object_get(j_list_parsed, "list"), index_c, j_element) {
                   json_object_set_new(j_element, "source", json_string(client_module->name));
                 }
                 cur_offset = 0;
-                if (cur_limit > json_array_size(j_list_parsed)) {
-                  cur_limit -= json_array_size(j_list_parsed);
+                if (cur_limit > json_array_size(json_object_get(j_list_parsed, "list"))) {
+                  cur_limit -= json_array_size(json_object_get(j_list_parsed, "list"));
                 } else {
                   cur_limit = 0;
                 }
-                json_array_extend(json_object_get(j_return, "client"), j_list_parsed);
+                json_array_extend(json_object_get(j_return, "client"), json_object_get(j_list_parsed, "list"));
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error client_module_get_list for module %s", json_string_value(json_object_get(j_module, "name")));
               }

@@ -37,7 +37,7 @@ json_t * user_module_load(struct config_module * config) {
                    "result",
                    G_OK,
                    "name",
-                   "database",
+                   "http",
                    "display_name",
                    "Database backend user module",
                    "description",

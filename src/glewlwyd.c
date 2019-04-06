@@ -426,7 +426,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
         o_free(module->name);
         o_free(module->display_name);
         o_free(module->description);
-        o_free(module->parameters);
+        json_decref(module->parameters);
         o_free(module);
       }
     }
@@ -465,7 +465,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
         o_free(module->name);
         o_free(module->display_name);
         o_free(module->description);
-        o_free(module->parameters);
+        json_decref(module->parameters);
         o_free(module);
       }
     }
@@ -499,7 +499,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
         o_free(module->name);
         o_free(module->display_name);
         o_free(module->description);
-        o_free(module->parameters);
+        json_decref(module->parameters);
         o_free(module);
       }
     }
@@ -533,7 +533,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
         o_free(module->name);
         o_free(module->display_name);
         o_free(module->description);
-        o_free(module->parameters);
+        json_decref(module->parameters);
         o_free(module);
       }
     }
@@ -1228,6 +1228,7 @@ int init_user_module_list(struct config_elements * config) {
                     y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error user_module_init for module %s", file_path);
                     ret = G_ERROR_MEMORY;
                   }
+                  json_decref(j_parameters);
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error module %s has not all required functions", file_path);
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_load: %s", (cur_user_module->user_module_load != NULL?"found":"not found"));
@@ -1696,14 +1697,11 @@ int init_client_module_list(struct config_elements * config) {
                     }
                   } else {
                     dlclose(file_handle);
-                    o_free(cur_client_module->name);
-                    o_free(cur_client_module->display_name);
-                    o_free(cur_client_module->description);
-                    o_free(cur_client_module->parameters);
                     o_free(cur_client_module);
-                    y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error client_module_init for module %s", file_path);
+                    y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error client_module_load for module %s", file_path);
                     ret = G_ERROR_MEMORY;
                   }
+                  json_decref(j_parameters);
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error module %s has not all required functions", file_path);
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_load: %s", (cur_client_module->client_module_load != NULL?"found":"not found"));
@@ -1930,6 +1928,7 @@ int init_plugin_module_list(struct config_elements * config) {
                     y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error client_module_init for module %s", file_path);
                     ret = G_ERROR_MEMORY;
                   }
+                  json_decref(j_result);
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error module %s has not all required functions", file_path);
                   y_log_message(Y_LOG_LEVEL_ERROR, " - plugin_module_load: %s", (cur_plugin_module->plugin_module_load != NULL?"found":"not found"));
@@ -1962,7 +1961,7 @@ int init_plugin_module_list(struct config_elements * config) {
 }
 
 int load_plugin_module_instance_list(struct config_elements * config) {
-  json_t * j_query, * j_result, * j_instance;
+  json_t * j_query, * j_result, * j_instance, * j_parameters;
   int res, ret, i;
   size_t index;
   struct _plugin_module_instance * cur_instance;
@@ -1998,12 +1997,19 @@ int load_plugin_module_instance_list(struct config_elements * config) {
             cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
             cur_instance->module = module;
             if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
-              if (module->plugin_module_init(config->config_p, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
-                cur_instance->enabled = 1;
+              j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+              if (j_parameters != NULL) {
+                if (module->plugin_module_init(config->config_p, j_parameters, &cur_instance->cls) == G_OK) {
+                  cur_instance->enabled = 1;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                  cur_instance->enabled = 0;
+                }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error parsing parameters for module %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                 cur_instance->enabled = 0;
               }
+              json_decref(j_parameters);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error reallocating resources for client_module_instance_list");
               o_free(cur_instance->name);

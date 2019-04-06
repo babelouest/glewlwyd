@@ -107,20 +107,24 @@ json_t * auth_register_user_scheme(struct config_elements * config, const char *
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL, * j_response = NULL;
   
-  scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
-  if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
-    j_response = scheme_instance->module->user_auth_scheme_module_register(config->config_m, request, username, j_register_parameters, scheme_instance->cls);
-    if (check_result_value(j_response, G_OK)) {
-      j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));
-    } else if (!check_result_value(j_response, G_ERROR)) {
-      j_return = json_incref(j_response);
+  if (json_is_object(j_register_parameters)) {
+    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+    if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
+      j_response = scheme_instance->module->user_auth_scheme_module_register(config->config_m, request, username, j_register_parameters, scheme_instance->cls);
+      if (check_result_value(j_response, G_OK)) {
+        j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));
+      } else if (!check_result_value(j_response, G_ERROR)) {
+        j_return = json_incref(j_response);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_user_scheme - Error user_auth_scheme_module_register");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      json_decref(j_response);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_user_scheme - Error user_auth_scheme_module_register");
-      j_return = json_pack("{si}", "result", G_ERROR);
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
-    json_decref(j_response);
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
   return j_return;
 }
@@ -170,7 +174,7 @@ json_t * get_user(struct config_elements * config, const char * username, const 
     if (user_module != NULL) {
       j_user = user_module->module->user_module_get(config->config_m, username, user_module->cls);
       if (check_result_value(j_user, G_OK)) {
-        json_object_set_new(j_user, "source", json_string(source));
+        json_object_set_new(json_object_get(j_user, "user"), "source", json_string(source));
         j_return = json_pack("{sisO}", "result", G_OK, "user", json_object_get(j_user, "user"));
       } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
         j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
@@ -192,11 +196,9 @@ json_t * get_user(struct config_elements * config, const char * username, const 
             if (user_module->enabled) {
               j_user = user_module->module->user_module_get(config->config_m, username, user_module->cls);
               if (check_result_value(j_user, G_OK)) {
-                json_object_set_new(j_user, "source", json_string(source));
+                json_object_set_new(json_object_get(j_user, "user"), "source", json_string(user_module->name));
                 j_return = json_pack("{sisO}", "result", G_OK, "user", json_object_get(j_user, "user"));
-              } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
-                j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
-              } else {
+              } else if (!check_result_value(j_user, G_ERROR_NOT_FOUND)) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error, user_module_get for module %s", user_module->name);
                 j_return = json_pack("{si}", "result", G_ERROR);
               }
@@ -209,7 +211,7 @@ json_t * get_user(struct config_elements * config, const char * username, const 
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error get_user_module_list");
-      j_return = json_pack("{si}", "result", G_ERROR);
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
     json_decref(j_module_list);
   }
@@ -230,7 +232,7 @@ json_t * get_user_profile(struct config_elements * config, const char * username
     if (user_module != NULL) {
       j_profile = user_module->module->user_module_get_profile(config->config_m, username, user_module->cls);
       if (check_result_value(j_profile, G_OK)) {
-        j_return = json_pack("{sisO}", "result", G_OK, "profile", j_profile);
+        j_return = json_incref(j_profile);
       } else if (check_result_value(j_profile, G_ERROR_NOT_FOUND)) {
         j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       } else {
@@ -251,7 +253,7 @@ json_t * get_user_profile(struct config_elements * config, const char * username
             if (user_module->enabled) {
               j_profile = user_module->module->user_module_get_profile(config->config_m, username, user_module->cls);
               if (check_result_value(j_profile, G_OK)) {
-                j_return = json_pack("{sisO}", "result", G_OK, "profile", j_profile);
+                j_return = json_incref(j_profile);
               } else if (check_result_value(j_profile, G_ERROR_NOT_FOUND)) {
                 j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
               } else {
@@ -313,7 +315,7 @@ json_t * get_user_list(struct config_elements * config, const char * pattern, si
           user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
           if (user_module != NULL && user_module->enabled) {
             if ((count_total = user_module->module->user_module_count_total(config->config_m, pattern, user_module->cls)) > cur_offset && cur_limit) {
-              j_result = user_module->module->user_module_get_list(config->config_m, pattern, offset, limit, user_module->cls);
+              j_result = user_module->module->user_module_get_list(config->config_m, pattern, cur_offset, cur_limit, user_module->cls);
               if (check_result_value(j_result, G_OK)) {
                 json_array_foreach(json_object_get(j_result, "list"), index_u, j_element) {
                   json_object_set_new(j_element, "source", json_string(user_module->name));

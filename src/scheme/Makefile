@@ -31,21 +31,24 @@ all: release
 %.o: %.c ../glewlwyd.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
-libmodmock.so: mock.o
-	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o $(LIBS)
+misc.o: ../misc.c ../glewlwyd-common.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) ../misc.c
 
-libmodemail.so: email.o
-	$(CC) -shared -Wl,-soname,libmodemail.so -o libmodemail.so email.o $(LIBS)
+libmodmock.so: mock.o misc.o
+	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o misc.o $(LIBS)
 
-libmodwebauthn.so: webauthn.o
-	$(CC) -shared -Wl,-soname,libmodwebauthn.so -o libmodwebauthn.so webauthn.o $(LIBS)
+libmodemail.so: email.o misc.o
+	$(CC) -shared -Wl,-soname,libmodemail.so -o libmodemail.so email.o misc.o $(LIBS)
+
+libmodwebauthn.so: webauthn.o misc.o
+	$(CC) -shared -Wl,-soname,libmodwebauthn.so -o libmodwebauthn.so webauthn.o misc.o $(LIBS)
 
 clean:
 	rm -f *.o *.so
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: libmodmock.so libmodemail.so
+debug: libmodmock.so $(TARGET)
 
 release: ADDITIONALFLAGS=-O3
 
