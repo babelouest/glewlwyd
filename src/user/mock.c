@@ -94,7 +94,7 @@ int user_module_init(struct config_module * config, json_t * j_parameters, void 
     prefix = json_string_value(json_object_get(j_parameters, "username-prefix"));
   }
   if (json_string_length(json_object_get(j_parameters, "password"))) {
-    prefix = json_string_value(json_object_get(j_parameters, "password"));
+    password = json_string_value(json_object_get(j_parameters, "password"));
   }
   *cls = (void*)json_pack("{sss[{ss+ ss ss so s[ss]}{ss+ ss ss so s[ssss]}{ss+ ss ss so s[ss]}{ss+ ss ss so s[ssss]}]}",
                           "password",
@@ -155,7 +155,7 @@ int user_module_init(struct config_module * config, json_t * j_parameters, void 
                               "scope1",
                               "scope2",
                               "scope3");
-  y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_init - success prefix: '%s', profile_scope: '%s', admin_scope: '%s'", config->profile_scope, config->admin_scope);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_init - success prefix: '%s', profile_scope: '%s', admin_scope: '%s'", prefix, config->profile_scope, config->admin_scope);
   return G_OK;
 }
 
@@ -199,15 +199,13 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
     }
     j_array = json_array();
     if (j_array != NULL) {
-      if (json_array_size(j_pattern_array)) {
-        json_array_foreach(j_pattern_array, index, j_user) {
-          if (index >= offset && (offset + counter) < json_array_size(json_object_get((json_t *)cls, "list")) && counter < limit) {
-            json_array_append(j_array, j_user);
-            counter++;
-          }
+      json_array_foreach(j_pattern_array, index, j_user) {
+        if (index >= offset && (offset + counter) < json_array_size(j_pattern_array) && counter < limit) {
+          json_array_append(j_array, j_user);
+          counter++;
         }
-        j_return = json_pack("{sisO}", "result", G_OK, "list", j_array);
       }
+      j_return = json_pack("{sisO}", "result", G_OK, "list", j_array);
       json_decref(j_array);
     } else {
       j_return = json_pack("{si}", "result", G_ERROR);
@@ -246,13 +244,13 @@ json_t * user_is_valid(struct config_module * config, const char * username, jso
   json_t * j_return = NULL;
 
   if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && username == NULL) {
-    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "username is mandatory on update mode");
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "username is mandatory on update mode");
   } else {
     if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
       if (json_is_string(json_object_get(j_user, "username")) && json_string_length(json_object_get(j_user, "username")) <= 128) {
         j_return = json_pack("{si}", "result", G_OK);
       } else {
-        j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "username must be a string value of maximum 128 characters");
+        j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "username must be a string value of maximum 128 characters");
       }
     } else {
       j_return = json_pack("{si}", "result", G_OK);
@@ -317,7 +315,7 @@ int user_module_check_password(struct config_module * config, const char * usern
   json_t * j_user = user_module_get(config, username, cls);
   
   if (check_result_value(j_user, G_OK)) {
-    if (0 == o_strcmp(password, "password")) {
+    if (0 == o_strcmp(password, json_string_value(json_object_get((json_t *)cls, "password")))) {
       ret = G_OK;
     } else {
       ret = G_ERROR_UNAUTHORIZED;
@@ -330,5 +328,6 @@ int user_module_check_password(struct config_module * config, const char * usern
 }
 
 int user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls) {
-  return G_ERROR_PARAM;
+  json_object_set_new((json_t *)cls, "password", json_string(new_password));
+  return G_OK;
 }

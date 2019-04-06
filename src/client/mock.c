@@ -196,7 +196,7 @@ json_t * client_module_get_list(struct config_module * config, const char * patt
     j_array = json_array();
     if (j_array != NULL) {
       json_array_foreach(j_array_pattern, index, j_user) {
-        if (index >= offset && (offset + counter) < json_array_size((json_t *)cls) && counter < limit && (!o_strlen(pattern) || json_has_str_pattern_case(j_user, pattern))) {
+        if (index >= offset && (offset + counter) < json_array_size(j_array_pattern) && counter < limit) {
           json_array_append(j_array, j_user);
           counter++;
         }
@@ -237,20 +237,20 @@ json_t * client_is_valid(struct config_module * config, const char * client_id, 
   json_t * j_return = NULL;
 
   if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && client_id == NULL) {
-    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "client_id is mandatory on update mode");
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "client_id is mandatory on update mode");
   } else {
     if (json_is_object(j_client)) {
       if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
         if (json_is_string(json_object_get(j_client, "client_id")) && json_string_length(json_object_get(j_client, "client_id")) <= 128) {
           j_return = json_pack("{si}", "result", G_OK);
         } else {
-          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "client_id must be a string value of maximum 128 characters");
+          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "client_id must be a string value of maximum 128 characters");
         }
       } else {
         j_return = json_pack("{si}", "result", G_OK);
       }
     } else {
-      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "client must be a JSON object");
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "client must be a JSON object");
     }
   }
 

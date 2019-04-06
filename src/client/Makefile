@@ -31,14 +31,17 @@ all: release
 %.o: %.c ../glewlwyd-common.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
-libmodmock.so: ../glewlwyd-common.h mock.o
-	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o $(LIBS)
+misc.o: ../misc.c ../glewlwyd-common.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) ../misc.c
+
+libmodmock.so: ../glewlwyd-common.h mock.o misc.o
+	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o misc.o $(LIBS)
 
 libmoddatabase.so: ../glewlwyd-common.h database.o
-	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o $(LIBS)
+	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o misc.o $(LIBS)
 
-libmodldap.so: ../glewlwyd-common.h ldap.o
-	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o $(LIBS)
+libmodldap.so: ../glewlwyd-common.h ldap.o misc.o
+	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o misc.o $(LIBS)
 
 clean:
 	rm -f *.o *.so

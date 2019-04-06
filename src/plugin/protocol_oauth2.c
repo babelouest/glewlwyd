@@ -1938,21 +1938,26 @@ static int check_parameters (json_t * j_params) {
 }
 
 json_t * plugin_module_load(struct config_plugin * config) {
-  return json_pack("{sisssssss{s{ssso}s{sssos[sss]}s{sssos[sss]}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{sssos{ssso}s{ssso}}}}",
+  return json_pack("{si ss ss ss s{ s{ssso} s{sssos[sss]} s{sssos[sss]} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ss so s{ssso} s{ssso} }}}",
                    "result",
                    G_OK,
+                   
                    "name",
                    "oauth2-glewlwyd",
+                   
                    "display_name",
                    "Glewlwyd OAuth2 plugin",
+                   
                    "description",
                    "Plugin for legacy Glewlwyd OAuth2 workflow",
+                   
                    "parameters",
                      "url",
                        "type",
                        "string",
                        "mandatory",
                        json_true(),
+                       
                      "jwt-type",
                        "type",
                        "list",
@@ -1962,6 +1967,7 @@ json_t * plugin_module_load(struct config_plugin * config) {
                          "rsa",
                          "ecdsa",
                          "sha",
+                         
                      "jwt-key-size",
                        "type",
                        "string",
@@ -1971,58 +1977,67 @@ json_t * plugin_module_load(struct config_plugin * config) {
                          "256",
                          "384",
                          "512",
+                         
                      "key",
                        "type",
                        "string",
                        "mandatory",
                        json_true(),
+                       
                      "cert",
                        "type",
                        "string",
                        "mandatory",
                        json_true(),
+                       
                      "access-token-duration",
                        "type",
                        "number",
                        "mandatory",
                        json_true(),
+                       
                      "refresh-token-duration",
                        "type",
                        "number",
                        "mandatory",
                        json_true(),
+                       
                      "refresh-token-rolling",
                        "type",
                        "boolean",
-                       "mandatory",
-                       json_false(),
                        "default",
                        json_false(),
+                       
                      "auth-type-code-enabled",
                        "type",
                        "boolean",
                        "mandatory",
                        json_true(),
+                       
                      "auth-type-implicit-enabled",
                        "type",
                        "boolean",
                        "mandatory",
                        json_true(),
+                       
                      "auth-type-password-enabled",
                        "type",
                        "boolean",
                        "mandatory",
                        json_true(),
+                       
                      "auth-type-client-enabled",
                        "type",
                        "boolean",
                        "mandatory",
                        json_true(),
+                       
                      "auth-type-refresh-enabled",
                        "type",
                        "boolean",
                        "mandatory",
                        json_true(),
+                       
                      "scope",
                        "type",
                        "array",
