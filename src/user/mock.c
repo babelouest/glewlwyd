@@ -191,11 +191,11 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
       j_pattern_array = json_array();
       json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {
         if (json_has_str_pattern_case(j_user, pattern)) {
-          json_array_append(j_pattern_array, j_user);
+          json_array_append_new(j_pattern_array, json_deep_copy(j_user));
         }
       }
     } else {
-      j_pattern_array = json_incref(json_object_get((json_t *)cls, "list"));
+      j_pattern_array = json_deep_copy(json_object_get((json_t *)cls, "list"));
     }
     j_array = json_array();
     if (j_array != NULL) {
@@ -218,23 +218,20 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
 }
 
 json_t * user_module_get(struct config_module * config, const char * username, void * cls) {
-  json_t * j_user, * j_return = NULL;
+  json_t * j_user;
   size_t index;
   
   if (username != NULL && o_strlen(username)) {
     json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {
       if (0 == o_strcmp(username, json_string_value(json_object_get(j_user, "username")))) {
-        j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
+        return json_pack("{siso}", "result", G_OK, "user", json_deep_copy(j_user));
         break;
       }
     }
-    if (j_return == NULL) {
-      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
-    }
+      return json_pack("{si}", "result", G_ERROR_NOT_FOUND);
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR);
+    return json_pack("{si}", "result", G_ERROR);
   }
-  return j_return;
 }
 
 json_t * user_module_get_profile(struct config_module * config, const char * username, void * cls) {
