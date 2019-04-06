@@ -175,7 +175,7 @@ json_t * get_user(struct config_elements * config, const char * username, const 
       j_user = user_module->module->user_module_get(config->config_m, username, user_module->cls);
       if (check_result_value(j_user, G_OK)) {
         json_object_set_new(json_object_get(j_user, "user"), "source", json_string(source));
-        j_return = json_pack("{sisO}", "result", G_OK, "user", json_object_get(j_user, "user"));
+        j_return = json_incref(j_user);
       } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
         j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       } else {
@@ -198,6 +198,7 @@ json_t * get_user(struct config_elements * config, const char * username, const 
               if (check_result_value(j_user, G_OK)) {
                 json_object_set_new(json_object_get(j_user, "user"), "source", json_string(user_module->name));
                 j_return = json_incref(j_user);
+                found = 1;
               } else if (!check_result_value(j_user, G_ERROR_NOT_FOUND)) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error, user_module_get for module %s", user_module->name);
                 j_return = json_pack("{si}", "result", G_ERROR);
