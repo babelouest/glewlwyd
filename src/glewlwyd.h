@@ -233,9 +233,9 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
 int add_user(struct config_elements * config, json_t * j_user, const char * source);
 int set_user(struct config_elements * config, const char * username, json_t * j_user, const char * source);
 int delete_user(struct config_elements * config, const char * username, const char * source);
-char * glewlwyd_module_callback_get_user(struct config_module * config, const char * username, int * result);
-int glewlwyd_module_callback_set_user(struct config_module * config, const char * username, const char * str_user);
-int glewlwyd_module_callback_check_user_password(struct config_module * config, const char * username, const char * str_user);
+json_t * glewlwyd_module_callback_get_user(struct config_module * config, const char * username);
+int glewlwyd_module_callback_set_user(struct config_module * config, const char * username, json_t * j_user);
+int glewlwyd_module_callback_check_user_password(struct config_module * config, const char * username, const char * password);
 
 // Client CRUD functions
 json_t * get_client_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source);

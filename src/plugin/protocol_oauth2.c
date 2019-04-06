@@ -582,7 +582,7 @@ static json_t * get_scope_parameters(struct _oauth2_config * config, const char 
   
   json_array_foreach(json_object_get(config->j_params, "scope"), index, j_element) {
     if (0 == o_strcmp(scope, json_string_value(json_object_get(j_element, "name")))) {
-      j_return = json_deep_copy(j_element);
+      j_return = json_incref(j_element);
     }
   }
   return j_return;
@@ -1937,40 +1937,114 @@ static int check_parameters (json_t * j_params) {
   }
 }
 
-int plugin_module_load(struct config_plugin * config, char ** name, char ** display_name, char ** description, char ** parameters) {
-  int ret = G_OK;
-  if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
-    y_log_message(Y_LOG_LEVEL_INFO, "Load plugin Glewlwyd Oauth2");
-    *name = o_strdup("oauth2-glewlwyd");
-    *display_name = o_strdup("Glewlwyd OAuth2 plugin");
-    *description = o_strdup("Plugin for legacy Glewlwyd OAuth2 workflow");
-    *parameters = o_strdup("{\"id\":{\"type\":\"string\",\"mandatory\":true},"\
-                            "\"url\":{\"type\":\"string\",\"mandatory\":true},"\
-                            "\"jwt-type\":{\"type\":\"list\",\"values\":[\"rsa\",\"ecdsa\",\"sha\"],\"mandatory\":true},"\
-                            "\"jwt-key-size\":{\"type\":\"list\",\"values\":[\"256\",\"384\",\"512\"],\"mandatory\":true},"\
-                            "\"key\":{\"type\":\"string\",\"mandatory\":false},"\
-                            "\"cert\":{\"type\":\"string\",\"mandatory\":false},"\
-                            "\"access-token-duration\":{\"type\":\"number\",\"mandatory\":true},"\
-                            "\"refresh-token-duration\":{\"type\":\"number\",\"mandatory\":true},"\
-                            "\"refresh-token-rolling\":{\"type\":\"boolean\",\"mandatory\":false},"\
-                            "\"auth-type-code-enabled\":{\"type\":\"boolean\",\"mandatory\":true},"\
-                            "\"auth-type-implicit-enabled\":{\"type\":\"boolean\",\"mandatory\":true},"\
-                            "\"auth-type-password-enabled\":{\"type\":\"boolean\",\"mandatory\":true},"\
-                            "\"auth-type-client-enabled\":{\"type\":\"boolean\",\"mandatory\":true},"\
-                            "\"auth-type-refresh-enabled\":{\"type\":\"boolean\",\"mandatory\":true},"\
-                            "\"scope\":{\"type\":\"array\",\"mandatory\":false,\"format\":{\"name\":{\"type\":\"string\",\"mandatory\":true},"\
-                                                                                          "\"rolling-refresh\":{\"type\":\"boolean\",\"mandatory\":false}}}}");
-  } else {
-    ret = G_ERROR;
-  }
-  return ret;
+json_t * plugin_module_load(struct config_plugin * config) {
+  return json_pack("{sisssssss{s{ssso}s{sssos[sss]}s{sssos[sss]}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{sssos{ssso}s{ssso}}}}",
+                   "result",
+                   G_OK,
+                   "name",
+                   "oauth2-glewlwyd",
+                   "display_name",
+                   "Glewlwyd OAuth2 plugin",
+                   "description",
+                   "Plugin for legacy Glewlwyd OAuth2 workflow",
+                   "parameters",
+                     "url",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "jwt-type",
+                       "type",
+                       "list",
+                       "mandatory",
+                       json_true(),
+                       "values",
+                         "rsa",
+                         "ecdsa",
+                         "sha",
+                     "jwt-key-size",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                       "values",
+                         "256",
+                         "384",
+                         "512",
+                     "key",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "cert",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "access-token-duration",
+                       "type",
+                       "number",
+                       "mandatory",
+                       json_true(),
+                     "refresh-token-duration",
+                       "type",
+                       "number",
+                       "mandatory",
+                       json_true(),
+                     "refresh-token-rolling",
+                       "type",
+                       "boolean",
+                       "mandatory",
+                       json_false(),
+                       "default",
+                       json_false(),
+                     "auth-type-code-enabled",
+                       "type",
+                       "boolean",
+                       "mandatory",
+                       json_true(),
+                     "auth-type-implicit-enabled",
+                       "type",
+                       "boolean",
+                       "mandatory",
+                       json_true(),
+                     "auth-type-password-enabled",
+                       "type",
+                       "boolean",
+                       "mandatory",
+                       json_true(),
+                     "auth-type-client-enabled",
+                       "type",
+                       "boolean",
+                       "mandatory",
+                       json_true(),
+                     "auth-type-refresh-enabled",
+                       "type",
+                       "boolean",
+                       "mandatory",
+                       json_true(),
+                     "scope",
+                       "type",
+                       "array",
+                       "mandatory",
+                       json_false(),
+                       "format",
+                         "type",
+                         "string",
+                         "mandatory",
+                         json_true(),
+                       "rolling-refresh",
+                         "type",
+                         "boolean",
+                         "mandatory",
+                         json_false());
 }
 
 int plugin_module_unload(struct config_plugin * config) {
   return G_OK;
 }
 
-int plugin_module_init(struct config_plugin * config, const char * parameters, void ** cls) {
+int plugin_module_init(struct config_plugin * config, json_t * j_parameters, void ** cls) {
   int ret;
   const unsigned char * key;
   jwt_alg_t alg = 0;
@@ -1988,7 +2062,7 @@ int plugin_module_init(struct config_plugin * config, const char * parameters, v
       ret = G_ERROR;
     } else {
       ((struct _oauth2_config *)*cls)->jwt_key = NULL;
-      ((struct _oauth2_config *)*cls)->j_params = json_loads(parameters, JSON_DECODE_ANY, 0);
+      ((struct _oauth2_config *)*cls)->j_params = json_incref(j_parameters);
       ((struct _oauth2_config *)*cls)->glewlwyd_config = config;
       ((struct _oauth2_config *)*cls)->glewlwyd_resource_config = o_malloc(sizeof(struct _glewlwyd_resource_config));
       if (((struct _oauth2_config *)*cls)->glewlwyd_resource_config != NULL) {

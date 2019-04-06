@@ -735,78 +735,167 @@ static char * get_client_dn_from_client_id(json_t * j_params, LDAP * ldap, const
   return str_result;
 }
 
-int client_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
-  int ret = G_OK;
-  if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
-    *name = o_strdup("ldap");
-    *display_name = o_strdup("LDAP backend client");
-    *description = o_strdup("Module to store clients in a LDAP server");
-    *parameters = o_strdup("{"
-                           "\"uri\":{\"type\":\"string\",\"mandatory\":true},"
-                           "\"bind-dn\":{\"type\":\"string\",\"mandatory\":true},"
-                           "\"bind-password\":{\"type\":\"string\",\"mandatory\":true},"
-                           "\"search-scope\":{\"type\":\"string\",\"mandatory\":true},"
-                           "\"page-size\":{\"type\":\"number\",\"mandatory\":false},"
-                           "\"base-search\":{\"type\":\"string\",\"mandatory\":true},"
-                           "\"filter\":{\"type\":\"string\",\"mandatory\":true},"
-                           "\"username-property\":{\"type\":\"string\",\"mandatory\":true},"
-                           "\"scope-property\":{\"type\":\"string\",\"mandatory\":true},"
-                           "\"scope-match\":[{\"ldap-value\":{\"type\":\"string\",\"mandatory\":true}},"
-                                            "{\"scope-value\":{\"type\":\"string\",\"mandatory\":true}},"
-                                            "{\"match\":{\"type\":\"list\",\"mandatory\":true,\"values\":[\"equals\",\"contains\",\"startswith\",\"endswith\"]}}],"
-                           "\"name-property\":{\"type\":\"string\",\"mandatory\":false},"
-                           "\"email-property\":{\"type\":\"string\",\"mandatory\":false},"
-                           "\"rdn-property\":{\"type\":\"string\",\"mandatory\":false},"
-                           "\"password-property\":{\"type\":\"string\",\"mandatory\":false},"
-                           "\"password-algorithm\":{\"type\":\"list\",\"mandatory\":false,\"values\":[\"SSHA\",\"SHA\",\"SMD5\",\"MD5\",\"PLAIN\"]},"
-                           "\"object-class\":{\"type\":\"string\",\"mandatory\":false},"
-                           "\"data-format\":{"
-                            "\"field-name\":{"
-                              "\"multiple\":{\"type\":\"boolean\",\"default\":false},"
-                              "\"read\":{\"type\":\"boolean\",\"default\":true},"
-                              "\"write\":{\"type\":\"boolean\",\"default\":true},"
-                              "\"profile-read\":{\"type\":\"boolean\",\"default\":false},"
-                              "\"profile-write\":{\"type\":\"boolean\",\"default\":false}"
-                            "}"
-                           "}"
-                         "}");
-  } else {
-    ret = G_ERROR;
-  }
-  return ret;
+json_t * client_module_load(struct config_module * config) {
+  return json_pack("{sisssssss{s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s[{s{ssso}s{ssso}s{sssos[ssss]}}]s{ssso}s{ssso}s{ssso}s{sssos[sssss]}s{ssso}s{s{s{sssso}s{sssso}s{sssso}s{sssso}s{sssso}}}}",
+                   "result",
+                   G_OK,
+                   "name",
+                   "database",
+                   "display_name",
+                   "Database backend user module",
+                   "description",
+                   "Module to store users in the database",
+                   "parameters",
+                     "uri",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "bind-dn",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "bind-password",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "search-scope",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "page-size",
+                       "type",
+                       "number",
+                       "mandatory",
+                       json_false(),
+                     "base-search",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "filter",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "client_id-property",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "scope-property",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "scope-match",
+                       "ldap-value",
+                         "type",
+                         "string",
+                         "mandatory",
+                         json_true(),
+                       "scope-value",
+                         "type",
+                         "string",
+                         "mandatory",
+                         json_true(),
+                       "match",
+                         "type",
+                         "list",
+                         "mandatory",
+                         json_true(),
+                         "values",
+                           "equals",
+                           "contains",
+                           "startswith",
+                           "endswith",
+                     "name-property",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "rdn-property",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "password-property",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "password-algorithm",
+                       "type",
+                       "list",
+                       "mandatory",
+                       json_false(),
+                       "values",
+                         "SSHA",
+                         "SHA",
+                         "SMS5",
+                         "MD5",
+                         "PLAIN",
+                     "object-class",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "data-format",
+                       "field-name",
+                         "multiple",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_false(),
+                         "read",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_true(),
+                         "write",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_true(),
+                         "profile-read",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_false(),
+                         "profile-write",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_false());
 }
 
 int client_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int client_module_init(struct config_module * config, const char * parameters, void ** cls) {
-  json_t * j_params = json_loads(parameters, JSON_DECODE_ANY, NULL), * j_properties;
+int client_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
+  json_t * j_properties;
   int ret;
   char * error_message;
   
-  if (j_params != NULL) {
-    j_properties = is_client_ldap_parameters_valid(j_params);
-    if (check_result_value(j_properties, G_OK)) {
-      *cls = j_params;
-      ret = G_OK;
-    } else if (check_result_value(j_properties, G_ERROR_PARAM)) {
-      error_message = json_dumps(json_object_get(j_properties, "error"), JSON_COMPACT);
-      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error parsing parameters");
-      y_log_message(Y_LOG_LEVEL_ERROR, error_message);
-      o_free(error_message);
-      json_decref(j_params);
-      ret = G_ERROR_PARAM;
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error is_client_database_parameters_valid");
-      json_decref(j_params);
-      ret = G_ERROR;
-    }
-    json_decref(j_properties);
-  } else {
+  j_properties = is_client_ldap_parameters_valid(j_parameters);
+  if (check_result_value(j_properties, G_OK)) {
+    *cls = json_incref(j_parameters);
+    ret = G_OK;
+  } else if (check_result_value(j_properties, G_ERROR_PARAM)) {
+    error_message = json_dumps(json_object_get(j_properties, "error"), JSON_COMPACT);
     y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error parsing parameters");
+    y_log_message(Y_LOG_LEVEL_ERROR, error_message);
+    o_free(error_message);
     ret = G_ERROR_PARAM;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error is_client_database_parameters_valid");
+    ret = G_ERROR;
   }
+  json_decref(j_properties);
   return ret;
 }
 
@@ -843,12 +932,11 @@ size_t client_module_count_total(struct config_module * config, const char * pat
   return counter;
 }
 
-char * client_module_get_list(struct config_module * config, const char * pattern, size_t limit, size_t offset, int * result, void * cls) {
-  json_t * j_params = (json_t *)cls, * j_properties_client = NULL, * j_client_list, * j_client;
+json_t * client_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls) {
+  json_t * j_params = (json_t *)cls, * j_properties_client = NULL, * j_client_list, * j_client, * j_return;
   LDAP * ldap = connect_ldap_server(j_params);
   LDAPMessage * entry;
   int i = 0;
-  char * str_result = NULL;
   
   int  ldap_result;
   int  scope = LDAP_SCOPE_ONELEVEL;
@@ -872,116 +960,112 @@ char * client_module_get_list(struct config_module * config, const char * patter
     // Connection successful, doing ldap search
     filter = get_ldap_filter_pattern(j_params, pattern);
     attrs = get_ldap_read_attributes(j_params, 0, (j_properties_client = json_object()));
-    j_client_list = json_array();
-    do {
-      *result = G_OK;
-      ldap_result = ldap_create_page_control(ldap, json_integer_value(json_object_get(j_params, "page-size")), cookie, 0, &page_control);
-      if (ldap_result != LDAP_SUCCESS) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error ldap_create_page_control, message: %s", ldap_err2string(ldap_result));
-        *result = G_ERROR;
-        break;
-      }
-      
-      search_controls[0] = page_control;
-      ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, search_controls, NULL, NULL, 0, &l_result);
-      if ((ldap_result != LDAP_SUCCESS) & (ldap_result != LDAP_PARTIAL_RESULTS)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error ldap search, base search: %s, filter: %s, error message: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
-        *result = G_ERROR;
-        break;
-      }
-      
-      ldap_result = ldap_parse_result(ldap, l_result, &l_errcode, NULL, NULL, NULL, &returned_controls, 0);
-      if (ldap_result != LDAP_SUCCESS) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error ldap_parse_result, message: %s", ldap_err2string(ldap_result));
-        *result = G_ERROR;
-        break;
-      }
-      
-      if (cookie != NULL) {
-        ber_bvfree(cookie);
-        cookie = NULL;
-      }
-      
-      ldap_result = ldap_parse_pageresponse_control(ldap, *returned_controls, &total_count, &new_cookie);
-      if (ldap_result != LDAP_SUCCESS) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error ldap_parse_pageresponse_control, message: %s", ldap_err2string(ldap_result));
-        *result = G_ERROR;
-        break;
-      }
-      
-      cookie = ber_memalloc( sizeof( struct berval ) );
-      if (cookie != NULL) {
-        *cookie = new_cookie;
-        if (cookie->bv_val != NULL && (strlen(cookie->bv_val) > 0)) {
-          more_page = 1;
-        } else {
-          more_page = 0;
-        }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error ber_malloc returned NULL");
-        *result = G_ERROR;
-        break;
-      }
-      
-      if (returned_controls != NULL)
-      {
-        ldap_controls_free(returned_controls);
-        returned_controls = NULL;
-      }
-      search_controls[0] = NULL;
-      ldap_control_free(page_control);
-      page_control = NULL;
-      
-      l_entries = ldap_count_entries(ldap, l_result);
-      if (l_entry_count <= offset && offset < (l_entry_count + l_entries)) {
-        entry = ldap_first_entry(ldap, l_result);
-        l_count = offset - l_entry_count;
-        for (;entry !=NULL && l_count > 0; entry = ldap_next_entry(ldap, entry)) {
-          l_count--;
-        }
-        
-        while (entry != NULL && i<(offset+limit)) {
-          j_client = get_client_from_result(j_params, j_properties_client, ldap, entry);
-          if (j_client != NULL) {
-            json_array_append_new(j_client_list, j_client);
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error get_client_from_result");
-          }
-          entry = ldap_next_entry(ldap, entry);
-          i++;
-        }
-      }
-      if (l_entries > 0) {
-        l_entry_count = l_entry_count + l_entries;
-        if (l_entry_count >= (offset + limit)) {
+    if ((j_client_list = json_array()) != NULL) {
+      do {
+        ldap_result = ldap_create_page_control(ldap, json_integer_value(json_object_get(j_params, "page-size")), cookie, 0, &page_control);
+        if (ldap_result != LDAP_SUCCESS) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error ldap_create_page_control, message: %s", ldap_err2string(ldap_result));
           break;
         }
-      }
+        
+        search_controls[0] = page_control;
+        ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, search_controls, NULL, NULL, 0, &l_result);
+        if ((ldap_result != LDAP_SUCCESS) & (ldap_result != LDAP_PARTIAL_RESULTS)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error ldap search, base search: %s, filter: %s, error message: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
+          break;
+        }
+        
+        ldap_result = ldap_parse_result(ldap, l_result, &l_errcode, NULL, NULL, NULL, &returned_controls, 0);
+        if (ldap_result != LDAP_SUCCESS) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error ldap_parse_result, message: %s", ldap_err2string(ldap_result));
+          break;
+        }
+        
+        if (cookie != NULL) {
+          ber_bvfree(cookie);
+          cookie = NULL;
+        }
+        
+        ldap_result = ldap_parse_pageresponse_control(ldap, *returned_controls, &total_count, &new_cookie);
+        if (ldap_result != LDAP_SUCCESS) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error ldap_parse_pageresponse_control, message: %s", ldap_err2string(ldap_result));
+          break;
+        }
+        
+        cookie = ber_memalloc( sizeof( struct berval ) );
+        if (cookie != NULL) {
+          *cookie = new_cookie;
+          if (cookie->bv_val != NULL && (strlen(cookie->bv_val) > 0)) {
+            more_page = 1;
+          } else {
+            more_page = 0;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error ber_malloc returned NULL");
+          break;
+        }
+        
+        if (returned_controls != NULL) {
+          ldap_controls_free(returned_controls);
+          returned_controls = NULL;
+        }
+        search_controls[0] = NULL;
+        ldap_control_free(page_control);
+        page_control = NULL;
+        
+        l_entries = ldap_count_entries(ldap, l_result);
+        if (l_entry_count <= offset && offset < (l_entry_count + l_entries)) {
+          entry = ldap_first_entry(ldap, l_result);
+          l_count = offset - l_entry_count;
+          for (;entry !=NULL && l_count > 0; entry = ldap_next_entry(ldap, entry)) {
+            l_count--;
+          }
+          
+          while (entry != NULL && i<(offset+limit)) {
+            j_client = get_client_from_result(j_params, j_properties_client, ldap, entry);
+            if (j_client != NULL) {
+              json_array_append_new(j_client_list, j_client);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error get_client_from_result");
+            }
+            entry = ldap_next_entry(ldap, entry);
+            i++;
+          }
+        }
+        if (l_entries > 0) {
+          l_entry_count = l_entry_count + l_entries;
+          if (l_entry_count >= (offset + limit)) {
+            break;
+          }
+        }
+        ldap_msgfree(l_result);
+        l_result = NULL;
+      } while (more_page);
       ldap_msgfree(l_result);
       l_result = NULL;
-    } while (more_page);
-    ldap_msgfree(l_result);
-    l_result = NULL;
-    o_free(filter);
+      o_free(filter);
 
-    ldap_unbind_ext(ldap, NULL, NULL);
-    str_result = json_dumps(j_client_list, JSON_COMPACT);
-    json_decref(j_client_list);
+      ldap_unbind_ext(ldap, NULL, NULL);
+      j_return = json_pack("{sisO}", "result", G_OK, "list", j_client_list);
+      json_decref(j_client_list);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error allocating resources for j_client_list");
+      j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+    }
     json_decref(j_properties_client);
     o_free(attrs);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error connect_ldap_server");
-    *result = G_ERROR;
+    j_return = json_pack("{si}", "result", G_ERROR);
   }
-  return str_result;
+  return j_return;
 }
 
-char * client_module_get(struct config_module * config, const char * client_id, int * result, void * cls) {
-  json_t * j_params = (json_t *)cls, * j_properties_client = NULL, * j_client;
+json_t * client_module_get(struct config_module * config, const char * client_id, void * cls) {
+  json_t * j_params = (json_t *)cls, * j_properties_client = NULL, * j_client, * j_return;
   LDAP * ldap = connect_ldap_server(j_params);
   LDAPMessage * entry, * answer;
   int ldap_result;
-  char * str_result = NULL;
   
   int  scope = LDAP_SCOPE_ONELEVEL;
   char * filter = NULL;
@@ -999,20 +1083,21 @@ char * client_module_get(struct config_module * config, const char * client_id, 
     attrs = get_ldap_read_attributes(j_params, 0, (j_properties_client = json_object()));
     if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
-      *result = G_ERROR;
+      j_return = json_pack("{si}", "result", G_ERROR);
     } else {
       // Looping in results, staring at offset, until the end of the list
       if (ldap_count_entries(ldap, answer) > 0) {
         entry = ldap_first_entry(ldap, answer);
         j_client = get_client_from_result(j_params, j_properties_client, ldap, entry);
         if (j_client != NULL) {
-          str_result = json_dumps(j_client, JSON_COMPACT);
+          j_return = json_pack("{sisO}", "result", G_OK, "client", j_client);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error get_client_from_result");
+          j_return = json_pack("{si}", "result", G_ERROR);
         }
         json_decref(j_client);
       } else {
-        *result = G_ERROR_NOT_FOUND;
+        j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       }
     }
     
@@ -1023,113 +1108,99 @@ char * client_module_get(struct config_module * config, const char * client_id, 
     ldap_unbind_ext(ldap, NULL, NULL);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error connect_ldap_server");
-    *result = G_ERROR;
+    j_return = json_pack("{si}", "result", G_ERROR);
   }
-  return str_result;
+  return j_return;
 }
 
-char * client_is_valid(struct config_module * config, const char * client_id, const char * str_client, int mode, int * result, void * cls) {
-  json_t * j_params = (json_t *)cls;
-  json_t * j_client = json_loads(str_client, JSON_DECODE_ANY, NULL), * j_result = NULL, * j_element, * j_format, * j_value;
-  char * str_result = NULL, * message;
-  int res;
+json_t * client_is_valid(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls) {
+  json_t * j_result = json_array(), * j_element, * j_format, * j_value, * j_return, * j_cur_client;
+  char * message;
   size_t index;
   const char * property;
   
-  if (j_client != NULL && json_is_object(j_client)) {
-    *result = G_OK;
-    j_result = json_array();
-    if (j_result != NULL) {
+  if (j_result != NULL) {
+    if (json_is_object(j_client)) {
       if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
-        if (!json_is_string(json_object_get(j_client, "client_id")) || !json_string_length(json_object_get(j_client, "client_id"))) {
-          *result = G_ERROR_PARAM;
-          json_array_append_new(j_result, json_string("client_id is mandatory and must be a non empty string"));
+        if (!json_is_string(json_object_get(j_client, "client_id")) || json_string_length(json_object_get(j_client, "client_id")) > 128) {
+          json_array_append_new(j_result, json_string("client_id is mandatory and must be a string of at least 128 characters"));
         } else {
-          o_free(client_module_get(config, json_string_value(json_object_get(j_client, "client_id")), &res, cls));
-          if (res == G_OK) {
-            *result = G_ERROR_PARAM;
+          j_cur_client = client_module_get(config, json_string_value(json_object_get(j_client, "client_id")), cls);
+          if (check_result_value(j_cur_client, G_OK)) {
             json_array_append_new(j_result, json_string("client_id already exist"));
-          } else if (res != G_ERROR_NOT_FOUND) {
+          } else if (!check_result_value(j_cur_client, G_ERROR_NOT_FOUND)) {
             y_log_message(Y_LOG_LEVEL_ERROR, "client_is_valid database - Error client_module_get");
           }
+          json_decref(j_cur_client);
         }
       } else if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && client_id == NULL) {
-        *result = G_ERROR_PARAM;
         json_array_append_new(j_result, json_string("client_id is mandatory on update mode"));
       }
-      if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) {
-        if (!json_is_array(json_object_get(j_client, "scope"))) {
-          *result = G_ERROR_PARAM;
-          json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
-        } else {
-          json_array_foreach(json_object_get(j_client, "scope"), index, j_element) {
-            if (!json_is_string(j_element) || !json_string_length(j_element)) {
-              *result = G_ERROR_PARAM;
-              json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
-            }
+      if (!json_is_array(json_object_get(j_client, "scope"))) {
+        json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
+      } else {
+        json_array_foreach(json_object_get(j_client, "scope"), index, j_element) {
+          if (!json_is_string(j_element) || !json_string_length(j_element)) {
+            json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
           }
         }
       }
-      if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE && json_object_get(j_client, "password") != NULL && !json_is_string(json_object_get(j_client, "password"))) {
-        *result = G_ERROR_PARAM;
+      if (json_object_get(j_client, "password") != NULL && !json_is_string(json_object_get(j_client, "password"))) {
         json_array_append_new(j_result, json_string("password must be a string"));
       }
-      if (json_object_get(j_client, "name") != NULL && (!json_is_string(json_object_get(j_client, "name")) || !json_string_length(json_object_get(j_client, "name")))) {
-        *result = G_ERROR_PARAM;
-        json_array_append_new(j_result, json_string("name must be a non empty string"));
-      }
-      if (json_object_get(j_client, "email") != NULL && (!json_is_string(json_object_get(j_client, "email")) || !json_string_length(json_object_get(j_client, "email")))) {
-        *result = G_ERROR_PARAM;
-        json_array_append_new(j_result, json_string("email must be a non empty string"));
+      if (json_object_get(j_client, "name") != NULL && (!json_is_string(json_object_get(j_client, "name")) || json_string_length(json_object_get(j_client, "name")) > 256)) {
+        json_array_append_new(j_result, json_string("name must be a string of at least 256 characters"));
       }
       if (json_object_get(j_client, "enabled") != NULL && !json_is_boolean(json_object_get(j_client, "enabled"))) {
-        *result = G_ERROR_PARAM;
         json_array_append_new(j_result, json_string("enabled must be a boolean"));
       }
+      if (json_object_get(j_client, "confidential") != NULL && !json_is_boolean(json_object_get(j_client, "confidential"))) {
+        json_array_append_new(j_result, json_string("confidential must be a boolean"));
+      }
       json_object_foreach(j_client, property, j_element) {
-        if (0 != o_strcmp(property, "client_id") && 0 != o_strcmp(property, "name") && 0 != o_strcmp(property, "email") && 0 != o_strcmp(property, "enabled") && 0 != o_strcmp(property, "password") && 0 != o_strcmp(property, "source")) {
-          j_format = json_object_get(json_object_get(j_params, "data-format"), property);
+        if (0 != o_strcmp(property, "username") && 0 != o_strcmp(property, "name") && 0 != o_strcmp(property, "email") && 0 != o_strcmp(property, "enabled") && 0 != o_strcmp(property, "password")) {
+          j_format = json_object_get(json_object_get((json_t *)cls, "data-format"), property);
           if (json_object_get(j_format, "multiple") == json_true()) {
             if (!json_is_array(j_element)) {
-              *result = G_ERROR_PARAM;
               message = msprintf("%s must be an array", property);
               json_array_append_new(j_result, json_string(message));
               o_free(message);
             } else {
               json_array_foreach(j_element, index, j_value) {
-                if (!json_is_string(j_value) || !json_string_length(j_value)) {
-                  *result = G_ERROR_PARAM;
-                  message = msprintf("%s must contain a non empty string value", property);
+                if (!json_is_string(j_value) || json_string_length(j_value) > 16*1024*1024) {
+                  message = msprintf("%s must contain a string value of at least 16M characters", property);
                   json_array_append_new(j_result, json_string(message));
                   o_free(message);
                 }
               }
             }
           } else {
-            if (!json_is_string(j_element) || !json_string_length(j_element)) {
-              *result = G_ERROR_PARAM;
-              message = msprintf("%s must contain a non empty string value", property);
+            if (!json_is_string(j_element) || json_string_length(j_element) > 16*1024*1024) {
+              message = msprintf("%s must contain a string value of at least 16M characters", property);
               json_array_append_new(j_result, json_string(message));
               o_free(message);
             }
           }
         }
       }
+    } else {
+      json_array_append_new(j_result, json_string("client must be a valid JSON object"));
     }
+    if (json_array_size(j_result)) {
+      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_result);
+    } else {
+      j_return = json_pack("{si}", "result", G_OK);
+    }
+    json_decref(j_result);
   } else {
-    *result = G_ERROR_PARAM;
-    j_result = json_string("client must be a valid JSON object");
+    y_log_message(Y_LOG_LEVEL_ERROR, "client_is_valid database - Error allocating resources for j_result");
+    j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
   }
-  json_decref(j_client);
-  if (*result != G_OK) {
-    str_result = json_dumps(j_result, JSON_COMPACT);
-  }
-  json_decref(j_result);
-  return str_result;
+  return j_return;
 }
 
-int client_module_add(struct config_module * config, const char * str_new_client, void * cls) {
-  json_t * j_params = (json_t *)cls, * j_client, * j_mod_value_free_array = NULL, * j_element;
+int client_module_add(struct config_module * config, json_t * j_client, void * cls) {
+  json_t * j_params = (json_t *)cls, * j_mod_value_free_array = NULL, * j_element;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, i, result;
   LDAPMod ** mods = NULL;
@@ -1137,42 +1208,35 @@ int client_module_add(struct config_module * config, const char * str_new_client
   size_t index;
   
   if (ldap != NULL) {
-    j_client = json_loads(str_new_client, JSON_DECODE_ANY, NULL);
-    if (j_client != NULL) {
-      mods = get_ldap_write_mod(j_params, j_client, 0, 1, (j_mod_value_free_array = json_array()));
-      if (mods != NULL) {
-        new_dn = msprintf("%s=%s,%s", json_string_value(json_object_get(j_params, "rdn-property")), json_string_value(json_object_get(j_client, "client_id")), json_string_value(json_object_get(j_params, "base-search")));
-        if (new_dn != NULL) {
-          if ((result = ldap_add_ext_s(ldap, new_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add ldap - Error adding new client %s in the ldap backend: %s", new_dn, ldap_err2string(result));
-            ret = G_ERROR;
-          } else {
-            ret = G_OK;
-          }
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add ldap - Error allocating resources for new_dn");
+    mods = get_ldap_write_mod(j_params, j_client, 0, 1, (j_mod_value_free_array = json_array()));
+    if (mods != NULL) {
+      new_dn = msprintf("%s=%s,%s", json_string_value(json_object_get(j_params, "rdn-property")), json_string_value(json_object_get(j_client, "client_id")), json_string_value(json_object_get(j_params, "base-search")));
+      if (new_dn != NULL) {
+        if ((result = ldap_add_ext_s(ldap, new_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add ldap - Error adding new client %s in the ldap backend: %s", new_dn, ldap_err2string(result));
           ret = G_ERROR;
+        } else {
+          ret = G_OK;
         }
-        json_array_foreach(j_mod_value_free_array, index, j_element) {
-          for (i=0; mods[index]->mod_values[i] != NULL; i++) {
-            o_free(mods[index]->mod_values[i]);
-          }
-        }
-        json_decref(j_mod_value_free_array);
-        for (i=0; mods[i] != NULL; i++) {
-          o_free(mods[i]->mod_values);
-          o_free(mods[i]);
-        }
-        o_free(mods);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add ldap - Error get_ldap_write_mod");
+        y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add ldap - Error allocating resources for new_dn");
         ret = G_ERROR;
       }
+      json_array_foreach(j_mod_value_free_array, index, j_element) {
+        for (i=0; mods[index]->mod_values[i] != NULL; i++) {
+          o_free(mods[index]->mod_values[i]);
+        }
+      }
+      json_decref(j_mod_value_free_array);
+      for (i=0; mods[i] != NULL; i++) {
+        o_free(mods[i]->mod_values);
+        o_free(mods[i]);
+      }
+      o_free(mods);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add ldap - Error parsing client into JSON");
+      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add ldap - Error get_ldap_write_mod");
       ret = G_ERROR;
     }
-    json_decref(j_client);
     ldap_unbind_ext(ldap, NULL, NULL);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add ldap - Error connect_ldap_server");
@@ -1181,8 +1245,8 @@ int client_module_add(struct config_module * config, const char * str_new_client
   return ret;
 }
 
-int client_module_update(struct config_module * config, const char * client_id, const char * str_client, void * cls) {
-  json_t * j_params = (json_t *)cls, * j_client, * j_mod_value_free_array, * j_element;
+int client_module_update(struct config_module * config, const char * client_id, json_t * j_client, void * cls) {
+  json_t * j_params = (json_t *)cls, * j_mod_value_free_array, * j_element;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, i, result;
   LDAPMod ** mods = NULL;
@@ -1190,43 +1254,36 @@ int client_module_update(struct config_module * config, const char * client_id, 
   size_t index;
   
   if (ldap != NULL) {
-    j_client = json_loads(str_client, JSON_DECODE_ANY, NULL);
-    if (j_client != NULL) {
-      mods = get_ldap_write_mod(j_params, j_client, 0, 0, (j_mod_value_free_array = json_array()));
-      if (mods != NULL) {
-        cur_dn = get_client_dn_from_client_id(j_params, ldap, client_id);
-        if (cur_dn != NULL) {
-          if ((result = ldap_modify_ext_s(ldap, cur_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Error setting new client %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
-            ret = G_ERROR;
-          } else {
-            ret = G_OK;
-          }
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "client_module_update ldap - Error get_client_dn_from_client_id");
+    mods = get_ldap_write_mod(j_params, j_client, 0, 0, (j_mod_value_free_array = json_array()));
+    if (mods != NULL) {
+      cur_dn = get_client_dn_from_client_id(j_params, ldap, client_id);
+      if (cur_dn != NULL) {
+        if ((result = ldap_modify_ext_s(ldap, cur_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error setting new client %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
           ret = G_ERROR;
+        } else {
+          ret = G_OK;
         }
-        o_free(cur_dn);
-        json_array_foreach(j_mod_value_free_array, index, j_element) {
-          for (i=0; mods[index]->mod_values[i] != NULL; i++) {
-            o_free(mods[index]->mod_values[i]);
-          }
-        }
-        json_decref(j_mod_value_free_array);
-        for (i=0; mods[i] != NULL; i++) {
-          o_free(mods[i]->mod_values);
-          o_free(mods[i]);
-        }
-        o_free(mods);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "client_module_update ldap - Error get_ldap_write_mod");
+        y_log_message(Y_LOG_LEVEL_ERROR, "client_module_update ldap - Error get_client_dn_from_client_id");
         ret = G_ERROR;
       }
+      o_free(cur_dn);
+      json_array_foreach(j_mod_value_free_array, index, j_element) {
+        for (i=0; mods[index]->mod_values[i] != NULL; i++) {
+          o_free(mods[index]->mod_values[i]);
+        }
+      }
+      json_decref(j_mod_value_free_array);
+      for (i=0; mods[i] != NULL; i++) {
+        o_free(mods[i]->mod_values);
+        o_free(mods[i]);
+      }
+      o_free(mods);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_update ldap - Error parsing client into JSON");
+      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_update ldap - Error get_ldap_write_mod");
       ret = G_ERROR;
     }
-    json_decref(j_client);
     ldap_unbind_ext(ldap, NULL, NULL);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "client_module_update ldap - Error connect_ldap_server");

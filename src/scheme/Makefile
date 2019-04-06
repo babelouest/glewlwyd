@@ -24,7 +24,7 @@ MODULES_TARGET=$(DEST)/lib/glewlwyd/scheme
 CC=gcc
 CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
 LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius
-TARGET=
+TARGET=libmodemail.so
 
 all: release
 
@@ -34,10 +34,10 @@ all: release
 libmodmock.so: mock.o
 	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o $(LIBS)
 
-libmodemail.so: mock.o
+libmodemail.so: email.o
 	$(CC) -shared -Wl,-soname,libmodemail.so -o libmodemail.so email.o $(LIBS)
 
-libmodwebauthn.so: mock.o
+libmodwebauthn.so: webauthn.o
 	$(CC) -shared -Wl,-soname,libmodwebauthn.so -o libmodwebauthn.so webauthn.o $(LIBS)
 
 clean:
@@ -45,7 +45,7 @@ clean:
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: libmodmock.so
+debug: libmodmock.so libmodemail.so
 
 release: ADDITIONALFLAGS=-O3
 

@@ -1134,6 +1134,7 @@ int init_user_module_list(struct config_elements * config) {
   struct dirent * in_file;
   char * file_path;
   void * file_handle;
+  json_t * j_parameters;
   
   config->user_module_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_module_list != NULL) {
@@ -1190,7 +1191,12 @@ int init_user_module_list(struct config_elements * config) {
                     cur_user_module->user_module_delete != NULL &&
                     cur_user_module->user_module_check_password != NULL &&
                     cur_user_module->user_module_update_password != NULL) {
-                  if (cur_user_module->user_module_load(config->config_m, &cur_user_module->name, &cur_user_module->display_name, &cur_user_module->description, &cur_user_module->parameters) == G_OK) {
+                  j_parameters = cur_user_module->user_module_load(config->config_m);
+                  if (check_result_value(j_parameters, G_OK)) {
+                    cur_user_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
+                    cur_user_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
+                    cur_user_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
+                    cur_user_module->parameters = json_incref(json_object_get(j_parameters, "parameters"));
                     if (o_strlen(cur_user_module->name) && get_user_module_lib(config, cur_user_module->name) == NULL) {
                       if (pointer_list_append(config->user_module_list, (void*)cur_user_module)) {
                         y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s - %s", file_path, cur_user_module->name);
@@ -1218,10 +1224,6 @@ int init_user_module_list(struct config_elements * config) {
                     }
                   } else {
                     dlclose(file_handle);
-                    o_free(cur_user_module->name);
-                    o_free(cur_user_module->display_name);
-                    o_free(cur_user_module->description);
-                    o_free(cur_user_module->parameters);
                     o_free(cur_user_module);
                     y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error user_module_init for module %s", file_path);
                     ret = G_ERROR_MEMORY;
@@ -1269,7 +1271,7 @@ int init_user_module_list(struct config_elements * config) {
 }
 
 int load_user_module_instance_list(struct config_elements * config) {
-  json_t * j_query, * j_result, * j_instance;
+  json_t * j_query, * j_result, * j_instance, * j_parameters;
   int res, ret, i;
   size_t index;
   struct _user_module_instance * cur_instance;
@@ -1310,12 +1312,19 @@ int load_user_module_instance_list(struct config_elements * config) {
             cur_instance->module = module;
             cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
             if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
-              if (module->user_module_init(config->config_m, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
-                cur_instance->enabled = 1;
+              j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+              if (j_parameters != NULL) {
+                if (module->user_module_init(config->config_m, j_parameters, &cur_instance->cls) == G_OK) {
+                  cur_instance->enabled = 1;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                  cur_instance->enabled = 0;
+                }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                 cur_instance->enabled = 0;
               }
+              json_decref(j_parameters);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error reallocating resources for user_module_instance_list");
               o_free(cur_instance->name);
@@ -1373,6 +1382,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
   struct dirent * in_file;
   char * file_path;
   void * file_handle;
+  json_t * j_module;
   
   config->user_auth_scheme_module_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_auth_scheme_module_list != NULL) {
@@ -1405,7 +1415,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_register_get) = dlsym(file_handle, "user_auth_scheme_module_register_get");
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_validate) = dlsym(file_handle, "user_auth_scheme_module_validate");
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_trigger) = dlsym(file_handle, "user_auth_scheme_module_trigger");
-                *(void **) (&cur_user_auth_scheme_module->user_can_use_scheme) = dlsym(file_handle, "user_can_use_scheme");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_can_use) = dlsym(file_handle, "user_auth_scheme_module_can_use");
                 
                 if (cur_user_auth_scheme_module->user_auth_scheme_module_load != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_unload != NULL &&
@@ -1415,8 +1425,13 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                     cur_user_auth_scheme_module->user_auth_scheme_module_register_get != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL &&
-                    cur_user_auth_scheme_module->user_can_use_scheme != NULL) {
-                  if (cur_user_auth_scheme_module->user_auth_scheme_module_load(config->config_m, &cur_user_auth_scheme_module->name, &cur_user_auth_scheme_module->display_name, &cur_user_auth_scheme_module->description, &cur_user_auth_scheme_module->parameters) == G_OK) {
+                    cur_user_auth_scheme_module->user_auth_scheme_module_can_use != NULL) {
+                  j_module = cur_user_auth_scheme_module->user_auth_scheme_module_load(config->config_m);
+                  if (check_result_value(j_module, G_OK)) {
+                    cur_user_auth_scheme_module->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
+                    cur_user_auth_scheme_module->display_name = o_strdup(json_string_value(json_object_get(j_module, "display_name")));
+                    cur_user_auth_scheme_module->description = o_strdup(json_string_value(json_object_get(j_module, "description")));
+                    cur_user_auth_scheme_module->parameters = json_incref(json_object_get(j_module, "parameters"));
                     if (o_strlen(cur_user_auth_scheme_module->name) && get_user_auth_scheme_module_lib(config, cur_user_auth_scheme_module->name) == NULL) {
                       if (pointer_list_append(config->user_auth_scheme_module_list, cur_user_auth_scheme_module)) {
                         y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
@@ -1426,7 +1441,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                         o_free(cur_user_auth_scheme_module->name);
                         o_free(cur_user_auth_scheme_module->display_name);
                         o_free(cur_user_auth_scheme_module->description);
-                        o_free(cur_user_auth_scheme_module->parameters);
+                        json_decref(cur_user_auth_scheme_module->parameters);
                         o_free(cur_user_auth_scheme_module);
                         y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error reallocating resources for user_auth_scheme_module_list");
                         ret = G_ERROR_MEMORY;
@@ -1438,20 +1453,17 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                       o_free(cur_user_auth_scheme_module->name);
                       o_free(cur_user_auth_scheme_module->display_name);
                       o_free(cur_user_auth_scheme_module->description);
-                      o_free(cur_user_auth_scheme_module->parameters);
+                      json_decref(cur_user_auth_scheme_module->parameters);
                       o_free(cur_user_auth_scheme_module);
                       ret = G_ERROR;
                     }
                   } else {
                     dlclose(file_handle);
-                    o_free(cur_user_auth_scheme_module->name);
-                    o_free(cur_user_auth_scheme_module->display_name);
-                    o_free(cur_user_auth_scheme_module->description);
-                    o_free(cur_user_auth_scheme_module->parameters);
                     o_free(cur_user_auth_scheme_module);
                     y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error user_auth_scheme_module_load for module %s", file_path);
                     ret = G_ERROR_MEMORY;
                   }
+                  json_decref(j_module);
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error module %s has not all required functions", file_path);
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_load: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_load != NULL?"found":"not found"));
@@ -1462,7 +1474,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_register_get: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_register_get != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_validate: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_trigger: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL?"found":"not found"));
-                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_can_use_scheme: %s", (cur_user_auth_scheme_module->user_can_use_scheme != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_can_use: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_can_use != NULL?"found":"not found"));
                   dlclose(file_handle);
                   o_free(cur_user_auth_scheme_module);
                 }
@@ -1489,7 +1501,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
 }
 
 int load_user_auth_scheme_module_instance_list(struct config_elements * config) {
-  json_t * j_query, * j_result, * j_instance;
+  json_t * j_query, * j_result, * j_instance, * j_parameters;
   int res, ret, i;
   size_t index;
   struct _user_auth_scheme_module_instance * cur_instance;
@@ -1531,12 +1543,19 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
             cur_instance->guasmi_expiration = json_integer_value(json_object_get(j_instance, "guasmi_expiration"));
             cur_instance->guasmi_max_use = json_integer_value(json_object_get(j_instance, "guasmi_max_use"));
             if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
-              if (module->user_auth_scheme_module_init(config->config_m, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
-                cur_instance->enabled = 1;
+              j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+              if (j_parameters != NULL) {
+                if (module->user_auth_scheme_module_init(config->config_m, j_parameters, &cur_instance->cls) == G_OK) {
+                  cur_instance->enabled = 1;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                  cur_instance->enabled = 0;
+                }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
-                cur_instance->enabled = 0;
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error parsing parameters for module %s: '%s'", cur_instance->name, json_string_value(json_object_get(j_instance, "parameters")));
+                o_free(cur_instance->name);
               }
+              json_decref(j_parameters);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error reallocating resources for user_auth_scheme_module_instance_list");
               o_free(cur_instance->name);
@@ -1594,6 +1613,7 @@ int init_client_module_list(struct config_elements * config) {
   struct dirent * in_file;
   char * file_path;
   void * file_handle;
+  json_t * j_parameters;
   
   config->client_module_list = o_malloc(sizeof(struct _pointer_list));
   if (config->client_module_list != NULL) {
@@ -1643,7 +1663,12 @@ int init_client_module_list(struct config_elements * config) {
                     cur_client_module->client_module_update != NULL &&
                     cur_client_module->client_module_delete != NULL &&
                     cur_client_module->client_module_check_password != NULL) {
-                  if (cur_client_module->client_module_load(config->config_m, &cur_client_module->name, &cur_client_module->display_name, &cur_client_module->description, &cur_client_module->parameters) == G_OK) {
+                  j_parameters = cur_client_module->client_module_load(config->config_m);
+                  if (check_result_value(j_parameters, G_OK)) {
+                    cur_client_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
+                    cur_client_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
+                    cur_client_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
+                    cur_client_module->parameters = json_incref(json_object_get(j_parameters, "parameters"));
                     if (o_strlen(cur_client_module->name) && get_client_module_lib(config, cur_client_module->name) == NULL) {
                       if (pointer_list_append(config->client_module_list, cur_client_module)) {
                         y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_client_module->name);
@@ -1719,7 +1744,7 @@ int init_client_module_list(struct config_elements * config) {
 }
 
 int load_client_module_instance_list(struct config_elements * config) {
-  json_t * j_query, * j_result, * j_instance;
+  json_t * j_query, * j_result, * j_instance, * j_parameters;
   int res, ret, i;
   size_t index;
   struct _client_module_instance * cur_instance;
@@ -1760,12 +1785,19 @@ int load_client_module_instance_list(struct config_elements * config) {
             cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
             cur_instance->module = module;
             if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
-              if (module->client_module_init(config->config_m, json_string_value(json_object_get(j_instance, "parameters")), &cur_instance->cls) == G_OK) {
-                cur_instance->enabled = 1;
+              j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+              if (j_parameters != NULL) {
+                if (module->client_module_init(config->config_m, j_parameters, &cur_instance->cls) == G_OK) {
+                  cur_instance->enabled = 1;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                  cur_instance->enabled = 0;
+                }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error parsing module parameters %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                 cur_instance->enabled = 0;
               }
+              json_decref(j_parameters);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error reallocating resources for client_module_instance_list");
               o_free(cur_instance->name);
@@ -1823,6 +1855,7 @@ int init_plugin_module_list(struct config_elements * config) {
   struct dirent * in_file;
   char * file_path;
   void * file_handle;
+  json_t * j_result;
   
   config->plugin_module_list = o_malloc(sizeof(struct _pointer_list));
   if (config->plugin_module_list != NULL) {
@@ -1856,7 +1889,12 @@ int init_plugin_module_list(struct config_elements * config) {
                     cur_plugin_module->plugin_module_unload != NULL &&
                     cur_plugin_module->plugin_module_init != NULL &&
                     cur_plugin_module->plugin_module_close != NULL) {
-                  if (cur_plugin_module->plugin_module_load(config->config_p, &cur_plugin_module->name, &cur_plugin_module->display_name, &cur_plugin_module->description, &cur_plugin_module->parameters) == G_OK) {
+                  j_result = cur_plugin_module->plugin_module_load(config->config_p);
+                  if (check_result_value(j_result, G_OK)) {
+                    cur_plugin_module->name = o_strdup(json_string_value(json_object_get(j_result, "name")));
+                    cur_plugin_module->display_name = o_strdup(json_string_value(json_object_get(j_result, "display_name")));
+                    cur_plugin_module->description = o_strdup(json_string_value(json_object_get(j_result, "description")));
+                    cur_plugin_module->parameters = json_incref(json_object_get(j_result, "parameters"));
                     if (o_strlen(cur_plugin_module->name) && get_plugin_module_lib(config, cur_plugin_module->name) == NULL) {
                       if (pointer_list_append(config->plugin_module_list, cur_plugin_module)) {
                         y_log_message(Y_LOG_LEVEL_INFO, "Loading plugin module %s - %s", file_path, cur_plugin_module->name);
@@ -1866,7 +1904,7 @@ int init_plugin_module_list(struct config_elements * config) {
                         o_free(cur_plugin_module->name);
                         o_free(cur_plugin_module->display_name);
                         o_free(cur_plugin_module->description);
-                        o_free(cur_plugin_module->parameters);
+                        json_decref(cur_plugin_module->parameters);
                         o_free(cur_plugin_module);
                         y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error reallocating resources for client_module_list");
                         ret = G_ERROR_MEMORY;
@@ -1878,7 +1916,7 @@ int init_plugin_module_list(struct config_elements * config) {
                       o_free(cur_plugin_module->name);
                       o_free(cur_plugin_module->display_name);
                       o_free(cur_plugin_module->description);
-                      o_free(cur_plugin_module->parameters);
+                      json_decref(cur_plugin_module->parameters);
                       o_free(cur_plugin_module);
                       ret = G_ERROR;
                     }
@@ -1887,7 +1925,7 @@ int init_plugin_module_list(struct config_elements * config) {
                     o_free(cur_plugin_module->name);
                     o_free(cur_plugin_module->display_name);
                     o_free(cur_plugin_module->description);
-                    o_free(cur_plugin_module->parameters);
+                    json_decref(cur_plugin_module->parameters);
                     o_free(cur_plugin_module);
                     y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error client_module_init for module %s", file_path);
                     ret = G_ERROR_MEMORY;

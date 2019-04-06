@@ -146,7 +146,7 @@ int user_auth_scheme_module_close(struct config_module * config, void * cls) {
 
 /**
  * 
- * user_auth_scheme_can_use
+ * user_auth_scheme_module_can_use
  * 
  * Validate if the user is allowed to use this scheme prior to the
  * authentication or registration
@@ -161,7 +161,7 @@ int user_auth_scheme_module_close(struct config_module * config, void * cls) {
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-int user_auth_scheme_can_use(struct config_module * config, const char * username, void * cls) {
+int user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls) {
   char * str_user = NULL, * key_mock;
   json_t * j_user;
   int ret, result;
@@ -312,7 +312,7 @@ char * user_auth_scheme_module_register_get(struct config_module * config, const
 int user_auth_scheme_module_trigger(struct config_module * config, const void * http_request, const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls) {
   int ret;
   
-  if (user_auth_scheme_can_use(username, cls) == GLEWLWYD_IS_REGISTERED) {
+  if (user_auth_scheme_module_can_use(username, cls) == GLEWLWYD_IS_REGISTERED) {
     *scheme_trigger_response = msprintf("{\"code\":\"%s\"}", json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")));
     ret = G_OK;
   } else {
@@ -348,7 +348,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const void *
   int ret, result = G_ERROR;
   
   if (j_scheme != NULL) {
-    if (user_auth_scheme_can_use(username, cls) != GLEWLWYD_IS_REGISTERED) {
+    if (user_auth_scheme_module_can_use(username, cls) != GLEWLWYD_IS_REGISTERED) {
       ret = G_ERROR_UNAUTHORIZED;
     } else if (json_object_get(j_scheme, "code") != NULL && json_is_string(json_object_get(j_scheme, "code")) && 0 == o_strcmp(json_string_value(json_object_get(j_scheme, "code")), json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")))) {
       str_user = config->glewlwyd_module_callback_get_user(config, username, &result);

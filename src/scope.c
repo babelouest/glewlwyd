@@ -417,7 +417,7 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
                 json_array_foreach(j_group, index_scheme, j_scheme) {
                   scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_name")));
                   if (scheme != NULL) {
-                    if (scheme->enabled && (can_use_scheme = scheme->module->user_can_use_scheme(config->config_m, json_string_value(json_object_get(json_object_get(j_user, "user"), "username")), scheme->cls)) != GLEWLWYD_IS_NOT_AVAILABLE) {
+                    if (scheme->enabled && (can_use_scheme = scheme->module->user_auth_scheme_module_can_use(config->config_m, json_string_value(json_object_get(json_object_get(j_user, "user"), "username")), scheme->cls)) != GLEWLWYD_IS_NOT_AVAILABLE) {
                       if (can_use_scheme == GLEWLWYD_IS_REGISTERED) {
                         json_object_set(j_scheme, "scheme_authenticated", is_scheme_valid_for_session(config, scheme->guasmi_id, scheme->guasmi_max_use, session_hash)?json_true():json_false());
                         json_object_set(j_scheme, "scheme_registered", json_true());

@@ -64,7 +64,7 @@ int callback_glewlwyd_check_user_session (const struct _u_request * request, str
   if ((session_uid = get_session_id(config, request)) != NULL) {
     j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
-      response->shared_data = json_deep_copy(json_object_get(j_user, "user"));
+      response->shared_data = json_incref(json_object_get(j_user, "user"));
       ret = U_CALLBACK_CONTINUE;
     } else {
       ret = U_CALLBACK_UNAUTHORIZED;
@@ -87,7 +87,7 @@ int callback_glewlwyd_check_admin_session (const struct _u_request * request, st
     j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if (is_scope_list_valid_for_session(config, config->admin_scope, session_uid) == G_OK) {
-        response->shared_data = json_deep_copy(json_object_get(j_user, "user"));
+        response->shared_data = json_incref(json_object_get(j_user, "user"));
         ret = U_CALLBACK_CONTINUE;
       } else {
         ret = U_CALLBACK_UNAUTHORIZED;

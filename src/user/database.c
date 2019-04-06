@@ -209,11 +209,10 @@ static json_t * database_user_scope_get(struct mod_parameters * param, json_int_
   return j_return;
 }
 
-static char * database_user_get(const char * username, int * result, void * cls, int profile) {
+static json_t * database_user_get(const char * username, void * cls, int profile) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_query, * j_result, * j_scope;
+  json_t * j_query, * j_result, * j_scope, * j_return;
   int res;
-  char * str_result = NULL;
   
   j_query = json_pack("{sss[sssss]s{ss}}",
                       "table",
@@ -240,22 +239,21 @@ static char * database_user_get(const char * username, int * result, void * cls,
         }
         json_object_del(json_array_get(j_result, 0), "gu_enabled");
         json_object_del(json_array_get(j_result, 0), "gu_id");
-        str_result = json_dumps(json_array_get(j_result, 0), JSON_COMPACT);
-        *result = G_OK;
+        j_return = json_pack("{sisO}", "result", G_OK, "user", json_array_get(j_result, 0));
       } else {
-        *result = G_ERROR;
+        j_return = json_pack("{si}", "result", G_ERROR);
         y_log_message(Y_LOG_LEVEL_ERROR, "database_user_get database - Error database_user_scope_get");
       }
       json_decref(j_scope);
     } else {
-      *result = G_ERROR_NOT_FOUND;
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
     json_decref(j_result);
   } else {
-    *result = G_ERROR_DB;
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
     y_log_message(Y_LOG_LEVEL_ERROR, "database_user_get database - Error executing j_query");
   }
-  return str_result;
+  return j_return;
 }
 
 static json_t * is_user_database_parameters_valid(json_t * j_params) {
@@ -564,88 +562,139 @@ static int save_user_scope(struct mod_parameters * param, json_t * j_scope, json
   return ret;
 }
 
-int user_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
-  int ret = G_OK;
-  if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
-    *name = o_strdup("database");
-    *display_name = o_strdup("Database backend user");
-    *description = o_strdup("Module to store users in the database");
-    *parameters = o_strdup("{"
-                             "\"use-glewlwyd-connection\":{\"type\":\"boolean\",\"default\":true},"
-                             "\"connection-type\":{\"type\":\"list\",\"values\":[\"sqlite\",\"mariadb\",\"postgre\"],\"mandatory\":false},"
-                             "\"sqlite-dbpath\":{\"type\":\"string\",\"mandatory\":false},"
-                             "\"mariadb-host\":{\"type\":\"string\",\"mandatory\":false},"
-                             "\"mariadb-user\":{\"type\":\"string\",\"mandatory\":false},"
-                             "\"mariadb-password\":{\"type\":\"string\",\"mandatory\":false},"
-                             "\"mariadb-dbname\":{\"type\":\"string\",\"mandatory\":false},"
-                             "\"mariadb-port\":{\"type\":\"number\",\"mandatory\":false},"
-                             "\"postgre-conninfo\":{\"type\":\"string\",\"mandatory\":false},"
-                             "\"data-format\":{"
-                              "\"field-name\":{"
-                                "\"multiple\":{\"type\":\"boolean\",\"default\":false},"
-                                "\"read\":{\"type\":\"boolean\",\"default\":true},"
-                                "\"write\":{\"type\":\"boolean\",\"default\":true},"
-                                "\"profile-read\":{\"type\":\"boolean\",\"default\":false},"
-                                "\"profile-write\":{\"type\":\"boolean\",\"default\":false}"
-                              "}"
-                             "}"
-                           "}");
-  } else {
-    ret = G_ERROR;
-  }
-  return ret;
+json_t * user_module_load(struct config_module * config) {
+  return json_pack("{sisssssss{s{ssso}s{sss[sss]so}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{s{s{sssso}s{sssso}s{sssso}s{sssso}s{sssso}}}}",
+                   "result",
+                   G_OK,
+                   "name",
+                   "database",
+                   "display_name",
+                   "Database backend user module",
+                   "description",
+                   "Module to store users in the database",
+                   "parameters",
+                     "use-glewlwyd-connection",
+                       "type",
+                       "boolean",
+                       "mandatory",
+                       json_true(),
+                     "connection-type",
+                       "type",
+                       "list",
+                       "values",
+                         "sqlite",
+                         "mariadb",
+                         "postgre",
+                       "mandatory",
+                       json_false(),
+                     "sqlite-dbpath",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "mariadb-host",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "mariadb-user",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "mariadb-password",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "mariadb-dbname",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "mariadb-port",
+                       "type",
+                       "number",
+                       "mandatory",
+                       json_false(),
+                     "postgre-conninfo",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "data-format",
+                       "field-name",
+                         "multiple",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_false(),
+                         "read",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_true(),
+                         "write",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_true(),
+                         "profile-read",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_false(),
+                         "profile-write",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_false());
 }
 
 int user_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int user_module_init(struct config_module * config, const char * parameters, void ** cls) {
-  json_t * j_params = json_loads(parameters, JSON_DECODE_ANY, NULL), * j_result;
+int user_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
+  json_t * j_params = json_incref(j_parameters), * j_result;
   int ret;
   char * error_message;
   
-  if (j_params != NULL) {
-    j_result = is_user_database_parameters_valid(j_params);
-    if (check_result_value(j_result, G_OK)) {
-      *cls = o_malloc(sizeof(struct mod_parameters));
-      if (*cls != NULL) {
-        ((struct mod_parameters *)*cls)->j_params = j_params;
-        ((struct mod_parameters *)*cls)->hash_algorithm = config->hash_algorithm;
-        if (json_object_get(j_params, "use-glewlwyd-connection") != json_false()) {
-            ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 0;
-            ((struct mod_parameters *)*cls)->conn = config->conn;
-        } else {
-          ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 1;
-          if (0 == o_strcmp(json_string_value(json_object_get(j_params, "connection-type")), "sqlite")) {
-            ((struct mod_parameters *)*cls)->conn = h_connect_sqlite(json_string_value(json_object_get(j_params, "sqlite-dbpath")));
-          } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "connection-type")), "mariadb")) {
-            ((struct mod_parameters *)*cls)->conn = h_connect_mariadb(json_string_value(json_object_get(j_params, "mariadb-host")), json_string_value(json_object_get(j_params, "mariadb-user")), json_string_value(json_object_get(j_params, "mariadb-password")), json_string_value(json_object_get(j_params, "mariadb-dbname")), json_integer_value(json_object_get(j_params, "mariadb-port")), NULL);
-          } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "connection-type")), "postgre")) {
-            ((struct mod_parameters *)*cls)->conn = h_connect_pgsql(json_string_value(json_object_get(j_params, "postgre-conninfo")));
-          }
-        }
-        ret = G_OK;
+  j_result = is_user_database_parameters_valid(j_params);
+  if (check_result_value(j_result, G_OK)) {
+    *cls = o_malloc(sizeof(struct mod_parameters));
+    if (*cls != NULL) {
+      ((struct mod_parameters *)*cls)->j_params = j_params;
+      ((struct mod_parameters *)*cls)->hash_algorithm = config->hash_algorithm;
+      if (json_object_get(j_params, "use-glewlwyd-connection") != json_false()) {
+          ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 0;
+          ((struct mod_parameters *)*cls)->conn = config->conn;
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error allocating resources for cls");
-        ret = G_ERROR_MEMORY;
+        ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 1;
+        if (0 == o_strcmp(json_string_value(json_object_get(j_params, "connection-type")), "sqlite")) {
+          ((struct mod_parameters *)*cls)->conn = h_connect_sqlite(json_string_value(json_object_get(j_params, "sqlite-dbpath")));
+        } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "connection-type")), "mariadb")) {
+          ((struct mod_parameters *)*cls)->conn = h_connect_mariadb(json_string_value(json_object_get(j_params, "mariadb-host")), json_string_value(json_object_get(j_params, "mariadb-user")), json_string_value(json_object_get(j_params, "mariadb-password")), json_string_value(json_object_get(j_params, "mariadb-dbname")), json_integer_value(json_object_get(j_params, "mariadb-port")), NULL);
+        } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "connection-type")), "postgre")) {
+          ((struct mod_parameters *)*cls)->conn = h_connect_pgsql(json_string_value(json_object_get(j_params, "postgre-conninfo")));
+        }
       }
-    } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-      error_message = json_dumps(json_object_get(j_result, "error"), JSON_COMPACT);
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error parsing parameters");
-      y_log_message(Y_LOG_LEVEL_ERROR, error_message);
-      o_free(error_message);
-      ret = G_ERROR_PARAM;
+      ret = G_OK;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error is_user_database_parameters_valid");
-      ret = G_ERROR;
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error allocating resources for cls");
+      ret = G_ERROR_MEMORY;
     }
-    json_decref(j_result);
-  } else {
+  } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+    error_message = json_dumps(json_object_get(j_result, "error"), JSON_COMPACT);
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error parsing parameters");
+    y_log_message(Y_LOG_LEVEL_ERROR, error_message);
+    o_free(error_message);
     ret = G_ERROR_PARAM;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error is_user_database_parameters_valid");
+    ret = G_ERROR;
   }
-  json_decref(j_params);
+  json_decref(j_result);
   return ret;
 }
 
@@ -653,6 +702,7 @@ int user_module_close(struct config_module * config, void * cls) {
   int ret;
   
   if (((struct mod_parameters *)cls)->use_glewlwyd_connection) {
+    json_decref(((struct mod_parameters *)cls)->j_params);
     if (h_close_db(((struct mod_parameters *)cls)->conn) != H_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_close database - Error h_close_db");
       ret = G_ERROR_DB;
@@ -694,11 +744,11 @@ size_t user_module_count_total(struct config_module * config, const char * patte
   return ret;
 }
 
-char * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
+json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_query, * j_result, * j_element, * j_scope;
+  json_t * j_query, * j_result, * j_element, * j_scope, * j_return;
   int res;
-  char * str_result = NULL, * pattern_clause;
+  char * pattern_clause;
   size_t index;
   
   j_query = json_pack("{sss[sssss]sisi}",
@@ -733,297 +783,263 @@ char * user_module_get_list(struct config_module * config, const char * pattern,
         json_object_del(j_element, "gu_enabled");
         json_object_del(j_element, "gu_id");
       } else {
-        *result = G_ERROR;
+        j_return = json_pack("{si}", "result", G_ERROR);
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list database - Error database_user_scope_get");
       }
       json_decref(j_scope);
     }
-    str_result = json_dumps(j_result, JSON_COMPACT);
-    *result = G_OK;
+    j_return = json_pack("{sisO}", "result", G_OK, "list", j_result);
     json_decref(j_result);
   } else {
-    *result = G_ERROR_DB;
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list database - Error executing j_query");
   }
-  return str_result;
+  return j_return;
 }
 
-char * user_module_get(struct config_module * config, const char * username, int * result, void * cls) {
-  return database_user_get(username, result, cls, 0);
+json_t * user_module_get(struct config_module * config, const char * username, void * cls) {
+  return database_user_get(username, cls, 0);
 }
 
-char * user_module_get_profile(struct config_module * config, const char * username, int * result, void * cls) {
-  return database_user_get(username, result, cls, 1);
+json_t * user_module_get_profile(struct config_module * config, const char * username, void * cls) {
+  return database_user_get(username, cls, 1);
 }
 
-char * user_is_valid(struct config_module * config, const char * username, const char * str_user, int mode, int * result, void * cls) {
+json_t * user_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_user = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_result = NULL, * j_element, * j_format, * j_value;
-  char * str_result = NULL, * message;
-  int res;
+  json_t * j_result = json_array(), * j_element, * j_format, * j_value, * j_return = NULL, * j_cur_user;
+  char * message;
   size_t index;
   const char * property;
   
-  if (j_user != NULL && json_is_object(j_user)) {
-    *result = G_OK;
-    j_result = json_array();
-    if (j_result != NULL) {
-      if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
-        if (!json_is_string(json_object_get(j_user, "username")) || json_string_length(json_object_get(j_user, "username")) > 128) {
-          *result = G_ERROR_PARAM;
-          json_array_append_new(j_result, json_string("username is mandatory and must be a string of at least 128 characters"));
+  if (j_result != NULL) {
+    if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
+      if (!json_is_string(json_object_get(j_user, "username")) || json_string_length(json_object_get(j_user, "username")) > 128) {
+        json_array_append_new(j_result, json_string("username is mandatory and must be a string of at least 128 characters"));
+      } else {
+        j_cur_user = user_module_get(config, json_string_value(json_object_get(j_user, "username")), cls);
+        if (check_result_value(j_cur_user, G_OK)) {
+          json_array_append_new(j_result, json_string("username already exist"));
+        } else if (!check_result_value(j_cur_user, G_ERROR_NOT_FOUND)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_is_valid database - Error user_module_get");
+        }
+        json_decref(j_cur_user);
+      }
+    } else if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && username == NULL) {
+      json_array_append_new(j_result, json_string("username is mandatory on update mode"));
+    }
+    if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) {
+      if (json_object_get(j_user, "scope") != NULL) {
+        if (!json_is_array(json_object_get(j_user, "scope"))) {
+          json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
         } else {
-          o_free(user_module_get(config, json_string_value(json_object_get(j_user, "username")), &res, cls));
-          if (res == G_OK) {
-            *result = G_ERROR_PARAM;
-            json_array_append_new(j_result, json_string("username already exist"));
-          } else if (res != G_ERROR_NOT_FOUND) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_is_valid database - Error user_module_get");
-          }
-        }
-      } else if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && username == NULL) {
-        *result = G_ERROR_PARAM;
-        json_array_append_new(j_result, json_string("username is mandatory on update mode"));
-      }
-      if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) {
-        if (json_object_get(j_user, "scope") != NULL) {
-          if (!json_is_array(json_object_get(j_user, "scope"))) {
-            *result = G_ERROR_PARAM;
-            json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
-          } else {
-            json_array_foreach(json_object_get(j_user, "scope"), index, j_element) {
-              if (!json_is_string(j_element) || !json_string_length(j_element)) {
-                *result = G_ERROR_PARAM;
-                json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
-              }
-            }
-          }
-        }
-      }
-      if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE && json_object_get(j_user, "password") != NULL && !json_is_string(json_object_get(j_user, "password"))) {
-        *result = G_ERROR_PARAM;
-        json_array_append_new(j_result, json_string("password must be a string"));
-      }
-      if (json_object_get(j_user, "name") != NULL && (!json_is_string(json_object_get(j_user, "name")) || json_string_length(json_object_get(j_user, "name")) > 256)) {
-        *result = G_ERROR_PARAM;
-        json_array_append_new(j_result, json_string("name must be a string of at least 256 characters"));
-      }
-      if (json_object_get(j_user, "email") != NULL && (!json_is_string(json_object_get(j_user, "email")) || json_string_length(json_object_get(j_user, "email")) > 512)) {
-        *result = G_ERROR_PARAM;
-        json_array_append_new(j_result, json_string("email must be a string of at least 512 characters"));
-      }
-      if (json_object_get(j_user, "enabled") != NULL && !json_is_boolean(json_object_get(j_user, "enabled"))) {
-        *result = G_ERROR_PARAM;
-        json_array_append_new(j_result, json_string("enabled must be a boolean"));
-      }
-      json_object_foreach(j_user, property, j_element) {
-        if (0 != o_strcmp(property, "username") && 0 != o_strcmp(property, "name") && 0 != o_strcmp(property, "email") && 0 != o_strcmp(property, "enabled") && 0 != o_strcmp(property, "password") && 0 != o_strcmp(property, "source") && 0 != o_strcmp(property, "scope")) {
-          j_format = json_object_get(json_object_get(param->j_params, "data-format"), property);
-          if (json_object_get(j_format, "multiple") == json_true()) {
-            if (!json_is_array(j_element)) {
-              *result = G_ERROR_PARAM;
-              message = msprintf("property '%s' must be a JSON array", property);
-              json_array_append_new(j_result, json_string(message));
-              o_free(message);
-            } else {
-              json_array_foreach(j_element, index, j_value) {
-                if (!json_is_string(j_value) || json_string_length(j_value) > 16*1024*1024) {
-                  *result = G_ERROR_PARAM;
-                  message = msprintf("property '%s' must contain a string value of at least 16M characters", property);
-                  json_array_append_new(j_result, json_string(message));
-                  o_free(message);
-                }
-              }
-            }
-          } else {
-            if (!json_is_string(j_element) || json_string_length(j_element) > 16*1024*1024) {
-              *result = G_ERROR_PARAM;
-              message = msprintf("property '%s' must be a string value of at least 16M characters", property);
-              json_array_append_new(j_result, json_string(message));
-              o_free(message);
+          json_array_foreach(json_object_get(j_user, "scope"), index, j_element) {
+            if (!json_is_string(j_element) || !json_string_length(j_element)) {
+              json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
             }
           }
         }
       }
     }
+    if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE && json_object_get(j_user, "password") != NULL && !json_is_string(json_object_get(j_user, "password"))) {
+      json_array_append_new(j_result, json_string("password must be a string"));
+    }
+    if (json_object_get(j_user, "name") != NULL && (!json_is_string(json_object_get(j_user, "name")) || json_string_length(json_object_get(j_user, "name")) > 256)) {
+      json_array_append_new(j_result, json_string("name must be a string of at least 256 characters"));
+    }
+    if (json_object_get(j_user, "email") != NULL && (!json_is_string(json_object_get(j_user, "email")) || json_string_length(json_object_get(j_user, "email")) > 512)) {
+      json_array_append_new(j_result, json_string("email must be a string of at least 512 characters"));
+    }
+    if (json_object_get(j_user, "enabled") != NULL && !json_is_boolean(json_object_get(j_user, "enabled"))) {
+      json_array_append_new(j_result, json_string("enabled must be a boolean"));
+    }
+    json_object_foreach(j_user, property, j_element) {
+      if (0 != o_strcmp(property, "username") && 0 != o_strcmp(property, "name") && 0 != o_strcmp(property, "email") && 0 != o_strcmp(property, "enabled") && 0 != o_strcmp(property, "password") && 0 != o_strcmp(property, "source") && 0 != o_strcmp(property, "scope")) {
+        j_format = json_object_get(json_object_get(param->j_params, "data-format"), property);
+        if (json_object_get(j_format, "multiple") == json_true()) {
+          if (!json_is_array(j_element)) {
+            message = msprintf("property '%s' must be a JSON array", property);
+            json_array_append_new(j_result, json_string(message));
+            o_free(message);
+          } else {
+            json_array_foreach(j_element, index, j_value) {
+              if (!json_is_string(j_value) || json_string_length(j_value) > 16*1024*1024) {
+                message = msprintf("property '%s' must contain a string value of at least 16M characters", property);
+                json_array_append_new(j_result, json_string(message));
+                o_free(message);
+              }
+            }
+          }
+        } else {
+          if (!json_is_string(j_element) || json_string_length(j_element) > 16*1024*1024) {
+            message = msprintf("property '%s' must be a string value of at least 16M characters", property);
+            json_array_append_new(j_result, json_string(message));
+            o_free(message);
+          }
+        }
+      }
+    }
+    if (json_array_size(j_result)) {
+      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_result);
+    } else {
+      j_return = json_pack("{si}", "result", G_OK);
+    }
+    json_decref(j_result);
   } else {
-    *result = G_ERROR_PARAM;
-    j_result = json_string("user must be a valid JSON object");
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_is_valid database - Error allocating resources for j_result");
+    j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
   }
-  json_decref(j_user);
-  if (*result != G_OK) {
-    str_result = json_dumps(j_result, JSON_COMPACT);
-  }
-  json_decref(j_result);
-  return str_result;
+  return j_return;
 }
 
-int user_module_add(struct config_module * config, const char * str_new_user, void * cls) {
+int user_module_add(struct config_module * config, json_t * j_user, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_user = json_loads(str_new_user, JSON_DECODE_ANY, NULL), * j_query, * j_gu_id;
+  json_t * j_query, * j_gu_id;
   int res, ret;
   char * password_clause;
   
-  if (j_user != NULL) {
-    j_query = json_pack("{sss{ss}}",
+  j_query = json_pack("{sss{ss}}",
+                      "table",
+                      G_TABLE_USER,
+                      "values",
+                        "gu_username",
+                        json_string_value(json_object_get(j_user, "username")));
+  
+  if (json_object_get(j_user, "password") != NULL) {
+    password_clause = get_password_clause_write(param, json_string_value(json_object_get(j_user, "password")));
+    json_object_set_new(json_object_get(j_query, "values"), "gu_password", json_pack("{ss}", "raw", password_clause));
+    o_free(password_clause);
+  }
+  if (json_object_get(j_user, "name") != NULL) {
+    json_object_set(json_object_get(j_query, "values"), "gu_name", json_object_get(j_user, "name"));
+  }
+  if (json_object_get(j_user, "email") != NULL) {
+    json_object_set(json_object_get(j_query, "values"), "gu_email", json_object_get(j_user, "email"));
+  }
+  if (json_object_get(j_user, "enabled") != NULL) {
+    json_object_set_new(json_object_get(j_query, "values"), "gu_enabled", json_object_get(j_user, "enabled")==json_false()?json_integer(0):json_integer(1));
+  }
+  res = h_insert(param->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    j_gu_id = h_last_insert_id(param->conn);
+    if (save_user_properties(param, j_user, json_integer_value(j_gu_id), 0) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_properties");
+      ret = G_ERROR_DB;
+    } else if (save_user_scope(param, json_object_get(j_user, "scope"), json_integer_value(j_gu_id)) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_scope");
+      ret = G_ERROR_DB;
+    } else {
+      ret = G_OK;
+    }
+    json_decref(j_gu_id);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error executing j_query insert");
+    ret = G_ERROR_DB;
+  }
+  return ret;
+}
+
+int user_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls) {
+  struct mod_parameters * param = (struct mod_parameters *)cls;
+  json_t * j_query, * j_result = NULL;
+  int res, ret;
+  char * password_clause;
+  
+  j_query = json_pack("{sss[s]s{ss}}", "table", G_TABLE_USER, "columns", "gu_id", "where", "gu_username", username);
+  res = h_select(param->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK && json_array_size(j_result)) {
+    j_query = json_pack("{sss{}s{sO}}",
                         "table",
                         G_TABLE_USER,
-                        "values",
-                          "gu_username",
-                          json_string_value(json_object_get(j_user, "username")));
+                        "set",
+                        "where",
+                          "gu_id",
+                          json_object_get(json_array_get(j_result, 0), "gu_id"));
     
     if (json_object_get(j_user, "password") != NULL) {
       password_clause = get_password_clause_write(param, json_string_value(json_object_get(j_user, "password")));
-      json_object_set_new(json_object_get(j_query, "values"), "gu_password", json_pack("{ss}", "raw", password_clause));
+    json_object_set_new(json_object_get(j_query, "values"), "gu_password", json_pack("{ss}", "raw", password_clause));
       o_free(password_clause);
     }
     if (json_object_get(j_user, "name") != NULL) {
-      json_object_set(json_object_get(j_query, "values"), "gu_name", json_object_get(j_user, "name"));
+      json_object_set(json_object_get(j_query, "set"), "gu_name", json_object_get(j_user, "name"));
     }
     if (json_object_get(j_user, "email") != NULL) {
-      json_object_set(json_object_get(j_query, "values"), "gu_email", json_object_get(j_user, "email"));
+      json_object_set(json_object_get(j_query, "set"), "gu_email", json_object_get(j_user, "email"));
     }
     if (json_object_get(j_user, "enabled") != NULL) {
       json_object_set_new(json_object_get(j_query, "values"), "gu_enabled", json_object_get(j_user, "enabled")==json_false()?json_integer(0):json_integer(1));
     }
-    res = h_insert(param->conn, j_query, NULL);
+    if (json_object_size(json_object_get(j_query, "set"))) {
+      res = h_update(param->conn, j_query, NULL);
+    } else {
+      res = H_OK;
+    }
     json_decref(j_query);
     if (res == H_OK) {
-      j_gu_id = h_last_insert_id(param->conn);
-      if (save_user_properties(param, j_user, json_integer_value(j_gu_id), 0) != G_OK) {
+      if (save_user_properties(param, j_user, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), 0) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_properties");
         ret = G_ERROR_DB;
-      } else if (save_user_scope(param, json_object_get(j_user, "scope"), json_integer_value(j_gu_id)) != G_OK) {
+      } else if (save_user_scope(param, json_object_get(j_user, "scope"), json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id"))) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_scope");
         ret = G_ERROR_DB;
       } else {
         ret = G_OK;
       }
-      json_decref(j_gu_id);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error executing j_query update");
+      ret = G_ERROR_DB;
+    }
+  } else {
+    ret = G_ERROR_NOT_FOUND;
+  }
+  json_decref(j_result);
+  return ret;
+}
+
+int user_module_update_profile(struct config_module * config, const char * username, json_t * j_user, void * cls) {
+  struct mod_parameters * param = (struct mod_parameters *)cls;
+  json_t * j_query, * j_result = NULL;
+  int res, ret;
+  
+  j_query = json_pack("{sss[s]s{sO}}", "table", G_TABLE_USER, "columns", "gu_id", "where", "gu_username", username);
+  res = h_select(param->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK && json_array_size(j_result)) {
+    j_query = json_pack("{sss{}s{ss}}",
+                        "table",
+                        G_TABLE_USER,
+                        "set",
+                        "where",
+                          "gu_id",
+                          json_object_get(json_array_get(j_result, 0), "gu_id"));
+    
+    if (json_object_get(j_user, "name") != NULL) {
+      json_object_set(json_object_get(j_query, "set"), "gu_name", json_object_get(j_user, "name"));
+    }
+    if (json_object_size(json_object_get(j_query, "set"))) {
+      res = h_update(param->conn, j_query, NULL);
+    } else {
+      res = H_OK;
+    }
+    json_decref(j_query);
+    if (res == H_OK) {
+      if (save_user_properties(param, j_user, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), 0) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_properties");
+        ret = G_ERROR_DB;
+      } else {
+        ret = G_OK;
+      }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error executing j_query insert");
       ret = G_ERROR_DB;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error parsing str_new_user");
-    ret = G_ERROR;
+    ret = G_ERROR_NOT_FOUND;
   }
-  json_decref(j_user);
-  return ret;
-}
-
-int user_module_update(struct config_module * config, const char * username, const char * str_user, void * cls) {
-  struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_user = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_query, * j_result = NULL;
-  int res, ret;
-  char * password_clause;
-  
-  if (j_user != NULL) {
-    j_query = json_pack("{sss[s]s{ss}}", "table", G_TABLE_USER, "columns", "gu_id", "where", "gu_username", username);
-    res = h_select(param->conn, j_query, &j_result, NULL);
-    json_decref(j_query);
-    if (res == H_OK && json_array_size(j_result)) {
-      j_query = json_pack("{sss{}s{sO}}",
-                          "table",
-                          G_TABLE_USER,
-                          "set",
-                          "where",
-                            "gu_id",
-                            json_object_get(json_array_get(j_result, 0), "gu_id"));
-      
-      if (json_object_get(j_user, "password") != NULL) {
-        password_clause = get_password_clause_write(param, json_string_value(json_object_get(j_user, "password")));
-      json_object_set_new(json_object_get(j_query, "values"), "gu_password", json_pack("{ss}", "raw", password_clause));
-        o_free(password_clause);
-      }
-      if (json_object_get(j_user, "name") != NULL) {
-        json_object_set(json_object_get(j_query, "set"), "gu_name", json_object_get(j_user, "name"));
-      }
-      if (json_object_get(j_user, "email") != NULL) {
-        json_object_set(json_object_get(j_query, "set"), "gu_email", json_object_get(j_user, "email"));
-      }
-      if (json_object_get(j_user, "enabled") != NULL) {
-        json_object_set_new(json_object_get(j_query, "values"), "gu_enabled", json_object_get(j_user, "enabled")==json_false()?json_integer(0):json_integer(1));
-      }
-      if (json_object_size(json_object_get(j_query, "set"))) {
-        res = h_update(param->conn, j_query, NULL);
-      } else {
-        res = H_OK;
-      }
-      json_decref(j_query);
-      if (res == H_OK) {
-        if (save_user_properties(param, j_user, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), 0) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_properties");
-          ret = G_ERROR_DB;
-        } else if (save_user_scope(param, json_object_get(j_user, "scope"), json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id"))) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_scope");
-          ret = G_ERROR_DB;
-        } else {
-          ret = G_OK;
-        }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error executing j_query update");
-        ret = G_ERROR_DB;
-      }
-    } else {
-      ret = G_ERROR_NOT_FOUND;
-    }
-    json_decref(j_result);
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error parsing str_new_user");
-    ret = G_ERROR;
-  }
-  json_decref(j_user);
-  return ret;
-}
-
-int user_module_update_profile(struct config_module * config, const char * username, const char * str_user, void * cls) {
-  struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_user = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_query, * j_result = NULL;
-  int res, ret;
-  
-  if (j_user != NULL) {
-    j_query = json_pack("{sss[s]s{sO}}", "table", G_TABLE_USER, "columns", "gu_id", "where", "gu_username", username);
-    res = h_select(param->conn, j_query, &j_result, NULL);
-    json_decref(j_query);
-    if (res == H_OK && json_array_size(j_result)) {
-      j_query = json_pack("{sss{}s{ss}}",
-                          "table",
-                          G_TABLE_USER,
-                          "set",
-                          "where",
-                            "gu_id",
-                            json_object_get(json_array_get(j_result, 0), "gu_id"));
-      
-      if (json_object_get(j_user, "name") != NULL) {
-        json_object_set(json_object_get(j_query, "set"), "gu_name", json_object_get(j_user, "name"));
-      }
-      if (json_object_size(json_object_get(j_query, "set"))) {
-        res = h_update(param->conn, j_query, NULL);
-      } else {
-        res = H_OK;
-      }
-      json_decref(j_query);
-      if (res == H_OK) {
-        if (save_user_properties(param, j_user, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), 0) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_properties");
-          ret = G_ERROR_DB;
-        } else {
-          ret = G_OK;
-        }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error executing j_query insert");
-        ret = G_ERROR_DB;
-      }
-    } else {
-      ret = G_ERROR_NOT_FOUND;
-    }
-    json_decref(j_result);
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error parsing str_new_user");
-    ret = G_ERROR;
-  }
-  json_decref(j_user);
+  json_decref(j_result);
   return ret;
 }
 
