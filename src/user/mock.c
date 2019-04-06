@@ -61,33 +61,47 @@ static int json_has_str_pattern_case(json_t * j_source, const char * pattern) {
   }
 }
 
-int user_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
-  int ret = G_OK;
-  if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
-    *name = o_strdup("mock");
-    *display_name = o_strdup("Mock user module");
-    *description = o_strdup("Mock user module for glewlwyd tests");
-    *parameters = o_strdup("{\"username-prefix\":{\"type\":\"string\",\"mandatory\":false}}");
-  } else {
-    ret = G_ERROR;
-  }
-  return ret;
+json_t * user_module_load(struct config_module * config) {
+  return json_pack("{sisssssss{s{ssso}s{ssso}}}",
+                   "result",
+                   G_OK,
+                   "name",
+                   "mock",
+                   "display_name",
+                   "Mock scheme module",
+                   "description",
+                   "Mock scheme module for glewlwyd tests",
+                   "parameters",
+                     "username-prefix",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "password",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false());
 }
 
 int user_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int user_module_init(struct config_module * config, const char * parameters, void ** cls) {
-  json_t * j_param = json_loads(parameters, 0, NULL);
-  if (j_param == NULL) {
-    j_param = json_pack("{ss}", "username-prefix", "");
-  } else if (!json_is_string(json_object_get(j_param, "username-prefix"))) {
-    json_object_set_new(j_param, "username-prefix", json_string(""));
+int user_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
+  const char * prefix = "", * password = "";
+  if (json_string_length(json_object_get(j_parameters, "username-prefix"))) {
+    prefix = json_string_value(json_object_get(j_parameters, "username-prefix"));
   }
-  *cls = (void*)json_pack("[{ss+ ss ss so s[ss]}{ss+ ss ss so s[ssss]}{ss+ ss ss so s[ss]}{ss+ ss ss so s[ssss]}]",
+  if (json_string_length(json_object_get(j_parameters, "password"))) {
+    prefix = json_string_value(json_object_get(j_parameters, "password"));
+  }
+  *cls = (void*)json_pack("{sss[{ss+ ss ss so s[ss]}{ss+ ss ss so s[ssss]}{ss+ ss ss so s[ss]}{ss+ ss ss so s[ssss]}]}",
+                          "password",
+                          password,
+                          "list",
                             "username", 
-                            json_string_value(json_object_get(j_param, "username-prefix")),
+                            prefix,
                             "admin", 
                             "name", 
                             "The Boss", 
@@ -100,7 +114,7 @@ int user_module_init(struct config_module * config, const char * parameters, voi
                               config->profile_scope,
 
                             "username",
-                            json_string_value(json_object_get(j_param, "username-prefix")),
+                            prefix,
                             "user1",
                             "name",
                             "Dave Lopper 1",
@@ -115,7 +129,7 @@ int user_module_init(struct config_module * config, const char * parameters, voi
                               "scope3",
 
                             "username",
-                            json_string_value(json_object_get(j_param, "username-prefix")),
+                            prefix,
                             "user2",
                             "name",
                             "Dave Lopper 2",
@@ -128,7 +142,7 @@ int user_module_init(struct config_module * config, const char * parameters, voi
                               "scope1",
 
                             "username",
-                            json_string_value(json_object_get(j_param, "username-prefix")),
+                            prefix,
                             "user3",
                             "name",
                             "Dave Lopper 3",
@@ -141,8 +155,7 @@ int user_module_init(struct config_module * config, const char * parameters, voi
                               "scope1",
                               "scope2",
                               "scope3");
-  y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_init - success %s %s", config->profile_scope, config->admin_scope);
-  json_decref(j_param);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_init - success prefix: '%s', profile_scope: '%s', admin_scope: '%s'", config->profile_scope, config->admin_scope);
   return G_OK;
 }
 
@@ -158,158 +171,126 @@ size_t user_module_count_total(struct config_module * config, const char * patte
 
   if (o_strlen(pattern)) {
     total = 0;
-    json_array_foreach((json_t *)cls, index, j_user) {
+    json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {
       if (json_has_str_pattern_case(j_user, pattern)) {
         total++;
       }
     }
   } else {
-    total = json_array_size((json_t *)cls);
+    total = json_array_size(json_object_get((json_t *)cls, "list"));
   }
   return total;
 }
 
-char * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
-  json_t * j_user, * j_array, * j_pattern_array;
+json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls) {
+  json_t * j_user, * j_array, * j_pattern_array, * j_return;
   size_t index, counter = 0;
-  char * to_return = NULL;
 
   if (limit) {
     if (o_strlen(pattern)) {
       j_pattern_array = json_array();
-      json_array_foreach((json_t *)cls, index, j_user) {
+      json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {
         if (json_has_str_pattern_case(j_user, pattern)) {
           json_array_append(j_pattern_array, j_user);
         }
       }
     } else {
-      j_pattern_array = json_copy((json_t *)cls);
+      j_pattern_array = json_incref(json_object_get((json_t *)cls, "list"));
     }
     j_array = json_array();
     if (j_array != NULL) {
       if (json_array_size(j_pattern_array)) {
         json_array_foreach(j_pattern_array, index, j_user) {
-          if (index >= offset && (offset + counter) < json_array_size((json_t *)cls) && counter < limit && (!o_strlen(pattern) || json_has_str_pattern_case(j_user, pattern))) {
+          if (index >= offset && (offset + counter) < json_array_size(json_object_get((json_t *)cls, "list")) && counter < limit) {
             json_array_append(j_array, j_user);
             counter++;
           }
         }
-        to_return = json_dumps(j_array, JSON_COMPACT);
-        *result = G_OK;
-        json_decref(j_array);
+        j_return = json_pack("{sisO}", "result", G_OK, "list", j_array);
       }
+      json_decref(j_array);
     } else {
-      *result = G_ERROR;
+      j_return = json_pack("{si}", "result", G_ERROR);
     }
     json_decref(j_pattern_array);
   } else {
-    *result = G_ERROR_PARAM;
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
-  return to_return;
+  return j_return;
 }
 
-char * user_module_get(struct config_module * config, const char * username, int * result, void * cls) {
-  json_t * j_user;
+json_t * user_module_get(struct config_module * config, const char * username, void * cls) {
+  json_t * j_user, * j_return = NULL;
   size_t index;
-  char * str_return = NULL;
   
   if (username != NULL && o_strlen(username)) {
-    *result = G_ERROR_NOT_FOUND;
-    json_array_foreach((json_t *)cls, index, j_user) {
+    json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {
       if (0 == o_strcmp(username, json_string_value(json_object_get(j_user, "username")))) {
-        str_return = json_dumps(j_user, JSON_COMPACT);
-        *result = G_OK;
-        break;
+        j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
       }
     }
+    if (j_return == NULL) {
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    }
   } else {
-    *result = G_ERROR;
+    j_return = json_pack("{si}", "result", G_ERROR);
   }
-  return str_return;
+  return j_return;
 }
 
-char * user_module_get_profile(struct config_module * config, const char * username, int * result, void * cls) {
-  return user_module_get(config, username, result, cls);
+json_t * user_module_get_profile(struct config_module * config, const char * username, void * cls) {
+  return user_module_get(config, username, cls);
 }
 
-char * user_is_valid(struct config_module * config, const char * username, const char * str_user, int mode, int * result, void * cls) {
-  json_t * j_return = NULL, * j_user;
-  char * str_return = NULL;
+json_t * user_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
+  json_t * j_return = NULL;
 
   if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && username == NULL) {
-    *result = G_ERROR_PARAM;
-    j_return = json_pack("[s]", "username is mandatory on update mode");
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "username is mandatory on update mode");
   } else {
-    j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
-    if (j_user != NULL && json_is_object(j_user)) {
-      if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
-        if (json_is_string(json_object_get(j_user, "username")) && json_string_length(json_object_get(j_user, "username")) <= 128) {
-          *result = G_OK;
-        } else {
-          *result = G_ERROR_PARAM;
-          j_return = json_pack("[s]", "username must be a string value of maximum 128 characters");
-        }
+    if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
+      if (json_is_string(json_object_get(j_user, "username")) && json_string_length(json_object_get(j_user, "username")) <= 128) {
+        j_return = json_pack("{si}", "result", G_OK);
       } else {
-        *result = G_OK;
+        j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "username must be a string value of maximum 128 characters");
       }
     } else {
-      *result = G_ERROR_PARAM;
-      j_return = json_pack("[s]", "user must be a JSON object");
+      j_return = json_pack("{si}", "result", G_OK);
     }
-    json_decref(j_user);
   }
-
-  if (j_return != NULL) {
-    str_return = json_dumps(j_return, JSON_COMPACT);
-    json_decref(j_return);
-  }
-  return str_return;
+  return j_return;
 }
 
-int user_module_add(struct config_module * config, const char * str_new_user, void * cls) {
-  json_t * j_user = json_loads(str_new_user, JSON_DECODE_ANY, NULL);
-  int ret;
-  
-  if (j_user != NULL && json_is_object(j_user)) {
-    json_array_append((json_t *)cls, j_user);
-    ret = G_OK;
-  } else {
-    ret = G_ERROR_PARAM;
-  }
-  json_decref(j_user);
-  return ret;
+int user_module_add(struct config_module * config, json_t * j_user, void * cls) {
+  json_array_append(json_object_get((json_t *)cls, "list"), j_user);
+  return G_OK;
 }
 
-int user_module_update(struct config_module * config, const char * username, const char * str_user, void * cls) {
-  json_t * j_user = json_loads(str_user, JSON_DECODE_ANY, NULL), * j_element, * j_property;
+int user_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls) {
+  json_t * j_element, * j_property;
   size_t index;
   int found = 0, ret;
   const char * key;
   
-  if (j_user != NULL && json_is_object(j_user)) {
-    json_array_foreach((json_t *)cls, index, j_element) {
-      if (0 == o_strcmp(username, json_string_value(json_object_get(j_element, "username")))) {
-        json_object_set_new(j_user, "username", json_string(username));
-        json_object_foreach(j_user, key, j_property) {
-          json_object_set(j_element, key, j_property);
-        }
-        ret = G_OK;
-        found = 1;
-        break;
+  json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_element) {
+    if (0 == o_strcmp(username, json_string_value(json_object_get(j_element, "username")))) {
+      json_object_set_new(j_user, "username", json_string(username));
+      json_object_foreach(j_user, key, j_property) {
+        json_object_set(j_element, key, j_property);
       }
+      ret = G_OK;
+      found = 1;
+      break;
     }
-    if (!found) {
-      ret = G_ERROR_NOT_FOUND;
-    }
-  } else {
-    ret = G_ERROR_PARAM;
   }
-  json_decref(j_user);
+  if (!found) {
+    ret = G_ERROR_NOT_FOUND;
+  }
   return ret;
 }
 
-int user_module_update_profile(struct config_module * config, const char * username, const char * str_user, void * cls) {
-  return user_module_update(config, username, str_user, cls);
+int user_module_update_profile(struct config_module * config, const char * username, json_t * j_user, void * cls) {
+  return user_module_update(config, username, j_user, cls);
 }
 
 int user_module_delete(struct config_module * config, const char * username, void * cls) {
@@ -317,9 +298,9 @@ int user_module_delete(struct config_module * config, const char * username, voi
   size_t index;
   int ret, found = 0;
   
-  json_array_foreach((json_t *)cls, index, j_user) {
+  json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {
     if (0 == o_strcmp(username, json_string_value(json_object_get(j_user, "username")))) {
-      json_array_remove((json_t *)cls, index);
+      json_array_remove(json_object_get((json_t *)cls, "list"), index);
       ret = G_OK;
       found = 1;
       break;
@@ -332,11 +313,10 @@ int user_module_delete(struct config_module * config, const char * username, voi
 }
 
 int user_module_check_password(struct config_module * config, const char * username, const char * password, void * cls) {
-  char * str_user;
-  int ret, result;
-  str_user = user_module_get(config, username, &result, cls);
+  int ret;
+  json_t * j_user = user_module_get(config, username, cls);
   
-  if (result == G_OK) {
+  if (check_result_value(j_user, G_OK)) {
     if (0 == o_strcmp(password, "password")) {
       ret = G_OK;
     } else {
@@ -345,7 +325,7 @@ int user_module_check_password(struct config_module * config, const char * usern
   } else {
     ret = G_ERROR_NOT_FOUND;
   }
-  o_free(str_user);
+  json_decref(j_user);
   return ret;
 }
 

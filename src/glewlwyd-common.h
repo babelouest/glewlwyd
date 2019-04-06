@@ -90,27 +90,27 @@ typedef enum {
 struct config_module;
 
 struct _user_module {
-  void     * file_handle;
-  char     * name;
-  char     * display_name;
-  char     * description;
-  char     * parameters;
-  int     (* user_module_load)(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters);
-  int     (* user_module_unload)(struct config_module * config);
-  int     (* user_module_init)(struct config_module * config, const char * parameters, void ** cls);
-  int     (* user_module_close)(struct config_module * config, void * cls);
-  size_t  (* user_module_count_total)(struct config_module * config, const char * pattern, void * cls);
-  char *  (* user_module_get_list)(struct config_module * config, const char * pattern, size_t offset, size_t limit, int * result, void * cls);
-  char *  (* user_module_get)(struct config_module * config, const char * username, int * result, void * cls);
-  char *  (* user_module_get_profile)(struct config_module * config, const char * username, int * result, void * cls);
-  char *  (* user_is_valid)(struct config_module * config, const char * username, const char * str_user, int mode, int * result, void * cls);
-  int     (* user_module_add)(struct config_module * config, const char * str_new_user, void * cls);
-  int     (* user_module_update)(struct config_module * config, const char * username, const char * str_user, void * cls);
-  int     (* user_module_update_profile)(struct config_module * config, const char * username, const char * str_user, void * cls);
-  int     (* user_module_delete)(struct config_module * config, const char * username, void * cls);
-  int     (* user_module_check_password)(struct config_module * config, const char * username, const char * password, void * cls);
-  int     (* user_module_update_password)(struct config_module * config, const char * username, const char * new_password, void * cls);
-};
+  void      * file_handle;
+  char      * name;
+  char      * display_name;
+  char      * description;
+  json_t    * parameters;
+  json_t * (* user_module_load)(struct config_module * config);
+  int      (* user_module_unload)(struct config_module * config);
+  json_t * (* user_module_init)(struct config_module * config, json_t * j_parameters, void ** cls);
+  int      (* user_module_close)(struct config_module * config, void * cls);
+  size_t   (* user_module_count_total)(struct config_module * config, const char * pattern, void * cls);
+  json_t * (* user_module_get_list)(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
+  json_t * (* user_module_get)(struct config_module * config, const char * username, void * cls);
+  json_t * (* user_module_get_profile)(struct config_module * config, const char * username, void * cls);
+  json_t * (* user_is_valid)(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls);
+  int      (* user_module_add)(struct config_module * config, json_t * j_user, void * cls);
+  int      (* user_module_update)(struct config_module * config, const char * username, json_t * j_user, void * cls);
+  int      (* user_module_update_profile)(struct config_module * config, const char * username, json_t * j_user, void * cls);
+  int      (* user_module_delete)(struct config_module * config, const char * username, void * cls);
+  int      (* user_module_check_password)(struct config_module * config, const char * username, const char * password, void * cls);
+  int      (* user_module_update_password)(struct config_module * config, const char * username, const char * new_password, void * cls);
+  };
 
 struct _user_module_instance {
   char                * name;
@@ -125,19 +125,19 @@ struct _client_module {
   char     * name;
   char     * display_name;
   char     * description;
-  char     * parameters;
-  int     (* client_module_load)(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters);
-  int     (* client_module_unload)(struct config_module * config);
-  int     (* client_module_init)(struct config_module * config, const char * parameters, void ** cls);
-  int     (* client_module_close)(struct config_module * config, void * cls);
-  size_t  (* client_module_count_total)(struct config_module * config, const char * pattern, void * cls);
-  char  * (* client_module_get_list)(struct config_module * config, const char * pattern, size_t offset, size_t limit, int * result, void * cls);
-  char  * (* client_module_get)(struct config_module * config, const char * client_id, int * result, void * cls);
-  char *  (* client_is_valid)(struct config_module * config, const char * username, const char * str_user, int mode, int * result, void * cls);
-  int     (* client_module_add)(struct config_module * config, const char * str_new_client, void * cls);
-  int     (* client_module_update)(struct config_module * config, const char * client_id, const char * str_client, void * cls);
-  int     (* client_module_delete)(struct config_module * config, const char * client_id, void * cls);
-  int     (* client_module_check_password)(struct config_module * config, const char * client_id, const char * password, void * cls);
+  json_t   * parameters;
+  json_t * (* client_module_load)(struct config_module * config);
+  int      (* client_module_unload)(struct config_module * config);
+  int      (* client_module_init)(struct config_module * config, json_t * j_parameters, void ** cls);
+  int      (* client_module_close)(struct config_module * config, void * cls);
+  size_t   (* client_module_count_total)(struct config_module * config, const char * pattern, void * cls);
+  json_t * (* client_module_get_list)(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
+  json_t * (* client_module_get)(struct config_module * config, const char * client_id, void * cls);
+  json_t * (* client_is_valid)(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls);
+  int      (* client_module_add)(struct config_module * config, json_t * j_client, void * cls);
+  int      (* client_module_update)(struct config_module * config, const char * client_id, json_t * j_client, void * cls);
+  int      (* client_module_delete)(struct config_module * config, const char * client_id, void * cls);
+  int      (* client_module_check_password)(struct config_module * config, const char * client_id, const char * password, void * cls);
 };
 
 struct _client_module_instance {
@@ -149,20 +149,20 @@ struct _client_module_instance {
 };
 
 struct _user_auth_scheme_module {
-  void * file_handle;
-  char * name;
-  char * display_name;
-  char * description;
-  char * parameters;
-  int    (* user_auth_scheme_module_load)(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters);
-  int    (* user_auth_scheme_module_unload)(struct config_module * config);
-  int    (* user_auth_scheme_module_init)(struct config_module * config, const char * parameters, void ** cls);
-  int    (* user_auth_scheme_module_close)(struct config_module * config, void * cls);
-  int    (* user_auth_scheme_module_trigger)(struct config_module * config, const void * http_request, const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls);
-  char * (* user_auth_scheme_module_register_get)(struct config_module * config, const void * http_request, const char * username, int * result, void * cls);
-  int    (* user_auth_scheme_module_register)(struct config_module * config, const void * http_request, const char * username, const char * scheme_data, char ** scheme_data_response, void * cls);
-  int    (* user_auth_scheme_module_validate)(struct config_module * config, const void * http_request, const char * username, const char * scheme_data, void * cls);
-  int    (* user_can_use_scheme)(struct config_module * config, const char * username, void * cls);
+  void       * file_handle;
+  char       * name;
+  char       * display_name;
+  char       * description;
+  json_t     * parameters;
+  json_t  * (* user_auth_scheme_module_load)(struct config_module * config);
+  int       (* user_auth_scheme_module_unload)(struct config_module * config);
+  int       (* user_auth_scheme_module_init)(struct config_module * config, json_t * j_parameters, void ** cls);
+  int       (* user_auth_scheme_module_close)(struct config_module * config, void * cls);
+  int       (* user_auth_scheme_module_can_use)(struct config_module * config, const char * username, void * cls);
+  json_t  * (* user_auth_scheme_module_register)(struct config_module * config, const void * http_request, const char * username, json_t * j_scheme_data, void * cls);
+  json_t  * (* user_auth_scheme_module_register_get)(struct config_module * config, const void * http_request, const char * username, void * cls);
+  json_t  * (* user_auth_scheme_module_trigger)(struct config_module * config, const void * http_request, const char * username, json_t * j_scheme_trigger, void * cls);
+  int       (* user_auth_scheme_module_validate)(struct config_module * config, const void * http_request, const char * username, json_t * j_scheme_data, void * cls);
 };
 
 struct _user_auth_scheme_module_instance {
@@ -179,15 +179,15 @@ struct _user_auth_scheme_module_instance {
 struct config_plugin;
 
 struct _plugin_module {
-  void * file_handle;
-  char * name;
-  char * display_name;
-  char * description;
-  char * parameters;
-  int (* plugin_module_load)(struct config_plugin * config, char ** name, char ** display_name, char ** description, char ** parameters);
-  int (* plugin_module_unload)(struct config_plugin * config);
-  int (* plugin_module_init)(struct config_plugin * config, const char * parameters, void ** cls);
-  int (* plugin_module_close)(struct config_plugin * config, void * cls);
+  void      * file_handle;
+  char      * name;
+  char      * display_name;
+  char      * description;
+  json_t    * parameters;
+  json_t * (* plugin_module_load)(struct config_plugin * config);
+  int      (* plugin_module_unload)(struct config_plugin * config);
+  int      (* plugin_module_init)(struct config_plugin * config, const char * parameters, void ** cls);
+  int      (* plugin_module_close)(struct config_plugin * config, void * cls);
 };
 
 struct _plugin_module_instance {
@@ -265,8 +265,8 @@ struct config_module {
   struct _h_connection    * conn;
   digest_algorithm          hash_algorithm;
   struct config_elements  * glewlwyd_config;
-  char                 * (* glewlwyd_module_callback_get_user)(struct config_module * config, const char * username, int * result);
-  int                    (* glewlwyd_module_callback_set_user)(struct config_module * config, const char * username, const char * str_user);
+  json_t               * (* glewlwyd_module_callback_get_user)(struct config_module * config, const char * username);
+  int                    (* glewlwyd_module_callback_set_user)(struct config_module * config, const char * username, json_t * j_user);
   int                    (* glewlwyd_module_callback_check_user_password)(struct config_module * config, const char * username, const char * password);
 };
 
@@ -275,10 +275,12 @@ const char * get_ip_source(const struct _u_request * request);
 char * get_client_hostname(const struct _u_request * request);
 unsigned char random_at_most(unsigned char max);
 char * rand_string(char * str, size_t str_size);
+int rand_code(char * str, size_t str_size);
 char * join_json_string_array(json_t * j_array, const char * separator);
 char * url_encode(const char * str);
 int generate_digest(digest_algorithm digest, const char * password, int use_salt, char * out_digest);
 char * generate_hash(digest_algorithm digest, const char * password);
+
 /**
  * Check if the result json object has a "result" element that is equal to value
  */
@@ -287,51 +289,51 @@ int check_result_value(json_t * result, const int value);
 // Modules functions prototypes
 
 // User
-int     user_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters);
-int     user_module_unload(struct config_module * config);
-int     user_module_init(struct config_module * config, const char * parameters, void ** cls);
-int     user_module_close(struct config_module * config, void * cls);
-size_t  user_module_count_total(struct config_module * config, const char * pattern, void * cls);
-char *  user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, int * result, void * cls);
-char *  user_module_get(struct config_module * config, const char * username, int * result, void * cls);
-char *  user_module_get_profile(struct config_module * config, const char * username, int * result, void * cls);
-char *  user_is_valid(struct config_module * config, const char * username, const char * str_user, int mode, int * result, void * cls);
-int     user_module_add(struct config_module * config, const char * str_new_user, void * cls);
-int     user_module_update(struct config_module * config, const char * username, const char * str_user, void * cls);
-int     user_module_update_profile(struct config_module * config, const char * username, const char * str_user, void * cls);
-int     user_module_delete(struct config_module * config, const char * username, void * cls);
-int     user_module_check_password(struct config_module * config, const char * username, const char * password, void * cls);
-int     user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls);
+json_t * user_module_load(struct config_module * config);
+int      user_module_unload(struct config_module * config);
+int      user_module_init(struct config_module * config, json_t * j_parameters, void ** cls);
+int      user_module_close(struct config_module * config, void * cls);
+size_t   user_module_count_total(struct config_module * config, const char * pattern, void * cls);
+json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
+json_t * user_module_get(struct config_module * config, const char * username, void * cls);
+json_t * user_module_get_profile(struct config_module * config, const char * username, void * cls);
+json_t * user_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls);
+int      user_module_add(struct config_module * config, json_t * j_user, void * cls);
+int      user_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls);
+int      user_module_update_profile(struct config_module * config, const char * username, json_t * j_user, void * cls);
+int      user_module_delete(struct config_module * config, const char * username, void * cls);
+int      user_module_check_password(struct config_module * config, const char * username, const char * password, void * cls);
+int      user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls);
 
 // Client
-int     client_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters);
-int     client_module_unload(struct config_module * config);
-int     client_module_init(struct config_module * config, const char * parameters, void ** cls);
-int     client_module_close(struct config_module * config, void * cls);
-size_t  client_module_count_total(struct config_module * config, const char * pattern, void * cls);
-char  * client_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, int * result, void * cls);
-char  * client_module_get(struct config_module * config, const char * client_id, int * result, void * cls);
-char *  client_is_valid(struct config_module * config, const char * username, const char * str_user, int mode, int * result, void * cls);
-int     client_module_add(struct config_module * config, const char * str_new_client, void * cls);
-int     client_module_update(struct config_module * config, const char * client_id, const char * str_client, void * cls);
-int     client_module_delete(struct config_module * config, const char * client_id, void * cls);
-int     client_module_check_password(struct config_module * config, const char * client_id, const char * password, void * cls);
+json_t * client_module_load(struct config_module * config);
+int      client_module_unload(struct config_module * config);
+int      client_module_init(struct config_module * config, json_t * j_parameters, void ** cls);
+int      client_module_close(struct config_module * config, void * cls);
+size_t   client_module_count_total(struct config_module * config, const char * pattern, void * cls);
+json_t * client_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
+json_t * client_module_get(struct config_module * config, const char * client_id, void * cls);
+json_t * client_is_valid(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls);
+int      client_module_add(struct config_module * config, json_t * j_client, void * cls);
+int      client_module_update(struct config_module * config, const char * client_id, json_t * j_client, void * cls);
+int      client_module_delete(struct config_module * config, const char * client_id, void * cls);
+int      client_module_check_password(struct config_module * config, const char * client_id, const char * password, void * cls);
 
 // Scheme
-int    user_auth_scheme_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters);
-int    user_auth_scheme_module_unload(struct config_module * config);
-int    user_auth_scheme_module_init(struct config_module * config, const char * parameters, void ** cls);
-int    user_auth_scheme_module_close(struct config_module * config, void * cls);
-int    user_auth_scheme_module_trigger(struct config_module * config, const void * http_request, const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls);
-char * user_auth_scheme_module_register_get(struct config_module * config, const void * http_request, const char * username, int * result, void * cls);
-int    user_auth_scheme_module_register(struct config_module * config, const void * http_request, const char * username, const char * scheme_data, char ** scheme_data_response, void * cls);
-int    user_auth_scheme_module_validate(struct config_module * config, const void * http_request, const char * username, const char * scheme_data, void * cls);
-int    user_can_use_scheme(struct config_module * config, const char * username, void * cls);
+json_t * user_auth_scheme_module_load(struct config_module * config);
+int      user_auth_scheme_module_unload(struct config_module * config);
+int      user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls);
+int      user_auth_scheme_module_close(struct config_module * config, void * cls);
+int      user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls);
+json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls);
+json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, const char * username, void * cls);
+json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls);
+int      user_auth_scheme_module_validate(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls);
 
 // Plugin
-int plugin_module_load(struct config_plugin * config, char ** name, char ** display_name, char ** description, char ** parameters);
-int plugin_module_unload(struct config_plugin * config);
-int plugin_module_init(struct config_plugin * config, const char * parameters, void ** cls);
-int plugin_module_close(struct config_plugin * config, void * cls);
+json_t * plugin_module_load(struct config_plugin * config);
+int      plugin_module_unload(struct config_plugin * config);
+int      plugin_module_init(struct config_plugin * config, json_t * j_parameters, void ** cls);
+int      plugin_module_close(struct config_plugin * config, void * cls);
 
 #endif

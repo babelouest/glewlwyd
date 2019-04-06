@@ -458,84 +458,138 @@ static int save_client_scope(struct mod_parameters * param, json_t * j_scope, js
   return ret;
 }
 
-int client_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
-  int ret = G_OK;
-  if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
-    *name = o_strdup("database");
-    *display_name = o_strdup("Database backend client");
-    *description = o_strdup("Module to store users in the database");
-    *parameters = o_strdup("{"
-                             "\"use-glewlwyd-connection\":{\"type\":\"boolean\",\"default\":true},"
-                             "\"connection-type\":{\"type\":\"list\",\"values\":[\"sqlite\",\"mariadb\",\"postgre\"],\"mandatory\":false},"
-                             "\"sqlite-dbpath\":{\"type\":\"string\",\"mandatory\":false},"
-                             "\"mariadb-host\":{\"type\":\"string\",\"mandatory\":false},"
-                             "\"mariadb-user\":{\"type\":\"string\",\"mandatory\":false},"
-                             "\"mariadb-password\":{\"type\":\"string\",\"mandatory\":false},"
-                             "\"mariadb-dbname\":{\"type\":\"string\",\"mandatory\":false},"
-                             "\"mariadb-port\":{\"type\":\"number\",\"mandatory\":false},"
-                             "\"postgre-conninfo\":{\"type\":\"string\",\"mandatory\":false},"
-                             "\"data-format\":{"
-                              "\"field-name\":{"
-                                "\"format\":{\"type\":\"list\",\"values\":[\"string\",\"number\",\"boolean\"],\"default\":\"string\"},"
-                                "\"multiple\":{\"type\":\"boolean\",\"default\":false}"
-                              "}"
-                             "}"
-                           "}");
-  } else {
-    ret = G_ERROR;
-  }
-  return ret;
+json_t * client_module_load(struct config_module * config) {
+  return json_pack("{sisssssss{s{ssso}s{sss[sss]so}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{s{s{sssso}s{sssso}s{sssso}s{sssso}s{sssso}}}}",
+                   "result",
+                   G_OK,
+                   "name",
+                   "database",
+                   "display_name",
+                   "Database backend user module",
+                   "description",
+                   "Module to store users in the database",
+                   "parameters",
+                     "use-glewlwyd-connection",
+                       "type",
+                       "boolean",
+                       "mandatory",
+                       json_true(),
+                     "connection-type",
+                       "type",
+                       "list",
+                       "values",
+                         "sqlite",
+                         "mariadb",
+                         "postgre",
+                       "mandatory",
+                       json_false(),
+                     "sqlite-dbpath",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "mariadb-host",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "mariadb-user",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "mariadb-password",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "mariadb-dbname",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "mariadb-port",
+                       "type",
+                       "number",
+                       "mandatory",
+                       json_false(),
+                     "postgre-conninfo",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "data-format",
+                       "field-name",
+                         "multiple",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_false(),
+                         "read",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_true(),
+                         "write",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_true(),
+                         "profile-read",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_false(),
+                         "profile-write",
+                           "type",
+                           "boolean",
+                           "default",
+                           json_false());
 }
 
 int client_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int client_module_init(struct config_module * config, const char * parameters, void ** cls) {
-  json_t * j_params = json_loads(parameters, JSON_DECODE_ANY, NULL), * j_result;
+int client_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
+  json_t * j_result;
   int ret;
   char * error_message;
   
-  if (j_params != NULL) {
-    j_result = is_client_database_parameters_valid(j_params);
-    if (check_result_value(j_result, G_OK)) {
-      *cls = o_malloc(sizeof(struct mod_parameters));
-      if (*cls != NULL) {
-        ((struct mod_parameters *)*cls)->j_params = j_params;
-        ((struct mod_parameters *)*cls)->hash_algorithm = config->hash_algorithm;
-        if (json_object_get(j_params, "use-glewlwyd-connection") != json_false()) {
-            ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 0;
-            ((struct mod_parameters *)*cls)->conn = config->conn;
-        } else {
-          ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 1;
-          if (0 == o_strcmp(json_string_value(json_object_get(j_params, "connection-type")), "sqlite")) {
-            ((struct mod_parameters *)*cls)->conn = h_connect_sqlite(json_string_value(json_object_get(j_params, "sqlite-dbpath")));
-          } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "connection-type")), "mariadb")) {
-            ((struct mod_parameters *)*cls)->conn = h_connect_mariadb(json_string_value(json_object_get(j_params, "mariadb-host")), json_string_value(json_object_get(j_params, "mariadb-user")), json_string_value(json_object_get(j_params, "mariadb-password")), json_string_value(json_object_get(j_params, "mariadb-dbname")), json_integer_value(json_object_get(j_params, "mariadb-port")), NULL);
-          } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "connection-type")), "postgre")) {
-            ((struct mod_parameters *)*cls)->conn = h_connect_pgsql(json_string_value(json_object_get(j_params, "postgre-conninfo")));
-          }
-        }
-        ret = G_OK;
+  j_result = is_client_database_parameters_valid(j_parameters);
+  if (check_result_value(j_result, G_OK)) {
+    *cls = o_malloc(sizeof(struct mod_parameters));
+    if (*cls != NULL) {
+      ((struct mod_parameters *)*cls)->j_params = json_incref(j_parameters);
+      ((struct mod_parameters *)*cls)->hash_algorithm = config->hash_algorithm;
+      if (json_object_get(j_parameters, "use-glewlwyd-connection") != json_false()) {
+          ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 0;
+          ((struct mod_parameters *)*cls)->conn = config->conn;
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error allocating resources for cls");
-        ret = G_ERROR_MEMORY;
+        ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 1;
+        if (0 == o_strcmp(json_string_value(json_object_get(j_parameters, "connection-type")), "sqlite")) {
+          ((struct mod_parameters *)*cls)->conn = h_connect_sqlite(json_string_value(json_object_get(j_parameters, "sqlite-dbpath")));
+        } else if (0 == o_strcmp(json_string_value(json_object_get(j_parameters, "connection-type")), "mariadb")) {
+          ((struct mod_parameters *)*cls)->conn = h_connect_mariadb(json_string_value(json_object_get(j_parameters, "mariadb-host")), json_string_value(json_object_get(j_parameters, "mariadb-user")), json_string_value(json_object_get(j_parameters, "mariadb-password")), json_string_value(json_object_get(j_parameters, "mariadb-dbname")), json_integer_value(json_object_get(j_parameters, "mariadb-port")), NULL);
+        } else if (0 == o_strcmp(json_string_value(json_object_get(j_parameters, "connection-type")), "postgre")) {
+          ((struct mod_parameters *)*cls)->conn = h_connect_pgsql(json_string_value(json_object_get(j_parameters, "postgre-conninfo")));
+        }
       }
-    } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-      error_message = json_dumps(json_object_get(j_result, "error"), JSON_COMPACT);
-      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error parsing parameters");
-      y_log_message(Y_LOG_LEVEL_ERROR, error_message);
-      o_free(error_message);
-      ret = G_ERROR_PARAM;
+      ret = G_OK;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error is_client_database_parameters_valid");
-      ret = G_ERROR;
+      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error allocating resources for cls");
+      ret = G_ERROR_MEMORY;
     }
-  } else {
+  } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+    error_message = json_dumps(json_object_get(j_result, "error"), JSON_COMPACT);
     y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error parsing parameters");
+    y_log_message(Y_LOG_LEVEL_ERROR, error_message);
+    o_free(error_message);
     ret = G_ERROR_PARAM;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error is_client_database_parameters_valid");
+    ret = G_ERROR;
   }
-  json_decref(j_params);
   return ret;
 }
 
@@ -584,11 +638,11 @@ size_t client_module_count_total(struct config_module * config, const char * pat
   return ret;
 }
 
-char * client_module_get_list(struct config_module * config, const char * pattern, size_t limit, size_t offset, int * result, void * cls) {
+json_t * client_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_query, * j_result, * j_element;
+  json_t * j_query, * j_result, * j_element, * j_return;
   int res;
-  char * str_result = NULL, * pattern_clause;
+  char * pattern_clause;
   size_t index;
   
   j_query = json_pack("{sss[sssss]sisi}",
@@ -621,14 +675,13 @@ char * client_module_get_list(struct config_module * config, const char * patter
       json_object_del(j_element, "gc_enabled");
       json_object_del(j_element, "gc_id");
     }
-    str_result = json_dumps(j_result, JSON_COMPACT);
-    *result = G_OK;
+    j_return = json_pack("{sisO}" "result", G_OK, "list", j_result);
     json_decref(j_result);
   } else {
-    *result = G_ERROR_DB;
     y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list database - Error executing j_query");
+    j_return = json_pack("{si}" "result", G_ERROR_DB);
   }
-  return str_result;
+  return j_return;
 }
 
 static json_t * database_client_scope_get(struct mod_parameters * param, json_int_t gu_id) {
@@ -659,11 +712,10 @@ static json_t * database_client_scope_get(struct mod_parameters * param, json_in
   return j_return;
 }
 
-char * client_module_get(struct config_module * config, const char * client_id, int * result, void * cls) {
+json_t * client_module_get(struct config_module * config, const char * client_id, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_query, * j_result, * j_scope;
+  json_t * j_query, * j_result, * j_scope, * j_return;
   int res;
-  char * str_result = NULL;
   
   j_query = json_pack("{sss[sssss]s{ss}}",
                       "table",
@@ -691,78 +743,66 @@ char * client_module_get(struct config_module * config, const char * client_id, 
         }
         json_object_del(json_array_get(j_result, 0), "gc_enabled");
         json_object_del(json_array_get(j_result, 0), "gc_id");
-        str_result = json_dumps(j_result, JSON_COMPACT);
-        *result = G_OK;
+        j_return = json_pack("{sisO}", "result", G_OK, "client", json_array_get(j_result, 0));
       } else {
-        *result = G_ERROR;
+        j_return = json_pack("{si}", "result", G_ERROR);
         y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get database - Error database_client_scope_get");
       }
       json_decref(j_scope);
     } else {
-      *result = G_ERROR_NOT_FOUND;
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
     json_decref(j_result);
   } else {
-    *result = G_ERROR_DB;
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_count_total database - Error executing j_query");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
-  return str_result;
+  return j_return;
 }
 
-char * client_is_valid(struct config_module * config, const char * client_id, const char * str_client, int mode, int * result, void * cls) {
+json_t * client_is_valid(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_client = json_loads(str_client, JSON_DECODE_ANY, NULL), * j_result = NULL, * j_element, * j_format, * j_value;
-  char * str_result = NULL, * message;
-  int res;
+  json_t * j_result = json_array(), * j_element, * j_format, * j_value, * j_return, * j_cur_client;
+  char * message;
   size_t index;
   const char * property;
   
-  if (j_client != NULL && json_is_object(j_client)) {
-    *result = G_OK;
-    j_result = json_array();
-    if (j_result != NULL) {
+  if (j_result != NULL) {
+    if (json_is_object(j_client)) {
       if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
         if (!json_is_string(json_object_get(j_client, "client_id")) || json_string_length(json_object_get(j_client, "client_id")) > 128) {
-          *result = G_ERROR_PARAM;
           json_array_append_new(j_result, json_string("client_id is mandatory and must be a string of at least 128 characters"));
         } else {
-          o_free(client_module_get(config, json_string_value(json_object_get(j_client, "client_id")), &res, cls));
-          if (res == G_OK) {
-            *result = G_ERROR_PARAM;
+          j_cur_client = client_module_get(config, json_string_value(json_object_get(j_client, "client_id")), cls);
+          if (check_result_value(j_cur_client, G_OK)) {
             json_array_append_new(j_result, json_string("client_id already exist"));
-          } else if (res != G_ERROR_NOT_FOUND) {
+          } else if (!check_result_value(j_cur_client, G_ERROR_NOT_FOUND)) {
             y_log_message(Y_LOG_LEVEL_ERROR, "client_is_valid database - Error client_module_get");
           }
+          json_decref(j_cur_client);
         }
       } else if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && client_id == NULL) {
-        *result = G_ERROR_PARAM;
         json_array_append_new(j_result, json_string("client_id is mandatory on update mode"));
       }
       if (!json_is_array(json_object_get(j_client, "scope"))) {
-        *result = G_ERROR_PARAM;
         json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
       } else {
         json_array_foreach(json_object_get(j_client, "scope"), index, j_element) {
           if (!json_is_string(j_element) || !json_string_length(j_element)) {
-            *result = G_ERROR_PARAM;
             json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
           }
         }
       }
       if (json_object_get(j_client, "password") != NULL && !json_is_string(json_object_get(j_client, "password"))) {
-        *result = G_ERROR_PARAM;
         json_array_append_new(j_result, json_string("password must be a string"));
       }
       if (json_object_get(j_client, "name") != NULL && (!json_is_string(json_object_get(j_client, "name")) || json_string_length(json_object_get(j_client, "name")) > 256)) {
-        *result = G_ERROR_PARAM;
         json_array_append_new(j_result, json_string("name must be a string of at least 256 characters"));
       }
       if (json_object_get(j_client, "enabled") != NULL && !json_is_boolean(json_object_get(j_client, "enabled"))) {
-        *result = G_ERROR_PARAM;
         json_array_append_new(j_result, json_string("enabled must be a boolean"));
       }
       if (json_object_get(j_client, "confidential") != NULL && !json_is_boolean(json_object_get(j_client, "confidential"))) {
-        *result = G_ERROR_PARAM;
         json_array_append_new(j_result, json_string("confidential must be a boolean"));
       }
       json_object_foreach(j_client, property, j_element) {
@@ -770,14 +810,12 @@ char * client_is_valid(struct config_module * config, const char * client_id, co
           j_format = json_object_get(json_object_get(param->j_params, "data-format"), property);
           if (json_object_get(j_format, "multiple") == json_true()) {
             if (!json_is_array(j_element)) {
-              *result = G_ERROR_PARAM;
               message = msprintf("%s must be an array", property);
               json_array_append_new(j_result, json_string(message));
               o_free(message);
             } else {
               json_array_foreach(j_element, index, j_value) {
                 if (!json_is_string(j_value) || json_string_length(j_value) > 16*1024*1024) {
-                  *result = G_ERROR_PARAM;
                   message = msprintf("%s must contain a string value of at least 16M characters", property);
                   json_array_append_new(j_result, json_string(message));
                   o_free(message);
@@ -786,7 +824,6 @@ char * client_is_valid(struct config_module * config, const char * client_id, co
             }
           } else {
             if (!json_is_string(j_element) || json_string_length(j_element) > 16*1024*1024) {
-              *result = G_ERROR_PARAM;
               message = msprintf("%s must contain a string value of at least 16M characters", property);
               json_array_append_new(j_result, json_string(message));
               o_free(message);
@@ -794,40 +831,95 @@ char * client_is_valid(struct config_module * config, const char * client_id, co
           }
         }
       }
+    } else {
+      json_array_append_new(j_result, json_string("client must be a valid JSON object"));
     }
+    if (json_array_size(j_result)) {
+      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_result);
+    } else {
+      j_return = json_pack("{si}", "result", G_OK);
+    }
+    json_decref(j_result);
   } else {
-    *result = G_ERROR_PARAM;
-    j_result = json_string("client must be a valid JSON object");
+    y_log_message(Y_LOG_LEVEL_ERROR, "client_is_valid database - Error allocating resources for j_result");
+    j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
   }
-  json_decref(j_client);
-  if (*result != G_OK) {
-    str_result = json_dumps(j_result, JSON_COMPACT);
-  }
-  json_decref(j_result);
-  return str_result;
+  return j_return;
 }
 
-int client_module_add(struct config_module * config, const char * str_new_client, void * cls) {
+int client_module_add(struct config_module * config, json_t * j_client, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_client = json_loads(str_new_client, JSON_DECODE_ANY, NULL), * j_query, * j_gc_id;
+  json_t * j_query, * j_gc_id;
   int res, ret;
   char * password_clause;
   
-  if (j_client != NULL) {
-    j_query = json_pack("{sss{ss}}",
+  j_query = json_pack("{sss{ss}}",
+                      "table",
+                      G_TABLE_CLIENT,
+                      "values",
+                        "gc_client_id",
+                        json_string_value(json_object_get(j_client, "client_id")));
+  
+  if (json_object_get(j_client, "password") != NULL) {
+    password_clause = get_password_clause_write(param, json_string_value(json_object_get(j_client, "password")));
+    json_object_set_new(json_object_get(j_query, "values"), "gc_password", json_pack("{ss}", "raw", password_clause));
+    o_free(password_clause);
+  }
+  if (json_object_get(j_client, "name") != NULL) {
+    json_object_set(json_object_get(j_query, "values"), "gc_name", json_object_get(j_client, "name"));
+  }
+  if (json_object_get(j_client, "enabled") != NULL) {
+    json_object_set_new(json_object_get(j_query, "values"), "gc_enabled", json_object_get(j_client, "enabled")==json_false()?json_integer(0):json_integer(1));
+  }
+  if (json_object_get(j_client, "confidential") != NULL) {
+    json_object_set_new(json_object_get(j_query, "values"), "gc_confidential", json_object_get(j_client, "confidential")==json_false()?json_integer(0):json_integer(1));
+  }
+  res = h_insert(param->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    j_gc_id = h_last_insert_id(param->conn);
+    if (save_client_properties(param, j_client, json_integer_value(j_gc_id), 0) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_properties");
+      ret = G_ERROR_DB;
+    } else if (save_client_scope(param, json_object_get(j_client, "scope"), json_integer_value(j_gc_id)) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_scope");
+      ret = G_ERROR_DB;
+    } else {
+      ret = G_OK;
+    }
+    json_decref(j_gc_id);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error executing j_query insert");
+    ret = G_ERROR_DB;
+  }
+  return ret;
+}
+
+int client_module_update(struct config_module * config, const char * client_id, json_t * j_client, void * cls) {
+  struct mod_parameters * param = (struct mod_parameters *)cls;
+  json_t * j_query, * j_result = NULL;
+  int res, ret;
+  char * password_clause;
+  
+  j_query = json_pack("{sss[s]s{ss}}", "table", G_TABLE_CLIENT, "columns", "gc_id", "where", "gc_client_id", client_id);
+  res = h_select(param->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK && json_array_size(j_result)) {
+    j_query = json_pack("{sss{}s{sO}}",
                         "table",
                         G_TABLE_CLIENT,
-                        "values",
-                          "gc_client_id",
-                          json_string_value(json_object_get(j_client, "client_id")));
+                        "set",
+                        "where",
+                          "gc_id",
+                          json_object_get(json_array_get(j_result, 0), "gc_id"));
     
     if (json_object_get(j_client, "password") != NULL) {
       password_clause = get_password_clause_write(param, json_string_value(json_object_get(j_client, "password")));
-      json_object_set_new(json_object_get(j_query, "values"), "gc_password", json_pack("{ss}", "raw", password_clause));
+    json_object_set_new(json_object_get(j_query, "values"), "gc_password", json_pack("{ss}", "raw", password_clause));
       o_free(password_clause);
     }
     if (json_object_get(j_client, "name") != NULL) {
-      json_object_set(json_object_get(j_query, "values"), "gc_name", json_object_get(j_client, "name"));
+      json_object_set(json_object_get(j_query, "set"), "gc_name", json_object_get(j_client, "name"));
     }
     if (json_object_get(j_client, "enabled") != NULL) {
       json_object_set_new(json_object_get(j_query, "values"), "gc_enabled", json_object_get(j_client, "enabled")==json_false()?json_integer(0):json_integer(1));
@@ -835,94 +927,30 @@ int client_module_add(struct config_module * config, const char * str_new_client
     if (json_object_get(j_client, "confidential") != NULL) {
       json_object_set_new(json_object_get(j_query, "values"), "gc_confidential", json_object_get(j_client, "confidential")==json_false()?json_integer(0):json_integer(1));
     }
-    res = h_insert(param->conn, j_query, NULL);
+    if (json_object_size(json_object_get(j_query, "set"))) {
+      res = h_update(param->conn, j_query, NULL);
+    } else {
+      res = H_OK;
+    }
     json_decref(j_query);
     if (res == H_OK) {
-      j_gc_id = h_last_insert_id(param->conn);
-      if (save_client_properties(param, j_client, json_integer_value(j_gc_id), 0) != G_OK) {
+      if (save_client_properties(param, j_client, json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id")), 0) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_properties");
         ret = G_ERROR_DB;
-      } else if (save_client_scope(param, json_object_get(j_client, "scope"), json_integer_value(j_gc_id)) != G_OK) {
+      } else if (save_client_scope(param, json_object_get(j_client, "scope"), json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id"))) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_scope");
         ret = G_ERROR_DB;
       } else {
         ret = G_OK;
       }
-      json_decref(j_gc_id);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error executing j_query insert");
+      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error executing j_query update");
       ret = G_ERROR_DB;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error parsing str_new_client");
-    ret = G_ERROR;
+    ret = G_ERROR_NOT_FOUND;
   }
-  json_decref(j_client);
-  return ret;
-}
-
-int client_module_update(struct config_module * config, const char * client_id, const char * str_client, void * cls) {
-  struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_client = json_loads(str_client, JSON_DECODE_ANY, NULL), * j_query, * j_result = NULL;
-  int res, ret;
-  char * password_clause;
-  
-  if (j_client != NULL) {
-    j_query = json_pack("{sss[s]s{ss}}", "table", G_TABLE_CLIENT, "columns", "gc_id", "where", "gc_client_id", client_id);
-    res = h_select(param->conn, j_query, &j_result, NULL);
-    json_decref(j_query);
-    if (res == H_OK && json_array_size(j_result)) {
-      j_query = json_pack("{sss{}s{sO}}",
-                          "table",
-                          G_TABLE_CLIENT,
-                          "set",
-                          "where",
-                            "gc_id",
-                            json_object_get(json_array_get(j_result, 0), "gc_id"));
-      
-      if (json_object_get(j_client, "password") != NULL) {
-        password_clause = get_password_clause_write(param, json_string_value(json_object_get(j_client, "password")));
-      json_object_set_new(json_object_get(j_query, "values"), "gc_password", json_pack("{ss}", "raw", password_clause));
-        o_free(password_clause);
-      }
-      if (json_object_get(j_client, "name") != NULL) {
-        json_object_set(json_object_get(j_query, "set"), "gc_name", json_object_get(j_client, "name"));
-      }
-      if (json_object_get(j_client, "enabled") != NULL) {
-        json_object_set_new(json_object_get(j_query, "values"), "gc_enabled", json_object_get(j_client, "enabled")==json_false()?json_integer(0):json_integer(1));
-      }
-      if (json_object_get(j_client, "confidential") != NULL) {
-        json_object_set_new(json_object_get(j_query, "values"), "gc_confidential", json_object_get(j_client, "confidential")==json_false()?json_integer(0):json_integer(1));
-      }
-      if (json_object_size(json_object_get(j_query, "set"))) {
-        res = h_update(param->conn, j_query, NULL);
-      } else {
-        res = H_OK;
-      }
-      json_decref(j_query);
-      if (res == H_OK) {
-        if (save_client_properties(param, j_client, json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id")), 0) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_properties");
-          ret = G_ERROR_DB;
-        } else if (save_client_scope(param, json_object_get(j_client, "scope"), json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id"))) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_scope");
-          ret = G_ERROR_DB;
-        } else {
-          ret = G_OK;
-        }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error executing j_query update");
-        ret = G_ERROR_DB;
-      }
-    } else {
-      ret = G_ERROR_NOT_FOUND;
-    }
-    json_decref(j_result);
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error parsing str_new_client");
-    ret = G_ERROR;
-  }
-  json_decref(j_client);
+  json_decref(j_result);
   return ret;
 }
 

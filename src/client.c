@@ -62,8 +62,7 @@ json_t * auth_check_client_credentials(struct config_elements * config, const ch
 }
 
 json_t * get_client(struct config_elements * config, const char * client_id, const char * source) {
-  int found = 0, result;
-  char * str_client;
+  int found = 0;
   json_t * j_return = NULL, * j_client, * j_module_list, * j_module;
   struct _client_module_instance * client_module;
   size_t index;
@@ -71,25 +70,17 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
   if (source != NULL) {
     client_module = get_client_module_instance(config, source);
     if (client_module != NULL) {
-      result = G_ERROR;
-      str_client = client_module->module->client_module_get(config->config_m, client_id, &result, client_module->cls);
-      if (result == G_OK && str_client != NULL) {
-        j_client = json_loads(str_client, JSON_DECODE_ANY, NULL);
-        if (j_client != NULL) {
-          json_object_set_new(j_client, "source", json_string(source));
-          j_return = json_pack("{sisO}", "result", G_OK, "client", j_client);
-          json_decref(j_client);
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error json_loads");
-          j_return = json_pack("{si}", "result", G_ERROR);
-        }
-      } else if (result != G_OK && result != G_ERROR_NOT_FOUND) {
+      j_client = client_module->module->client_module_get(config->config_m, client_id, client_module->cls);
+      if (check_result_value(j_client, G_OK)) {
+        json_object_set_new(j_client, "source", json_string(source));
+        j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
+      } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
+        j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+      } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error, client_module_get for module %s", client_module->name);
         j_return = json_pack("{si}", "result", G_ERROR);
-      } else {
-        j_return = json_pack("{si}", "result", result);
       }
-      o_free(str_client);
+      json_decref(j_client);
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
@@ -101,22 +92,17 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
           client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
           if (client_module != NULL) {
             if (client_module->enabled) {
-              result = G_ERROR;
-              str_client = client_module->module->client_module_get(config->config_m, client_id, &result, client_module->cls);
-              if (result == G_OK && str_client != NULL) {
-                j_client = json_loads(str_client, JSON_DECODE_ANY, NULL);
-                if (j_client != NULL) {
-                  json_object_set_new(j_client, "source", json_string(client_module->name));
-                  j_return = json_pack("{sisO}", "result", G_OK, "client", j_client);
-                  json_decref(j_client);
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error json_loads");
-                }
-                found = 1;
-              } else if (result != G_OK && result != G_ERROR_NOT_FOUND) {
+              j_client = client_module->module->client_module_get(config->config_m, client_id, client_module->cls);
+              if (check_result_value(j_client, G_OK)) {
+                json_object_set_new(j_client, "source", json_string(source));
+                j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
+              } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
+                j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+              } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error, client_module_get for module %s", client_module->name);
+                j_return = json_pack("{si}", "result", G_ERROR);
               }
-              o_free(str_client);
+              json_decref(j_client);
             }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error, client_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
@@ -138,7 +124,6 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
 json_t * get_client_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source) {
   json_t * j_return, * j_module_list, * j_module, * j_list_parsed, * j_element;
   struct _client_module_instance * client_module;
-  char * list_result = NULL;
   int result;
   size_t cur_offset, cur_limit, count_total, index, index_c;
   
@@ -146,24 +131,17 @@ json_t * get_client_list(struct config_elements * config, const char * pattern, 
     client_module = get_client_module_instance(config, source);
     if (client_module != NULL && client_module->enabled) {
       result = G_ERROR;
-      list_result = client_module->module->client_module_get_list(config->config_m, pattern, offset, limit, &result, client_module->cls);
-      if (result == G_OK) {
-        j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
-        if (j_list_parsed && json_is_array(j_list_parsed)) {
-          json_array_foreach(j_list_parsed, index, j_element) {
-            json_object_set_new(j_element, "source", json_string(client_module->name));
-          }
-          j_return = json_pack("{sisO}", "result", G_OK, "client", j_list_parsed);
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error parsing client_module_get_list result into a JSON array");
-          j_return = json_pack("{si}", "result", G_ERROR);
+      j_list_parsed = client_module->module->client_module_get_list(config->config_m, pattern, offset, limit, client_module->cls);
+      if (check_result_value(j_list_parsed, G_OK)) {
+        json_array_foreach(j_list_parsed, index, j_element) {
+          json_object_set_new(j_element, "source", json_string(client_module->name));
         }
-        json_decref(j_list_parsed);
+        j_return = json_pack("{sisO}", "result", G_OK, "client", j_list_parsed);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error client_module_get_list");
         j_return = json_pack("{si}", "result", result);
       }
-      o_free(list_result);
+      json_decref(j_list_parsed);
     } else if (client_module != NULL && !client_module->enabled) {
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     } else {
@@ -182,29 +160,22 @@ json_t * get_client_list(struct config_elements * config, const char * pattern, 
           if (client_module != NULL && client_module->enabled) {
             result = G_ERROR;
             if ((count_total = client_module->module->client_module_count_total(config->config_m, pattern, client_module->cls)) > cur_offset && cur_limit) {
-              list_result = client_module->module->client_module_get_list(config->config_m, pattern, cur_offset, cur_limit, &result, client_module->cls);
-              if (result == G_OK) {
-                j_list_parsed = json_loads(list_result, JSON_DECODE_ANY, NULL);
-                if (j_list_parsed && json_is_array(j_list_parsed)) {
-                  json_array_foreach(j_list_parsed, index_c, j_element) {
-                    json_object_set_new(j_element, "source", json_string(client_module->name));
-                  }
-                  cur_offset = 0;
-                  if (cur_limit > json_array_size(j_list_parsed)) {
-                    cur_limit -= json_array_size(j_list_parsed);
-                  } else {
-                    cur_limit = 0;
-                  }
-                  json_array_extend(json_object_get(j_return, "client"), j_list_parsed);
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error parsing client_module_get_list result into a JSON array for module %s", json_string_value(json_object_get(j_module, "name")));
-                  j_return = json_pack("{si}", "result", G_ERROR);
+              j_list_parsed = client_module->module->client_module_get_list(config->config_m, pattern, cur_offset, cur_limit, client_module->cls);
+              if (check_result_value(j_list_parsed, G_OK)) {
+                json_array_foreach(j_list_parsed, index_c, j_element) {
+                  json_object_set_new(j_element, "source", json_string(client_module->name));
                 }
-                json_decref(j_list_parsed);
+                cur_offset = 0;
+                if (cur_limit > json_array_size(j_list_parsed)) {
+                  cur_limit -= json_array_size(j_list_parsed);
+                } else {
+                  cur_limit = 0;
+                }
+                json_array_extend(json_object_get(j_return, "client"), j_list_parsed);
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error client_module_get_list for module %s", json_string_value(json_object_get(j_module, "name")));
               }
-              o_free(list_result);
+              json_decref(j_list_parsed);
             } else {
               cur_offset -= count_total;
             }
@@ -226,8 +197,7 @@ json_t * get_client_list(struct config_elements * config, const char * pattern, 
 }
 
 json_t * is_client_valid(struct config_elements * config, const char * client_id, json_t * j_client, int add, const char * source) {
-  int found = 0, result;
-  char * str_error, * str_client;
+  int found = 0;
   json_t * j_return = NULL, * j_error_list, * j_module_list, * j_module;
   struct _client_module_instance * client_module;
   size_t index;
@@ -235,26 +205,14 @@ json_t * is_client_valid(struct config_elements * config, const char * client_id
   if (source != NULL) {
     client_module = get_client_module_instance(config, source);
     if (client_module != NULL && client_module->enabled && !client_module->readonly) {
-      str_client = json_dumps(j_client, JSON_COMPACT);
-      result = G_ERROR;
-      str_error = client_module->module->client_is_valid(config->config_m, client_id, str_client, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, client_module->cls);
-      if (result == G_ERROR_PARAM && str_error != NULL) {
-        j_error_list = json_loads(str_error, JSON_DECODE_ANY, NULL);
-        if (j_error_list != NULL) {
-          j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error_list);
-          json_decref(j_error_list);
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error json_loads");
-          j_return = json_pack("{si}", "result", G_ERROR);
-        }
-      } else if (result == G_OK) {
-        j_return = json_pack("{si}", "result", G_OK);
+      j_error_list = client_module->module->client_is_valid(config->config_m, client_id, j_client, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, client_module->cls);
+      if (check_result_value(j_error_list, G_ERROR_PARAM) || check_result_value(j_error_list, G_OK)) {
+        j_return = json_incref(j_error_list);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error client_is_valid");
-        j_return = json_pack("{si}", "result", result);
+        y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error, client_is_valid for module %s", client_module->name);
+        j_return = json_pack("{si}", "result", G_ERROR);
       }
-      o_free(str_error);
-      o_free(str_client);
+      json_decref(j_error_list);
     } else if (client_module != NULL && (client_module->readonly || !client_module->enabled)) {
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "module is unavailable");
     } else {
@@ -269,25 +227,14 @@ json_t * is_client_valid(struct config_elements * config, const char * client_id
           client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
           if (client_module != NULL && client_module->enabled && !client_module->readonly) {
             found = 1;
-            str_client = json_dumps(j_client, JSON_COMPACT);
-            result = G_ERROR;
-            str_error = client_module->module->client_is_valid(config->config_m, client_id, str_client, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, &result, client_module->cls);
-            if (result == G_ERROR_PARAM && str_error != NULL) {
-              j_error_list = json_loads(str_error, JSON_DECODE_ANY, NULL);
-              if (j_error_list != NULL) {
-                j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "client", j_error_list);
-                json_decref(j_error_list);
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error json_loads");
-              }
-            } else if (result == G_OK) {
-              j_return = json_pack("{si}", "result", G_OK);
+            j_error_list = client_module->module->client_is_valid(config->config_m, client_id, j_client, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, client_module->cls);
+            if (check_result_value(j_error_list, G_ERROR_PARAM) || check_result_value(j_error_list, G_OK)) {
+              j_return = json_incref(j_error_list);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error, client_is_valid for module %s", client_module->name);
-              j_return = json_pack("{si}", "result", result);
+              j_return = json_pack("{si}", "result", G_ERROR);
             }
-            o_free(str_error);
-            o_free(str_client);
+            json_decref(j_error_list);
           } else if (client_module == NULL) {
             y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error, client_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
           }
@@ -307,7 +254,6 @@ json_t * is_client_valid(struct config_elements * config, const char * client_id
 
 int add_client(struct config_elements * config, json_t * j_client, const char * source) {
   int found = 0, result, ret;
-  char * str_client;
   json_t * j_module_list, * j_module;
   struct _client_module_instance * client_module;
   size_t index;
@@ -315,15 +261,13 @@ int add_client(struct config_elements * config, json_t * j_client, const char * 
   if (source != NULL) {
     client_module = get_client_module_instance(config, source);
     if (client_module != NULL && client_module->enabled && !client_module->readonly) {
-      str_client = json_dumps(j_client, JSON_COMPACT);
-      result = client_module->module->client_module_add(config->config_m, str_client, client_module->cls);
+      result = client_module->module->client_module_add(config->config_m, j_client, client_module->cls);
       if (result == G_OK) {
         ret = G_OK;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "add_client - Error client_module_add");
         ret = result;
       }
-      o_free(str_client);
     } else if (client_module != NULL && (client_module->readonly || !client_module->enabled)) {
       ret = G_ERROR_PARAM;
     } else {
@@ -338,15 +282,13 @@ int add_client(struct config_elements * config, json_t * j_client, const char * 
           client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
           if (client_module != NULL && client_module->enabled && !client_module->readonly) {
             found = 1;
-            str_client = json_dumps(j_client, JSON_COMPACT);
-            result = client_module->module->client_module_add(config->config_m, str_client, client_module->cls);
+            result = client_module->module->client_module_add(config->config_m, j_client, client_module->cls);
             if (result == G_OK) {
               ret = G_OK;
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "add_client - Error client_module_add");
               ret = result;
             }
-            o_free(str_client);
           } else if (client_module == NULL) {
             y_log_message(Y_LOG_LEVEL_ERROR, "add_client - Error, client_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
           }
@@ -365,30 +307,29 @@ int add_client(struct config_elements * config, json_t * j_client, const char * 
 }
 
 int set_client(struct config_elements * config, const char * client_id, json_t * j_client, const char * source) {
-  int result, ret;
-  char * str_client;
+  int ret, result;
   struct _client_module_instance * client_module;
+  json_t * j_cur_client;
   
   if (source != NULL) {
     client_module = get_client_module_instance(config, source);
     if (client_module != NULL && client_module->enabled && !client_module->readonly) {
-      o_free(client_module->module->client_module_get(config->config_m, client_id, &result, client_module->cls));
-      if (result == G_OK) {
-        str_client = json_dumps(j_client, JSON_COMPACT);
-        result = client_module->module->client_module_update(config->config_m, client_id, str_client, client_module->cls);
+      j_cur_client = client_module->module->client_module_get(config->config_m, client_id, client_module->cls);
+      if (check_result_value(j_cur_client, G_OK)) {
+        result = client_module->module->client_module_update(config->config_m, client_id, j_client, client_module->cls);
         if (result == G_OK) {
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "set_client - Error client_module_update");
           ret = result;
         }
-        o_free(str_client);
-      } else if (result != G_ERROR_NOT_FOUND) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "set_client - Error client_module_get");
-        ret = result;
-      } else {
+      } else if (check_result_value(j_cur_client, G_ERROR_NOT_FOUND)) {
         ret = G_ERROR_NOT_FOUND;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "set_client - Error client_module_get");
+        ret = G_ERROR;
       }
+      json_decref(j_cur_client);
     } else if (client_module != NULL && (client_module->readonly || !client_module->enabled)) {
       ret = G_ERROR_PARAM;
     } else {
@@ -402,14 +343,15 @@ int set_client(struct config_elements * config, const char * client_id, json_t *
 }
 
 int delete_client(struct config_elements * config, const char * client_id, const char * source) {
-  int result, ret;
+  int ret, result;
   struct _client_module_instance * client_module;
+  json_t * j_client;
   
   if (source != NULL) {
     client_module = get_client_module_instance(config, source);
     if (client_module != NULL && client_module->enabled && !client_module->readonly) {
-      o_free(client_module->module->client_module_get(config->config_m, client_id, &result, client_module->cls));
-      if (result == G_OK) {
+      j_client = client_module->module->client_module_get(config->config_m, client_id, client_module->cls);
+      if (check_result_value(j_client, G_OK)) {
         result = client_module->module->client_module_delete(config->config_m, client_id, client_module->cls);
         if (result == G_OK) {
           ret = G_OK;
@@ -417,12 +359,13 @@ int delete_client(struct config_elements * config, const char * client_id, const
           y_log_message(Y_LOG_LEVEL_ERROR, "delete_client - Error client_module_delete");
           ret = result;
         }
-      } else if (result != G_ERROR_NOT_FOUND) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "delete_client - Error client_module_get");
-        ret = result;
-      } else {
+      } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
         ret = G_ERROR_NOT_FOUND;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "delete_client - Error client_module_get");
+        ret = G_ERROR;
       }
+      json_decref(j_client);
     } else if (client_module != NULL && (client_module->readonly || !client_module->enabled)) {
       ret = G_ERROR_PARAM;
     } else {

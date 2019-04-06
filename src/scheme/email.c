@@ -37,11 +37,7 @@
 #define GLEWLWYD_SCHEME_CODE_DEFAULT_LENGTH 6
 #define GLEWLWYD_SCHEME_CODE_DURATION 900
 
-struct _scheme_config {
-  json_t * j_param;
-};
-
-static int generate_new_code(struct _scheme_config * config, const char * username, char * code, size_t len) {
+static int generate_new_code(struct config_module * config, const char * username, char * code, size_t len) {
   json_t * j_query;
   int res, ret;
   char * code_hash = NULL;
@@ -55,11 +51,11 @@ static int generate_new_code(struct _scheme_config * config, const char * userna
                        "where",
                         "gusc_username",
                         username);
-  res = h_delete(config->config->conn, j_query, NULL);
+  res = h_delete(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
     if (rand_code(code, len)) {
-      if ((code_hash = generate_hash(config->config->hash_algorithm, code)) != NULL) {
+      if ((code_hash = generate_hash(config->hash_algorithm, code)) != NULL) {
         j_query = json_pack("{sss{ssss}}",
                             "table",
                             GLEWLWYD_SCHEME_CODE_TABLE,
@@ -68,7 +64,7 @@ static int generate_new_code(struct _scheme_config * config, const char * userna
                               username,
                               "gusc_code_hash",
                               code_hash);
-        res = h_insert(config->config->conn, j_query, NULL);
+        res = h_insert(config->conn, j_query, NULL);
         json_decref(j_query);
         if (res == H_OK) {
           ret = G_OK;
@@ -91,7 +87,7 @@ static int generate_new_code(struct _scheme_config * config, const char * userna
   return ret;
 }
 
-static int check_code(struct config_module * config, struct _scheme_config * scheme_config, const char * username, char * code) {
+static int check_code(struct config_module * config, json_t * j_param, const char * username, const char * code) {
   json_t * j_query, * j_result;
   int res, ret;
   char * code_hash = NULL, * issued_at_clause = NULL;
@@ -99,12 +95,12 @@ static int check_code(struct config_module * config, struct _scheme_config * sch
   
   if ((code_hash = generate_hash(config->hash_algorithm, code)) != NULL) {
     time(&now);
-    if (conn->type==HOEL_DB_TYPE_MARIADB) {
-      issued_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now - json_integer_value(json_object_get(scheme_config->j_param, "code-duration"))));
-    } else if (conn->type==HOEL_DB_TYPE_PGSQL) {
-      issued_at_clause = msprintf("> EXTRACT(TIMESTAMP FROM EPOCH %u)", (now - json_integer_value(json_object_get(scheme_config->j_param, "code-duration"))));
+    if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+      issued_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now - json_integer_value(json_object_get(j_param, "code-duration"))));
+    } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+      issued_at_clause = msprintf("> EXTRACT(TIMESTAMP FROM EPOCH %u)", (now - json_integer_value(json_object_get(j_param, "code-duration"))));
     } else { // HOEL_DB_TYPE_SQLITE
-      issued_at_clause = msprintf("> %u", (now - json_integer_value(json_object_get(scheme_config->j_param, "code-duration"))));
+      issued_at_clause = msprintf("> %u", (now - json_integer_value(json_object_get(j_param, "code-duration"))));
     }
     j_query = json_pack("{sss{sssssis{ssss}}}",
                         "table",
@@ -227,45 +223,107 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
  * You can also use it to load resources that are required once for all
  * instance modules for example
  * 
- * @return value: G_OK on success, another value on error
- *                On error, the module will not be available
+ * @return value: a json_t * value with the following pattern:
+ *                {
+ *                  result: number (G_OK on success, another value on error)
+ *                  name: string, mandatory, name of the module, must be unique among other scheme modules
+ *                  display_name: string, optional, long name of the module
+ *                  description: string, optional, description for the module
+ *                  parameters: object, optional, parameters description for the module
+ *                }
+ * 
+ *                Example:
+ *                {
+ *                  result: G_OK,
+ *                  name: "mock",
+ *                  display_name: "Mock scheme module",
+ *                  description: "Mock scheme module for glewlwyd tests",
+ *                  parameters: {
+ *                    mock-value: {
+ *                      type: "string",
+ *                      mandatory: true
+ *                    }
+ *                  }
+ *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
- * @parameter name: must return an allocated char * value containing the name
- *                  of the module, must be unique to identify the module
- * @parameter display_name: must return an allocated char * value containing the
- *                          display_name (long name) of the module
- * @parameter description: must return an allocated char * value containing the
- *                         description of the module
- * @parameter parameters: must return an allocated char * value containing the
- *                        expected parameters when calling user_auth_scheme_module_init
- *                        in JSON stringified format
  * 
  */
-int user_auth_scheme_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
-  int ret = G_OK;
-  
-  if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
-    *name = o_strdup("email");
-    *display_name = o_strdup("Email code scheme module");
-    *description = o_strdup("Send a code via email to authenticate the user");
-    *parameters = o_strdup("{\"code-length\":{\"type\":\"number\",\"mandatory\":false},"
-                            "\"code-duration\":{\"type\":\"number\",\"mandatory\":false},"
-                            "\"host\":{\"type\":\"string\",\"mandatory\":true},"
-                            "\"port\":{\"type\":\"number\",\"mandatory\":false},"
-                            "\"use-tls\":{\"type\":\"boolean\",\"mandatory\":false},"
-                            "\"check-certificate\":{\"type\":\"boolean\",\"mandatory\":false},"
-                            "\"user\":{\"type\":\"string\",\"mandatory\":false},"
-                            "\"password\":{\"type\":\"string\",\"mandatory\":false},"
-                            "\"from\":{\"type\":\"string\",\"mandatory\":false},"
-                            "\"subject\":{\"type\":\"string\",\"mandatory\":true},"
-                            "\"body-pattern\":{\"type\":\"string\",\"mandatory\":true},"
-                            "}");
-  } else {
-    ret = G_ERROR_PARAM;
-  }
-  return ret;
+json_t * user_auth_scheme_module_load(struct config_module * config) {
+  return json_pack("{sisssssss{s{sssosi}s{sssosi}s{ssso}s{sssosi}s{sssoso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}}}",
+                   "result",
+                   G_OK,
+                   "name",
+                   "email",
+                   "display_name",
+                   "Email code scheme module",
+                   "description",
+                   "Send a code via email to authenticate the user",
+                   "parameters",
+                     "code-length",
+                       "type",
+                       "number",
+                       "mandatory",
+                       json_false(),
+                       "default",
+                       GLEWLWYD_SCHEME_CODE_DEFAULT_LENGTH,
+                     "code-duration",
+                       "type",
+                       "number",
+                       "mandatory",
+                       json_false(),
+                       "default",
+                       GLEWLWYD_SCHEME_CODE_DURATION,
+                     "host",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "port",
+                       "type",
+                       "number",
+                       "mandatory",
+                       json_false(),
+                       "default",
+                       0,
+                     "use-tls",
+                       "type",
+                       "boolean",
+                       "mandatory",
+                       json_false(),
+                       "default",
+                       json_false(),
+                     "check-certificate",
+                       "type",
+                       "boolean",
+                       "mandatory",
+                       json_false(),
+                     "user",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "password",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "from",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
+                     "subject",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "body-pattern",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true());
 }
 
 /**
@@ -298,42 +356,28 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
- * @parameter: parameters used to initialize an instance in JSON stringified format
+ * @parameter j_parameters: used to initialize an instance in JSON format
  * @parameter cls: must return an allocated void * pointer that will be sent back
  *                 as void * in all module functions
  * 
  */
-int user_auth_scheme_module_init(struct config_module * config, const char * parameters, void ** cls) {
-  json_t * j_params = json_loads(parameters, JSON_DECODE_ANY, NULL), * j_result;
+int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
+  json_t * j_params = json_incref(j_parameters), * j_result;
   int ret;
   char * str_error;
   
-  if (j_params != NULL) {
-    *cls = o_malloc(sizeof(struct _scheme_config));
-    if (*cls != NULL) {
-      j_result = is_scheme_parameters_valid(j_params);
-      if (check_result_value(j_result, G_OK)) {
-        ((struct _scheme_config *)*cls)->j_param = j_params;
-        ret = G_OK;
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init email - Error in parameters");
-        str_error = json_dumps(json_object_get(k_result, "error"), JSON_ENCODE_ANY);
-        y_log_message(Y_LOG_LEVEL_ERROR, str_error);
-        o_free(str_error);
-        ret = G_ERROR_PARAM;
-      }
-      json_decref(j_result);
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init email - Error allocating resources for cls");
-      ret = G_ERROR_MEMORY;
-    }
+  j_result = is_scheme_parameters_valid(j_params);
+  if (check_result_value(j_result, G_OK)) {
+    *cls = json_incref(j_parameters);
+    ret = G_OK;
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init email - Error parsing parameters in JSON format");
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init email - Error in parameters");
+    str_error = json_dumps(json_object_get(j_result, "error"), JSON_ENCODE_ANY);
+    y_log_message(Y_LOG_LEVEL_ERROR, str_error);
+    o_free(str_error);
     ret = G_ERROR_PARAM;
   }
-  if (ret != G_OK) {
-    json_decref(j_params);
-  }
+  json_decref(j_result);
   return ret;
 }
 
@@ -353,14 +397,13 @@ int user_auth_scheme_module_init(struct config_module * config, const char * par
  * 
  */
 int user_auth_scheme_module_close(struct config_module * config, void * cls) {
-  json_decref(((struct _scheme_config *)cls)->j_param);
-  o_free(cls);
+  json_decref((json_t *)cls);
   return G_OK;
 }
 
 /**
  * 
- * user_auth_scheme_can_use
+ * user_auth_scheme_module_can_use
  * 
  * Validate if the user is allowed to use this scheme prior to the
  * authentication or registration
@@ -375,30 +418,18 @@ int user_auth_scheme_module_close(struct config_module * config, void * cls) {
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-int user_can_use_scheme(struct config_module * config, const char * username, void * cls) {
-  char * str_user = NULL;
+int user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls) {
   json_t * j_user;
-  int ret, result;
+  int ret;
 
-  str_user = config->glewlwyd_module_callback_get_user(config, username, &result);
-  if (result == G_OK) {
-    j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
-    if (j_user != NULL) {
-      if (json_object_get(j_user, "email") != NULL) {
-        ret = GLEWLWYD_IS_REGISTERED;
-      } else {
-        ret = GLEWLWYD_IS_NOT_AVAILABLE;
-      }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_can_use_scheme mail - Error parsing user");
-      ret = GLEWLWYD_IS_NOT_AVAILABLE;
-    }
-    json_decref(j_user);
+  j_user = config->glewlwyd_module_callback_get_user(config, username);
+  if (check_result_value(j_user, G_OK)) {
+    ret = json_object_get(json_object_get(j_user, "user"), "email") != NULL?GLEWLWYD_IS_REGISTERED:GLEWLWYD_IS_NOT_AVAILABLE;
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_can_use_scheme mail - Error glewlwyd_module_callback_get_user");
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use mail - Error glewlwyd_module_callback_get_user");
     ret = GLEWLWYD_IS_NOT_AVAILABLE;
   }
-  o_free(str_user);
+  json_decref(j_user);
   return ret;
 }
 
@@ -409,25 +440,23 @@ int user_can_use_scheme(struct config_module * config, const char * username, vo
  * Register the scheme for a user
  * Ex: add a certificate, add new TOTP values, etc.
  * 
- * @return value: G_OK on success, another value on error
+ * @return value: a json_t * value with the following pattern:
+ *                {
+ *                  result: number (G_OK on success, another value on error)
+ *                  response: JSON object, optional
+ *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
- * @parameter http_request: the original struct _u_request from the API, must be casted to be available
+ * @parameter http_request: the original struct _u_request from the HTTP API
  * @parameter username: username to identify the user
- * @parameter register_data: additional data used to register the scheme for the user
- *                           in JSON stringified format
- * @parameter register_response: must return an allocated char * value containing the
- *                               response of the registration in JSON stringified format
+ * @parameter j_scheme_data: additional data used to register the scheme for the user
+ *                           in JSON format
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-int user_auth_scheme_module_register(struct config_module * config, const void * http_request, const char * username, const char * register_data, char ** register_response, void * cls) {
-  if (user_can_use_scheme(username, cls) == GLEWLWYD_IS_REGISTERED) {
-    return G_OK;
-  } else {
-    return G_ERROR_PARAM;
-  }
+json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
+  return json_pack("{si}", "result", (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED?G_OK:G_ERROR_PARAM));
 }
 
 /**
@@ -436,25 +465,21 @@ int user_auth_scheme_module_register(struct config_module * config, const void *
  * 
  * Get the registration value(s) of the scheme for a user
  * 
- * @return value: Registration value for the user in JSON stringified format
- * as a dynamically allocated char *.
+ * @return value: a json_t * value with the following pattern:
+ *                {
+ *                  result: number (G_OK on success, another value on error)
+ *                  response: JSON object, optional
+ *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * @parameter http_request: the original struct _u_request from the API, must be casted to be available
  * @parameter username: username to identify the user
- * @parameter result: used to set the result of the function, must G_OK on success, another value on error
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-char * user_auth_scheme_module_register_get(struct config_module * config, const void * http_request, const char * username, int * result, void * cls) {
-  char * str_result = NULL;
-  if (user_can_use_scheme(username, cls) == GLEWLWYD_IS_REGISTERED) {
-    *result = G_OK;
-  } else {
-    *result = G_ERROR_PARAM;
-  }
-  return str_result;
+json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, const char * username, void * cls) {
+  return json_pack("{si}", "result", (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED)?G_OK:G_ERROR_PARAM);
 }
 
 /**
@@ -464,80 +489,73 @@ char * user_auth_scheme_module_register_get(struct config_module * config, const
  * Trigger the scheme for a user
  * Ex: send the code to a device, generate a challenge, etc.
  * 
- * @return value: G_OK on success, another value on error
+ * @return value: a json_t * value with the following pattern:
+ *                {
+ *                  result: number (G_OK on success, another value on error)
+ *                  response: JSON object, optional
+ *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * @parameter http_request: the original struct _u_request from the API, must be casted to be available
  * @parameter username: username to identify the user
  * @parameter scheme_trigger: data sent to trigger the scheme for the user
- *                           in JSON stringified format
- * @parameter register_response: must return an allocated char * value containing the
- *                               response of the trigger in JSON stringified format
+ *                           in JSON format
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-int user_auth_scheme_module_trigger(struct config_module * config, const void * http_request, const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls) {
-  struct _scheme_config * config = (struct _scheme_config *)cls;
-  char * str_user = NULL;
-  json_t * j_user;
-  int ret, result;
+json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls) {
+  json_t * j_user, * j_param = (json_t *)cls;
+  int ret;
   char * code = NULL, * body;
 
-  if (user_can_use_scheme(username, cls) == GLEWLWYD_IS_REGISTERED) {
-    str_user = config->glewlwyd_module_callback_get_user(config, username, &result);
-    if (result == G_OK) {
-      j_user = json_loads(str_user, JSON_DECODE_ANY, NULL);
-      if (j_user != NULL) {
-        if ((code = o_malloc((json_integer_value(json_object_get(config->j_param, "code-length")) + 1)*sizeof(char))) != NULL) {
-          memset(code, 0, (json_integer_value(json_object_get(config->j_param, "code-length")) + 1));
-          if (generate_new_code(config, username, code, json_integer_value(json_object_get(config->j_param, "code-length"))) == G_OK) {
-            if ((body = str_replace(json_string_value(json_object_get(config->j_param, "body-pattern")), "{CODE}", code)) != NULL) {
-              if (ulfius_send_smtp_email(json_string_value(json_object_get(config->j_param, "host")),
-                                         json_integer_value(json_object_get(config->j_param, "port")),
-                                         json_object_get(config->j_param, "use-tls")==json_true()?1:0,
-                                         json_object_get(config->j_param, "verify-certificate")==json_false()?0:1,
-                                         json_string_value(json_object_get(config->j_param, "user")),
-                                         json_string_value(json_object_get(config->j_param, "password")),
-                                         json_string_value(json_object_get(config->j_param, "from")),
-                                         json_string_value(json_object_get(j_user, "email")),
-                                         NULL,
-                                         NULL,
-                                         json_string_value(json_object_get(config->j_param, "subject")),
-                                         body) == G_OK) {
-                ret = G_OK;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error ulfius_send_smtp_email");
-                ret = G_ERROR_MEMORY;
-              }
-              o_free(body);
+  if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
+    j_user = config->glewlwyd_module_callback_get_user(config, username);
+    if (check_result_value(j_user, G_OK)) {
+      if ((code = o_malloc((json_integer_value(json_object_get(j_param, "code-length")) + 1)*sizeof(char))) != NULL) {
+        memset(code, 0, (json_integer_value(json_object_get(j_param, "code-length")) + 1));
+        if (generate_new_code(config, username, code, json_integer_value(json_object_get(j_param, "code-length"))) == G_OK) {
+          if ((body = str_replace(json_string_value(json_object_get(j_param, "body-pattern")), "{CODE}", code)) != NULL) {
+            if (ulfius_send_smtp_email(json_string_value(json_object_get(j_param, "host")),
+                                       json_integer_value(json_object_get(j_param, "port")),
+                                       json_object_get(j_param, "use-tls")==json_true()?1:0,
+                                       json_object_get(j_param, "verify-certificate")==json_false()?0:1,
+                                       json_string_value(json_object_get(j_param, "user")),
+                                       json_string_value(json_object_get(j_param, "password")),
+                                       json_string_value(json_object_get(j_param, "from")),
+                                       json_string_value(json_object_get(j_user, "email")),
+                                       NULL,
+                                       NULL,
+                                       json_string_value(json_object_get(j_param, "subject")),
+                                       body) == G_OK) {
+              ret = G_OK;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error str_replace");
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error ulfius_send_smtp_email");
               ret = G_ERROR_MEMORY;
             }
+            o_free(body);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error generate_new_code");
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error str_replace");
             ret = G_ERROR_MEMORY;
           }
-          o_free(code);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error parsing user");
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error generate_new_code");
           ret = G_ERROR_MEMORY;
         }
+        o_free(code);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error parsing user");
-        ret = G_ERROR;
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error allocating resources for code");
+        ret = G_ERROR_MEMORY;
       }
-      json_decref(j_user);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error glewlwyd_module_callback_get_user");
       ret = G_ERROR;
     }
-    o_free(str_user);
+    json_decref(j_user);
   } else {
     ret = G_ERROR_PARAM;
   }
-  return ret;
+  return json_pack("{si}", "result", ret);
 }
 
 /**
@@ -556,35 +574,28 @@ int user_auth_scheme_module_trigger(struct config_module * config, const void * 
  *                    service and data
  * @parameter http_request: the original struct _u_request from the API, must be casted to be available
  * @parameter username: username to identify the user
- * @parameter scheme_data: data sent to validate the scheme for the user
- *                           in JSON stringified format
+ * @parameter j_scheme_data: data sent to validate the scheme for the user
+ *                           in JSON format
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-int user_auth_scheme_module_validate(struct config_module * config, const void * http_request, const char * username, const char * scheme_data, void * cls) {
-  struct _scheme_config * config = (struct _scheme_config *)cls;
-  json_t * j_scheme = json_loads(scheme_data, JSON_DECODE_ANY, NULL);
+int user_auth_scheme_module_validate(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
   int ret, res;
-  char * code_hash;
+  json_t * j_param = (json_t *)cls;
   
-  if (j_scheme != NULL) {
-    if (user_can_use_scheme(username, cls) != GLEWLWYD_IS_REGISTERED) {
+  if (user_auth_scheme_module_can_use(config, username, cls) != GLEWLWYD_IS_REGISTERED) {
+    ret = G_ERROR_UNAUTHORIZED;
+  } else if (json_object_get(j_scheme_data, "code") != NULL && json_is_string(json_object_get(j_scheme_data, "code")) && json_integer_value(json_object_get(j_param, "code-length")) == json_string_length(json_object_get(j_scheme_data, "code"))) {
+    if ((res = check_code(config, j_param, username, json_string_value(json_object_get(j_scheme_data, "code")))) == G_OK) {
+      ret = G_OK;
+    } else if (res == G_ERROR_UNAUTHORIZED) {
       ret = G_ERROR_UNAUTHORIZED;
-    } else if (json_object_get(j_scheme, "code") != NULL && json_is_string(json_object_get(j_scheme, "code")) && json_integer_value(json_object_get(config->j_param, "code-length")) == json_string_length(json_object_get(j_scheme, "code"))) {
-      if ((res = check_code(config, username, json_string_value(json_object_get(j_scheme, "code")))) == G_OK) {
-        ret = G_OK;
-      } else if (res == G_ERROR_UNAUTHORIZED) {
-        ret = G_ERROR_UNAUTHORIZED;
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate mail - Error check_code");
-        ret = res;
-      }
     } else {
-      ret = G_ERROR_PARAM;
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate mail - Error check_code");
+      ret = res;
     }
   } else {
     ret = G_ERROR_PARAM;
   }
-  json_decref(j_scheme);
   return ret;
 }

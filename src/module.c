@@ -33,23 +33,18 @@ json_t * get_module_type_list(struct config_elements * config) {
   struct _user_auth_scheme_module * scheme_module;
   struct _plugin_module * plugin_module;
   int i;
-  json_t * j_parameters, * j_return;
+  json_t * j_return;
   
   if ((j_return = json_pack("{sis{s[]s[]s[]s[]}}", "result", G_OK, "module", "user", "client", "scheme", "plugin")) != NULL) {
     // Gathering user modules
     for (i=0; i<pointer_list_size(config->user_module_list); i++) {
       user_module = (struct _user_module *)pointer_list_get_at(config->user_module_list, i);
       if (user_module != NULL) {
-        if ((j_parameters = json_loads(user_module->parameters, JSON_DECODE_ANY, NULL)) != NULL) {
-          json_array_append_new(json_object_get(json_object_get(j_return, "module"), "user"), json_pack("{sssssssO}",
-                                                                                                        "name", user_module->name,
-                                                                                                        "display_name", user_module->display_name,
-                                                                                                        "description", user_module->description,
-                                                                                                        "parameters", j_parameters));
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error parsing json parameters for user module %s", user_module->name);
-        }
-        json_decref(j_parameters);
+        json_array_append_new(json_object_get(json_object_get(j_return, "module"), "user"), json_pack("{sssssssO}",
+                                                                                                      "name", user_module->name,
+                                                                                                      "display_name", user_module->display_name,
+                                                                                                      "description", user_module->description,
+                                                                                                      "parameters", user_module->parameters));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for user module at index %d", i);
       }
@@ -58,16 +53,11 @@ json_t * get_module_type_list(struct config_elements * config) {
     for (i=0; i<pointer_list_size(config->client_module_list); i++) {
       client_module = (struct _client_module *)pointer_list_get_at(config->client_module_list, i);
       if (client_module != NULL) {
-        if ((j_parameters = json_loads(client_module->parameters, JSON_DECODE_ANY, NULL)) != NULL) {
-          json_array_append_new(json_object_get(json_object_get(j_return, "module"), "client"), json_pack("{sssssssO}",
-                                                                                                          "name", client_module->name,
-                                                                                                          "display_name", client_module->display_name,
-                                                                                                          "description", client_module->description,
-                                                                                                          "parameters", j_parameters));
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error parsing json parameters for client module %s", client_module->name);
-        }
-        json_decref(j_parameters);
+        json_array_append_new(json_object_get(json_object_get(j_return, "module"), "client"), json_pack("{sssssssO}",
+                                                                                                        "name", client_module->name,
+                                                                                                        "display_name", client_module->display_name,
+                                                                                                        "description", client_module->description,
+                                                                                                        "parameters", user_module->parameters));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for client module at index %d", i);
       }
@@ -76,16 +66,11 @@ json_t * get_module_type_list(struct config_elements * config) {
     for (i=0; i<pointer_list_size(config->user_auth_scheme_module_list); i++) {
       scheme_module = (struct _user_auth_scheme_module *)pointer_list_get_at(config->user_auth_scheme_module_list, i);
       if (scheme_module != NULL) {
-        if ((j_parameters = json_loads(scheme_module->parameters, JSON_DECODE_ANY, NULL)) != NULL) {
-          json_array_append_new(json_object_get(json_object_get(j_return, "module"), "scheme"), json_pack("{sssssssO}",
-                                                                                                          "name", scheme_module->name,
-                                                                                                          "display_name", scheme_module->display_name,
-                                                                                                          "description", scheme_module->description,
-                                                                                                          "parameters", j_parameters));
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error parsing json parameters for user auth scheme module %s", scheme_module->name);
-        }
-        json_decref(j_parameters);
+        json_array_append_new(json_object_get(json_object_get(j_return, "module"), "scheme"), json_pack("{sssssssO}",
+                                                                                                        "name", scheme_module->name,
+                                                                                                        "display_name", scheme_module->display_name,
+                                                                                                        "description", scheme_module->description,
+                                                                                                        "parameters", user_module->parameters));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for user auth scheme module at index %d", i);
       }
@@ -94,16 +79,11 @@ json_t * get_module_type_list(struct config_elements * config) {
     for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {
       plugin_module = (struct _plugin_module *)pointer_list_get_at(config->plugin_module_list, i);
       if (plugin_module != NULL) {
-        if ((j_parameters = json_loads(plugin_module->parameters, JSON_DECODE_ANY, NULL)) != NULL) {
-          json_array_append_new(json_object_get(json_object_get(j_return, "module"), "plugin"), json_pack("{sssssssO}",
-                                                                                                          "name", plugin_module->name,
-                                                                                                          "display_name", plugin_module->display_name,
-                                                                                                          "description", plugin_module->description,
-                                                                                                          "parameters", j_parameters));
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error parsing json parameters for plugin module %s", plugin_module->name);
-        }
-        json_decref(j_parameters);
+        json_array_append_new(json_object_get(json_object_get(j_return, "module"), "plugin"), json_pack("{sssssssO}",
+                                                                                                        "name", plugin_module->name,
+                                                                                                        "display_name", plugin_module->display_name,
+                                                                                                        "description", plugin_module->description,
+                                                                                                        "parameters", user_module->parameters));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for plugin module at index %d", i);
       }
@@ -336,7 +316,7 @@ int add_user_module(struct config_elements * config, json_t * j_module) {
         cur_instance->enabled = 0;
         cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
         if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
-          if (module->user_module_init(config->config_m, parameters, &cur_instance->cls) == G_OK) {
+          if (module->user_module_init(config->config_m, json_object_get(j_module, "parameters"), &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
           } else {
@@ -443,7 +423,7 @@ int manage_user_module(struct config_elements * config, const char * name, int a
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->user_module_init(config->config_m, json_string_value(json_object_get(j_module, "parameters")), &instance->cls) == G_OK) {
+        if (instance->module->user_module_init(config->config_m, json_object_get(j_module, "parameters"), &instance->cls) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
         } else {
@@ -676,7 +656,7 @@ int add_user_auth_scheme_module(struct config_elements * config, json_t * j_modu
         cur_instance->module = module;
         cur_instance->enabled = 0;
         if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
-          if (module->user_auth_scheme_module_init(config->config_m, parameters, &cur_instance->cls) == G_OK) {
+          if (module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
           } else {
@@ -775,7 +755,7 @@ int manage_user_auth_scheme_module(struct config_elements * config, const char *
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->user_auth_scheme_module_init(config->config_m, json_string_value(json_object_get(j_module, "parameters")), &instance->cls) == G_OK) {
+        if (instance->module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), &instance->cls) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
         } else {
@@ -1032,7 +1012,7 @@ int add_client_module(struct config_elements * config, json_t * j_module) {
         cur_instance->enabled = 0;
         cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
         if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
-          if (module->client_module_init(config->config_m, parameters, &cur_instance->cls) == G_OK) {
+          if (module->client_module_init(config->config_m, json_object_get(j_module, "parameters"), &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
           } else {
@@ -1139,7 +1119,7 @@ int manage_client_module(struct config_elements * config, const char * name, int
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->client_module_init(config->config_m, json_string_value(json_object_get(j_module, "parameters")), &instance->cls) == G_OK) {
+        if (instance->module->client_module_init(config->config_m, json_object_get(j_module, "parameters"), &instance->cls) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
         } else {

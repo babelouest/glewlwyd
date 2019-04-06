@@ -27,18 +27,17 @@
 
 #include "../glewlwyd-common.h"
 
-int plugin_module_load(struct config_plugin * config, char ** name, char ** display_name, char ** description, char ** parameters) {
-  int ret = G_OK;
-  if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "plugin_module_load - success");
-    *name = o_strdup("mock");
-    *display_name = o_strdup("Mock plugin");
-    *description = o_strdup("Mock plugin description");
-    *parameters = o_strdup("{}");
-  } else {
-    ret = G_ERROR;
-  }
-  return ret;
+json_t * plugin_module_load(struct config_plugin * config) {
+  return json_pack("{sisssssss{}}",
+                   "result",
+                   G_OK,
+                   "name",
+                   "mock",
+                   "display_name",
+                   "Mock plugin",
+                   "description",
+                   "Mock plugin description",
+                   "parameters");
 }
 
 int plugin_module_unload(struct config_plugin * config) {
@@ -46,7 +45,7 @@ int plugin_module_unload(struct config_plugin * config) {
   return G_OK;
 }
 
-int plugin_module_init(struct config_plugin * config, const char * parameters, void ** cls) {
+int plugin_module_init(struct config_plugin * config, json_t * j_parameters, void ** cls) {
   y_log_message(Y_LOG_LEVEL_DEBUG, "plugin_module_init - success");
   return G_OK;
 }

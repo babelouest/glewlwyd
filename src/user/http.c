@@ -32,62 +32,74 @@
 #include <ulfius.h>
 #include "../glewlwyd-common.h"
 
-int user_module_load(struct config_module * config, char ** name, char ** display_name, char ** description, char ** parameters) {
-  int ret = G_OK;
-  if (name != NULL && parameters != NULL && display_name != NULL && description != NULL) {
-    *name = o_strdup("http");
-    *display_name = o_strdup("HTTP Basic Auth backend user");
-    *description = o_strdup("Module to authenticate users via a HTTP service with Basic Auth");
-    *parameters = o_strdup("{}");
-  } else {
-    ret = G_ERROR;
-  }
-  return ret;
+json_t * user_module_load(struct config_module * config) {
+  return json_pack("{sisssssss{s{ssso}s{sssoso}s{sssos[s]}}}",
+                   "result",
+                   G_OK,
+                   "name",
+                   "database",
+                   "display_name",
+                   "Database backend user module",
+                   "description",
+                   "Module to store users in the database",
+                   "parameters",
+                     "url",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_true(),
+                     "check-server-certificate",
+                       "type",
+                       "boolean",
+                       "mandatory",
+                       json_false(),
+                       "default",
+                       json_true(),
+                     "default-scope",
+                       "type",
+                       "array",
+                       "mandatory",
+                       json_true(),
+                       "values",
+                        "string");
 }
 
 int user_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int user_module_init(struct config_module * config, const char * parameters, void ** cls) {
-  json_t * j_params = json_loads(parameters, JSON_DECODE_ANY, NULL), * j_element;
+int user_module_init(struct config_module * config, json_t * j_params, void ** cls) {
   int ret;
   size_t index;
+  json_t * j_element;
   
-  if (j_params != NULL) {
-    if (json_is_object(j_params)) {
-      ret = G_OK;
-      if (!json_string_length(json_object_get(j_params, "url"))) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter url is mandatory must be a non empty string");
-        ret = G_ERROR;
-      }
-      if (json_object_get(j_params, "check-server-certificate") != NULL && !json_is_boolean(json_object_get(j_params, "check-server-certificate"))) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter check-server-certificate is optional and must be a boolean");
-        ret = G_ERROR;
-      }
-      if (json_object_get(j_params, "default-scope") == NULL || !json_is_array(json_object_get(j_params, "default-scope"))) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter default-scope is mandatory must be an array of non empty strings");
-        ret = G_ERROR;
-      } else {
-        json_array_foreach(json_object_get(j_params, "default-scope"), index, j_element) {
-          if (!json_string_length(j_element)) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter default-scope is mandatory must be an array of non empty strings");
-            ret = G_ERROR;
-          }
-        }
-      }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameters must be a JSON object");
+  if (json_is_object(j_params)) {
+    ret = G_OK;
+    if (!json_string_length(json_object_get(j_params, "url"))) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter url is mandatory must be a non empty string");
       ret = G_ERROR;
     }
+    if (json_object_get(j_params, "check-server-certificate") != NULL && !json_is_boolean(json_object_get(j_params, "check-server-certificate"))) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter check-server-certificate is optional and must be a boolean");
+      ret = G_ERROR;
+    }
+    if (json_object_get(j_params, "default-scope") == NULL || !json_is_array(json_object_get(j_params, "default-scope"))) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter default-scope is mandatory must be an array of non empty strings");
+      ret = G_ERROR;
+    } else {
+      json_array_foreach(json_object_get(j_params, "default-scope"), index, j_element) {
+        if (!json_string_length(j_element)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter default-scope is mandatory must be an array of non empty strings");
+          ret = G_ERROR;
+        }
+      }
+    }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - Error parsing parameters");
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameters must be a JSON object");
     ret = G_ERROR;
   }
-  if (ret != G_OK) {
-    json_decref(j_params);
-  } else {
-    *cls = j_params;
+  if (ret == G_OK) {
+    *cls = json_incref(j_params);
   }
   return ret;
 }
@@ -101,38 +113,31 @@ size_t user_module_count_total(struct config_module * config, const char * patte
   return 0;
 }
 
-char * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, int * result, void * cls) {
-  *result = G_OK;
-  return o_strdup("[]");
+json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls) {
+  return json_pack("{sis[]}", "result", G_OK, "list");
 }
 
-char * user_module_get(struct config_module * config, const char * username, int * result, void * cls) {
-  *result = G_OK;
-  json_t * j_user = json_pack("{sssO}", "username", username, "scope", json_object_get((json_t *)cls, "default-scope"));
-  char * str_user = json_dumps(j_user, JSON_COMPACT);
-  json_decref(j_user);
-  return str_user;
+json_t * user_module_get(struct config_module * config, const char * username, void * cls) {
+  return json_pack("{sis{sssO}}", "result", G_OK, "user", "username", username, "scope", json_object_get((json_t *)cls, "default-scope"));
 }
 
-char * user_module_get_profile(struct config_module * config, const char * username, int * result, void * cls) {
-  *result = G_ERROR_NOT_FOUND;
-  return NULL;
+json_t * user_module_get_profile(struct config_module * config, const char * username, void * cls) {
+  return json_pack("{si}", "result", G_ERROR_NOT_FOUND);
 }
 
-char * user_is_valid(struct config_module * config, const char * username, const char * str_user, int mode, int * result, void * cls) {
-  *result = G_ERROR_PARAM;
-  return NULL;
+json_t * user_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
+  return json_pack("{si}", "result", G_ERROR_PARAM);
 }
 
-int user_module_add(struct config_module * config, const char * str_new_user, void * cls) {
+int user_module_add(struct config_module * config, json_t * j_user, void * cls) {
   return G_ERROR_PARAM;
 }
 
-int user_module_update(struct config_module * config, const char * username, const char * str_user, void * cls) {
+int user_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls) {
   return G_ERROR_PARAM;
 }
 
-int user_module_update_profile(struct config_module * config, const char * username, const char * str_user, void * cls) {
+int user_module_update_profile(struct config_module * config, const char * username, json_t * j_user, void * cls) {
   return G_ERROR_PARAM;
 }
 
