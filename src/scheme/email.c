@@ -98,7 +98,7 @@ static int check_code(struct config_module * config, json_t * j_param, const cha
     if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
       issued_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now - json_integer_value(json_object_get(j_param, "code-duration"))));
     } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-      issued_at_clause = msprintf("> EXTRACT(TIMESTAMP FROM EPOCH %u)", (now - json_integer_value(json_object_get(j_param, "code-duration"))));
+      issued_at_clause = msprintf("> TO_TIMESTAMP(%u)", (now - json_integer_value(json_object_get(j_param, "code-duration"))));
     } else { // HOEL_DB_TYPE_SQLITE
       issued_at_clause = msprintf("> %u", (now - json_integer_value(json_object_get(j_param, "code-duration"))));
     }

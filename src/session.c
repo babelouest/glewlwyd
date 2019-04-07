@@ -303,14 +303,14 @@ int user_session_update(struct config_elements * config, const char * session_ui
         if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
           expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
         } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-          expiration_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
+          expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
         } else { // HOEL_DB_TYPE_SQLITE
           expiration_clause = msprintf("%u", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
         }
         if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
           last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
         } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-          last_login_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now));
+          last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
         } else { // HOEL_DB_TYPE_SQLITE
           last_login_clause = msprintf("%u", (now));
         }
@@ -364,7 +364,7 @@ int user_session_update(struct config_elements * config, const char * session_ui
         if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
           last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
         } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-          last_login_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now));
+          last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
         } else { // HOEL_DB_TYPE_SQLITE
           last_login_clause = msprintf("%u", (now));
         }
@@ -422,14 +422,14 @@ int user_session_update(struct config_elements * config, const char * session_ui
             if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
               expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)scheme_instance->guasmi_expiration));
             } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-              expiration_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now + (unsigned int)scheme_instance->guasmi_expiration));
+              expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)scheme_instance->guasmi_expiration));
             } else { // HOEL_DB_TYPE_SQLITE
               expiration_clause = msprintf("%u", (now + (unsigned int)scheme_instance->guasmi_expiration));
             }
             if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
               last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
             } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-              last_login_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now));
+              last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
             } else { // HOEL_DB_TYPE_SQLITE
               last_login_clause = msprintf("%u", (now));
             }
@@ -483,14 +483,14 @@ int user_session_update(struct config_elements * config, const char * session_ui
           if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
             expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
           } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-            expiration_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
+            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
           } else { // HOEL_DB_TYPE_SQLITE
             expiration_clause = msprintf("%u", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
           }
           if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
             last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
           } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-            last_login_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now));
+            last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
           } else { // HOEL_DB_TYPE_SQLITE
             last_login_clause = msprintf("%u", (now));
           }

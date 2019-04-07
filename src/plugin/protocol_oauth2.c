@@ -134,7 +134,7 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
         issued_at_clause = msprintf("FROM_UNIXTIME(%u)", (now));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        issued_at_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now));
+        issued_at_clause = msprintf("TO_TIMESTAMP(%u)", (now));
       } else { // HOEL_DB_TYPE_SQLITE
         issued_at_clause = msprintf("%u", (now));
       }
@@ -275,14 +275,14 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
         issued_at_clause = msprintf("FROM_UNIXTIME(%u)", (now));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        issued_at_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now));
+        issued_at_clause = msprintf("TO_TIMESTAMP(%u)", (now));
       } else { // HOEL_DB_TYPE_SQLITE
         issued_at_clause = msprintf("%u", (now));
       }
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
         expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)duration));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        expires_at_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now + (unsigned int)duration ));
+        expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)duration ));
       } else { // HOEL_DB_TYPE_SQLITE
         expires_at_clause = msprintf("%u", (now + (unsigned int)duration));
       }
@@ -482,7 +482,7 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
           if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
             expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_CODE_EXP_DEFAULT ));
           } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-            expiration_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now + GLEWLWYD_CODE_EXP_DEFAULT ));
+            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + GLEWLWYD_CODE_EXP_DEFAULT ));
           } else { // HOEL_DB_TYPE_SQLITE
             expiration_clause = msprintf("%u", (now + GLEWLWYD_CODE_EXP_DEFAULT ));
           }
@@ -829,9 +829,9 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
         expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        expires_at_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", now);
+        expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
       } else { // HOEL_DB_TYPE_SQLITE
-        expires_at_clause = msprintf("%u", (now));
+        expires_at_clause = msprintf("> %u", (now));
       }
       j_query = json_pack("{sss[sssssssss]s{sssis{ssss}}}",
                           "table",
@@ -919,9 +919,9 @@ static json_t * refresh_token_list_get(struct _oauth2_config * config, const cha
                         "gpgr_token_hash AS token_hash",
                         "gpgr_authorization_type AS authorization_type",
                         "gpgr_client_id AS client_id",
-                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(`gpgr_issued_at`) AS issued_at", "gpgr_issued_at AS issued_at", "EXTRACT(EPOCH FROM gpgr_issued_at) AS issued_at"),
-                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(`gpgr_expires_at`) AS expires_at", "gpgr_expires_at AS expires_at", "EXTRACT(EPOCH FROM gpgr_expires_at) AS expires_at"),
-                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(`gpgr_last_seen`) AS last_seen", "gpgr_last_seen AS last_seen", "EXTRACT(EPOCH FROM gpgr_last_seen) AS last_seen"),
+                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpgr_issued_at) AS issued_at", "gpgr_issued_at AS issued_at", "EXTRACT(EPOCH FROM gpgr_issued_at) AS issued_at"),
+                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpgr_expires_at) AS expires_at", "gpgr_expires_at AS expires_at", "EXTRACT(EPOCH FROM gpgr_expires_at) AS expires_at"),
+                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpgr_last_seen) AS last_seen", "gpgr_last_seen AS last_seen", "EXTRACT(EPOCH FROM gpgr_last_seen) AS last_seen"),
                         "gpgr_rolling_expiration",
                         "gpgr_issued_for AS issued_for",
                         "gpgr_user_agent AS user_agent",
@@ -1016,7 +1016,7 @@ static int update_refresh_token(struct _oauth2_config * config, json_int_t gpgr_
   if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
     last_seen_clause = msprintf("FROM_UNIXTIME(%u)", (now));
   } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-    last_seen_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", now);
+    last_seen_clause = msprintf("TO_TIMESTAMP(%u)", now);
   } else { // HOEL_DB_TYPE_SQLITE
     last_seen_clause = msprintf("%u", (now));
   }
@@ -1035,7 +1035,7 @@ static int update_refresh_token(struct _oauth2_config * config, json_int_t gpgr_
     if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
       expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)refresh_token_duration));
     } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-      expires_at_clause = msprintf("EXTRACT(TIMESTAMP FROM EPOCH %u)", (now + (unsigned int)refresh_token_duration));
+      expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)refresh_token_duration));
     } else { // HOEL_DB_TYPE_SQLITE
       expires_at_clause = msprintf("%u", (now + (unsigned int)refresh_token_duration));
     }
