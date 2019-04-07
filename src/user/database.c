@@ -48,7 +48,7 @@ static char * get_pattern_clause(struct mod_parameters * param, const char * pat
   char * escape_pattern = h_escape_string(param->conn, pattern), * clause = NULL;
   
   if (escape_pattern != NULL) {
-    clause = msprintf("IN (SELECT `gu_id` from `" G_TABLE_USER "` WHERE `gu_username` LIKE '%s' OR `gu_display_name` LIKE '%s' OR `gu_email` LIKE '%s')", escape_pattern, escape_pattern, escape_pattern);
+    clause = msprintf("IN (SELECT gu_id from " G_TABLE_USER " WHERE gu_username LIKE '%s' OR gu_display_name LIKE '%s' OR gu_email LIKE '%s')", escape_pattern, escape_pattern, escape_pattern);
   }
   o_free(escape_pattern);
   return clause;
@@ -173,7 +173,7 @@ static json_t * database_user_scope_get(struct mod_parameters * param, json_int_
   json_t * j_query, * j_result, * j_return, * j_array, * j_scope;
   int res;
   size_t index;
-  char * scope_clause = msprintf("IN (SELECT `gus_id` from `" G_TABLE_USER_SCOPE_USER "` WHERE `gu_id` = %"JSON_INTEGER_FORMAT")", gu_id);
+  char * scope_clause = msprintf("IN (SELECT gus_id from " G_TABLE_USER_SCOPE_USER " WHERE gu_id = %"JSON_INTEGER_FORMAT")", gu_id);
   
   j_query = json_pack("{sss[s]s{s{ssss}}}",
                       "table",
@@ -538,7 +538,7 @@ static int save_user_scope(struct mod_parameters * param, json_t * j_scope, json
       }
     }
     // Clean orphan user_scope
-    scope_clause = msprintf("NOT IN (SELECT DISTINCT(`gus_id`) FROM `" G_TABLE_USER_SCOPE_USER "`)");
+    scope_clause = msprintf("NOT IN (SELECT DISTINCT(gus_id) FROM " G_TABLE_USER_SCOPE_USER ")");
     j_query = json_pack("{sss{s{ssss}}}",
                         "table",
                         G_TABLE_USER_SCOPE,

@@ -347,7 +347,7 @@ int main (int argc, char ** argv) {
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
 
   y_log_message(Y_LOG_LEVEL_INFO, "Start glewlwyd on port %d, prefix: %s, secure: %s", config->instance->port, config->api_prefix, config->use_secure_connection?"true":"false");
-  
+    
   if (config->use_secure_connection) {
     char * key_file = get_file_content(config->secure_connection_key_file);
     char * pem_file = get_file_content(config->secure_connection_pem_file);

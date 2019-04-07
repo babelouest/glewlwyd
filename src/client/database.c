@@ -47,7 +47,7 @@ static char * get_pattern_clause(struct mod_parameters * param, const char * pat
   char * escape_pattern = h_escape_string(param->conn, pattern), * clause = NULL;
   
   if (escape_pattern != NULL) {
-    clause = msprintf("IN (SELECT `gc_id` from `" G_TABLE_CLIENT "` WHERE `gc_client_id` LIKE '%s' OR `gc_name` LIKE '%s')", escape_pattern, escape_pattern);
+    clause = msprintf("IN (SELECT gc_id from " G_TABLE_CLIENT " WHERE gc_client_id LIKE '%s' OR gc_name LIKE '%s')", escape_pattern, escape_pattern);
   }
   o_free(escape_pattern);
   return clause;
@@ -434,7 +434,7 @@ static int save_client_scope(struct mod_parameters * param, json_t * j_scope, js
         }
       }
     }
-    scope_clause = msprintf("NOT IN (SELECT DISTINCT(`gcs_id`) FROM `" G_TABLE_CLIENT_SCOPE_CLIENT "`)");
+    scope_clause = msprintf("NOT IN (SELECT DISTINCT(gcs_id) FROM " G_TABLE_CLIENT_SCOPE_CLIENT ")");
     j_query = json_pack("{sss{s{ssss}}}",
                         "table",
                         G_TABLE_CLIENT_SCOPE,
@@ -704,7 +704,7 @@ json_t * client_module_get_list(struct config_module * config, const char * patt
 static json_t * database_client_scope_get(struct mod_parameters * param, json_int_t gu_id) {
   json_t * j_query, * j_result, * j_return;
   int res;
-  char * scope_clause = msprintf("IN (SELECT `gcs_id` from `" G_TABLE_CLIENT_SCOPE_CLIENT "` WHERE `gc_id` = %"JSON_INTEGER_FORMAT")", gu_id);
+  char * scope_clause = msprintf("IN (SELECT gcs_id from " G_TABLE_CLIENT_SCOPE_CLIENT " WHERE gc_id = %"JSON_INTEGER_FORMAT")", gu_id);
   
   j_query = json_pack("{sss[s]s{s{ssss}}}",
                       "table",
