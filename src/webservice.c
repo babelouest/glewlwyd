@@ -1588,9 +1588,9 @@ int callback_glewlwyd_user_get_session_list (const struct _u_request * request, 
     }
   }
   if (0 == o_strcmp(u_map_get(request->map_url, "sort"), "session_hash") || 0 == o_strcmp(u_map_get(request->map_url, "sort"), "user_agent") || 0 == o_strcmp(u_map_get(request->map_url, "sort"), "issued_for") || 0 == o_strcmp(u_map_get(request->map_url, "sort"), "expiration") || 0 == o_strcmp(u_map_get(request->map_url, "sort"), "last_login") || 0 == o_strcmp(u_map_get(request->map_url, "sort"), "enabled")) {
-    sort = msprintf("gpgr_%s", u_map_get(request->map_url, "sort"));
+    sort = msprintf("gpgr_%s%s", u_map_get(request->map_url, "sort"), (u_map_get_case(request->map_url, "desc")!=NULL?" DESC":" ASC"));
   }
-  j_session_list = get_user_session_list(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), offset, limit, sort);
+  j_session_list = get_user_session_list(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "pattern"), offset, limit, sort);
   if (check_result_value(j_session_list, G_OK)) {
     ulfius_set_json_body_response(response, 200, json_object_get(j_session_list, "session"));
   } else {

@@ -907,17 +907,18 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
   return j_return;
 }
 
-static json_t * refresh_token_list_get(struct _oauth2_config * config, const char * username, size_t offset, size_t limit, const char * sort) {
+static json_t * refresh_token_list_get(struct _oauth2_config * config, const char * username, const char * pattern, size_t offset, size_t limit, const char * sort) {
   json_t * j_query, * j_result, * j_return, * j_element;
   int res;
   size_t index;
+  char * pattern_escaped, * pattern_clause;
   
   j_query = json_pack("{sss[ssssssssss]s{ss}sisi}",
                       "table",
-                      GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN
+                      GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
                       "columns",
                         "gpgr_token_hash AS token_hash",
-                        "gpgr_authorization_type AS authorization_type",
+                        "gpgr_authorization_type",
                         "gpgr_client_id AS client_id",
                         SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpgr_issued_at) AS issued_at", "gpgr_issued_at AS issued_at", "EXTRACT(EPOCH FROM gpgr_issued_at) AS issued_at"),
                         SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpgr_expires_at) AS expires_at", "gpgr_expires_at AS expires_at", "EXTRACT(EPOCH FROM gpgr_expires_at) AS expires_at"),
@@ -936,6 +937,13 @@ static json_t * refresh_token_list_get(struct _oauth2_config * config, const cha
   if (sort != NULL) {
     json_object_set_new(j_query, "order_by", json_string(sort));
   }
+  if (pattern != NULL) {
+    pattern_escaped = h_escape_string(config->glewlwyd_config->glewlwyd_config->conn, pattern);
+    pattern_clause = msprintf("gpgr_id IN (SELECT gpgr_id FROM "GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN" WHERE gpgr_user_agent LIKE '%%%s%%' OR gpgr_issued_for LIKE '%%%s%%')", pattern_escaped, pattern_escaped);
+    json_object_set_new(json_object_get(j_query, "where"), "gpgr_id", json_pack("{ssss}", "operator", "raw", "value", pattern_clause));
+    o_free(pattern_clause);
+    o_free(pattern_escaped);
+  }
   res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -944,6 +952,18 @@ static json_t * refresh_token_list_get(struct _oauth2_config * config, const cha
       json_object_set(j_element, "enabled", (json_integer_value(json_object_get(j_element, "gpgr_enabled"))?json_true():json_false()));
       json_object_del(j_element, "gpgr_rolling_expiration");
       json_object_del(j_element, "gpgr_enabled");
+      switch(json_integer_value(json_object_get(j_element, "gpgr_authorization_type"))) {
+        case GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE:
+          json_object_set_new(j_element, "authorization_type", json_string("code"));
+          break;
+        case GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS:
+          json_object_set(j_element, "authorization_type", json_string("password"));
+          break;
+        default:
+          json_object_set(j_element, "authorization_type", json_string("unknown"));
+          break;
+      }
+      json_object_del(j_element, "gpgr_authorization_type");
     }
     j_return = json_pack("{sisO}", "result", G_OK, "refresh_token", j_result);
     json_decref(j_result);
@@ -958,9 +978,10 @@ static int refresh_token_disable(struct _oauth2_config * config, const char * us
   json_t * j_query, * j_result;
   int res, ret;
   
+  y_log_message(Y_LOG_LEVEL_DEBUG, "plop 0");
   j_query = json_pack("{sss[ss]s{ssss}}",
                       "table",
-                      GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN
+                      GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
                       "columns",
                         "gpgr_id",
                         "gpgr_enabled",
@@ -973,7 +994,8 @@ static int refresh_token_disable(struct _oauth2_config * config, const char * us
   json_decref(j_query);
   if (res == H_OK) {
     if (json_array_size(j_result)) {
-      if (!json_integer_value(json_object_get(json_array_get(j_result, 0), "gpgr_enabled"))) {
+      if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpgr_enabled"))) {
+        char * query;
         j_query = json_pack("{sss{si}s{ssss}}",
                             "table",
                             GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
@@ -984,26 +1006,31 @@ static int refresh_token_disable(struct _oauth2_config * config, const char * us
                               "gpgr_username",
                               username,
                               "gpgr_token_hash",
-                              token_hash,
-                              "gpgr_enabled");
-        res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+                              token_hash);
+        res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, &query);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "uery is %s", query);
         json_decref(j_query);
         if (res == H_OK) {
           ret = G_OK;
+          y_log_message(Y_LOG_LEVEL_DEBUG, "plop 1");
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_list_get - Error executing j_query (2)");
+          y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (2)");
           ret = G_ERROR_DB;
+          y_log_message(Y_LOG_LEVEL_DEBUG, "plop 2");
         }
       } else {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "plop 3");
         ret = G_ERROR_PARAM;
       }
     } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "plop 4");
       ret = G_ERROR_NOT_FOUND;
     }
     json_decref(j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_list_get - Error executing j_query (1)");
+    y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (1)");
     ret = G_ERROR_DB;
+    y_log_message(Y_LOG_LEVEL_DEBUG, "plop 5");
   }
   return ret;
 }
@@ -1795,9 +1822,9 @@ static int callback_oauth2_refresh_token_list_get(const struct _u_request * requ
     }
   }
   if (0 == o_strcmp(u_map_get(request->map_url, "sort"), "authorization_type") || 0 == o_strcmp(u_map_get(request->map_url, "sort"), "client_id") || 0 == o_strcmp(u_map_get(request->map_url, "sort"), "issued_at") || 0 == o_strcmp(u_map_get(request->map_url, "sort"), "last_seen") || 0 == o_strcmp(u_map_get(request->map_url, "sort"), "expires_at") || 0 == o_strcmp(u_map_get(request->map_url, "sort"), "issued_for") || 0 == o_strcmp(u_map_get(request->map_url, "sort"), "user_agent") || 0 == o_strcmp(u_map_get(request->map_url, "sort"), "enabled") || 0 == o_strcmp(u_map_get(request->map_url, "sort"), "rolling_expiration")) {
-    sort = msprintf("gpgr_%s", u_map_get(request->map_url, "sort"));
+    sort = msprintf("gpgr_%s%s", u_map_get(request->map_url, "sort"), (u_map_get_case(request->map_url, "desc")!=NULL?" DESC":" ASC"));
   }
-  j_refresh_list = refresh_token_list_get(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), offset, limit, sort);
+  j_refresh_list = refresh_token_list_get(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "pattern"), offset, limit, sort);
   if (check_result_value(j_refresh_list, G_OK)) {
     ulfius_set_json_body_response(response, 200, json_object_get(j_refresh_list, "refresh_token"));
   } else {
@@ -1815,10 +1842,13 @@ static int callback_oauth2_disable_refresh_token(const struct _u_request * reque
   
   if ((res = refresh_token_disable(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "token_hash"))) == G_ERROR_NOT_FOUND) {
     response->status = 404;
+  } else if (res == G_ERROR_PARAM) {
+    response->status = 400;
   } else if (res != G_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_oauth2_disable_refresh_token - Error refresh_token_disable");
     response->status = 500;
   }
+  y_log_message(Y_LOG_LEVEL_DEBUG, "res %d", res);
   return U_CALLBACK_CONTINUE;
 }
 

@@ -144,7 +144,7 @@ json_t * get_current_user_for_session(struct config_elements * config, const cha
 json_t * get_users_for_session(struct config_elements * config, const char * session_uid);
 int user_session_delete(struct config_elements * config, const char * session_uid, const char * username);
 char * get_session_id(struct config_elements * config, const struct _u_request * request);
-json_t * get_user_session_list(struct config_elements * config, const char * username, size_t offset, size_t limit, const char * sort);
+json_t * get_user_session_list(struct config_elements * config, const char * username, const char * pattern, size_t offset, size_t limit, const char * sort);
 int delete_user_session_from_hash(struct config_elements * config, const char * username, const char * session_hash);
 
 // Profile

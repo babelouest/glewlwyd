@@ -1168,7 +1168,7 @@ int init_user_module_list(struct config_elements * config) {
                 *(void **) (&cur_user_module->user_module_get_list) = dlsym(file_handle, "user_module_get_list");
                 *(void **) (&cur_user_module->user_module_get) = dlsym(file_handle, "user_module_get");
                 *(void **) (&cur_user_module->user_module_get_profile) = dlsym(file_handle, "user_module_get_profile");
-                *(void **) (&cur_user_module->user_is_valid) = dlsym(file_handle, "user_is_valid");
+                *(void **) (&cur_user_module->user_module_is_valid) = dlsym(file_handle, "user_module_is_valid");
                 *(void **) (&cur_user_module->user_module_add) = dlsym(file_handle, "user_module_add");
                 *(void **) (&cur_user_module->user_module_update) = dlsym(file_handle, "user_module_update");
                 *(void **) (&cur_user_module->user_module_update_profile) = dlsym(file_handle, "user_module_update_profile");
@@ -1184,7 +1184,7 @@ int init_user_module_list(struct config_elements * config) {
                     cur_user_module->user_module_get_list != NULL &&
                     cur_user_module->user_module_get != NULL &&
                     cur_user_module->user_module_get_profile != NULL &&
-                    cur_user_module->user_is_valid != NULL &&
+                    cur_user_module->user_module_is_valid != NULL &&
                     cur_user_module->user_module_add != NULL &&
                     cur_user_module->user_module_update != NULL &&
                     cur_user_module->user_module_update_profile != NULL &&
@@ -1239,7 +1239,7 @@ int init_user_module_list(struct config_elements * config) {
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get_list: %s", (cur_user_module->user_module_get_list != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get: %s", (cur_user_module->user_module_get != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get_profile: %s", (cur_user_module->user_module_get_profile != NULL?"found":"not found"));
-                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_is_valid: %s", (cur_user_module->user_is_valid != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_is_valid: %s", (cur_user_module->user_module_is_valid != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_add: %s", (cur_user_module->user_module_add != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update: %s", (cur_user_module->user_module_update != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update_profile: %s", (cur_user_module->user_module_update_profile != NULL?"found":"not found"));
@@ -1646,7 +1646,7 @@ int init_client_module_list(struct config_elements * config) {
                 *(void **) (&cur_client_module->client_module_count_total) = dlsym(file_handle, "client_module_count_total");
                 *(void **) (&cur_client_module->client_module_get_list) = dlsym(file_handle, "client_module_get_list");
                 *(void **) (&cur_client_module->client_module_get) = dlsym(file_handle, "client_module_get");
-                *(void **) (&cur_client_module->client_is_valid) = dlsym(file_handle, "client_is_valid");
+                *(void **) (&cur_client_module->client_module_is_valid) = dlsym(file_handle, "client_module_is_valid");
                 *(void **) (&cur_client_module->client_module_add) = dlsym(file_handle, "client_module_add");
                 *(void **) (&cur_client_module->client_module_update) = dlsym(file_handle, "client_module_update");
                 *(void **) (&cur_client_module->client_module_delete) = dlsym(file_handle, "client_module_delete");
@@ -1659,7 +1659,7 @@ int init_client_module_list(struct config_elements * config) {
                     cur_client_module->client_module_count_total != NULL &&
                     cur_client_module->client_module_get_list != NULL &&
                     cur_client_module->client_module_get != NULL &&
-                    cur_client_module->client_is_valid != NULL &&
+                    cur_client_module->client_module_is_valid != NULL &&
                     cur_client_module->client_module_add != NULL &&
                     cur_client_module->client_module_update != NULL &&
                     cur_client_module->client_module_delete != NULL &&
@@ -1711,7 +1711,7 @@ int init_client_module_list(struct config_elements * config) {
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_count_total: %s", (cur_client_module->client_module_count_total != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_get_list: %s", (cur_client_module->client_module_get_list != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_get: %s", (cur_client_module->client_module_get != NULL?"found":"not found"));
-                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_is_valid: %s", (cur_client_module->client_is_valid != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_is_valid: %s", (cur_client_module->client_module_is_valid != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_add: %s", (cur_client_module->client_module_add != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_update: %s", (cur_client_module->client_module_update != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_delete: %s", (cur_client_module->client_module_delete != NULL?"found":"not found"));
