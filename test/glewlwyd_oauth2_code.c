@@ -24,7 +24,7 @@
 struct _u_request user_req;
 char * code;
 
-START_TEST(test_glwd_code_code_invalid)
+START_TEST(test_oauth2_code_code_invalid)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
@@ -43,7 +43,7 @@ START_TEST(test_glwd_code_code_invalid)
 }
 END_TEST
 
-START_TEST(test_glwd_code_client_invalid)
+START_TEST(test_oauth2_code_client_invalid)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
@@ -62,7 +62,7 @@ START_TEST(test_glwd_code_client_invalid)
 }
 END_TEST
 
-START_TEST(test_glwd_code_redirect_uri_invalid)
+START_TEST(test_oauth2_code_redirect_uri_invalid)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
@@ -81,7 +81,7 @@ START_TEST(test_glwd_code_redirect_uri_invalid)
 }
 END_TEST
 
-START_TEST(test_glwd_code_ok)
+START_TEST(test_oauth2_code_ok)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
@@ -100,7 +100,7 @@ START_TEST(test_glwd_code_ok)
 }
 END_TEST
 
-START_TEST(test_glwd_code_scope_grant_partial)
+START_TEST(test_oauth2_code_scope_grant_partial)
 {
   struct _u_request auth_req, code_req;
   struct _u_response auth_resp, code_resp;
@@ -216,7 +216,7 @@ START_TEST(test_glwd_code_scope_grant_partial)
 }
 END_TEST
 
-START_TEST(test_glwd_code_scope_grant_none)
+START_TEST(test_oauth2_code_scope_grant_none)
 {
   struct _u_request auth_req, code_req;
   struct _u_response auth_resp, code_resp;
@@ -286,7 +286,7 @@ START_TEST(test_glwd_code_scope_grant_none)
 }
 END_TEST
 
-START_TEST(test_glwd_code_scope_grant_all_authorize_partial)
+START_TEST(test_oauth2_code_scope_grant_all_authorize_partial)
 {
   struct _u_request auth_req, code_req;
   struct _u_response auth_resp, code_resp;
@@ -366,7 +366,7 @@ START_TEST(test_glwd_code_scope_grant_all_authorize_partial)
 }
 END_TEST
 
-START_TEST(test_glwd_code_retry_with_max_use)
+START_TEST(test_oauth2_code_retry_with_max_use)
 {
   struct _u_request auth_req, code_req;
   struct _u_response auth_resp, code_resp;
@@ -557,15 +557,15 @@ static Suite *glewlwyd_suite(void)
   TCase *tc_core;
 
   s = suite_create("Glewlwyd code");
-  tc_core = tcase_create("test_glwd_code");
-  tcase_add_test(tc_core, test_glwd_code_code_invalid);
-  tcase_add_test(tc_core, test_glwd_code_client_invalid);
-  tcase_add_test(tc_core, test_glwd_code_redirect_uri_invalid);
-  tcase_add_test(tc_core, test_glwd_code_ok);
-  tcase_add_test(tc_core, test_glwd_code_scope_grant_partial);
-  tcase_add_test(tc_core, test_glwd_code_scope_grant_none);
-  tcase_add_test(tc_core, test_glwd_code_scope_grant_all_authorize_partial);
-  tcase_add_test(tc_core, test_glwd_code_retry_with_max_use);
+  tc_core = tcase_create("test_oauth2_code");
+  tcase_add_test(tc_core, test_oauth2_code_code_invalid);
+  tcase_add_test(tc_core, test_oauth2_code_client_invalid);
+  tcase_add_test(tc_core, test_oauth2_code_redirect_uri_invalid);
+  tcase_add_test(tc_core, test_oauth2_code_ok);
+  tcase_add_test(tc_core, test_oauth2_code_scope_grant_partial);
+  tcase_add_test(tc_core, test_oauth2_code_scope_grant_none);
+  tcase_add_test(tc_core, test_oauth2_code_scope_grant_all_authorize_partial);
+  tcase_add_test(tc_core, test_oauth2_code_retry_with_max_use);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 

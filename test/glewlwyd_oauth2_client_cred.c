@@ -21,7 +21,7 @@
 struct _u_request user_req;
 char * code;
 
-START_TEST(glewlwyd_client_cred_valid)
+START_TEST(test_oauth2_cred_valid)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
@@ -36,7 +36,7 @@ START_TEST(glewlwyd_client_cred_valid)
 }
 END_TEST
 
-START_TEST(glewlwyd_client_cred_valid_reduced_scope)
+START_TEST(test_oauth2_cred_valid_reduced_scope)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
@@ -51,7 +51,7 @@ START_TEST(glewlwyd_client_cred_valid_reduced_scope)
 }
 END_TEST
 
-START_TEST(glewlwyd_client_cred_pwd_invalid)
+START_TEST(test_oauth2_cred_pwd_invalid)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
@@ -66,7 +66,7 @@ START_TEST(glewlwyd_client_cred_pwd_invalid)
 }
 END_TEST
 
-START_TEST(glewlwyd_client_cred_client_unauthorized)
+START_TEST(test_oauth2_cred_client_unauthorized)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
@@ -81,7 +81,7 @@ START_TEST(glewlwyd_client_cred_client_unauthorized)
 }
 END_TEST
 
-START_TEST(glewlwyd_client_cred_client_invalid)
+START_TEST(test_oauth2_cred_client_invalid)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
@@ -96,7 +96,7 @@ START_TEST(glewlwyd_client_cred_client_invalid)
 }
 END_TEST
 
-START_TEST(glewlwyd_client_cred_scope_invalid)
+START_TEST(test_oauth2_cred_scope_invalid)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
@@ -111,7 +111,7 @@ START_TEST(glewlwyd_client_cred_scope_invalid)
 }
 END_TEST
 
-START_TEST(glewlwyd_client_cred_empty)
+START_TEST(test_oauth2_cred_empty)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
@@ -132,14 +132,14 @@ static Suite *glewlwyd_suite(void)
   TCase *tc_core;
 
   s = suite_create("Glewlwyd client credentials");
-  tc_core = tcase_create("glewlwyd_client_cred");
-  tcase_add_test(tc_core, glewlwyd_client_cred_valid);
-  tcase_add_test(tc_core, glewlwyd_client_cred_valid_reduced_scope);
-  tcase_add_test(tc_core, glewlwyd_client_cred_pwd_invalid);
-  tcase_add_test(tc_core, glewlwyd_client_cred_client_unauthorized);
-  tcase_add_test(tc_core, glewlwyd_client_cred_client_invalid);
-  tcase_add_test(tc_core, glewlwyd_client_cred_scope_invalid);
-  tcase_add_test(tc_core, glewlwyd_client_cred_empty);
+  tc_core = tcase_create("test_oauth2_cred");
+  tcase_add_test(tc_core, test_oauth2_cred_valid);
+  tcase_add_test(tc_core, test_oauth2_cred_valid_reduced_scope);
+  tcase_add_test(tc_core, test_oauth2_cred_pwd_invalid);
+  tcase_add_test(tc_core, test_oauth2_cred_client_unauthorized);
+  tcase_add_test(tc_core, test_oauth2_cred_client_invalid);
+  tcase_add_test(tc_core, test_oauth2_cred_scope_invalid);
+  tcase_add_test(tc_core, test_oauth2_cred_empty);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 

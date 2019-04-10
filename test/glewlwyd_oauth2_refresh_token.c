@@ -20,7 +20,7 @@
 
 char * refresh_token;
 
-START_TEST(test_glwd_refresh_token_token_invalid)
+START_TEST(test_oauth2_refresh_token_token_invalid)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
@@ -35,7 +35,7 @@ START_TEST(test_glwd_refresh_token_token_invalid)
 }
 END_TEST
 
-START_TEST(test_glwd_refresh_token_ok)
+START_TEST(test_oauth2_refresh_token_ok)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
@@ -56,9 +56,9 @@ static Suite *glewlwyd_suite(void)
   TCase *tc_core;
 
   s = suite_create("Glewlwyd refresh token");
-  tc_core = tcase_create("test_glwd_refresh_token");
-  tcase_add_test(tc_core, test_glwd_refresh_token_token_invalid);
-  tcase_add_test(tc_core, test_glwd_refresh_token_ok);
+  tc_core = tcase_create("test_oauth2_refresh_token");
+  tcase_add_test(tc_core, test_oauth2_refresh_token_token_invalid);
+  tcase_add_test(tc_core, test_oauth2_refresh_token_ok);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
