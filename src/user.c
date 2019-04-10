@@ -361,13 +361,13 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
   if (source != NULL) {
     user_module = get_user_module_instance(config, source);
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
-      j_error_list = user_module->module->user_is_valid(config->config_m, username, j_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, user_module->cls);
+      j_error_list = user_module->module->user_module_is_valid(config->config_m, username, j_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, user_module->cls);
       if (check_result_value(j_error_list, G_ERROR_PARAM)) {
         j_return = json_incref(j_error_list);
       } else if (check_result_value(j_error_list, G_OK)) {
         j_return = json_pack("{si}", "result", G_OK);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error user_is_valid");
+        y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error user_module_is_valid");
         j_return = json_pack("{si}", "result", G_ERROR);
       }
       json_decref(j_error_list);
@@ -385,13 +385,13 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
           user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
           if (user_module != NULL && user_module->enabled && !user_module->readonly) {
             found = 1;
-            j_error_list = user_module->module->user_is_valid(config->config_m, username, j_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, user_module->cls);
+            j_error_list = user_module->module->user_module_is_valid(config->config_m, username, j_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, user_module->cls);
             if (check_result_value(j_error_list, G_ERROR_PARAM)) {
               j_return = json_incref(j_error_list);
             } else if (check_result_value(j_error_list, G_OK)) {
               j_return = json_pack("{si}", "result", G_OK);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error user_is_valid");
+              y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error user_module_is_valid");
               j_return = json_pack("{si}", "result", G_ERROR);
             }
             json_decref(j_error_list);
