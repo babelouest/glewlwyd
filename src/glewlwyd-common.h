@@ -103,7 +103,7 @@ struct _user_module {
   json_t * (* user_module_get_list)(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
   json_t * (* user_module_get)(struct config_module * config, const char * username, void * cls);
   json_t * (* user_module_get_profile)(struct config_module * config, const char * username, void * cls);
-  json_t * (* user_is_valid)(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls);
+  json_t * (* user_module_is_valid)(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls);
   int      (* user_module_add)(struct config_module * config, json_t * j_user, void * cls);
   int      (* user_module_update)(struct config_module * config, const char * username, json_t * j_user, void * cls);
   int      (* user_module_update_profile)(struct config_module * config, const char * username, json_t * j_user, void * cls);
@@ -133,7 +133,7 @@ struct _client_module {
   size_t   (* client_module_count_total)(struct config_module * config, const char * pattern, void * cls);
   json_t * (* client_module_get_list)(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
   json_t * (* client_module_get)(struct config_module * config, const char * client_id, void * cls);
-  json_t * (* client_is_valid)(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls);
+  json_t * (* client_module_is_valid)(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls);
   int      (* client_module_add)(struct config_module * config, json_t * j_client, void * cls);
   int      (* client_module_update)(struct config_module * config, const char * client_id, json_t * j_client, void * cls);
   int      (* client_module_delete)(struct config_module * config, const char * client_id, void * cls);
@@ -297,7 +297,7 @@ size_t   user_module_count_total(struct config_module * config, const char * pat
 json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
 json_t * user_module_get(struct config_module * config, const char * username, void * cls);
 json_t * user_module_get_profile(struct config_module * config, const char * username, void * cls);
-json_t * user_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls);
+json_t * user_module_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls);
 int      user_module_add(struct config_module * config, json_t * j_user, void * cls);
 int      user_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls);
 int      user_module_update_profile(struct config_module * config, const char * username, json_t * j_user, void * cls);
@@ -313,7 +313,7 @@ int      client_module_close(struct config_module * config, void * cls);
 size_t   client_module_count_total(struct config_module * config, const char * pattern, void * cls);
 json_t * client_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
 json_t * client_module_get(struct config_module * config, const char * client_id, void * cls);
-json_t * client_is_valid(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls);
+json_t * client_module_is_valid(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls);
 int      client_module_add(struct config_module * config, json_t * j_client, void * cls);
 int      client_module_update(struct config_module * config, const char * client_id, json_t * j_client, void * cls);
 int      client_module_delete(struct config_module * config, const char * client_id, void * cls);
