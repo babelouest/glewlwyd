@@ -233,7 +233,7 @@ json_t * client_module_get(struct config_module * config, const char * client_id
   return j_return;
 }
 
-json_t * client_is_valid(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls) {
+json_t * client_module_is_valid(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls) {
   json_t * j_return = NULL;
 
   if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && client_id == NULL) {

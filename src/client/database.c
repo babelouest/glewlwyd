@@ -777,7 +777,7 @@ json_t * client_module_get(struct config_module * config, const char * client_id
   return j_return;
 }
 
-json_t * client_is_valid(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls) {
+json_t * client_module_is_valid(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_result = json_array(), * j_element, * j_format, * j_value, * j_return, * j_cur_client;
   char * message;
@@ -794,7 +794,7 @@ json_t * client_is_valid(struct config_module * config, const char * client_id, 
           if (check_result_value(j_cur_client, G_OK)) {
             json_array_append_new(j_result, json_string("client_id already exist"));
           } else if (!check_result_value(j_cur_client, G_ERROR_NOT_FOUND)) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "client_is_valid database - Error client_module_get");
+            y_log_message(Y_LOG_LEVEL_ERROR, "client_module_is_valid database - Error client_module_get");
           }
           json_decref(j_cur_client);
         }
@@ -858,7 +858,7 @@ json_t * client_is_valid(struct config_module * config, const char * client_id, 
     }
     json_decref(j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "client_is_valid database - Error allocating resources for j_result");
+    y_log_message(Y_LOG_LEVEL_ERROR, "client_module_is_valid database - Error allocating resources for j_result");
     j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
   }
   return j_return;
