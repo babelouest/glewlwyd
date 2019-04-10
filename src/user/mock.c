@@ -238,7 +238,7 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
   return user_module_get(config, username, cls);
 }
 
-json_t * user_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
+json_t * user_module_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
   json_t * j_return = NULL;
 
   if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && username == NULL) {

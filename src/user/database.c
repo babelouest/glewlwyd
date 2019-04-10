@@ -48,7 +48,7 @@ static char * get_pattern_clause(struct mod_parameters * param, const char * pat
   char * escape_pattern = h_escape_string(param->conn, pattern), * clause = NULL;
   
   if (escape_pattern != NULL) {
-    clause = msprintf("IN (SELECT gu_id from " G_TABLE_USER " WHERE gu_username LIKE '%s' OR gu_display_name LIKE '%s' OR gu_email LIKE '%s')", escape_pattern, escape_pattern, escape_pattern);
+    clause = msprintf("IN (SELECT gu_id from " G_TABLE_USER " WHERE gu_username LIKE '%%%s%%' OR gu_display_name LIKE '%%%s%%' OR gu_email LIKE '%%%s%%')", escape_pattern, escape_pattern, escape_pattern);
   }
   o_free(escape_pattern);
   return clause;
@@ -435,6 +435,7 @@ static int save_user_properties(struct mod_parameters * param, json_t * j_user, 
     res = h_delete(param->conn, j_query, NULL);
     json_decref(j_query);
     if (res == H_OK) {
+      // Add new values
       if (json_array_size(j_array)) {
         j_query = json_pack("{sssO}", "table", G_TABLE_USER_PROPERTY, "values", j_array);
         res = h_insert(param->conn, j_query, NULL);
@@ -673,27 +674,27 @@ int user_module_unload(struct config_module * config) {
 }
 
 int user_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
-  json_t * j_params = json_incref(j_parameters), * j_result;
+  json_t * j_result;
   int ret;
   char * error_message;
   
-  j_result = is_user_database_parameters_valid(j_params);
+  j_result = is_user_database_parameters_valid(j_parameters);
   if (check_result_value(j_result, G_OK)) {
     *cls = o_malloc(sizeof(struct mod_parameters));
     if (*cls != NULL) {
-      ((struct mod_parameters *)*cls)->j_params = j_params;
+      ((struct mod_parameters *)*cls)->j_params = json_incref(j_parameters);
       ((struct mod_parameters *)*cls)->hash_algorithm = config->hash_algorithm;
-      if (json_object_get(j_params, "use-glewlwyd-connection") != json_false()) {
+      if (json_object_get(j_parameters, "use-glewlwyd-connection") != json_false()) {
           ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 0;
           ((struct mod_parameters *)*cls)->conn = config->conn;
       } else {
         ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 1;
-        if (0 == o_strcmp(json_string_value(json_object_get(j_params, "connection-type")), "sqlite")) {
-          ((struct mod_parameters *)*cls)->conn = h_connect_sqlite(json_string_value(json_object_get(j_params, "sqlite-dbpath")));
-        } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "connection-type")), "mariadb")) {
-          ((struct mod_parameters *)*cls)->conn = h_connect_mariadb(json_string_value(json_object_get(j_params, "mariadb-host")), json_string_value(json_object_get(j_params, "mariadb-user")), json_string_value(json_object_get(j_params, "mariadb-password")), json_string_value(json_object_get(j_params, "mariadb-dbname")), json_integer_value(json_object_get(j_params, "mariadb-port")), NULL);
-        } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "connection-type")), "postgre")) {
-          ((struct mod_parameters *)*cls)->conn = h_connect_pgsql(json_string_value(json_object_get(j_params, "postgre-conninfo")));
+        if (0 == o_strcmp(json_string_value(json_object_get(j_parameters, "connection-type")), "sqlite")) {
+          ((struct mod_parameters *)*cls)->conn = h_connect_sqlite(json_string_value(json_object_get(j_parameters, "sqlite-dbpath")));
+        } else if (0 == o_strcmp(json_string_value(json_object_get(j_parameters, "connection-type")), "mariadb")) {
+          ((struct mod_parameters *)*cls)->conn = h_connect_mariadb(json_string_value(json_object_get(j_parameters, "mariadb-host")), json_string_value(json_object_get(j_parameters, "mariadb-user")), json_string_value(json_object_get(j_parameters, "mariadb-password")), json_string_value(json_object_get(j_parameters, "mariadb-dbname")), json_integer_value(json_object_get(j_parameters, "mariadb-port")), NULL);
+        } else if (0 == o_strcmp(json_string_value(json_object_get(j_parameters, "connection-type")), "postgre")) {
+          ((struct mod_parameters *)*cls)->conn = h_connect_pgsql(json_string_value(json_object_get(j_parameters, "postgre-conninfo")));
         }
       }
       ret = G_OK;
@@ -718,18 +719,22 @@ int user_module_init(struct config_module * config, json_t * j_parameters, void 
 int user_module_close(struct config_module * config, void * cls) {
   int ret;
   
-  if (((struct mod_parameters *)cls)->use_glewlwyd_connection) {
-    json_decref(((struct mod_parameters *)cls)->j_params);
-    if (h_close_db(((struct mod_parameters *)cls)->conn) != H_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_close database - Error h_close_db");
-      ret = G_ERROR_DB;
+  if (cls != NULL) {
+    if (((struct mod_parameters *)cls)->use_glewlwyd_connection) {
+      json_decref(((struct mod_parameters *)cls)->j_params);
+      if (h_close_db(((struct mod_parameters *)cls)->conn) != H_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_close database - Error h_close_db");
+        ret = G_ERROR_DB;
+      } else {
+        ret = G_OK;
+      }
     } else {
       ret = G_OK;
     }
+    o_free(cls);
   } else {
-    ret = G_OK;
+    ret = G_ERROR_PARAM;
   }
-  o_free(cls);
   return ret;
 }
 
@@ -822,7 +827,7 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
   return database_user_get(username, cls, 1);
 }
 
-json_t * user_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
+json_t * user_module_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_result = json_array(), * j_element, * j_format, * j_value, * j_return = NULL, * j_cur_user;
   char * message;
@@ -838,7 +843,7 @@ json_t * user_is_valid(struct config_module * config, const char * username, jso
         if (check_result_value(j_cur_user, G_OK)) {
           json_array_append_new(j_result, json_string("username already exist"));
         } else if (!check_result_value(j_cur_user, G_ERROR_NOT_FOUND)) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_is_valid database - Error user_module_get");
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_is_valid database - Error user_module_get");
         }
         json_decref(j_cur_user);
       }
@@ -903,7 +908,7 @@ json_t * user_is_valid(struct config_module * config, const char * username, jso
     }
     json_decref(j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_is_valid database - Error allocating resources for j_result");
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_is_valid database - Error allocating resources for j_result");
     j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
   }
   return j_return;

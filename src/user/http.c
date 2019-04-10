@@ -125,7 +125,7 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
   return json_pack("{si}", "result", G_ERROR_NOT_FOUND);
 }
 
-json_t * user_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
+json_t * user_module_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
   return json_pack("{si}", "result", G_ERROR_PARAM);
 }
 

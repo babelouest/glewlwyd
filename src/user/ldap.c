@@ -832,18 +832,6 @@ json_t * user_module_load(struct config_module * config) {
                        "mandatory",
                        json_true(),
                        
-                     "search-scope",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_true(),
-                       
-                     "page-size",
-                       "type",
-                       "number",
-                       "mandatory",
-                       json_false(),
-                       
                      "base-search",
                        "type",
                        "string",
@@ -867,6 +855,18 @@ json_t * user_module_load(struct config_module * config) {
                        "string",
                        "mandatory",
                        json_true(),
+                       
+                     "page-size",
+                       "type",
+                       "number",
+                       "mandatory",
+                       json_false(),
+                       
+                     "search-scope",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false(),
                        
                      "scope-match",
                        "ldap-value",
@@ -1100,8 +1100,7 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
         break;
       }
       
-      if (returned_controls != NULL)
-      {
+      if (returned_controls != NULL) {
         ldap_controls_free(returned_controls);
         returned_controls = NULL;
       }
@@ -1256,7 +1255,7 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
   return j_return;
 }
 
-json_t * user_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
+json_t * user_module_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
   json_t * j_params = (json_t *)cls;
   json_t * j_result = json_array(), * j_element, * j_format, * j_value, * j_return, * j_cur_user;
   char * message;
@@ -1272,7 +1271,7 @@ json_t * user_is_valid(struct config_module * config, const char * username, jso
         if (check_result_value(j_cur_user, G_OK)) {
           json_array_append_new(j_result, json_string("username already exist"));
         } else if (!check_result_value(j_cur_user, G_ERROR_NOT_FOUND)) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_is_valid database - Error user_module_get");
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_is_valid database - Error user_module_get");
         }
         json_decref(j_cur_user);
       }
@@ -1335,7 +1334,7 @@ json_t * user_is_valid(struct config_module * config, const char * username, jso
     }
     json_decref(j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_is_valid ldap - Error allocating resources for j_result");
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_is_valid ldap - Error allocating resources for j_result");
     j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
   }
   return j_return;
