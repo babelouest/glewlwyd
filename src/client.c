@@ -205,11 +205,11 @@ json_t * is_client_valid(struct config_elements * config, const char * client_id
   if (source != NULL) {
     client_module = get_client_module_instance(config, source);
     if (client_module != NULL && client_module->enabled && !client_module->readonly) {
-      j_error_list = client_module->module->client_is_valid(config->config_m, client_id, j_client, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, client_module->cls);
+      j_error_list = client_module->module->client_module_is_valid(config->config_m, client_id, j_client, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, client_module->cls);
       if (check_result_value(j_error_list, G_ERROR_PARAM) || check_result_value(j_error_list, G_OK)) {
         j_return = json_incref(j_error_list);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error, client_is_valid for module %s", client_module->name);
+        y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error, client_module_is_valid for module %s", client_module->name);
         j_return = json_pack("{si}", "result", G_ERROR);
       }
       json_decref(j_error_list);
@@ -227,11 +227,11 @@ json_t * is_client_valid(struct config_elements * config, const char * client_id
           client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
           if (client_module != NULL && client_module->enabled && !client_module->readonly) {
             found = 1;
-            j_error_list = client_module->module->client_is_valid(config->config_m, client_id, j_client, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, client_module->cls);
+            j_error_list = client_module->module->client_module_is_valid(config->config_m, client_id, j_client, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, client_module->cls);
             if (check_result_value(j_error_list, G_ERROR_PARAM) || check_result_value(j_error_list, G_OK)) {
               j_return = json_incref(j_error_list);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error, client_is_valid for module %s", client_module->name);
+              y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error, client_module_is_valid for module %s", client_module->name);
               j_return = json_pack("{si}", "result", G_ERROR);
             }
             json_decref(j_error_list);
