@@ -20,13 +20,13 @@
 
 char * bearer_token;
 
-START_TEST(test_glwd_profile_no_token)
+START_TEST(test_oauth2_profile_no_token)
 {
   ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/glwd/profile", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
 }
 END_TEST
 
-START_TEST(test_glwd_profile_token_invalid)
+START_TEST(test_oauth2_profile_token_invalid)
 {
   struct _u_request user_req;
   char * invalid_token = o_strndup(bearer_token, o_strlen(bearer_token)-2);
@@ -38,7 +38,7 @@ START_TEST(test_glwd_profile_token_invalid)
 }
 END_TEST
 
-START_TEST(test_glwd_profile_ok)
+START_TEST(test_oauth2_profile_ok)
 {
   struct _u_request user_req;
   json_t * j_body = json_pack("{ssso}", "username", USERNAME, "enabled", json_true());
@@ -56,10 +56,10 @@ static Suite *glewlwyd_suite(void)
   TCase *tc_core;
 
   s = suite_create("Glewlwyd profile");
-  tc_core = tcase_create("test_glwd_profile");
-  tcase_add_test(tc_core, test_glwd_profile_no_token);
-  tcase_add_test(tc_core, test_glwd_profile_token_invalid);
-  tcase_add_test(tc_core, test_glwd_profile_ok);
+  tc_core = tcase_create("test_oauth2_profile");
+  tcase_add_test(tc_core, test_oauth2_profile_no_token);
+  tcase_add_test(tc_core, test_oauth2_profile_token_invalid);
+  tcase_add_test(tc_core, test_oauth2_profile_ok);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
