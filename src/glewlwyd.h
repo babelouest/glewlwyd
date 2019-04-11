@@ -138,7 +138,7 @@ json_t * auth_register_get_user_scheme(struct config_elements * config, const ch
 json_t * auth_trigger_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * register_parameters, const struct _u_request * request);
 
 // Session
-int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * username, const char * scheme_type, const char * scheme_name);
+int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * issued_for, const char * username, const char * scheme_type, const char * scheme_name);
 json_t * get_session_for_username(struct config_elements * config, const char * session_uid, const char * username);
 json_t * get_current_user_for_session(struct config_elements * config, const char * session_uid);
 json_t * get_users_for_session(struct config_elements * config, const char * session_uid);
