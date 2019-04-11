@@ -23,15 +23,19 @@ CC=gcc
 CFLAGS=-Wall -D_REENTRANT -DDEBUG -g -O0
 LDFLAGS=-lc -lulfius -lorcania -ljansson -lyder -lcheck -lpthread -lm -lrt -lsubunit -ljwt
 TARGET_ADMIN=glewlwyd_admin_mod_type glewlwyd_admin_mod_user glewlwyd_admin_mod_user_auth_scheme glewlwyd_admin_mod_client glewlwyd_admin_mod_plugin
-TARGET_AUTH=glewlwyd_auth_password glewlwyd_auth_scheme glewlwyd_auth_grant glewlwyd_auth_check_scheme glewlwyd_auth_scheme_trigger glewlwyd_auth_scheme_register glewlwyd_auth_profile
+TARGET_AUTH=glewlwyd_auth_password glewlwyd_auth_scheme glewlwyd_auth_grant glewlwyd_auth_check_scheme glewlwyd_auth_scheme_trigger glewlwyd_auth_scheme_register glewlwyd_auth_profile glewlwyd_auth_session_manage
 TARGET_CRUD=glewlwyd_crud_user glewlwyd_crud_client glewlwyd_crud_scope
-TARGET_OAUTH2=glewlwyd_oauth2_auth_code glewlwyd_oauth2_code glewlwyd_oauth2_code_client_confidential glewlwyd_oauth2_implicit glewlwyd_oauth2_resource_owner_pwd_cred glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential glewlwyd_oauth2_client_cred glewlwyd_oauth2_refresh_token glewlwyd_oauth2_refresh_token_client_confidential glewlwyd_oauth2_delete_token glewlwyd_oauth2_delete_token_client_confidential glewlwyd_oauth2_profile
-all: test
+TARGET_OAUTH2=glewlwyd_oauth2_auth_code glewlwyd_oauth2_code glewlwyd_oauth2_code_client_confidential glewlwyd_oauth2_implicit glewlwyd_oauth2_resource_owner_pwd_cred glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential glewlwyd_oauth2_client_cred glewlwyd_oauth2_refresh_token glewlwyd_oauth2_refresh_token_client_confidential glewlwyd_oauth2_delete_token glewlwyd_oauth2_delete_token_client_confidential glewlwyd_oauth2_profile glewlwyd_oauth2_refresh_manage glewlwyd_oauth2_refresh_manage glewlwyd_oauth2_refresh_manage_session
+TARGET_MOD_USER_MOCK=glewlwyd_mod_user_database glewlwyd_mod_user_ldap
 VERBOSE=0
+MEMCHECK=0
 RUN=1
+LIBMOCKVERSION=1.0.0
+
+all: test
 
 clean:
-	rm -f *.o *.log valgrind.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2)
+	rm -f *.o *.so *.so.$(LIBMOCKVERSION) *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_MOD_USER_MOCK)
 
 build: $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2)
 
@@ -43,17 +47,32 @@ unit-tests.o: unit-tests.c unit-tests.h
 
 test: build test-admin test-auth test-crud test-oauth2
 
-test-auth: $(TARGET_AUTH) test_glewlwyd_auth_password test_glewlwyd_auth_scheme test_glewlwyd_auth_grant test_glewlwyd_auth_check_scheme test_glewlwyd_auth_scheme_trigger test_glewlwyd_auth_scheme_register test_glewlwyd_auth_profile
+test-auth: $(TARGET_AUTH) test_glewlwyd_auth_password test_glewlwyd_auth_scheme test_glewlwyd_auth_grant test_glewlwyd_auth_check_scheme test_glewlwyd_auth_scheme_trigger test_glewlwyd_auth_scheme_register test_glewlwyd_auth_profile test_glewlwyd_auth_session_manage
 
 test-admin: $(TARGET_ADMIN) test_glewlwyd_admin_mod_type test_glewlwyd_admin_mod_user test_glewlwyd_admin_mod_user_auth_scheme test_glewlwyd_admin_mod_client test_glewlwyd_admin_mod_plugin
 
 test-crud: $(TARGET_CRUD) test_glewlwyd_crud_user test_glewlwyd_crud_client test_glewlwyd_crud_scope
 
-test-oauth2: $(TARGET_OAUTH2) test_glewlwyd_oauth2_auth_code test_glewlwyd_oauth2_code test_glewlwyd_oauth2_code_client_confidential test_glewlwyd_oauth2_implicit test_glewlwyd_oauth2_resource_owner_pwd_cred test_glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential test_glewlwyd_oauth2_client_cred test_glewlwyd_oauth2_refresh_token test_glewlwyd_oauth2_refresh_token_client_confidential test_glewlwyd_oauth2_delete_token test_glewlwyd_oauth2_delete_token_client_confidential test_glewlwyd_oauth2_profile
+test-oauth2: $(TARGET_OAUTH2) test_glewlwyd_oauth2_auth_code test_glewlwyd_oauth2_code test_glewlwyd_oauth2_code_client_confidential test_glewlwyd_oauth2_implicit test_glewlwyd_oauth2_resource_owner_pwd_cred test_glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential test_glewlwyd_oauth2_client_cred test_glewlwyd_oauth2_refresh_token test_glewlwyd_oauth2_refresh_token_client_confidential test_glewlwyd_oauth2_delete_token test_glewlwyd_oauth2_delete_token_client_confidential test_glewlwyd_oauth2_profile test_glewlwyd_oauth2_refresh_manage glewlwyd_oauth2_refresh_manage glewlwyd_oauth2_refresh_manage_session
+
+test-mod-mock: $(TARGET_MOD_USER_MOCK) test_glewlwyd_mod_user_database test_glewlwyd_mod_user_ldap
+
+libglwdmockhoel.so: mock_hoel.c
+	$(CC) -c -fPIC $(CFLAGS) mock_hoel.c -fPIC
+	$(CC) -shared -fPIC -Wl,-soname,libglwdmockhoel.so -o libglwdmockhoel.so.$(LIBMOCKVERSION) mock_hoel.o -lc -ljansson -lorcania
+	ln -sf libglwdmockhoel.so.$(LIBMOCKVERSION) libglwdmockhoel.so
+
+glewlwyd_mod_user_database: glewlwyd_mod_user_database.c ../src/user/database.c unit-tests.c libglwdmockhoel.so
+	$(CC) $(CFLAGS) glewlwyd_mod_user_database.c ../src/user/database.c unit-tests.c -o glewlwyd_mod_user_database -L. -lglwdmockhoel $(LDFLAGS)
+
+glewlwyd_mod_user_ldap: glewlwyd_mod_user_ldap.c ../src/user/database.c unit-tests.c glwdmock.so
+	$(CC) $(CFLAGS) glewlwyd_mod_user_ldap.c ../src/user/database.c unit-tests.c -o glewlwyd_mod_user_ldap $(LDFLAGS) -lglwdmock -Wl,-rpath=./
 
 test_%: %
-	@-if [ "$(VERBOSE)" = "0" ]; then \
-		./run_test.sh ./$^; \
+	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
+		LD_LIBRARY_PATH=. ./run_test.sh ./$^; \
+	elif [ "$(MEMCHECK)" = "0" ]; then \
+	  LD_LIBRARY_PATH=. ./$^; \
 	else \
-		./$^; \
+	  LD_LIBRARY_PATH=. valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./$^ --config-file=$(CONFIG_FILE) 2>valgrind-$@.txt; \
 	fi

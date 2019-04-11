@@ -21,6 +21,7 @@
 char * bearer_token;
 char * refresh_token;
 char user_agent[33];
+struct _u_request user_req;
 
 START_TEST(test_oauth2_refresh_manage_endpoints_noauth)
 {
@@ -31,11 +32,9 @@ END_TEST
 
 START_TEST(test_oauth2_refresh_manage_list)
 {
-  struct _u_request user_req;
   struct _u_response resp;
   json_t * j_body = NULL;
   
-  ulfius_init_request(&user_req);
   ulfius_init_response(&resp);
   u_map_put(user_req.map_header, "Authorization", bearer_token);
   user_req.http_url = o_strdup(SERVER_URI "/glwd/profile/token/");
@@ -117,12 +116,9 @@ END_TEST
 
 START_TEST(test_oauth2_refresh_manage_delete_not_found)
 {
-  struct _u_request user_req;
   struct _u_response resp;
   
-  ulfius_init_request(&user_req);
   ulfius_init_response(&resp);
-  u_map_put(user_req.map_header, "Authorization", bearer_token);
   user_req.http_url = o_strdup(SERVER_URI "/glwd/profile/token/error");
   user_req.http_verb = o_strdup("DELETE");
   
@@ -138,14 +134,10 @@ START_TEST(test_oauth2_refresh_manage_delete_ok)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI), * token_hash, * token_hash_encoded;
   struct _u_map body;
-  struct _u_request user_req;
   struct _u_response resp;
   int res;
   json_t * j_body;
-  ulfius_init_request(&user_req);
   ulfius_init_response(&resp);
-  
-  u_map_put(user_req.map_header, "Authorization", bearer_token);
   
   user_req.http_url = msprintf(SERVER_URI "/glwd/profile/token/?sort=issued_at&desc&limit=1&pattern=%s", user_agent);
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -165,7 +157,6 @@ START_TEST(test_oauth2_refresh_manage_delete_ok)
   
   o_free(user_req.http_url);
   o_free(user_req.http_verb);
-  u_map_put(user_req.map_header, "Authorization", bearer_token);
   user_req.http_url = msprintf(SERVER_URI "/glwd/profile/token/%s", token_hash_encoded);
   user_req.http_verb = o_strdup("DELETE");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -218,7 +209,8 @@ int main(int argc, char *argv[])
   SRunner *sr;
   struct _u_request auth_req;
   struct _u_response auth_resp;
-  int res;
+  int res, i, do_test;
+  json_t * j_body;
   
   srand(time(NULL));
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
@@ -247,12 +239,36 @@ int main(int argc, char *argv[])
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
   
-  s = glewlwyd_suite();
-  sr = srunner_create(s);
+  ulfius_init_request(&auth_req);
+  ulfius_init_request(&user_req);
+  ulfius_init_response(&auth_resp);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{ssss}", "username", USERNAME, "password", PASSWORD);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  res = ulfius_send_http_request(&auth_req, &auth_resp);
+  if (res == U_OK && auth_resp.status == 200) {
+    for (i=0; i<auth_resp.nb_cookies; i++) {
+      char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
+      u_map_put(user_req.map_header, "Cookie", cookie);
+      o_free(cookie);
+    }
+    do_test = 1;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication");
+  }
+  ulfius_clean_request(&auth_req);
+  ulfius_clean_response(&auth_resp);
+  
+  if (do_test) {
+    s = glewlwyd_suite();
+    sr = srunner_create(s);
 
-  srunner_run_all(sr, CK_VERBOSE);
-  number_failed = srunner_ntests_failed(sr);
-  srunner_free(sr);
+    srunner_run_all(sr, CK_VERBOSE);
+    number_failed = srunner_ntests_failed(sr);
+    srunner_free(sr);
+  }
   
   o_free(bearer_token);
   o_free(refresh_token);
