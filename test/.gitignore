@@ -10,6 +10,8 @@ glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential
 glewlwyd_oauth2_delete_token
 glewlwyd_oauth2_delete_token_client_confidential
 glewlwyd_oauth2_profile
+glewlwyd_oauth2_refresh_manage
+glewlwyd_oauth2_refresh_manage_session
 
 glewlwyd_admin_mod_type
 glewlwyd_admin_mod_user
@@ -24,7 +26,10 @@ glewlwyd_auth_check_scheme
 glewlwyd_auth_scheme_trigger
 glewlwyd_auth_scheme_register
 glewlwyd_auth_profile
+glewlwyd_auth_session_manage
 
 glewlwyd_crud_user
 glewlwyd_crud_client
 glewlwyd_crud_scope
+
+valgrind-*.txt
