@@ -276,7 +276,7 @@ json_t * get_current_user_for_session(struct config_elements * config, const cha
   return j_return;
 }
 
-int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * username, const char * scheme_type, const char * scheme_name) {
+int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * issued_for, const char * username, const char * scheme_type, const char * scheme_name) {
   json_t * j_query, * j_session = get_session_for_username(config, session_uid, username);
   struct _user_auth_scheme_module_instance * scheme_instance = NULL;
   int res, ret;
@@ -314,7 +314,7 @@ int user_session_update(struct config_elements * config, const char * session_ui
         } else { // HOEL_DB_TYPE_SQLITE
           last_login_clause = msprintf("%u", (now));
         }
-        j_query = json_pack("{sss{sssssss{ss}s{ss}si}}",
+        j_query = json_pack("{sss{sssssssss{ss}s{ss}si}}",
                             "table",
                             GLEWLWYD_TABLE_USER_SESSION,
                             "values",
@@ -324,6 +324,8 @@ int user_session_update(struct config_elements * config, const char * session_ui
                               username,
                               "gus_user_agent",
                               user_agent!=NULL?user_agent:"",
+                              "gus_issued_for",
+                              issued_for!=NULL?issued_for:"",
                               "gus_expiration",
                                 "raw",
                                 expiration_clause,
@@ -581,7 +583,7 @@ json_t * get_user_session_list(struct config_elements * config, const char * use
   size_t index;
   char * pattern_escaped, * pattern_clause;
   
-  j_query = json_pack("{sss[sssssss]s{ss}sisi}",
+  j_query = json_pack("{sss[ssssss]s{ss}sisi}",
                       "table",
                       GLEWLWYD_TABLE_USER_SESSION,
                       "columns",
@@ -603,7 +605,7 @@ json_t * get_user_session_list(struct config_elements * config, const char * use
   }
   if (pattern != NULL) {
     pattern_escaped = h_escape_string(config->conn, pattern);
-    pattern_clause = msprintf("gus_id IN (SELECT gus_id FROM "GLEWLWYD_TABLE_USER_SESSION" WHERE gus_user_agent LIKE '%%%s%%' OR gus_issued_for LIKE '%%%s%%')", pattern_escaped, pattern_escaped);
+    pattern_clause = msprintf("IN (SELECT gus_id FROM "GLEWLWYD_TABLE_USER_SESSION" WHERE gus_user_agent LIKE '%%%s%%' OR gus_issued_for LIKE '%%%s%%')", pattern_escaped, pattern_escaped);
     json_object_set_new(json_object_get(j_query, "where"), "gus_id", json_pack("{ssss}", "operator", "raw", "value", pattern_clause));
     o_free(pattern_clause);
     o_free(pattern_escaped);
@@ -616,6 +618,7 @@ json_t * get_user_session_list(struct config_elements * config, const char * use
       json_object_del(j_element, "gus_enabled");
     }
     j_return = json_pack("{sisO}", "result", G_OK, "session", j_result);
+    json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_session_delete - Error executing j_query");
     j_return = json_pack("{si}", "result", G_ERROR_DB);
