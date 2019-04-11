@@ -1111,7 +1111,6 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
                 response->status = 302;
                 o_free(redirect_url);
                 o_free(authorization_code);
-                o_free(issued_for);
               } else {
                 redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
                 ulfius_add_header_to_response(response, "Location", redirect_url);
@@ -1126,6 +1125,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
               y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_auth_code_grant - Error get_client_hostname");
               response->status = 302;
             }
+            o_free(issued_for);
           } else {
             // Redirect to login page
             redirect_url = get_login_url(config, request, "auth", u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
@@ -1695,6 +1695,24 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
   return U_CALLBACK_CONTINUE;
 }
 
+static int callback_check_glewlwyd_session_or_token(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _oauth2_config * config = (struct _oauth2_config *)user_data;
+  json_t * j_session;
+  int ret = U_CALLBACK_UNAUTHORIZED;
+  
+  if (u_map_get(request->map_header, "Authorization") != NULL) {
+    return callback_check_glewlwyd_access_token(request, response, (void*)config->glewlwyd_resource_config);
+  } else {
+    j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, NULL);
+    if (check_result_value(j_session, G_OK)) {
+      response->shared_data = json_pack("{ss}", "username", json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
+      ret = U_CALLBACK_CONTINUE;
+    }
+    json_decref(j_session);
+    return ret;
+  }
+}
+
 static int callback_oauth2_authorization(const struct _u_request * request, struct _u_response * response, void * user_data) {
   const char * response_type = u_map_get(request->map_url, "response_type");
   int result = U_CALLBACK_CONTINUE;
@@ -2179,7 +2197,7 @@ int plugin_module_init(struct config_plugin * config, json_t * j_parameters, voi
                 y_log_message(Y_LOG_LEVEL_DEBUG, "Add endpoints with plugin prefix %s", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")));
                 if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)*cls) != G_OK || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "POST", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_token, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "*", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_access_token, ((struct _oauth2_config *)*cls)->glewlwyd_resource_config) || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "*", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_get_profile, (void*)*cls) || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "profile/token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_refresh_token_list_get, (void*)*cls) || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "profile/token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_disable_refresh_token, (void*)*cls) || 
