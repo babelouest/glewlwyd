@@ -117,6 +117,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_param = ulfius_get_json_body_request(request, NULL), * j_result = NULL;
   const char * ip_source = get_ip_source(request);
+  char * issued_for = get_client_hostname(request);
   char * session_uid, session_str_array[129];
   time_t now;
   
@@ -130,7 +131,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             if ((session_uid = get_session_id(config, request)) == NULL) {
               session_uid = o_strdup(rand_string(session_str_array, 128));
             }
-            if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
+            if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (1)");
               response->status = 500;
             } else {
@@ -141,7 +142,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - Error login/password for username %s at IP Address %s", json_string_value(json_object_get(j_param, "username")), ip_source);
             }
-            if ((session_uid = get_session_id(config, request)) != NULL && user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
+            if ((session_uid = get_session_id(config, request)) != NULL && user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (2)");
             }
             o_free(session_uid);
@@ -155,7 +156,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
           j_result = get_users_for_session(config, session_uid);
           if (check_result_value(j_result, G_OK)) {
             // Refresh username to set as default
-            if (user_session_update(config, u_map_get(request->map_cookie, config->session_key), u_map_get_case(request->map_header, "user-agent"), json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
+            if (user_session_update(config, u_map_get(request->map_cookie, config->session_key), u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (3)");
               response->status = 500;
             }
@@ -181,7 +182,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             if ((session_uid = get_session_id(config, request)) == NULL) {
               session_uid = o_strdup(rand_string(session_str_array, 128));
             }
-            if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name"))) != G_OK) {
+            if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name"))) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (4)");
               response->status = 500;
             } else {
@@ -204,6 +205,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
     ulfius_set_string_body_response(response, 400, "Input parameters must be in JSON format");
   }
   json_decref(j_param);
+  o_free(issued_for);
 
   return U_CALLBACK_CONTINUE;
 }
