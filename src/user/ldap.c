@@ -609,7 +609,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
               mods[i]->mod_values = o_malloc((json_array_size(json_object_get(j_user, "scope")) + 1) * sizeof(char *));
               if (mods[i]->mod_values != NULL) {
                 mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
-                mods[i]->mod_type = (char *)json_string_value(j_property);
+                mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "scope-property"));
                 json_array_foreach(json_object_get(j_user, "scope"), index_scope, j_scope) {
                   mods[i]->mod_values[index_scope] = (char *)json_string_value(j_scope);
                 }

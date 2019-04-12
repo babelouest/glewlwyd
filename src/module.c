@@ -57,7 +57,7 @@ json_t * get_module_type_list(struct config_elements * config) {
                                                                                                         "name", client_module->name,
                                                                                                         "display_name", client_module->display_name,
                                                                                                         "description", client_module->description,
-                                                                                                        "parameters", user_module->parameters));
+                                                                                                        "parameters", client_module->parameters));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for client module at index %d", i);
       }
@@ -70,7 +70,7 @@ json_t * get_module_type_list(struct config_elements * config) {
                                                                                                         "name", scheme_module->name,
                                                                                                         "display_name", scheme_module->display_name,
                                                                                                         "description", scheme_module->description,
-                                                                                                        "parameters", user_module->parameters));
+                                                                                                        "parameters", scheme_module->parameters));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for user auth scheme module at index %d", i);
       }
@@ -83,7 +83,7 @@ json_t * get_module_type_list(struct config_elements * config) {
                                                                                                         "name", plugin_module->name,
                                                                                                         "display_name", plugin_module->display_name,
                                                                                                         "description", plugin_module->description,
-                                                                                                        "parameters", user_module->parameters));
+                                                                                                        "parameters", plugin_module->parameters));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for plugin module at index %d", i);
       }

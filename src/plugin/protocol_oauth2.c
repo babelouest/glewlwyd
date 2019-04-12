@@ -129,6 +129,7 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
   
   if (pthread_mutex_lock(&config->insert_lock)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_access_token - Error pthread_mutex_lock");
+    ret = G_ERROR;
   } else {
     if (issued_for != NULL && now > 0) {
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
@@ -269,6 +270,7 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
   
   if (pthread_mutex_lock(&config->insert_lock)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_refresh_token - Error pthread_mutex_lock");
+    j_return = json_pack("{si}", "result", G_ERROR);
   } else {
     if (token_hash != NULL && username != NULL && issued_for != NULL && now > 0 && duration > 0) {
       json_error_t error;
