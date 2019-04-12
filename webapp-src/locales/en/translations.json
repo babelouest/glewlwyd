@@ -216,7 +216,14 @@
     "mod-ldap-scope-match-equals": "Equals",
     "mod-ldap-scope-match-contains": "Contains",
     "mod-ldap-scope-match-startswith": "Starts with",
-    "mod-ldap-scope-match-endswith": "Ends with"
+    "mod-ldap-scope-match-endswith": "Ends with",
+    "mod-ldap-password-algorithm": "Algorithm",
+    "mod-ldap-password-algorithm-select": "Choose an algorithm",
+    "mod-ldap-password-algorithm-ssha": "SSHA",
+    "mod-ldap-password-algorithm-sha": "SHA",
+    "mod-ldap-password-algorithm-smd5": "SMD5",
+    "mod-ldap-password-algorithm-md5": "MD5",
+    "mod-ldap-password-algorithm-plain": "PLAIN"
   },
   "modal": {
     "close": "Close",
