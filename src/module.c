@@ -409,7 +409,7 @@ int delete_user_module(struct config_elements * config, const char * name) {
       ret = G_ERROR;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_module - Error action not found");
+    y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_module - Error manage_user_module");
     ret = G_ERROR;
   }
   return ret;
@@ -431,7 +431,7 @@ int manage_user_module(struct config_elements * config, const char * name, int a
           ret = G_ERROR;
         }
       } else {
-        ret = G_ERROR_PARAM;
+        ret = G_OK;
       }
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
       if (instance->enabled) {
@@ -443,7 +443,7 @@ int manage_user_module(struct config_elements * config, const char * name, int a
           ret = G_ERROR;
         }
       } else {
-        ret = G_ERROR_PARAM;
+        ret = G_OK;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error action not found");
