@@ -122,7 +122,7 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params) {
       } else if (0 == o_strcmp("one", json_string_value(json_object_get(j_params, "search-scope"))) || 0 == o_strcmp("subtree", json_string_value(json_object_get(j_params, "search-scope"))) || 0 == o_strcmp("children", json_string_value(json_object_get(j_params, "search-scope")))) {
         json_array_append_new(j_error, json_string("search-scope must have one of the following values: 'one', 'subtree', 'children'"));
       }
-      if (json_object_get(j_params, "page-size") != NULL && (!json_is_integer(json_object_get(j_params, "page-size")) || json_integer_value(json_object_get(j_params, "page-size")) > 0)) {
+      if (json_object_get(j_params, "page-size") != NULL && (!json_is_integer(json_object_get(j_params, "page-size")) || json_integer_value(json_object_get(j_params, "page-size")) <= 0)) {
         json_array_append_new(j_error, json_string("page-size is optional and must be a positive integer"));
       } else if (json_object_get(j_params, "page-size") == NULL) {
         json_object_set_new(j_params, "page-size", json_integer(LDAP_DEFAULT_PAGE_SIZE));
@@ -133,21 +133,25 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params) {
       if (json_object_get(j_params, "filter") == NULL || !json_is_string(json_object_get(j_params, "filter")) || !json_string_length(json_object_get(j_params, "filter"))) {
         json_array_append_new(j_error, json_string("filter is mandatory and must be a string"));
       }
-      if (json_object_get(j_params, "username-property") == NULL || !json_is_string(json_object_get(j_params, "username-property")) || !json_string_length(json_object_get(j_params, "username-property")) || !json_is_array(json_object_get(j_params, "username-property"))) {
-        json_array_append_new(j_error, json_string("username-property is mandatory and must be a string or an array of string"));
+      if (json_object_get(j_params, "username-property") == NULL || (!json_is_string(json_object_get(j_params, "username-property")) && !json_is_array(json_object_get(j_params, "username-property")))) {
+        json_array_append_new(j_error, json_string("username-property is mandatory and must be a non empty string or an array of non empty strings"));
+      } else if (json_is_string(json_object_get(j_params, "username-property")) && !json_string_length(json_object_get(j_params, "username-property"))) {
+        json_array_append_new(j_error, json_string("username-property is mandatory and must be a non empty string or an array of non empty strings"));
       } else if (json_is_array(json_object_get(j_params, "username-property"))) {
         json_array_foreach(json_object_get(j_params, "username-property"), index, j_element) {
           if (!json_is_string(j_element)) {
-            json_array_append_new(j_error, json_string("username-property is mandatory and must be a string or an array of string"));
+            json_array_append_new(j_error, json_string("username-property is mandatory and must be a non empty string or an array of non empty strings"));
           }
         }
       }
-      if (json_object_get(j_params, "scope-property") == NULL || !json_is_string(json_object_get(j_params, "scope-property")) || !json_string_length(json_object_get(j_params, "scope-property")) || !json_is_array(json_object_get(j_params, "scope-property"))) {
-        json_array_append_new(j_error, json_string("scope-property is mandatory and must be a string or an array of string"));
+      if (json_object_get(j_params, "scope-property") == NULL || (!json_is_string(json_object_get(j_params, "scope-property")) && !json_is_array(json_object_get(j_params, "scope-property")))) {
+        json_array_append_new(j_error, json_string("scope-property is mandatory and must be a non empty string or an array of non empty strings"));
+      } else if (json_is_string(json_object_get(j_params, "scope-property")) && !json_string_length(json_object_get(j_params, "scope-property"))) {
+        json_array_append_new(j_error, json_string("scope-property is mandatory and must be a non empty string or an array of non empty strings"));
       } else if (json_is_array(json_object_get(j_params, "scope-property"))) {
         json_array_foreach(json_object_get(j_params, "scope-property"), index, j_element) {
           if (!json_is_string(j_element)) {
-            json_array_append_new(j_error, json_string("scope-property is mandatory and must be a string or an array of string"));
+            json_array_append_new(j_error, json_string("scope-property is mandatory and must be a non empty string or an array of non empty strings"));
           }
         }
       }
@@ -166,21 +170,25 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params) {
           }
         }
       }
-      if (json_object_get(j_params, "name-property") != NULL && (!json_is_string(json_object_get(j_params, "name-property")) || !json_is_array(json_object_get(j_params, "name-property")))) {
-        json_array_append_new(j_error, json_string("name-property is optional and must be a string or an array of string"));
+      if (json_object_get(j_params, "name-property") != NULL && !json_is_string(json_object_get(j_params, "name-property")) && !json_is_array(json_object_get(j_params, "name-property"))) {
+        json_array_append_new(j_error, json_string("name-property is optional and must be a non empty string or an array of non empty strings"));
+      } else if (json_is_string(json_object_get(j_params, "name-property")) && !json_string_length(json_object_get(j_params, "name-property"))) {
+        json_array_append_new(j_error, json_string("name-property is optional and must be a non empty string or an array of non empty strings"));
       } else if (json_is_array(json_object_get(j_params, "name-property"))) {
         json_array_foreach(json_object_get(j_params, "name-property"), index, j_element) {
           if (!json_is_string(j_element)) {
-            json_array_append_new(j_error, json_string("name-property is optional and must be a string or an array of string"));
+            json_array_append_new(j_error, json_string("name-property is optional and must be a non empty string or an array of non empty strings"));
           }
         }
       }
-      if (json_object_get(j_params, "email-property") != NULL && !json_is_string(json_object_get(j_params, "email-property"))) {
-        json_array_append_new(j_error, json_string("email-property is optional and must be a string"));
-      } else if (json_is_array(json_object_get(j_params, "name-property"))) {
-        json_array_foreach(json_object_get(j_params, "name-property"), index, j_element) {
+      if (json_object_get(j_params, "email-property") != NULL && !json_is_string(json_object_get(j_params, "email-property")) && !json_is_array(json_object_get(j_params, "email-property"))) {
+        json_array_append_new(j_error, json_string("email-property is optional and must be a non empty string or an array of non empty strings"));
+      } else if (json_is_string(json_object_get(j_params, "email-property")) && !json_string_length(json_object_get(j_params, "email-property"))) {
+        json_array_append_new(j_error, json_string("email-property is optional and must be a non empty string or an array of non empty strings"));
+      } else if (json_is_array(json_object_get(j_params, "email-property"))) {
+        json_array_foreach(json_object_get(j_params, "email-property"), index, j_element) {
           if (!json_is_string(j_element)) {
-            json_array_append_new(j_error, json_string("name-property is optional and must be a string or an array of string"));
+            json_array_append_new(j_error, json_string("email-property is optional and must be a non empty string or an array of non empty strings"));
           }
         }
       }
@@ -1302,7 +1310,7 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
       json_array_append_new(j_result, json_string("enabled must be a boolean"));
     }
     json_object_foreach(j_user, property, j_element) {
-      if (0 != o_strcmp(property, "username") && 0 != o_strcmp(property, "name") && 0 != o_strcmp(property, "email") && 0 != o_strcmp(property, "enabled") && 0 != o_strcmp(property, "password") && 0 != o_strcmp(property, "source")) {
+      if (0 != o_strcmp(property, "username") && 0 != o_strcmp(property, "name") && 0 != o_strcmp(property, "email") && 0 != o_strcmp(property, "enabled") && 0 != o_strcmp(property, "password") && 0 != o_strcmp(property, "source") && 0 != o_strcmp(property, "scope")) {
         j_format = json_object_get(json_object_get(j_params, "data-format"), property);
         if (json_object_get(j_format, "multiple") == json_true()) {
           if (!json_is_array(j_element)) {
@@ -1364,8 +1372,8 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
         ret = G_ERROR;
       }
       json_array_foreach(j_mod_value_free_array, index, j_element) {
-        for (i=0; mods[index]->mod_values[i] != NULL; i++) {
-          o_free(mods[index]->mod_values[i]);
+        for (i=0; mods[json_integer_value(j_element)]->mod_values[i] != NULL; i++) {
+          o_free(mods[json_integer_value(j_element)]->mod_values[i]);
         }
       }
       json_decref(j_mod_value_free_array);
