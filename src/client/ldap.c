@@ -901,7 +901,7 @@ int client_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int client_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
+int client_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
   json_t * j_properties;
   int ret;
   char * error_message;

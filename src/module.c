@@ -316,7 +316,7 @@ int add_user_module(struct config_elements * config, json_t * j_module) {
         cur_instance->enabled = 0;
         cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
         if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
-          if (module->user_module_init(config->config_m, json_object_get(j_module, "parameters"), &cur_instance->cls) == G_OK) {
+          if (module->user_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
           } else {
@@ -381,35 +381,43 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
 }
 
 int delete_user_module(struct config_elements * config, const char * name) {
-  int ret, res;
+  int ret, res, error = 0;
   json_t * j_query;
   struct _user_module_instance * instance;
   
-  if (manage_user_module(config, name, GLEWLWYD_MODULE_ACTION_STOP) == G_OK) {
-    instance = get_user_module_instance(config, name);
-    if (pointer_list_remove_pointer(config->user_module_instance_list, instance)) {
-      o_free(instance->name);
-      o_free(instance);
-      j_query = json_pack("{sss{ss}}",
-                          "table",
-                          GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
-                          "where",
-                            "gumi_name",
-                            name);
-      res = h_delete(config->conn, j_query, NULL);
-      json_decref(j_query);
-      if (res == H_OK) {
-        ret = G_OK;
+  instance = get_user_module_instance(config, name);
+  if (instance != NULL) {
+    if (instance->enabled) {
+      error = (manage_user_module(config, name, GLEWLWYD_MODULE_ACTION_STOP) != G_OK);
+    }
+    if (!error) {
+      if (pointer_list_remove_pointer(config->user_module_instance_list, instance)) {
+        o_free(instance->name);
+        o_free(instance);
+        j_query = json_pack("{sss{ss}}",
+                            "table",
+                            GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
+                            "where",
+                              "gumi_name",
+                              name);
+        res = h_delete(config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_module - Error executing j_query");
+          ret = G_ERROR_DB;
+        }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_module - Error executing j_query");
-        ret = G_ERROR_DB;
+        y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_module - Error pointer_list_remove_pointer");
+        ret = G_ERROR;
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_module - Error pointer_list_remove_pointer");
+      y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_module - Error manage_user_module");
       ret = G_ERROR;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_module - Error manage_user_module");
+    y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_module - Error module not found");
     ret = G_ERROR;
   }
   return ret;
@@ -423,7 +431,7 @@ int manage_user_module(struct config_elements * config, const char * name, int a
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->user_module_init(config->config_m, json_object_get(j_module, "parameters"), &instance->cls) == G_OK) {
+        if (instance->module->user_module_init(config->config_m, instance->readonly, json_object_get(j_module, "parameters"), &instance->cls) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
         } else {
@@ -431,7 +439,7 @@ int manage_user_module(struct config_elements * config, const char * name, int a
           ret = G_ERROR;
         }
       } else {
-        ret = G_OK;
+        ret = G_ERROR_PARAM;
       }
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
       if (instance->enabled) {
@@ -443,7 +451,7 @@ int manage_user_module(struct config_elements * config, const char * name, int a
           ret = G_ERROR;
         }
       } else {
-        ret = G_OK;
+        ret = G_ERROR_PARAM;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error action not found");
@@ -1012,7 +1020,7 @@ int add_client_module(struct config_elements * config, json_t * j_module) {
         cur_instance->enabled = 0;
         cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
         if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
-          if (module->client_module_init(config->config_m, json_object_get(j_module, "parameters"), &cur_instance->cls) == G_OK) {
+          if (module->client_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
           } else {
@@ -1077,35 +1085,43 @@ int set_client_module(struct config_elements * config, const char * name, json_t
 }
 
 int delete_client_module(struct config_elements * config, const char * name) {
-  int ret, res;
+  int ret, res, error = 0;
   json_t * j_query;
   struct _client_module_instance * instance;
   
-  if (manage_client_module(config, name, GLEWLWYD_MODULE_ACTION_STOP) == G_OK) {
-    instance = get_client_module_instance(config, name);
-    if (pointer_list_remove_pointer(config->client_module_instance_list, instance)) {
-      o_free(instance->name);
-      o_free(instance);
-      j_query = json_pack("{sss{ss}}",
-                          "table",
-                          GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
-                          "where",
-                            "gcmi_name",
-                            name);
-      res = h_delete(config->conn, j_query, NULL);
-      json_decref(j_query);
-      if (res == H_OK) {
-        ret = G_OK;
+  instance = get_client_module_instance(config, name);
+  if (instance != NULL) {
+    if (instance->enabled) {
+      error = (manage_client_module(config, name, GLEWLWYD_MODULE_ACTION_STOP) != G_OK);
+    }
+    if (!error) {
+      if (pointer_list_remove_pointer(config->client_module_instance_list, instance)) {
+        o_free(instance->name);
+        o_free(instance);
+        j_query = json_pack("{sss{ss}}",
+                            "table",
+                            GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
+                            "where",
+                              "gcmi_name",
+                              name);
+        res = h_delete(config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_module - Error executing j_query");
+          ret = G_ERROR_DB;
+        }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_module - Error executing j_query");
-        ret = G_ERROR_DB;
+        y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_module - Error pointer_list_remove_pointer");
+        ret = G_ERROR;
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_module - Error pointer_list_remove_pointer");
+      y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_module - Error manage_client_module");
       ret = G_ERROR;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_module - Error action not found");
+    y_log_message(Y_LOG_LEVEL_ERROR, "delete_client_module - Error instance not found");
     ret = G_ERROR;
   }
   return ret;
@@ -1119,7 +1135,7 @@ int manage_client_module(struct config_elements * config, const char * name, int
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->client_module_init(config->config_m, json_object_get(j_module, "parameters"), &instance->cls) == G_OK) {
+        if (instance->module->client_module_init(config->config_m, instance->readonly, json_object_get(j_module, "parameters"), &instance->cls) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
         } else {

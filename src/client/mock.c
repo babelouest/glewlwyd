@@ -88,7 +88,7 @@ int client_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int client_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
+int client_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
   const char * prefix = "";
   if (json_string_length(json_object_get(j_parameters, "client-id-prefix"))) {
     prefix = json_string_value(json_object_get(j_parameters, "client-id-prefix"));
