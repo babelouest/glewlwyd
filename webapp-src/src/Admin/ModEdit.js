@@ -55,8 +55,10 @@ class ModEdit extends Component {
             .then(() => {
               this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-exist"), typeInvalidMessage: false});
             })
-            .fail(() => {
-              this.state.callback(result, this.state.mod);
+            .fail((err) => {
+              if (err.status === 404) {
+                this.state.callback(result, this.state.mod);
+              }
             });
           } else {
             this.state.callback(result, this.state.mod);

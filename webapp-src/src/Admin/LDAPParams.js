@@ -66,7 +66,7 @@ class LDAPParams extends Component {
   
   changeParam(e, parameter) {
     var mod = this.state.mod;
-    mod.parameters[property] = e.target.value;
+    mod.parameters[parameter] = e.target.value;
     this.setState({mod: mod});
   }
   
