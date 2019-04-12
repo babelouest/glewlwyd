@@ -37,7 +37,7 @@ misc.o: ../misc.c ../glewlwyd-common.h
 libmodmock.so: ../glewlwyd-common.h mock.o misc.o
 	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o misc.o $(LIBS)
 
-libmoddatabase.so: ../glewlwyd-common.h database.o
+libmoddatabase.so: ../glewlwyd-common.h database.o misc.o
 	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o misc.o $(LIBS)
 
 libmodldap.so: ../glewlwyd-common.h ldap.o misc.o
