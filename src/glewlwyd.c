@@ -97,6 +97,7 @@ int main (int argc, char ** argv) {
   config->port = GLEWLWYD_DEFAULT_PORT;
   config->api_prefix = NULL;
   config->external_url = NULL;
+  config->cookie_domain = NULL;
   config->log_mode = Y_LOG_MODE_NONE;
   config->log_level = Y_LOG_LEVEL_NONE;
   config->log_file = NULL;
@@ -542,6 +543,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     
     o_free((*config)->config_file);
     o_free((*config)->api_prefix);
+    o_free((*config)->cookie_domain);
     o_free((*config)->admin_scope);
     o_free((*config)->profile_scope);
     o_free((*config)->external_url);
@@ -796,6 +798,15 @@ int build_config_from_file(struct config_elements * config) {
     config->api_prefix = o_strdup(str_value);
     if (config->api_prefix == NULL) {
       fprintf(stderr, "Error allocating config->api_prefix, exiting\n");
+      config_destroy(&cfg);
+      return 0;
+    }
+  }
+
+  if (config->cookie_domain == NULL && config_lookup_string(&cfg, "cookie_domain", &str_value) == CONFIG_TRUE) {
+    config->cookie_domain = o_strdup(str_value);
+    if (config->cookie_domain == NULL) {
+      fprintf(stderr, "Error allocating config->cookie_domain, exiting\n");
       config_destroy(&cfg);
       return 0;
     }
@@ -1315,7 +1326,7 @@ int load_user_module_instance_list(struct config_elements * config) {
             if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
               j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
               if (j_parameters != NULL) {
-                if (module->user_module_init(config->config_m, j_parameters, &cur_instance->cls) == G_OK) {
+                if (module->user_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls) == G_OK) {
                   cur_instance->enabled = 1;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
@@ -1785,7 +1796,7 @@ int load_client_module_instance_list(struct config_elements * config) {
             if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
               j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
               if (j_parameters != NULL) {
-                if (module->client_module_init(config->config_m, j_parameters, &cur_instance->cls) == G_OK) {
+                if (module->client_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls) == G_OK) {
                   cur_instance->enabled = 1;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));

@@ -97,7 +97,7 @@ struct _user_module {
   json_t    * parameters;
   json_t * (* user_module_load)(struct config_module * config);
   int      (* user_module_unload)(struct config_module * config);
-  json_t * (* user_module_init)(struct config_module * config, json_t * j_parameters, void ** cls);
+  json_t * (* user_module_init)(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
   int      (* user_module_close)(struct config_module * config, void * cls);
   size_t   (* user_module_count_total)(struct config_module * config, const char * pattern, void * cls);
   json_t * (* user_module_get_list)(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
@@ -128,7 +128,7 @@ struct _client_module {
   json_t   * parameters;
   json_t * (* client_module_load)(struct config_module * config);
   int      (* client_module_unload)(struct config_module * config);
-  int      (* client_module_init)(struct config_module * config, json_t * j_parameters, void ** cls);
+  int      (* client_module_init)(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
   int      (* client_module_close)(struct config_module * config, void * cls);
   size_t   (* client_module_count_total)(struct config_module * config, const char * pattern, void * cls);
   json_t * (* client_module_get_list)(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
@@ -202,6 +202,7 @@ struct config_elements {
   unsigned int                                port;
   char *                                      external_url;
   char *                                      api_prefix;
+  char *                                      cookie_domain;
   unsigned long                               log_mode;
   unsigned long                               log_level;
   char *                                      log_file;
@@ -297,7 +298,7 @@ int check_result_value(json_t * result, const int value);
 // User
 json_t * user_module_load(struct config_module * config);
 int      user_module_unload(struct config_module * config);
-int      user_module_init(struct config_module * config, json_t * j_parameters, void ** cls);
+int      user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
 int      user_module_close(struct config_module * config, void * cls);
 size_t   user_module_count_total(struct config_module * config, const char * pattern, void * cls);
 json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
@@ -314,7 +315,7 @@ int      user_module_update_password(struct config_module * config, const char *
 // Client
 json_t * client_module_load(struct config_module * config);
 int      client_module_unload(struct config_module * config);
-int      client_module_init(struct config_module * config, json_t * j_parameters, void ** cls);
+int      client_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
 int      client_module_close(struct config_module * config, void * cls);
 size_t   client_module_count_total(struct config_module * config, const char * pattern, void * cls);
 json_t * client_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);

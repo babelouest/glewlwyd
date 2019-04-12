@@ -68,7 +68,7 @@ int user_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int user_module_init(struct config_module * config, json_t * j_params, void ** cls) {
+int user_module_init(struct config_module * config, int readonly, json_t * j_params, void ** cls) {
   int ret;
   size_t index;
   json_t * j_element;
