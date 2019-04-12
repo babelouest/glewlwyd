@@ -21,6 +21,7 @@ class LDAPParams extends Component {
     this.addScopeMatch = this.addScopeMatch.bind(this);
     this.changeScopeMatchProperty = this.changeScopeMatchProperty.bind(this);
     this.changeMatchType = this.changeMatchType.bind(this);
+    this.changePasswordAlgorithm = this.changePasswordAlgorithm.bind(this);
     this.getMatchType = this.getMatchType.bind(this);
   }
   
@@ -88,6 +89,12 @@ class LDAPParams extends Component {
   changeMatchType(e, index, type) {
     var mod = this.state.mod;
     mod.parameters["scope-match"][index].match = type;
+    this.setState({mod: mod});
+  }
+  
+  changePasswordAlgorithm(e, alg) {
+    var mod = this.state.mod;
+    mod.parameters["password-algorithm"] = alg;
     this.setState({mod: mod});
   }
   
@@ -207,6 +214,21 @@ class LDAPParams extends Component {
         <div className="form-group">
           <label htmlFor="mod-ldap-password-property">{i18next.t("admin.mod-ldap-password-property")}</label>
           <input type="text" className="form-control" id="mod-ldap-password-property" onChange={(e) => this.changeParam(e, "password-property")} value={this.state.mod.parameters["password-property"]} placeholder={i18next.t("admin.mod-ldap-password-property-ph")} />
+        </div>
+        <div className="form-group">
+          <label htmlFor="dropdownPasswordAlgorithm">{i18next.t("admin.mod-ldap-password-algorithm")}</label>
+          <div className="dropdown">
+            <button className="btn btn-secondary dropdown-toggle" type="button" id={"dropdownPasswordAlgorithm"} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {this.state.mod.parameters["password-algorithm"] || i18next.t("admin.mod-ldap-password-algorithm-select")}
+            </button>
+            <div className="dropdown-menu" aria-labelledby={"dropdownPasswordAlgorithm"}>
+              <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'SSHA')}>{i18next.t("admin.mod-ldap-password-algorithm-ssha")}</a>
+              <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'SHA')}>{i18next.t("admin.mod-ldap-password-algorithm-sha")}</a>
+              <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'SMD5')}>{i18next.t("admin.mod-ldap-password-algorithm-smd5")}</a>
+              <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'MD5')}>{i18next.t("admin.mod-ldap-password-algorithm-md5")}</a>
+              <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'PLAIN')}>{i18next.t("admin.mod-ldap-password-algorithm-plain")}</a>
+            </div>
+          </div>
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-object-class">{i18next.t("admin.mod-ldap-object-class")}</label>
