@@ -229,7 +229,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     if (json_object_get(j_scheme_data, "register") == json_true()) {
       json_object_set_new(json_object_get(j_user, "user"), key_mock, json_string("1"));
     } else {
-      json_object_set(json_object_get(j_user, "user"), key_mock, json_string("0"));
+      json_object_set_new(json_object_get(j_user, "user"), key_mock, json_string("0"));
     }
     if (config->glewlwyd_module_callback_set_user(config, username, json_object_get(j_user, "user")) == G_OK) {
       j_return = json_pack("{sis{ss}}", "result", G_OK, "response", "register-code", json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")));
