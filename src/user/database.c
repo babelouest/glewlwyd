@@ -262,7 +262,7 @@ static json_t * is_user_database_parameters_valid(json_t * j_params) {
   
   if (j_error != NULL) {
     if (!json_is_object(j_params)) {
-      json_array_append_new(j_error, json_string("parameters must be a JSON array"));
+      json_array_append_new(j_error, json_string("parameters must be a JSON object"));
     } else {
       if (json_object_get(j_params, "use-glewlwyd-connection") != NULL && !json_is_boolean(json_object_get(j_params, "use-glewlwyd-connection"))) {
         json_array_append_new(j_error, json_string("use-glewlwyd-connection must be a boolean"));

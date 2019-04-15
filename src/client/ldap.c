@@ -104,7 +104,7 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params) {
   
   if (j_error != NULL) {
     if (!json_is_object(j_params)) {
-      json_array_append_new(j_error, json_string("parameters must be a JSON array"));
+      json_array_append_new(j_error, json_string("parameters must be a JSON object"));
     } else {
       if (json_object_get(j_params, "uri") == NULL || !json_is_string(json_object_get(j_params, "uri")) || !json_string_length(json_object_get(j_params, "uri"))) {
         json_array_append_new(j_error, json_string("uri is mandatory and must be a string"));

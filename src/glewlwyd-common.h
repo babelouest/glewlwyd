@@ -84,6 +84,11 @@ typedef enum {
   digest_SSHA512,
   digest_MD5,
   digest_SMD5,
+  digest_PKCS5S2,
+  digest_CRYPT,
+  digest_CRYPT_MD5,
+  digest_CRYPT_SHA256,
+  digest_CRYPT_SHA512,
   digest_PLAIN
 } digest_algorithm;
 
@@ -285,8 +290,8 @@ char * rand_string(char * str, size_t str_size);
 int rand_code(char * str, size_t str_size);
 char * join_json_string_array(json_t * j_array, const char * separator);
 char * url_encode(const char * str);
-int generate_digest(digest_algorithm digest, const char * password, int use_salt, char * out_digest);
-char * generate_hash(digest_algorithm digest, const char * password);
+int generate_digest(digest_algorithm digest, const char * data, int use_salt, char * out_digest);
+char * generate_hash(digest_algorithm digest, const char * data);
 
 /**
  * Check if the result json object has a "result" element that is equal to value
