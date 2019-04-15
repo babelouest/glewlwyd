@@ -48,7 +48,7 @@ static char * get_pattern_clause(struct mod_parameters * param, const char * pat
   char * escape_pattern = h_escape_string(param->conn, pattern), * clause = NULL;
   
   if (escape_pattern != NULL) {
-    clause = msprintf("IN (SELECT gu_id from " G_TABLE_USER " WHERE gu_username LIKE '%%%s%%' OR gu_display_name LIKE '%%%s%%' OR gu_email LIKE '%%%s%%')", escape_pattern, escape_pattern, escape_pattern);
+    clause = msprintf("IN (SELECT gu_id from " G_TABLE_USER " WHERE gu_username LIKE '%%%s%%' OR gu_name LIKE '%%%s%%' OR gu_email LIKE '%%%s%%')", escape_pattern, escape_pattern, escape_pattern);
   }
   o_free(escape_pattern);
   return clause;
@@ -123,7 +123,7 @@ static int append_user_properties(struct mod_parameters * param, json_t * j_user
       ret = G_ERROR_DB;
     }
   } else {
-    j_query = json_pack("{sss[ssss]s{sO}}",
+    j_query = json_pack("{sss[ss]s{sO}}",
                         "table",
                         G_TABLE_USER_PROPERTY,
                         "columns",
@@ -338,7 +338,7 @@ static json_t * is_user_database_parameters_valid(json_t * j_params) {
 }
 
 static char * get_password_clause_write(struct mod_parameters * param, const char * password) {
-  char * clause = NULL, * password_encoded, digest[64] = {0};
+  char * clause = NULL, * password_encoded, digest[1024] = {0};
   
   if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
     if (generate_digest(param->hash_algorithm, password, 0, digest)) {
@@ -367,7 +367,7 @@ static char * get_password_clause_write(struct mod_parameters * param, const cha
 }
 
 static char * get_password_clause_check(struct mod_parameters * param, const char * password) {
-  char * clause = NULL, * password_encoded, digest[64] = {0};
+  char * clause = NULL, * password_encoded, digest[1024] = {0};
   
   if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
     if (generate_digest(param->hash_algorithm, password, 0, digest)) {
@@ -395,17 +395,17 @@ static char * get_password_clause_check(struct mod_parameters * param, const cha
   return clause;
 }
 
-static json_t * get_property_value_db(struct mod_parameters * param, json_t * j_property, json_int_t gu_id) {
+static json_t * get_property_value_db(struct mod_parameters * param, const char * name, json_t * j_property, json_int_t gu_id) {
   if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
     if (json_string_length(j_property) < 512) {
-      return json_pack("{sIsO}", "gu_id", gu_id, "gup_value_tiny", j_property);
+      return json_pack("{sIsssO}", "gu_id", gu_id, "gup_name", name, "gup_value_tiny", j_property);
     } else if (json_string_length(j_property) < 16*1024) {
-      return json_pack("{sIsO}", "gu_id", gu_id, "gup_value_small", j_property);
+      return json_pack("{sIsssO}", "gu_id", gu_id, "gup_name", name, "gup_value_small", j_property);
     } else {
-      return json_pack("{sIsO}", "gu_id", gu_id, "gup_value_medium", j_property);
+      return json_pack("{sIsssO}", "gu_id", gu_id, "gup_name", name, "gup_value_medium", j_property);
     }
   } else {
-    return json_pack("{sIsO}", "gu_id", gu_id, "gup_value", j_property);;
+    return json_pack("{sIsssO}", "gu_id", gu_id, "gup_name", name, "gup_value", j_property);;
   }
 }
 
@@ -417,14 +417,14 @@ static int save_user_properties(struct mod_parameters * param, json_t * j_user, 
   
   if (j_array != NULL) {
     json_object_foreach(j_user, name, j_property) {
-      if (0 != o_strcmp(name, "username") && 0 != o_strcmp(name, "name") && 0 != o_strcmp(name, "password") && 0 != o_strcmp(name, "email") && 0 != o_strcmp(name, "enabled")) {
+      if (0 != o_strcmp(name, "username") && 0 != o_strcmp(name, "name") && 0 != o_strcmp(name, "password") && 0 != o_strcmp(name, "email") && 0 != o_strcmp(name, "enabled") && 0 != o_strcmp(name, "scope")) {
         j_format = json_object_get(json_object_get(param->j_params, "data-format"), name);
         if ((!profile && json_object_get(j_format, "write") != json_false()) || (profile && json_object_get(j_format, "profile-write") == json_true())) {
           if (!json_is_array(j_property)) {
-            json_array_append_new(j_array, get_property_value_db(param, j_property, gu_id));
+            json_array_append_new(j_array, get_property_value_db(param, name, j_property, gu_id));
           } else {
             json_array_foreach(j_property, index, j_property_value) {
-              json_array_append_new(j_array, get_property_value_db(param, j_property_value, gu_id));
+              json_array_append_new(j_array, get_property_value_db(param, name, j_property_value, gu_id));
             }
           }
         }
@@ -721,7 +721,6 @@ int user_module_close(struct config_module * config, void * cls) {
   
   if (cls != NULL) {
     if (((struct mod_parameters *)cls)->use_glewlwyd_connection) {
-      json_decref(((struct mod_parameters *)cls)->j_params);
       if (h_close_db(((struct mod_parameters *)cls)->conn) != H_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_close database - Error h_close_db");
         ret = G_ERROR_DB;
@@ -731,6 +730,7 @@ int user_module_close(struct config_module * config, void * cls) {
     } else {
       ret = G_OK;
     }
+    json_decref(((struct mod_parameters *)cls)->j_params);
     o_free(cls);
   } else {
     ret = G_ERROR_PARAM;
@@ -1026,17 +1026,16 @@ int user_module_update_profile(struct config_module * config, const char * usern
   json_t * j_query, * j_result = NULL;
   int res, ret;
   
-  j_query = json_pack("{sss[s]s{sO}}", "table", G_TABLE_USER, "columns", "gu_id", "where", "gu_username", username);
+  j_query = json_pack("{sss[s]s{ss}}", "table", G_TABLE_USER, "columns", "gu_id", "where", "gu_username", username);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK && json_array_size(j_result)) {
-    j_query = json_pack("{sss{}s{ss}}",
+    j_query = json_pack("{sss{}sO}",
                         "table",
                         G_TABLE_USER,
                         "set",
                         "where",
-                          "gu_id",
-                          json_object_get(json_array_get(j_result, 0), "gu_id"));
+                          json_array_get(j_result, 0));
     
     if (json_object_get(j_user, "name") != NULL) {
       json_object_set(json_object_get(j_query, "set"), "gu_name", json_object_get(j_user, "name"));
@@ -1115,6 +1114,7 @@ int user_module_check_password(struct config_module * config, const char * usern
     } else {
       ret = G_ERROR_UNAUTHORIZED;
     }
+    json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_check_password database - Error executing j_query");
     ret = G_ERROR_DB;
@@ -1129,7 +1129,7 @@ int user_module_update_password(struct config_module * config, const char * user
   char * password_clause;
   
   password_clause = get_password_clause_write(param, new_password);
-  j_query = json_pack("{sss{s{ss}}s{sO}}",
+  j_query = json_pack("{sss{s{ss}}s{ss}}",
                       "table",
                       G_TABLE_USER,
                       "set",
