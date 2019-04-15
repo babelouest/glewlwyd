@@ -27,10 +27,10 @@ set(PROGRAM_VERSION_MINOR "0")
 set(PROGRAM_VERSION_PATCH "0")
 set(PROJECT_DESCRIPTION "OAuth2 authentication server providing Json Web Tokens")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
-set(ORCANIA_VERSION_DOWNLOAD "1.3.0")
-set(YDER_VERSION_DOWNLOAD "1.4.4")
-set(ULFIUS_VERSION_DOWNLOAD "2.5.3")
-set(HOEL_VERSION_DOWNLOAD "1.4.8")
+set(ORCANIA_VERSION_REQUIRED "2.0.0")
+set(YDER_VERSION_REQUIRED "1.4.5")
+set(ULFIUS_VERSION_REQUIRED "2.6.0")
+set(HOEL_VERSION_REQUIRED "1.4.9")
 
 include(GNUInstallDirs)
 include(CheckSymbolExists)
@@ -135,11 +135,11 @@ set(SEARCH_YDER OFF CACHE BOOL "Force to false") # Avoid to search and download 
 
 set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
 include(FindOrcania)
-find_package(Orcania 1.1 QUIET) # try to find orcania
+find_package(Orcania ${ORCANIA_VERSION_REQUIRED} QUIET) # try to find orcania
 if (NOT ORCANIA_FOUND)
     include(DownloadProject)
     download_project(PROJ orcania # ... otherwise, download archive
-            URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_DOWNLOAD}.tar.gz"
+            URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_REQUIRED}.tar.gz"
             QUIET)
     add_subdirectory(${orcania_SOURCE_DIR} ${orcania_BINARY_DIR})
     include_directories(${orcania_SOURCE_DIR}/include)
@@ -151,12 +151,12 @@ set(LIBS ${LIBS} ${ORCANIA_LIBRARIES})
 
 set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
 include(FindYder)
-find_package(Yder 1.1 QUIET) # try to find Yder
+find_package(Yder ${YDER_VERSION_REQUIRED} QUIET) # try to find Yder
 if (NOT YDER_FOUND)
     include(DownloadProject)
     option(CHECK_ORCANIA "specific param" off)
     download_project(PROJ yder # ... otherwise, download archive
-            URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_DOWNLOAD}.tar.gz"
+            URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_REQUIRED}.tar.gz"
             QUIET)
     add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
     include_directories(${yder_SOURCE_DIR}/include)
@@ -169,14 +169,14 @@ set(LIBS ${LIBS} ${YDER_LIBRARIES})
 
 set(Ulfius_FIND_QUIETLY ON)
 include(FindUlfius)
-find_package(Ulfius 2.2 QUIET)
+find_package(Ulfius ${ULFIUS_VERSION_REQUIRED} QUIET)
 if (NOT ULFIUS_FOUND)
     include(DownloadProject)
     option(WITH_WEBSOCKET "specific param" off)
     option(INSTALL_HEADER "specific param" off)
     option(CHECK_YDER "specific param" off)
     download_project(PROJ ulfius
-            URL "https://github.com/babelouest/ulfius/archive/v${ULFIUS_VERSION_DOWNLOAD}.tar.gz"
+            URL "https://github.com/babelouest/ulfius/archive/v${ULFIUS_VERSION_REQUIRED}.tar.gz"
             QUIET)
     add_subdirectory(${ulfius_SOURCE_DIR} ${ulfius_BINARY_DIR})
     include_directories(${yder_SOURCE_DIR}/include)
@@ -190,14 +190,14 @@ set(LIBS ${LIBS} ${ULFIUS_LIBRARIES})
 
 set(Hoel_FIND_QUIETLY ON)
 include(FindHoel)
-find_package(Hoel 1.3 QUIET)
+find_package(Hoel ${HOEL_VERSION_REQUIRED} QUIET)
 if (NOT HOEL_FOUND)
     include(DownloadProject)
     option(WITH_PGSQL "specific param" off)
     option(INSTALL_HEADER "specific param" off)
     option(CHECK_YDER "specific param" off)
     download_project(PROJ hoel
-            URL "https://github.com/babelouest/hoel/archive/v${HOEL_VERSION_DOWNLOAD}.tar.gz"
+            URL "https://github.com/babelouest/hoel/archive/v${HOEL_VERSION_REQUIRED}.tar.gz"
             QUIET)
     add_subdirectory(${hoel_SOURCE_DIR} ${hoel_BINARY_DIR})
     include_directories(${hoel_SOURCE_DIR}/include)
@@ -317,7 +317,7 @@ set(CPACK_GENERATOR "TGZ;DEB")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mail@babelouest.org")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/babelouest/glewlwyd")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.3.4), libconfig9, libgnutls30 (>= 3.5.0), libjansson4 (>= 2.7), libldap-2.4-2 (>= 2.4.7), liborcania (>= 1.2), libyder (>= 1.3), libulfius (>= 2.3), libhoel (>= 1.4), libuuid1 (>= 2.16), lsb-base (>= 3.0-6)")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.3.4), libconfig9, libgnutls30 (>= 3.5.0), libjansson4 (>= 2.7), libldap-2.4-2 (>= 2.4.7), liborcania (>= ${ORCANIA_VERSION_REQUIRED}), libyder (>= ${YDER_VERSION_REQUIRED}), libulfius (>= ${ULFIUS_VERSION_REQUIRED}), libhoel (>= ${HOEL_VERSION_REQUIRED}), lsb-base (>= 3.0-6)")
 set(CPACK_PACKAGE_FILE_NAME ${PACKAGE_FILE_NAME})
 
 set(CPACK_SOURCE_GENERATOR "TGZ")
