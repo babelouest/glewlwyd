@@ -337,24 +337,34 @@ static LDAP * connect_ldap_server(json_t * j_params) {
   return ldap;
 }
 
+static const char * get_read_property(json_t * j_params, const char * property) {
+  if (json_is_string(json_object_get(j_params, property))) {
+    return json_string_value(json_object_get(j_params, property));
+  } else if (json_is_array(json_object_get(j_params, property))) {
+    return json_string_value(json_array_get(json_object_get(j_params, property), 0));
+  } else {
+    return NULL;
+  }
+}
+
 static char * get_ldap_filter_pattern(json_t * j_params, const char * pattern) {
   char * pattern_escaped, * filter, * name_filter, * email_filter;
   
   if (o_strlen(pattern)) {
     pattern_escaped = escape_ldap(pattern);
     if (json_object_get(j_params, "name-property") != NULL) {
-      name_filter = msprintf("(%s=*%s*)", json_string_value(json_object_get(j_params, "name-property")), pattern_escaped);
+      name_filter = msprintf("(%s=*%s*)", get_read_property(j_params, "name-property"), pattern_escaped);
     } else {
       name_filter = o_strdup("");
     }
     if (json_object_get(j_params, "email-property") != NULL) {
-      email_filter = msprintf("(%s=*%s*)", json_string_value(json_object_get(j_params, "email-property")), pattern_escaped);
+      email_filter = msprintf("(%s=*%s*)", get_read_property(j_params, "email-property"), pattern_escaped);
     } else {
       email_filter = o_strdup("");
     }
     filter = msprintf("(&(%s)(|(%s=*%s*)%s%s))", 
                       json_string_value(json_object_get(j_params, "filter")), 
-                      json_string_value(json_object_get(j_params, "username-property")),
+                      get_read_property(j_params, "username-property"),
                       pattern_escaped,
                       name_filter,
                       email_filter);
@@ -366,16 +376,6 @@ static char * get_ldap_filter_pattern(json_t * j_params, const char * pattern) {
   }
   
   return filter;
-}
-
-static const char * get_read_property(json_t * j_params, const char * property) {
-  if (json_is_string(json_object_get(j_params, property))) {
-    return json_string_value(json_object_get(j_params, property));
-  } else if (json_is_array(json_object_get(j_params, property))) {
-    return json_string_value(json_array_get(json_object_get(j_params, property), 0));
-  } else {
-    return NULL;
-  }
 }
 
 static char ** get_ldap_read_attributes(json_t * j_params, int profile, json_t * j_properties) {
