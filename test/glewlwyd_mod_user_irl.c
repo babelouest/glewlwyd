@@ -330,7 +330,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_mod_user_irl_user_large_list_get);
   tcase_add_test(tc_core, test_glwd_mod_user_irl_user_large_list_delete);
   tcase_add_test(tc_core, test_glwd_mod_user_irl_module_delete);
-  tcase_set_timeout(tc_core, 30);
+  tcase_set_timeout(tc_core, 90);
   suite_add_tcase(s, tc_core);
 
   return s;
@@ -351,10 +351,10 @@ int main(int argc, char *argv[])
   
   srand(time(NULL));
   j_params = json_load_file(argv[1], JSON_DECODE_ANY, NULL);
+  ulfius_init_request(&admin_req);
   if (j_params != NULL) {
     // Getting a valid session id for authenticated http requests
     ulfius_init_request(&auth_req);
-    ulfius_init_request(&admin_req);
     ulfius_init_response(&auth_resp);
     auth_req.http_verb = strdup("POST");
     auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
@@ -371,10 +371,10 @@ int main(int argc, char *argv[])
         username_pattern = msprintf("user_irl_list_%d_", (rand()%1000));
         do_test = 1;
       }
-      ulfius_clean_response(&auth_resp);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication");
     }
+    ulfius_clean_response(&auth_resp);
     ulfius_clean_request(&auth_req);
     
     if (do_test) {
@@ -386,10 +386,11 @@ int main(int argc, char *argv[])
       srunner_free(sr);
     }
     
-    ulfius_clean_request(&admin_req);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error reading parameters file %s", argv[1]);
   }
+  json_decref(j_params);
+  ulfius_clean_request(&admin_req);
   y_close_logs();
   o_free(username);
   
