@@ -26,16 +26,17 @@ TARGET_ADMIN=glewlwyd_admin_mod_type glewlwyd_admin_mod_user glewlwyd_admin_mod_
 TARGET_AUTH=glewlwyd_auth_password glewlwyd_auth_scheme glewlwyd_auth_grant glewlwyd_auth_check_scheme glewlwyd_auth_scheme_trigger glewlwyd_auth_scheme_register glewlwyd_auth_profile glewlwyd_auth_session_manage
 TARGET_CRUD=glewlwyd_crud_user glewlwyd_crud_client glewlwyd_crud_scope
 TARGET_OAUTH2=glewlwyd_oauth2_auth_code glewlwyd_oauth2_code glewlwyd_oauth2_code_client_confidential glewlwyd_oauth2_implicit glewlwyd_oauth2_resource_owner_pwd_cred glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential glewlwyd_oauth2_client_cred glewlwyd_oauth2_refresh_token glewlwyd_oauth2_refresh_token_client_confidential glewlwyd_oauth2_delete_token glewlwyd_oauth2_delete_token_client_confidential glewlwyd_oauth2_profile glewlwyd_oauth2_refresh_manage glewlwyd_oauth2_refresh_manage glewlwyd_oauth2_refresh_manage_session
-TARGET_MOD_USER_MOCK=glewlwyd_mod_user_database glewlwyd_mod_user_ldap
+TARGET_IRL=glewlwyd_mod_user_irl
 VERBOSE=0
 MEMCHECK=0
 RUN=1
 LIBMOCKVERSION=1.0.0
+PARAM_FILE=param.json
 
 all: test
 
 clean:
-	rm -f *.o *.so *.so.$(LIBMOCKVERSION) *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_MOD_USER_MOCK)
+	rm -f *.o *.so *.so.$(LIBMOCKVERSION) *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_IRL)
 
 build: $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2)
 
@@ -55,18 +56,16 @@ test-crud: $(TARGET_CRUD) test_glewlwyd_crud_user test_glewlwyd_crud_client test
 
 test-oauth2: $(TARGET_OAUTH2) test_glewlwyd_oauth2_auth_code test_glewlwyd_oauth2_code test_glewlwyd_oauth2_code_client_confidential test_glewlwyd_oauth2_implicit test_glewlwyd_oauth2_resource_owner_pwd_cred test_glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential test_glewlwyd_oauth2_client_cred test_glewlwyd_oauth2_refresh_token test_glewlwyd_oauth2_refresh_token_client_confidential test_glewlwyd_oauth2_delete_token test_glewlwyd_oauth2_delete_token_client_confidential test_glewlwyd_oauth2_profile test_glewlwyd_oauth2_refresh_manage glewlwyd_oauth2_refresh_manage glewlwyd_oauth2_refresh_manage_session
 
-test-mod-mock: $(TARGET_MOD_USER_MOCK) test_glewlwyd_mod_user_database test_glewlwyd_mod_user_ldap
+test-irl: $(TARGET_IRL)
 
-libglwdmockhoel.so: mock_hoel.c
-	$(CC) -c -fPIC $(CFLAGS) mock_hoel.c -fPIC
-	$(CC) -shared -fPIC -Wl,-soname,libglwdmockhoel.so -o libglwdmockhoel.so.$(LIBMOCKVERSION) mock_hoel.o -lc -ljansson -lorcania
-	ln -sf libglwdmockhoel.so.$(LIBMOCKVERSION) libglwdmockhoel.so
-
-glewlwyd_mod_user_database: glewlwyd_mod_user_database.c ../src/user/database.c unit-tests.c libglwdmockhoel.so
-	$(CC) $(CFLAGS) glewlwyd_mod_user_database.c ../src/user/database.c unit-tests.c -o glewlwyd_mod_user_database -L. -lglwdmockhoel $(LDFLAGS)
-
-glewlwyd_mod_user_ldap: glewlwyd_mod_user_ldap.c ../src/user/database.c unit-tests.c glwdmock.so
-	$(CC) $(CFLAGS) glewlwyd_mod_user_ldap.c ../src/user/database.c unit-tests.c -o glewlwyd_mod_user_ldap $(LDFLAGS) -lglwdmock -Wl,-rpath=./
+test_glewlwyd_mod_user_irl: glewlwyd_mod_user_irl
+	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
+		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM_FILE); \
+	elif [ "$(MEMCHECK)" = "0" ]; then \
+	  LD_LIBRARY_PATH=. ./$^ $(PARAM_FILE); \
+	else \
+	  LD_LIBRARY_PATH=. valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./$^ $(PARAM_FILE) 2>valgrind-$@.txt; \
+	fi
 
 test_%: %
 	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
