@@ -1561,6 +1561,7 @@ int callback_glewlwyd_user_update_password (const struct _u_request * request, s
       } else {
         response->status = 400;
       }
+      json_decref(j_password);
     } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
       response->status = 401;
     } else {
