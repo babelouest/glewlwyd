@@ -33,3 +33,4 @@ glewlwyd_crud_client
 glewlwyd_crud_scope
 
 valgrind-*.txt
+*.json
