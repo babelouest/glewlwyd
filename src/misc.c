@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>
+#include <gnutls/pkcs12.h>
 
 #include "glewlwyd.h"
 
@@ -255,9 +256,9 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
           sprintf(intermediate, "%s", password);
           if (use_salt) {
             rand_string(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
-            // gcc9 doesn't like strncat
-            memcpy(intermediate, salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
-            intermediate[GLEWLWYD_DEFAULT_SALT_LENGTH] = '\0';
+            strncat(intermediate, salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+//            memcpy(intermediate+o_strlen(password), salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+//            intermediate[o_strlen(password)+GLEWLWYD_DEFAULT_SALT_LENGTH] = '\0';
           }
           
           key_data.size = o_strlen(intermediate);
@@ -292,6 +293,37 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
   return res;
 }
 
+int generate_digest_pkcs5s2(const char * password, char * out_digest) {
+  gnutls_pkcs12_bag_t bag;
+  gnutls_pkcs12_bag_init(&bag);
+  unsigned int schema = GNUTLS_PKCS_PKCS12_3DES, cipher = GNUTLS_CIPHER_3DES_CBC, salt_size = GLEWLWYD_DEFAULT_SALT_LENGTH, count = 1000;
+  char * pbkdf2_key = NULL;
+  char salt[GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0};
+  unsigned char encoded_key[128 + GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0};
+  size_t encoded_key_size = (128 + GLEWLWYD_DEFAULT_SALT_LENGTH), encoded_key_size_base64;
+  int res;
+  
+  if (!gnutls_pkcs12_bag_encrypt(bag, password, schema)) {
+    rand_string(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+    if (!gnutls_pkcs12_bag_enc_info(bag, &schema, &cipher, salt, &salt_size, &count, &pbkdf2_key)) {
+      memcpy(encoded_key, pbkdf2_key, o_strlen(pbkdf2_key));
+      memcpy(encoded_key+o_strlen(pbkdf2_key), salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+      encoded_key_size = o_strlen(pbkdf2_key) + GLEWLWYD_DEFAULT_SALT_LENGTH;
+      if (o_base64_encode(encoded_key, encoded_key_size, (unsigned char *)out_digest, &encoded_key_size_base64)) {
+        res = 1;
+      } else {
+        res = 0;
+      }
+    } else {
+      res = 0;
+    }
+  } else {
+    res = 0;
+  }
+  gnutls_free(pbkdf2_key);
+  return res;
+}
+
 /**
  * Generates a hash from the specified string data, using the digest method specified
  * returned value must be 'd after user
@@ -317,62 +349,62 @@ char * generate_hash(digest_algorithm digest, const char * data) {
         break;
       case digest_SSHA224:
         if (generate_digest(digest_SHA224, data, 1, buffer)) {
-          to_return = msprintf("{SSHA}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SSHA224}%s", buffer, o_strlen(buffer));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA");
         }
         break;
       case digest_SHA224:
         if (generate_digest(digest_SHA224, data, 0, buffer)) {
-          to_return = msprintf("{SHA}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SHA224}%s", buffer, o_strlen(buffer));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
         }
         break;
       case digest_SSHA256:
         if (generate_digest(digest_SHA256, data, 1, buffer)) {
-          to_return = msprintf("{SSHA}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SSHA256}%s", buffer, o_strlen(buffer));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA");
         }
         break;
       case digest_SHA256:
         if (generate_digest(digest_SHA256, data, 0, buffer)) {
-          to_return = msprintf("{SHA}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SHA256}%s", buffer, o_strlen(buffer));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
         }
         break;
       case digest_SSHA384:
         if (generate_digest(digest_SHA384, data, 1, buffer)) {
-          to_return = msprintf("{SSHA}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SSHA384}%s", buffer, o_strlen(buffer));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA");
         }
         break;
       case digest_SHA384:
         if (generate_digest(digest_SHA384, data, 0, buffer)) {
-          to_return = msprintf("{SHA}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SHA384}%s", buffer, o_strlen(buffer));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
         }
         break;
       case digest_SSHA512:
         if (generate_digest(digest_SHA512, data, 1, buffer)) {
-          to_return = msprintf("{SSHA}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SSHA512}%s", buffer, o_strlen(buffer));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA");
         }
         break;
       case digest_SHA512:
         if (generate_digest(digest_SHA512, data, 0, buffer)) {
-          to_return = msprintf("{SHA}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SHA512}%s", buffer, o_strlen(buffer));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
         }
         break;
       case digest_SMD5:
-        if (generate_digest(digest_SMD5, data, 1, buffer)) {
+        if (generate_digest(digest_MD5, data, 1, buffer)) {
           to_return = msprintf("{SMD5}%s", buffer, o_strlen(buffer));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA");
@@ -383,6 +415,13 @@ char * generate_hash(digest_algorithm digest, const char * data) {
           to_return = msprintf("{MD5}%s", buffer, o_strlen(buffer));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
+        }
+        break;
+      case digest_PKCS5S2:
+        if (generate_digest_pkcs5s2(data, buffer)) {
+          to_return = msprintf("{PKCS5S2}%s", buffer, o_strlen(buffer));
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest PKCS5S2");
         }
         break;
       default:

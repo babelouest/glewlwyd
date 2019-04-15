@@ -118,7 +118,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
   json_t * j_param = ulfius_get_json_body_request(request, NULL), * j_result = NULL;
   const char * ip_source = get_ip_source(request);
   char * issued_for = get_client_hostname(request);
-  char * session_uid, session_str_array[129], expires[129], * cookie_path = msprintf("/%s", config->api_prefix);
+  char * session_uid, session_str_array[129], expires[129];
   time_t now;
   struct tm ts;
   
@@ -139,7 +139,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (1)");
               response->status = 500;
             } else {
-              ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, cookie_path, 0, 0);
+              ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", 0, 0);
             }
             o_free(session_uid);
           } else {
@@ -190,7 +190,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (4)");
               response->status = 500;
             } else {
-              ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, cookie_path, 0, 0);
+              ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", 0, 0);
             }
             o_free(session_uid);
           } else {
@@ -210,7 +210,6 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
   }
   json_decref(j_param);
   o_free(issued_for);
-  o_free(cookie_path);
 
   return U_CALLBACK_CONTINUE;
 }
@@ -1544,18 +1543,23 @@ int callback_glewlwyd_user_update_profile (const struct _u_request * request, st
 
 int callback_glewlwyd_user_update_password (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_session;
+  json_t * j_session, * j_password;
   char * session_uid = get_session_id(config, request);
   int res;
 
   if (session_uid != NULL && o_strlen(session_uid)) {
     j_session = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_session, G_OK)) {
-      if ((res = user_update_password(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "username")), json_string_value(json_object_get(json_object_get(j_session, "user"), "old_password")), json_string_value(json_object_get(json_object_get(j_session, "user"), "password")))) == G_ERROR_PARAM) {
+      j_password = ulfius_get_json_body_request(request, NULL);
+      if (json_string_length(json_object_get(j_password, "old_password")) && json_string_length(json_object_get(j_password, "password"))) {
+        if ((res = user_update_password(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "username")), json_string_value(json_object_get(j_password, "old_password")), json_string_value(json_object_get(j_password, "password")))) == G_ERROR_PARAM) {
+          response->status = 400;
+        } else if (res != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_update_password - Error user_update_password");
+          response->status = 500;
+        }
+      } else {
         response->status = 400;
-      } else if (res != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_update_password - Error user_update_password");
-        response->status = 500;
       }
     } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
       response->status = 401;

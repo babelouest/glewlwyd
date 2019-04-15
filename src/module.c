@@ -185,7 +185,7 @@ json_t * get_user_module(struct config_elements * config, const char * name) {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_user_module - Error instance %s not found in app config", name);
         json_object_set(json_array_get(j_result, 0), "enabled", json_false());
       }
-      j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
+      j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
@@ -431,11 +431,11 @@ int manage_user_module(struct config_elements * config, const char * name, int a
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->user_module_init(config->config_m, instance->readonly, json_object_get(j_module, "parameters"), &instance->cls) == G_OK) {
+        if (instance->module->user_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
+          y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           ret = G_ERROR;
         }
       } else {
@@ -447,7 +447,7 @@ int manage_user_module(struct config_elements * config, const char * name, int a
           instance->enabled = 0;
           ret = G_OK;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
+          y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           ret = G_ERROR;
         }
       } else {
@@ -547,7 +547,7 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
         y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module_list - Error instance %s not found in app config", name);
         json_object_set(json_array_get(j_result, 0), "enabled", json_false());
       }
-      j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
+      j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
@@ -763,11 +763,11 @@ int manage_user_auth_scheme_module(struct config_elements * config, const char *
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), &instance->cls) == G_OK) {
+        if (instance->module->user_auth_scheme_module_init(config->config_m, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
+          y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           ret = G_ERROR;
         }
       } else {
@@ -779,7 +779,7 @@ int manage_user_auth_scheme_module(struct config_elements * config, const char *
           instance->enabled = 0;
           ret = G_OK;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
+          y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           ret = G_ERROR;
         }
       } else {
@@ -889,7 +889,7 @@ json_t * get_client_module(struct config_elements * config, const char * name) {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_client_module_list - Error instance %s not found in app config", name);
         json_object_set(json_array_get(j_result, 0), "enabled", json_false());
       }
-      j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
+      j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
@@ -1135,11 +1135,11 @@ int manage_client_module(struct config_elements * config, const char * name, int
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->client_module_init(config->config_m, instance->readonly, json_object_get(j_module, "parameters"), &instance->cls) == G_OK) {
+        if (instance->module->client_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
+          y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           ret = G_ERROR;
         }
       } else {
@@ -1151,7 +1151,7 @@ int manage_client_module(struct config_elements * config, const char * name, int
           instance->enabled = 0;
           ret = G_OK;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
+          y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           ret = G_ERROR;
         }
       } else {
@@ -1251,7 +1251,7 @@ json_t * get_plugin_module(struct config_elements * config, const char * name) {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module_list - Error instance %s not found in app config", name);
         json_object_set(json_array_get(j_result, 0), "enabled", json_false());
       }
-      j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
+      j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
@@ -1467,11 +1467,11 @@ int manage_plugin_module(struct config_elements * config, const char * name, int
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->plugin_module_init(config->config_p, json_object_get(j_module, "parameters"), &instance->cls) == G_OK) {
+        if (instance->module->plugin_module_init(config->config_p, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
+          y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           ret = G_ERROR;
         }
       } else {
@@ -1483,7 +1483,7 @@ int manage_plugin_module(struct config_elements * config, const char * name, int
           instance->enabled = 0;
           ret = G_OK;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(j_module, "name")));
+          y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           ret = G_ERROR;
         }
       } else {
