@@ -32,5 +32,7 @@ glewlwyd_crud_user
 glewlwyd_crud_client
 glewlwyd_crud_scope
 
+glewlwyd_mod_user_irl
+
 valgrind-*.txt
 *.json
