@@ -819,9 +819,19 @@ class App extends Component {
 
   confirmEditUserMod(result, mod) {
     if (result) {
+      console.log(JSON.stringify(mod));
       apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name), "PUT", mod)
       .then(() => {
-        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+        apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name) + "/disable/", "PUT")
+        .always(() => {
+          apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name) + "/enable/", "PUT")
+          .then(() => {
+            messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+          })
+          .fail(() => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+          });
+        });
       })
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
@@ -892,7 +902,16 @@ class App extends Component {
     if (result) {
       apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name), "PUT", mod)
       .then(() => {
-        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+        apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name) + "/disable/", "PUT")
+        .always(() => {
+          apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name) + "/enable/", "PUT")
+          .then(() => {
+            messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+          })
+          .fail(() => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+          });
+        });
       })
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
@@ -962,7 +981,16 @@ class App extends Component {
     if (result) {
       apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(mod.name), "PUT", mod)
       .then(() => {
-        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+        apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(mod.name) + "/disable/", "PUT")
+        .always(() => {
+          apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(mod.name) + "/enable/", "PUT")
+          .then(() => {
+            messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+          })
+          .fail(() => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+          });
+        });
       })
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
@@ -1030,7 +1058,16 @@ class App extends Component {
     if (result) {
       apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name), "PUT", mod)
       .then(() => {
-        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+        apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name) + "/disable/", "PUT")
+        .always(() => {
+          apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name) + "/enable/", "PUT")
+          .then(() => {
+            messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+          })
+          .fail(() => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+          });
+        });
       })
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});

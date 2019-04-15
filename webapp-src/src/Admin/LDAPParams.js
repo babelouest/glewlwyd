@@ -17,12 +17,14 @@ class LDAPParams extends Component {
     this.changeDataFormatProperty = this.changeDataFormatProperty.bind(this);
     this.changeDataFormatLdapProperty = this.changeDataFormatLdapProperty.bind(this);
     this.toggleDataFormatValue = this.toggleDataFormatValue.bind(this);
+    this.deleteDataFormat = this.deleteDataFormat.bind(this);
     this.changeParam = this.changeParam.bind(this);
     this.addScopeMatch = this.addScopeMatch.bind(this);
     this.changeScopeMatchProperty = this.changeScopeMatchProperty.bind(this);
     this.changeMatchType = this.changeMatchType.bind(this);
     this.changePasswordAlgorithm = this.changePasswordAlgorithm.bind(this);
     this.getMatchType = this.getMatchType.bind(this);
+    this.changePageSize = this.changePageSize.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -55,7 +57,7 @@ class LDAPParams extends Component {
   
   changeDataFormatLdapProperty(e, property) {
     var mod = this.state.mod;
-    mod.parameters["data-format"][property] = e.target.value;
+    mod.parameters["data-format"][property].property = e.target.value;
     this.setState({mod: mod});
   }
   
@@ -65,9 +67,19 @@ class LDAPParams extends Component {
     this.setState({mod: mod});
   }
   
-  changeParam(e, parameter) {
+  deleteDataFormat(e, property) {
     var mod = this.state.mod;
-    mod.parameters[parameter] = e.target.value;
+    delete(mod.parameters["data-format"][property]);
+    this.setState({mod: mod});
+  }
+  
+  changeParam(e, parameter, toArray = false) {
+    var mod = this.state.mod;
+    if (toArray) {
+      mod.parameters[parameter] = e.target.value.replace(/ /g, '').split(',');
+    } else {
+      mod.parameters[parameter] = e.target.value;
+    }
     this.setState({mod: mod});
   }
   
@@ -110,18 +122,25 @@ class LDAPParams extends Component {
     }
   }
   
+  changePageSize(e) {
+    var mod = this.state.mod;
+    mod.parameters["page-size"] = parseInt(e.target.value);
+    this.setState({mod: mod});
+  }
+  
   render() {
     var dataFormat = [], scopeMatch = [];
     var i = 0;
     for (var property in this.state.mod.parameters["data-format"]) {
       dataFormat.push(<div key={i++}>
+        <hr/>
         <div className="form-group">
           <label htmlFor={"mod-database-data-format-name-"+property}>{i18next.t("admin.mod-database-data-format-property")}</label>
           <input type="text" className="form-control" id={"mod-database-data-format-name-"+property} onChange={(e) => this.changeDataFormatProperty(e, property)} value={property} placeholder={i18next.t("admin.mod-database-data-format-property-ph")} />
         </div>
         <div className="form-group">
-          <label htmlFor={"mod-database-data-format-name-"+property}>{i18next.t("admin.mod-database-data-format-property")}</label>
-          <input type="text" className="form-control" id={"mod-database-data-format-name-"+property} onChange={(e) => this.changeDataFormatLdapProperty(e, property)} value={property} placeholder={i18next.t("admin.mod-database-data-format-property-ph")} />
+          <label htmlFor={"mod-database-data-format-name-"+property}>{i18next.t("admin.mod-database-data-format-ldap-property")}</label>
+          <input type="text" className="form-control" id={"mod-database-data-format-ldap-name-"+property} onChange={(e) => this.changeDataFormatLdapProperty(e, property)} value={this.state.mod.parameters["data-format"][property].property} placeholder={i18next.t("admin.mod-database-data-format-ldap-property-ph")} />
         </div>
         <div className="form-group">
           <label htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-read")}</label>
@@ -139,6 +158,9 @@ class LDAPParams extends Component {
           <label htmlFor={"mod-database-data-format-profile-write-"+property}>{i18next.t("admin.mod-database-data-format-profile-write")}</label>
           <input type="checkbox" className="form-control" id={"mod-database-data-format-profile-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-write")} checked={this.state.mod.parameters["data-format"][property]["profile-write"]} />
         </div>
+        <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteDataFormat(e, property)} title={i18next.t("admin.mod-data-format-delete")}>
+          <i className="fas fa-trash"></i>
+        </button>
       </div>);
     }
     this.state.mod.parameters["scope-match"].forEach((match, index) => {
@@ -181,7 +203,7 @@ class LDAPParams extends Component {
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-page-size">{i18next.t("admin.mod-ldap-page-size")}</label>
-          <input type="number" min="0" step="1" className="form-control" id="mod-ldap-page-size" onChange={(e) => this.changeParam(e, "page-size")} value={this.state.mod.parameters["page-size"]} placeholder={i18next.t("admin.mod-ldap-page-size-ph")} />
+          <input type="number" min="0" step="1" className="form-control" id="mod-ldap-page-size" onChange={this.changePageSize} value={this.state.mod.parameters["page-size"]} placeholder={i18next.t("admin.mod-ldap-page-size-ph")} />
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-base-search">{i18next.t("admin.mod-ldap-base-search")}</label>
@@ -193,19 +215,19 @@ class LDAPParams extends Component {
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-username-property">{i18next.t("admin.mod-ldap-username-property")}</label>
-          <input type="text" className="form-control" id="mod-ldap-username-property" onChange={(e) => this.changeParam(e, "username-property")} value={this.state.mod.parameters["username-property"]} placeholder={i18next.t("admin.mod-ldap-username-property-ph")} />
+          <input type="text" className="form-control" id="mod-ldap-username-property" onChange={(e) => this.changeParam(e, "username-property", true)} value={this.state.mod.parameters["username-property"]} placeholder={i18next.t("admin.mod-ldap-username-property-ph")} />
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-scope-property">{i18next.t("admin.mod-ldap-scope-property")}</label>
-          <input type="text" className="form-control" id="mod-ldap-scope-property" onChange={(e) => this.changeParam(e, "scope-property")} value={this.state.mod.parameters["scope-property"]} placeholder={i18next.t("admin.mod-ldap-scope-property-ph")} />
+          <input type="text" className="form-control" id="mod-ldap-scope-property" onChange={(e) => this.changeParam(e, "scope-property", true)} value={this.state.mod.parameters["scope-property"]} placeholder={i18next.t("admin.mod-ldap-scope-property-ph")} />
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-name-property">{i18next.t("admin.mod-ldap-name-property")}</label>
-          <input type="text" className="form-control" id="mod-ldap-name-property" onChange={(e) => this.changeParam(e, "name-property")} value={this.state.mod.parameters["name-property"]} placeholder={i18next.t("admin.mod-ldap-name-property-ph")} />
+          <input type="text" className="form-control" id="mod-ldap-name-property" onChange={(e) => this.changeParam(e, "name-property", true)} value={this.state.mod.parameters["name-property"]} placeholder={i18next.t("admin.mod-ldap-name-property-ph")} />
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-email-property">{i18next.t("admin.mod-ldap-email-property")}</label>
-          <input type="text" className="form-control" id="mod-ldap-email-property" onChange={(e) => this.changeParam(e, "email-property")} value={this.state.mod.parameters["email-property"]} placeholder={i18next.t("admin.mod-ldap-email-property-ph")} />
+          <input type="text" className="form-control" id="mod-ldap-email-property" onChange={(e) => this.changeParam(e, "email-property", true)} value={this.state.mod.parameters["email-property"]} placeholder={i18next.t("admin.mod-ldap-email-property-ph")} />
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-rdn-property">{i18next.t("admin.mod-ldap-rdn-property")}</label>
@@ -232,7 +254,7 @@ class LDAPParams extends Component {
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-object-class">{i18next.t("admin.mod-ldap-object-class")}</label>
-          <input type="text" className="form-control" id="mod-ldap-object-class" onChange={(e) => this.changeParam(e, "object-class")} value={this.state.mod.parameters["object-class"]} placeholder={i18next.t("admin.mod-ldap-object-class-ph")} />
+          <input type="text" className="form-control" id="mod-ldap-object-class" onChange={(e) => this.changeParam(e, "object-class", true)} value={this.state.mod.parameters["object-class"]} placeholder={i18next.t("admin.mod-ldap-object-class-ph")} />
         </div>
         <div className="accordion" id="accordionParams">
           <div className="card">
