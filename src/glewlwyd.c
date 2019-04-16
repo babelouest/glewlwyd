@@ -2010,7 +2010,7 @@ int load_plugin_module_instance_list(struct config_elements * config) {
             if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
               j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
               if (j_parameters != NULL) {
-                if (module->plugin_module_init(config->config_p, j_parameters, &cur_instance->cls) == G_OK) {
+                if (module->plugin_module_init(config->config_p, cur_instance->name, j_parameters, &cur_instance->cls) == G_OK) {
                   cur_instance->enabled = 1;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));

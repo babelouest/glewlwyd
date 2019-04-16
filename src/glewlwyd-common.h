@@ -191,7 +191,7 @@ struct _plugin_module {
   json_t    * parameters;
   json_t * (* plugin_module_load)(struct config_plugin * config);
   int      (* plugin_module_unload)(struct config_plugin * config);
-  int      (* plugin_module_init)(struct config_plugin * config, json_t * j_parameters, void ** cls);
+  int      (* plugin_module_init)(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls);
   int      (* plugin_module_close)(struct config_plugin * config, void * cls);
 };
 
@@ -345,7 +345,7 @@ int      user_auth_scheme_module_validate(struct config_module * config, const s
 // Plugin
 json_t * plugin_module_load(struct config_plugin * config);
 int      plugin_module_unload(struct config_plugin * config);
-int      plugin_module_init(struct config_plugin * config, json_t * j_parameters, void ** cls);
+int      plugin_module_init(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls);
 int      plugin_module_close(struct config_plugin * config, void * cls);
 
 #endif
