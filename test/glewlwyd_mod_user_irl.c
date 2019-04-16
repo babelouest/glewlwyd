@@ -49,12 +49,52 @@ START_TEST(test_glwd_mod_user_irl_module_add)
 }
 END_TEST
 
+START_TEST(test_glwd_mod_user_irl_add_error_param)
+{
+  char * url = msprintf("%s/user?source=" MOD_NAME, SERVER_URI);
+  json_t * j_parameters = json_pack("{ss}", "error", "error");
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  
+  j_parameters = json_pack("[{ss}]", "username", "test");
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  
+  j_parameters = json_pack("{si}", "username", 42);
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  
+  o_free(url);
+}
+END_TEST
+
 START_TEST(test_glwd_mod_user_irl_user_add)
 {
   json_t * j_user = json_pack("{sssssssss[ss]}", "username", username, "password", PROFILE_PASSWORD, "name", PROFILE_NAME, "email", PROFILE_MAIL, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
   char * url = SERVER_URI "/user?source=" MOD_NAME;
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_user, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_user);
+}
+END_TEST
+
+START_TEST(test_glwd_mod_user_irl_add_already_present)
+{
+  char * url = msprintf("%s/user?source=" MOD_NAME, SERVER_URI);
+  json_t * j_parameters = json_pack("{sssssssss[ss]}", "username", username, "password", PROFILE_PASSWORD, "name", PROFILE_NAME, "email", PROFILE_MAIL, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
+  
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  o_free(url);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_glwd_mod_user_irl_delete_error)
+{
+  char * url = msprintf("%s/user/error?source=" MOD_NAME, SERVER_URI);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL), 1);
+  o_free(url);
 }
 END_TEST
 
@@ -318,6 +358,9 @@ static Suite *glewlwyd_suite(void)
   tc_core = tcase_create("test_glwd_mod_user_irl");
   tcase_add_test(tc_core, test_glwd_mod_user_irl_module_add);
   tcase_add_test(tc_core, test_glwd_mod_user_irl_user_add);
+  tcase_add_test(tc_core, test_glwd_mod_user_irl_add_error_param);
+  tcase_add_test(tc_core, test_glwd_mod_user_irl_add_already_present);
+  tcase_add_test(tc_core, test_glwd_mod_user_irl_delete_error);
   tcase_add_test(tc_core, test_glwd_mod_user_irl_user_get_list);
   tcase_add_test(tc_core, test_glwd_mod_user_irl_user_get);
   tcase_add_test(tc_core, test_glwd_mod_user_irl_user_auth);
@@ -368,7 +411,8 @@ int main(int argc, char *argv[])
         u_map_put(admin_req.map_header, "Cookie", cookie);
         o_free(cookie);
         username = msprintf("user_irl%d", (rand()%1000));
-        username_pattern = msprintf("user_irl_list_%d_", (rand()%1000));
+        //username_pattern = msprintf("user_irl_list_%d_", (rand()%1000));
+        username_pattern = msprintf("user_irl_list_");
         do_test = 1;
       }
     } else {
