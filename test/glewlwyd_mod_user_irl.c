@@ -174,6 +174,7 @@ START_TEST(test_glwd_mod_user_irl_user_auth)
   
   ulfius_clean_response(&auth_resp);
   ulfius_clean_request(&auth_req);
+  o_free(cookie);
 }
 END_TEST
 
@@ -215,6 +216,7 @@ START_TEST(test_glwd_mod_user_irl_user_update_profile)
   
   ulfius_clean_response(&auth_resp);
   ulfius_clean_request(&auth_req);
+  o_free(cookie);
 }
 END_TEST
 
@@ -261,6 +263,7 @@ START_TEST(test_glwd_mod_user_irl_user_update_password)
   json_decref(j_profile);
   
   ulfius_clean_request(&auth_req);
+  o_free(cookie);
 }
 END_TEST
 
@@ -411,8 +414,7 @@ int main(int argc, char *argv[])
         u_map_put(admin_req.map_header, "Cookie", cookie);
         o_free(cookie);
         username = msprintf("user_irl%d", (rand()%1000));
-        //username_pattern = msprintf("user_irl_list_%d_", (rand()%1000));
-        username_pattern = msprintf("user_irl_list_");
+        username_pattern = msprintf("user_irl_list_%d_", (rand()%1000));
         do_test = 1;
       }
     } else {
