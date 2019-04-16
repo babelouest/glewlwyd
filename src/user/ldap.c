@@ -1127,7 +1127,6 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
   json_t * j_params = (json_t *)cls, * j_properties_user = NULL, * j_user_list, * j_user, * j_return;
   LDAP * ldap = connect_ldap_server(j_params);
   LDAPMessage * entry;
-  int i = 0;
   
   int  ldap_result;
   int  scope = LDAP_SCOPE_ONELEVEL;
@@ -1137,7 +1136,7 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
 
   /* paged control variables */
   struct berval new_cookie, * cookie = NULL;
-  int more_page, l_errcode = 0, l_entries, l_entry_count = 0, l_count;
+  int more_page, l_errcode = 0;
   LDAPControl * page_control = NULL, * search_controls[2] = { NULL, NULL }, ** returned_controls = NULL;
   LDAPMessage * l_result = NULL;
   ber_int_t total_count;
@@ -1204,34 +1203,25 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
       ldap_control_free(page_control);
       page_control = NULL;
       
-      l_entries = ldap_count_entries(ldap, l_result);
-      if (l_entry_count <= offset && offset < (l_entry_count + l_entries)) {
-        entry = ldap_first_entry(ldap, l_result);
-        l_count = offset - l_entry_count;
-        for (;entry !=NULL && l_count > 0; entry = ldap_next_entry(ldap, entry)) {
-          l_count--;
-        }
-        
-        while (entry != NULL && i<(offset+limit)) {
-          j_user = get_user_from_result(j_params, j_properties_user, ldap, entry);
-          if (j_user != NULL) {
-            json_array_append_new(j_user_list, j_user);
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error get_user_from_result");
-          }
-          entry = ldap_next_entry(ldap, entry);
-          i++;
-        }
+      entry = ldap_first_entry(ldap, l_result);
+      for (;entry !=NULL && offset > 0; entry = ldap_next_entry(ldap, entry)) {
+        offset--;
       }
-      if (l_entries > 0) {
-        l_entry_count = l_entry_count + l_entries;
-        if (l_entry_count >= (offset + limit)) {
-          break;
+      
+      while (entry != NULL && limit) {
+        j_user = get_user_from_result(j_params, j_properties_user, ldap, entry);
+        if (j_user != NULL) {
+          json_array_append_new(j_user_list, j_user);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error get_user_from_result");
         }
+        entry = ldap_next_entry(ldap, entry);
+        limit--;
       }
+      
       ldap_msgfree(l_result);
       l_result = NULL;
-    } while (more_page);
+    } while (more_page && limit);
     ldap_msgfree(l_result);
     l_result = NULL;
     o_free(filter);
@@ -1557,10 +1547,11 @@ int user_module_update_profile(struct config_module * config, const char * usern
       }
       o_free(cur_dn);
       json_array_foreach(j_mod_value_free_array, index, j_element) {
-        for (i=0; mods[index]->mod_values[i] != NULL; i++) {
-          o_free(mods[index]->mod_values[i]);
+        for (i=0; mods[json_integer_value(j_element)]->mod_values[i] != NULL; i++) {
+          o_free(mods[json_integer_value(j_element)]->mod_values[i]);
         }
       }
+      json_decref(j_mod_value_free_array);
       for (i=0; mods[i] != NULL; i++) {
         o_free(mods[i]->mod_values);
         o_free(mods[i]);
