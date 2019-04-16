@@ -61,6 +61,7 @@
 struct _oauth2_config {
   struct config_plugin             * glewlwyd_config;
   jwt_t                            * jwt_key;
+  const char                       * name;
   json_t                           * j_params;
   unsigned long                      access_token_duration;
   json_int_t                         refresh_token_duration;
@@ -2100,7 +2101,7 @@ int plugin_module_unload(struct config_plugin * config) {
   return G_OK;
 }
 
-int plugin_module_init(struct config_plugin * config, json_t * j_parameters, void ** cls) {
+int plugin_module_init(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls) {
   int ret;
   const unsigned char * key;
   jwt_alg_t alg = 0;
@@ -2117,6 +2118,7 @@ int plugin_module_init(struct config_plugin * config, json_t * j_parameters, voi
       *cls = NULL;
       ret = G_ERROR;
     } else {
+      ((struct _oauth2_config *)*cls)->name = name;
       ((struct _oauth2_config *)*cls)->jwt_key = NULL;
       ((struct _oauth2_config *)*cls)->j_params = json_incref(j_parameters);
       ((struct _oauth2_config *)*cls)->glewlwyd_config = config;

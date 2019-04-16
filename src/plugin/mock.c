@@ -45,7 +45,7 @@ int plugin_module_unload(struct config_plugin * config) {
   return G_OK;
 }
 
-int plugin_module_init(struct config_plugin * config, json_t * j_parameters, void ** cls) {
+int plugin_module_init(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls) {
   y_log_message(Y_LOG_LEVEL_DEBUG, "plugin_module_init - success");
   return G_OK;
 }
