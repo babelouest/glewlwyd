@@ -46,7 +46,7 @@ unit-tests.o: unit-tests.c unit-tests.h
 %: %.c unit-tests.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-test: build test-admin test-auth test-crud test-oauth2
+test: build test-admin test-auth test-crud test-oauth2 test-irl
 
 test-auth: $(TARGET_AUTH) test_glewlwyd_auth_password test_glewlwyd_auth_scheme test_glewlwyd_auth_grant test_glewlwyd_auth_check_scheme test_glewlwyd_auth_scheme_trigger test_glewlwyd_auth_scheme_register test_glewlwyd_auth_profile test_glewlwyd_auth_session_manage
 
@@ -57,6 +57,9 @@ test-crud: $(TARGET_CRUD) test_glewlwyd_crud_user test_glewlwyd_crud_client test
 test-oauth2: $(TARGET_OAUTH2) test_glewlwyd_oauth2_auth_code test_glewlwyd_oauth2_code test_glewlwyd_oauth2_code_client_confidential test_glewlwyd_oauth2_implicit test_glewlwyd_oauth2_resource_owner_pwd_cred test_glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential test_glewlwyd_oauth2_client_cred test_glewlwyd_oauth2_refresh_token test_glewlwyd_oauth2_refresh_token_client_confidential test_glewlwyd_oauth2_delete_token test_glewlwyd_oauth2_delete_token_client_confidential test_glewlwyd_oauth2_profile test_glewlwyd_oauth2_refresh_manage glewlwyd_oauth2_refresh_manage glewlwyd_oauth2_refresh_manage_session
 
 test-irl: $(TARGET_IRL)
+	@-for JSON_FILE in mod_user_*.json; \
+		do $(MAKE) test_glewlwyd_mod_user_irl PARAM_FILE=$$JSON_FILE $*; \
+	done
 
 test_glewlwyd_mod_user_irl: glewlwyd_mod_user_irl
 	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
