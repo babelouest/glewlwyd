@@ -773,7 +773,7 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
   char * pattern_clause;
   size_t index;
   
-  j_query = json_pack("{sss[sssss]sisi}",
+  j_query = json_pack("{sss[sssss]sisiss}",
                       "table",
                       G_TABLE_USER,
                       "columns",
@@ -785,7 +785,9 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
                       "offset",
                       offset,
                       "limit",
-                      limit);
+                      limit,
+                      "order_by",
+                      "gu_username");
   if (o_strlen(pattern)) {
     pattern_clause = get_pattern_clause(param, pattern);
     json_object_set_new(j_query, "where", json_pack("{s{ssss}}", "gu_id", "operator", "raw", "value", pattern_clause));
