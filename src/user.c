@@ -28,7 +28,7 @@
 
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password) {
   int res;
-  json_t * j_return = NULL, * j_module_list = get_user_module_list(config), * j_module;
+  json_t * j_return = NULL, * j_module_list = get_user_module_list(config), * j_module, * j_user;
   struct _user_module_instance * user_module;
   size_t index;
   
@@ -37,14 +37,20 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
       user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
       if (user_module != NULL) {
         if (user_module->enabled) {
-          res = user_module->module->user_module_check_password(config->config_m, username, password, user_module->cls);
-          if (res == G_OK) {
-            j_return = json_pack("{si}", "result", G_OK);
-          } else if (res == G_ERROR_UNAUTHORIZED) {
-            j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-          } else if (res != G_ERROR_NOT_FOUND) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error, user_module_check_password for module '%s', skip", user_module->name);
+          j_user = user_module->module->user_module_get(config->config_m, username, user_module->cls);
+          if (check_result_value(j_user, G_OK)) {
+            res = user_module->module->user_module_check_password(config->config_m, username, password, user_module->cls);
+            if (res == G_OK) {
+              j_return = json_pack("{si}", "result", G_OK);
+            } else if (res == G_ERROR_UNAUTHORIZED) {
+              j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+            } else if (res != G_ERROR_NOT_FOUND) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error, user_module_check_password for module '%s', skip", user_module->name);
+            }
+          } else if (!check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error, user_module_get for module '%s', skip", user_module->name);
           }
+          json_decref(j_user);
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_credentials - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
@@ -572,13 +578,11 @@ json_t * user_get_profile(struct config_elements * config, const char * username
 json_t * user_set_profile(struct config_elements * config, const char * username, json_t * j_profile) {
   json_t * j_user = get_user(config, username, NULL), * j_return;
   struct _user_module_instance * user_module;
-  int ret;
 
   if (check_result_value(j_user, G_OK)) {
     user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
-      ret = user_module->module->user_module_update_profile(config->config_m, username, j_profile, user_module->cls);
-      j_return = json_pack("{si}", "result", ret);
+      j_return = json_pack("{si}", "result", user_module->module->user_module_update_profile(config->config_m, username, j_profile, user_module->cls));
     } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "profile update is not allowed");
     } else {
@@ -648,22 +652,15 @@ int glewlwyd_module_callback_set_user(struct config_module * config, const char 
 
 int glewlwyd_module_callback_check_user_password(struct config_module * config, const char * username, const char * password) {
   int ret;
-  json_t * j_user, * j_result;
+  json_t * j_result;
   
-  j_user = get_user(config->glewlwyd_config, username, NULL);
-  if (check_result_value(j_user, G_OK)) {
-    j_result = auth_check_user_credentials(config->glewlwyd_config, username, password);
-    if (json_is_integer(json_object_get(j_result, "result"))) {
-      ret = json_integer_value(json_object_get(j_result, "result"));
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_module_callback_check_user_password - Error auth_check_user_credentials");
-      ret = G_ERROR;
-    }
-    json_decref(j_result);
+  j_result = auth_check_user_credentials(config->glewlwyd_config, username, password);
+  if (json_is_integer(json_object_get(j_result, "result"))) {
+    ret = json_integer_value(json_object_get(j_result, "result"));
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_module_callback_check_user_password - Error get_user");
+    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_module_callback_check_user_password - Error auth_check_user_credentials");
     ret = G_ERROR;
   }
-  json_decref(j_user);
+  json_decref(j_result);
   return ret;
 }
