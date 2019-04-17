@@ -412,7 +412,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
       struct _user_module * module = (struct _user_module *)pointer_list_get_at((*config)->user_module_list, i);
       if (module != NULL) {
         if (module->user_module_unload((*config)->config_m) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_module_close for module '%s'", module->name);
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_module_unload for module '%s'", module->name);
         }
 /* 
  * dlclose() makes valgrind not useful when it comes to libraries
@@ -451,7 +451,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
       struct _client_module * module = (struct _client_module *)pointer_list_get_at((*config)->client_module_list, i);
       if (module != NULL) {
         if (module->client_module_unload((*config)->config_m) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error client_module_close for module '%s'", module->name);
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error client_module_unload for module '%s'", module->name);
         }
 /* 
  * dlclose() makes valgrind not useful when it comes to libraries
@@ -490,7 +490,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
       struct _user_auth_scheme_module * module = (struct _user_auth_scheme_module *)pointer_list_get_at((*config)->user_auth_scheme_module_list, i);
       if (module != NULL) {
         if (module->user_auth_scheme_module_unload((*config)->config_m) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_auth_scheme_module_close for module '%s'", module->name);
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_auth_scheme_module_unload for module '%s'", module->name);
         }
 #ifndef DEBUG
         if (dlclose(module->file_handle)) {
@@ -1207,7 +1207,7 @@ int init_user_module_list(struct config_elements * config) {
                     cur_user_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
                     cur_user_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
                     cur_user_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
-                    cur_user_module->parameters = json_incref(json_object_get(j_parameters, "parameters"));
+                    cur_user_module->parameters = json_deep_copy(json_object_get(j_parameters, "parameters"));
                     if (o_strlen(cur_user_module->name) && get_user_module_lib(config, cur_user_module->name) == NULL) {
                       if (pointer_list_append(config->user_module_list, (void*)cur_user_module)) {
                         y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s - %s", file_path, cur_user_module->name);
@@ -1217,7 +1217,7 @@ int init_user_module_list(struct config_elements * config) {
                         o_free(cur_user_module->name);
                         o_free(cur_user_module->display_name);
                         o_free(cur_user_module->description);
-                        o_free(cur_user_module->parameters);
+                        json_decref(cur_user_module->parameters);
                         o_free(cur_user_module);
                         y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error pointer_list_append");
                         ret = G_ERROR;
@@ -1229,7 +1229,7 @@ int init_user_module_list(struct config_elements * config) {
                       o_free(cur_user_module->name);
                       o_free(cur_user_module->display_name);
                       o_free(cur_user_module->description);
-                      o_free(cur_user_module->parameters);
+                      json_decref(cur_user_module->parameters);
                       o_free(cur_user_module);
                       ret = G_ERROR_PARAM;
                     }
@@ -1443,7 +1443,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                     cur_user_auth_scheme_module->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
                     cur_user_auth_scheme_module->display_name = o_strdup(json_string_value(json_object_get(j_module, "display_name")));
                     cur_user_auth_scheme_module->description = o_strdup(json_string_value(json_object_get(j_module, "description")));
-                    cur_user_auth_scheme_module->parameters = json_incref(json_object_get(j_module, "parameters"));
+                    cur_user_auth_scheme_module->parameters = json_deep_copy(json_object_get(j_module, "parameters"));
                     if (o_strlen(cur_user_auth_scheme_module->name) && get_user_auth_scheme_module_lib(config, cur_user_auth_scheme_module->name) == NULL) {
                       if (pointer_list_append(config->user_auth_scheme_module_list, cur_user_auth_scheme_module)) {
                         y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
@@ -1676,11 +1676,12 @@ int init_client_module_list(struct config_elements * config) {
                     cur_client_module->client_module_delete != NULL &&
                     cur_client_module->client_module_check_password != NULL) {
                   j_parameters = cur_client_module->client_module_load(config->config_m);
+                  y_log_message(Y_LOG_LEVEL_DEBUG, "j_params %d", check_result_value(j_parameters, G_OK));
                   if (check_result_value(j_parameters, G_OK)) {
                     cur_client_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
                     cur_client_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
                     cur_client_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
-                    cur_client_module->parameters = json_incref(json_object_get(j_parameters, "parameters"));
+                    cur_client_module->parameters = json_deep_copy(json_object_get(j_parameters, "parameters"));
                     if (o_strlen(cur_client_module->name) && get_client_module_lib(config, cur_client_module->name) == NULL) {
                       if (pointer_list_append(config->client_module_list, cur_client_module)) {
                         y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_client_module->name);
@@ -1690,7 +1691,7 @@ int init_client_module_list(struct config_elements * config) {
                         o_free(cur_client_module->name);
                         o_free(cur_client_module->display_name);
                         o_free(cur_client_module->description);
-                        o_free(cur_client_module->parameters);
+                        json_decref(cur_client_module->parameters);
                         o_free(cur_client_module);
                         y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error reallocating resources for client_module_list");
                         ret = G_ERROR_MEMORY;
@@ -1702,7 +1703,7 @@ int init_client_module_list(struct config_elements * config) {
                       o_free(cur_client_module->name);
                       o_free(cur_client_module->display_name);
                       o_free(cur_client_module->description);
-                      o_free(cur_client_module->parameters);
+                      json_decref(cur_client_module->parameters);
                       o_free(cur_client_module);
                       ret = G_ERROR;
                     }
@@ -1903,7 +1904,7 @@ int init_plugin_module_list(struct config_elements * config) {
                     cur_plugin_module->name = o_strdup(json_string_value(json_object_get(j_result, "name")));
                     cur_plugin_module->display_name = o_strdup(json_string_value(json_object_get(j_result, "display_name")));
                     cur_plugin_module->description = o_strdup(json_string_value(json_object_get(j_result, "description")));
-                    cur_plugin_module->parameters = json_incref(json_object_get(j_result, "parameters"));
+                    cur_plugin_module->parameters = json_deep_copy(json_object_get(j_result, "parameters"));
                     if (o_strlen(cur_plugin_module->name) && get_plugin_module_lib(config, cur_plugin_module->name) == NULL) {
                       if (pointer_list_append(config->plugin_module_list, cur_plugin_module)) {
                         y_log_message(Y_LOG_LEVEL_INFO, "Loading plugin module %s - %s", file_path, cur_plugin_module->name);
