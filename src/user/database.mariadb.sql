@@ -1,37 +1,38 @@
-DROP TABLE IF EXISTS `g_user_property`;
-DROP TABLE IF EXISTS `g_user_scope_user`;
-DROP TABLE IF EXISTS `g_user_scope`;
-DROP TABLE IF EXISTS `g_user`;
+DROP TABLE IF EXISTS `g_client_property`;
+DROP TABLE IF EXISTS `g_client_scope_client`;
+DROP TABLE IF EXISTS `g_client_scope`;
+DROP TABLE IF EXISTS `g_client`;
 
-CREATE TABLE `g_user` (
-  `gu_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
-  `gu_username` VARCHAR(128) NOT NULL UNIQUE,
-  `gu_name` VARCHAR(256) DEFAULT '',
-  `gu_email` VARCHAR(512),
-  `gu_password` VARCHAR(256),
-  `gu_enabled` TINYINT(1) DEFAULT 1
+CREATE TABLE `g_client` (
+  `gc_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gc_client_id` VARCHAR(128) NOT NULL UNIQUE,
+  `gc_name` VARCHAR(256) DEFAULT '',
+  `gc_description` VARCHAR(512) DEFAULT '',
+  `gc_confidential` TINYINT(1) DEFAULT 0,
+  `gc_password` VARCHAR(256),
+  `gc_enabled` TINYINT(1) DEFAULT 1
 );
 
-CREATE TABLE `g_user_scope` (
-  `gus_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
-  `gus_name` VARCHAR(128) NOT NULL UNIQUE
+CREATE TABLE `g_client_scope` (
+  `gcs_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gcs_name` VARCHAR(128) NOT NULL UNIQUE
 );
 
-CREATE TABLE `g_user_scope_user` (
-  `gusu_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
-  `gu_id` INT(11),
-  `gus_id` INT(11),
-  FOREIGN KEY(`gu_id`) REFERENCES `g_user`(`gu_id`) ON DELETE CASCADE,
-  FOREIGN KEY(`gus_id`) REFERENCES `g_user_scope`(`gus_id`) ON DELETE CASCADE
+CREATE TABLE `g_client_scope_client` (
+  `gcsu_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gc_id` INT(11),
+  `gcs_id` INT(11),
+  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE,
+  FOREIGN KEY(`gcs_id`) REFERENCES `g_client_scope`(`gcs_id`) ON DELETE CASCADE
 );
 
-CREATE TABLE `g_user_property` (
-  `gup_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
-  `gu_id` INT(11),
-  `gup_name` VARCHAR(128) NOT NULL,
-  `gup_value_tiny` VARCHAR(512) DEFAULT NULL,
-  `gup_value_small` BLOB DEFAULT NULL,
-  `gup_value_medium` MEDIUMBLOB DEFAULT NULL,
-  FOREIGN KEY(`gu_id`) REFERENCES `g_user`(`gu_id`) ON DELETE CASCADE
+CREATE TABLE `g_client_property` (
+  `gcp_id` INT(11) PRIMARY KEY AUTO_INCREMENT,
+  `gc_id` INT(11),
+  `gcp_name` VARCHAR(128) NOT NULL,
+  `gcp_value_tiny` VARCHAR(512) DEFAULT NULL,
+  `gcp_value_small` BLOB DEFAULT NULL,
+  `gcp_value_medium` MEDIUMBLOB DEFAULT NULL,
+  FOREIGN KEY(`gc_id`) REFERENCES `g_client`(`gc_id`) ON DELETE CASCADE
 );
-CREATE INDEX `i_g_user_property_name` ON `g_user_property`(`gup_name`);
+CREATE INDEX `i_g_client_property_name` ON `g_client_property`(`gcp_name`);
