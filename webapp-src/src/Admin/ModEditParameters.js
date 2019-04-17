@@ -10,24 +10,26 @@ class ModEditParameters extends Component {
 
     this.state = {
       mod: props.mod,
-      role: props.role
+      role: props.role,
+      check: props.check
     };
   }
   
   componentWillReceiveProps(nextProps) {
     this.setState({
       mod: nextProps.mod,
-      role: nextProps.role
+      role: nextProps.role,
+      check: nextProps.check
     });
   }
   
   render() {
     if (this.state.mod.module === "mock") {
-      return <MockParams mod={this.state.mod} role={this.state.role} />
+      return <MockParams mod={this.state.mod} role={this.state.role} check={this.state.check} />
     } else if (this.state.mod.module === "database") {
-      return <DatabaseParams mod={this.state.mod} role={this.state.role} />
+      return <DatabaseParams mod={this.state.mod} role={this.state.role} check={this.state.check} />
     } else if (this.state.mod.module === "ldap") {
-      return <LDAPParams mod={this.state.mod} role={this.state.role} />
+      return <LDAPParams mod={this.state.mod} role={this.state.role} check={this.state.check} />
     } else {
       return ("");
     }

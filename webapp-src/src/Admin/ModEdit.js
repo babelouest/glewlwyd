@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 
 import apiManager from '../lib/APIManager';
 import ModEditParameters from './ModEditParameters';
+import messageDispatcher from '../lib/MessageDispatcher';
 
 class ModEdit extends Component {
   constructor(props) {
@@ -17,8 +18,35 @@ class ModEdit extends Component {
       parametersValid: true,
       nameInvalid: false,
       nameInvalidMessage: false,
-      typeInvalidMessage: false
+      typeInvalidMessage: false,
+      check: false
     }
+    
+    messageDispatcher.subscribe('ModEdit', (message) => {
+      if (message.type === 'modValid') {
+        this.setState({check: false}, () => {
+          if (this.state.add && !this.state.mod.name) {
+            this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-mandatory"), typeInvalidMessage: false});
+          } else if (!this.state.mod.module) {
+            this.setState({nameInvalid: false, nameInvalidMessage: false, typeInvalidMessage: i18next.t("admin.error-mod-type-mandatory")});
+          } else if (this.state.parametersValid) {
+            if (this.state.add) {
+              apiManager.glewlwydRequest("/mod/" + this.state.role + "/" + encodeURI(this.state.mod.name), "GET")
+              .then(() => {
+                this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-exist"), typeInvalidMessage: false});
+              })
+              .fail((err) => {
+                if (err.status === 404) {
+                  this.state.callback(true, this.state.mod);
+                }
+              });
+            } else {
+              this.state.callback(true, this.state.mod);
+            }
+          }
+        });
+      }
+    });
 
     this.closeModal = this.closeModal.bind(this);
     this.changeName = this.changeName.bind(this);
@@ -45,25 +73,7 @@ class ModEdit extends Component {
   closeModal(e, result) {
     if (this.state.callback) {
       if (result) {
-        if (this.state.add && !this.state.mod.name) {
-          this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-mandatory"), typeInvalidMessage: false});
-        } else if (!this.state.mod.module) {
-          this.setState({nameInvalid: false, nameInvalidMessage: false, typeInvalidMessage: i18next.t("admin.error-mod-type-mandatory")});
-        } else if (this.state.parametersValid) {
-          if (this.state.add) {
-            apiManager.glewlwydRequest("/mod/" + this.state.role + "/" + encodeURI(this.state.mod.name), "GET")
-            .then(() => {
-              this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-exist"), typeInvalidMessage: false});
-            })
-            .fail((err) => {
-              if (err.status === 404) {
-                this.state.callback(result, this.state.mod);
-              }
-            });
-          } else {
-            this.state.callback(result, this.state.mod);
-          }
-        }
+        this.setState({check: true});
       } else {
         this.state.callback(result);
       }
@@ -156,7 +166,7 @@ class ModEdit extends Component {
                 <span className={"error-input" + (this.state.typeInvalidMessage?"":" hidden")}>{this.state.typeInvalidMessage}</span>
               </div>
               {readonly}
-              <ModEditParameters mod={this.state.mod} role={this.state.role} />
+              <ModEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} />
             </form>
           </div>
           <div className="modal-footer">

@@ -14,14 +14,20 @@ class DatabaseParams extends Component {
     
     this.state = {
       mod: props.mod,
-      role: props.role
+      role: props.role,
+      check: props.check
     };
+    
+    if (this.state.check) {
+      this.checkParameters();
+    }
     
     this.toggleInternalConnection = this.toggleInternalConnection.bind(this);
     this.changeDbType = this.changeDbType.bind(this);
     this.getDbType = this.getDbType.bind(this);
     this.changeValue = this.changeValue.bind(this);
     this.addDataFormat = this.addDataFormat.bind(this);
+    this.checkParameters = this.checkParameters.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -35,7 +41,12 @@ class DatabaseParams extends Component {
     
     this.setState({
       mod: nextProps.mod,
-      role: nextProps.role
+      role: nextProps.role,
+      check: nextProps.check
+    }, () => {
+      if (this.state.check) {
+        this.checkParameters();
+      }
     });
   }
   
@@ -90,6 +101,10 @@ class DatabaseParams extends Component {
     var mod = this.state.mod;
     mod.parameters["data-format"][property][value] = !mod.parameters["data-format"][property][value];
     this.setState({mod: mod});
+  }
+  
+  checkParameters() {
+    messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
   }
   
   render() {
