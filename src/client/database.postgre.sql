@@ -7,6 +7,7 @@ CREATE TABLE `g_client` (
   `gc_id` SERIAL PRIMARY KEY,
   `gc_client_id` VARCHAR(128) NOT NULL UNIQUE,
   `gc_name` VARCHAR(256) DEFAULT '',
+  `gc_description` VARCHAR(512) DEFAULT '',
   `gc_confidential` SMALLINT DEFAULT 0,
   `gc_password` VARCHAR(256),
   `gc_enabled` SMALLINT DEFAULT 1
