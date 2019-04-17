@@ -213,8 +213,11 @@ static json_t * database_user_get(const char * username, void * cls, int profile
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result, * j_scope, * j_return;
   int res;
+  char * username_escaped, * username_clause;
   
-  j_query = json_pack("{sss[sssss]s{ss}}",
+  username_escaped = h_escape_string(param->conn, username);
+  username_clause = msprintf(" = UPPER('%s')", username_escaped);
+  j_query = json_pack("{sss[sssss]s{s{ssss}}}",
                       "table",
                       G_TABLE_USER,
                       "columns",
@@ -224,8 +227,13 @@ static json_t * database_user_get(const char * username, void * cls, int profile
                         "gu_email AS email",
                         "gu_enabled",
                       "where",
-                        "gu_username",
-                        username);
+                        "UPPER(gu_username)",
+                          "operator",
+                          "raw",
+                          "value",
+                          username_clause);
+  o_free(username_clause);
+  o_free(username_escaped);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -969,10 +977,15 @@ int user_module_update(struct config_module * config, const char * username, jso
   json_t * j_query, * j_result = NULL;
   int res, ret;
   char * password_clause;
+  char * username_escaped, * username_clause;
   
-  j_query = json_pack("{sss[s]s{ss}}", "table", G_TABLE_USER, "columns", "gu_id", "where", "gu_username", username);
+  username_escaped = h_escape_string(param->conn, username);
+  username_clause = msprintf(" = UPPER('%s')", username_escaped);  
+  j_query = json_pack("{sss[s]s{s{ssss}}}", "table", G_TABLE_USER, "columns", "gu_id", "where", "UPPER(gu_username)", "operator", "raw", "value", username_clause);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
+  o_free(username_clause);
+  o_free(username_escaped);
   if (res == H_OK && json_array_size(j_result)) {
     j_query = json_pack("{sss{}s{sO}}",
                         "table",
@@ -1027,40 +1040,53 @@ int user_module_update_profile(struct config_module * config, const char * usern
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result = NULL;
   int res, ret;
+  char * username_escaped, * username_clause;
   
-  j_query = json_pack("{sss[s]s{ss}}", "table", G_TABLE_USER, "columns", "gu_id", "where", "gu_username", username);
+  username_escaped = h_escape_string(param->conn, username);
+  username_clause = msprintf(" = UPPER('%s')", username_escaped);  
+  j_query = json_pack("{sss[s]s{s{ssss}}}", "table", G_TABLE_USER, "columns", "gu_id", "where", "UPPER(gu_username)", "operator", "raw", "value", username_clause);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
-  if (res == H_OK && json_array_size(j_result)) {
-    j_query = json_pack("{sss{}sO}",
-                        "table",
-                        G_TABLE_USER,
-                        "set",
-                        "where",
-                          json_array_get(j_result, 0));
-    
-    if (json_object_get(j_user, "name") != NULL) {
-      json_object_set(json_object_get(j_query, "set"), "gu_name", json_object_get(j_user, "name"));
-    }
-    if (json_object_size(json_object_get(j_query, "set"))) {
-      res = h_update(param->conn, j_query, NULL);
-    } else {
-      res = H_OK;
-    }
-    json_decref(j_query);
-    if (res == H_OK) {
-      if (save_user_properties(param, j_user, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), 0) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_properties");
-        ret = G_ERROR_DB;
+  o_free(username_clause);
+  o_free(username_escaped);
+  if (res == H_OK) {
+    if (json_array_size(j_result)) {
+      j_query = json_pack("{sss{}sO}",
+                          "table",
+                          G_TABLE_USER,
+                          "set",
+                          "where",
+                            json_array_get(j_result, 0));
+      
+      if (json_object_get(j_user, "name") != NULL) {
+        json_object_set(json_object_get(j_query, "set"), "gu_name", json_object_get(j_user, "name"));
+      }
+      if (json_object_size(json_object_get(j_query, "set"))) {
+        if (h_update(param->conn, j_query, NULL) == H_OK) {
+          res = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_update_profile database - Error executing j_query update");
+          ret = G_ERROR_DB;
+        }
       } else {
-        ret = G_OK;
+        res = G_OK;
+      }
+      json_decref(j_query);
+      if (res == H_OK) {
+        if (save_user_properties(param, j_user, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), 0) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_profile database - Error save_user_properties");
+          ret = G_ERROR_DB;
+        } else {
+          ret = G_OK;
+        }
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error executing j_query insert");
-      ret = G_ERROR_DB;
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_profile database - Error username '%s' not found", username);
+      ret = G_ERROR_NOT_FOUND;
     }
   } else {
-    ret = G_ERROR_NOT_FOUND;
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_profile database - Error executing j_query select");
+    ret = G_ERROR_DB;
   }
   json_decref(j_result);
   return ret;
@@ -1070,13 +1096,21 @@ int user_module_delete(struct config_module * config, const char * username, voi
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query;
   int res, ret;
+  char * username_escaped, * username_clause;
   
-  j_query = json_pack("{sss{ss}}",
+  username_escaped = h_escape_string(param->conn, username);
+  username_clause = msprintf(" = UPPER('%s')", username_escaped);  
+  j_query = json_pack("{sss{s{ssss}}}",
                       "table",
                       G_TABLE_USER,
                       "where",
-                        "gu_username",
-                        username);
+                        "UPPER(gu_username)",
+                          "operator",
+                          "raw",
+                          "value",
+                          username_clause);
+  o_free(username_clause);
+  o_free(username_escaped);
   res = h_delete(param->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -1093,21 +1127,29 @@ int user_module_check_password(struct config_module * config, const char * usern
   int ret, res;
   json_t * j_query, * j_result;
   char * clause = get_password_clause_check(param, password);
+  char * username_escaped, * username_clause;
   
-  j_query = json_pack("{sss[s]s{sss{ssss}}}",
+  username_escaped = h_escape_string(param->conn, username);
+  username_clause = msprintf(" = UPPER('%s')", username_escaped);  
+  j_query = json_pack("{sss[s]s{s{ssss}s{ssss}}}",
                       "table",
                       G_TABLE_USER,
                       "columns",
                         "gu_id",
                       "where",
-                        "gu_username",
-                        username,
+                        "UPPER(gu_username)",
+                          "operator",
+                          "raw",
+                          "value",
+                          username_clause,
                         "gu_password",
                           "operator",
                           "raw",
                           "value",
                           clause);
   o_free(clause);
+  o_free(username_clause);
+  o_free(username_escaped);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -1129,9 +1171,12 @@ int user_module_update_password(struct config_module * config, const char * user
   json_t * j_query;
   int res, ret;
   char * password_clause;
+  char * username_escaped, * username_clause;
   
+  username_escaped = h_escape_string(param->conn, username);
+  username_clause = msprintf(" = UPPER('%s')", username_escaped);  
   password_clause = get_password_clause_write(param, new_password);
-  j_query = json_pack("{sss{s{ss}}s{ss}}",
+  j_query = json_pack("{sss{s{ss}}s{s{ssss}}}",
                       "table",
                       G_TABLE_USER,
                       "set",
@@ -1139,9 +1184,14 @@ int user_module_update_password(struct config_module * config, const char * user
                           "raw",
                           password_clause,
                       "where",
-                        "gu_username",
-                        username);
+                        "UPPER(gu_username)",
+                          "operator",
+                          "raw",
+                          "value",
+                          username_clause);
   o_free(password_clause);
+  o_free(username_clause);
+  o_free(username_escaped);
   res = h_update(param->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
