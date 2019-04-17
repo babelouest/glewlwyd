@@ -225,7 +225,10 @@
     "mod-ldap-password-algorithm-sha": "SHA",
     "mod-ldap-password-algorithm-smd5": "SMD5",
     "mod-ldap-password-algorithm-md5": "MD5",
-    "mod-ldap-password-algorithm-plain": "PLAIN"
+    "mod-ldap-password-algorithm-plain": "PLAIN",
+    "mod-mock-username-prefix-required": "Préfixe requis",
+    "mod-mock-client-id-prefix-required": "Préfixe requis",
+    "mod-mock-scheme-value-required": "Valeur de schéma requise"
   },
   "modal": {
     "close": "Fermer",

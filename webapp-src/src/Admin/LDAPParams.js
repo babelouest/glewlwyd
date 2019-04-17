@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+import messageDispatcher from '../lib/MessageDispatcher';
+
 class LDAPParams extends Component {
   constructor(props) {
     super(props);
@@ -10,8 +12,13 @@ class LDAPParams extends Component {
     
     this.state = {
       mod: props.mod,
-      role: props.role
+      role: props.role,
+      check: props.check
     };
+    
+    if (this.state.check) {
+      this.checkParameters();
+    }
     
     this.addDataFormat = this.addDataFormat.bind(this);
     this.changeDataFormatProperty = this.changeDataFormatProperty.bind(this);
@@ -25,6 +32,7 @@ class LDAPParams extends Component {
     this.changePasswordAlgorithm = this.changePasswordAlgorithm.bind(this);
     this.getMatchType = this.getMatchType.bind(this);
     this.changePageSize = this.changePageSize.bind(this);
+    this.checkParameters = this.checkParameters.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -35,7 +43,12 @@ class LDAPParams extends Component {
     
     this.setState({
       mod: nextProps.mod,
-      role: nextProps.role
+      role: nextProps.role,
+      check: nextProps.check
+    }, () => {
+      if (this.state.check) {
+        this.checkParameters();
+      }
     });
   }
   
@@ -126,6 +139,10 @@ class LDAPParams extends Component {
     var mod = this.state.mod;
     mod.parameters["page-size"] = parseInt(e.target.value);
     this.setState({mod: mod});
+  }
+  
+  checkParameters() {
+    messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
   }
   
   render() {
