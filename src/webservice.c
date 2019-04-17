@@ -254,7 +254,7 @@ int callback_glewlwyd_user_auth_register (const struct _u_request * request, str
 
   if (j_param != NULL) {
     if (json_object_get(j_param, "username") != NULL && json_is_string(json_object_get(j_param, "username")) && json_string_length(json_object_get(j_param, "username"))) {
-      if (0 == o_strcmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
+      if (0 == o_strcasecmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
         if (json_object_get(j_param, "scheme_type") != NULL && json_is_string(json_object_get(j_param, "scheme_type")) && json_string_length(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_is_string(json_object_get(j_param, "scheme_name")) && json_string_length(json_object_get(j_param, "scheme_name"))) {
           j_result = auth_register_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), json_object_get(j_param, "value"), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
@@ -292,7 +292,7 @@ int callback_glewlwyd_user_auth_register_get (const struct _u_request * request,
 
   if (j_param != NULL) {
     if (json_object_get(j_param, "username") != NULL && json_is_string(json_object_get(j_param, "username")) && json_string_length(json_object_get(j_param, "username"))) {
-      if (0 == o_strcmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
+      if (0 == o_strcasecmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
         if (json_object_get(j_param, "scheme_type") != NULL && json_is_string(json_object_get(j_param, "scheme_type")) && json_string_length(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_is_string(json_object_get(j_param, "scheme_name")) && json_string_length(json_object_get(j_param, "scheme_name"))) {
           j_result = auth_register_get_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
@@ -340,7 +340,7 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
     } else {
       if (u_map_get(request->map_url, "username") != NULL) {
         json_array_foreach(json_object_get(j_session, "session"), index, j_cur_session) {
-          if (0 == o_strcmp(u_map_get(request->map_url, "username"), json_string_value(json_object_get(j_cur_session, "username")))) {
+          if (0 == o_strcasecmp(u_map_get(request->map_url, "username"), json_string_value(json_object_get(j_cur_session, "username")))) {
             if (user_session_delete(config, session_uid, u_map_get(request->map_url, "username")) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error user_session_delete");
               response->status = 500;
