@@ -1,16 +1,10 @@
 /* Public domain, no copyright. Use at your own risk. */
 
 /**
+ *
  * This test is used to validate one client backend module that will be created upon start and deleted after
  * The client backend must be in write mode
- * This backend must have the following data-format available:
  *
- * data-format: {
- *   data1: {multiple: false, read: true, write: true, profile-read: false, profile-write: false}
- *   data2: {multiple: true, read: true, write: true, profile-read: true, profile-write: false}
- *   data3: {multiple: false, read: false, write: false, profile-read: true, profile-write: true}
- *   data4: {multiple: true, read: false, write: false, profile-read: true, profile-write: true}
- * }
  */
 
 #include <stdio.h>
@@ -71,7 +65,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_add)
 {
-  json_t * j_client = json_pack("{sssssssss[ss]so}", "client_id", client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true());
+  json_t * j_client = json_pack("{sssssssss[ss]sos[ss]}", "client_id", client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote");
   char * url = SERVER_URI "/client?source=" MOD_NAME;
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
@@ -80,7 +74,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_add_case)
 {
-  json_t * j_client = json_pack("{sssssssss[ss]so}", "client_id", client_id_case, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true());
+  json_t * j_client = json_pack("{sssssssss[ss]sos[ss]}", "client_id", client_id_case, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote");
   char * url = SERVER_URI "/client?source=" MOD_NAME;
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
@@ -90,7 +84,7 @@ END_TEST
 START_TEST(test_glwd_mod_client_irl_add_already_present)
 {
   char * url = msprintf("%s/client?source=" MOD_NAME, SERVER_URI);
-  json_t * j_parameters =json_pack("{sssssssss[ss]so}", "client_id", client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true());
+  json_t * j_parameters =json_pack("{sssssssss[ss]sos[ss]}", "client_id", client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote");
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   o_free(url);
@@ -101,7 +95,7 @@ END_TEST
 START_TEST(test_glwd_mod_client_irl_add_case_already_present)
 {
   char * url = msprintf("%s/client?source=" MOD_NAME, SERVER_URI);
-  json_t * j_parameters = json_pack("{sssssssss[ss]so}", "client_id", client_id_upper, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true());
+  json_t * j_parameters = json_pack("{sssssssss[ss]sos[ss]}", "client_id", client_id_upper, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote");
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   o_free(url);
@@ -120,7 +114,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_get_list)
 {
-  json_t * j_client = json_pack("{sssssssss[ss]so}", "client_id", client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true());
+  json_t * j_client = json_pack("{sssssss[ss]sos[ss]}", "client_id", client_id, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote");
   char * url = SERVER_URI "/client?source=" MOD_NAME;
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_client, NULL, NULL), 1);
   json_decref(j_client);
@@ -129,7 +123,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_get)
 {
-  json_t * j_client = json_pack("{sssssssss[ss]so}", "client_id", client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true());
+  json_t * j_client = json_pack("{sssssss[ss]sos[ss]}", "client_id", client_id, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote");
   char * url = msprintf(SERVER_URI "/client/%s?source=" MOD_NAME, client_id);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_client, NULL, NULL), 1);
   json_decref(j_client);
@@ -139,7 +133,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_get_case)
 {
-  json_t * j_client = json_pack("{sssssssss[ss]so}", "client_id", client_id_case, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true());
+  json_t * j_client = json_pack("{sssssss[ss]sos[ss]}", "client_id", client_id_case, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote");
   char * url = msprintf(SERVER_URI "/client/%s?source=" MOD_NAME, client_id_upper);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_client, NULL, NULL), 1);
   json_decref(j_client);
@@ -149,7 +143,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_update)
 {
-  json_t * j_client = json_pack("{sssss[ss]}", "name", CLIENT_NAME "-updated", "email", CLIENT_DESCRIPTION "-updated", "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2);
+  json_t * j_client = json_pack("{sssss[ss]s[ss]}", "name", CLIENT_NAME "-updated", "description", CLIENT_DESCRIPTION "-updated", "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "redirect-uri", "https://glewlwyd.local/updated", "https://glewlwyd.remote/updated");
   char * url = msprintf(SERVER_URI "/client/%s?source=" MOD_NAME, client_id);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
@@ -159,7 +153,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_update_case)
 {
-  json_t * j_client = json_pack("{sssss[ss]}", "name", CLIENT_NAME "-updated", "email", CLIENT_DESCRIPTION "-updated", "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2);
+  json_t * j_client = json_pack("{sssss[ss]s[ss]}", "name", CLIENT_NAME "-updated", "description", CLIENT_DESCRIPTION "-updated", "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "redirect-uri", "https://glewlwyd.local/updated", "https://glewlwyd.remote/updated");
   char * url = msprintf(SERVER_URI "/client/%s?source=" MOD_NAME, client_id_upper);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
@@ -169,7 +163,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_get_updated)
 {
-  json_t * j_client = json_pack("{sssssssss[ss]}", "client_id", client_id, "name", CLIENT_NAME "-updated", "email", CLIENT_DESCRIPTION "-updated", "source", MOD_NAME, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2);
+  json_t * j_client = json_pack("{sssssssss[ss]s[ss]}", "client_id", client_id, "name", CLIENT_NAME "-updated", "description", CLIENT_DESCRIPTION "-updated", "source", MOD_NAME, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "redirect-uri", "https://glewlwyd.local/updated", "https://glewlwyd.remote/updated");
   char * url = msprintf(SERVER_URI "/client/%s?source=" MOD_NAME, client_id);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_client, NULL, NULL), 1);
   json_decref(j_client);
@@ -179,7 +173,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_get_case_updated)
 {
-  json_t * j_client = json_pack("{sssssssss[ss]}", "client_id", client_id_upper, "name", CLIENT_NAME "-updated", "email", CLIENT_DESCRIPTION "-updated", "source", MOD_NAME, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2);
+  json_t * j_client = json_pack("{sssssssss[ss]s[ss]}", "client_id", client_id_case, "name", CLIENT_NAME "-updated", "description", CLIENT_DESCRIPTION "-updated", "source", MOD_NAME, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "redirect-uri", "https://glewlwyd.local/updated", "https://glewlwyd.remote/updated");
   char * url = msprintf(SERVER_URI "/client/%s?source=" MOD_NAME, client_id_case);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_client, NULL, NULL), 1);
   json_decref(j_client);
@@ -211,7 +205,7 @@ START_TEST(test_glwd_mod_client_irl_client_large_list_add)
   
   for (i=0; i < 100; i++) {
     cur_client_id = msprintf("%s%d", client_id_pattern, i);
-    j_client = json_pack("{sssssssss[ss]}", "client_id", cur_client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "email", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2);
+    j_client = json_pack("{sssssssss[ss]}", "client_id", cur_client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2);
     ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client?source=" MOD_NAME, NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
     json_decref(j_client);
     o_free(cur_client_id);
@@ -324,14 +318,14 @@ int main(int argc, char *argv[])
         cookie = msprintf("%s=%s", auth_resp.map_cookie[0].key, auth_resp.map_cookie[0].value);
         u_map_put(admin_req.map_header, "Cookie", cookie);
         o_free(cookie);
-        client_id = msprintf("client_irl%4d", (rand()%1000));
-        client_id_case = msprintf("client_irl_case%4d", (rand()%1000));
+        client_id = msprintf("client_irl%04d", (rand()%1000));
+        client_id_case = msprintf("client_irl_case%04d", (rand()%1000));
         client_id_upper = o_malloc(o_strlen(client_id_case) + sizeof(char));
         for (i=0; i<o_strlen(client_id_case); i++) {
           client_id_upper[i] = toupper(client_id_case[i]);
         }
         client_id_upper[o_strlen(client_id_case)] = '\0';
-        client_id_pattern = msprintf("client_irl_list_%d_", (rand()%1000));
+        client_id_pattern = msprintf("client_irl_list_%04d_", (rand()%1000));
         do_test = 1;
       }
     } else {
