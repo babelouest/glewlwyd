@@ -269,6 +269,7 @@ int add_client(struct config_elements * config, json_t * j_client, const char * 
         ret = result;
       }
     } else if (client_module != NULL && (client_module->readonly || !client_module->enabled)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "add_client - Error module %s", source);
       ret = G_ERROR_PARAM;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "add_client - Error get_client_module_instance");
@@ -299,9 +300,10 @@ int add_client(struct config_elements * config, json_t * j_client, const char * 
       ret = G_ERROR;
     }
     json_decref(j_module_list);
-  }
-  if (!found) {
-    ret = G_ERROR_NOT_FOUND;
+    if (!found) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "add_client - Error no module in write mode available");
+      ret = G_ERROR;
+    }
   }
   return ret;
 }
