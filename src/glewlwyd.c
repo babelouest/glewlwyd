@@ -1676,7 +1676,6 @@ int init_client_module_list(struct config_elements * config) {
                     cur_client_module->client_module_delete != NULL &&
                     cur_client_module->client_module_check_password != NULL) {
                   j_parameters = cur_client_module->client_module_load(config->config_m);
-                  y_log_message(Y_LOG_LEVEL_DEBUG, "j_params %d", check_result_value(j_parameters, G_OK));
                   if (check_result_value(j_parameters, G_OK)) {
                     cur_client_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
                     cur_client_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
