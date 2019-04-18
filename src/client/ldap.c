@@ -691,7 +691,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
               if (mods[i]->mod_values != NULL) {
                 mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
                 mods[i]->mod_type = (char *)json_string_value(j_property);
-                mods[i]->mod_values[0] = (char *)json_string_value(json_object_get(j_client, "confidential"));
+                mods[i]->mod_values[0] = json_object_get(j_client, "confidential")==json_true()?"1":"0";
                 mods[i]->mod_values[1] = NULL;
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (confidential)", i);
@@ -709,7 +709,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
             if (mods[i]->mod_values != NULL) {
               mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
               mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "confidential-property"));
-              mods[i]->mod_values[0] = (char *)json_string_value(json_object_get(j_client, "confidential"));
+              mods[i]->mod_values[0] = json_object_get(j_client, "confidential")==json_true()?"1":"0";
               mods[i]->mod_values[1] = NULL;
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (confidential)", i);
@@ -800,7 +800,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
                     json_array_foreach(j_property, index_scope, j_property_value) {
                       mods[i]->mod_values[index_scope] = (char *)json_string_value(j_property_value);
                     }
-                    mods[i]->mod_values[(json_array_size(j_property) + 1)] = NULL;
+                    mods[i]->mod_values[json_array_size(j_property)] = NULL;
                   } else {
                     y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (%s)", json_string_value(json_object_get(j_format, "property")), i);
                     has_error = 1;
@@ -896,10 +896,10 @@ static json_t * get_client_from_result(json_t * j_params, json_t * j_properties_
               y_log_message(Y_LOG_LEVEL_ERROR, "get_client_from_result - Error get_scope_from_ldap");
             }
           }
-        } else if (0 == o_strcmp(field, "client_id") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "description") || json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true()) {
+        } else if (0 == o_strcmp(field, "client_id") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "description") || (json_object_get(json_object_get(j_params, "data-format"), field) != NULL && json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true())) {
           json_object_set_new(j_client, field, json_stringn(result_values[0]->bv_val, result_values[0]->bv_len));
         } else if (0 == o_strcmp(field, "confidential")) {
-          json_object_set_new(j_client, field, (0==o_strcmp("1", result_values[0]->bv_val)?json_true():json_false()));
+          json_object_set_new(j_client, field, (result_values[0]->bv_val[0]=='1'?json_true():json_false()));
         } else if (json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") == json_true()) {
           json_object_set_new(j_client, field, json_array());
           for (i=0; i<ldap_count_values_len(result_values); i++) {
@@ -950,7 +950,7 @@ static char * get_client_dn_from_client_id(json_t * j_params, LDAP * ldap, const
 }
 
 json_t * client_module_load(struct config_module * config) {
-  return json_pack("{si ss ss ss s{ s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s[{s{ssso} s{ssso} s{sssos[ssss]}}] s{ssso} s{ssso} s{ssso} s{ssso} s{sssos[sssss]} s{ssso} s{s{s{ssso} s{ssso} s{ssso} s{ssso} s{ssso}}}}}",
+  return json_pack("{si ss ss ss s{ s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s[{s{ssso} s{ssso} s{sssos[ssss]}}] s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{sssos[sssss]} s{ssso} s{s{s{ssso} s{ssso} s{ssso} s{ssso} s{ssso}}}}}",
                    "result",
                    G_OK,
                    
