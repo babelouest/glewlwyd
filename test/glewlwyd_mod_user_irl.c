@@ -1,16 +1,10 @@
 /* Public domain, no copyright. Use at your own risk. */
 
 /**
+ *
  * This test is used to validate one user backend module that will be created upon start and deleted after
  * The user backend must be in write mode
- * This backend must have the following data-format available:
  *
- * data-format: {
- *   data1: {multiple: false, read: true, write: true, profile-read: false, profile-write: false}
- *   data2: {multiple: true, read: true, write: true, profile-read: true, profile-write: false}
- *   data3: {multiple: false, read: false, write: false, profile-read: true, profile-write: true}
- *   data4: {multiple: true, read: false, write: false, profile-read: true, profile-write: true}
- * }
  */
 
 #include <stdio.h>
