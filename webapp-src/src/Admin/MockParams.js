@@ -60,21 +60,21 @@ class MockParams extends Component {
         this.setState({hasError: true});
       } else {
         this.setState({hasError: false});
-        messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
+        messageDispatcher.sendMessage('ModEditUser', {type: "modValid"});
       }
     } else if (this.state.role === "client") {
       if (!this.state.mod.parameters["client-id-prefix"]) {
         this.setState({hasError: true});
       } else {
         this.setState({hasError: false});
-        messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
+        messageDispatcher.sendMessage('ModEditClient', {type: "modValid"});
       }
     } else if (this.state.role === "scheme") {
       if (!this.state.mod.parameters["mock-value"]) {
         this.setState({hasError: true});
       } else {
         this.setState({hasError: false});
-        messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
+        messageDispatcher.sendMessage('ModEditScheme', {type: "modValid"});
       }
     }
   }
