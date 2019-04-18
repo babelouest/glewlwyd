@@ -746,7 +746,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
                     json_array_foreach(j_property, index_scope, j_property_value) {
                       mods[i]->mod_values[index_scope] = (char *)json_string_value(j_property_value);
                     }
-                    mods[i]->mod_values[(json_array_size(j_property) + 1)] = NULL;
+                    mods[i]->mod_values[json_array_size(j_property)] = NULL;
                   } else {
                     y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (%s)", json_string_value(json_object_get(j_format, "property")), i);
                     has_error = 1;
@@ -842,7 +842,7 @@ static json_t * get_user_from_result(json_t * j_params, json_t * j_properties_us
               y_log_message(Y_LOG_LEVEL_ERROR, "get_user_from_result - Error get_scope_from_ldap");
             }
           }
-        } else if (0 == o_strcmp(field, "username") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "email") || json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true()) {
+        } else if (0 == o_strcmp(field, "username") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "email") || (json_object_get(json_object_get(j_params, "data-format"), field) != NULL &&json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true())) {
           json_object_set_new(j_user, field, json_stringn(result_values[0]->bv_val, result_values[0]->bv_len));
         } else if (json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") == json_true()) {
           json_object_set_new(j_user, field, json_array());
