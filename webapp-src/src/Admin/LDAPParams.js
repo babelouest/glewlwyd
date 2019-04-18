@@ -10,10 +10,15 @@ class LDAPParams extends Component {
       props.mod.parameters["scope-match"] = [];
     }
     
+    if (!props.mod.parameters["search-scope"]) {
+      props.mod.parameters["search-scope"] = "one";
+    }
+    
     this.state = {
       mod: props.mod,
       role: props.role,
-      check: props.check
+      check: props.check,
+      errorList: {}
     };
     
     if (this.state.check) {
@@ -33,12 +38,18 @@ class LDAPParams extends Component {
     this.getMatchType = this.getMatchType.bind(this);
     this.changePageSize = this.changePageSize.bind(this);
     this.checkParameters = this.checkParameters.bind(this);
+    this.deleteScopeMatch = this.deleteScopeMatch.bind(this);
+    this.changeSearchScope = this.changeSearchScope.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
     
     if (!nextProps.mod.parameters["scope-match"]) {
       nextProps.mod.parameters["scope-match"] = [];
+    }
+    
+    if (!nextProps.mod.parameters["search-scope"]) {
+      nextProps.mod.parameters["search-scope"] = "one";
     }
     
     this.setState({
@@ -141,8 +152,74 @@ class LDAPParams extends Component {
     this.setState({mod: mod});
   }
   
+  deleteScopeMatch(index) {
+    var mod = this.state.mod;
+    mod.parameters["scope-match"].splice(index, 1);
+    this.setState({mod: mod});
+  }
+  
+  changeSearchScope(e, searchScope) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["search-scope"] = searchScope;
+    this.setState({mod: mod});
+  }
+  
   checkParameters() {
-    messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
+    var errorList = {}, hasError = false;
+    if (!this.state.mod.parameters["uri"]) {
+      hasError = true;
+      errorList["uri"] = i18next.t("admin.mod-ldap-uri-error")
+    }
+    if (!this.state.mod.parameters["bind-dn"]) {
+      hasError = true;
+      errorList["bind-dn"] = i18next.t("admin.mod-ldap-bind-dn-error")
+    }
+    if (!this.state.mod.parameters["bind-password"]) {
+      hasError = true;
+      errorList["bind-password"] = i18next.t("admin.mod-ldap-bind-password-error")
+    }
+    if (!this.state.mod.parameters["base-search"]) {
+      hasError = true;
+      errorList["base-search"] = i18next.t("admin.mod-ldap-base-search-error")
+    }
+    if (!this.state.mod.parameters["filter"]) {
+      hasError = true;
+      errorList["filter"] = i18next.t("admin.mod-ldap-filter-error")
+    }
+    if (!this.state.mod.parameters["username-property"]) {
+      hasError = true;
+      errorList["username-property"] = i18next.t("admin.mod-ldap-username-property-error")
+    }
+    if (!this.state.mod.parameters["scope-property"]) {
+      hasError = true;
+      errorList["scope-property"] = i18next.t("admin.mod-ldap-scope-property-error")
+    }
+    if (!this.state.mod.readonly) {
+      if (!this.state.mod.parameters["rdn-property"]) {
+        hasError = true;
+        errorList["rdn-property"] = i18next.t("admin.mod-ldap-rdn-property-error")
+      }
+      if (!this.state.mod.parameters["password-property"]) {
+        hasError = true;
+        errorList["password-property"] = i18next.t("admin.mod-ldap-password-property-error")
+      }
+      if (!this.state.mod.parameters["password-algorithm"]) {
+        hasError = true;
+        errorList["password-algorithm"] = i18next.t("admin.mod-ldap-password-algorithm-error")
+      }
+      if (!this.state.mod.parameters["object-class"]) {
+        hasError = true;
+        errorList["object-class"] = i18next.t("admin.mod-ldap-object-class-error")
+      }
+    }
+    if (!hasError) {
+      this.setState({errorList: {}}, () => {
+        messageDispatcher.sendMessage('ModEditUser', {type: "modValid"});
+      });
+    } else {
+      this.setState({errorList: errorList});
+    }
   }
   
   render() {
@@ -182,6 +259,7 @@ class LDAPParams extends Component {
     }
     this.state.mod.parameters["scope-match"].forEach((match, index) => {
       scopeMatch.push(<div key={index}>
+        <hr/>
         <div className="form-group">
           <label htmlFor={"mod-ldap-scope-match-ldap-"+index}>{i18next.t("admin.mod-ldap-scope-match-ldap")}</label>
           <input type="text" className="form-control" id={"mod-ldap-scope-match-ldap-"+index} onChange={(e) => this.changeScopeMatchProperty(e, index, "ldap-value")} value={match["ldap-value"]} placeholder={i18next.t("admin.mod-ldap-scope-match-ldap-ph")} />
@@ -190,16 +268,23 @@ class LDAPParams extends Component {
           <label htmlFor={"mod-ldap-scope-match-scope-"+index}>{i18next.t("admin.mod-ldap-scope-match-scope")}</label>
           <input type="text" className="form-control" id={"mod-ldap-scope-match-scope-"+index} onChange={(e) => this.changeScopeMatchProperty(e, index, "scope-value")} value={match["scope-value"]} placeholder={i18next.t("admin.mod-ldap-scope-match-scope-ph")} />
         </div>
-        <div className="dropdown">
-          <button className="btn btn-secondary dropdown-toggle" type="button" id={"dropdownMatchType-"+index} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            {this.getMatchType(match["match"])}
-          </button>
-          <div className="dropdown-menu" aria-labelledby={"dropdownMatchType-"+index}>
-            <a className="dropdown-item" href="#" onClick={(e) => this.changeMatchType(e, index, 'equals')}>{i18next.t("admin.mod-ldap-scope-match-equals")}</a>
-            <a className="dropdown-item" href="#" onClick={(e) => this.changeMatchType(e, index, 'contains')}>{i18next.t("admin.mod-ldap-scope-match-contains")}</a>
-            <a className="dropdown-item" href="#" onClick={(e) => this.changeMatchType(e, index, 'startswith')}>{i18next.t("admin.mod-ldap-scope-match-startswith")}</a>
-            <a className="dropdown-item" href="#" onClick={(e) => this.changeMatchType(e, index, 'endswith')}>{i18next.t("admin.mod-ldap-scope-match-endswith")}</a>
+        <div className="btn-group" role="group">
+          <div className="btn-group" role="group">
+            <div className="dropdown">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id={"dropdownMatchType-"+index} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {this.getMatchType(match["match"])}
+              </button>
+              <div className="dropdown-menu" aria-labelledby={"dropdownMatchType-"+index}>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changeMatchType(e, index, 'equals')}>{i18next.t("admin.mod-ldap-scope-match-equals")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changeMatchType(e, index, 'contains')}>{i18next.t("admin.mod-ldap-scope-match-contains")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changeMatchType(e, index, 'startswith')}>{i18next.t("admin.mod-ldap-scope-match-startswith")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changeMatchType(e, index, 'endswith')}>{i18next.t("admin.mod-ldap-scope-match-endswith")}</a>
+              </div>
+            </div>
           </div>
+          <button type="button" className="btn btn-secondary" onClick={() => this.deleteScopeMatch(index)} title={i18next.t("admin.mod-ldap-scope-match-delete")}>
+            <i className="fas fa-trash"></i>
+          </button>
         </div>
       </div>
       );
@@ -208,15 +293,18 @@ class LDAPParams extends Component {
       <div>
         <div className="form-group">
           <label htmlFor="mod-ldap-uri">{i18next.t("admin.mod-ldap-uri")}</label>
-          <input type="text" className="form-control" id="mod-ldap-uri" onChange={(e) => this.changeParam(e, "uri")} value={this.state.mod.parameters["uri"]} placeholder={i18next.t("admin.mod-ldap-uri-ph")} />
+          <input type="text" className={this.state.errorList["uri"]?"form-control is-invalid":"form-control"} id="mod-ldap-uri" onChange={(e) => this.changeParam(e, "uri")} value={this.state.mod.parameters["uri"]} placeholder={i18next.t("admin.mod-ldap-uri-ph")} />
+          {this.state.errorList["uri"]?<span className="error-input">{i18next.t(this.state.errorList["uri"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-bind-dn">{i18next.t("admin.mod-ldap-bind-dn")}</label>
-          <input type="text" className="form-control" id="mod-ldap-bind-dn" onChange={(e) => this.changeParam(e, "bind-dn")} value={this.state.mod.parameters["bind-dn"]} placeholder={i18next.t("admin.mod-ldap-bind-dn-ph")} />
+          <input type="text" className={this.state.errorList["bind-dn"]?"form-control is-invalid":"form-control"} id="mod-ldap-bind-dn" onChange={(e) => this.changeParam(e, "bind-dn")} value={this.state.mod.parameters["bind-dn"]} placeholder={i18next.t("admin.mod-ldap-bind-dn-ph")} />
+          {this.state.errorList["bind-dn"]?<span className="error-input">{i18next.t(this.state.errorList["bind-dn"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-bind-password">{i18next.t("admin.mod-ldap-bind-password")}</label>
-          <input type="password" className="form-control" id="mod-ldap-bind-password" onChange={(e) => this.changeParam(e, "bind-password")} value={this.state.mod.parameters["bind-password"]} placeholder={i18next.t("admin.mod-ldap-bind-password-ph")} />
+          <input type="password" className={this.state.errorList["bind-password"]?"form-control is-invalid":"form-control"} id="mod-ldap-bind-password" onChange={(e) => this.changeParam(e, "bind-password")} value={this.state.mod.parameters["bind-password"]} placeholder={i18next.t("admin.mod-ldap-bind-password-ph")} />
+          {this.state.errorList["bind-password"]?<span className="error-input">{i18next.t(this.state.errorList["bind-password"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-page-size">{i18next.t("admin.mod-ldap-page-size")}</label>
@@ -224,19 +312,36 @@ class LDAPParams extends Component {
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-base-search">{i18next.t("admin.mod-ldap-base-search")}</label>
-          <input type="text" className="form-control" id="mod-ldap-base-search" onChange={(e) => this.changeParam(e, "base-search")} value={this.state.mod.parameters["base-search"]} placeholder={i18next.t("admin.mod-ldap-base-search-ph")} />
+          <input type="text" className={this.state.errorList["base-search"]?"form-control is-invalid":"form-control"} id="mod-ldap-base-search" onChange={(e) => this.changeParam(e, "base-search")} value={this.state.mod.parameters["base-search"]} placeholder={i18next.t("admin.mod-ldap-base-search-ph")} />
+          {this.state.errorList["base-search"]?<span className="error-input">{i18next.t(this.state.errorList["base-search"])}</span>:""}
+        </div>
+        <div className="form-group">
+          <label htmlFor="mod-ldap-base-search">{i18next.t("admin.mod-ldap-search-scope")}</label>
+          <div className="dropdown">
+            <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-ldap-search-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {i18next.t("admin.mod-ldap-search-scope-" + this.state.mod.parameters["search-scope"])}
+            </button>
+            <div className="dropdown-menu" aria-labelledby="mod-ldap-search-scope">
+              <a className={"dropdown-item"+(this.state.mod.parameters["search-scope"]==="one"?" active":"")} href="#" onClick={(e) => this.changeSearchScope(e, 'one')}>{i18next.t("admin.mod-ldap-search-scope-one")}</a>
+              <a className={"dropdown-item"+(this.state.mod.parameters["search-scope"]==="subtree"?" active":"")} href="#" onClick={(e) => this.changeSearchScope(e, 'subtree')}>{i18next.t("admin.mod-ldap-search-scope-subtree")}</a>
+              <a className={"dropdown-item"+(this.state.mod.parameters["search-scope"]==="children"?" active":"")} href="#" onClick={(e) => this.changeSearchScope(e, 'children')}>{i18next.t("admin.mod-ldap-search-scope-children")}</a>
+            </div>
+          </div>
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-filter">{i18next.t("admin.mod-ldap-filter")}</label>
-          <input type="text" className="form-control" id="mod-ldap-filter" onChange={(e) => this.changeParam(e, "filter")} value={this.state.mod.parameters["filter"]} placeholder={i18next.t("admin.mod-ldap-filter-ph")} />
+          <input type="text" className={this.state.errorList["filter"]?"form-control is-invalid":"form-control"} id="mod-ldap-filter" onChange={(e) => this.changeParam(e, "filter")} value={this.state.mod.parameters["filter"]} placeholder={i18next.t("admin.mod-ldap-filter-ph")} />
+          {this.state.errorList["filter"]?<span className="error-input">{i18next.t(this.state.errorList["filter"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-username-property">{i18next.t("admin.mod-ldap-username-property")}</label>
-          <input type="text" className="form-control" id="mod-ldap-username-property" onChange={(e) => this.changeParam(e, "username-property", true)} value={this.state.mod.parameters["username-property"]} placeholder={i18next.t("admin.mod-ldap-username-property-ph")} />
+          <input type="text" className={this.state.errorList["username-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-username-property" onChange={(e) => this.changeParam(e, "username-property", true)} value={this.state.mod.parameters["username-property"]} placeholder={i18next.t("admin.mod-ldap-username-property-ph")} />
+          {this.state.errorList["username-property"]?<span className="error-input">{i18next.t(this.state.errorList["username-property"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-scope-property">{i18next.t("admin.mod-ldap-scope-property")}</label>
-          <input type="text" className="form-control" id="mod-ldap-scope-property" onChange={(e) => this.changeParam(e, "scope-property", true)} value={this.state.mod.parameters["scope-property"]} placeholder={i18next.t("admin.mod-ldap-scope-property-ph")} />
+          <input type="text" className={this.state.errorList["scope-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-scope-property" onChange={(e) => this.changeParam(e, "scope-property", true)} value={this.state.mod.parameters["scope-property"]} placeholder={i18next.t("admin.mod-ldap-scope-property-ph")} />
+          {this.state.errorList["scope-property"]?<span className="error-input">{i18next.t(this.state.errorList["scope-property"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-name-property">{i18next.t("admin.mod-ldap-name-property")}</label>
@@ -248,16 +353,18 @@ class LDAPParams extends Component {
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-rdn-property">{i18next.t("admin.mod-ldap-rdn-property")}</label>
-          <input type="text" className="form-control" id="mod-ldap-rdn-property" onChange={(e) => this.changeParam(e, "rdn-property")} value={this.state.mod.parameters["rdn-property"]} placeholder={i18next.t("admin.mod-ldap-rdn-property-ph")} />
+          <input disabled={this.state.mod.readonly} type="text" className={this.state.errorList["rdn-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-rdn-property" onChange={(e) => this.changeParam(e, "rdn-property")} value={this.state.mod.parameters["rdn-property"]} placeholder={i18next.t("admin.mod-ldap-rdn-property-ph")} />
+          {this.state.errorList["rdn-property"]?<span className="error-input">{i18next.t(this.state.errorList["rdn-property"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-password-property">{i18next.t("admin.mod-ldap-password-property")}</label>
-          <input type="text" className="form-control" id="mod-ldap-password-property" onChange={(e) => this.changeParam(e, "password-property")} value={this.state.mod.parameters["password-property"]} placeholder={i18next.t("admin.mod-ldap-password-property-ph")} />
+          <input disabled={this.state.mod.readonly} type="text" className={this.state.errorList["password-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-password-property" onChange={(e) => this.changeParam(e, "password-property")} value={this.state.mod.parameters["password-property"]} placeholder={i18next.t("admin.mod-ldap-password-property-ph")} />
+          {this.state.errorList["password-property"]?<span className="error-input">{i18next.t(this.state.errorList["password-property"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="dropdownPasswordAlgorithm">{i18next.t("admin.mod-ldap-password-algorithm")}</label>
           <div className="dropdown">
-            <button className="btn btn-secondary dropdown-toggle" type="button" id={"dropdownPasswordAlgorithm"} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <button disabled={this.state.mod.readonly} className={this.state.errorList["password-algorithm"]?"btn btn-secondary dropdown-toggle is-invalid":"btn btn-secondary dropdown-toggle"} type="button" id={"dropdownPasswordAlgorithm"} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               {this.state.mod.parameters["password-algorithm"] || i18next.t("admin.mod-ldap-password-algorithm-select")}
             </button>
             <div className="dropdown-menu" aria-labelledby={"dropdownPasswordAlgorithm"}>
@@ -268,10 +375,12 @@ class LDAPParams extends Component {
               <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'PLAIN')}>{i18next.t("admin.mod-ldap-password-algorithm-plain")}</a>
             </div>
           </div>
+          {this.state.errorList["password-algorithm"]?<span className="error-input">{i18next.t(this.state.errorList["password-algorithm"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-ldap-object-class">{i18next.t("admin.mod-ldap-object-class")}</label>
-          <input type="text" className="form-control" id="mod-ldap-object-class" onChange={(e) => this.changeParam(e, "object-class", true)} value={this.state.mod.parameters["object-class"]} placeholder={i18next.t("admin.mod-ldap-object-class-ph")} />
+          <input disabled={this.state.mod.readonly} type="text" className={this.state.errorList["object-class"]?"form-control is-invalid":"form-control"} id="mod-ldap-object-class" onChange={(e) => this.changeParam(e, "object-class", true)} value={this.state.mod.parameters["object-class"]} placeholder={i18next.t("admin.mod-ldap-object-class-ph")} />
+          {this.state.errorList["object-class"]?<span className="error-input">{i18next.t(this.state.errorList["object-class"])}</span>:""}
         </div>
         <div className="accordion" id="accordionParams">
           <div className="card">

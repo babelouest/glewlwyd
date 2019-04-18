@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 
+import messageDispatcher from '../lib/MessageDispatcher';
+
 class DatabaseParams extends Component {
   constructor(props) {
     super(props);
@@ -15,7 +17,8 @@ class DatabaseParams extends Component {
     this.state = {
       mod: props.mod,
       role: props.role,
-      check: props.check
+      check: props.check,
+      errorList: {}
     };
     
     if (this.state.check) {
@@ -104,7 +107,49 @@ class DatabaseParams extends Component {
   }
   
   checkParameters() {
-    messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
+    var errorList = {}, hasError = false;
+    if (!this.state.mod.parameters["use-glewlwyd-connection"]) {
+      if (this.state.mod.parameters["connection-type"] === "sqlite") {
+        if (!this.state.mod.parameters["sqlite-dbpath"]) {
+          hasError = true;
+          errorList["sqlite-dbpath"] = i18next.t("admin.mod-database-sqlite-dbpath-error")
+        }
+      } else if (this.state.mod.parameters["connection-type"] === "mariadb") {
+        if (!this.state.mod.parameters["mariadb-host"]) {
+          hasError = true;
+          errorList["mariadb-host"] = i18next.t("admin.mod-database-mariadb-host-error")
+        }
+        if (!this.state.mod.parameters["mariadb-user"]) {
+          hasError = true;
+          errorList["mariadb-user"] = i18next.t("admin.mod-database-mariadb-user-error")
+        }
+        if (!this.state.mod.parameters["mariadb-password"]) {
+          hasError = true;
+          errorList["mariadb-password"] = i18next.t("admin.mod-database-mariadb-password-error")
+        }
+        if (!this.state.mod.parameters["mariadb-dbname"]) {
+          hasError = true;
+          errorList["mariadb-dbname"] = i18next.t("admin.mod-database-mariadb-dbname-error")
+        }
+      } else if (this.state.mod.parameters["connection-type"] === "postgre") {
+        if (!this.state.mod.parameters["postgre-conninfo"]) {
+          hasError = true;
+          errorList["postgre-conninfo"] = i18next.t("admin.mod-database-postgre-conninfo-error")
+        }
+      } else {
+        hasError = true;
+        errorList["connection-type"] = i18next.t("admin.mod-database-connection-type-error")
+      }
+      if (!hasError) {
+        this.setState({errorList: {}}, () => {
+          messageDispatcher.sendMessage('ModEditUser', {type: "modValid"});
+        });
+      } else {
+        this.setState({errorList: errorList});
+      }
+    } else {
+      messageDispatcher.sendMessage('ModEditUser', {type: "modValid"});
+    }
   }
   
   render() {
@@ -115,46 +160,55 @@ class DatabaseParams extends Component {
     var selectDbType;
     var dbParams;
     if (!this.state.mod.parameters["use-glewlwyd-connection"]) {
-      selectDbType = <div className="dropdown">
-        <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownDbType" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          {this.getDbType(this.state.mod.parameters["connection-type"])}
-        </button>
-        <div className="dropdown-menu" aria-labelledby="dropdownDbType">
-          <a className="dropdown-item" href="#" onClick={(e) => this.changeDbType(e, 'sqlite')}>{i18next.t("admin.mod-database-type-sqlite")}</a>
-          <a className="dropdown-item" href="#" onClick={(e) => this.changeDbType(e, 'mariadb')}>{i18next.t("admin.mod-database-type-mariadb")}</a>
-          <a className="dropdown-item" href="#" onClick={(e) => this.changeDbType(e, 'postgre')}>{i18next.t("admin.mod-database-type-postgre")}</a>
+      selectDbType = <div>
+        <div className="dropdown">
+          <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownDbType" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            {this.getDbType(this.state.mod.parameters["connection-type"])}
+          </button>
+          <div className="dropdown-menu" aria-labelledby="dropdownDbType">
+            <a className="dropdown-item" href="#" onClick={(e) => this.changeDbType(e, 'sqlite')}>{i18next.t("admin.mod-database-type-sqlite")}</a>
+            <a className="dropdown-item" href="#" onClick={(e) => this.changeDbType(e, 'mariadb')}>{i18next.t("admin.mod-database-type-mariadb")}</a>
+            <a className="dropdown-item" href="#" onClick={(e) => this.changeDbType(e, 'postgre')}>{i18next.t("admin.mod-database-type-postgre")}</a>
+          </div>
         </div>
+        {this.state.errorList["connection-type"]?<span className="error-input">{i18next.t(this.state.errorList["connection-type"])}</span>:""}
       </div>;
       if (this.state.mod.parameters["connection-type"] === "sqlite") {
         dbParams = <div className="form-group">
           <label htmlFor="mod-database-sqlite-dbpath">{i18next.t("admin.mod-database-sqlite-dbpath")}</label>
-          <input type="text" className="form-control" id="mod-database-sqlite-dbpath" onChange={(e) => this.changeValue(e, "sqlite-dbpath")} value={this.state.mod.parameters["sqlite-dbpath"]} placeholder={i18next.t("admin.mod-database-sqlite-dbpath-ph")} />
+          <input type="text" className={this.state.errorList["sqlite-dbpath"]?"form-control is-invalid":"form-control"} id="mod-database-sqlite-dbpath" onChange={(e) => this.changeValue(e, "sqlite-dbpath")} value={this.state.mod.parameters["sqlite-dbpath"]} placeholder={i18next.t("admin.mod-database-sqlite-dbpath-ph")} />
+          {this.state.errorList["sqlite-dbpath"]?<span className="error-input">{i18next.t(this.state.errorList["sqlite-dbpath"])}</span>:""}
         </div>;
       } else if (this.state.mod.parameters["connection-type"] === "mariadb") {
         dbParams = <div><div className="form-group">
           <label htmlFor="mod-database-mariadb-host">{i18next.t("admin.mod-database-mariadb-host")}</label>
-          <input type="text" className="form-control" id="mod-database-mariadb-host" onChange={(e) => this.changeValue(e, "mariadb-host")} value={this.state.mod.parameters["mariadb-host"]} placeholder={i18next.t("admin.mod-database-mariadb-host-ph")} />
+          <input type="text" className={this.state.errorList["mariadb-host"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-host" onChange={(e) => this.changeValue(e, "mariadb-host")} value={this.state.mod.parameters["mariadb-host"]} placeholder={i18next.t("admin.mod-database-mariadb-host-ph")} />
+          {this.state.errorList["mariadb-host"]?<span className="error-input">{i18next.t(this.state.errorList["mariadb-host"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-database-mariadb-user">{i18next.t("admin.mod-database-mariadb-user")}</label>
-          <input type="text" className="form-control" id="mod-database-mariadb-user" onChange={(e) => this.changeValue(e, "mariadb-user")} value={this.state.mod.parameters["mariadb-user"]} placeholder={i18next.t("admin.mod-database-mariadb-user-ph")} />
+          <input type="text" className={this.state.errorList["mariadb-user"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-user" onChange={(e) => this.changeValue(e, "mariadb-user")} value={this.state.mod.parameters["mariadb-user"]} placeholder={i18next.t("admin.mod-database-mariadb-user-ph")} />
+          {this.state.errorList["mariadb-user"]?<span className="error-input">{i18next.t(this.state.errorList["mariadb-user"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-database-mariadb-password">{i18next.t("admin.mod-database-mariadb-password")}</label>
-          <input type="password" className="form-control" id="mod-database-mariadb-password" onChange={(e) => this.changeValue(e, "mariadb-password")} value={this.state.mod.parameters["mariadb-password"]} placeholder={i18next.t("admin.mod-database-mariadb-password-ph")} />
+          <input type="password" className={this.state.errorList["mariadb-password"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-password" onChange={(e) => this.changeValue(e, "mariadb-password")} value={this.state.mod.parameters["mariadb-password"]} placeholder={i18next.t("admin.mod-database-mariadb-password-ph")} />
+          {this.state.errorList["mariadb-password"]?<span className="error-input">{i18next.t(this.state.errorList["mariadb-password"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-database-mariadb-dbname">{i18next.t("admin.mod-database-mariadb-dbname")}</label>
-          <input type="text" className="form-control" id="mod-database-mariadb-dbname" onChange={(e) => this.changeValue(e, "mariadb-dbname")} value={this.state.mod.parameters["mariadb-dbname"]} placeholder={i18next.t("admin.mod-database-mariadb-dbname-ph")} />
+          <input type="text" className={this.state.errorList["mariadb-dbname"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-dbname" onChange={(e) => this.changeValue(e, "mariadb-dbname")} value={this.state.mod.parameters["mariadb-dbname"]} placeholder={i18next.t("admin.mod-database-mariadb-dbname-ph")} />
+          {this.state.errorList["mariadb-dbname"]?<span className="error-input">{i18next.t(this.state.errorList["mariadb-dbname"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-database-mariadb-port">{i18next.t("admin.mod-database-mariadb-port")}</label>
-          <input type="number" min="0" max="65534" step="1" className="form-control" id="mod-database-mariadb-port" onChange={(e) => this.changeValue(e, "mariadb-port")} value={this.state.mod.parameters["mariadb-port"]} placeholder={i18next.t("admin.mod-database-mariadb-port-ph")} />
+          <input type="number" min="0" max="65535" step="1" className="form-control" id="mod-database-mariadb-port" onChange={(e) => this.changeValue(e, "mariadb-port")} value={this.state.mod.parameters["mariadb-port"]} placeholder={i18next.t("admin.mod-database-mariadb-port-ph")} />
         </div></div>;
       } else if (this.state.mod.parameters["connection-type"] === "postgre") {
         dbParams = <div className="form-group">
           <label htmlFor="mod-database-postgre-conninfo">{i18next.t("admin.mod-database-postgre-conninfo")}</label>
-          <input type="text" className="form-control" id="mod-database-postgre-conninfo" onChange={(e) => this.changeValue(e, "postgre-conninfo")} value={this.state.mod.parameters["postgre-conninfo"]} placeholder={i18next.t("admin.mod-database-postgre-conninfo-ph")} />
+          <input type="text" className={this.state.errorList["postgre-conninfo"]?"form-control is-invalid":"form-control"} id="mod-database-postgre-conninfo" onChange={(e) => this.changeValue(e, "postgre-conninfo")} value={this.state.mod.parameters["postgre-conninfo"]} placeholder={i18next.t("admin.mod-database-postgre-conninfo-ph")} />
+          {this.state.errorList["postgre-conninfo"]?<span className="error-input">{i18next.t(this.state.errorList["postgre-conninfo"])}</span>:""}
         </div>;
       }
     }
