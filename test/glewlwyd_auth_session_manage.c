@@ -172,7 +172,6 @@ START_TEST(test_auth_session_manage_delete_ok)
   o_free(user_req.http_verb);
   o_free(user_req.http_url);
   user_req.http_verb = strdup("DELETE");
-  y_log_message(Y_LOG_LEVEL_DEBUG, "hash %s", session_hash_encoded);
   user_req.http_url = msprintf(SERVER_URI "/profile/session/%s", session_hash_encoded);
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
