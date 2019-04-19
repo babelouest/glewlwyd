@@ -9,6 +9,7 @@ class ModEdit extends Component {
     super(props);
 
     this.state = {
+      config: props.config,
       title: props.title,
       mod: props.mod,
       role: props.role,
@@ -57,6 +58,7 @@ class ModEdit extends Component {
 
   componentWillReceiveProps(nextProps) {
     this.setState({
+      config: nextProps.config,
       title: nextProps.title,
       mod: nextProps.mod,
       role: nextProps.role,
@@ -136,7 +138,7 @@ class ModEdit extends Component {
     if (this.state.role !== "scheme") {
       readonly = <div className="form-group">
         <label htmlFor="mod-readonly">{i18next.t("admin.mod-readonly")}</label>
-        <input type="checkbox" className="form-control" id="mod-readonly" onChange={(e) => this.toggleReadonly(e)} checked={this.state.mod.readonly||false} />
+        <input type="checkbox" className="form-control" id="mod-readonly" onChange={(e) => this.toggleReadonly(e)} checked={this.state.mod.readonly||this.state.mod.module==="http"||false} />
       </div>;
     }
 		return (
@@ -166,7 +168,7 @@ class ModEdit extends Component {
                 <span className={"error-input" + (this.state.typeInvalidMessage?"":" hidden")}>{this.state.typeInvalidMessage}</span>
               </div>
               {readonly}
-              <ModEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} />
+              <ModEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
             </form>
           </div>
           <div className="modal-footer">

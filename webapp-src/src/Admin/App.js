@@ -24,6 +24,7 @@ class App extends Component {
     super(props);
 
     this.state = {
+      lang: i18next.language,
       config: props.config,
       curNav: "users",
       loggedIn: false,
@@ -1147,8 +1148,8 @@ class App extends Component {
         <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
         <Edit title={this.state.editModal.title} pattern={this.state.editModal.pattern} source={this.state.editModal.source} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
         <ScopeEdit scope={this.state.scopeModal.data} add={this.state.scopeModal.add} modSchemes={this.state.modSchemes} callback={this.state.scopeModal.callback} />
-        <ModEdit title={this.state.ModModal.title} role={this.state.ModModal.role} mod={this.state.ModModal.data} add={this.state.ModModal.add} types={this.state.ModModal.types} callback={this.state.ModModal.callback} />
-        <PluginEdit title={this.state.PluginModal.title} mod={this.state.PluginModal.data} add={this.state.PluginModal.add} types={this.state.PluginModal.types} callback={this.state.PluginModal.callback} />
+        <ModEdit title={this.state.ModModal.title} role={this.state.ModModal.role} mod={this.state.ModModal.data} add={this.state.ModModal.add} types={this.state.ModModal.types} callback={this.state.ModModal.callback} config={this.state.config} />
+        <PluginEdit title={this.state.PluginModal.title} mod={this.state.PluginModal.data} add={this.state.PluginModal.add} types={this.state.PluginModal.types} callback={this.state.PluginModal.callback} config={this.state.config} />
       </div>
 		);
 	}
