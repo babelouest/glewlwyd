@@ -27,6 +27,7 @@ glewlwyd_auth_scheme_trigger
 glewlwyd_auth_scheme_register
 glewlwyd_auth_profile
 glewlwyd_auth_session_manage
+glewlwyd_auth_profile_get_scheme_available
 
 glewlwyd_crud_user
 glewlwyd_crud_client

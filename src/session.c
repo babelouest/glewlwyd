@@ -671,3 +671,37 @@ int delete_user_session_from_hash(struct config_elements * config, const char * 
   }
   return ret;
 }
+
+json_t * get_scheme_list_for_user(struct config_elements * config, const char * username) {
+  json_t * j_scheme_modules = get_user_auth_scheme_module_list(config), * j_return, * j_module_array, * j_element;
+  size_t index;
+  struct _user_auth_scheme_module_instance * instance = NULL;
+  int can_use;
+  
+  if (check_result_value(j_scheme_modules, G_OK)) {
+    j_module_array = json_array();
+    if (j_module_array != NULL) {
+      json_array_foreach(json_object_get(j_scheme_modules, "module"), index, j_element) {
+        instance = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_element, "name")));
+        if (instance != NULL) {
+          can_use = instance->module->user_auth_scheme_module_can_use(config->config_m, username, instance->cls);
+          if (can_use != GLEWLWYD_IS_NOT_AVAILABLE) {
+            json_array_append(j_module_array, j_element);
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_scheme_list_for_user - Error instance %s/%s not found", json_string_value(json_object_get(j_element, "module")), json_string_value(json_object_get(j_element, "name")));
+        }
+      }
+      j_return = json_pack("{sisO}", "result", G_OK, "scheme", j_module_array);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_scheme_list_for_user - Error allocating resources for j_module_array");
+      j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+    }
+    json_decref(j_module_array);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_scheme_list_for_user - Error get_user_auth_scheme_module_list");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  json_decref(j_scheme_modules);
+  return j_return;
+}

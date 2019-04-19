@@ -151,6 +151,7 @@ int delete_user_session_from_hash(struct config_elements * config, const char * 
 json_t * user_set_profile(struct config_elements * config, const char * username, json_t * j_profile);
 json_t * user_get_profile(struct config_elements * config, const char * username);
 int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char * new_password);
+json_t * get_scheme_list_for_user(struct config_elements * config, const char * username);
 
 // User
 int user_has_scope(json_t * j_user, const char * scope);
@@ -270,6 +271,7 @@ int callback_glewlwyd_user_get_profile (const struct _u_request * request, struc
 int callback_glewlwyd_user_update_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_update_password (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_session_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_get_scheme_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);

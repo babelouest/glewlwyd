@@ -480,7 +480,7 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
                         "guasmi_display_name AS display_name",
                         "guasmi_parameters",
                       "order_by",
-                      "guasmi_module,guasmi_name");
+                      "guasmi_module");
   res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
