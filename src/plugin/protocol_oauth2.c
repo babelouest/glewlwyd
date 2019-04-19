@@ -2180,7 +2180,7 @@ int plugin_module_init(struct config_plugin * config, const char * name, json_t 
               jwt_free(((struct _oauth2_config *)*cls)->jwt_key);
               o_free(*cls);
               *cls = NULL;
-              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for jwt_key");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error jwt_set_alg");
               ret = G_ERROR_MEMORY;
             } else {
               if (jwt_autocheck(((struct _oauth2_config *)*cls)) != G_OK) {
