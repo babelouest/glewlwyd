@@ -12,7 +12,7 @@ class UserMod extends Component {
       curMod: {},
       types: props.types
     }
-
+    
     this.addMod = this.addMod.bind(this);
     this.editMod = this.editMod.bind(this);
     this.deleteMod = this.deleteMod.bind(this);

@@ -19,6 +19,7 @@ class Navbar extends Component {
     
     this.navigate = this.navigate.bind(this);
     this.toggleLogin = this.toggleLogin.bind(this);
+    this.changeLang = this.changeLang.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -45,7 +46,22 @@ class Navbar extends Component {
     }
   }
 
+  changeLang(e, lang) {
+    i18next.changeLanguage(lang)
+    .then(() => {
+      this.setState({lang: lang});
+    });
+  }
+
 	render() {
+    var langList = [];
+    ["en","fr"].forEach((lang, i) => {
+      if (lang === i18next.language) {
+        langList.push(<a className="dropdown-item active" href="#" key={i}>{lang}</a>);
+      } else {
+        langList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeLang(e, lang)} key={i}>{lang}</a>);
+      }
+    });
 		return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
       <a className="navbar-brand" href="#">Glewlwyd</a>
@@ -78,9 +94,21 @@ class Navbar extends Component {
           </li>
         </ul>
         <form className="form-inline my-2 my-lg-0">
-          <button type="button" className="btn btn-primary" onClick={this.toggleLogin}>
-            <i className="fas fa-sign-in-alt btn-icon"></i>{this.state.loggedIn?i18next.t("admin.menu-logout"):i18next.t("admin.menu-login")}
-          </button>
+          <div className="btn-group" role="group">
+            <div className="btn-group" role="group">
+              <div className="dropdown">
+                <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i className="fas fa-globe-africa"></i> {i18next.t("select-lang")}
+                </button>
+                <div className="dropdown-menu" aria-labelledby="dropdownLang">
+                  {langList}
+                </div>
+              </div>
+            </div>
+            <button type="button" className="btn btn-secondary" onClick={this.toggleLogin}>
+              <i className="fas fa-sign-in-alt btn-icon"></i>{this.state.loggedIn?i18next.t("admin.menu-logout"):i18next.t("admin.menu-login")}
+            </button>
+          </div>
         </form>
       </div>
     </nav>

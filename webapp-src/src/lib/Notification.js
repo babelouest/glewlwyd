@@ -16,11 +16,10 @@ class Notification extends Component {
         this.setState({show: true, type: message.type, message: message.message}, () => {
           setTimeout(() => {
             this.setState({show: false});
-          }, 50000);
+          }, 5000);
         });
       }
     });
-    
     this.close = this.close.bind(this);
   }
   
