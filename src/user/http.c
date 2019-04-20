@@ -118,7 +118,7 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
 }
 
 json_t * user_module_get(struct config_module * config, const char * username, void * cls) {
-  return json_pack("{sis{sssO}}", "result", G_OK, "user", "username", username, "scope", json_object_get((json_t *)cls, "default-scope"));
+  return json_pack("{sis{sssOso}}", "result", G_OK, "user", "username", username, "scope", json_object_get((json_t *)cls, "default-scope"), "enabled", json_true());
 }
 
 json_t * user_module_get_profile(struct config_module * config, const char * username, void * cls) {
