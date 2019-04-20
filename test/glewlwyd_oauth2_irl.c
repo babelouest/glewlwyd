@@ -68,6 +68,61 @@ END_TEST
 
 START_TEST(test_glwd_oauth2_irl_run_workflow)
 {
+  struct _u_request auth_req;
+  struct _u_response auth_resp;
+  json_t * j_body, * j_register, * j_scheme;
+  char * cookie;
+  size_t index;
+  const char * username = json_string_value(json_object_get(json_object_get(j_params, "user"), "username")),
+             * password = json_string_value(json_object_get(json_object_get(j_params, "user"), "password"));
+  
+  ulfius_init_request(&auth_req);
+  ulfius_init_response(&auth_resp);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{ssss}", "username", username, "password", password);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_gt(auth_resp.nb_cookies, 0);
+  ck_assert_ptr_ne((cookie = msprintf("%s=%s", auth_resp.map_cookie[0].key, auth_resp.map_cookie[0].value)), NULL);
+  ck_assert_int_eq(u_map_put(auth_req.map_header, "Cookie", cookie), U_OK);
+  
+  ulfius_clean_response(&auth_resp);
+  
+  json_array_foreach(json_object_get(j_params, "schemes"), index, j_scheme) {
+    j_register = json_pack("{ss ss ss sO}", 
+                          "username", username, 
+                          "scheme_type", json_string_value(json_object_get(j_scheme, "scheme_type")), 
+                          "scheme_name", json_string_value(json_object_get(j_scheme, "scheme_name")), 
+                          "value", json_object_get(j_scheme, "register"));
+    ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+    json_decref(j_register);
+  }
+  
+  json_array_foreach(json_object_get(j_params, "schemes"), index, j_scheme) {
+    ulfius_init_response(&auth_resp);
+    j_body = json_pack("{sssssssO}", "username", username, "scheme_type", json_string_value(json_object_get(j_scheme, "scheme_type")), "scheme_name", json_string_value(json_object_get(j_scheme, "scheme_name")), "value", json_string_value(json_object_get(j_scheme, "value")));
+    ulfius_set_json_body_request(&auth_req, j_body);
+    json_decref(j_body);
+    ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+    ck_assert_int_eq(auth_resp.status, 200);
+    ulfius_clean_response(&auth_resp);
+  }
+  
+  json_array_foreach(json_object_get(j_params, "schemes"), index, j_scheme) {
+    j_register = json_pack("{ss ss ss sO}", 
+                          "username", username, 
+                          "scheme_type", json_string_value(json_object_get(j_scheme, "scheme_type")), 
+                          "scheme_name", json_string_value(json_object_get(j_scheme, "scheme_name")), 
+                          "value", json_object_get(j_scheme, "deregister"));
+    ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+    json_decref(j_register);
+  }
+  
+  ulfius_clean_request(&auth_req);
+  o_free(cookie);
 }
 END_TEST
 
