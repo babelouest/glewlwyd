@@ -36,5 +36,25 @@
     "confidential": true,
     "pasword": "password",
     "redirect-uri":["https://glewlwyd.local/"]
-  }
+  },
+  "schemes":[
+    {
+      "scheme_type": "mock",
+      "scheme_name": "mock_scheme_42",
+      "register": {"register": true},
+      "deregister": {"register": false},
+      "value": {
+        "code": "42"
+      }
+    },
+    {
+      "scheme_type": "mock",
+      "scheme_name": "mock_scheme_95",
+      "register": {"register": true},
+      "deregister": {"register": false},
+      "value": {
+        "code": "95"
+      }
+    }
+  ]
 }
