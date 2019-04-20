@@ -35,6 +35,8 @@ glewlwyd_crud_scope
 
 glewlwyd_mod_user_irl
 glewlwyd_mod_client_irl
+glewlwyd_mod_user_http
+glewlwyd_oauth2_irl
 
 valgrind-*.txt
 *.json
