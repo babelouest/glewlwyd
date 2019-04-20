@@ -41,6 +41,7 @@
  */
 struct mock_config {
   json_t * j_param;
+  json_t * j_users;
 };
 
 /**
@@ -135,6 +136,7 @@ int user_auth_scheme_module_unload(struct config_module * config) {
 int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
   *cls = o_malloc(sizeof(struct mock_config));
   ((struct mock_config *)*cls)->j_param = json_incref(j_parameters);
+  ((struct mock_config *)*cls)->j_users = json_object();
   return G_OK;
 }
 
@@ -155,6 +157,7 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
  */
 int user_auth_scheme_module_close(struct config_module * config, void * cls) {
   json_decref(((struct mock_config *)cls)->j_param);
+  json_decref(((struct mock_config *)cls)->j_users);
   o_free(cls);
   return G_OK;
 }
@@ -177,24 +180,11 @@ int user_auth_scheme_module_close(struct config_module * config, void * cls) {
  * 
  */
 int user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls) {
-  char * key_mock;
-  json_t * j_user;
-  int ret;
-
-  j_user = config->glewlwyd_module_callback_get_user(config, username);
-  if (check_result_value(j_user, G_OK)) {
-    key_mock = msprintf("mock-%s", json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")));
-    if (0 == o_strcmp("1", json_string_value(json_object_get(json_object_get(j_user, "user"), key_mock)))) {
-      ret = GLEWLWYD_IS_REGISTERED;
-    } else {
-      ret = GLEWLWYD_IS_AVAILABLE;
-    }
-    o_free(key_mock);
+  if (json_object_get(((struct mock_config *)cls)->j_users, username) != NULL) {
+    return GLEWLWYD_IS_REGISTERED;
   } else {
-    ret = GLEWLWYD_IS_NOT_AVAILABLE;
+    return GLEWLWYD_IS_AVAILABLE;
   }
-  json_decref(j_user);
-  return ret;
 }
 
 /**
@@ -220,27 +210,21 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
  * 
  */
 json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
-  char  * key_mock;
-  json_t * j_user, * j_return;
+  json_t * j_return;
   
-  j_user = config->glewlwyd_module_callback_get_user(config, username);
-  if (check_result_value(j_user, G_OK)) {
-    key_mock = msprintf("mock-%s", json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")));
-    if (json_object_get(j_scheme_data, "register") == json_true()) {
-      json_object_set_new(json_object_get(j_user, "user"), key_mock, json_string("1"));
-    } else {
-      json_object_set_new(json_object_get(j_user, "user"), key_mock, json_string("0"));
+  if (json_object_get(j_scheme_data, "register") == json_true()) {
+    if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_AVAILABLE) {
+      json_object_set(((struct mock_config *)cls)->j_users, username, json_true());
     }
-    if (config->glewlwyd_module_callback_set_user(config, username, json_object_get(j_user, "user")) == G_OK) {
-      j_return = json_pack("{sis{ss}}", "result", G_OK, "response", "register-code", json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")));
-    } else {
-      j_return = json_pack("{si}", "result", G_ERROR);
+    j_return = json_pack("{siso}", "result", G_OK, "response", json_true());
+  } else if (json_object_get(j_scheme_data, "register") == json_false()) {
+    if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
+      json_object_del(((struct mock_config *)cls)->j_users, username);
     }
-    o_free(key_mock);
+    j_return = json_pack("{siso}", "result", G_OK, "response", json_true());
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR);
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
-  json_decref(j_user);
   return j_return;
 }
 
@@ -264,22 +248,13 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
  * 
  */
 json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, const char * username, void * cls) {
-  json_t * j_user, * j_register, * j_return;
-  char * key_mock;
+  json_t * j_return;
   
-  j_user = config->glewlwyd_module_callback_get_user(config, username);
-  if (check_result_value(j_user, G_OK)) {
-    key_mock = msprintf("mock-%s", json_string_value(json_object_get(((struct mock_config *)cls)->j_param, "mock-value")));
-    if ((j_register = json_object_get(json_object_get(j_user, "user"), key_mock)) != NULL) {
-      j_return = json_pack("{sisO}", "result", G_OK, "response", j_register);
-    } else {
-      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-    }
-    o_free(key_mock);
+  if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
+    j_return = json_pack("{sisO}", "result", G_OK, "response", json_true());
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
-  json_decref(j_user);
   return j_return;
 }
 
