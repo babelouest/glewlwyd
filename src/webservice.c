@@ -304,7 +304,7 @@ int callback_glewlwyd_user_auth_register_get (const struct _u_request * request,
           } else if (check_result_value(j_result, G_OK)) {
             ulfius_set_json_body_response(response, 200, json_object_get(j_result, "register"));
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth_register - Error auth_check_user_scheme");
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth_register_get - Error auth_register_get_user_scheme");
             response->status = 500;
           }
           json_decref(j_result);
