@@ -1,0 +1,40 @@
+{
+  "client_mod":{
+    "module":"database",
+    "name":"mod_irl",
+    "display_name":"Database",
+    "order_rank":1,
+    "parameters":{
+      "use-glewlwyd-connection":true,
+      "data-format":{
+        "redirect-uri":{"multiple":true,"read":true,"write":true}
+      }
+    },
+    "readonly":false,
+    "enabled":true
+  },
+  "user_mod":{
+    "module":"database",
+    "name":"mod_irl",
+    "display_name":"Database",
+    "order_rank":1,
+    "parameters":{
+      "use-glewlwyd-connection":true
+    },
+    "readonly":false,
+    "enabled":true
+  },
+  "user_add": true,
+  "user":{
+    "username": "irl_user1",
+    "password": "password",
+    "scope":["g_profile","scope1"]
+  },
+  "client_add": true,
+  "client":{
+    "client_id": "irl_client1",
+    "confidential": true,
+    "pasword": "password",
+    "redirect-uri":["https://glewlwyd.local/"]
+  }
+}
