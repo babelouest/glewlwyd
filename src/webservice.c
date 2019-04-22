@@ -229,7 +229,9 @@ int callback_glewlwyd_user_auth_trigger (const struct _u_request * request, stru
         } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
           response->status = 401;
         } else if (check_result_value(j_result, G_OK)) {
-          ulfius_set_json_body_response(response, 200, json_object_get(j_result, "trigger"));
+          if (json_object_get(j_result, "trigger") != NULL) {
+            ulfius_set_json_body_response(response, 200, json_object_get(j_result, "trigger"));
+          }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth_trigger - Error auth_check_user_scheme");
           response->status = 500;
@@ -264,7 +266,9 @@ int callback_glewlwyd_user_auth_register (const struct _u_request * request, str
           } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
             response->status = 401;
           } else if (check_result_value(j_result, G_OK)) {
-            ulfius_set_json_body_response(response, 200, json_object_get(j_result, "register"));
+            if (json_object_get(j_result, "register") != NULL) {
+              ulfius_set_json_body_response(response, 200, json_object_get(j_result, "register"));
+            }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth_register - Error auth_check_user_scheme");
             response->status = 500;
@@ -302,7 +306,9 @@ int callback_glewlwyd_user_auth_register_get (const struct _u_request * request,
           } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
             response->status = 401;
           } else if (check_result_value(j_result, G_OK)) {
-            ulfius_set_json_body_response(response, 200, json_object_get(j_result, "register"));
+            if (json_object_get(j_result, "register") != NULL) {
+              ulfius_set_json_body_response(response, 200, json_object_get(j_result, "register"));
+            }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth_register_get - Error auth_register_get_user_scheme");
             response->status = 500;
