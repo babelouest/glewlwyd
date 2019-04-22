@@ -95,7 +95,11 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
   if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
     j_response = scheme_instance->module->user_auth_scheme_module_trigger(config->config_m, request, username, j_trigger_parameters, scheme_instance->cls);
     if (check_result_value(j_response, G_OK)) {
-      j_return = json_pack("{sisO}", "result", G_OK, "trigger", json_object_get(j_response, "response"));
+      if (json_object_get(j_response, "response") != NULL) {
+        j_return = json_pack("{sisO}", "result", G_OK, "trigger", json_object_get(j_response, "response"));
+      } else {
+        j_return = json_pack("{si}", "result", G_OK);
+      }
     } else if (!check_result_value(j_response, G_ERROR)) {
       j_return = json_incref(j_response);
     } else {
@@ -118,7 +122,11 @@ json_t * auth_register_user_scheme(struct config_elements * config, const char *
     if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
       j_response = scheme_instance->module->user_auth_scheme_module_register(config->config_m, request, username, j_register_parameters, scheme_instance->cls);
       if (check_result_value(j_response, G_OK)) {
-        j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));
+        if (json_object_get(j_response, "response") != NULL) {
+          j_return = json_pack("{sisO}", "result", G_OK, "trigger", json_object_get(j_response, "response"));
+        } else {
+          j_return = json_pack("{si}", "result", G_OK);
+        }
       } else if (!check_result_value(j_response, G_ERROR)) {
         j_return = json_incref(j_response);
       } else {
@@ -143,7 +151,11 @@ json_t * auth_register_get_user_scheme(struct config_elements * config, const ch
   if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
     j_response = scheme_instance->module->user_auth_scheme_module_register_get(config->config_m, request, username, scheme_instance->cls);
     if (check_result_value(j_response, G_OK)) {
-      j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));
+      if (json_object_get(j_response, "response") != NULL) {
+        j_return = json_pack("{sisO}", "result", G_OK, "trigger", json_object_get(j_response, "response"));
+      } else {
+        j_return = json_pack("{si}", "result", G_OK);
+      }
     } else if (!check_result_value(j_response, G_ERROR)) {
       j_return = json_incref(j_response);
     } else {
