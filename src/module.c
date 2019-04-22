@@ -985,7 +985,7 @@ int add_client_module(struct config_elements * config, json_t * j_module) {
   struct _client_module * module;
   struct _client_module_instance * cur_instance;
   json_t * j_query;
-  int res, ret, i;
+  int res, ret = G_ERROR, i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
   j_query = json_pack("{sss{sOsOsOsOss}}",
