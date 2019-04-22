@@ -1797,6 +1797,7 @@ static int callback_oauth2_token(const struct _u_request * request, struct _u_re
   } else if (0 == o_strcmp("delete_token", grant_type)) {
     result = delete_refresh_token(request, response, user_data);
   } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Unknown grant_type '%s'", grant_type);
     response->status = 400;
   }
   return result;
