@@ -822,7 +822,7 @@ int callback_glewlwyd_add_client_module (const struct _u_request * request, stru
       if ((res = add_client_module(config, j_module)) == G_ERROR_PARAM) {
         response->status = 400;
       } else if (res != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client_module - Error add_client_module");
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client_module - Error add_client_module %d", res);
         response->status = 500;
       }
     } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
