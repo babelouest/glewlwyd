@@ -160,12 +160,12 @@ START_TEST(test_glwd_admin_get_mod_client_action)
   char * url = msprintf("%s/mod/client/%s/disable", SERVER_URI, MODULE_NAME);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
-  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 400, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
   o_free(url);
   
   url = msprintf("%s/mod/client/%s/enable", SERVER_URI, MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
-  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 400, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
   o_free(url);
   
   url = msprintf("%s/mod/client/%s/error", SERVER_URI, MODULE_NAME);
@@ -192,6 +192,29 @@ START_TEST(test_glwd_admin_get_mod_client_delete_OK)
 }
 END_TEST
 
+START_TEST(test_glwd_admin_mod_client_with_errors)
+{
+  const char * name = "test_with_errors";
+  json_t * j_parameters = json_pack("{sssssssisos{so}}", "module", MODULE_MODULE, "name", name, "display_name", MODULE_DISPLAY_NAME, "order_rank", 1, "readonly", json_false(), "parameters", "error", json_true());
+  char * url;
+  
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/client/", NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  
+  url = msprintf(SERVER_URI "/mod/client/%s", name);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  o_free(url);
+  
+  url = msprintf(SERVER_URI "/mod/client/%s/enable", name);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  o_free(url);
+  
+  url = msprintf(SERVER_URI "/mod/client/%s", name);
+  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  o_free(url);
+  
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -209,6 +232,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_admin_get_mod_client_action);
   tcase_add_test(tc_core, test_glwd_admin_get_mod_client_delete_error);
   tcase_add_test(tc_core, test_glwd_admin_get_mod_client_delete_OK);
+  tcase_add_test(tc_core, test_glwd_admin_mod_client_with_errors);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
