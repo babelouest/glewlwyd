@@ -65,6 +65,7 @@ class ClientMod extends Component {
         <td>{mod.name}</td>
         <td>{mod.display_name||""}</td>
         <td>{(mod.readonly?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
+        <td>{(mod.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
         <td>
           <div className="btn-group" role="group">
             <button type="button" className="btn btn-secondary" onClick={(e) => this.editMod(e, mod)} title={i18next.t("admin.edit")}>
@@ -106,6 +107,9 @@ class ClientMod extends Component {
           </th>
           <th>
             {i18next.t("admin.readonly")}
+          </th>
+          <th>
+            {i18next.t("admin.enabled")}
           </th>
           <th>
           </th>
