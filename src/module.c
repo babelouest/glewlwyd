@@ -316,9 +316,11 @@ int add_user_module(struct config_elements * config, json_t * j_module) {
         cur_instance->enabled = 0;
         cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
         if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
-          if (module->user_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls) == G_OK) {
+          if ((res = module->user_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls)) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
+          } else if (res == G_ERROR_PARAM) {
+            ret = G_ERROR_PARAM;
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
             ret = G_ERROR;
@@ -426,14 +428,16 @@ int delete_user_module(struct config_elements * config, const char * name) {
 int manage_user_module(struct config_elements * config, const char * name, int action) {
   struct _user_module_instance * instance = get_user_module_instance(config, name);
   json_t * j_module = get_user_module(config, name);
-  int ret;
+  int ret, res;
   
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->user_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls) == G_OK) {
+        if ((res = instance->module->user_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls)) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
+        } else if (res == G_ERROR_PARAM) {
+          ret = G_ERROR_PARAM;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           ret = G_ERROR;
@@ -664,9 +668,11 @@ int add_user_auth_scheme_module(struct config_elements * config, json_t * j_modu
         cur_instance->module = module;
         cur_instance->enabled = 0;
         if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
-          if (module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), &cur_instance->cls) == G_OK) {
+          if ((res = module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), &cur_instance->cls)) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
+          } else if (res == G_ERROR_PARAM) {
+            ret = G_ERROR_PARAM;
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
             ret = G_ERROR;
@@ -758,14 +764,16 @@ int delete_user_auth_scheme_module(struct config_elements * config, const char *
 int manage_user_auth_scheme_module(struct config_elements * config, const char * name, int action) {
   struct _user_auth_scheme_module_instance * instance = get_user_auth_scheme_module_instance(config, name);
   json_t * j_module = get_user_auth_scheme_module(config, name);
-  int ret;
+  int ret, res;
   
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->user_auth_scheme_module_init(config->config_m, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls) == G_OK) {
+        if ((res = instance->module->user_auth_scheme_module_init(config->config_m, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls)) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
+        } else if (res == G_ERROR_PARAM) {
+          ret = G_ERROR_PARAM;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           ret = G_ERROR;
@@ -1020,9 +1028,11 @@ int add_client_module(struct config_elements * config, json_t * j_module) {
         cur_instance->enabled = 0;
         cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
         if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
-          if (module->client_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls) == G_OK) {
+          if ((res = module->client_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls)) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
+          } else if (res == G_ERROR_PARAM) {
+            res = G_ERROR_PARAM;
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
             ret = G_ERROR;
@@ -1130,14 +1140,16 @@ int delete_client_module(struct config_elements * config, const char * name) {
 int manage_client_module(struct config_elements * config, const char * name, int action) {
   struct _client_module_instance * instance = get_client_module_instance(config, name);
   json_t * j_module = get_client_module(config, name);
-  int ret;
+  int ret, res;
   
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->client_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls) == G_OK) {
+        if ((res = instance->module->client_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls)) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
+        } else if (res == G_ERROR_PARAM) {
+          ret = G_ERROR_PARAM;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           ret = G_ERROR;
@@ -1368,9 +1380,11 @@ int add_plugin_module(struct config_elements * config, json_t * j_module) {
         cur_instance->module = module;
         cur_instance->enabled = 0;
         if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
-          if (module->plugin_module_init(config->config_p, cur_instance->name, json_object_get(j_module, "parameters"), &cur_instance->cls) == G_OK) {
+          if ((res = module->plugin_module_init(config->config_p, cur_instance->name, json_object_get(j_module, "parameters"), &cur_instance->cls)) == G_OK) {
             cur_instance->enabled = 1;
             ret = G_OK;
+          } else if (res == G_ERROR_PARAM) {
+            ret = G_ERROR_PARAM;
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
             ret = G_ERROR;
@@ -1462,14 +1476,16 @@ int delete_plugin_module(struct config_elements * config, const char * name) {
 int manage_plugin_module(struct config_elements * config, const char * name, int action) {
   struct _plugin_module_instance * instance = get_plugin_module_instance(config, name);
   json_t * j_module = get_plugin_module(config, name);
-  int ret;
+  int ret, res;
   
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if (instance->module->plugin_module_init(config->config_p, instance->name, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls) == G_OK) {
+        if ((res = instance->module->plugin_module_init(config->config_p, instance->name, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls)) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
+        } else if (res == G_ERROR_PARAM) {
+          ret = G_ERROR_PARAM;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           ret = G_ERROR;

@@ -509,12 +509,15 @@ int callback_glewlwyd_get_user_module (const struct _u_request * request, struct
 int callback_glewlwyd_add_user_module (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_module, * j_module_valid;
+  int res;
   
   j_module = ulfius_get_json_body_request(request, NULL);
   if (j_module != NULL) {
     j_module_valid = is_user_module_valid(config, j_module, 1);
     if (check_result_value(j_module_valid, G_OK)) {
-      if (add_user_module(config, j_module) != G_OK) {
+      if ((res = add_user_module(config, j_module)) == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user_module - Error add_user_module");
         response->status = 500;
       }
@@ -658,12 +661,15 @@ int callback_glewlwyd_get_user_auth_scheme_module (const struct _u_request * req
 int callback_glewlwyd_add_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data) {
   struct config_elements * config = (struct config_elements *)user_auth_scheme_data;
   json_t * j_module, * j_module_valid;
+  int res;
   
   j_module = ulfius_get_json_body_request(request, NULL);
   if (j_module != NULL) {
     j_module_valid = is_user_auth_scheme_module_valid(config, j_module, 1);
     if (check_result_value(j_module_valid, G_OK)) {
-      if (add_user_auth_scheme_module(config, j_module) != G_OK) {
+      if ((res = add_user_auth_scheme_module(config, j_module)) == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user_auth_scheme_module - Error add_user_auth_scheme_module");
         response->status = 500;
       }
@@ -807,12 +813,15 @@ int callback_glewlwyd_get_client_module (const struct _u_request * request, stru
 int callback_glewlwyd_add_client_module (const struct _u_request * request, struct _u_response * response, void * client_data) {
   struct config_elements * config = (struct config_elements *)client_data;
   json_t * j_module, * j_module_valid;
+  int res;
   
   j_module = ulfius_get_json_body_request(request, NULL);
   if (j_module != NULL) {
     j_module_valid = is_client_module_valid(config, j_module, 1);
     if (check_result_value(j_module_valid, G_OK)) {
-      if (add_client_module(config, j_module) != G_OK) {
+      if ((res = add_client_module(config, j_module)) == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client_module - Error add_client_module");
         response->status = 500;
       }
@@ -956,12 +965,15 @@ int callback_glewlwyd_get_plugin_module (const struct _u_request * request, stru
 int callback_glewlwyd_add_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data) {
   struct config_elements * config = (struct config_elements *)plugin_data;
   json_t * j_module, * j_module_valid;
+  int res;
   
   j_module = ulfius_get_json_body_request(request, NULL);
   if (j_module != NULL) {
     j_module_valid = is_plugin_module_valid(config, j_module, 1);
     if (check_result_value(j_module_valid, G_OK)) {
-      if (add_plugin_module(config, j_module) != G_OK) {
+      if ((res = add_plugin_module(config, j_module)) == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_plugin_module - Error add_plugin_module");
         response->status = 500;
       }
