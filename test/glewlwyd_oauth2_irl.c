@@ -143,6 +143,7 @@ START_TEST(test_glwd_oauth2_irl_run_workflow)
   auth_req.auth_basic_password = o_strdup(client_password);
   ulfius_init_response(&resp);
   ck_assert_int_eq(ulfius_send_http_request(&auth_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
   code = o_strdup(strstr(u_map_get(resp.map_header, "Location"), "code=")+strlen("code="));
   if (strchr(code, '&') != NULL) {
     *strchr(code, '&') = '\0';
