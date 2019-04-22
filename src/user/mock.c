@@ -89,74 +89,78 @@ int user_module_unload(struct config_module * config) {
 }
 
 int user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
-  const char * prefix = "", * password = "";
-  if (json_string_length(json_object_get(j_parameters, "username-prefix"))) {
-    prefix = json_string_value(json_object_get(j_parameters, "username-prefix"));
+  if (json_object_get(j_parameters, "error") == NULL) {
+    const char * prefix = "", * password = "";
+    if (json_string_length(json_object_get(j_parameters, "username-prefix"))) {
+      prefix = json_string_value(json_object_get(j_parameters, "username-prefix"));
+    }
+    if (json_string_length(json_object_get(j_parameters, "password"))) {
+      password = json_string_value(json_object_get(j_parameters, "password"));
+    }
+    *cls = (void*)json_pack("{sss[{ss+ ss ss so s[ss]}{ss+ ss ss so s[ssss]}{ss+ ss ss so s[ss]}{ss+ ss ss so s[ssss]}]}",
+                            "password",
+                            password,
+                            "list",
+                              "username", 
+                              prefix,
+                              "admin", 
+                              "name", 
+                              "The Boss", 
+                              "email", 
+                              "boss@glewlwyd.domain",
+                              "enabled",
+                              json_true(),
+                              "scope",
+                                config->admin_scope,
+                                config->profile_scope,
+
+                              "username",
+                              prefix,
+                              "user1",
+                              "name",
+                              "Dave Lopper 1",
+                              "email",
+                              "dev1@glewlwyd",
+                              "enabled",
+                              json_true(),
+                              "scope",
+                                config->profile_scope,
+                                "scope1",
+                                "scope2",
+                                "scope3",
+
+                              "username",
+                              prefix,
+                              "user2",
+                              "name",
+                              "Dave Lopper 2",
+                              "email",
+                              "dev2@glewlwyd",
+                              "enabled",
+                              json_true(),
+                              "scope",
+                                config->profile_scope,
+                                "scope1",
+
+                              "username",
+                              prefix,
+                              "user3",
+                              "name",
+                              "Dave Lopper 3",
+                              "email",
+                              "dev3@glewlwyd",
+                              "enabled",
+                              json_true(),
+                              "scope",
+                                config->profile_scope,
+                                "scope1",
+                                "scope2",
+                                "scope3");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_init - success prefix: '%s', profile_scope: '%s', admin_scope: '%s'", prefix, config->profile_scope, config->admin_scope);
+    return G_OK;
+  } else {
+    return G_ERROR_PARAM;
   }
-  if (json_string_length(json_object_get(j_parameters, "password"))) {
-    password = json_string_value(json_object_get(j_parameters, "password"));
-  }
-  *cls = (void*)json_pack("{sss[{ss+ ss ss so s[ss]}{ss+ ss ss so s[ssss]}{ss+ ss ss so s[ss]}{ss+ ss ss so s[ssss]}]}",
-                          "password",
-                          password,
-                          "list",
-                            "username", 
-                            prefix,
-                            "admin", 
-                            "name", 
-                            "The Boss", 
-                            "email", 
-                            "boss@glewlwyd.domain",
-                            "enabled",
-                            json_true(),
-                            "scope",
-                              config->admin_scope,
-                              config->profile_scope,
-
-                            "username",
-                            prefix,
-                            "user1",
-                            "name",
-                            "Dave Lopper 1",
-                            "email",
-                            "dev1@glewlwyd",
-                            "enabled",
-                            json_true(),
-                            "scope",
-                              config->profile_scope,
-                              "scope1",
-                              "scope2",
-                              "scope3",
-
-                            "username",
-                            prefix,
-                            "user2",
-                            "name",
-                            "Dave Lopper 2",
-                            "email",
-                            "dev2@glewlwyd",
-                            "enabled",
-                            json_true(),
-                            "scope",
-                              config->profile_scope,
-                              "scope1",
-
-                            "username",
-                            prefix,
-                            "user3",
-                            "name",
-                            "Dave Lopper 3",
-                            "email",
-                            "dev3@glewlwyd",
-                            "enabled",
-                            json_true(),
-                            "scope",
-                              config->profile_scope,
-                              "scope1",
-                              "scope2",
-                              "scope3");
-  y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_init - success prefix: '%s', profile_scope: '%s', admin_scope: '%s'", prefix, config->profile_scope, config->admin_scope);
-  return G_OK;
 }
 
 int user_module_close(struct config_module * config, void * cls) {

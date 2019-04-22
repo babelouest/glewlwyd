@@ -46,8 +46,12 @@ int plugin_module_unload(struct config_plugin * config) {
 }
 
 int plugin_module_init(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls) {
-  y_log_message(Y_LOG_LEVEL_DEBUG, "plugin_module_init - success");
-  return G_OK;
+  if (json_object_get(j_parameters, "error") == NULL) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "plugin_module_init - success");
+    return G_OK;
+  } else {
+    return G_ERROR_PARAM;
+  }
 }
 
 int plugin_module_close(struct config_plugin * config, void * cls) {

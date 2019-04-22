@@ -134,10 +134,14 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  * 
  */
 int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
-  *cls = o_malloc(sizeof(struct mock_config));
-  ((struct mock_config *)*cls)->j_param = json_incref(j_parameters);
-  ((struct mock_config *)*cls)->j_users = json_object();
-  return G_OK;
+  if (json_object_get(j_parameters, "error") == NULL) {
+    *cls = o_malloc(sizeof(struct mock_config));
+    ((struct mock_config *)*cls)->j_param = json_incref(j_parameters);
+    ((struct mock_config *)*cls)->j_users = json_object();
+    return G_OK;
+  } else {
+    return G_ERROR_PARAM;
+  }
 }
 
 /**
