@@ -705,7 +705,12 @@ int user_module_init(struct config_module * config, int readonly, json_t * j_par
           ((struct mod_parameters *)*cls)->conn = h_connect_pgsql(json_string_value(json_object_get(j_parameters, "postgre-conninfo")));
         }
       }
-      ret = G_OK;
+      if (((struct mod_parameters *)*cls)->conn != NULL) {
+        ret = G_OK;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error connecting to database");
+        ret = G_ERROR_PARAM;
+      }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error allocating resources for cls");
       ret = G_ERROR_MEMORY;
