@@ -25,9 +25,6 @@
 #define SERVER_URI "http://localhost:4593/api"
 #define ADMIN_USERNAME "admin"
 #define ADMIN_PASSWORD "password"
-#define MOD_NAME "mod_irl"
-#define PROFILE_SCOPE_1 "g_profile"
-#define PROFILE_SCOPE_2 "scope1"
 
 struct _u_request admin_req;
 json_t * j_params;
@@ -69,12 +66,16 @@ END_TEST
 START_TEST(test_glwd_oauth2_irl_run_workflow)
 {
   struct _u_request auth_req;
-  struct _u_response auth_resp;
-  json_t * j_body, * j_register, * j_scheme;
+  struct _u_response auth_resp, resp;
+  struct _u_map body;
+  json_t * j_body, * j_register, * j_element;
   char * cookie;
   size_t index;
   const char * username = json_string_value(json_object_get(json_object_get(j_params, "user"), "username")),
-             * password = json_string_value(json_object_get(json_object_get(j_params, "user"), "password"));
+             * password = json_string_value(json_object_get(json_object_get(j_params, "user"), "password")),
+             * client_id = json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")),
+             * client_password = json_string_value(json_object_get(json_object_get(j_params, "client"), "password"));
+  char * url, * redirect_uri_encoded, * scope = NULL, * tmp, * code;
   
   ulfius_init_request(&auth_req);
   ulfius_init_response(&auth_resp);
@@ -91,32 +92,95 @@ START_TEST(test_glwd_oauth2_irl_run_workflow)
   
   ulfius_clean_response(&auth_resp);
   
-  json_array_foreach(json_object_get(j_params, "schemes"), index, j_scheme) {
+  json_array_foreach(json_object_get(j_params, "schemes"), index, j_element) {
     j_register = json_pack("{ss ss ss sO}", 
                           "username", username, 
-                          "scheme_type", json_string_value(json_object_get(j_scheme, "scheme_type")), 
-                          "scheme_name", json_string_value(json_object_get(j_scheme, "scheme_name")), 
-                          "value", json_object_get(j_scheme, "register"));
+                          "scheme_type", json_string_value(json_object_get(j_element, "scheme_type")), 
+                          "scheme_name", json_string_value(json_object_get(j_element, "scheme_name")), 
+                          "value", json_object_get(j_element, "register"));
     ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
     json_decref(j_register);
   }
-  
-  json_array_foreach(json_object_get(j_params, "schemes"), index, j_scheme) {
-    ulfius_init_response(&auth_resp);
-    j_body = json_pack("{sssssssO}", "username", username, "scheme_type", json_string_value(json_object_get(j_scheme, "scheme_type")), "scheme_name", json_string_value(json_object_get(j_scheme, "scheme_name")), "value", json_string_value(json_object_get(j_scheme, "value")));
-    ulfius_set_json_body_request(&auth_req, j_body);
-    json_decref(j_body);
-    ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
-    ck_assert_int_eq(auth_resp.status, 200);
-    ulfius_clean_response(&auth_resp);
-  }
-  
-  json_array_foreach(json_object_get(j_params, "schemes"), index, j_scheme) {
+
+  json_array_foreach(json_object_get(j_params, "schemes"), index, j_element) {
     j_register = json_pack("{ss ss ss sO}", 
                           "username", username, 
-                          "scheme_type", json_string_value(json_object_get(j_scheme, "scheme_type")), 
-                          "scheme_name", json_string_value(json_object_get(j_scheme, "scheme_name")), 
-                          "value", json_object_get(j_scheme, "deregister"));
+                          "scheme_type", json_string_value(json_object_get(j_element, "scheme_type")), 
+                          "scheme_name", json_string_value(json_object_get(j_element, "scheme_name")), 
+                          "value", json_object_get(j_element, "value"));
+    ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+    json_decref(j_register);
+  }
+
+  json_array_foreach(json_object_get(json_object_get(j_params, "user"), "scope"), index, j_element) {
+    if (scope == NULL) {
+      scope = o_strdup(json_string_value(j_element));
+    } else {
+      tmp = msprintf("%s %s", scope, o_strdup(json_string_value(j_element)));
+      o_free(scope);
+      scope = tmp;
+    }
+  }
+  
+  url = msprintf("%s/auth/grant/%s", SERVER_URI, json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")));
+  j_body = json_pack("{ss}", "scope", scope);
+  ck_assert_int_eq(run_simple_test(&auth_req, "PUT", url, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  o_free(url);
+
+  // Test implicit framework
+  redirect_uri_encoded = ulfius_url_encode(json_string_value(json_array_get(json_object_get(json_object_get(j_params, "client"), "redirect_uri"), 0)));
+  url = msprintf("%s/glwd/auth?response_type=token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&scope=%s", SERVER_URI, json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")), redirect_uri_encoded, scope);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", url, client_id, client_password, NULL, NULL, 302, NULL, NULL, "token="), 1);
+  o_free(url);
+  
+  // Test code framework
+  o_free(auth_req.http_verb);
+  o_free(auth_req.http_url);
+  auth_req.http_url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&scope=%s", SERVER_URI, json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")), redirect_uri_encoded, scope);
+  auth_req.http_verb = o_strdup("GET");
+  auth_req.auth_basic_user = o_strdup(client_id);
+  auth_req.auth_basic_password = o_strdup(client_password);
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &resp), U_OK);
+  code = o_strdup(strstr(u_map_get(resp.map_header, "Location"), "code=")+strlen("code="));
+  if (strchr(code, '&') != NULL) {
+    *strchr(code, '&') = '\0';
+  }
+  url = msprintf("%s/glwd/token/", SERVER_URI);
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "authorization_code");
+  u_map_put(&body, "client_id", json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")));
+  u_map_put(&body, "redirect_uri", json_string_value(json_array_get(json_object_get(json_object_get(j_params, "client"), "redirect_uri"), 0)));
+  u_map_put(&body, "code", code);
+
+  ck_assert_int_eq(run_simple_test(NULL, "POST", url, client_id, client_password, NULL, &body, 200, NULL, "refresh_token", NULL), 1);
+  u_map_clean(&body);
+  ulfius_clean_response(&resp);
+  o_free(url);
+
+  // Test password framework
+  url = msprintf("%s/glwd/token/", SERVER_URI);
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "password");
+  u_map_put(&body, "scope", scope);
+  u_map_put(&body, "username", username);
+  u_map_put(&body, "password", password);
+
+  ck_assert_int_eq(run_simple_test(NULL, "POST", url, client_id, client_password, NULL, &body, 200, NULL, NULL, NULL), 1);
+  u_map_clean(&body);
+
+  o_free(code);
+  o_free(url);
+  o_free(redirect_uri_encoded);
+  o_free(scope);
+  
+  json_array_foreach(json_object_get(j_params, "schemes"), index, j_element) {
+    j_register = json_pack("{ss ss ss sO}", 
+                          "username", username, 
+                          "scheme_type", json_string_value(json_object_get(j_element, "scheme_type")), 
+                          "scheme_name", json_string_value(json_object_get(j_element, "scheme_name")), 
+                          "value", json_object_get(j_element, "deregister"));
     ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
     json_decref(j_register);
   }
