@@ -34,8 +34,8 @@
   "client":{
     "client_id": "irl_client1",
     "confidential": true,
-    "pasword": "password",
-    "redirect-uri":["https://glewlwyd.local/"]
+    "password": "password",
+    "redirect_uri":["https://glewlwyd.local/"]
   },
   "schemes":[
     {
