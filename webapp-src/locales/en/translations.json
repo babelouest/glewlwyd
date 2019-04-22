@@ -324,7 +324,8 @@
     "success-api-delete-mod": "Module deleted",
     "error-api-delete-mod": "Error while removing module",
     "success-api-edit-mod": "Module updated",
-    "error-api-edit-mod": "Error while updating module"
+    "error-api-edit-mod": "Error while updating module",
+    "error-api-fetch": "Error while fetching data"
   },
   "modal": {
     "close": "Close",

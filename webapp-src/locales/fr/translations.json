@@ -325,7 +325,8 @@
     "success-api-delete-mod": "Module supprimé",
     "error-api-delete-mod": "Erreur lors de la suppression du module",
     "success-api-edit-mod": "Module modifié",
-    "error-api-edit-mod": "Erreur lors de la modification du module"
+    "error-api-edit-mod": "Erreur lors de la modification du module",
+    "error-api-fetch": "Erreur lors de la récupération des données"
   },
   "modal": {
     "close": "Fermer",
