@@ -96,9 +96,8 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
               if (check_result_value(j_client, G_OK)) {
                 json_object_set_new(json_object_get(j_client, "client"), "source", json_string(client_module->name));
                 j_return = json_incref(j_client);
-              } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
-                j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
-              } else {
+                found = 1;
+              } else if (!check_result_value(j_client, G_ERROR_NOT_FOUND)) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_client - Error, client_module_get for module %s", client_module->name);
                 j_return = json_pack("{si}", "result", G_ERROR);
               }
