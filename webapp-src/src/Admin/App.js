@@ -427,6 +427,8 @@ class App extends Component {
       curUsers.list = users;
       curUsers.pattern = this.state.config.pattern.user;
       this.setState({users: curUsers});
+    }).fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
     });
   }
 
@@ -437,6 +439,8 @@ class App extends Component {
       curClients.list = clients;
       curClients.pattern = this.state.config.pattern.client;
       this.setState({clients: curClients});
+    }).fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
     });
   }
 
@@ -462,6 +466,8 @@ class App extends Component {
         }
       });
       this.setState({scopes: curScopes, users: users, clients: clients});
+    }).fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
     });
   }
 
@@ -469,6 +475,8 @@ class App extends Component {
     return apiManager.glewlwydRequest("/mod/user")
     .then((modUsers) => {
       this.setState({modUsers: modUsers});
+    }).fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
     });
   }
   
@@ -476,6 +484,8 @@ class App extends Component {
     return apiManager.glewlwydRequest("/mod/type")
     .then((modTypes) => {
       this.setState({modTypes: modTypes});
+    }).fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
     });
   }
   
@@ -483,6 +493,8 @@ class App extends Component {
     return apiManager.glewlwydRequest("/mod/client")
     .then((modClients) => {
       this.setState({modClients: modClients});
+    }).fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
     });
   }
   
@@ -490,6 +502,8 @@ class App extends Component {
     return apiManager.glewlwydRequest("/mod/scheme")
     .then((modSchemes) => {
       this.setState({modSchemes: modSchemes});
+    }).fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
     });
   }
   
@@ -497,6 +511,8 @@ class App extends Component {
     return apiManager.glewlwydRequest("/mod/plugin")
     .then((plugins) => {
       this.setState({plugins: plugins});
+    }).fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
     });
   }
   
@@ -823,7 +839,7 @@ class App extends Component {
       apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name), "PUT", mod)
       .then(() => {
         apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name) + "/disable/", "PUT")
-        .always(() => {
+        .then(() => {
           apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name) + "/enable/", "PUT")
           .then(() => {
             messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
@@ -831,6 +847,9 @@ class App extends Component {
           .fail(() => {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
           });
+        })
+        .fail(() => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
         });
       })
       .fail(() => {
@@ -903,7 +922,7 @@ class App extends Component {
       apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name), "PUT", mod)
       .then(() => {
         apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name) + "/disable/", "PUT")
-        .always(() => {
+        .then(() => {
           apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name) + "/enable/", "PUT")
           .then(() => {
             messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
@@ -911,6 +930,9 @@ class App extends Component {
           .fail(() => {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
           });
+        })
+        .fail(() => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
         });
       })
       .fail(() => {
@@ -982,7 +1004,7 @@ class App extends Component {
       apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(mod.name), "PUT", mod)
       .then(() => {
         apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(mod.name) + "/disable/", "PUT")
-        .always(() => {
+        .then(() => {
           apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(mod.name) + "/enable/", "PUT")
           .then(() => {
             messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
@@ -990,6 +1012,9 @@ class App extends Component {
           .fail(() => {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
           });
+        })
+        .fail(() => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
         });
       })
       .fail(() => {
@@ -1059,7 +1084,7 @@ class App extends Component {
       apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name), "PUT", mod)
       .then(() => {
         apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name) + "/disable/", "PUT")
-        .always(() => {
+        .then(() => {
           apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name) + "/enable/", "PUT")
           .then(() => {
             messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
@@ -1067,6 +1092,9 @@ class App extends Component {
           .fail(() => {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
           });
+        })
+        .fail(() => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
         });
       })
       .fail(() => {
