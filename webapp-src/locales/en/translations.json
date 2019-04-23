@@ -235,6 +235,7 @@
     "mod-ldap-search-scope-one": "one",
     "mod-ldap-search-scope-subtree": "subtree",
     "mod-ldap-search-scope-children": "children",
+    "mod-http-default-scope": "Default scopes",
     "mod-http-url": "URL",
     "mod-http-url-ph": "Ex: http://example.com/",
     "mod-check-server-certificate": "Validate server certificate",
