@@ -342,7 +342,15 @@
     "password-modal-new-password-confirm-ph": "8 characters minimum",
     "password-min-characters": "A password must be at least 8 characters length",
     "password-not-match": "Passwords don't match",
-    "password-invalid": "Password is invalid"
+    "password-invalid": "Password is invalid",
+    "scheme-not-found": "Scheme {{module}} not found",
+    "scheme-mock-title": "Scheme {{module}}/{{name}} configuration",
+    "scheme-mock-get-register": "Registration status",
+    "scheme-mock-register": "Register scheme",
+    "scheme-mock-deregister": "Deregister scheme",
+    "scheme-mock-register-status": "Current status:",
+    "scheme-mock-register-status-registered": "Registered",
+    "scheme-mock-register-status-not-registered": "Not registered"
   },
   "modal": {
     "close": "Close",

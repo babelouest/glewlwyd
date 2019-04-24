@@ -342,7 +342,15 @@
     "password-modal-new-password-confirm-ph": "8 caractères minimum",
     "password-min-characters": "Un mot de passe doit avoir 8 caractères minimum",
     "password-not-match": "Les mots de passe ne concordent pas",
-    "password-invalid": "Le mot de passe est invalide"
+    "password-invalid": "Le mot de passe est invalide",
+    "scheme-not-found": "Schéma {{module}} inconnu",
+    "scheme-mock-title": "Configuration du schéma {{module}}/{{name}}",
+    "scheme-mock-get-register": "Statut de l'enregistrement",
+    "scheme-mock-register": "Enregistrer le schéma",
+    "scheme-mock-deregister": "Désactiver le schéma",
+    "scheme-mock-register-status": "Statut actuel:",
+    "scheme-mock-register-status-registered": "Enregistré",
+    "scheme-mock-register-status-not-registered": "Non enregistré"
   },
   "modal": {
     "close": "Fermer",
