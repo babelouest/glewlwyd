@@ -37,6 +37,8 @@ class App extends Component {
       } else if (message.type === 'loggedIn') {
         this.setState({loggedIn: message.message}, () => {
           if (!this.state.loggedIn) {
+            this.setState({profileList: false, schemeList: []});
+          } else {
             this.fetchProfile();
           }
         });

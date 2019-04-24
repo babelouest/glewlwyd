@@ -344,7 +344,7 @@ class User extends Component {
         </div>
         <div className="row">
           <div className="col-md-12 text-right">
-            <button type="button" className="btn btn-primary" onClick={(e) => this.saveProfile(e)}>{i18next.t("profile.save")}</button>
+            <button type="button" className="btn btn-primary" onClick={(e) => this.saveProfile(e)} disabled={!this.state.profile}>{i18next.t("profile.save")}</button>
           </div>
         </div>
       </div>

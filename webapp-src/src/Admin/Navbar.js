@@ -42,7 +42,7 @@ class Navbar extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
       });
     } else {
-      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURI(document.location.href) + "&scope=" + encodeURI(this.state.config.admin_scope);
+      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURI([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURI(this.state.config.admin_scope);
     }
   }
 
