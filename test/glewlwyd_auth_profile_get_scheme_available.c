@@ -32,7 +32,7 @@ END_TEST
 
 START_TEST(test_glwd_auth_profile_get_scheme_available_success)
 {
-  json_t * j_expected = json_pack("{sssssss{ss}so}", "module", "mock", "name", "mock_scheme_42", "display_name", "Mock 42", "parameters", "mock-value", "42", "enabled", json_true());
+  json_t * j_expected = json_pack("{ssssssso}", "module", "mock", "name", "mock_scheme_42", "display_name", "Mock 42", "enabled", json_true());
   ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_expected, NULL, NULL), 1);
   json_decref(j_expected);
 }
