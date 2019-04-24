@@ -97,6 +97,8 @@ class App extends Component {
             this.fetchApi();
           }
         });
+      } else if (message.type === 'lang') {
+        this.setState({lang: i18next.language});
       } else if (message.type === 'delete') {
         if (message.role === 'user') {
           var confirmModal = {
@@ -394,8 +396,8 @@ class App extends Component {
   fetchApi() {
     apiManager.glewlwydRequest("/profile")
     .then((res) => {
-      if (res[0] && res[0].scope.indexOf(this.state.config.admin_scope) < 0) {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-profile")});
+      if (!res[0] || res[0].scope.indexOf(this.state.config.admin_scope) < 0) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
       } else {
         this.setState({loggedIn: true}, () => {
           this.fetchUsers()
@@ -414,7 +416,9 @@ class App extends Component {
       }
     })
     .fail((error) => {
-      if (error.status !== 401) {
+      if (error.status === 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+      } else {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
       }
     });
@@ -427,8 +431,10 @@ class App extends Component {
       curUsers.list = users;
       curUsers.pattern = this.state.config.pattern.user;
       this.setState({users: curUsers});
-    }).fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+    }).fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      }
     });
   }
 
@@ -439,8 +445,10 @@ class App extends Component {
       curClients.list = clients;
       curClients.pattern = this.state.config.pattern.client;
       this.setState({clients: curClients});
-    }).fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+    }).fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      }
     });
   }
 
@@ -466,8 +474,10 @@ class App extends Component {
         }
       });
       this.setState({scopes: curScopes, users: users, clients: clients});
-    }).fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+    }).fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      }
     });
   }
 
@@ -475,8 +485,10 @@ class App extends Component {
     return apiManager.glewlwydRequest("/mod/user")
     .then((modUsers) => {
       this.setState({modUsers: modUsers});
-    }).fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+    }).fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      }
     });
   }
   
@@ -484,8 +496,10 @@ class App extends Component {
     return apiManager.glewlwydRequest("/mod/type")
     .then((modTypes) => {
       this.setState({modTypes: modTypes});
-    }).fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+    }).fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      }
     });
   }
   
@@ -493,8 +507,10 @@ class App extends Component {
     return apiManager.glewlwydRequest("/mod/client")
     .then((modClients) => {
       this.setState({modClients: modClients});
-    }).fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+    }).fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      }
     });
   }
   
@@ -502,8 +518,10 @@ class App extends Component {
     return apiManager.glewlwydRequest("/mod/scheme")
     .then((modSchemes) => {
       this.setState({modSchemes: modSchemes});
-    }).fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+    }).fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      }
     });
   }
   
@@ -511,8 +529,10 @@ class App extends Component {
     return apiManager.glewlwydRequest("/mod/plugin")
     .then((plugins) => {
       this.setState({plugins: plugins});
-    }).fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+    }).fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      }
     });
   }
   
