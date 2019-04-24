@@ -1,0 +1,52 @@
+# travis configuration file
+# Copyright 2018 Ilya Shipitsin <chipitsine@gmail.com>
+#                Nicolas Mora <mail@babelouest.org>
+sudo: required
+
+language: c
+
+addons:
+  apt:
+    packages: [ autoconf, automake, libtool, sqlite3, libsqlite3-dev, libmysqlclient-dev, libgnutls-dev, libconfig-dev, libssl-dev, uuid-dev, libldap2-dev, check, libsubunit-dev, cppcheck ]
+
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+    - os: linux
+      compiler: clang
+    - env: LABEL=cppcheck
+      os: linux
+      script:
+        - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 . >build.log 2>&1 || (cat build.log && exit 1)
+install:
+- wget https://ftp.gnu.org/gnu/libmicrohttpd/libmicrohttpd-0.9.63.tar.gz
+- tar xzf libmicrohttpd-0.9.63.tar.gz
+- pushd libmicrohttpd-0.9.63 && ./configure && make && sudo make install && popd
+- rm -rf libmicrohttpd-0.9.63
+- wget https://github.com/akheron/jansson/archive/v2.11.tar.gz -O jansson-2.11.tar.gz
+- tar xzf jansson-2.11.tar.gz
+- pushd jansson-2.11 && autoreconf -i && ./configure && make && sudo make install && popd
+- rm -rf jansson-2.11
+- wget https://github.com/benmcollins/libjwt/archive/v1.9.0.tar.gz -O libjwt-1.9.0.tar.gz
+- tar xzf libjwt-1.10.1.tar.gz
+- pushd libjwt-1.10.1 && autoreconf -i && ./configure && make && sudo make install && popd
+- rm -rf libjwt-1.10.1
+- sudo ldconfig
+
+script:
+  - echo "fake test" || true
+  - mkdir build && pushd build
+  - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on ..
+  - make
+  - sudo make install
+  - sudo ldconfig
+  - sqlite3 /tmp/glewlwyd.db < ../docs/database/init.sqlite3.sql
+  - sqlite3 /tmp/glewlwyd.db < ../src/plugin/protocol_oauth2.sqlite.sql
+  - sqlite3 /tmp/glewlwyd.db < ../src/user/database.sqlite3.sql
+  - sqlite3 /tmp/glewlwyd.db < ../src/client/database.sqlite3.sql
+  - glewlwyd --config-file=../test/glewlwyd.conf &
+  - export G_PID=$!
+  - make test
+  - kill $G_PID
+  - popd
