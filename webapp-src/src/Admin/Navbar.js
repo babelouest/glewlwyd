@@ -50,6 +50,7 @@ class Navbar extends Component {
     i18next.changeLanguage(lang)
     .then(() => {
       this.setState({lang: lang});
+      messageDispatcher.sendMessage('App', {type: "lang"});
     });
   }
 
