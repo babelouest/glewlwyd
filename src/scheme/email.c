@@ -251,6 +251,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
  * 
  */
 json_t * user_auth_scheme_module_load(struct config_module * config) {
+  UNUSED(config);
   return json_pack("{sisssssss{s{sssosi}s{sssosi}s{ssso}s{sssosi}s{sssoso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}}}",
                    "result",
                    G_OK,
@@ -341,6 +342,7 @@ json_t * user_auth_scheme_module_load(struct config_module * config) {
  * 
  */
 int user_auth_scheme_module_unload(struct config_module * config) {
+  UNUSED(config);
   return G_OK;
 }
 
@@ -362,6 +364,7 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  * 
  */
 int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
+  UNUSED(config);
   json_t * j_params = json_incref(j_parameters), * j_result;
   int ret;
   char * str_error;
@@ -397,6 +400,7 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
  * 
  */
 int user_auth_scheme_module_close(struct config_module * config, void * cls) {
+  UNUSED(config);
   json_decref((json_t *)cls);
   return G_OK;
 }
@@ -419,6 +423,7 @@ int user_auth_scheme_module_close(struct config_module * config, void * cls) {
  * 
  */
 int user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls) {
+  UNUSED(cls);
   json_t * j_user;
   int ret;
 
@@ -456,6 +461,9 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
  * 
  */
 json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
+  UNUSED(config);
+  UNUSED(http_request);
+  UNUSED(j_scheme_data);
   return json_pack("{si}", "result", (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED?G_OK:G_ERROR_PARAM));
 }
 
@@ -479,6 +487,8 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
  * 
  */
 json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, const char * username, void * cls) {
+  UNUSED(config);
+  UNUSED(http_request);
   return json_pack("{si}", "result", (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED)?G_OK:G_ERROR_PARAM);
 }
 
@@ -505,6 +515,9 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
  * 
  */
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls) {
+  UNUSED(config);
+  UNUSED(http_request);
+  UNUSED(j_scheme_trigger);
   json_t * j_user, * j_param = (json_t *)cls;
   int ret;
   char * code = NULL, * body;
@@ -580,12 +593,14 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
  * 
  */
 int user_auth_scheme_module_validate(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
+  UNUSED(config);
+  UNUSED(http_request);
   int ret, res;
   json_t * j_param = (json_t *)cls;
   
   if (user_auth_scheme_module_can_use(config, username, cls) != GLEWLWYD_IS_REGISTERED) {
     ret = G_ERROR_UNAUTHORIZED;
-  } else if (json_object_get(j_scheme_data, "code") != NULL && json_is_string(json_object_get(j_scheme_data, "code")) && json_integer_value(json_object_get(j_param, "code-length")) == json_string_length(json_object_get(j_scheme_data, "code"))) {
+  } else if (json_object_get(j_scheme_data, "code") != NULL && json_is_string(json_object_get(j_scheme_data, "code")) && (unsigned int)json_integer_value(json_object_get(j_param, "code-length")) == json_string_length(json_object_get(j_scheme_data, "code"))) {
     if ((res = check_code(config, j_param, username, json_string_value(json_object_get(j_scheme_data, "code")))) == G_OK) {
       ret = G_OK;
     } else if (res == G_ERROR_UNAUTHORIZED) {

@@ -81,6 +81,7 @@ struct mock_config {
  * 
  */
 json_t * user_auth_scheme_module_load(struct config_module * config) {
+  UNUSED(config);
   return json_pack("{sisssssss{s{ssso}}}",
                    "result",
                    G_OK,
@@ -113,6 +114,7 @@ json_t * user_auth_scheme_module_load(struct config_module * config) {
  * 
  */
 int user_auth_scheme_module_unload(struct config_module * config) {
+  UNUSED(config);
   return G_OK;
 }
 
@@ -134,6 +136,7 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  * 
  */
 int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
+  UNUSED(config);
   if (json_object_get(j_parameters, "error") == NULL) {
     *cls = o_malloc(sizeof(struct mock_config));
     ((struct mock_config *)*cls)->j_param = json_incref(j_parameters);
@@ -160,6 +163,7 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
  * 
  */
 int user_auth_scheme_module_close(struct config_module * config, void * cls) {
+  UNUSED(config);
   json_decref(((struct mock_config *)cls)->j_param);
   json_decref(((struct mock_config *)cls)->j_users);
   o_free(cls);
@@ -184,6 +188,7 @@ int user_auth_scheme_module_close(struct config_module * config, void * cls) {
  * 
  */
 int user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls) {
+  UNUSED(config);
   if (json_object_get(((struct mock_config *)cls)->j_users, username) != NULL) {
     return GLEWLWYD_IS_REGISTERED;
   } else {
@@ -214,6 +219,8 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
  * 
  */
 json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
+  UNUSED(config);
+  UNUSED(http_request);
   json_t * j_return;
   
   if (json_object_get(j_scheme_data, "register") == json_true()) {
@@ -252,6 +259,8 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
  * 
  */
 json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, const char * username, void * cls) {
+  UNUSED(config);
+  UNUSED(http_request);
   json_t * j_return;
   
   if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
@@ -285,6 +294,9 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
  * 
  */
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls) {
+  UNUSED(config);
+  UNUSED(http_request);
+  UNUSED(j_scheme_trigger);
   json_t * j_return;
   
   if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
@@ -317,6 +329,8 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
  * 
  */
 int user_auth_scheme_module_validate(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
+  UNUSED(config);
+  UNUSED(http_request);
   int ret;
   
   if (user_auth_scheme_module_can_use(config, username, cls) != GLEWLWYD_IS_REGISTERED) {

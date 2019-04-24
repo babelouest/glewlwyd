@@ -212,7 +212,7 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
 /**
  * Generates a client_access_token from the specified parameters that are considered valid
  */
-static char * generate_client_access_token(struct _oauth2_config * config, const char * client_id, const char * issued_for, const char * scope_list, time_t now) {
+static char * generate_client_access_token(struct _oauth2_config * config, const char * client_id, const char * scope_list, time_t now) {
   jwt_t * jwt;
   char * token = NULL;
   char salt[OAUTH2_SALT_LENGTH + 1] = {0};
@@ -369,7 +369,7 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
   return j_return;
 }
 
-static char * generate_refresh_token(struct _oauth2_config * config, const char * client_id, const char * username, const uint auth_type, const char * issued_for, const char * scope_list, time_t now) {
+static char * generate_refresh_token(struct _oauth2_config * config, const char * client_id, const char * username, const char * scope_list, time_t now) {
   jwt_t * jwt;
   char * token = NULL;
   char salt[OAUTH2_SALT_LENGTH + 1] = {0};
@@ -1205,7 +1205,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
     j_code = validate_authorization_code(config, code, client_id, redirect_uri);
     if (check_result_value(j_code, G_OK)) {
       time(&now);
-      if ((refresh_token = generate_refresh_token(config, client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, issued_for, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
+      if ((refresh_token = generate_refresh_token(config, client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
         j_refresh_token = serialize_refresh_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpgc_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, json_integer_value(json_object_get(json_object_get(j_code, "code"), "refresh-token-duration")), json_object_get(json_object_get(j_code, "code"), "refresh-token-rolling")==json_true(), refresh_token, issued_for, u_map_get_case(request->map_header, "user-agent"));
         if (check_result_value(j_refresh_token, G_OK)) {
           if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
@@ -1430,7 +1430,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
     j_user = config->glewlwyd_config->glewlwyd_callback_check_user_valid(config->glewlwyd_config, username, password, scope);
     if (check_result_value(j_user, G_OK)) {
       time(&now);
-      if ((refresh_token = generate_refresh_token(config, client_id, username, GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, issued_for, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), now)) != NULL) {
+      if ((refresh_token = generate_refresh_token(config, client_id, username, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), now)) != NULL) {
         j_refresh_token = serialize_refresh_token(config, GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, 0, username, client_id, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), now, config->refresh_token_duration, config->refresh_token_rolling, refresh_token, issued_for, u_map_get_case(request->map_header, "user-agent"));
         if (check_result_value(j_refresh_token, G_OK)) {
           if ((access_token = generate_access_token(config, username, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), now)) != NULL) {
@@ -1533,7 +1533,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
         } else {
           scope_joined = string_array_join((const char **)scope_allowed, " ");
           time(&now);
-          if ((access_token = generate_client_access_token(config, request->auth_basic_user, issued_for, scope_joined, now)) != NULL) {
+          if ((access_token = generate_client_access_token(config, request->auth_basic_user, scope_joined, now)) != NULL) {
             if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS, 0, NULL, request->auth_basic_user, scope_joined, now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
               json_body = json_pack("{sssssiss}",
                                     "access_token", access_token,
@@ -1608,7 +1608,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
         has_error = 1;
       }
       if (!has_error && !has_issues) {
-        if ((access_token = generate_client_access_token(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), issued_for, scope_joined, now)) != NULL) {
+        if ((access_token = generate_client_access_token(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), scope_joined, now)) != NULL) {
           if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS, 0, NULL, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), scope_joined, now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
             json_body = json_pack("{sssssiss}",
                                   "access_token", access_token,
@@ -1805,6 +1805,7 @@ static int callback_oauth2_token(const struct _u_request * request, struct _u_re
 }
 
 static int callback_oauth2_get_profile(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
   json_t * j_profile = config->glewlwyd_config->glewlwyd_plugin_callback_get_user_profile(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")));
   
@@ -1867,6 +1868,8 @@ static int callback_oauth2_disable_refresh_token(const struct _u_request * reque
 }
 
 static int callback_oauth2_clean(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   if (response->shared_data != NULL) {
     json_decref((json_t *)response->shared_data);
   }
@@ -1982,7 +1985,8 @@ static int check_parameters (json_t * j_params) {
 }
 
 json_t * plugin_module_load(struct config_plugin * config) {
-  return json_pack("{si ss ss ss s{ s{ssso} s{sssos[sss]} s{sssos[sss]} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ss so s{ssso} s{ssso} }}}",
+  UNUSED(config);
+  return json_pack("{si ss ss ss s{ s{ssso} s{sssos[sss]} s{sssos[sss]} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ss so s{ssso} s{ssso} }}}",
                    "result",
                    G_OK,
                    
@@ -2046,6 +2050,12 @@ json_t * plugin_module_load(struct config_plugin * config) {
                        "mandatory",
                        json_true(),
                        
+                     "code-token-duration",
+                       "type",
+                       "number",
+                       "mandatory",
+                       json_true(),
+                       
                      "refresh-token-rolling",
                        "type",
                        "boolean",
@@ -2100,6 +2110,7 @@ json_t * plugin_module_load(struct config_plugin * config) {
 }
 
 int plugin_module_unload(struct config_plugin * config) {
+  UNUSED(config);
   return G_OK;
 }
 
@@ -2250,6 +2261,7 @@ int plugin_module_init(struct config_plugin * config, const char * name, json_t 
 }
 
 int plugin_module_close(struct config_plugin * config, void * cls) {
+  UNUSED(config);
   if (cls != NULL) {
     pthread_mutex_destroy(&((struct _oauth2_config *)cls)->insert_lock);
     jwt_free(((struct _oauth2_config *)cls)->jwt_key);

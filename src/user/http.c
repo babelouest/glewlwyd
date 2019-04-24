@@ -33,6 +33,7 @@
 #include "../glewlwyd-common.h"
 
 json_t * user_module_load(struct config_module * config) {
+  UNUSED(config);
   return json_pack("{sisssssss{s{ssso}s{sssoso}s{sssos[s]}}}",
                    "result",
                    G_OK,
@@ -65,10 +66,13 @@ json_t * user_module_load(struct config_module * config) {
 }
 
 int user_module_unload(struct config_module * config) {
+  UNUSED(config);
   return G_OK;
 }
 
 int user_module_init(struct config_module * config, int readonly, json_t * j_params, void ** cls) {
+  UNUSED(config);
+  UNUSED(readonly);
   int ret;
   size_t index;
   json_t * j_element;
@@ -105,47 +109,82 @@ int user_module_init(struct config_module * config, int readonly, json_t * j_par
 }
 
 int user_module_close(struct config_module * config, void * cls) {
+  UNUSED(config);
   json_decref((json_t *)cls);
   return G_OK;
 }
 
 size_t user_module_count_total(struct config_module * config, const char * pattern, void * cls) {
+  UNUSED(config);
+  UNUSED(pattern);
+  UNUSED(cls);
   return 0;
 }
 
 json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls) {
+  UNUSED(config);
+  UNUSED(pattern);
+  UNUSED(offset);
+  UNUSED(limit);
+  UNUSED(cls);
   return json_pack("{sis[]}", "result", G_OK, "list");
 }
 
 json_t * user_module_get(struct config_module * config, const char * username, void * cls) {
+  UNUSED(config);
+  UNUSED(username);
+  UNUSED(cls);
   return json_pack("{sis{sssOso}}", "result", G_OK, "user", "username", username, "scope", json_object_get((json_t *)cls, "default-scope"), "enabled", json_true());
 }
 
 json_t * user_module_get_profile(struct config_module * config, const char * username, void * cls) {
+  UNUSED(config);
+  UNUSED(username);
+  UNUSED(cls);
   return json_pack("{si}", "result", G_ERROR_NOT_FOUND);
 }
 
 json_t * user_module_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
+  UNUSED(config);
+  UNUSED(username);
+  UNUSED(j_user);
+  UNUSED(mode);
+  UNUSED(cls);
   return json_pack("{si}", "result", G_ERROR_PARAM);
 }
 
 int user_module_add(struct config_module * config, json_t * j_user, void * cls) {
+  UNUSED(config);
+  UNUSED(j_user);
+  UNUSED(cls);
   return G_ERROR_PARAM;
 }
 
 int user_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls) {
+  UNUSED(config);
+  UNUSED(username);
+  UNUSED(j_user);
+  UNUSED(cls);
   return G_ERROR_PARAM;
 }
 
 int user_module_update_profile(struct config_module * config, const char * username, json_t * j_user, void * cls) {
+  UNUSED(config);
+  UNUSED(username);
+  UNUSED(j_user);
+  UNUSED(cls);
   return G_ERROR_PARAM;
 }
 
 int user_module_delete(struct config_module * config, const char * username, void * cls) {
+  UNUSED(config);
+  UNUSED(username);
+  UNUSED(cls);
   return G_ERROR_PARAM;
 }
 
 int user_module_check_password(struct config_module * config, const char * username, const char * password, void * cls) {
+  UNUSED(config);
   struct _u_request request;
   struct _u_response response;
   int res, ret;
@@ -178,5 +217,9 @@ int user_module_check_password(struct config_module * config, const char * usern
 }
 
 int user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls) {
+  UNUSED(config);
+  UNUSED(username);
+  UNUSED(new_password);
+  UNUSED(cls);
   return G_ERROR_PARAM;
 }
