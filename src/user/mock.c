@@ -62,6 +62,7 @@ static int json_has_str_pattern_case(json_t * j_source, const char * pattern) {
 }
 
 json_t * user_module_load(struct config_module * config) {
+  UNUSED(config);
   return json_pack("{sisssssss{s{ssso}s{ssso}}}",
                    "result",
                    G_OK,
@@ -85,10 +86,12 @@ json_t * user_module_load(struct config_module * config) {
 }
 
 int user_module_unload(struct config_module * config) {
+  UNUSED(config);
   return G_OK;
 }
 
 int user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
+  UNUSED(readonly);
   if (json_object_get(j_parameters, "error") == NULL) {
     const char * prefix = "", * password = "";
     if (json_string_length(json_object_get(j_parameters, "username-prefix"))) {
@@ -164,12 +167,14 @@ int user_module_init(struct config_module * config, int readonly, json_t * j_par
 }
 
 int user_module_close(struct config_module * config, void * cls) {
+  UNUSED(config);
   y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_close - success");
   json_decref((json_t *)cls);
   return G_OK;
 }
 
 size_t user_module_count_total(struct config_module * config, const char * pattern, void * cls) {
+  UNUSED(config);
   json_t * j_user;
   size_t index, total;
 
@@ -187,6 +192,7 @@ size_t user_module_count_total(struct config_module * config, const char * patte
 }
 
 json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls) {
+  UNUSED(config);
   json_t * j_user, * j_array, * j_pattern_array, * j_return;
   size_t index, counter = 0;
 
@@ -222,6 +228,7 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
 }
 
 json_t * user_module_get(struct config_module * config, const char * username, void * cls) {
+  UNUSED(config);
   json_t * j_user;
   size_t index;
   
@@ -243,6 +250,8 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
 }
 
 json_t * user_module_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
+  UNUSED(config);
+  UNUSED(cls);
   json_t * j_return = NULL;
 
   if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && username == NULL) {
@@ -262,11 +271,13 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
 }
 
 int user_module_add(struct config_module * config, json_t * j_user, void * cls) {
+  UNUSED(config);
   json_array_append(json_object_get((json_t *)cls, "list"), j_user);
   return G_OK;
 }
 
 int user_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls) {
+  UNUSED(config);
   json_t * j_element, * j_property;
   size_t index;
   int found = 0, ret;
@@ -294,6 +305,7 @@ int user_module_update_profile(struct config_module * config, const char * usern
 }
 
 int user_module_delete(struct config_module * config, const char * username, void * cls) {
+  UNUSED(config);
   json_t * j_user;
   size_t index;
   int ret, found = 0;
@@ -330,6 +342,9 @@ int user_module_check_password(struct config_module * config, const char * usern
 }
 
 int user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls) {
+  UNUSED(config);
+  UNUSED(cls);
+  UNUSED(username);
   json_object_set_new((json_t *)cls, "password", json_string(new_password));
   return G_OK;
 }

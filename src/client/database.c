@@ -566,6 +566,7 @@ static int save_client_scope(struct mod_parameters * param, json_t * j_scope, js
 }
 
 json_t * client_module_load(struct config_module * config) {
+  UNUSED(config);
   return json_pack("{si ss ss ss s{s{ssso} s{sss[sss]so} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{s{s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} }}}}",
                    "result",
                    G_OK,
@@ -672,10 +673,12 @@ json_t * client_module_load(struct config_module * config) {
 }
 
 int client_module_unload(struct config_module * config) {
+  UNUSED(config);
   return G_OK;
 }
 
 int client_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
+  UNUSED(readonly);
   json_t * j_result;
   int ret;
   char * error_message;
@@ -724,6 +727,7 @@ int client_module_init(struct config_module * config, int readonly, json_t * j_p
 }
 
 int client_module_close(struct config_module * config, void * cls) {
+  UNUSED(config);
   int ret;
   
   if (cls != NULL) {
@@ -746,6 +750,7 @@ int client_module_close(struct config_module * config, void * cls) {
 }
 
 size_t client_module_count_total(struct config_module * config, const char * pattern, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result = NULL;
   int res;
@@ -774,6 +779,7 @@ size_t client_module_count_total(struct config_module * config, const char * pat
 }
 
 json_t * client_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result, * j_element, * j_scope, * j_return;
   int res;
@@ -832,14 +838,17 @@ json_t * client_module_get_list(struct config_module * config, const char * patt
 }
 
 json_t * client_module_get(struct config_module * config, const char * client_id, void * cls) {
+  UNUSED(config);
   return database_client_get(client_id, cls, 0);
 }
 
 json_t * client_module_get_profile(struct config_module * config, const char * client_id, void * cls) {
+  UNUSED(config);
   return database_client_get(client_id, cls, 1);
 }
 
 json_t * client_module_is_valid(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_result = json_array(), * j_element, * j_format, * j_value, * j_return = NULL, * j_cur_client;
   char * message;
@@ -930,6 +939,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
 }
 
 int client_module_add(struct config_module * config, json_t * j_client, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_gc_id;
   int res, ret;
@@ -981,6 +991,7 @@ int client_module_add(struct config_module * config, json_t * j_client, void * c
 }
 
 int client_module_update(struct config_module * config, const char * client_id, json_t * j_client, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result = NULL;
   int res, ret;
@@ -1043,6 +1054,7 @@ int client_module_update(struct config_module * config, const char * client_id, 
 }
 
 int client_module_delete(struct config_module * config, const char * client_id, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query;
   int res, ret;
@@ -1065,6 +1077,7 @@ int client_module_delete(struct config_module * config, const char * client_id, 
 }
 
 int client_module_check_password(struct config_module * config, const char * client_id, const char * password, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   int ret, res;
   json_t * j_query, * j_result;

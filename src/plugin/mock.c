@@ -28,6 +28,7 @@
 #include "../glewlwyd-common.h"
 
 json_t * plugin_module_load(struct config_plugin * config) {
+  UNUSED(config);
   return json_pack("{sisssssss{}}",
                    "result",
                    G_OK,
@@ -41,11 +42,15 @@ json_t * plugin_module_load(struct config_plugin * config) {
 }
 
 int plugin_module_unload(struct config_plugin * config) {
+  UNUSED(config);
   y_log_message(Y_LOG_LEVEL_DEBUG, "plugin_module_unload - success");
   return G_OK;
 }
 
 int plugin_module_init(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls) {
+  UNUSED(config);
+  UNUSED(name);
+  UNUSED(cls);
   if (json_object_get(j_parameters, "error") == NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "plugin_module_init - success");
     return G_OK;
@@ -55,6 +60,8 @@ int plugin_module_init(struct config_plugin * config, const char * name, json_t 
 }
 
 int plugin_module_close(struct config_plugin * config, void * cls) {
+  UNUSED(config);
+  UNUSED(cls);
   y_log_message(Y_LOG_LEVEL_DEBUG, "plugin_module_close - success");
   return G_OK;
 }

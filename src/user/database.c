@@ -572,6 +572,7 @@ static int save_user_scope(struct mod_parameters * param, json_t * j_scope, json
 }
 
 json_t * user_module_load(struct config_module * config) {
+  UNUSED(config);
   return json_pack("{si ss ss ss s{s{ssso} s{sss[sss]so} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{s{s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} }}}}",
                    "result",
                    G_OK,
@@ -678,10 +679,12 @@ json_t * user_module_load(struct config_module * config) {
 }
 
 int user_module_unload(struct config_module * config) {
+  UNUSED(config);
   return G_OK;
 }
 
 int user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
+  UNUSED(readonly);
   json_t * j_result;
   int ret;
   char * error_message;
@@ -730,6 +733,7 @@ int user_module_init(struct config_module * config, int readonly, json_t * j_par
 }
 
 int user_module_close(struct config_module * config, void * cls) {
+  UNUSED(config);
   int ret;
   
   if (cls != NULL) {
@@ -752,6 +756,7 @@ int user_module_close(struct config_module * config, void * cls) {
 }
 
 size_t user_module_count_total(struct config_module * config, const char * pattern, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result = NULL;
   int res;
@@ -780,6 +785,7 @@ size_t user_module_count_total(struct config_module * config, const char * patte
 }
 
 json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result, * j_element, * j_scope, * j_return;
   int res;
@@ -835,10 +841,12 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
 }
 
 json_t * user_module_get(struct config_module * config, const char * username, void * cls) {
+  UNUSED(config);
   return database_user_get(username, cls, 0);
 }
 
 json_t * user_module_get_profile(struct config_module * config, const char * username, void * cls) {
+  UNUSED(config);
   return database_user_get(username, cls, 1);
 }
 
@@ -930,6 +938,7 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
 }
 
 int user_module_add(struct config_module * config, json_t * j_user, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_gu_id;
   int res, ret;
@@ -978,6 +987,7 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
 }
 
 int user_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result = NULL;
   int res, ret;
@@ -1042,6 +1052,7 @@ int user_module_update(struct config_module * config, const char * username, jso
 }
 
 int user_module_update_profile(struct config_module * config, const char * username, json_t * j_user, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result = NULL;
   int res, ret;
@@ -1098,6 +1109,7 @@ int user_module_update_profile(struct config_module * config, const char * usern
 }
 
 int user_module_delete(struct config_module * config, const char * username, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query;
   int res, ret;
@@ -1128,6 +1140,7 @@ int user_module_delete(struct config_module * config, const char * username, voi
 }
 
 int user_module_check_password(struct config_module * config, const char * username, const char * password, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   int ret, res;
   json_t * j_query, * j_result;
@@ -1172,6 +1185,7 @@ int user_module_check_password(struct config_module * config, const char * usern
 }
 
 int user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls) {
+  UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query;
   int res, ret;
