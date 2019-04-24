@@ -26,9 +26,9 @@ class Navbar extends Component {
     this.setState({loggedIn: nextProps.loggedIn, schemeList: nextProps.schemeList});
   }
   
-  navigate(e, type, page) {
+  navigate(e, page, type) {
     e.preventDefault();
-    messageDispatcher.sendMessage('App', {type: "nav", module: type, page: page});
+    messageDispatcher.sendMessage('App', {type: "nav", page: page, module: type});
     this.setState({curNav: page});
   }
 
@@ -66,7 +66,7 @@ class Navbar extends Component {
     this.state.schemeList.forEach((scheme, index) => {
       schemeList.push(
         <li className={"nav-item" + (this.state.curNav===scheme.name?" active":"")} key={index}>
-          <a className="nav-link" href="#" onClick={(e) => this.navigate(e, scheme.type, scheme.name)}>{scheme.display_name}</a>
+          <a className="nav-link" href="#" onClick={(e) => this.navigate(e, scheme.name, scheme.module)}>{scheme.display_name}</a>
         </li>
       );
     });
@@ -79,10 +79,10 @@ class Navbar extends Component {
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav mr-auto">
             <li className={"nav-item" + (this.state.curNav==="profile"?" active":"")}>
-              <a className="nav-link" href="#" onClick={(e) => this.navigate(e, null, "profile")}>{i18next.t("profile.menu-user")}</a>
+              <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "profile", null)}>{i18next.t("profile.menu-user")}</a>
             </li>
             <li className={"nav-item" + (this.state.curNav==="password"?" active":"")}>
-              <a className="nav-link" href="#" onClick={(e) => this.navigate(e, null, "password")}>{i18next.t("profile.menu-password")}</a>
+              <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "password", null)}>{i18next.t("profile.menu-password")}</a>
             </li>
             {schemeList}
           </ul>

@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 
-import apiManager from '../lib/APIManager';
-import messageDispatcher from '../lib/MessageDispatcher';
-import Notification from '../lib/Notification';
+import SchemeMock from './SchemeMock.js';
 
 class SchemePage extends Component {
   constructor(props) {
@@ -10,24 +8,33 @@ class SchemePage extends Component {
     
     this.state = {
       config: props.config,
-      type: props.type,
-      name: props.name
+      module: props.module,
+      name: props.name,
+      profile: props.profile
     }
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
-      type: nextProps.type,
-      name: nextProps.name
+      module: nextProps.module,
+      name: nextProps.name,
+      profile: nextProps.profile
     });
   }
   
   render() {
-    console.log(this.state);
-    return (
-      <div>grut</div>
-    );
+    if (this.state.module === "mock") {
+      return (
+        <SchemeMock config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} />
+      );
+    } else {
+      return (
+        <div>
+          <h4>{i18next.t("profile.scheme-not-found", {module: this.state.module})}</h4>
+        </div>
+      );
+    }
   }
 }
 

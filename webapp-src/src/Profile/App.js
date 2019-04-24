@@ -29,6 +29,8 @@ class App extends Component {
       if (message.type === 'nav') {
         if (message.page === "password") {
           $("#passwordModal").modal({keyboard: false, show: true});
+        } else if (message.page === "profile") {
+          this.setState({curNav: "profile"});
         } else {
           this.setState({curNav: message.module, module: message.page});
         }
@@ -79,7 +81,6 @@ class App extends Component {
   }
   
 	render() {
-    console.log(this.state.curNav);
 		return (
       <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
         <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
@@ -93,7 +94,7 @@ class App extends Component {
                   <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false}/>
                 </div>
                 <div className={"carousel-item" + (this.state.curNav!=="profile"?" active":"")}>
-                  <SchemePage config={this.state.config} type={this.state.curNav} name={this.state.module} />
+                  <SchemePage config={this.state.config} module={this.state.curNav} name={this.state.module} profile={(this.state.profileList?this.state.profileList[0]:false)} />
                 </div>
               </div>
             </div>
