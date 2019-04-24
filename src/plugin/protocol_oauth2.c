@@ -63,8 +63,9 @@ struct _oauth2_config {
   jwt_t                            * jwt_key;
   const char                       * name;
   json_t                           * j_params;
-  unsigned long                      access_token_duration;
+  json_int_t                         access_token_duration;
   json_int_t                         refresh_token_duration;
+  json_int_t                         code_duration;
   unsigned short int                 refresh_token_rolling;
   unsigned short int                 auth_type_enabled[5];
   pthread_mutex_t                    insert_lock;
@@ -483,11 +484,11 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
         if (code_hash != NULL) {
           time(&now);
           if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-            expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_CODE_EXP_DEFAULT ));
+            expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + config->code_duration ));
           } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + GLEWLWYD_CODE_EXP_DEFAULT ));
+            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + config->code_duration ));
           } else { // HOEL_DB_TYPE_SQLITE
-            expiration_clause = msprintf("%u", (now + GLEWLWYD_CODE_EXP_DEFAULT ));
+            expiration_clause = msprintf("%u", (now + config->code_duration ));
           }
           j_query = json_pack("{sss{sssssssssssss{ss}}}",
                               "table",
@@ -2136,6 +2137,10 @@ int plugin_module_init(struct config_plugin * config, const char * name, json_t 
           ((struct _oauth2_config *)*cls)->refresh_token_duration = json_integer_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-duration"));
           if (!((struct _oauth2_config *)*cls)->refresh_token_duration) {
             ((struct _oauth2_config *)*cls)->refresh_token_duration = GLEWLWYD_REFRESH_TOKEN_EXP_DEFAULT;
+          }
+          ((struct _oauth2_config *)*cls)->code_duration = json_integer_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "code-duration"));
+          if (!((struct _oauth2_config *)*cls)->code_duration) {
+            ((struct _oauth2_config *)*cls)->code_duration = GLEWLWYD_CODE_EXP_DEFAULT;
           }
           if (json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-rolling") != NULL) {
             ((struct _oauth2_config *)*cls)->refresh_token_rolling = json_object_get(((struct _oauth2_config *)*cls)->j_params, "refresh-token-rolling")==json_true()?1:0;
