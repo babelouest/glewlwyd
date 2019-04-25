@@ -77,9 +77,10 @@ int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, cons
 
 json_t * glewlwyd_callback_check_session_valid(struct config_plugin * config, const struct _u_request * request, const char * scope_list) {
   json_t * j_user, * j_return, * j_scope_allowed;
-  char * session_uid = get_session_id(config->glewlwyd_config, request);
+  char * session_uid;
   
   if (config != NULL && request != NULL) {
+    session_uid = get_session_id(config->glewlwyd_config, request);
     j_user = get_current_user_for_session(config->glewlwyd_config, session_uid);
     // Check if session is valid
     if (check_result_value(j_user, G_OK)) {
