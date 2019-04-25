@@ -36,6 +36,9 @@
 
 #include "static_file_callback.h"
 
+/**
+ * Result values used in the application
+ */
 #define G_OK                 0
 #define G_ERROR              1
 #define G_ERROR_UNAUTHORIZED 2
@@ -44,19 +47,26 @@
 #define G_ERROR_MEMORY       5
 #define G_ERROR_NOT_FOUND    6
 
-// Callback priority
+/**
+ * Callback priority
+ */
 #define GLEWLWYD_CALLBACK_PRIORITY_ZERO           0
 #define GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION 1
 #define GLEWLWYD_CALLBACK_PRIORITY_APPLICATION    2
 #define GLEWLWYD_CALLBACK_PRIORITY_CLOSE          3
 #define GLEWLWYD_CALLBACK_PRIORITY_PLUGIN         4
 #define GLEWLWYD_CALLBACK_PRIORITY_FILE           100
-#define GLEWLWYD_CALLBACK_PRIORITY_GZIP           101
 
+/**
+ * Modes available when adding or modifying a user
+ */
 #define GLEWLWYD_IS_VALID_MODE_ADD            0
 #define GLEWLWYD_IS_VALID_MODE_UPDATE         1
 #define GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE 2
 
+/**
+ * Modes available of the availability of a scheme for a user
+ */
 #define GLEWLWYD_IS_NOT_AVAILABLE 0
 #define GLEWLWYD_IS_AVAILABLE     1
 #define GLEWLWYD_IS_REGISTERED    2
@@ -74,6 +84,9 @@
 /** Macro to avoid compiler warning when some parameters are unused and that's ok **/
 #define UNUSED(x) (void)(x)
 
+/**
+ * Digest format available
+ */
 typedef enum {
   digest_SHA1,
   digest_SSHA1,
@@ -97,6 +110,9 @@ typedef enum {
 
 struct config_module;
 
+/**
+ * Structure used to store a user module
+ */
 struct _user_module {
   void      * file_handle;
   char      * name;
@@ -120,6 +136,9 @@ struct _user_module {
   int      (* user_module_update_password)(struct config_module * config, const char * username, const char * new_password, void * cls);
   };
 
+/**
+ * Structure used to store a user module instance
+ */
 struct _user_module_instance {
   char                * name;
   struct _user_module * module;
@@ -128,6 +147,9 @@ struct _user_module_instance {
   short int             readonly;
 };
 
+/**
+ * Structure used to store a client module
+ */
 struct _client_module {
   void     * file_handle;
   char     * name;
@@ -148,6 +170,9 @@ struct _client_module {
   int      (* client_module_check_password)(struct config_module * config, const char * client_id, const char * password, void * cls);
 };
 
+/**
+ * Structure used to store a client module instance
+ */
 struct _client_module_instance {
   char                  * name;
   struct _client_module * module;
@@ -156,6 +181,9 @@ struct _client_module_instance {
   short int               readonly;
 };
 
+/**
+ * Structure used to store a user auth schem module
+ */
 struct _user_auth_scheme_module {
   void       * file_handle;
   char       * name;
@@ -173,6 +201,9 @@ struct _user_auth_scheme_module {
   int       (* user_auth_scheme_module_validate)(struct config_module * config, const void * http_request, const char * username, json_t * j_scheme_data, void * cls);
 };
 
+/**
+ * Structure used to store a user auth schem module instance
+ */
 struct _user_auth_scheme_module_instance {
   char                            * name;
   struct _user_auth_scheme_module * module;
@@ -183,9 +214,11 @@ struct _user_auth_scheme_module_instance {
   short int                         enabled;
 };
 
-// mock declaration
 struct config_plugin;
 
+/**
+ * Structure used to store a plugin module
+ */
 struct _plugin_module {
   void      * file_handle;
   char      * name;
@@ -198,6 +231,9 @@ struct _plugin_module {
   int      (* plugin_module_close)(struct config_plugin * config, void * cls);
 };
 
+/**
+ * Structure used to store a plugin module instance
+ */
 struct _plugin_module_instance {
   char                  * name;
   struct _plugin_module * module;
@@ -205,6 +241,9 @@ struct _plugin_module_instance {
   short int               enabled;
 };
 
+/**
+ * Structure used to store the global application config
+ */
 struct config_elements {
   char *                                      config_file;
   unsigned int                                port;
@@ -244,6 +283,10 @@ struct config_elements {
   struct config_module *                      config_m;
 };
 
+/**
+ * Structure given to all plugin functions that will contain configuration on the
+ * application host, and pointer to functions of the application host
+ */
 struct config_plugin {
   struct config_elements * glewlwyd_config;
   int      (* glewlwyd_callback_add_plugin_endpoint)(struct config_plugin * config, const char * method, const char * prefix, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
@@ -272,6 +315,10 @@ struct config_plugin {
   char   * (* glewlwyd_callback_generate_hash)(struct config_plugin * config, const char * data);
 };
 
+/**
+ * Structure given to all module functions that will contain configuration on the
+ * application host, and pointer to functions of the application host
+ */
 struct config_module {
   const char              * external_url;
   const char              * login_url;
@@ -285,7 +332,9 @@ struct config_module {
   int                    (* glewlwyd_module_callback_check_user_password)(struct config_module * config, const char * username, const char * password);
 };
 
-// Misc functions
+/**
+ * Misc functions available in src/misc.c
+ */
 const char * get_ip_source(const struct _u_request * request);
 char * get_client_hostname(const struct _u_request * request);
 unsigned char random_at_most(unsigned char max);
@@ -301,9 +350,13 @@ char * generate_hash(digest_algorithm digest, const char * data);
  */
 int check_result_value(json_t * result, const int value);
 
-// Modules functions prototypes
+/**
+ * Modules functions prototypes
+ */
 
-// User
+/**
+ * User functions prototypes
+ */
 json_t * user_module_load(struct config_module * config);
 int      user_module_unload(struct config_module * config);
 int      user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
@@ -320,7 +373,9 @@ int      user_module_delete(struct config_module * config, const char * username
 int      user_module_check_password(struct config_module * config, const char * username, const char * password, void * cls);
 int      user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls);
 
-// Client
+/**
+ * Client functions prototypes
+ */
 json_t * client_module_load(struct config_module * config);
 int      client_module_unload(struct config_module * config);
 int      client_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
@@ -334,7 +389,9 @@ int      client_module_update(struct config_module * config, const char * client
 int      client_module_delete(struct config_module * config, const char * client_id, void * cls);
 int      client_module_check_password(struct config_module * config, const char * client_id, const char * password, void * cls);
 
-// Scheme
+/**
+ * Scheme functions prototypes
+ */
 json_t * user_auth_scheme_module_load(struct config_module * config);
 int      user_auth_scheme_module_unload(struct config_module * config);
 int      user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls);
@@ -345,7 +402,9 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls);
 int      user_auth_scheme_module_validate(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls);
 
-// Plugin
+/**
+ * Plugin functions prototypes
+ */
 json_t * plugin_module_load(struct config_plugin * config);
 int      plugin_module_unload(struct config_plugin * config);
 int      plugin_module_init(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls);
