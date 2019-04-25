@@ -32,6 +32,37 @@
 #include "../glewlwyd-common.h"
 
 /**
+ *
+ * Note on the user auth scheme module
+ *
+ * It's possible for the scheme module to get or store any value in the user object returned by the functions
+ * struct config_module.glewlwyd_module_callback_get_user()
+ * struct config_module.glewlwyd_module_callback_set_user()
+ *
+ * Although, the module can't know if any value, other than "name", "password", "email" or "enabled" can be added or updated by the scheme module
+ * The scheme module can store its specific data for each user by itself or store the data in the user object, or both, this will depend on the implementation
+ *
+ * The format of the structure config_module is:
+ *
+ * struct config_module {
+ *   const char              * external_url;    // Absolute url of the glewlwyd service
+ *   const char              * login_url;       // Relative url of the login page
+ *   const char              * admin_scope;     // Value of the g_admin scope
+ *   const char              * profile_scope;   // Value of the g_profile scope
+ *   struct _h_connection    * conn;            // Hoel structure to access to the database
+ *   digest_algorithm          hash_algorithm;  // Hash algorithm used in Glewlwyd
+ *   struct config_elements  * glewlwyd_config; // Pointer to the global config structure
+ *                          // Function used to return a user object
+ *   json_t               * (* glewlwyd_module_callback_get_user)(struct config_module * config, const char * username);
+ *                          // Function used to update a user
+ *   int                    (* glewlwyd_module_callback_set_user)(struct config_module * config, const char * username, json_t * j_user);
+ *                          // Function used to check the validity of a user's password
+ *   int                    (* glewlwyd_module_callback_check_user_password)(struct config_module * config, const char * username, const char * password);
+ * };
+ *
+ */
+
+/**
  * 
  * Config structure specific for the module
  * An instance of this structure will be created in the init function
@@ -48,7 +79,7 @@ struct mock_config {
  * 
  * user_auth_scheme_module_load
  * 
- * Executed once when Glewlwyd service is loaded
+ * Executed once when Glewlwyd service is started
  * Used to identify the module and to show its parameters on init
  * You can also use it to load resources that are required once for all
  * instance modules for example
@@ -131,7 +162,8 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * @parameter j_parameters: used to initialize an instance in JSON format
- * @parameter cls: must return an allocated void * pointer that will be sent back
+ *                          The module must validate itself its parameters
+ * @parameter cls: will contain an allocated void * pointer that will be sent back
  *                 as void * in all module functions
  * 
  */
