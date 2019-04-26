@@ -5,6 +5,7 @@ sudo: required
 
 language: c
 
+dist: xenial
 addons:
   apt:
     packages: [ autoconf, automake, libtool, sqlite3, libsqlite3-dev, libmysqlclient-dev, libgnutls-dev, libconfig-dev, libssl-dev, uuid-dev, libldap2-dev, check, libsubunit-dev, cppcheck ]
