@@ -74,9 +74,9 @@
  */
 
 static int json_has_str_pattern_case(json_t * j_source, const char * pattern) {
-  const char * key;
-  size_t index;
-  json_t * j_element;
+  const char * key = NULL;
+  size_t index = 0;
+  json_t * j_element = NULL;
 
   if (j_source != NULL) {
     if (json_is_string(j_source) && o_strcasestr(json_string_value(j_source), pattern) != NULL) {
@@ -314,8 +314,8 @@ int client_module_close(struct config_module * config, void * cls) {
  */
 size_t client_module_count_total(struct config_module * config, const char * pattern, void * cls) {
   UNUSED(config);
-  size_t index, total;
-  json_t * j_user;
+  size_t index = 0, total;
+  json_t * j_user = NULL;
 
   if (o_strlen(pattern)) {
     total = 0;
@@ -355,8 +355,8 @@ size_t client_module_count_total(struct config_module * config, const char * pat
  */
 json_t * client_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls) {
   UNUSED(config);
-  json_t * j_user, * j_array, * j_array_pattern, * j_return;
-  size_t index, counter = 0;
+  json_t * j_user = NULL, * j_array, * j_array_pattern, * j_return;
+  size_t index = 0, counter = 0;
 
   if (limit > 0) {
     if (o_strlen(pattern)) {
@@ -409,8 +409,8 @@ json_t * client_module_get_list(struct config_module * config, const char * patt
  */
 json_t * client_module_get(struct config_module * config, const char * client_id, void * cls) {
   UNUSED(config);
-  json_t * j_client, * j_return = NULL;
-  size_t index;
+  json_t * j_client = NULL, * j_return = NULL;
+  size_t index = 0;
   
   if (client_id != NULL && o_strlen(client_id)) {
     json_array_foreach((json_t *)cls, index, j_client) {
@@ -517,9 +517,9 @@ int client_module_add(struct config_module * config, json_t * j_client, void * c
  */
 int client_module_update(struct config_module * config, const char * client_id, json_t * j_client, void * cls) {
   UNUSED(config);
-  size_t index;
+  size_t index = 0;
   int ret, found = 0;
-  json_t * j_element;
+  json_t * j_element = NULL;
   
   json_array_foreach((json_t *)cls, index, j_element) {
     if (0 == o_strcmp(client_id, json_string_value(json_object_get(j_element, "client_id")))) {
@@ -553,8 +553,8 @@ int client_module_update(struct config_module * config, const char * client_id, 
  */
 int client_module_delete(struct config_module * config, const char * client_id, void * cls) {
   UNUSED(config);
-  json_t * j_client;
-  size_t index;
+  json_t * j_client = NULL;
+  size_t index = 0;
   int ret, found = 0;
   
   json_array_foreach((json_t *)cls, index, j_client) {

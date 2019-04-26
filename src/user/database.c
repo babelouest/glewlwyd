@@ -55,9 +55,9 @@ static char * get_pattern_clause(struct mod_parameters * param, const char * pat
 }
 
 static int append_user_properties(struct mod_parameters * param, json_t * j_user, int profile) {
-  json_t * j_query, * j_result, * j_element, * j_param_config;
+  json_t * j_query, * j_result, * j_element = NULL, * j_param_config;
   int res, ret;
-  size_t index;
+  size_t index = 0;
   
   if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
     j_query = json_pack("{sss[ssss]s{sO}}",
@@ -170,9 +170,9 @@ static int append_user_properties(struct mod_parameters * param, json_t * j_user
 }
 
 static json_t * database_user_scope_get(struct mod_parameters * param, json_int_t gu_id) {
-  json_t * j_query, * j_result, * j_return, * j_array, * j_scope;
+  json_t * j_query, * j_result, * j_return, * j_array, * j_scope = NULL;
   int res;
-  size_t index;
+  size_t index = 0;
   char * scope_clause = msprintf("IN (SELECT gus_id from " G_TABLE_USER_SCOPE_USER " WHERE gu_id = %"JSON_INTEGER_FORMAT")", gu_id);
   
   j_query = json_pack("{sss[s]s{s{ssss}}}",
@@ -265,8 +265,8 @@ static json_t * database_user_get(const char * username, void * cls, int profile
 }
 
 static json_t * is_user_database_parameters_valid(json_t * j_params) {
-  json_t * j_return, * j_error = json_array(), * j_element;
-  const char * field;
+  json_t * j_return, * j_error = json_array(), * j_element = NULL;
+  const char * field = NULL;
   
   if (j_error != NULL) {
     if (!json_is_object(j_params)) {
@@ -418,10 +418,10 @@ static json_t * get_property_value_db(struct mod_parameters * param, const char 
 }
 
 static int save_user_properties(struct mod_parameters * param, json_t * j_user, json_int_t gu_id, int profile) {
-  json_t * j_property, * j_query, * j_array = json_array(), * j_format, * j_property_value;
-  const char * name;
+  json_t * j_property = NULL, * j_query, * j_array = json_array(), * j_format, * j_property_value = NULL;
+  const char * name = NULL;
   int ret, res;
-  size_t index;
+  size_t index = 0;
   
   if (j_array != NULL) {
     json_object_foreach(j_user, name, j_property) {
@@ -470,10 +470,10 @@ static int save_user_properties(struct mod_parameters * param, json_t * j_user, 
 }
 
 static int save_user_scope(struct mod_parameters * param, json_t * j_scope, json_int_t gu_id) {
-  json_t * j_query, * j_result, * j_element, * j_new_scope_id;
+  json_t * j_query, * j_result, * j_element = NULL, * j_new_scope_id;
   int res, ret;
   char * scope_clause;
-  size_t index;
+  size_t index = 0;
   
   j_query = json_pack("{sss{sI}}", "table", G_TABLE_USER_SCOPE_USER, "where", "gu_id", gu_id);
   res = h_delete(param->conn, j_query, NULL);
@@ -787,10 +787,10 @@ size_t user_module_count_total(struct config_module * config, const char * patte
 json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls) {
   UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_query, * j_result, * j_element, * j_scope, * j_return;
+  json_t * j_query, * j_result, * j_element = NULL, * j_scope, * j_return;
   int res;
   char * pattern_clause;
-  size_t index;
+  size_t index = 0;
   
   j_query = json_pack("{sss[sssss]sisiss}",
                       "table",
@@ -854,7 +854,7 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_result = json_array(), * j_element, * j_format, * j_value, * j_return = NULL, * j_cur_user;
   char * message;
-  size_t index;
+  size_t index = 0;
   const char * property;
   
   if (j_result != NULL) {
@@ -1079,7 +1079,7 @@ int user_module_update_profile(struct config_module * config, const char * usern
       }
       if (json_object_size(json_object_get(j_query, "set"))) {
         if (h_update(param->conn, j_query, NULL) == H_OK) {
-          res = G_OK;
+          ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_update_profile database - Error executing j_query update");
           ret = G_ERROR_DB;
