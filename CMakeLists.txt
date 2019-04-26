@@ -179,7 +179,6 @@ include(FindHoel)
 find_package(Hoel ${HOEL_VERSION_REQUIRED} QUIET)
 if (NOT HOEL_FOUND)
 	include(DownloadProject)
-	option(WITH_PGSQL "specific param" off)
 	option(INSTALL_HEADER "specific param" off)
 	option(CHECK_YDER "specific param" off)
 	download_project(PROJ hoel
