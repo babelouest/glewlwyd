@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
     }
     
     j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_true());
-    run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    run_simple_test(&user_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
     json_decref(j_register);
 
     j_register = json_pack("{ssss}", "username", USERNAME2, "password", PASSWORD);
@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
     json_decref(j_register);
 
     j_register = json_pack("{sssssss{so}}", "username", USERNAME2, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_true());
-    run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    run_simple_test(&user_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
     json_decref(j_register);
 
     do_test = 1;
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
     json_decref(j_register);
     
     j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_false());
-    run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    run_simple_test(&user_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
     json_decref(j_register);
     
     j_register = json_pack("{ss}", "username", USERNAME2);
@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
     json_decref(j_register);
     
     j_register = json_pack("{sssssss{so}}", "username", USERNAME2, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_false());
-    run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    run_simple_test(&user_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
     json_decref(j_register);
   }
   

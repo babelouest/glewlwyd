@@ -29,27 +29,27 @@ START_TEST(test_glwd_auth_scheme_register_error_parameters)
   json_t * j_register;
   
   j_register = json_pack("{ssssssss}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register");
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 400, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_register);
   
   j_register = json_pack("{sssisss{so}}", "username", USERNAME, "scheme_type", 42, "scheme_name", SCHEME_NAME, "value", "register", json_true());
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 400, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_register);
   
   j_register = json_pack("{sssssis{so}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", 42, "value", "register", json_true());
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 400, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_register);
   
   j_register = json_pack("{sssssss{so}}", "username", "user2", "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_true());
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 400, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_register);
   
   j_register = json_pack("{sssss{so}}", "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_true());
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 400, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_register);
   
   j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_true());
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_register);
   
 }
@@ -78,15 +78,15 @@ START_TEST(test_glwd_auth_scheme_register_success)
   json_decref(j_body);
   
   j_body = json_pack("{ssssss}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME);
-  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_body, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_body, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
   j_body = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_true());
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
   j_body = json_pack("{ssssss}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME);
-  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
   ulfius_init_response(&resp);
@@ -137,7 +137,7 @@ START_TEST(test_glwd_auth_scheme_deregister_success)
   json_decref(j_body);
   
   j_body = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_false());
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
   ulfius_init_response(&resp);
@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
     srunner_free(sr);
     
     j_body = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "register", json_false());
-    run_simple_test(&user_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL);
+    run_simple_test(&user_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL);
     json_decref(j_body);
   }
   

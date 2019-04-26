@@ -98,7 +98,7 @@ START_TEST(test_glwd_oauth2_irl_run_workflow)
                           "scheme_type", json_string_value(json_object_get(j_element, "scheme_type")), 
                           "scheme_name", json_string_value(json_object_get(j_element, "scheme_name")), 
                           "value", json_object_get(j_element, "register"));
-    ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+    ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
     json_decref(j_register);
   }
 
@@ -182,7 +182,7 @@ START_TEST(test_glwd_oauth2_irl_run_workflow)
                           "scheme_type", json_string_value(json_object_get(j_element, "scheme_type")), 
                           "scheme_name", json_string_value(json_object_get(j_element, "scheme_name")), 
                           "value", json_object_get(j_element, "deregister"));
-    ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+    ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
     json_decref(j_register);
   }
   
