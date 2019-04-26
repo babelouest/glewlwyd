@@ -30,13 +30,12 @@ TARGET_IRL=glewlwyd_mod_user_irl glewlwyd_mod_client_irl glewlwyd_mod_user_http 
 VERBOSE=0
 MEMCHECK=0
 RUN=1
-LIBMOCKVERSION=1.0.0
 PARAM_FILE=param.json
 
 all: test
 
 clean:
-	rm -f *.o *.so *.so.$(LIBMOCKVERSION) *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_IRL)
+	rm -f *.o *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_IRL)
 
 build: $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_IRL)
 
@@ -69,8 +68,9 @@ test-irl: $(TARGET_IRL) test_glewlwyd_mod_user_http
 
 test_glewlwyd_mod_user_irl: glewlwyd_mod_user_irl
 	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
+		echo "Run test_glewlwyd_mod_user_irl with file $(PARAM_FILE)"; \
 		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM_FILE); \
-		mv test_glewlwyd_mod_user_irl.log test_glewlwyd_mod_user_irl-$(PARAM_FILE).log; \
+		mv glewlwyd_mod_user_irl.log glewlwyd_mod_user_irl-$(PARAM_FILE).log; \
 	elif [ "$(MEMCHECK)" = "0" ]; then \
 	  LD_LIBRARY_PATH=. ./$^ $(PARAM_FILE); \
 	else \
@@ -79,8 +79,9 @@ test_glewlwyd_mod_user_irl: glewlwyd_mod_user_irl
 
 test_glewlwyd_mod_client_irl: glewlwyd_mod_client_irl
 	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
+		echo "Run test_glewlwyd_mod_client_irl with file $(PARAM_FILE)"; \
 		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM_FILE); \
-		mv test_glewlwyd_mod_client_irl.log test_glewlwyd_mod_client_irl-$(PARAM_FILE).log; \
+		mv glewlwyd_mod_client_irl.log glewlwyd_mod_client_irl-$(PARAM_FILE).log; \
 	elif [ "$(MEMCHECK)" = "0" ]; then \
 	  LD_LIBRARY_PATH=. ./$^ $(PARAM_FILE); \
 	else \
@@ -89,8 +90,9 @@ test_glewlwyd_mod_client_irl: glewlwyd_mod_client_irl
 
 test_glewlwyd_oauth2_irl: glewlwyd_oauth2_irl
 	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
+		echo "Run test_glewlwyd_oauth2_irl with file $(PARAM_FILE)"; \
 		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM_FILE); \
-		mv test_glewlwyd_oauth2_irl.log test_glewlwyd_oauth2_irl-$(PARAM_FILE).log; \
+		mv glewlwyd_oauth2_irl.log glewlwyd_oauth2_irl-$(PARAM_FILE).log; \
 	elif [ "$(MEMCHECK)" = "0" ]; then \
 	  LD_LIBRARY_PATH=. ./$^ $(PARAM_FILE); \
 	else \
