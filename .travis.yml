@@ -43,9 +43,7 @@ script:
   - sudo make install
   - sudo ldconfig
   - sqlite3 /tmp/glewlwyd.db < ../docs/database/init.sqlite3.sql
-  - sqlite3 /tmp/glewlwyd.db < ../src/plugin/protocol_oauth2.sqlite.sql
-  - sqlite3 /tmp/glewlwyd.db < ../src/user/database.sqlite3.sql
-  - sqlite3 /tmp/glewlwyd.db < ../src/client/database.sqlite3.sql
+  - sqlite3 /tmp/glewlwyd.db < ../test/glewlwyd-test.sql
   - glewlwyd --config-file=../test/glewlwyd.conf &
   - export G_PID=$!
   - make test
