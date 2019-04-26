@@ -212,8 +212,11 @@ static json_t * database_client_get(const char * client_id, void * cls, int prof
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result, * j_scope, * j_return;
   int res;
+  char * client_id_escaped, * client_id_clause;
   
-  j_query = json_pack("{sss[ssssss]s{ss}}",
+  client_id_escaped = h_escape_string(param->conn, client_id);
+  client_id_clause = msprintf(" = UPPER('%s')", client_id_escaped);  
+  j_query = json_pack("{sss[ssssss]s{s{ssss}}}",
                       "table",
                       G_TABLE_CLIENT,
                       "columns",
@@ -224,8 +227,13 @@ static json_t * database_client_get(const char * client_id, void * cls, int prof
                         "gc_enabled",
                         "gc_confidential",
                       "where",
-                        "gc_client_id",
-                        client_id);
+                        "UPPER(gc_client_id)",
+                          "operator",
+                          "raw",
+                          "value",
+                          client_id_clause);
+  o_free(client_id_escaped);
+  o_free(client_id_clause);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -996,8 +1004,13 @@ int client_module_update(struct config_module * config, const char * client_id, 
   json_t * j_query, * j_result = NULL;
   int res, ret;
   char * password_clause;
+  char * client_id_escaped, * client_id_clause;
   
-  j_query = json_pack("{sss[s]s{ss}}", "table", G_TABLE_CLIENT, "columns", "gc_id", "where", "gc_client_id", client_id);
+  client_id_escaped = h_escape_string(param->conn, client_id);
+  client_id_clause = msprintf(" = UPPER('%s')", client_id_escaped);  
+  j_query = json_pack("{sss[s]s{s{ssss}}}", "table", G_TABLE_CLIENT, "columns", "gc_id", "where", "UPPER(gc_client_id)", "operator", "raw", "value", client_id_clause);
+  o_free(client_id_escaped);
+  o_free(client_id_clause);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK && json_array_size(j_result)) {
@@ -1058,13 +1071,21 @@ int client_module_delete(struct config_module * config, const char * client_id, 
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query;
   int res, ret;
+  char * client_id_escaped, * client_id_clause;
   
-  j_query = json_pack("{sss{ss}}",
+  client_id_escaped = h_escape_string(param->conn, client_id);
+  client_id_clause = msprintf(" = UPPER('%s')", client_id_escaped);  
+  j_query = json_pack("{sss{s{ssss}}}",
                       "table",
                       G_TABLE_CLIENT,
                       "where",
-                        "gc_client_id",
-                        client_id);
+                        "UPPER(gc_client_id)",
+                          "operator",
+                          "raw",
+                          "value",
+                          client_id_clause);
+  o_free(client_id_escaped);
+  o_free(client_id_clause);
   res = h_delete(param->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -1082,20 +1103,28 @@ int client_module_check_password(struct config_module * config, const char * cli
   int ret, res;
   json_t * j_query, * j_result;
   char * clause = get_password_clause_check(param, password);
+  char * client_id_escaped, * client_id_clause;
   
-  j_query = json_pack("{sss[s]s{sss{ssss}}}",
+  client_id_escaped = h_escape_string(param->conn, client_id);
+  client_id_clause = msprintf(" = UPPER('%s')", client_id_escaped);  
+  j_query = json_pack("{sss[s]s{s{ssss}s{ssss}}}",
                       "table",
                       G_TABLE_CLIENT,
                       "columns",
                         "gc_id",
                       "where",
-                        "gc_client_id",
-                        client_id,
+                        "UPPER(gc_client_id)",
+                          "operator",
+                          "raw",
+                          "value",
+                          client_id_clause,
                         "gc_password",
                           "operator",
                           "raw",
                           "value",
                           clause);
+  o_free(client_id_escaped);
+  o_free(client_id_clause);
   o_free(clause);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
