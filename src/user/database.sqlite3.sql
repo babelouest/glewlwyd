@@ -4,32 +4,32 @@ DROP TABLE IF EXISTS g_user_scope;
 DROP TABLE IF EXISTS g_user;
 
 CREATE TABLE g_user (
-  gc_id INTEGER PRIMARY KEY AUTOINCREMENT,
-  gc_username TEXT NOT NULL UNIQUE,
-  gc_name TEXT DEFAULT '',
+  gu_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gu_username TEXT NOT NULL UNIQUE,
+  gu_name TEXT DEFAULT '',
   gu_email TEXT,
-  gc_password TEXT,
-  gc_enabled INTEGER DEFAULT 1
+  gu_password TEXT,
+  gu_enabled INTEGER DEFAULT 1
 );
 
 CREATE TABLE g_user_scope (
-  gcs_id INTEGER PRIMARY KEY AUTOINCREMENT,
-  gcs_name TEXT NOT NULL UNIQUE
+  gus_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gus_name TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE g_user_scope_user (
-  gcsu_id INTEGER PRIMARY KEY AUTOINCREMENT,
-  gc_id INTEGER,
-  gcs_id INTEGER,
-  FOREIGN KEY(gc_id) REFERENCES g_user(gc_id) ON DELETE CASCADE,
-  FOREIGN KEY(gcs_id) REFERENCES g_user_scope(gcs_id) ON DELETE CASCADE
+  gusu_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gu_id INTEGER,
+  gus_id INTEGER,
+  FOREIGN KEY(gu_id) REFERENCES g_user(gu_id) ON DELETE CASCADE,
+  FOREIGN KEY(gus_id) REFERENCES g_user_scope(gus_id) ON DELETE CASCADE
 );
 
 CREATE TABLE g_user_property (
-  gcp_id INTEGER PRIMARY KEY AUTOINCREMENT,
-  gc_id INTEGER,
-  gcp_name TEXT NOT NULL,
-  gcp_value TEXT DEFAULT NULL,
-  FOREIGN KEY(gc_id) REFERENCES g_user(gc_id) ON DELETE CASCADE
+  gup_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gu_id INTEGER,
+  gup_name TEXT NOT NULL,
+  gup_value TEXT DEFAULT NULL,
+  FOREIGN KEY(gu_id) REFERENCES g_user(gu_id) ON DELETE CASCADE
 );
-CREATE INDEX i_g_user_property_name ON g_user_property(gcp_name);
+CREATE INDEX i_g_user_property_name ON g_user_property(gup_name);
