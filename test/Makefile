@@ -70,6 +70,7 @@ test-irl: $(TARGET_IRL) test_glewlwyd_mod_user_http
 test_glewlwyd_mod_user_irl: glewlwyd_mod_user_irl
 	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
 		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM_FILE); \
+		mv test_glewlwyd_mod_user_irl.log test_glewlwyd_mod_user_irl-$(PARAM_FILE).log; \
 	elif [ "$(MEMCHECK)" = "0" ]; then \
 	  LD_LIBRARY_PATH=. ./$^ $(PARAM_FILE); \
 	else \
@@ -79,6 +80,7 @@ test_glewlwyd_mod_user_irl: glewlwyd_mod_user_irl
 test_glewlwyd_mod_client_irl: glewlwyd_mod_client_irl
 	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
 		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM_FILE); \
+		mv test_glewlwyd_mod_client_irl.log test_glewlwyd_mod_client_irl-$(PARAM_FILE).log; \
 	elif [ "$(MEMCHECK)" = "0" ]; then \
 	  LD_LIBRARY_PATH=. ./$^ $(PARAM_FILE); \
 	else \
@@ -88,6 +90,7 @@ test_glewlwyd_mod_client_irl: glewlwyd_mod_client_irl
 test_glewlwyd_oauth2_irl: glewlwyd_oauth2_irl
 	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
 		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM_FILE); \
+		mv test_glewlwyd_oauth2_irl.log test_glewlwyd_oauth2_irl-$(PARAM_FILE).log; \
 	elif [ "$(MEMCHECK)" = "0" ]; then \
 	  LD_LIBRARY_PATH=. ./$^ $(PARAM_FILE); \
 	else \
