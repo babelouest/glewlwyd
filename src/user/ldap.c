@@ -98,7 +98,7 @@ static char * escape_ldap(const char * input) {
 }
 
 static json_t * is_user_ldap_parameters_valid(json_t * j_params, int readonly) {
-  json_t * j_return, * j_error = json_array(), * j_element = NULL, * j_element = NULL_p;
+  json_t * j_return, * j_error = json_array(), * j_element = NULL, * j_element_p = NULL;
   size_t index = 0;
   const char * field;
   
