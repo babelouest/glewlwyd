@@ -84,11 +84,11 @@ START_TEST(test_glwd_mod_user_irl_http_auth_success)
   ulfius_init_response(&auth_resp);
   
   j_register = json_pack("{sssssss{so}}", "username", HTTP_USER, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "register", json_true());
-  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_register);
   
   j_register = json_pack("{sssssss{so}}", "username", HTTP_USER, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "register", json_true());
-  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_register);
   
   j_body = json_pack("{sssssss{ss}}", "username", HTTP_USER, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "code", "42");
@@ -107,11 +107,11 @@ START_TEST(test_glwd_mod_user_irl_http_auth_success)
   ck_assert_int_eq(auth_resp.status, 200);
   
   j_register = json_pack("{sssssss{so}}", "username", HTTP_USER, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "register", json_false());
-  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_register);
   
   j_register = json_pack("{sssssss{so}}", "username", HTTP_USER, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "register", json_false());
-  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_register);
   
   ulfius_clean_response(&auth_resp);

@@ -38,7 +38,7 @@ class SchemeMock extends Component {
   
   getRegister() {
     if (this.state.profile) {
-      apiManager.glewlwydRequest("/auth/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
+      apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
       .then((res) => {
         this.setState({registration: i18next.t("profile.scheme-mock-register-status-registered"), registered: true});
       })
@@ -53,7 +53,7 @@ class SchemeMock extends Component {
   }
   
   register() {
-    apiManager.glewlwydRequest("/auth/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: !this.state.registered}})
+    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: !this.state.registered}})
     .fail((err) => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
     })
