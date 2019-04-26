@@ -98,8 +98,8 @@ static char * escape_ldap(const char * input) {
 }
 
 static json_t * is_user_ldap_parameters_valid(json_t * j_params, int readonly) {
-  json_t * j_return, * j_error = json_array(), * j_element, * j_element_p;
-  size_t index;
+  json_t * j_return, * j_error = json_array(), * j_element = NULL, * j_element = NULL_p;
+  size_t index = 0;
   const char * field;
   
   if (j_error != NULL) {
@@ -381,8 +381,8 @@ static char * get_ldap_filter_pattern(json_t * j_params, const char * pattern) {
 static char ** get_ldap_read_attributes(json_t * j_params, int profile, json_t * j_properties) {
   char ** attrs = NULL;
   size_t i, nb_attrs = 2; // Username, Scope
-  json_t * j_element;
-  const char * field;
+  json_t * j_element = NULL;
+  const char * field = NULL;
   
   if (j_properties != NULL && json_is_object(j_properties) && !json_object_size(j_properties)) {
     nb_attrs += (json_object_get(j_params, "name-property") != NULL);
@@ -472,10 +472,10 @@ static digest_algorithm get_digest_algorithm(json_t * j_params) {
 static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int profile, int add, json_t * j_mod_value_free_array) {
   LDAPMod ** mods = NULL;
   size_t nb_attr = 0;
-  json_t * j_format, * j_property, * j_property_value, * j_scope;
-  const char * field;
+  json_t * j_format, * j_property = NULL, * j_property_value, * j_scope;
+  const char * field = NULL;
   unsigned int i;
-  size_t index, index_scope;
+  size_t index = 0, index_scope = 0;
   int has_error = 0;
   
   if (j_mod_value_free_array != NULL) {
@@ -802,8 +802,8 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
 }
 
 static json_t * get_scope_from_ldap(json_t * j_params, const char * ldap_scope_value) {
-  json_t * j_element;
-  const char * key, * value;
+  json_t * j_element = NULL;
+  const char * key = NULL, * value;
   
   if (json_object_get(j_params, "scope-property-match-correspondence") != NULL) {
     json_object_foreach(json_object_get(j_params, "scope-property-match-correspondence"), key, j_element) {
@@ -820,8 +820,8 @@ static json_t * get_scope_from_ldap(json_t * j_params, const char * ldap_scope_v
 }
 
 static json_t * get_user_from_result(json_t * j_params, json_t * j_properties_user, LDAP * ldap, LDAPMessage * entry) {
-  json_t * j_user = json_object(), * j_property, * j_scope;
-  const char * field;
+  json_t * j_user = json_object(), * j_property = NULL, * j_scope;
+  const char * field = NULL;
   char * str_scope;
   struct berval ** result_values = NULL;
   int i;
@@ -1182,9 +1182,14 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
         cookie = NULL;
       }
       
-      ldap_result = ldap_parse_pageresponse_control(ldap, *returned_controls, &total_count, &new_cookie);
-      if (ldap_result != LDAP_SUCCESS) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error ldap_parse_pageresponse_control, message: %s", ldap_err2string(ldap_result));
+      if (returned_controls != NULL) {
+        ldap_result = ldap_parse_pageresponse_control(ldap, *returned_controls, &total_count, &new_cookie);
+        if (ldap_result != LDAP_SUCCESS) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error ldap_parse_pageresponse_control, message: %s", ldap_err2string(ldap_result));
+          break;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error returned_controls is NULL");
         break;
       }
       
@@ -1353,9 +1358,9 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
 
 json_t * user_module_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
   json_t * j_params = (json_t *)cls;
-  json_t * j_result = json_array(), * j_element, * j_format, * j_value, * j_return, * j_cur_user;
+  json_t * j_result = json_array(), * j_element = NULL, * j_format, * j_value, * j_return, * j_cur_user;
   char * message;
-  size_t index;
+  size_t index = 0;
   const char * property;
   
   if (j_result != NULL) {
@@ -1438,12 +1443,12 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
 
 int user_module_add(struct config_module * config, json_t * j_user, void * cls) {
   UNUSED(config);
-  json_t * j_params = (json_t *)cls, * j_mod_value_free_array = NULL, * j_element;
+  json_t * j_params = (json_t *)cls, * j_mod_value_free_array = NULL, * j_element = NULL;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, i, result;
   LDAPMod ** mods = NULL;
   char * new_dn;
-  size_t index;
+  size_t index = 0;
   
   if (ldap != NULL) {
     mods = get_ldap_write_mod(j_params, j_user, 0, 1, (j_mod_value_free_array = json_array()));
@@ -1486,12 +1491,12 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
 
 int user_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls) {
   UNUSED(config);
-  json_t * j_params = (json_t *)cls, * j_mod_value_free_array, * j_element;
+  json_t * j_params = (json_t *)cls, * j_mod_value_free_array, * j_element = NULL;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, i, result;
   LDAPMod ** mods = NULL;
   char * cur_dn;
-  size_t index;
+  size_t index = 0;
   
   if (ldap != NULL) {
     mods = get_ldap_write_mod(j_params, j_user, 0, 0, (j_mod_value_free_array = json_array()));
@@ -1534,12 +1539,12 @@ int user_module_update(struct config_module * config, const char * username, jso
 
 int user_module_update_profile(struct config_module * config, const char * username, json_t * j_user, void * cls) {
   UNUSED(config);
-  json_t * j_params = (json_t *)cls, * j_mod_value_free_array, * j_element;
+  json_t * j_params = (json_t *)cls, * j_mod_value_free_array, * j_element = NULL;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, i, result;
   LDAPMod ** mods = NULL;
   char * cur_dn;
-  size_t index;
+  size_t index = 0;
   
   if (ldap != NULL) {
     mods = get_ldap_write_mod(j_params, j_user, 1, 0, (j_mod_value_free_array = json_array()));

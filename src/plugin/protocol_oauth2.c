@@ -403,9 +403,9 @@ static int is_authorization_type_enabled(struct _oauth2_config * config, uint au
 }
 
 static json_t * check_client_valid(struct _oauth2_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * redirect_uri, const char * scope_list, unsigned short authorization_type) {
-  json_t * j_client, * j_element, * j_return;
+  json_t * j_client, * j_element = NULL, * j_return;
   int uri_found, authorization_type_enabled;
-  size_t index;
+  size_t index = 0;
   
   if (client_id == NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error client_id is NULL");
@@ -581,8 +581,8 @@ static char * get_login_url(struct _oauth2_config * config, const struct _u_requ
 }
 
 static json_t * get_scope_parameters(struct _oauth2_config * config, const char * scope) {
-  json_t * j_element, * j_return = NULL;
-  size_t index;
+  json_t * j_element = NULL, * j_return = NULL;
+  size_t index = 0;
   
   json_array_foreach(json_object_get(config->j_params, "scope"), index, j_element) {
     if (0 == o_strcmp(scope, json_string_value(json_object_get(j_element, "name")))) {
@@ -617,9 +617,9 @@ static int disable_authorization_code(struct _oauth2_config * config, json_int_t
 
 static json_t * validate_authorization_code(struct _oauth2_config * config, const char * code, const char * client_id, const char * redirect_uri) {
   char * code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code), * expiration_clause = NULL, * scope_list = NULL, * tmp;
-  json_t * j_query, * j_result = NULL, * j_result_scope = NULL, * j_return, * j_element, * j_scope_param;
+  json_t * j_query, * j_result = NULL, * j_result_scope = NULL, * j_return, * j_element = NULL, * j_scope_param;
   int res;
-  size_t index;
+  size_t index = 0;
   json_int_t maximum_duration = config->refresh_token_duration;
   int rolling_refresh = config->refresh_token_rolling;
   
@@ -719,10 +719,10 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
 }
 
 static json_t * validate_session_client_scope(struct _oauth2_config * config, const struct _u_request * request, const char * client_id, const char * scope) {
-  json_t * j_session, * j_grant, * j_return, * j_scope_session, * j_scope_grant, * j_group, * j_scheme;
-  const char * scope_session, * group;
+  json_t * j_session, * j_grant, * j_return, * j_scope_session, * j_scope_grant = NULL, * j_group = NULL, * j_scheme;
+  const char * scope_session, * group = NULL;
   char * scope_filtered = NULL, * tmp;
-  size_t index;
+  size_t index = 0;
   json_int_t scopes_authorized = 0, scopes_granted = 0;
   int group_allowed;
   
@@ -823,7 +823,7 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
   json_t * j_return, * j_query, * j_result, * j_result_scope, * j_element;
   char * token_hash, * expires_at_clause;
   int res;
-  size_t index;
+  size_t index = 0;
   time_t now;
 
   if (refresh_token != NULL) {
@@ -912,9 +912,9 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
 }
 
 static json_t * refresh_token_list_get(struct _oauth2_config * config, const char * username, const char * pattern, size_t offset, size_t limit, const char * sort) {
-  json_t * j_query, * j_result, * j_return, * j_element;
+  json_t * j_query, * j_result, * j_return, * j_element = NULL;
   int res;
-  size_t index;
+  size_t index = 0;
   char * pattern_escaped, * pattern_clause;
   
   j_query = json_pack("{sss[ssssssssss]s{ss}sisi}",
@@ -1501,7 +1501,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
   json_t * j_client, * j_scope, * json_body;
   char ** scope_array, ** scope_allowed = NULL, * scope_joined, * access_token, * issued_for = get_client_hostname(request);
-  size_t index;
+  size_t index = 0;
   int i, i_scope_allowed = 0;
   time_t now;
 
@@ -1917,8 +1917,8 @@ static int jwt_autocheck(struct _oauth2_config * config) {
 }
 
 static int check_parameters (json_t * j_params) {
-  json_t * j_element;
-  size_t index;
+  json_t * j_element = NULL;
+  size_t index = 0;
   
   if (j_params == NULL) {
     return G_ERROR_PARAM;

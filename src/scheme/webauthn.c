@@ -208,7 +208,7 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-int user_auth_scheme_module_register(struct config_module * config, const void * http_request, const char * username, const char * register_data, char ** register_response, void * cls) {
+json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
   int ret, result = G_ERROR;
   char * str_user = NULL, * str_user_set, * key_mock;
   json_t * j_user, * j_data;
@@ -260,7 +260,7 @@ int user_auth_scheme_module_register(struct config_module * config, const void *
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-char * user_auth_scheme_module_register_get(struct config_module * config, const void * http_request, const char * username, int * result, void * cls) {
+json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, const char * username, void * cls) {
   int res;
   json_t * j_user, * j_register;
   char * str_result = NULL, * str_user, * key_mock;
@@ -309,7 +309,7 @@ char * user_auth_scheme_module_register_get(struct config_module * config, const
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-int user_auth_scheme_module_trigger(struct config_module * config, const void * http_request, const char * username, const char * scheme_trigger, char ** scheme_trigger_response, void * cls) {
+json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls) {
   int ret;
   
   if (user_auth_scheme_module_can_use(username, cls) == GLEWLWYD_IS_REGISTERED) {

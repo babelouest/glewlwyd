@@ -72,9 +72,9 @@
  */
 
 static int json_has_str_pattern_case(json_t * j_source, const char * pattern) {
-  const char * key;
-  size_t index;
-  json_t * j_element;
+  const char * key = NULL;
+  size_t index = 0;
+  json_t * j_element = NULL;
 
   if (j_source != NULL) {
     if (json_is_string(j_source) && o_strcasestr(json_string_value(j_source), pattern) != NULL) {
@@ -316,8 +316,8 @@ int user_module_close(struct config_module * config, void * cls) {
  */
 size_t user_module_count_total(struct config_module * config, const char * pattern, void * cls) {
   UNUSED(config);
-  json_t * j_user;
-  size_t index, total;
+  json_t * j_user = NULL;
+  size_t index = 0, total;
 
   if (o_strlen(pattern)) {
     total = 0;
@@ -357,8 +357,8 @@ size_t user_module_count_total(struct config_module * config, const char * patte
  */
 json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls) {
   UNUSED(config);
-  json_t * j_user, * j_array, * j_pattern_array, * j_return;
-  size_t index, counter = 0;
+  json_t * j_user = NULL, * j_array, * j_pattern_array, * j_return;
+  size_t index = 0, counter = 0;
 
   if (limit) {
     if (o_strlen(pattern)) {
@@ -412,8 +412,8 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
  */
 json_t * user_module_get(struct config_module * config, const char * username, void * cls) {
   UNUSED(config);
-  json_t * j_user;
-  size_t index;
+  json_t * j_user = NULL;
+  size_t index = 0;
   
   if (username != NULL && o_strlen(username)) {
     json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {
@@ -538,8 +538,8 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
  */
 int user_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls) {
   UNUSED(config);
-  json_t * j_element, * j_property;
-  size_t index;
+  json_t * j_element = NULL, * j_property;
+  size_t index = 0;
   int found = 0, ret;
   const char * key;
   
@@ -598,8 +598,8 @@ int user_module_update_profile(struct config_module * config, const char * usern
  */
 int user_module_delete(struct config_module * config, const char * username, void * cls) {
   UNUSED(config);
-  json_t * j_user;
-  size_t index;
+  json_t * j_user = NULL;
+  size_t index = 0;
   int ret, found = 0;
   
   json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {

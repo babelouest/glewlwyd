@@ -74,8 +74,8 @@ int user_module_init(struct config_module * config, int readonly, json_t * j_par
   UNUSED(config);
   UNUSED(readonly);
   int ret;
-  size_t index;
-  json_t * j_element;
+  size_t index = 0;
+  json_t * j_element = NULL;
   
   if (json_is_object(j_params)) {
     ret = G_OK;
