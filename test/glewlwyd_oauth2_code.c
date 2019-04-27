@@ -93,10 +93,9 @@ START_TEST(test_oauth2_code_ok)
   
   o_free(user_req.http_verb);
   user_req.http_verb = NULL;
-  int res = run_simple_test(&user_req, "POST", url, NULL, NULL, NULL, &body, 200, NULL, "refresh_token", NULL);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", url, NULL, NULL, NULL, &body, 200, NULL, "refresh_token", NULL), 1);
   o_free(url);
   u_map_clean(&body);
-  ck_assert_int_eq(res, 1);
 }
 END_TEST
 
