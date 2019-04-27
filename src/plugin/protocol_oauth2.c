@@ -1707,18 +1707,31 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
 
 static int callback_check_glewlwyd_session_or_token(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
-  json_t * j_session;
+  json_t * j_session, * j_user;
   int ret = U_CALLBACK_UNAUTHORIZED;
   
   if (u_map_get(request->map_header, "Authorization") != NULL) {
     return callback_check_glewlwyd_access_token(request, response, (void*)config->glewlwyd_resource_config);
   } else {
-    j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, NULL);
-    if (check_result_value(j_session, G_OK)) {
-      response->shared_data = json_pack("{ss}", "username", json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
-      ret = U_CALLBACK_CONTINUE;
+    if (o_strlen(u_map_get(request->map_url, "impersonate"))) {
+      j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, config->glewlwyd_config->glewlwyd_config->admin_scope);
+      if (check_result_value(j_session, G_OK)) {
+        j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, u_map_get(request->map_url, "impersonate"));
+        if (check_result_value(j_user, G_OK)) {
+          response->shared_data = json_pack("{ss}", "username", u_map_get(request->map_url, "impersonate"));
+          ret = U_CALLBACK_CONTINUE;
+        }
+        json_decref(j_user);
+      }
+      json_decref(j_session);
+    } else {
+      j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, NULL);
+      if (check_result_value(j_session, G_OK)) {
+        response->shared_data = json_pack("{ss}", "username", json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
+        ret = U_CALLBACK_CONTINUE;
+      }
+      json_decref(j_session);
     }
-    json_decref(j_session);
     return ret;
   }
 }
