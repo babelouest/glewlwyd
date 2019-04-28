@@ -10,6 +10,7 @@
     "password": "Mot de passe",
     "password-placeholder": "Votre mot de passe",
     "btn-ok": "Valider",
+    "btn-reload": "Recharger",
     "sign-in-title": "Cliquer ici pour valider votre nom d'utilisateur et mot de passe",
     "error-login": "Erreur lors de l'authentification",
     "error-change-user-api": "Erreur lors du changement d'utilisateur",
@@ -37,7 +38,8 @@
     "mock-value-button-title": "Ça ne devrait pas être si dur que ça...",
     "wish-message": "Quel est votre souhait?",
     "error-mock-value": "Erreur de la valeur factice",
-    "error-mock-trigger": "Erreur lors du déclenchement de la valeur factice"
+    "error-mock-trigger": "Erreur lors du déclenchement de la valeur factice",
+    "mock-trigger-must-register": "Vous devez enregistrer la valeur factice dans la page profil"
   },
   "admin": {
     "menu-users": "Utilisateurs",

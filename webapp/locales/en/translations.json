@@ -10,6 +10,7 @@
     "password": "Password",
     "password-placeholder": "Your password",
     "btn-ok": "OK",
+    "btn-reload": "Reload",
     "sign-in-title": "Click here to validate your login and password",
     "error-login": "Authentication error",
     "error-change-user-api": "Error changing user",
@@ -37,7 +38,8 @@
     "error-mock-expected": "The answer is {{value}}",
     "wish-message": "What do you wish for?",
     "error-mock-value": "Error mock value",
-    "error-mock-trigger": "Error while triggering mock value"
+    "error-mock-trigger": "Error while triggering mock value",
+    "mock-trigger-must-register": "You must register mock value in the profile page"
   },
   "admin": {
     "menu-users": "Users",
