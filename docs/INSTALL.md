@@ -291,9 +291,9 @@ These pages are used when a user requires some access to Glewlwyd. They are simp
 
 #### Login Page
 
-![Login Page](docs/screenshots/login.png)
+![Login Page](screenshots/login.png)
 
-![Logged In](docs/screenshots/logged%20in.png)
+![Logged In](screenshots/logged%20in.png)
 
 This page is used when the user needs to log-in to Glewlwyd with its login/password and/or to redirect to a client with the access to the resource.
 
