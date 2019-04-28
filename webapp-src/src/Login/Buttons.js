@@ -17,7 +17,6 @@ class Buttons extends Component {
       showGrantAsterisk: props.showGrantAsterisk
     };
 
-    this.clickProfile = this.clickProfile.bind(this);
     this.clickLogout = this.clickLogout.bind(this);
     this.clickGrant = this.clickGrant.bind(this);
     this.clickContinue = this.clickContinue.bind(this);
@@ -40,10 +39,6 @@ class Buttons extends Component {
       bGrant: nextProps.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change"),
       showGrantAsterisk: nextProps.showGrantAsterisk
     });
-  }
-
-  clickProfile() {
-    document.location.href = this.state.config.ProfileUrl;
   }
 
   clickLogout() {
@@ -135,7 +130,7 @@ class Buttons extends Component {
                     {asterisk}
                   </a>
                   <div className="dropdown-divider"></div>
-                  <a className="dropdown-item" href="#" onClick={this.clickProfile}>{i18next.t("login.update-profile")}</a>
+                  <a className="dropdown-item" href={this.state.config.ProfileUrl} target="_blank">{i18next.t("login.update-profile")}</a>
                 </div>
               </div>
             </div>
