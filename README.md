@@ -4,7 +4,7 @@
 
 Single Sign On authentication server.
 
-![logged in](docs/screenshots/logged in.png)
+![logged in](docs/screenshots/logged%20in.png)
 
 This is the development branch for the next release 2.0. The next release is currently under development.
 
@@ -26,7 +26,7 @@ The full core API documention is available in the [API documentation](docs/API.m
 
 ## Screenshots
 
-TBD
+[Screen shots](docs/screenshots) are available here!
 
 ## Questions, problems or feature requests
 
