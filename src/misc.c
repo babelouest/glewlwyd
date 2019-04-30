@@ -32,7 +32,7 @@
 #include <ctype.h>
 #include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>
-#include <gnutls/pkcs12.h>
+#include <nettle/pbkdf2.h>
 
 #include "glewlwyd.h"
 
@@ -286,40 +286,28 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
   return res;
 }
 
-int generate_digest_pkcs5s2(const char * password, const char * salt, char * out_digest) {
-  gnutls_pkcs12_bag_t bag;
-  gnutls_pkcs12_bag_init(&bag);
-  unsigned int schema = GNUTLS_PKCS_PKCS12_3DES, cipher = GNUTLS_CIPHER_3DES_CBC, salt_size = GLEWLWYD_DEFAULT_SALT_LENGTH, count = 1000;
-  char * pbkdf2_key = NULL;
+/**
+ * Generates a digest using the PBKDF2 algorithm from password and a salt if specified, otherwise generates a salt, stores it in out_digest
+ */
+int generate_digest_pbkdf2(const char * password, const char * salt, char * out_digest) {
   char my_salt[GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0};
-  const char * cur_salt;
-  unsigned char encoded_key[128 + GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0};
-  size_t encoded_key_size = (128 + GLEWLWYD_DEFAULT_SALT_LENGTH), encoded_key_size_base64;
+  uint8_t cur_salt[GLEWLWYD_DEFAULT_SALT_LENGTH], dst[32 + GLEWLWYD_DEFAULT_SALT_LENGTH] = {0};
   int res;
+  size_t encoded_key_size_base64;
   
-  if (!gnutls_pkcs12_bag_encrypt(bag, password, schema)) {
-    if (salt != NULL) {
-      cur_salt = salt;
-    } else {
-      rand_string(my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
-      cur_salt = my_salt;
-    }
-    if (!gnutls_pkcs12_bag_enc_info(bag, &schema, &cipher, (void*)cur_salt, &salt_size, &count, &pbkdf2_key)) {
-      memcpy(encoded_key, pbkdf2_key, o_strlen(pbkdf2_key));
-      memcpy(encoded_key+o_strlen(pbkdf2_key), cur_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
-      encoded_key_size = o_strlen(pbkdf2_key) + GLEWLWYD_DEFAULT_SALT_LENGTH;
-      if (o_base64_encode(encoded_key, encoded_key_size, (unsigned char *)out_digest, &encoded_key_size_base64)) {
-        res = 1;
-      } else {
-        res = 0;
-      }
-    } else {
-      res = 0;
-    }
+  if (salt != NULL) {
+    memcpy(cur_salt, salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
   } else {
+    rand_string(my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+    memcpy(cur_salt, my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+  }
+  pbkdf2_hmac_sha256(o_strlen(password), (const uint8_t *)password, 1000, GLEWLWYD_DEFAULT_SALT_LENGTH, cur_salt, 32, dst);
+  memcpy(dst+32, cur_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+  if (o_base64_encode(dst, 32 + GLEWLWYD_DEFAULT_SALT_LENGTH, (unsigned char *)out_digest, &encoded_key_size_base64)) {
+    res = 1;
+  } else{
     res = 0;
   }
-  gnutls_free(pbkdf2_key);
   return res;
 }
 
@@ -416,9 +404,9 @@ char * generate_hash(digest_algorithm digest, const char * data) {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
         }
         break;
-      case digest_PKCS5S2:
-        if (generate_digest_pkcs5s2(data, NULL, buffer)) {
-          to_return = msprintf("{PKCS5S2}%s", buffer, o_strlen(buffer));
+      case digest_PBKDF2_SHA256:
+        if (generate_digest_pbkdf2(data, NULL, buffer)) {
+          to_return = msprintf("{PBKDF2}%s", buffer, o_strlen(buffer));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest PKCS5S2");
         }
