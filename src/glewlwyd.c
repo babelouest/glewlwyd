@@ -355,6 +355,7 @@ int main (int argc, char ** argv) {
   } else {
     res = ulfius_start_framework(config->instance);
   }
+  
   if (res == U_OK) {
     // Wait until stop signal is broadcasted
     pthread_mutex_lock(&global_handler_close_lock);

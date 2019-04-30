@@ -73,6 +73,8 @@
 
 #define GLEWLWYD_DEFAULT_LIMIT_SIZE 100
 
+#define GLEWLWYD_DEFAULT_SALT_LENGTH 16
+
 #define SWITCH_DB_TYPE(T, M, S, P) \
         ((T)==HOEL_DB_TYPE_MARIADB?\
            (M):\
@@ -100,7 +102,7 @@ typedef enum {
   digest_SSHA512,
   digest_MD5,
   digest_SMD5,
-  digest_PKCS5S2,
+  digest_PBKDF2_SHA256,
   digest_CRYPT,
   digest_CRYPT_MD5,
   digest_CRYPT_SHA256,
@@ -344,6 +346,7 @@ char * join_json_string_array(json_t * j_array, const char * separator);
 char * url_encode(const char * str);
 int generate_digest(digest_algorithm digest, const char * data, int use_salt, char * out_digest);
 char * generate_hash(digest_algorithm digest, const char * data);
+int generate_digest_pbkdf2(const char * password, const char * salt, char * out_digest);
 
 /**
  * Check if the result json object has a "result" element that is equal to value
