@@ -473,8 +473,8 @@ static digest_algorithm get_digest_algorithm(json_t * j_params) {
     return digest_SHA512;
   } else if (0 == o_strcmp("SSHA512", json_string_value(json_object_get(j_params, "password-algorithm")))) {
     return digest_SSHA512;
-  } else if (0 == o_strcmp("PKCS5S2", json_string_value(json_object_get(j_params, "password-algorithm")))) {
-    return digest_PKCS5S2;
+  } else if (0 == o_strcmp("PBKDF2", json_string_value(json_object_get(j_params, "password-algorithm")))) {
+    return digest_PBKDF2_SHA256;
   } else if (0 == o_strcmp("MD5", json_string_value(json_object_get(j_params, "password-algorithm")))) {
     return digest_MD5;
   } else if (0 == o_strcmp("SMD5", json_string_value(json_object_get(j_params, "password-algorithm")))) {
