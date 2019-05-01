@@ -28,7 +28,8 @@ class EmailSchemeForm extends Component {
     });
   }
   
-  triggerScheme() {
+  triggerScheme(e) {
+    e.preventDefault();
     if (this.state.scheme && this.state.currentUser) {
       var scheme = {
         scheme_type: this.state.scheme.scheme_type,
@@ -77,16 +78,16 @@ class EmailSchemeForm extends Component {
   
   render() {
       return (
-        <form action="#" id="mailSchemeForm">
+        <form action="#" id="mailSchemeForm" onSubmit={(e) => this.validateCode(e)}>
           <div className="form-group">
             <h5>{i18next.t("login.enter-mail-scheme-value")}</h5>
           </div>
           <div className="form-group">
             <label htmlFor="code">{i18next.t("login.mail-value-label")}</label>
-            <input type="text" className="form-control" name="code" id="code" autoFocus="" required="" placeholder={i18next.t("login.error-mail-expected")} value={this.state.code||""} onChange={this.handleChangeMockValue}/>
+            <input type="text" className="form-control" name="code" id="code" autoFocus="" required="" placeholder={i18next.t("login.error-mail-expected")} value={this.state.code||""} onChange={this.handleChangeCode}/>
           </div>
           <button type="button" name="triggerbut" id="triggerbut" className="btn btn-primary" onClick={this.triggerScheme} title={i18next.t("login.mail-trugger-button-title")}>{i18next.t("login.mail-scheme-trigger")}</button>
-          <button type="submit" name="mailbut" id="mailbut" className="btn btn-primary" onClick={(e) => this.validateMockValue(e)} title={i18next.t("login.mail-value-button-title")}>{i18next.t("login.btn-ok")}</button>
+          <button type="submit" name="mailbut" id="mailbut" className="btn btn-primary" onClick={(e) => this.validateCode(e)} title={i18next.t("login.mail-value-button-title")}>{i18next.t("login.btn-ok")}</button>
         </form>
       );
   }
