@@ -91,6 +91,13 @@ if (GNUTLS_FOUND)
 	include_directories(${GNUTLS_INCLUDE_DIRS})
 endif ()
 
+include(FindNettle)
+find_package(Nettle REQUIRED)
+if (NETTLE_FOUND)
+	set(LIBS ${LIBS} ${NETTLE_LIBRARIES})
+	include_directories(${NETTLE_INCLUDE_DIRS})
+endif ()
+
 include(FindLibconfig)
 find_package(Libconfig REQUIRED)
 if (LIBCONFIG_FOUND)
