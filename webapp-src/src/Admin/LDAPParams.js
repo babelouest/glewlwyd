@@ -232,7 +232,11 @@ class LDAPParams extends Component {
     }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
-        messageDispatcher.sendMessage('ModEditUser', {type: "modValid"});
+        if (this.state.role === "user") {
+          messageDispatcher.sendMessage('ModEditUser', {type: "modValid"});
+        } else if (this.state.role === "client") {
+          messageDispatcher.sendMessage('ModEditClient', {type: "modValid"});
+        }
       });
     } else {
       this.setState({errorList: errorList});

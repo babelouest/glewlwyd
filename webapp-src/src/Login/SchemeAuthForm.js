@@ -4,6 +4,7 @@ import apiManager from '../lib/APIManager';
 import messageDispatcher from '../lib/MessageDispatcher';
 
 import MockSchemeForm from './scheme/MockSchemeForm';
+import EmailSchemeForm from './scheme/EmailSchemeForm';
 
 class SchemeAuthForm extends Component {
   constructor(props) {
@@ -27,6 +28,8 @@ class SchemeAuthForm extends Component {
   render() {
     if (this.state.scheme.scheme_type === "mock") {
       return (<MockSchemeForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>);
+    } else if (this.state.scheme.scheme_type === "email") {
+      return (<EmailSchemeForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>);
     } else {
       return ("");
     }
