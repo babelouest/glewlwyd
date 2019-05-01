@@ -4,6 +4,7 @@ import MockParams from './MockParams';
 import DatabaseParams from './DatabaseParams';
 import LDAPParams from './LDAPParams';
 import HTTPParams from './HTTPParams';
+import EmailParams from './EmailParams';
 
 class ModEditParameters extends Component {
   constructor(props) {
@@ -35,6 +36,8 @@ class ModEditParameters extends Component {
       return <LDAPParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
     } else if (this.state.mod.module === "http") {
       return <HTTPParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
+    } else if (this.state.mod.module === "email") {
+      return <EmailParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
     } else {
       return ("");
     }

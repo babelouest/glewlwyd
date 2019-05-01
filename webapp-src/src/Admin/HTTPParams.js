@@ -78,7 +78,11 @@ class HTTPParams extends Component {
     }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
-        messageDispatcher.sendMessage('ModEditUser', {type: "modValid"});
+        if (this.state.role === "user") {
+          messageDispatcher.sendMessage('ModEditUser', {type: "modValid"});
+        } else if (this.state.role === "client") {
+          messageDispatcher.sendMessage('ModEditClient', {type: "modValid"});
+        }
       });
     } else {
       this.setState({errorList: errorList});
@@ -112,22 +116,22 @@ class HTTPParams extends Component {
         </div>
       </div>;
     return (
-    <div>
-      <div className="form-group">
-        <label htmlFor="mod-http-url">{i18next.t("admin.mod-http-url")}</label>
-        <input type="text" className={this.state.errorList["url"]?"form-control is-invalid":"form-control"} id="mod-http-url" onChange={(e) => this.changeParam(e, "url")} value={this.state.mod.parameters["url"]} placeholder={i18next.t("admin.mod-http-url-ph")} />
-        {this.state.errorList["url"]?<span className="error-input">{i18next.t(this.state.errorList["url"])}</span>:""}
+      <div>
+        <div className="form-group">
+          <label htmlFor="mod-http-url">{i18next.t("admin.mod-http-url")}</label>
+          <input type="text" className={this.state.errorList["url"]?"form-control is-invalid":"form-control"} id="mod-http-url" onChange={(e) => this.changeParam(e, "url")} value={this.state.mod.parameters["url"]} placeholder={i18next.t("admin.mod-http-url-ph")} />
+          {this.state.errorList["url"]?<span className="error-input">{i18next.t(this.state.errorList["url"])}</span>:""}
+        </div>
+        <div className="form-group">
+          <label htmlFor="mod-check-server-certificate">{i18next.t("admin.mod-check-server-certificate")}</label>
+          <input type="checkbox" className="form-control" id="mod-check-server-certificate" onChange={(e) => this.toggleCheckServerCertificate()} checked={this.state.mod.parameters["check-server-certificate"]||false} />
+        </div>
+        <div className="form-group">
+          <label htmlFor="mod-default-scope">{i18next.t("admin.mod-default-scope")}</label>
+          {scopeJsx}
+          {this.state.errorList["default-scope"]?<span className="error-input">{i18next.t(this.state.errorList["default-scope"])}</span>:""}
+        </div>
       </div>
-      <div className="form-group">
-        <label htmlFor="mod-check-server-certificate">{i18next.t("admin.mod-check-server-certificate")}</label>
-        <input type="checkbox" className="form-control" id="mod-check-server-certificate" onChange={(e) => this.toggleCheckServerCertificate()} checked={this.state.mod.parameters["check-server-certificate"]||false} />
-      </div>
-      <div className="form-group">
-        <label htmlFor="mod-default-scope">{i18next.t("admin.mod-default-scope")}</label>
-        {scopeJsx}
-        {this.state.errorList["default-scope"]?<span className="error-input">{i18next.t(this.state.errorList["default-scope"])}</span>:""}
-      </div>
-    </div>
     );
   }
 }

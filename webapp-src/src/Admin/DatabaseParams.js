@@ -142,13 +142,13 @@ class DatabaseParams extends Component {
       }
       if (!hasError) {
         this.setState({errorList: {}}, () => {
-          messageDispatcher.sendMessage('ModEditUser', {type: "modValid"});
+          messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
         });
       } else {
         this.setState({errorList: errorList});
       }
     } else {
-      messageDispatcher.sendMessage('ModEditUser', {type: "modValid"});
+      messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
     }
   }
   

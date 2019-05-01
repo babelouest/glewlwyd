@@ -23,7 +23,7 @@ class ModEdit extends Component {
       check: false
     }
     
-    messageDispatcher.subscribe('ModEditUser', (message) => {
+    messageDispatcher.subscribe('ModEdit', (message) => {
       if (message.type === 'modValid') {
         this.setState({check: false}, () => {
           if (this.state.add && !this.state.mod.name) {

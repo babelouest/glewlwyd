@@ -32,7 +32,7 @@
 #include <ulfius.h>
 #include "../glewlwyd-common.h"
 
-#define GLEWLWYD_SCHEME_CODE_TABLE "gss_code"
+#define GLEWLWYD_SCHEME_CODE_TABLE "gs_code"
 
 #define GLEWLWYD_SCHEME_CODE_DEFAULT_LENGTH 6
 #define GLEWLWYD_SCHEME_CODE_DURATION 900
@@ -46,10 +46,10 @@ static int generate_new_code(struct config_module * config, const char * usernam
                       "table",
                       GLEWLWYD_SCHEME_CODE_TABLE,
                       "set",
-                        "gusc_enabled",
+                        "gsc_enabled",
                         0,
                        "where",
-                        "gusc_username",
+                        "gsc_username",
                         username);
   res = h_delete(config->conn, j_query, NULL);
   json_decref(j_query);
@@ -60,9 +60,9 @@ static int generate_new_code(struct config_module * config, const char * usernam
                             "table",
                             GLEWLWYD_SCHEME_CODE_TABLE,
                             "values",
-                              "gusc_username",
+                              "gsc_username",
                               username,
-                              "gusc_code_hash",
+                              "gsc_code_hash",
                               code_hash);
         res = h_insert(config->conn, j_query, NULL);
         json_decref(j_query);
@@ -106,13 +106,13 @@ static int check_code(struct config_module * config, json_t * j_param, const cha
                         "table",
                         GLEWLWYD_SCHEME_CODE_TABLE,
                         "where",
-                          "gusc_username",
+                          "gsc_username",
                           username,
-                          "gusc_code_hash",
+                          "gsc_code_hash",
                           code_hash,
-                          "gusc_enabled",
+                          "gsc_enabled",
                           1,
-                          "gusc_issued_at",
+                          "gsc_issued_at",
                             "operator",
                             "raw",
                             "value",
@@ -125,12 +125,12 @@ static int check_code(struct config_module * config, json_t * j_param, const cha
                             "table",
                             GLEWLWYD_SCHEME_CODE_TABLE,
                             "set",
-                              "gusc_enabled",
+                              "gsc_enabled",
                               0,
                              "where",
-                               "gusc_username",
+                               "gsc_username",
                                username,
-                               "gusc_code_hash",
+                               "gsc_code_hash",
                                code_hash);
         res = h_update(config->conn, j_query, NULL);
         json_decref(j_query);
@@ -536,7 +536,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
                                        json_string_value(json_object_get(j_param, "user")),
                                        json_string_value(json_object_get(j_param, "password")),
                                        json_string_value(json_object_get(j_param, "from")),
-                                       json_string_value(json_object_get(j_user, "email")),
+                                       json_string_value(json_object_get(j_param, "email")),
                                        NULL,
                                        NULL,
                                        json_string_value(json_object_get(j_param, "subject")),
@@ -571,7 +571,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
   return json_pack("{si}", "result", ret);
 }
 
-/**
+/** 
  * 
  * user_auth_scheme_module_validate
  * 
