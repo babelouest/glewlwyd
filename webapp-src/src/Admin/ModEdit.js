@@ -100,6 +100,18 @@ class ModEdit extends Component {
     this.setState({mod: mod});
   }
   
+  changeExpiration(e) {
+    var mod = this.state.mod;
+    mod.expiration = parseInt(e.target.value);
+    this.setState({mod: mod});
+  }
+  
+  changeMaxUse(e) {
+    var mod = this.state.mod;
+    mod.max_use = parseInt(e.target.value);
+    this.setState({mod: mod});
+  }
+  
   toggleReadonly(e) {
     var mod = this.state.mod;
     mod.readonly = !mod.readonly;
@@ -135,11 +147,23 @@ class ModEdit extends Component {
       });
     }
     var readonly = "";
+    var schemeParams = "";
     if (this.state.role !== "scheme") {
       readonly = <div className="form-group">
         <label htmlFor="mod-readonly">{i18next.t("admin.mod-readonly")}</label>
         <input type="checkbox" className="form-control" id="mod-readonly" onChange={(e) => this.toggleReadonly(e)} checked={this.state.mod.readonly||this.state.mod.module==="http"||false} />
       </div>;
+    } else {
+      schemeParams = <div>
+        <div className="form-group">
+          <label htmlFor="mod-expiration">{i18next.t("admin.mod-expiration")}</label>
+          <input type="number" min="0" step="1" className="form-control" id="mod-expiration" placeholder={i18next.t("admin.mod-expiration-ph")} value={this.state.mod.expiration} onChange={(e) => this.changeExpiration(e)}/>
+        </div>
+        <div className="form-group">
+          <label htmlFor="mod-max-use">{i18next.t("admin.mod-max-use")}</label>
+          <input type="number" min="0" step="1" className="form-control" id="mod-max-use" placeholder={i18next.t("admin.mod-max-use-ph")} value={this.state.mod.max_use} onChange={(e) => this.changeMaxUse(e)}/>
+        </div>
+      </div>
     }
 		return (
     <div className="modal fade" id="editModModal" tabIndex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
@@ -162,6 +186,7 @@ class ModEdit extends Component {
                 <label htmlFor="mod-display-name">{i18next.t("admin.mod-display-name")}</label>
                 <input type="text" className="form-control" id="mod-display-name" placeholder={i18next.t("admin.mod-display-name-ph")} maxLength="256" value={this.state.mod.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
               </div>
+              {schemeParams}
               <div className="form-group">
                 <label htmlFor="mod-type">{i18next.t("admin.mod-type")}</label>
                 {modType}

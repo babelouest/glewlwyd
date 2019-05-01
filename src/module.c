@@ -475,7 +475,7 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
   size_t index;
   struct _user_auth_scheme_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[ssss]ss}",
+  j_query = json_pack("{sss[ssssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "columns",
@@ -483,6 +483,8 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
                         "guasmi_name AS name",
                         "guasmi_display_name AS display_name",
                         "guasmi_parameters",
+                        "guasmi_expiration AS expiration",
+                        "guasmi_max_use AS max_use",
                       "order_by",
                       "guasmi_module");
   res = h_select(config->conn, j_query, &j_result, NULL);
@@ -520,7 +522,7 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
   struct _user_auth_scheme_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[ssss]s{ss}}",
+  j_query = json_pack("{sss[ssssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "columns",
@@ -528,6 +530,8 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
                         "guasmi_name AS name",
                         "guasmi_display_name AS display_name",
                         "guasmi_parameters",
+                        "guasmi_expiration AS expiration",
+                        "guasmi_max_use AS max_use",
                       "where",
                         "guasmi_name",
                         name);
@@ -604,6 +608,12 @@ json_t * is_user_auth_scheme_module_valid(struct config_elements * config, json_
       if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) == 0 || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
         json_array_append_new(j_error_list, json_string("display_name is optional and must be a non empty string of at most 256 characters"));
       }
+      if (json_object_get(j_module, "expiration") == NULL || !json_is_integer(json_object_get(j_module, "expiration")) || json_integer_value(json_object_get(j_module, "expiration")) <= 0) {
+        json_array_append_new(j_error_list, json_string("expiration is mandatory and must be a non null positive integer"));
+      }
+      if (json_object_get(j_module, "max_use") == NULL || !json_is_integer(json_object_get(j_module, "max_use")) || json_integer_value(json_object_get(j_module, "max_use")) < 0) {
+        json_array_append_new(j_error_list, json_string("max_use is mandatory and must be a positive integer"));
+      }
       if (json_object_get(j_module, "parameters") == NULL || !json_is_object(json_object_get(j_module, "parameters"))) {
         json_array_append_new(j_error_list, json_string("Parameters is mandatory and must be a json object of at most 16k characters"));
       } else {
@@ -636,7 +646,7 @@ int add_user_auth_scheme_module(struct config_elements * config, json_t * j_modu
   int res, ret, i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOsOsOss}}",
+  j_query = json_pack("{sss{sOsOsOsssOsO}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "values",
@@ -647,7 +657,11 @@ int add_user_auth_scheme_module(struct config_elements * config, json_t * j_modu
                         "guasmi_display_name",
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
                         "guasmi_parameters",
-                        parameters);
+                        parameters,
+                        "guasmi_expiration",
+                        json_object_get(j_module, "expiration"),
+                        "guasmi_max_use",
+                        json_object_get(j_module, "max_use"));
   res = h_insert(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -703,7 +717,7 @@ int set_user_auth_scheme_module(struct config_elements * config, const char * na
   int res, ret;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOss}s{ss}}",
+  j_query = json_pack("{sss{sOsssOsO}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "set",
@@ -711,6 +725,10 @@ int set_user_auth_scheme_module(struct config_elements * config, const char * na
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
                         "guasmi_parameters",
                         parameters,
+                        "guasmi_expiration",
+                        json_object_get(j_module, "expiration"),
+                        "guasmi_max_use",
+                        json_object_get(j_module, "max_use"),
                       "where",
                         "guasmi_name",
                         name);
