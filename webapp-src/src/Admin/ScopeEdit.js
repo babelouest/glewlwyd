@@ -18,6 +18,7 @@ class ScopeEdit extends Component {
     this.changeDescription = this.changeDescription.bind(this);
     this.togglePasswordRequired = this.togglePasswordRequired.bind(this);
     this.addScheme = this.addScheme.bind(this);
+    this.handleRemoveScheme = this.handleRemoveScheme.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -92,6 +93,18 @@ class ScopeEdit extends Component {
     scope.scheme[group].push(newScheme);
     this.setState({scope: scope});
   }
+  
+  handleRemoveScheme(e, group, scheme) {
+    var scope = this.state.scope;
+    if (scope.scheme[group]) {
+      scope.scheme[group].forEach((curScheme, index) => {
+        if (curScheme.scheme_name === scheme.scheme_name) {
+          scope.scheme[group].splice(index, 1);
+        }
+      });
+    }
+    this.setState({scope: scope});
+  }
 
 	render() {
     var groupList = [];
@@ -121,15 +134,14 @@ class ScopeEdit extends Component {
       var schemeList = [];
       var iScheme = 0;
       this.state.scope.scheme[groupName].forEach((scheme, index) => {
-        var maxUse = "";
         // Add badge or
         if (schemeList.length) {
           schemeList.push(<span className="badge badge-secondary btn-icon-right" key={iScheme++}>{i18next.t("admin.or")}</span>);
         }
         // Add scheme
-        schemeList.push(<span className="badge badge-primary btn-icon-right" key={iScheme++}>{scheme.scheme_display_name}{maxUse}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span>);
+        schemeList.push(<a href="#" key={iScheme++} onClick={(e) => this.handleRemoveScheme(e, groupName, scheme)}><span className="badge badge-primary btn-icon-right">{scheme.scheme_display_name}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
       });
-      // Add badge and
+      // Add badge
       if (groupList.length) {
         groupList.push(<span className="badge badge-secondary btn-icon-right" key={i++}>{i18next.t("admin.and")}</span>);
       }
