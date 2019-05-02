@@ -46,7 +46,7 @@ class EmailSchemeForm extends Component {
         this.setState({showValidate: true});
       })
       .fail((err) => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-mail-trigger")});
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.mail-trigger-error")});
       });
     }
   }
@@ -70,8 +70,12 @@ class EmailSchemeForm extends Component {
     .then(() => {
       messageDispatcher.sendMessage('App', 'InitProfile');
     })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-mail-code")});
+    .fail((err) => {
+      if (err.status === 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.mail-code-invalid")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.mail-code-error")});
+      }
     });
   }
   

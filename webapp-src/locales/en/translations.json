@@ -45,7 +45,11 @@
     "mail-code-ph": "Ex: 123456",
     "mail-trigger-button-title": "Send a new code",
     "mail-scheme-trigger": "Send a new code",
-    "mail-code-button-title": "Confirm code"
+    "mail-code-button-title": "Confirm code",
+    "mail-trigger-ok": "Code Sent",
+    "mail-trigger-error": "Error sending code",
+    "mail-code-error": "Error while validating code",
+    "mail-code-invalid": "Invalid code"
   },
   "admin": {
     "menu-users": "Users",
