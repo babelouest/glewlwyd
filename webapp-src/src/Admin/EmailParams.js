@@ -72,9 +72,13 @@ class EmailParams extends Component {
     });
   }
   
-  changeParam(e, param) {
+  changeParam(e, param, number) {
     var mod = this.state.mod;
-    mod.parameters[param] = e.target.value;
+    if (number) {
+      mod.parameters[param] = parseInt(e.target.value);
+    } else {
+      mod.parameters[param] = e.target.value;
+    }
     this.setState({mod: mod});
   }
   
@@ -145,7 +149,7 @@ class EmailParams extends Component {
         </div>
         <div className="form-group">
           <label htmlFor="mod-email-port">{i18next.t("admin.mod-email-port")}</label>
-          <input type="number" min="0" max="65536" step="1" className={this.state.errorList["port"]?"form-control is-invalid":"form-control"} id="mod-email-port" onChange={(e) => this.changeParam(e, "port")} value={this.state.mod.parameters["port"]} placeholder={i18next.t("admin.mod-email-port-ph")} />
+          <input type="number" min="0" max="65536" step="1" className={this.state.errorList["port"]?"form-control is-invalid":"form-control"} id="mod-email-port" onChange={(e) => this.changeParam(e, "port", true)} value={this.state.mod.parameters["port"]} placeholder={i18next.t("admin.mod-email-port-ph")} />
           {this.state.errorList["port"]?<span className="error-input">{i18next.t(this.state.errorList["port"])}</span>:""}
         </div>
         <div className="form-group">
