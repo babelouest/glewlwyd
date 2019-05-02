@@ -39,7 +39,13 @@
     "wish-message": "What do you wish for?",
     "error-mock-value": "Error mock value",
     "error-mock-trigger": "Error while triggering mock value",
-    "mock-trigger-must-register": "You must register mock value in the profile page"
+    "mock-trigger-must-register": "You must register mock value in the profile page",
+    "mail-enter-scheme-code": "Enter the code sent by e-mail",
+    "mail-code-label": "E-mail code",
+    "mail-code-ph": "Ex: 123456",
+    "mail-trigger-button-title": "Send a new code",
+    "mail-scheme-trigger": "Send a new code",
+    "mail-code-button-title": "Confirm code"
   },
   "admin": {
     "menu-users": "Users",
