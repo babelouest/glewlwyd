@@ -642,7 +642,7 @@ json_t * is_user_auth_scheme_module_valid(struct config_elements * config, json_
 int add_user_auth_scheme_module(struct config_elements * config, json_t * j_module) {
   struct _user_auth_scheme_module * module;
   struct _user_auth_scheme_module_instance * cur_instance;
-  json_t * j_query;
+  json_t * j_query, * j_last_id;
   int res, ret, i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
@@ -665,45 +665,55 @@ int add_user_auth_scheme_module(struct config_elements * config, json_t * j_modu
   res = h_insert(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    module = NULL;
-    for (i=0; i<pointer_list_size(config->user_auth_scheme_module_list); i++) {
-      module = (struct _user_auth_scheme_module *)pointer_list_get_at(config->user_auth_scheme_module_list, i);
-      if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_module, "module")))) {
-        break;
-      } else {
-        module = NULL;
+    j_last_id = h_last_insert_id(config->conn);
+    if (j_last_id != NULL) {
+      module = NULL;
+      for (i=0; i<pointer_list_size(config->user_auth_scheme_module_list); i++) {
+        module = (struct _user_auth_scheme_module *)pointer_list_get_at(config->user_auth_scheme_module_list, i);
+        if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_module, "module")))) {
+          break;
+        } else {
+          module = NULL;
+        }
       }
-    }
-    if (module != NULL) {
-      cur_instance = o_malloc(sizeof(struct _user_auth_scheme_module_instance));
-      if (cur_instance != NULL) {
-        cur_instance->cls = NULL;
-        cur_instance->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
-        cur_instance->module = module;
-        cur_instance->enabled = 0;
-        if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
-          if ((res = module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), &cur_instance->cls)) == G_OK) {
-            cur_instance->enabled = 1;
-            ret = G_OK;
-          } else if (res == G_ERROR_PARAM) {
-            ret = G_ERROR_PARAM;
+      if (module != NULL) {
+        cur_instance = o_malloc(sizeof(struct _user_auth_scheme_module_instance));
+        if (cur_instance != NULL) {
+          cur_instance->cls = NULL;
+          cur_instance->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
+          cur_instance->module = module;
+          cur_instance->guasmi_id = json_integer_value(j_last_id);
+          cur_instance->guasmi_expiration = json_integer_value(json_object_get(j_module, "expiration"));
+          cur_instance->guasmi_max_use = json_integer_value(json_object_get(j_module, "max_use"));
+          cur_instance->enabled = 0;
+          if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
+            if ((res = module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), &cur_instance->cls)) == G_OK) {
+              cur_instance->enabled = 1;
+              ret = G_OK;
+            } else if (res == G_ERROR_PARAM) {
+              ret = G_ERROR_PARAM;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
+              ret = G_ERROR;
+            }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
-            ret = G_ERROR;
+            y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error reallocating resources for user_auth_scheme_module_instance_list");
+            o_free(cur_instance->name);
+            ret = G_ERROR_MEMORY;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error reallocating resources for user_auth_scheme_module_instance_list");
-          o_free(cur_instance->name);
+          y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error allocating resources for cur_instance");
           ret = G_ERROR_MEMORY;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error allocating resources for cur_instance");
-        ret = G_ERROR_MEMORY;
+        y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Module '%s' not found", json_string_value(json_object_get(j_module, "module")));
+        ret = G_ERROR;
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Module '%s' not found", json_string_value(json_object_get(j_module, "module")));
-      ret = G_ERROR;
+      y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error h_last_insert_id");
+      ret = G_ERROR_DB;
     }
+    json_decref(j_last_id);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error executing j_query");
     ret = G_ERROR_DB;
@@ -716,6 +726,7 @@ int set_user_auth_scheme_module(struct config_elements * config, const char * na
   json_t * j_query;
   int res, ret;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
+  struct _user_auth_scheme_module_instance * scheme_instance = NULL;
   
   j_query = json_pack("{sss{sOsssOsO}s{ss}}",
                       "table",
@@ -736,7 +747,15 @@ int set_user_auth_scheme_module(struct config_elements * config, const char * na
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    ret = G_OK;
+    scheme_instance = get_user_auth_scheme_module_instance(config, name);
+    if (scheme_instance != NULL) {
+      scheme_instance->guasmi_expiration = json_integer_value(json_object_get(j_module, "expiration"));
+      scheme_instance->guasmi_max_use = json_integer_value(json_object_get(j_module, "max_use"));
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error get_user_auth_scheme_module_instance");
+      ret = G_ERROR;
+    }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error executing j_query");
     ret = G_ERROR_DB;
