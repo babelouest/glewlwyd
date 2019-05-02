@@ -11,7 +11,8 @@ class EmailSchemeForm extends Component {
       config: props.config,
       scheme: props.scheme,
       currentUser: props.currentUser,
-      code: ""
+      code: "",
+      showValidate: false
     };
     
     this.triggerScheme = this.triggerScheme.bind(this);
@@ -24,7 +25,8 @@ class EmailSchemeForm extends Component {
       config: nextProps.config,
       scheme: nextProps.scheme,
       currentUser: nextProps.currentUser,
-      code: ""
+      code: "",
+      showValidate: false
     });
   }
   
@@ -41,13 +43,10 @@ class EmailSchemeForm extends Component {
       apiManager.glewlwydRequest("/auth/scheme/trigger/", "POST", scheme)
       .then((res) => {
         messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.mail-trigger-ok")});
+        this.setState({showValidate: true});
       })
       .fail((err) => {
-        if (err.status === 401) {
-          messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.mail-trigger-must-register")});
-        } else {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-mail-trigger")});
-        }
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-mail-trigger")});
       });
     }
   }
@@ -72,22 +71,29 @@ class EmailSchemeForm extends Component {
       messageDispatcher.sendMessage('App', 'InitProfile');
     })
     .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-mail-value")});
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-mail-code")});
     });
   }
   
   render() {
+    var validateButton, inputCode;
+    if (this.state.showValidate) {
+      validateButton = <button type="submit" name="mailbut" id="mailbut" className="btn btn-primary" onClick={(e) => this.validateCode(e)} title={i18next.t("login.mail-code-button-title")}>{i18next.t("login.btn-ok")}</button>;
+      inputCode = <input type="text" className="form-control" name="code" id="code" autoFocus="" required="" placeholder={i18next.t("login.mail-code-ph")} value={this.state.code||""} onChange={this.handleChangeCode}/>;
+    }
       return (
         <form action="#" id="mailSchemeForm" onSubmit={(e) => this.validateCode(e)}>
           <div className="form-group">
-            <h5>{i18next.t("login.enter-mail-scheme-value")}</h5>
+            <h5>{i18next.t("login.mail-enter-scheme-code")}</h5>
           </div>
           <div className="form-group">
-            <label htmlFor="code">{i18next.t("login.mail-value-label")}</label>
-            <input type="text" className="form-control" name="code" id="code" autoFocus="" required="" placeholder={i18next.t("login.error-mail-expected")} value={this.state.code||""} onChange={this.handleChangeCode}/>
+            <label htmlFor="code">{i18next.t("login.mail-code-label")}</label>
+            {inputCode}
           </div>
-          <button type="button" name="triggerbut" id="triggerbut" className="btn btn-primary" onClick={this.triggerScheme} title={i18next.t("login.mail-trugger-button-title")}>{i18next.t("login.mail-scheme-trigger")}</button>
-          <button type="submit" name="mailbut" id="mailbut" className="btn btn-primary" onClick={(e) => this.validateCode(e)} title={i18next.t("login.mail-value-button-title")}>{i18next.t("login.btn-ok")}</button>
+          <div className="btn-group" role="group">
+            {validateButton}
+            <button type="button" name="triggerbut" id="triggerbut" className="btn btn-primary" onClick={this.triggerScheme} title={i18next.t("login.mail-trigger-button-title")}>{i18next.t("login.mail-scheme-trigger")}</button>
+          </div>
         </form>
       );
   }

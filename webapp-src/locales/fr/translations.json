@@ -39,7 +39,13 @@
     "wish-message": "Quel est votre souhait?",
     "error-mock-value": "Erreur de la valeur factice",
     "error-mock-trigger": "Erreur lors du déclenchement de la valeur factice",
-    "mock-trigger-must-register": "Vous devez enregistrer la valeur factice dans la page profil"
+    "mock-trigger-must-register": "Vous devez enregistrer la valeur factice dans la page profil",
+    "mail-enter-scheme-code": "Enrez le code de confirmation recu par courriel",
+    "mail-code-label": "Code courriel",
+    "mail-code-ph": "Ex: 123456",
+    "mail-trigger-button-title": "Envoyer un nouveau code",
+    "mail-scheme-trigger": "Envoyer un nouveau code",
+    "mail-code-button-title": "Valider le code"
   },
   "admin": {
     "menu-users": "Utilisateurs",
