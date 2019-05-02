@@ -118,6 +118,7 @@ static int check_code(struct config_module * config, json_t * j_param, const cha
                             "value",
                             issued_at_clause);
     res = h_select(config->conn, j_query, &j_result, NULL);
+    o_free(issued_at_clause);
     json_decref(j_query);
     if (res == H_OK) {
       if (json_array_size(j_result)) {
@@ -143,10 +144,12 @@ static int check_code(struct config_module * config, json_t * j_param, const cha
       } else {
         ret = G_ERROR_UNAUTHORIZED;
       }
+      json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "check_code - Error executing j_query (1)");
       ret = G_ERROR_DB;
     }
+    o_free(code_hash);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "check_code - Error generate_hash");
     ret = G_ERROR;
@@ -365,11 +368,11 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  */
 int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
   UNUSED(config);
-  json_t * j_params = json_incref(j_parameters), * j_result;
+  json_t * j_result;
   int ret;
   char * str_error;
   
-  j_result = is_scheme_parameters_valid(j_params);
+  j_result = is_scheme_parameters_valid(j_parameters);
   if (check_result_value(j_result, G_OK)) {
     *cls = json_incref(j_parameters);
     ret = G_OK;
