@@ -260,8 +260,6 @@ int callback_glewlwyd_check_admin_session_delegate (const struct _u_request * re
 int callback_glewlwyd_close_check_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_user_auth_register (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_user_auth_register_get (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_auth_trigger (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_schemes_from_scopes (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_delete_session (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -272,6 +270,11 @@ int callback_glewlwyd_user_update_password (const struct _u_request * request, s
 int callback_glewlwyd_user_get_session_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_scheme_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_session (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_auth_register (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_auth_register_get (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_glewlwyd_user_auth_register_delegate (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_auth_register_get_delegate (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * request, struct _u_response * response, void * user_data);
