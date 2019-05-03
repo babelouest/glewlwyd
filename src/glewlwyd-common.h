@@ -197,8 +197,8 @@ struct _user_auth_scheme_module {
   int       (* user_auth_scheme_module_init)(struct config_module * config, json_t * j_parameters, void ** cls);
   int       (* user_auth_scheme_module_close)(struct config_module * config, void * cls);
   int       (* user_auth_scheme_module_can_use)(struct config_module * config, const char * username, void * cls);
-  json_t  * (* user_auth_scheme_module_register)(struct config_module * config, const void * http_request, const char * username, json_t * j_scheme_data, void * cls);
-  json_t  * (* user_auth_scheme_module_register_get)(struct config_module * config, const void * http_request, const char * username, void * cls);
+  json_t  * (* user_auth_scheme_module_register)(struct config_module * config, const void * http_request, int from_admin, const char * username, json_t * j_scheme_data, void * cls);
+  json_t  * (* user_auth_scheme_module_register_get)(struct config_module * config, const void * http_request, int from_admin, const char * username, void * cls);
   json_t  * (* user_auth_scheme_module_trigger)(struct config_module * config, const void * http_request, const char * username, json_t * j_scheme_trigger, void * cls);
   int       (* user_auth_scheme_module_validate)(struct config_module * config, const void * http_request, const char * username, json_t * j_scheme_data, void * cls);
 };
@@ -400,8 +400,8 @@ int      user_auth_scheme_module_unload(struct config_module * config);
 int      user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls);
 int      user_auth_scheme_module_close(struct config_module * config, void * cls);
 int      user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls);
-json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls);
-json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, const char * username, void * cls);
+json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, int from_admin, const char * username, json_t * j_scheme_data, void * cls);
+json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, int from_admin, const char * username, void * cls);
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls);
 int      user_auth_scheme_module_validate(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls);
 
