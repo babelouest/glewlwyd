@@ -467,6 +467,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
   UNUSED(config);
   UNUSED(http_request);
   UNUSED(j_scheme_data);
+  UNUSED(from_admin);
   return json_pack("{si}", "result", (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED?G_OK:G_ERROR_PARAM));
 }
 
@@ -492,6 +493,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
 json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, int from_admin, const char * username, void * cls) {
   UNUSED(config);
   UNUSED(http_request);
+  UNUSED(from_admin);
   return json_pack("{si}", "result", (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED)?G_OK:G_ERROR_PARAM);
 }
 
