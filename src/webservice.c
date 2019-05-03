@@ -58,25 +58,14 @@ int callback_default (const struct _u_request * request, struct _u_response * re
 int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   char * session_uid;
-  json_t * j_user, * j_impersonate;
+  json_t * j_user;
   int ret;
   
   if ((session_uid = get_session_id(config, request)) != NULL) {
     j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
-      if (o_strlen(u_map_get(request->map_url, "impersonate")) && is_scope_list_valid_for_session(config, config->admin_scope, session_uid) == G_OK) {
-        j_impersonate = get_user(config, u_map_get(request->map_url, "impersonate"), NULL);
-        if (check_result_value(j_impersonate, G_OK)) {
-          response->shared_data = json_incref(json_object_get(j_impersonate, "user"));
-          ret = U_CALLBACK_CONTINUE;
-        } else {
-          ret = U_CALLBACK_UNAUTHORIZED;
-        }
-        json_decref(j_impersonate);
-      } else {
-        response->shared_data = json_incref(json_object_get(j_user, "user"));
-        ret = U_CALLBACK_CONTINUE;
-      }
+      response->shared_data = json_incref(json_object_get(j_user, "user"));
+      ret = U_CALLBACK_CONTINUE;
     } else {
       ret = U_CALLBACK_UNAUTHORIZED;
     }
@@ -100,6 +89,38 @@ int callback_glewlwyd_check_admin_session (const struct _u_request * request, st
       if (is_scope_list_valid_for_session(config, config->admin_scope, session_uid) == G_OK) {
         response->shared_data = json_incref(json_object_get(j_user, "user"));
         ret = U_CALLBACK_CONTINUE;
+      } else {
+        ret = U_CALLBACK_UNAUTHORIZED;
+      }
+    } else {
+      ret = U_CALLBACK_UNAUTHORIZED;
+    }
+    json_decref(j_user);
+  } else {
+    ret = U_CALLBACK_UNAUTHORIZED;
+  }
+  o_free(session_uid);
+  return ret;
+}
+
+int callback_glewlwyd_check_admin_session_delegate (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  char * session_uid;
+  json_t * j_user, * j_delegate;
+  int ret;
+  
+  if ((session_uid = get_session_id(config, request)) != NULL) {
+    j_user = get_current_user_for_session(config, session_uid);
+    if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
+      if (is_scope_list_valid_for_session(config, config->admin_scope, session_uid) == G_OK) {
+        j_delegate = get_user(config, u_map_get(request->map_url, "username"), NULL);
+        if (check_result_value(j_delegate, G_OK)) {
+          response->shared_data = json_incref(json_object_get(j_delegate, "user"));
+          ret = U_CALLBACK_CONTINUE;
+        } else {
+          ret = U_CALLBACK_UNAUTHORIZED;
+        }
+        json_decref(j_delegate);
       } else {
         ret = U_CALLBACK_UNAUTHORIZED;
       }
@@ -277,7 +298,7 @@ int callback_glewlwyd_user_auth_register (const struct _u_request * request, str
     if (json_object_get(j_param, "username") != NULL && json_is_string(json_object_get(j_param, "username")) && json_string_length(json_object_get(j_param, "username"))) {
       if (0 == o_strcasecmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
         if (json_object_get(j_param, "scheme_type") != NULL && json_is_string(json_object_get(j_param, "scheme_type")) && json_string_length(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_is_string(json_object_get(j_param, "scheme_name")) && json_string_length(json_object_get(j_param, "scheme_name"))) {
-          j_result = auth_register_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), json_object_get(j_param, "value"), request);
+          j_result = auth_register_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), (o_strstr(request->http_url, "/delegate/")!=NULL), json_string_value(json_object_get(j_param, "username")), json_object_get(j_param, "value"), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             ulfius_set_string_body_response(response, 400, "bad scheme parameters");
           } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
@@ -317,7 +338,7 @@ int callback_glewlwyd_user_auth_register_get (const struct _u_request * request,
     if (json_object_get(j_param, "username") != NULL && json_string_length(json_object_get(j_param, "username"))) {
       if (0 == o_strcasecmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
         if (json_object_get(j_param, "scheme_type") != NULL && json_string_length(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_string_length(json_object_get(j_param, "scheme_name"))) {
-          j_result = auth_register_get_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), request);
+          j_result = auth_register_get_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), (o_strstr(request->http_url, "/delegate/")!=NULL), json_string_value(json_object_get(j_param, "username")), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             ulfius_set_string_body_response(response, 400, "bad scheme parameters");
           } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
