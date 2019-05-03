@@ -250,7 +250,7 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
+json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, int from_admin, const char * username, json_t * j_scheme_data, void * cls) {
   UNUSED(config);
   UNUSED(http_request);
   json_t * j_return;
@@ -290,7 +290,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, const char * username, void * cls) {
+json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, int from_admin, const char * username, void * cls) {
   UNUSED(config);
   UNUSED(http_request);
   json_t * j_return;
