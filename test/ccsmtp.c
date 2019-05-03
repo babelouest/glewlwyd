@@ -28,6 +28,8 @@
 // been made to sandbox the server or prevent it from using excessive
 // system resources in the name of responding to client requests.
 //
+// to compile: gcc ccsmtp.c -o ccsmtpd -lpthread -lyder -lorcania
+//
 
 #include <assert.h>
 #include <ctype.h>
