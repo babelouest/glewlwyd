@@ -28,7 +28,7 @@ struct _u_request admin_req;
 START_TEST(test_glwd_auth_update_ok)
 {
   json_t * j_profile = json_pack("{ssss}", "name", NAME "-new", "email", EMAIL "-new");
-  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/profile?impersonate=" USERNAME_IMPERSONATE, NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/delegate/" USERNAME_IMPERSONATE "/profile", NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   j_profile = json_pack("{ssssss}", "username", USERNAME_IMPERSONATE, "name", NAME "-new", "email", EMAIL "-new");
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/user/" USERNAME_IMPERSONATE, NULL, NULL, NULL, NULL, 200, j_profile, NULL, NULL), 1);
@@ -39,30 +39,14 @@ END_TEST
 START_TEST(test_glwd_auth_profile_get_scheme_available_success)
 {
   json_t * j_expected = json_pack("{ssssssso}", "module", "mock", "name", "mock_scheme_42", "display_name", "Mock 42", "enabled", json_true());
-  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/profile/scheme?impersonate=" USERNAME_IMPERSONATE, NULL, NULL, NULL, NULL, 200, j_expected, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME_IMPERSONATE "/profile/scheme", NULL, NULL, NULL, NULL, 200, j_expected, NULL, NULL), 1);
   json_decref(j_expected);
 }
 END_TEST
 
 START_TEST(test_glwd_auth_session_manage_list)
 {
-  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/profile/session?impersonate=" USERNAME_IMPERSONATE, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
-}
-END_TEST
-
-START_TEST(test_glwd_auth_change_password)
-{
-  json_t * j_profile = json_pack("{ssss}", "old_password", PROFILE_PASSWORD, "password", PROFILE_NEW_PASSWORD);
-  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/profile/password/", NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
-  json_decref(j_profile);
-  
-  j_profile = json_pack("{ssss}", "username", USERNAME_IMPERSONATE, "password", PROFILE_NEW_PASSWORD);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/", NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
-  json_decref(j_profile);
-  
-  j_profile = json_pack("{ssss}", "old_password", PROFILE_NEW_PASSWORD, "password", PROFILE_PASSWORD);
-  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/profile/password/", NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
-  json_decref(j_profile);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME_IMPERSONATE "/profile/session", NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
 }
 END_TEST
 
@@ -76,7 +60,6 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_auth_update_ok);
   tcase_add_test(tc_core, test_glwd_auth_profile_get_scheme_available_success);
   tcase_add_test(tc_core, test_glwd_auth_session_manage_list);
-  tcase_add_test(tc_core, test_glwd_auth_change_password);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
