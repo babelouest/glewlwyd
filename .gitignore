@@ -1,6 +1,9 @@
 *.o
 *.so
 *.key
+*.crt
+*.pfx
+*.csr
 *.pem
 *.log
 *.err
