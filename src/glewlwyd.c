@@ -105,6 +105,7 @@ int main (int argc, char ** argv) {
   config->use_secure_connection = 0;
   config->secure_connection_key_file = NULL;
   config->secure_connection_pem_file = NULL;
+  config->secure_connection_ca_file = NULL;
   config->conn = NULL;
   config->session_key = o_strdup(GLEWLWYD_DEFAULT_SESSION_KEY);
   config->session_expiration = GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE;
@@ -357,7 +358,17 @@ int main (int argc, char ** argv) {
     char * key_file = get_file_content(config->secure_connection_key_file);
     char * pem_file = get_file_content(config->secure_connection_pem_file);
     if (key_file != NULL && pem_file != NULL) {
-      res = ulfius_start_secure_framework(config->instance, key_file, pem_file);
+      if (config->secure_connection_ca_file != NULL) {
+        char * ca_file = get_file_content(config->secure_connection_ca_file);
+        if (ca_file != NULL) {
+          res = ulfius_start_secure_ca_trust_framework(config->instance, key_file, pem_file, ca_file);
+        } else {
+          res = U_ERROR_PARAMS;
+        }
+        o_free(ca_file);
+      } else {
+        res = ulfius_start_secure_framework(config->instance, key_file, pem_file);
+      }
     } else {
       res = U_ERROR_PARAMS;
     }
@@ -556,6 +567,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->allow_origin);
     o_free((*config)->secure_connection_key_file);
     o_free((*config)->secure_connection_pem_file);
+    o_free((*config)->secure_connection_ca_file);
     o_free((*config)->session_key);
     o_free((*config)->login_url);
     o_free((*config)->user_module_path);
@@ -947,6 +959,9 @@ int build_config_from_file(struct config_elements * config) {
       config->use_secure_connection = int_value;
       config->secure_connection_key_file = o_strdup(str_value);
       config->secure_connection_pem_file = o_strdup(str_value_2);
+      if (config_lookup_string(&cfg, "secure_connection_ca_file", &str_value) == CONFIG_TRUE) {
+        config->secure_connection_ca_file = o_strdup(str_value);
+      }
     } else {
       fprintf(stderr, "Error secure connection is active but certificate is not valid, exiting\n");
       config_destroy(&cfg);
