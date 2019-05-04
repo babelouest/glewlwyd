@@ -26,7 +26,7 @@ TARGET_ADMIN=glewlwyd_admin_mod_type glewlwyd_admin_mod_user glewlwyd_admin_mod_
 TARGET_AUTH=glewlwyd_auth_password glewlwyd_auth_scheme glewlwyd_auth_grant glewlwyd_auth_check_scheme glewlwyd_auth_scheme_trigger glewlwyd_auth_scheme_register glewlwyd_auth_profile glewlwyd_auth_session_manage glewlwyd_auth_profile_get_scheme_available glewlwyd_auth_profile_impersonate
 TARGET_CRUD=glewlwyd_crud_user glewlwyd_crud_client glewlwyd_crud_scope
 TARGET_OAUTH2=glewlwyd_oauth2_auth_code glewlwyd_oauth2_code glewlwyd_oauth2_code_client_confidential glewlwyd_oauth2_implicit glewlwyd_oauth2_resource_owner_pwd_cred glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential glewlwyd_oauth2_client_cred glewlwyd_oauth2_refresh_token glewlwyd_oauth2_refresh_token_client_confidential glewlwyd_oauth2_delete_token glewlwyd_oauth2_delete_token_client_confidential glewlwyd_oauth2_profile glewlwyd_oauth2_refresh_manage glewlwyd_oauth2_refresh_manage_session glewlwyd_oauth2_profile_impersonate
-TARGET_IRL=glewlwyd_mod_user_irl glewlwyd_mod_client_irl glewlwyd_mod_user_http glewlwyd_oauth2_irl
+TARGET_IRL=glewlwyd_mod_user_irl glewlwyd_mod_client_irl glewlwyd_mod_user_http glewlwyd_oauth2_irl glewlwyd_scheme_mail
 VERBOSE=0
 MEMCHECK=0
 RUN=1
@@ -55,7 +55,7 @@ test-crud: $(TARGET_CRUD) test_glewlwyd_crud_user test_glewlwyd_crud_client test
 
 test-oauth2: $(TARGET_OAUTH2) test_glewlwyd_oauth2_auth_code test_glewlwyd_oauth2_code test_glewlwyd_oauth2_code_client_confidential test_glewlwyd_oauth2_implicit test_glewlwyd_oauth2_resource_owner_pwd_cred test_glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential test_glewlwyd_oauth2_client_cred test_glewlwyd_oauth2_refresh_token test_glewlwyd_oauth2_refresh_token_client_confidential test_glewlwyd_oauth2_delete_token test_glewlwyd_oauth2_delete_token_client_confidential test_glewlwyd_oauth2_profile test_glewlwyd_oauth2_refresh_manage glewlwyd_oauth2_refresh_manage glewlwyd_oauth2_refresh_manage_session test_glewlwyd_oauth2_profile_impersonate
 
-test-irl: $(TARGET_IRL) test_glewlwyd_mod_user_http
+test-irl: $(TARGET_IRL) test_glewlwyd_mod_user_http test_glewlwyd_scheme_mail
 	@-for JSON_FILE in mod_user_*.json; \
 		do $(MAKE) test_glewlwyd_mod_user_irl PARAM_FILE=$$JSON_FILE $*; \
 	done
@@ -66,33 +66,11 @@ test-irl: $(TARGET_IRL) test_glewlwyd_mod_user_http
 		do $(MAKE) test_glewlwyd_oauth2_irl PARAM_FILE=$$JSON_FILE $*; \
 	done
 
-test_glewlwyd_mod_user_irl: glewlwyd_mod_user_irl
+test_%_irl: %_irl
 	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
-		echo "Run test_glewlwyd_mod_user_irl with file $(PARAM_FILE)"; \
+		echo "Run $^ with file $(PARAM_FILE)"; \
 		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM_FILE); \
-		mv glewlwyd_mod_user_irl.log glewlwyd_mod_user_irl-$(PARAM_FILE).log; \
-	elif [ "$(MEMCHECK)" = "0" ]; then \
-	  LD_LIBRARY_PATH=. ./$^ $(PARAM_FILE); \
-	else \
-	  LD_LIBRARY_PATH=. valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./$^ $(PARAM_FILE) 2>valgrind-$@.txt; \
-	fi
-
-test_glewlwyd_mod_client_irl: glewlwyd_mod_client_irl
-	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
-		echo "Run test_glewlwyd_mod_client_irl with file $(PARAM_FILE)"; \
-		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM_FILE); \
-		mv glewlwyd_mod_client_irl.log glewlwyd_mod_client_irl-$(PARAM_FILE).log; \
-	elif [ "$(MEMCHECK)" = "0" ]; then \
-	  LD_LIBRARY_PATH=. ./$^ $(PARAM_FILE); \
-	else \
-	  LD_LIBRARY_PATH=. valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./$^ $(PARAM_FILE) 2>valgrind-$@.txt; \
-	fi
-
-test_glewlwyd_oauth2_irl: glewlwyd_oauth2_irl
-	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
-		echo "Run test_glewlwyd_oauth2_irl with file $(PARAM_FILE)"; \
-		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM_FILE); \
-		mv glewlwyd_oauth2_irl.log glewlwyd_oauth2_irl-$(PARAM_FILE).log; \
+		mv $^.log $^-$(PARAM_FILE).log; \
 	elif [ "$(MEMCHECK)" = "0" ]; then \
 	  LD_LIBRARY_PATH=. ./$^ $(PARAM_FILE); \
 	else \
