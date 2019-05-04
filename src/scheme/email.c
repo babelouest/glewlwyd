@@ -261,7 +261,7 @@ json_t * user_auth_scheme_module_load(struct config_module * config) {
                    "name",
                    "email",
                    "display_name",
-                   "Email code scheme module",
+                   "Email code",
                    "description",
                    "Send a code via email to authenticate the user",
                    "parameters",
