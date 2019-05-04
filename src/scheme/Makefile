@@ -24,7 +24,7 @@ MODULES_TARGET=$(DEST)/lib/glewlwyd/scheme
 CC=gcc
 CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
 LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius
-TARGET=libmodemail.so
+TARGET=libmodemail.so libmodwebauthn.so
 
 all: release
 
