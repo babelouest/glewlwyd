@@ -119,7 +119,7 @@ json_t * user_auth_scheme_module_load(struct config_module * config) {
                    "name",
                    "mock",
                    "display_name",
-                   "Mock scheme module",
+                   "Mock",
                    "description",
                    "Mock scheme module for glewlwyd tests",
                    "parameters",
