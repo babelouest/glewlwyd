@@ -363,6 +363,7 @@ int main (int argc, char ** argv) {
         if (ca_file != NULL) {
           res = ulfius_start_secure_ca_trust_framework(config->instance, key_file, pem_file, ca_file);
         } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Error ca_file: %s", config->secure_connection_ca_file);
           res = U_ERROR_PARAMS;
         }
         o_free(ca_file);
@@ -370,6 +371,7 @@ int main (int argc, char ** argv) {
         res = ulfius_start_secure_framework(config->instance, key_file, pem_file);
       }
     } else {
+      y_log_message(Y_LOG_LEVEL_INFO, "Error server certificate: %s - %s", config->secure_connection_key_file, config->secure_connection_pem_file);
       res = U_ERROR_PARAMS;
     }
     o_free(key_file);
