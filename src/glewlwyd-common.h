@@ -262,6 +262,7 @@ struct config_elements {
   unsigned int                                use_secure_connection;
   char *                                      secure_connection_key_file;
   char *                                      secure_connection_pem_file;
+  char *                                      secure_connection_ca_file;
   struct _h_connection *                      conn;
   struct _u_instance *                        instance;
   char *                                      session_key;
