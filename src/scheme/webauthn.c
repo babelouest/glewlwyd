@@ -26,6 +26,8 @@
  */
 
 #include <string.h>
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
 #include <jansson.h>
 #include <yder.h>
 #include <orcania.h>
@@ -125,6 +127,21 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  */
 int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
   UNUSED(config);
+  *cls = json_pack("{sis[{sssi}{sssi}{sssi}{sssi}{sssi}{sssi}]}",
+                   "challenge-length", 64,
+                   "pubKey-cred-params",
+                     "type", "public-key",
+                     "alg", -7,
+                     "type", "public-key",
+                     "alg", -35,
+                     "type", "public-key",
+                     "alg", -36,
+                     "type", "public-key",
+                     "alg", -257,
+                     "type", "public-key",
+                     "alg", -258,
+                     "type", "public-key",
+                     "alg", -259);
   return G_OK;
 }
 
@@ -166,7 +183,7 @@ int user_auth_scheme_module_close(struct config_module * config, void * cls) {
  * 
  */
 int user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls) {
-  return GLEWLWYD_IS_REGISTERED;
+  return GLEWLWYD_IS_AVAILABLE;
 }
 
 /**
@@ -195,7 +212,18 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
   UNUSED(config);
   UNUSED(http_request);
   UNUSED(from_admin);
-  json_t * j_return = NULL;
+  json_t * j_return;
+  json_int_t challenge_length = json_integer_value(json_object_get((json_t *)cls, "challenge-length"));
+  unsigned char challenge[challenge_length], challenge_b64[challenge_length*2];
+  size_t len;
+
+  if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "challenge")) {
+    gnutls_rnd(GNUTLS_RND_NONCE, challenge, challenge_length*sizeof(unsigned char));
+    o_base64_encode(challenge, challenge_length, challenge_b64, &len);
+    j_return = json_pack("{sis{sssO}}", "result", G_OK, "response", "challenge", challenge_b64, "pubKey-cred-params", json_object_get((json_t *)cls, "pubKey-cred-params"));
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  }
   
   return j_return;
 }
@@ -223,7 +251,7 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
   UNUSED(config);
   UNUSED(http_request);
   UNUSED(from_admin);
-  json_t * j_return = NULL;
+  json_t * j_return = json_pack("{sis{ss}}", "result", G_OK, "response", "grut", "plop");
   
   return j_return;
 }
