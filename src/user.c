@@ -123,7 +123,7 @@ json_t * auth_register_user_scheme(struct config_elements * config, const char *
       j_response = scheme_instance->module->user_auth_scheme_module_register(config->config_m, request, from_admin, username, j_register_parameters, scheme_instance->cls);
       if (check_result_value(j_response, G_OK)) {
         if (json_object_get(j_response, "response") != NULL) {
-          j_return = json_pack("{sisO}", "result", G_OK, "trigger", json_object_get(j_response, "response"));
+          j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));
         } else {
           j_return = json_pack("{si}", "result", G_OK);
         }
@@ -152,7 +152,7 @@ json_t * auth_register_get_user_scheme(struct config_elements * config, const ch
     j_response = scheme_instance->module->user_auth_scheme_module_register_get(config->config_m, request, from_admin, username, scheme_instance->cls);
     if (check_result_value(j_response, G_OK)) {
       if (json_object_get(j_response, "response") != NULL) {
-        j_return = json_pack("{sisO}", "result", G_OK, "trigger", json_object_get(j_response, "response"));
+        j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));
       } else {
         j_return = json_pack("{si}", "result", G_OK);
       }
