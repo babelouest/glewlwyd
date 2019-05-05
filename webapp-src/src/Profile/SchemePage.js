@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 
 import SchemeMock from './SchemeMock.js';
+import SchemeWebauthn from './SchemeWebauthn.js';
 
 class SchemePage extends Component {
   constructor(props) {
@@ -27,6 +28,10 @@ class SchemePage extends Component {
     if (this.state.module === "mock") {
       return (
         <SchemeMock config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} />
+      );
+    } else if (this.state.module === "webauthn") {
+      return (
+        <SchemeWebauthn config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} />
       );
     } else {
       return (
