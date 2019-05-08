@@ -392,7 +392,12 @@
     "scheme-mock-deregister": "Deregister scheme",
     "scheme-mock-register-status": "Current status:",
     "scheme-mock-register-status-registered": "Registered",
-    "scheme-mock-register-status-not-registered": "Not registered"
+    "scheme-mock-register-status-not-registered": "Not registered",
+    "scheme-webauthn-title": "Web Authentication components",
+    "scheme-webauthn-register": "Register a new component",
+    "scheme-webauthn-test-registration": "Validate component",
+    "scheme-webauthn-register-credential-error": "Error while registering component",
+    "scheme-webauthn-register-credential-success": "The new component has been registered"
   },
   "modal": {
     "close": "Close",
