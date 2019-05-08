@@ -392,7 +392,12 @@
     "scheme-mock-deregister": "Désactiver le schéma",
     "scheme-mock-register-status": "Statut actuel:",
     "scheme-mock-register-status-registered": "Enregistré",
-    "scheme-mock-register-status-not-registered": "Non enregistré"
+    "scheme-mock-register-status-not-registered": "Non enregistré",
+    "scheme-webauthn-title": "Composants Web Authentication",
+    "scheme-webauthn-register": "Enregistrer un nouveau composant",
+    "scheme-webauthn-test-registration": "Valider l'enregistrement",
+    "scheme-webauthn-register-credential-error": "Erreur lors de l'enregistrement du composant",
+    "scheme-webauthn-register-credential-success": "Le composant a été enregistré"
   },
   "modal": {
     "close": "Fermer",

@@ -69,50 +69,24 @@ class SchemeWebauthn extends Component {
       username: this.state.profile.username, 
       scheme_type: this.state.module, 
       scheme_name: this.state.name, 
-      value: {register: "challenge"}
+      value: {
+        register: "new-credential"
+      }
     })
     .then((result) => {
-      // sample arguments for registration
       var createCredentialDefaultArgs = {
         publicKey: {
-          // Relying Party (a.k.a. - Service):
           rp: {
-            name: "Glewlwyd"
+            name: result["rp-origin"]
           },
 
-          // User:
           user: {
-            id: new Uint8Array(16),
-            name: this.state.profile.username,
-            displayName: this.state.profile.name||""
+            id: Uint8Array.from(atob(result.user.id), c => c.charCodeAt(0)),
+            name: result.user.name,
+            displayName: this.state.profile.name||result.user.name
           },
 
-          pubKeyCredParams: [
-          {
-            type: "public-key",
-            alg: -7
-          },
-          {
-            type: "public-key",
-            alg: -35
-          },
-          {
-            type: "public-key",
-            alg: -36
-          },
-          {
-            type: "public-key",
-            alg: -257
-          },
-          {
-            type: "public-key",
-            alg: -258
-          },
-          {
-            type: "public-key",
-            alg: -259
-          }
-          ],
+          pubKeyCredParams: result["pubKey-cred-params"],
 
           attestation: "direct",
 
@@ -122,7 +96,6 @@ class SchemeWebauthn extends Component {
         }
       };
 
-      // register / create a new credential
       navigator.credentials.create(createCredentialDefaultArgs)
       .then((cred) => {
         this.setState({status: "registered"});
@@ -134,9 +107,6 @@ class SchemeWebauthn extends Component {
         }
         if ('type' in cred) {
           publicKeyCredential.type = cred.type;
-        }
-        if ('rawId' in cred) {
-          publicKeyCredential.rawId = this.binToStr(cred.rawId);
         }
         if (!cred.response) {
           console.log("Make Credential response lacking 'response' attribute");
@@ -152,17 +122,23 @@ class SchemeWebauthn extends Component {
         }
 
         publicKeyCredential.response = response;
-        console.log(publicKeyCredential);
-
-        // normally the credential IDs available for an account would come from a server
-        // but we can just copy them from above...
-        var idList = this.state.idList;
-        idList.push({
-          id: cred.rawId,
-          transports: ["usb", "nfc", "ble"],
-          type: "public-key"
+        apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {
+          username: this.state.profile.username, 
+          scheme_type: this.state.module, 
+          scheme_name: this.state.name, 
+          value: {
+            register: "register-credential", 
+            session_id: result.session_id, 
+            credential: publicKeyCredential
+          }
+        })
+        .fail((err) => {
+          if (err.status === 400) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-register-credential-error")});
+          } else {
+            messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("profile.scheme-webauthn-register-credential-success")});
+          }
         });
-        this.setState({idList: idList});
       })
       .catch((err) => {
         this.setState({status: "error registration"});
