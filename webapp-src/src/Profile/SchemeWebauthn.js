@@ -95,6 +95,7 @@ class SchemeWebauthn extends Component {
           challenge: this.strToBin(result.challenge)
         }
       };
+      console.log(createCredentialDefaultArgs);
 
       navigator.credentials.create(createCredentialDefaultArgs)
       .then((cred) => {
@@ -107,6 +108,9 @@ class SchemeWebauthn extends Component {
         }
         if ('type' in cred) {
           publicKeyCredential.type = cred.type;
+        }
+        if ('rawId' in cred) {
+          publicKeyCredential.rawId = this.binToStr(cred.rawId);
         }
         if (!cred.response) {
           console.log("Make Credential response lacking 'response' attribute");
@@ -141,6 +145,7 @@ class SchemeWebauthn extends Component {
         });
       })
       .catch((err) => {
+        console.log(err);
         this.setState({status: "error registration"});
       });
     })
