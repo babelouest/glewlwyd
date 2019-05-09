@@ -129,7 +129,7 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
   UNUSED(config);
   *cls = json_pack("{sisss[{sssi}{sssi}{sssi}{sssi}{sssi}{sssi}]}",
                    "challenge-length", 64,
-                   "rp-origin", "localhost",
+                   "rp-origin", "babelouest",
                    "pubKey-cred-params",
                      "type", "public-key",
                      "alg", -7,
@@ -224,7 +224,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       if (generate_digest(digest_SHA256, username, 0, username_hash)) {
         gnutls_rnd(GNUTLS_RND_NONCE, challenge, challenge_length*sizeof(unsigned char));
         o_base64_encode(challenge, challenge_length, challenge_b64, &len);
-        j_return = json_pack("{sis{ss%sssOs{ssss}ss}}", 
+        j_return = json_pack("{sis{ss%sssOs{ssss}sO}}", 
                               "result", G_OK, 
                               "response", 
                                 "session_id", session_id, 32,
@@ -233,7 +233,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
                                 "user",
                                   "id", username_hash,
                                   "name", username,
-                                "rp-origin", "localhost"
+                                "rp-origin", json_object_get((json_t *)cls, "rp-origin")
                              );
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error generate_digest");
@@ -243,6 +243,9 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error rand_string");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
+  } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "register-credential")) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "credentials:\n%s", json_dumps(j_scheme_data, JSON_ENCODE_ANY));
+    j_return = json_pack("{si}", "result", G_OK);
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
