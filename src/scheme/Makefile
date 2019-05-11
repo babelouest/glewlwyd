@@ -41,7 +41,7 @@ libmodemail.so: email.o misc.o
 	$(CC) -shared -Wl,-soname,libmodemail.so -o libmodemail.so email.o misc.o $(LIBS)
 
 libmodwebauthn.so: webauthn.o misc.o
-	$(CC) -shared -Wl,-soname,libmodwebauthn.so -o libmodwebauthn.so webauthn.o misc.o $(LIBS)
+	$(CC) -shared -Wl,-soname,libmodwebauthn.so -o libmodwebauthn.so webauthn.o misc.o $(LIBS) -lcbor
 
 clean:
 	rm -f *.o *.so
