@@ -354,7 +354,7 @@ static char * get_password_clause_write(struct mod_parameters * param, const cha
     if (generate_digest_pbkdf2(password, NULL, digest)) {
       clause = msprintf("'%s'", digest);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error generate_digest");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error generate_digest_pbkdf2");
     }
   } else if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
     password_encoded = h_escape_string(param->conn, password);
