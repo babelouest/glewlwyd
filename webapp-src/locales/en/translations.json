@@ -367,7 +367,18 @@
     "mod-email-host-error": "SMTP Host is mandatory",
     "mod-email-from-error": "E-mail sender is mandatory",
     "mod-email-subject-error": "Subject is mandatory",
-    "mod-email-body-pattern-error": "E-mail body is mandatory and must contain the pattern {CODE}"
+    "mod-email-body-pattern-error": "E-mail body is mandatory and must contain the pattern {CODE}",
+    "mod-webauthn-challenge-length": "Challenge length",
+    "mod-webauthn-challenge-length-ph": "Ex: 64",
+    "mod-webauthn-challenge-length-error": "Challenge length is required",
+    "mod-webauthn-rp-origin": "Relying party",
+    "mod-webauthn-rp-origin-ph": "Ex: https://glewlwyd.tld",
+    "mod-webauthn-rp-origin-error": "Relying party is required",
+    "mod-webauthn-pubKey-cred-params": "Signature algorithm",
+    "mod-webauthn-pubKey-cred-params-error": "You must select at least one signature type",
+    "mod-webauthn-pubKey-cred-params-label-ecdsa-sha256": "ECDSA w/ SHA-256",
+    "mod-webauthn-pubKey-cred-params-label-ecdsa-sha384": "ECDSA w/ SHA-384",
+    "mod-webauthn-pubKey-cred-params-label-ecdsa-sha512": "ECDSA w/ SHA-512"
   },
   "profile": {
     "requires-profile-scope": "Profile scope required",

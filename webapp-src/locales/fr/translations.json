@@ -367,7 +367,18 @@
     "mod-email-host-error": "Le serveur SMTP est obligatoire",
     "mod-email-from-error": "L'expéditeur est obligatoire",
     "mod-email-subject-error": "Le sujet est obligatoire",
-    "mod-email-body-pattern-error": "Le corps du courriel est obligatoire et doit contenir la chaine {CODE}"
+    "mod-email-body-pattern-error": "Le corps du courriel est obligatoire et doit contenir la chaine {CODE}",
+    "mod-webauthn-challenge-length": "Longueur du challenge",
+    "mod-webauthn-challenge-length-ph": "Ex: 64",
+    "mod-webauthn-challenge-length-error": "La longueur du challenge est requise",
+    "mod-webauthn-rp-origin": "Serveur d'origine",
+    "mod-webauthn-rp-origin-ph": "Ex: https://glewlwyd.tld",
+    "mod-webauthn-rp-origin-error": "Le serveur d'origine est requis",
+    "mod-webauthn-pubKey-cred-params": "Algorithme de signature",
+    "mod-webauthn-pubKey-cred-params-error": "Vous devez sélectionner au moins un type de signature",
+    "mod-webauthn-pubKey-cred-params-label-ecdsa-sha256": "ECDSA w/ SHA-256",
+    "mod-webauthn-pubKey-cred-params-label-ecdsa-sha384": "ECDSA w/ SHA-384",
+    "mod-webauthn-pubKey-cred-params-label-ecdsa-sha512": "ECDSA w/ SHA-512"
   },
   "profile": {
     "requires-profile-scope": "Scope profil requis",
