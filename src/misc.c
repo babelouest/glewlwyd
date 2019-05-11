@@ -287,6 +287,70 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
 }
 
 /**
+ * Generates a digest using the digest_algorithm specified from password and add a salt if specified, stores it in out_digest as raw output
+ */
+int generate_digest_raw(digest_algorithm digest, const char * password, int use_salt, unsigned char * out_digest, size_t * out_digest_len) {
+  unsigned int res = 0;
+  int alg, dig_res;
+  gnutls_datum_t key_data;
+  char salt[GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0}, * intermediate = NULL;
+
+  if (password != NULL && out_digest != NULL) {
+    switch (digest) {
+      case digest_SHA1:
+        alg = GNUTLS_DIG_SHA1;
+        break;
+      case digest_SHA224:
+        alg = GNUTLS_MAC_SHA224;
+        break;
+      case digest_SHA256:
+        alg = GNUTLS_MAC_SHA256;
+        break;
+      case digest_SHA384:
+        alg = GNUTLS_DIG_SHA384;
+        break;
+      case digest_SHA512:
+        alg = GNUTLS_DIG_SHA512;
+        break;
+      case digest_MD5:
+        alg = GNUTLS_MAC_MD5;
+        break;
+      default:
+        alg = GNUTLS_MAC_UNKNOWN;
+        break;
+    }
+    
+    if(alg != GNUTLS_MAC_UNKNOWN) {
+      if (o_strlen(password) > 0) {
+        if (use_salt) {
+          rand_string(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+          intermediate = msprintf("%s%s", password, salt);
+        } else {
+          intermediate = o_strdup(password);
+        }
+        key_data.data = (unsigned char*)intermediate;
+        key_data.size = o_strlen(intermediate);
+        if (key_data.data != NULL && (dig_res = gnutls_fingerprint(alg, &key_data, out_digest, out_digest_len)) == GNUTLS_E_SUCCESS) {
+          res = 1;
+        } else {
+          res = 0;
+        }
+        o_free(intermediate);
+      } else {
+        // No password, then out_digest becomes an empty string
+        out_digest[0] = '\0';
+        res = 1;
+      }
+    } else {
+      res = 0;
+    }
+  } else {
+    res = 0;
+  }
+  return res;
+}
+
+/**
  * Generates a digest using the PBKDF2 algorithm from password and a salt if specified, otherwise generates a salt, stores it in out_digest
  */
 int generate_digest_pbkdf2(const char * password, const char * salt, char * out_digest) {
