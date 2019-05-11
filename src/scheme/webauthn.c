@@ -40,6 +40,46 @@
 #define SESSION_LENGTH 32
 #define USER_ID_LENGTH 32
 
+static json_t * is_scheme_parameters_valid(json_t * j_params) {
+  json_t * j_return, * j_error, * j_element;
+  size_t index;
+  json_int_t pubkey;
+  
+  if (json_is_object(j_params)) {
+    j_error = json_array();
+    if (j_error != NULL) {
+      if (json_integer_value(json_object_get(j_params, "challenge-length")) <= 0) {
+        json_array_append_new(j_error, json_string("challenge-length is mandatory and must be a positive integer"));
+      }
+      if (!json_string_length(json_object_get(j_params, "rp-origin"))) {
+        json_array_append_new(j_error, json_string("rp-origin is mandatory and must be a non empty string"));
+      }
+      if (!json_array_size(json_object_get(j_params, "pubKey-cred-params"))) {
+        json_array_append_new(j_error, json_string("pubKey-cred-params is mandatory and must be a non empty JSON array"));
+      } else {
+        json_array_foreach(json_object_get(j_params, "pubKey-cred-params"), index, j_element) {
+          pubkey = json_integer_value(j_element);
+          if (pubkey != -7 && pubkey != -35 && pubkey != -36) {
+            json_array_append_new(j_error, json_string("pubKey-cred-params elements values available are -7, -35, -36"));
+          }
+        }
+      }
+      if (json_array_size(j_error)) {
+        j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
+      } else {
+        j_return = json_pack("{si}", "result", G_OK);
+      }
+      json_decref(j_error);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "is_scheme_parameters_valid - Error allocating resources for j_error");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+  } else {
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameters must be a JSON object");
+  }
+  return j_return;
+}
+
 /**
  * Get the user_id associated with the username in the table G_TABLE_WEBAUTHN_USER
  * If user_id doesn't exist, create one, stores it, and return the new user_id
@@ -257,7 +297,7 @@ static json_t * get_credentials_from_session(struct config_module * config, cons
 static json_t * register_new_credential(struct config_module * config, json_t * j_params, const char * username, json_t * j_scheme_data, json_t * j_credentials) {
   json_t * j_return, * j_client_data, * j_error_list;
   unsigned char * client_data, * challenge_b64, * att_obj;
-  char * challenge_hash;
+  char * challenge_hash, * message;
   size_t client_data_len, challenge_b64_len, att_obj_len;
   int ret = G_OK;
   struct cbor_load_result cbor_result;
@@ -308,10 +348,11 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
               }
               // Step 5
               if (json_string_length(json_object_get(j_client_data, "origin"))) {
-                if (0 != o_strcmp(config->external_url, json_string_value(json_object_get(j_client_data, "origin")))) {
-                  json_array_append_new(j_error_list, json_string("clientDataJSON.origin invalid"));
+                if (0 != o_strcmp(json_string_value(json_object_get(j_params, "rp-origin")), json_string_value(json_object_get(j_client_data, "origin")))) {
+                  message = msprintf("clientDataJSON.origin invalid - Client send %s, required %s", json_string_value(json_object_get(j_params, "rp-origin")), json_string_value(json_object_get(j_client_data, "origin")));
+                  json_array_append_new(j_error_list, json_string(message));
+                  o_free(message);
                   ret = G_ERROR_PARAM;
-                  y_log_message(Y_LOG_LEVEL_DEBUG, "%s %s", config->external_url, json_string_value(json_object_get(j_client_data, "origin")));
                 }
               } else {
                 json_array_append_new(j_error_list, json_string("clientDataJSON.origin mandatory"));
@@ -322,18 +363,24 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
               // Step 7 - hash response.clientDataJSON SHA256
               
               // Step 8
-              if (json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attenstationObject"))) {
-                att_obj = o_malloc(json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attenstationObject")));
+              if (json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attestationObject"))) {
+                att_obj = o_malloc(json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attestationObject")));
                 if (att_obj != NULL) {
-                  if (o_base64_decode(json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attenstationObject")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attenstationObject")), att_obj, &att_obj_len)) {
+                  if (o_base64_decode((unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attestationObject")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attestationObject")), att_obj, &att_obj_len)) {
                     item = cbor_load(att_obj, att_obj_len, &cbor_result);
                     if (cbor_result.error.code == CBOR_ERR_NONE) {
+                      if (cbor_isa_map(item)) {
+                        y_log_message(Y_LOG_LEVEL_DEBUG, "item size %zu", cbor_map_size(item));
+                      } else {
+                        json_array_append_new(j_error_list, json_string("attestationObject invalid cbor item"));
+                        ret = G_ERROR_PARAM;
+                      }
                     } else {
-                      json_array_append_new(j_error_list, json_string("attenstationObject invalid cbor"));
+                      json_array_append_new(j_error_list, json_string("attestationObject invalid cbor"));
                       ret = G_ERROR_PARAM;
                     }
                   } else {
-                    json_array_append_new(j_error_list, json_string("attenstationObject invalid base64"));
+                    json_array_append_new(j_error_list, json_string("attestationObject invalid base64"));
                     ret = G_ERROR_PARAM;
                   }
                 } else {
@@ -342,7 +389,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
                 }
                 o_free(att_obj);
               } else {
-                json_array_append_new(j_error_list, json_string("attenstationObject required"));
+                json_array_append_new(j_error_list, json_string("attestationObject required"));
                 ret = G_ERROR_PARAM;
               }
             } else {
@@ -473,23 +520,26 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  */
 int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
   UNUSED(config);
-  *cls = json_pack("{sisss[{sssi}{sssi}{sssi}{sssi}{sssi}{sssi}]}",
-                   "challenge-length", 64,
-                   "rp-origin", "localhost",
-                   "pubKey-cred-params",
-                     "type", "public-key",
-                     "alg", -7,
-                     "type", "public-key",
-                     "alg", -35,
-                     "type", "public-key",
-                     "alg", -36,
-                     "type", "public-key",
-                     "alg", -257,
-                     "type", "public-key",
-                     "alg", -258,
-                     "type", "public-key",
-                     "alg", -259);
-  return G_OK;
+  json_t * j_result = is_scheme_parameters_valid(j_parameters), * j_element;
+  int ret;
+  size_t index;
+  
+  if (check_result_value(j_result, G_OK)) {
+    *cls = json_pack("{sOsOs[]}",
+                     "challenge-length", json_object_get(j_parameters, "challenge-length"),
+                     "rp-origin", json_object_get(j_parameters, "rp-origin"),
+                     "pubKey-cred-params");
+    json_array_foreach(json_object_get(j_parameters, "pubKey-cred-params"), index, j_element) {
+      json_array_append_new(json_object_get((json_t *)*cls, "pubKey-cred-params"), json_pack("{sssO}", "type", "public-key", "alg", j_element));
+    }
+    ret = G_OK;
+  } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+    ret = G_ERROR_PARAM;
+  } else {
+    ret = G_ERROR;
+  }
+  json_decref(j_result);
+  return ret;
 }
 
 /**
