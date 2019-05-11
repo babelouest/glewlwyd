@@ -95,7 +95,6 @@ class SchemeWebauthn extends Component {
           challenge: this.strToBin(result.challenge)
         }
       };
-      console.log(createCredentialDefaultArgs);
 
       navigator.credentials.create(createCredentialDefaultArgs)
       .then((cred) => {
@@ -132,15 +131,18 @@ class SchemeWebauthn extends Component {
           scheme_name: this.state.name, 
           value: {
             register: "register-credential", 
-            session_id: result.session_id, 
+            session: result.session, 
             credential: publicKeyCredential
           }
+        })
+        .then(() => {
+          messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-register-credential-success")});
         })
         .fail((err) => {
           if (err.status === 400) {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-register-credential-error")});
           } else {
-            messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("profile.scheme-webauthn-register-credential-success")});
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
           }
         });
       })
