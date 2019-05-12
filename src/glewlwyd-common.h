@@ -83,6 +83,9 @@
            (P)\
         )
 
+#define MIN(A, B) ((A)>(B)?(B):(A))
+#define MAX(A, B) ((A)>(B)?(A):(B))
+
 /** Macro to avoid compiler warning when some parameters are unused and that's ok **/
 #define UNUSED(x) (void)(x)
 
@@ -346,9 +349,9 @@ int rand_code(char * str, size_t str_size);
 char * join_json_string_array(json_t * j_array, const char * separator);
 char * url_encode(const char * str);
 int generate_digest(digest_algorithm digest, const char * data, int use_salt, char * out_digest);
-int generate_digest_raw(digest_algorithm digest, const char * password, int use_salt, unsigned char * out_digest, size_t * out_digest_len);
+int generate_digest_raw(digest_algorithm digest, const unsigned char * data, size_t data_len, unsigned char * out_digest, size_t * out_digest_len);
 char * generate_hash(digest_algorithm digest, const char * data);
-int generate_digest_pbkdf2(const char * password, const char * salt, char * out_digest);
+int generate_digest_pbkdf2(const char * data, const char * salt, char * out_digest);
 
 /**
  * Check if the result json object has a "result" element that is equal to value
