@@ -28,6 +28,7 @@
 #include <string.h>
 #include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>
+#include <gnutls/abstract.h>
 #include <jansson.h>
 #include <cbor.h>
 #include <yder.h>
@@ -294,8 +295,283 @@ static json_t * get_credentials_from_session(struct config_module * config, cons
   return j_return;
 }
 
+/**
+ * 
+ * Validate the attStmt object under the fido-u2f format
+ * https://w3c.github.io/webauthn/#fido-u2f-attestation
+ * Really want you in my world
+ * 
+ */
+static json_t * check_attestation_fido_u2f(struct config_module * config, json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const char * clientDataJSON) {
+  json_t * j_error = json_array(), * j_return;
+  cbor_item_t * key, * x5c, * sig = NULL, * att_cert;
+  int i, ret, has_x = 0, has_y = 0;
+  char * message;
+  gnutls_pubkey_t pubkey;
+  gnutls_x509_crt_t cert;
+  gnutls_datum_t cert_dat;
+  unsigned char * cred_pub_key, data_signed[1024] = {0}, client_data_hash[32], * cbor_auth_data, cert_x[32], cert_y[32];
+  size_t cred_pub_key_len, data_signed_offset, client_data_hash_len, cbor_auth_data_len, credential_id_len;
+  struct cbor_load_result cbor_result;
+  cbor_item_t * cbor_cose_key, * cbor_key, * cbor_value;
+  
+  if (j_error != NULL) {
+    if (!gnutls_pubkey_init(&pubkey) && !gnutls_cert_init(cert)) {
+      // Step 1
+      if (!cbor_isa_map(att_stmt) || cbor_map_size(att_stmt) != 2) {
+        json_array_append_new(j_error, json_string("CBOR map value 'attStmt' invalid format"));
+      } else {
+        for (i=0; i<2; i++) {
+          key = cbor_map_handle(att_stmt)[i].key;
+          if (cbor_isa_string(key)) {
+            if (0 == o_strncmp((const char *)cbor_string_handle(key), "x5c", MIN(o_strlen("x5c"), cbor_string_length(key)))) {
+              x5c = cbor_map_handle(att_stmt)[i].value;
+              // Step 2
+              if (!cbor_isa_array(x5c) || cbor_array_size(x5c) != 1) {
+                json_array_append_new(j_error, json_string("CBOR map value 'x5c' invalid format"));
+              } else {
+                att_cert = cbor_array_get(x5c, 0);
+                cert_dat.data = cbor_bytestring_handle(att_cert);
+                cert_dat.size = cbor_bytestring_length(att_cert);
+                if (!(ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER))) {
+                  if (generate_digest_raw(digest_SHA256, (unsigned char *)clientDataJSON, o_strlen(clientDataJSON), client_data_hash, &client_data_hash_len)) {
+                    // Extract credential ID
+                    cbor_auth_data_len = cbor_bytestring_length(auth_data);
+                    cbor_auth_data = cbor_bytestring_handle(auth_data);
+                    data_signed_offset = 1;
+                    data_signed[0] = 0x0;
+                    memcpy(data_signed+data_signed_offset, rpid_hash, rpid_hash_len);
+                    data_signed_offset += rpid_hash_len;
+                    memcpy(data_signed+data_signed_offset, client_data_hash, client_data_hash_len);
+                    data_signed_offset+=client_data_hash_len;
+                    credential_id_len = cbor_auth_data[54] | (cbor_auth_data[53] << 8);
+                    memcpy(data_signed+data_signed_offset, cbor_auth_data+55, credential_id_len);
+                    data_signed_offset+=credential_id_len;
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "credential_id_len is %zu", credential_id_len);
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "data_signed_offset is %zu", data_signed_offset);
+                    // Extract COSE_Key
+                    // A Cose key is a CBOR data embedded ina CBOR data
+                    cred_pub_key = cbor_auth_data+55+credential_id_len;
+                    cred_pub_key_len = cbor_auth_data_len-55-credential_id_len;
+                    cbor_cose_key = cbor_load(cred_pub_key, cred_pub_key_len, &cbor_result);
+                    if (cbor_result.error.code == CBOR_ERR_NONE) {
+                      if (cbor_isa_map(cbor_cose_key)) {
+                        for (i=0; i<cbor_map_size(cbor_cose_key); i++) {
+                          cbor_key = cbor_map_handle(cbor_cose_key)[i].key;
+                          cbor_value = cbor_map_handle(cbor_cose_key)[i].value;
+                          if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 1 && cbor_isa_bytestring(cbor_value) && cbor_bytestring_length(cbor_value) == 32) {
+                            has_x = 1;
+                            memcpy(cert_x, cbor_bytestring_handle(cbor_value), 32);
+                          } else if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 2 && cbor_isa_bytestring(cbor_value) && cbor_bytestring_length(cbor_value) == 32) {
+                            has_y = 1;
+                            memcpy(cert_y, cbor_bytestring_handle(cbor_value), 32);
+                          }
+                        }
+                        if (has_x && has_y) {
+                          unsigned char cert_pref = 0x04;
+                          memcpy(data_signed+data_signed_offset, &cert_pref, 1);
+                          data_signed_offset++;
+                          memcpy(data_signed+data_signed_offset, cert_x, 32);
+                          data_signed_offset+=32;
+                          memcpy(data_signed+data_signed_offset, cert_y, 32);
+                          data_signed_offset+=32;
+                          y_log_message(Y_LOG_LEVEL_DEBUG, "Yolo? %zu", data_signed_offset);
+                        } else {
+                          json_array_append_new(j_error, json_string("Internal error"));
+                          y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error has_x %d && has_y %d", has_x, has_y);
+                        }
+                      } else {
+                        json_array_append_new(j_error, json_string("Internal error"));
+                        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error cbor_cose_key not a map");
+                      }
+                    } else {
+                      json_array_append_new(j_error, json_string("Internal error"));
+                      y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error cbor_load cbor_cose_key");
+                    }
+                    cbor_decref(&cbor_cose_key);
+                  } else {
+                    json_array_append_new(j_error, json_string("Internal error"));
+                    y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error generate_digest_raw clientDataJSON");
+                  }
+                } else {
+                  json_array_append_new(j_error, json_string("Error importing x509 certificate"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error gnutls_pcert_import_x509_raw: %d", ret);
+                }
+              }
+            } else if (0 == o_strncmp((const char *)cbor_string_handle(key), "sig", MIN(o_strlen("sig"), cbor_string_length(key)))) {
+              sig = cbor_map_handle(att_stmt)[i].value;
+            } else {
+              message = msprintf("attStmt map element %d key is not valid: '%.*s", i, cbor_string_length(key), cbor_string_handle(key));
+              json_array_append_new(j_error, json_string(message));
+              o_free(message);
+            }
+          } else {
+            message = msprintf("attStmt map element %d key is not a string", i);
+            json_array_append_new(j_error, json_string(message));
+            o_free(message);
+          }
+        }
+        // Let's verify sig over data_signed
+        if (cbor_isa_bytestring(sig)) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "sig len %zu", cbor_bytestring_length(sig));
+          gnutls_datum_t data = {
+            data_signed_offset,
+            data_signed
+          };
+          gnutls_datum_t signature = {
+            cbor_bytestring_length(sig),
+            cbor_bytestring_handle(sig)
+          };
+          if (!gnutls_pubkey_verify_data2(pubkey, GNUTLS_SIGN_ECDSA_SHA256, 0, &data, &signature)) {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "Signature verified :-)");
+          } else {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "Signature not verified :-(");
+          }
+        }
+      }
+    } else {
+      json_array_append_new(j_error, json_string("Internal error"));
+      y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error gnutls_pubkey_init");
+    }
+    
+    if (json_array_size(j_error)) {
+      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
+    } else {
+      j_return = json_pack("{si}", "result", G_OK);
+    }
+    json_decref(j_error);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error allocating resources for j_error");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  return j_return;
+}
+
+/**
+ * 
+ * Validate the attestationObject
+ * Verify steps 9 to 19 in the w3c procedure
+ * Ooh baybay
+ * Gonna get to you girl
+ * 
+ */
+static json_t * check_attestation_object(struct config_module * config, json_t * j_params, cbor_item_t * item, const char * clientDataJSON) {
+  json_t * j_error = json_array(), * j_return, * j_result;
+  cbor_item_t * key, * auth_data, * att_stmt;
+  int i;
+  char * message, * rpid;
+  unsigned char * cbor_bs_handle, rpid_hash[32], * fmt;
+  size_t rpid_hash_len, fmt_len;
+  
+  if (j_error != NULL) {
+    if (cbor_map_size(item) == 3) {
+      for (i=0; i<3; i++) {
+        key = cbor_map_handle(item)[i].key;
+        if (cbor_isa_string(key)) {
+          if (0 == o_strncmp((const char *)cbor_string_handle(key), "fmt", MIN(o_strlen("fmt"), cbor_string_length(key)))) {
+            if (!cbor_isa_string(cbor_map_handle(item)[i].value)) {
+              json_array_append_new(j_error, json_string("CBOR map value 'fmt' isnt't a string"));
+            } else {
+              fmt_len = cbor_string_length(cbor_map_handle(item)[i].value);
+              fmt = cbor_string_handle(cbor_map_handle(item)[i].value);
+            }
+          } else if (0 == o_strncmp((const char *)cbor_string_handle(key), "attStmt", MIN(o_strlen("attStmt"), cbor_string_length(key)))) {
+            att_stmt = cbor_map_handle(item)[i].value;
+          } else if (0 == o_strncmp((const char *)cbor_string_handle(key), "authData", MIN(o_strlen("authData"), cbor_string_length(key)))) {
+            auth_data = cbor_map_handle(item)[i].value;
+            if (!cbor_isa_bytestring(auth_data) || cbor_bytestring_length(auth_data) < 56 || cbor_bytestring_is_indefinite(auth_data)) {
+              json_array_append_new(j_error, json_string("CBOR map value 'authData' is invalid"));
+            }
+          } else {
+            message = msprintf("CBOR map element %d is not an expected item", i);
+            json_array_append_new(j_error, json_string(message));
+            o_free(message);
+          }
+        } else {
+          message = msprintf("CBOR map element %d key is not a string", i);
+          json_array_append_new(j_error, json_string(message));
+          o_free(message);
+        }
+      }
+      
+      // Step 9
+      cbor_bs_handle = cbor_bytestring_handle(auth_data);
+      if (o_strstr(json_string_value(json_object_get(j_params, "rp-origin")), "://") != NULL) {
+        rpid = o_strstr(json_string_value(json_object_get(j_params, "rp-origin")), "://")+3;
+        if (generate_digest_raw(digest_SHA256, (unsigned char *)rpid, o_strlen(rpid), rpid_hash, &rpid_hash_len)) {
+          if (0 != memcmp(cbor_bs_handle, rpid_hash, rpid_hash_len)) {
+            json_array_append_new(j_error, json_string("authData.rpIdHash invalid"));
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_object - Error generate_digest_raw");
+          json_array_append_new(j_error, json_string("Internal error"));
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_object - rp-origin invalid");
+        json_array_append_new(j_error, json_string("Internal error"));
+      }
+      
+      // Step 10
+      if (!(cbor_bs_handle[32] & 0x01)) {
+        json_array_append_new(j_error, json_string("authData.userPresent not set"));
+      }
+      
+      // Step 11 ignored for now
+      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", (cbor_bs_handle[34] & 0x01));
+      
+      // Step 12 ignored for now (no extension)
+      
+      // Steps 13-14
+      if (0 == o_strncmp("packed", (char *)fmt, MIN(fmt_len, o_strlen("packed")))) {
+        json_array_append_new(j_error, json_string("fmt 'packed' not handled yet"));
+      } else if (0 == o_strncmp("tpm", (char *)fmt, MIN(fmt_len, o_strlen("tpm")))) {
+        json_array_append_new(j_error, json_string("fmt 'tpm' not handled yet"));
+      } else if (0 == o_strncmp("android-key", (char *)fmt, MIN(fmt_len, o_strlen("android-key")))) {
+        json_array_append_new(j_error, json_string("fmt 'android-key' not handled yet"));
+      } else if (0 == o_strncmp("android-safetynet", (char *)fmt, MIN(fmt_len, o_strlen("android-safetynet")))) {
+        json_array_append_new(j_error, json_string("fmt 'android-safetynet' not handled yet"));
+      } else if (0 == o_strncmp("fido-u2f", (char *)fmt, MIN(fmt_len, o_strlen("fido-u2f")))) {
+        j_result = check_attestation_fido_u2f(config, j_params, auth_data, att_stmt, rpid_hash, rpid_hash_len, clientDataJSON);
+        if (check_result_value(j_result, G_ERROR_PARAM)) {
+          json_array_extend(j_error, json_object_get(j_result, "error"));
+        } else if (!check_result_value(j_result, G_OK)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_object - Error check_attestation_fido_u2f");
+          json_array_append_new(j_error, json_string("internal error"));
+        }
+        json_decref(j_result);
+      } else {
+        message = msprintf("fmt '%.*s' not handled by Glewlwyd Webauthn scheme", fmt_len, fmt);
+        json_array_append_new(j_error, json_string(message));
+        o_free(message);
+      }
+    } else {
+      json_array_append_new(j_error, json_string("CBOR map item must have 3 elements"));
+    }
+    if (json_array_size(j_error)) {
+      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
+    } else {
+      j_return = json_pack("{si}", "result", G_OK);
+    }
+    json_decref(j_error);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_object - Error allocating resources for j_error");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  return j_return;
+}
+
+/**
+ * 
+ * It's like the New Kids On The Block
+ * 
+ * You have to validate the credential by following
+ * the registration procedure step by step
+ * Because the w3c said so
+ * https://w3c.github.io/webauthn/#registering-a-new-credential
+ * 
+ */
 static json_t * register_new_credential(struct config_module * config, json_t * j_params, const char * username, json_t * j_scheme_data, json_t * j_credentials) {
-  json_t * j_return, * j_client_data, * j_error_list;
+  json_t * j_return, * j_client_data, * j_error_list, * j_result;
   unsigned char * client_data, * challenge_b64, * att_obj;
   char * challenge_hash, * message;
   size_t client_data_len, challenge_b64_len, att_obj_len;
@@ -360,17 +636,23 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
               }
               // Step 6 ??
               
-              // Step 7 - hash response.clientDataJSON SHA256
-              
-              // Step 8
               if (json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attestationObject"))) {
                 att_obj = o_malloc(json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attestationObject")));
                 if (att_obj != NULL) {
                   if (o_base64_decode((unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attestationObject")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attestationObject")), att_obj, &att_obj_len)) {
+                    // Step 7
                     item = cbor_load(att_obj, att_obj_len, &cbor_result);
                     if (cbor_result.error.code == CBOR_ERR_NONE) {
                       if (cbor_isa_map(item)) {
-                        y_log_message(Y_LOG_LEVEL_DEBUG, "item size %zu", cbor_map_size(item));
+                        j_result = check_attestation_object(config, j_params, item, json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")));
+                        if (check_result_value(j_result, G_ERROR_PARAM)) {
+                          json_array_extend(j_error_list, json_object_get(j_result, "error"));
+                          ret = G_ERROR_PARAM;
+                        } else if (!check_result_value(j_result, G_OK)) {
+                          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error check_attestation_object");
+                          ret = G_ERROR;
+                        }
+                        json_decref(j_result);
                       } else {
                         json_array_append_new(j_error_list, json_string("attestationObject invalid cbor item"));
                         ret = G_ERROR_PARAM;
@@ -379,6 +661,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
                       json_array_append_new(j_error_list, json_string("attestationObject invalid cbor"));
                       ret = G_ERROR_PARAM;
                     }
+                    cbor_decref(&item);
                   } else {
                     json_array_append_new(j_error_list, json_string("attestationObject invalid base64"));
                     ret = G_ERROR_PARAM;
@@ -410,7 +693,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
         json_array_append_new(j_error_list, json_string("clientDataJSON mandatory"));
         ret = G_ERROR_PARAM;
       }
-      if (ret == G_ERROR_PARAM || ret == G_ERROR_UNAUTHORIZED) {
+      if (ret == G_ERROR_PARAM) {
         j_return = json_pack("{sisO}", "result", ret, "error", j_error_list);
       } else {
         j_return = json_pack("{si}", "result", G_OK);
