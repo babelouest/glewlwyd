@@ -213,9 +213,9 @@ char * url_encode(const char * str) {
 }
 
 /**
- * Generates a digest using the digest_algorithm specified from password and add a salt if specified, stores it in out_digest
+ * Generates a digest using the digest_algorithm specified from data and add a salt if specified, stores it in out_digest
  */
-int generate_digest(digest_algorithm digest, const char * password, int use_salt, char * out_digest) {
+int generate_digest(digest_algorithm digest, const char * data, int use_salt, char * out_digest) {
   unsigned int res = 0;
   int alg, dig_res;
   gnutls_datum_t key_data;
@@ -223,7 +223,7 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
   unsigned char encoded_key[128 + GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0};
   size_t encoded_key_size = (128 + GLEWLWYD_DEFAULT_SALT_LENGTH), encoded_key_size_base64;
 
-  if (password != NULL && out_digest != NULL) {
+  if (data != NULL && out_digest != NULL) {
     switch (digest) {
       case digest_SHA1:
         alg = GNUTLS_DIG_SHA1;
@@ -249,12 +249,12 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
     }
     
     if(alg != GNUTLS_MAC_UNKNOWN) {
-      if (o_strlen(password) > 0) {
+      if (o_strlen(data) > 0) {
         if (use_salt) {
           rand_string(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
-          intermediate = msprintf("%s%s", password, salt);
+          intermediate = msprintf("%s%s", data, salt);
         } else {
-          intermediate = o_strdup(password);
+          intermediate = o_strdup(data);
         }
         key_data.data = (unsigned char*)intermediate;
         key_data.size = o_strlen(intermediate);
@@ -273,7 +273,7 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
         }
         o_free(intermediate);
       } else {
-        // No password, then out_digest becomes an empty string
+        // No data, then out_digest becomes an empty string
         out_digest[0] = '\0';
         res = 1;
       }
@@ -287,15 +287,14 @@ int generate_digest(digest_algorithm digest, const char * password, int use_salt
 }
 
 /**
- * Generates a digest using the digest_algorithm specified from password and add a salt if specified, stores it in out_digest as raw output
+ * Generates a digest using the digest_algorithm specified from data and add a salt if specified, stores it in out_digest as raw output
  */
-int generate_digest_raw(digest_algorithm digest, const char * password, int use_salt, unsigned char * out_digest, size_t * out_digest_len) {
+int generate_digest_raw(digest_algorithm digest, const unsigned char * data, size_t data_len, unsigned char * out_digest, size_t * out_digest_len) {
   unsigned int res = 0;
   int alg, dig_res;
   gnutls_datum_t key_data;
-  char salt[GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0}, * intermediate = NULL;
 
-  if (password != NULL && out_digest != NULL) {
+  if (data != NULL && out_digest != NULL) {
     switch (digest) {
       case digest_SHA1:
         alg = GNUTLS_DIG_SHA1;
@@ -321,24 +320,17 @@ int generate_digest_raw(digest_algorithm digest, const char * password, int use_
     }
     
     if(alg != GNUTLS_MAC_UNKNOWN) {
-      if (o_strlen(password) > 0) {
-        if (use_salt) {
-          rand_string(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
-          intermediate = msprintf("%s%s", password, salt);
-        } else {
-          intermediate = o_strdup(password);
-        }
-        key_data.data = (unsigned char*)intermediate;
-        key_data.size = o_strlen(intermediate);
+      if (data_len > 0) {
+        key_data.data = (unsigned char *)data;
+        key_data.size = data_len;
         if (key_data.data != NULL && (dig_res = gnutls_fingerprint(alg, &key_data, out_digest, out_digest_len)) == GNUTLS_E_SUCCESS) {
           res = 1;
         } else {
           res = 0;
         }
-        o_free(intermediate);
       } else {
-        // No password, then out_digest becomes an empty string
-        out_digest[0] = '\0';
+        // No data, then out_digest is empty
+        *out_digest_len = 0;
         res = 1;
       }
     } else {
@@ -351,9 +343,9 @@ int generate_digest_raw(digest_algorithm digest, const char * password, int use_
 }
 
 /**
- * Generates a digest using the PBKDF2 algorithm from password and a salt if specified, otherwise generates a salt, stores it in out_digest
+ * Generates a digest using the PBKDF2 algorithm from data and a salt if specified, otherwise generates a salt, stores it in out_digest
  */
-int generate_digest_pbkdf2(const char * password, const char * salt, char * out_digest) {
+int generate_digest_pbkdf2(const char * data, const char * salt, char * out_digest) {
   char my_salt[GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0};
   uint8_t cur_salt[GLEWLWYD_DEFAULT_SALT_LENGTH], dst[32 + GLEWLWYD_DEFAULT_SALT_LENGTH] = {0};
   int res;
@@ -365,7 +357,7 @@ int generate_digest_pbkdf2(const char * password, const char * salt, char * out_
     rand_string(my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
     memcpy(cur_salt, my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
   }
-  pbkdf2_hmac_sha256(o_strlen(password), (const uint8_t *)password, 1000, GLEWLWYD_DEFAULT_SALT_LENGTH, cur_salt, 32, dst);
+  pbkdf2_hmac_sha256(o_strlen(data), (const uint8_t *)data, 1000, GLEWLWYD_DEFAULT_SALT_LENGTH, cur_salt, 32, dst);
   memcpy(dst+32, cur_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
   if (o_base64_encode(dst, 32 + GLEWLWYD_DEFAULT_SALT_LENGTH, (unsigned char *)out_digest, &encoded_key_size_base64)) {
     res = 1;
