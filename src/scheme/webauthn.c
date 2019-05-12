@@ -316,7 +316,7 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
   cbor_item_t * cbor_cose_key, * cbor_key, * cbor_value;
   
   if (j_error != NULL) {
-    if (!gnutls_pubkey_init(&pubkey) && !gnutls_cert_init(cert)) {
+    if (!gnutls_pubkey_init(&pubkey) && !gnutls_x509_crt_init(&cert)) {
       // Step 1
       if (!cbor_isa_map(att_stmt) || cbor_map_size(att_stmt) != 2) {
         json_array_append_new(j_error, json_string("CBOR map value 'attStmt' invalid format"));
@@ -334,6 +334,9 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
                 cert_dat.data = cbor_bytestring_handle(att_cert);
                 cert_dat.size = cbor_bytestring_length(att_cert);
                 if (!(ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER))) {
+                  if ((ret = gnutls_pubkey_import_x509(pubkey, cert, 0))) {
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "Error gnutls_pubkey_import_x509 %d", ret);
+                  }
                   if (generate_digest_raw(digest_SHA256, (unsigned char *)clientDataJSON, o_strlen(clientDataJSON), client_data_hash, &client_data_hash_len)) {
                     // Extract credential ID
                     cbor_auth_data_len = cbor_bytestring_length(auth_data);
