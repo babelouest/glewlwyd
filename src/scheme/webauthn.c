@@ -418,12 +418,12 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
         if (cbor_isa_bytestring(sig)) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "sig len %zu", cbor_bytestring_length(sig));
           gnutls_datum_t data = {
-            data_signed_offset,
-            data_signed
+            data_signed,
+            data_signed_offset
           };
           gnutls_datum_t signature = {
-            cbor_bytestring_length(sig),
-            cbor_bytestring_handle(sig)
+            cbor_bytestring_handle(sig),
+            cbor_bytestring_length(sig)
           };
           if (!gnutls_pubkey_verify_data2(pubkey, GNUTLS_SIGN_ECDSA_SHA256, 0, &data, &signature)) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "Signature verified :-)");
@@ -450,6 +450,10 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
   return j_return;
 }
 
+#define FLAG_USER_PRESENT 0x01
+#define FLAG_USER_VERIFY 0x04
+#define FLAG_AT 0x40
+#define FLAG_ED 0x80
 /**
  * 
  * Validate the attestationObject
@@ -515,12 +519,14 @@ static json_t * check_attestation_object(struct config_module * config, json_t *
       }
       
       // Step 10
-      if (!(cbor_bs_handle[32] & 0x01)) {
+      if (!(cbor_bs_handle[32] & FLAG_USER_PRESENT)) {
         json_array_append_new(j_error, json_string("authData.userPresent not set"));
       }
       
       // Step 11 ignored for now
-      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", (cbor_bs_handle[34] & 0x01));
+      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", (cbor_bs_handle[32] & FLAG_USER_VERIFY));
+      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Attested credential data: %d", (cbor_bs_handle[32] & FLAG_AT));
+      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", (cbor_bs_handle[32] & FLAG_ED));
       
       // Step 12 ignored for now (no extension)
       
