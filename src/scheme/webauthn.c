@@ -310,11 +310,12 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
   gnutls_pubkey_t pubkey;
   gnutls_x509_crt_t cert;
   gnutls_datum_t cert_dat;
-  unsigned char * cred_pub_key, data_signed[1024] = {0}, client_data_hash[32], * cbor_auth_data, cert_x[32], cert_y[32];
-  size_t cred_pub_key_len, data_signed_offset, client_data_hash_len, cbor_auth_data_len, credential_id_len;
+  unsigned char * cred_pub_key, data_signed[1024], client_data_hash[32], * cbor_auth_data, cert_x[32], cert_y[32];
+  size_t cred_pub_key_len, data_signed_offset = 0, client_data_hash_len, cbor_auth_data_len, credential_id_len;
   struct cbor_load_result cbor_result;
   cbor_item_t * cbor_cose_key, * cbor_key, * cbor_value;
   
+  memset(data_signed, 0, 1024);
   if (j_error != NULL) {
     if (!gnutls_pubkey_init(&pubkey) && !gnutls_x509_crt_init(&cert)) {
       // Step 1
@@ -335,14 +336,14 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
                 cert_dat.size = cbor_bytestring_length(att_cert);
                 if (!(ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER))) {
                   if ((ret = gnutls_pubkey_import_x509(pubkey, cert, 0))) {
-                    y_log_message(Y_LOG_LEVEL_DEBUG, "Error gnutls_pubkey_import_x509 %d", ret);
+                    y_log_message(Y_LOG_LEVEL_ERROR, "Error gnutls_pubkey_import_x509 %d", ret);
                   }
                   if (generate_digest_raw(digest_SHA256, (unsigned char *)clientDataJSON, o_strlen(clientDataJSON), client_data_hash, &client_data_hash_len)) {
                     // Extract credential ID
                     cbor_auth_data_len = cbor_bytestring_length(auth_data);
                     cbor_auth_data = cbor_bytestring_handle(auth_data);
-                    data_signed_offset = 1;
                     data_signed[0] = 0x0;
+                    data_signed_offset = 1;
                     memcpy(data_signed+data_signed_offset, rpid_hash, rpid_hash_len);
                     data_signed_offset += rpid_hash_len;
                     memcpy(data_signed+data_signed_offset, client_data_hash, client_data_hash_len);
@@ -350,9 +351,6 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
                     credential_id_len = cbor_auth_data[54] | (cbor_auth_data[53] << 8);
                     memcpy(data_signed+data_signed_offset, cbor_auth_data+55, credential_id_len);
                     data_signed_offset+=credential_id_len;
-                    y_log_message(Y_LOG_LEVEL_DEBUG, "credential_id_len is %zu", credential_id_len);
-                    y_log_message(Y_LOG_LEVEL_DEBUG, "data_signed_offset is %zu", data_signed_offset);
-                    // Extract COSE_Key
                     // A Cose key is a CBOR data embedded ina CBOR data
                     cred_pub_key = cbor_auth_data+55+credential_id_len;
                     cred_pub_key_len = cbor_auth_data_len-55-credential_id_len;
@@ -371,14 +369,13 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
                           }
                         }
                         if (has_x && has_y) {
-                          unsigned char cert_pref = 0x04;
-                          memcpy(data_signed+data_signed_offset, &cert_pref, 1);
+                          data_signed[data_signed_offset] = 0x04;
                           data_signed_offset++;
                           memcpy(data_signed+data_signed_offset, cert_x, 32);
                           data_signed_offset+=32;
                           memcpy(data_signed+data_signed_offset, cert_y, 32);
                           data_signed_offset+=32;
-                          y_log_message(Y_LOG_LEVEL_DEBUG, "Yolo? %zu", data_signed_offset);
+                          y_log_message(Y_LOG_LEVEL_DEBUG, "data_signed is %zu long", data_signed_offset);
                         } else {
                           json_array_append_new(j_error, json_string("Internal error"));
                           y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error has_x %d && has_y %d", has_x, has_y);
@@ -425,10 +422,10 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
             cbor_bytestring_handle(sig),
             cbor_bytestring_length(sig)
           };
-          if (!gnutls_pubkey_verify_data2(pubkey, GNUTLS_SIGN_ECDSA_SHA256, 0, &data, &signature)) {
+          if (!(ret = gnutls_pubkey_verify_data2(pubkey, GNUTLS_SIGN_ECDSA_SHA256, 0, &data, &signature))) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "Signature verified :-)");
           } else {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "Signature not verified :-(");
+            y_log_message(Y_LOG_LEVEL_DEBUG, "Signature not verified :-( %d", ret);
           }
         }
       }
@@ -468,7 +465,7 @@ static json_t * check_attestation_object(struct config_module * config, json_t *
   int i;
   char * message, * rpid;
   unsigned char * cbor_bs_handle, rpid_hash[32], * fmt;
-  size_t rpid_hash_len, fmt_len;
+  size_t rpid_hash_len = 0, fmt_len = 0;
   
   if (j_error != NULL) {
     if (cbor_map_size(item) == 3) {
@@ -505,6 +502,7 @@ static json_t * check_attestation_object(struct config_module * config, json_t *
       cbor_bs_handle = cbor_bytestring_handle(auth_data);
       if (o_strstr(json_string_value(json_object_get(j_params, "rp-origin")), "://") != NULL) {
         rpid = o_strstr(json_string_value(json_object_get(j_params, "rp-origin")), "://")+3;
+        memset(rpid_hash, 0, 32);
         if (generate_digest_raw(digest_SHA256, (unsigned char *)rpid, o_strlen(rpid), rpid_hash, &rpid_hash_len)) {
           if (0 != memcmp(cbor_bs_handle, rpid_hash, rpid_hash_len)) {
             json_array_append_new(j_error, json_string("authData.rpIdHash invalid"));
@@ -524,9 +522,9 @@ static json_t * check_attestation_object(struct config_module * config, json_t *
       }
       
       // Step 11 ignored for now
-      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", (cbor_bs_handle[32] & FLAG_USER_VERIFY));
-      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Attested credential data: %d", (cbor_bs_handle[32] & FLAG_AT));
-      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", (cbor_bs_handle[32] & FLAG_ED));
+      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", !!(cbor_bs_handle[32] & FLAG_USER_VERIFY));
+      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Attested credential data: %d", !!(cbor_bs_handle[32] & FLAG_AT));
+      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", !!(cbor_bs_handle[32] & FLAG_ED));
       
       // Step 12 ignored for now (no extension)
       
@@ -540,7 +538,7 @@ static json_t * check_attestation_object(struct config_module * config, json_t *
       } else if (0 == o_strncmp("android-safetynet", (char *)fmt, MIN(fmt_len, o_strlen("android-safetynet")))) {
         json_array_append_new(j_error, json_string("fmt 'android-safetynet' not handled yet"));
       } else if (0 == o_strncmp("fido-u2f", (char *)fmt, MIN(fmt_len, o_strlen("fido-u2f")))) {
-        j_result = check_attestation_fido_u2f(config, j_params, auth_data, att_stmt, rpid_hash, rpid_hash_len, clientDataJSON);
+        j_result = check_attestation_fido_u2f(config, j_params, auth_data, att_stmt, cbor_bs_handle, rpid_hash_len, clientDataJSON);
         if (check_result_value(j_result, G_ERROR_PARAM)) {
           json_array_extend(j_error, json_object_get(j_result, "error"));
         } else if (!check_result_value(j_result, G_OK)) {
@@ -592,9 +590,10 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
     j_error_list = json_array();
     if (j_error_list != NULL) {
       if (json_is_string(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")) && json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON"))) {
-        client_data = o_malloc(json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")));
+        client_data = o_malloc(json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON"))+1);
         if (client_data != NULL) {
           if (o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), client_data, &client_data_len)) {
+            client_data[client_data_len] = '\0';
             j_client_data = json_loads((const char *)client_data, JSON_DECODE_ANY, NULL);
             if (j_client_data != NULL) {
               // Step 3
@@ -653,7 +652,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
                     item = cbor_load(att_obj, att_obj_len, &cbor_result);
                     if (cbor_result.error.code == CBOR_ERR_NONE) {
                       if (cbor_isa_map(item)) {
-                        j_result = check_attestation_object(config, j_params, item, json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")));
+                        j_result = check_attestation_object(config, j_params, item, (const char *)client_data);
                         if (check_result_value(j_result, G_ERROR_PARAM)) {
                           json_array_extend(j_error_list, json_object_get(j_result, "error"));
                           ret = G_ERROR_PARAM;
