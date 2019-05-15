@@ -168,12 +168,12 @@ class SchemeWebauthn extends Component {
   }
   
   testRegistration(e) {
-    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", 
+    apiManager.glewlwydRequest("/auth/scheme/trigger/", "POST", 
     {
       username: this.state.profile.username, 
       scheme_type: this.state.module, 
       scheme_name: this.state.name, 
-      value: {register: "challenge"}
+      value: {}
     })
     .then((result) => {
       // sample arguments for login
