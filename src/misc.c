@@ -323,9 +323,15 @@ int generate_digest_raw(digest_algorithm digest, const unsigned char * data, siz
       if (data_len > 0) {
         key_data.data = (unsigned char *)data;
         key_data.size = data_len;
-        if (key_data.data != NULL && (dig_res = gnutls_fingerprint(alg, &key_data, out_digest, out_digest_len)) == GNUTLS_E_SUCCESS) {
-          res = 1;
+        if (key_data.data != NULL) {
+          if ((dig_res = gnutls_fingerprint(alg, &key_data, out_digest, out_digest_len)) == GNUTLS_E_SUCCESS) {
+            res = 1;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "generate_digest_raw - Error gnutls_fingerprint: %d", dig_res);
+            res = 0;
+          }
         } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_digest_raw - Error key_data.data");
           res = 0;
         }
       } else {
@@ -334,9 +340,11 @@ int generate_digest_raw(digest_algorithm digest, const unsigned char * data, siz
         res = 1;
       }
     } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_digest_raw - Error alg");
       res = 0;
     }
   } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_digest_raw - Error param");
     res = 0;
   }
   return res;
