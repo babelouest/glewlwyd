@@ -76,8 +76,16 @@ class SchemeWebauthn extends Component {
     .then((result) => {
       var createCredentialDefaultArgs = {
         publicKey: {
+          authenticatorSelection: {
+            requireResidentKey: false
+          },
+              
           rp: {
             name: result["rp-origin"]
+          },
+          
+          authenticatorSelection: {
+            requireResidentKey: false
           },
 
           user: {
