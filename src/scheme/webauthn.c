@@ -375,7 +375,6 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
                           data_signed_offset+=32;
                           memcpy(data_signed+data_signed_offset, cert_y, 32);
                           data_signed_offset+=32;
-                          y_log_message(Y_LOG_LEVEL_DEBUG, "data_signed is %zu long", data_signed_offset);
                         } else {
                           json_array_append_new(j_error, json_string("Internal error"));
                           y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error has_x %d && has_y %d", has_x, has_y);
@@ -413,7 +412,6 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
         }
         // Let's verify sig over data_signed
         if (cbor_isa_bytestring(sig)) {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "sig len %zu", cbor_bytestring_length(sig));
           gnutls_datum_t data = {
             data_signed,
             data_signed_offset
@@ -425,7 +423,7 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
           if (!(ret = gnutls_pubkey_verify_data2(pubkey, GNUTLS_SIGN_ECDSA_SHA256, 0, &data, &signature))) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "Signature verified :-)");
           } else {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "Signature not verified :-( %d", ret);
+            y_log_message(Y_LOG_LEVEL_DEBUG, "Signature not verified :-(");
           }
         }
       }
@@ -433,6 +431,8 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
       json_array_append_new(j_error, json_string("Internal error"));
       y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error gnutls_pubkey_init");
     }
+    gnutls_pubkey_deinit(pubkey);
+    gnutls_x509_crt_deinit(cert);
     
     if (json_array_size(j_error)) {
       j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
@@ -465,7 +465,7 @@ static json_t * check_attestation_object(struct config_module * config, json_t *
   int i;
   char * message, * rpid;
   unsigned char * cbor_bs_handle, rpid_hash[32], * fmt;
-  size_t rpid_hash_len = 0, fmt_len = 0;
+  size_t rpid_hash_len = 32, fmt_len = 0;
   
   if (j_error != NULL) {
     if (cbor_map_size(item) == 3) {
@@ -522,9 +522,9 @@ static json_t * check_attestation_object(struct config_module * config, json_t *
       }
       
       // Step 11 ignored for now
-      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", !!(cbor_bs_handle[32] & FLAG_USER_VERIFY));
-      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Attested credential data: %d", !!(cbor_bs_handle[32] & FLAG_AT));
-      y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", !!(cbor_bs_handle[32] & FLAG_ED));
+      //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", !!(cbor_bs_handle[32] & FLAG_USER_VERIFY));
+      //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Attested credential data: %d", !!(cbor_bs_handle[32] & FLAG_AT));
+      //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", !!(cbor_bs_handle[32] & FLAG_ED));
       
       // Step 12 ignored for now (no extension)
       
@@ -584,7 +584,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
   size_t client_data_len, challenge_b64_len, att_obj_len;
   int ret = G_OK;
   struct cbor_load_result cbor_result;
-  cbor_item_t * item;
+  cbor_item_t * item = NULL;
   
   if (j_scheme_data != NULL) {
     j_error_list = json_array();
