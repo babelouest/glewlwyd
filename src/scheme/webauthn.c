@@ -160,6 +160,47 @@ static json_t * get_user_id_from_username(struct config_module * config, const c
   return j_return;
 }
 
+static json_t * get_credentials_for_user(struct config_module * config, const char * username) {
+  json_t * j_query, * j_result, * j_return, * j_element;
+  int res;
+  char * username_escaped, * username_clause;
+  size_t index;
+  
+  username_escaped = h_escape_string(config->conn, username);
+  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
+  j_query = json_pack("{sss[s]s{s{ssss}si}}",
+                      "table",
+                      G_TABLE_WEBAUTHN_CREDENTIAL,
+                      "columns",
+                        "gswc_credential_id",
+                      "where",
+                        "gswu_id",
+                          "operator",
+                          "raw",
+                          "value",
+                          username_clause,
+                        "gswc_status",
+                        1);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    j_return = json_pack("{sis[]}", "result", G_OK, "credentials");
+    if (j_return != NULL) {
+      json_array_foreach(j_result, index, j_element) {
+        json_array_append(json_object_get(j_return, "credentials"), json_object_get(j_element, "gswc_credential_id"));
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_credentials_for_user - Error json_pack");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_credentials_for_user - Error executing j_query");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  return j_return;
+}
+
 static json_t * generate_new_credential(struct config_module * config, json_t * j_params, const char * username) {
   json_t * j_query, * j_return;
   char * username_escaped, * username_clause, * challenge_hash;
@@ -321,27 +362,28 @@ static json_t * get_credentials_from_session(struct config_module * config, cons
 static json_t * check_attestation_fido_u2f(struct config_module * config, json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * clientDataJSON) {
   json_t * j_error = json_array(), * j_return;
   cbor_item_t * key, * x5c, * sig = NULL, * att_cert;
-  int i, ret, has_x = 0, has_y = 0;
+  int i, ret, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0;
   char * message;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
   gnutls_datum_t cert_dat;
-  unsigned char * cred_pub_key, data_signed[200], client_data_hash[32], * cbor_auth_data, cert_x[32], cert_y[32];
-  size_t cred_pub_key_len, data_signed_offset = 0, client_data_hash_len = 32, cbor_auth_data_len, credential_id_len;
+  unsigned char * cred_pub_key, data_signed[200], client_data_hash[32], * cbor_auth_data, cert_x[32], cert_y[32], pubkey_export[1024];
+  size_t cred_pub_key_len, data_signed_offset = 0, client_data_hash_len = 32, cbor_auth_data_len, credential_id_len, pubkey_export_len = 1024;
   struct cbor_load_result cbor_result;
-  cbor_item_t * cbor_cose_key, * cbor_key, * cbor_value;
+  cbor_item_t * cbor_cose, * cbor_key, * cbor_value;
   
   memset(data_signed, 0, 200);
   if (j_error != NULL) {
     do {
-      if (gnutls_pubkey_init(&pubkey)) {
-        json_array_append_new(j_error, json_string("check_attestation_fido_u2f - Error gnutls_pubkey_init"));
-        break;
-      }
       if (gnutls_x509_crt_init(&cert)) {
         json_array_append_new(j_error, json_string("check_attestation_fido_u2f - Error gnutls_x509_crt_init"));
         break;
       }
+      if (gnutls_pubkey_init(&pubkey)) {
+        json_array_append_new(j_error, json_string("check_attestation_fido_u2f - Error gnutls_pubkey_init"));
+        break;
+      }
+      
       // Step 1
       if (!cbor_isa_map(att_stmt) || cbor_map_size(att_stmt) != 2) {
         json_array_append_new(j_error, json_string("CBOR map value 'attStmt' invalid format"));
@@ -395,40 +437,42 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
       cbor_auth_data = cbor_bytestring_handle(auth_data);
       
       // A Cose key is a CBOR data embedded ina CBOR data
-     credential_id_len = cbor_auth_data[CRED_ID_L_OFFSET+1] | (cbor_auth_data[CRED_ID_L_OFFSET] << 8);
+      credential_id_len = cbor_auth_data[CRED_ID_L_OFFSET+1] | (cbor_auth_data[CRED_ID_L_OFFSET] << 8);
       
       cred_pub_key = cbor_auth_data+CREDENTIAL_ID_OFFSET+credential_id_len;
       cred_pub_key_len = cbor_auth_data_len-CREDENTIAL_ID_OFFSET-credential_id_len;
-      cbor_cose_key = cbor_load(cred_pub_key, cred_pub_key_len, &cbor_result);
+      cbor_cose = cbor_load(cred_pub_key, cred_pub_key_len, &cbor_result);
       if (cbor_result.error.code != CBOR_ERR_NONE) {
         json_array_append_new(j_error, json_string("Internal error"));
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error cbor_load cbor_cose_key");
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error cbor_load cbor_cose");
         break;
       }
       
-      if (!cbor_isa_map(cbor_cose_key)) {
+      if (!cbor_isa_map(cbor_cose)) {
         json_array_append_new(j_error, json_string("Internal error"));
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error cbor_cose_key not a map");
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error cbor_cose not a map");
         break;
       }
       
-      // TODO Rework here
-      for (i=0; i<cbor_map_size(cbor_cose_key); i++) {
-        cbor_key = cbor_map_handle(cbor_cose_key)[i].key;
-        cbor_value = cbor_map_handle(cbor_cose_key)[i].value;
+      for (i=0; i<cbor_map_size(cbor_cose); i++) {
+        cbor_key = cbor_map_handle(cbor_cose)[i].key;
+        cbor_value = cbor_map_handle(cbor_cose)[i].value;
         if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 1 && cbor_isa_bytestring(cbor_value) && cbor_bytestring_length(cbor_value) == 32) {
           has_x = 1;
           memcpy(cert_x, cbor_bytestring_handle(cbor_value), 32);
         } else if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 2 && cbor_isa_bytestring(cbor_value) && cbor_bytestring_length(cbor_value) == 32) {
           has_y = 1;
           memcpy(cert_y, cbor_bytestring_handle(cbor_value), 32);
+        } else if (cbor_isa_uint(cbor_key) && cbor_get_int(cbor_key) == 1 && cbor_isa_uint(cbor_value) && cbor_get_int(cbor_value) == 2) {
+          key_type_valid = 1;
+        } else if (cbor_isa_uint(cbor_key) && cbor_get_int(cbor_key) == 3 && cbor_isa_negint(cbor_value) && cbor_get_int(cbor_value) == 6) {
+          key_alg_valid = 1;
         }
       }
-      // End TODO
       
-      if (!has_x || !has_y) {
-        json_array_append_new(j_error, json_string("Internal error"));
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error has_x %d && has_y %d", has_x, has_y);
+      if (!has_x || !has_y || !key_type_valid || !key_alg_valid) {
+        json_array_append_new(j_error, json_string("Invalid COSE key"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error invalid COSE key has_x %d && has_y %d && key_type_valid %d && key_alg_valid %d", has_x, has_y, key_type_valid, key_alg_valid);
         break;
       }
       
@@ -469,23 +513,27 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
         cbor_bytestring_length(sig)
       };
       
-      if (!(ret = gnutls_pubkey_verify_data2(pubkey, GNUTLS_SIGN_ECDSA_SHA256, 0, &data, &signature))) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "Signature verified :-)");
-      } else {
+      if (gnutls_pubkey_verify_data2(pubkey, GNUTLS_SIGN_ECDSA_SHA256, 0, &data, &signature)) {
         json_array_append_new(j_error, json_string("Invalid signature"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "Signature not verified :-(");
       }
     } while (0);
-    
-    gnutls_pubkey_deinit(pubkey);
-    gnutls_x509_crt_deinit(cert);
     
     if (json_array_size(j_error)) {
       j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
     } else {
-      j_return = json_pack("{si}", "result", G_OK);
+      if (!gnutls_pubkey_export(pubkey, GNUTLS_X509_FMT_PEM, pubkey_export, &pubkey_export_len)) {
+        j_return = json_pack("{sis{ss%}}", "result", G_OK, "data", "pubkey", pubkey_export, pubkey_export_len);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error gnutls_pubkey_export");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
     }
     json_decref(j_error);
+    gnutls_pubkey_deinit(pubkey);
+    gnutls_x509_crt_deinit(cert);
+    cbor_decref(&cbor_cose);
+    cbor_decref(&att_cert);
+    
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error allocating resources for j_error");
     j_return = json_pack("{si}", "result", G_ERROR);
@@ -504,11 +552,11 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
  * 
  */
 static json_t * register_new_credential(struct config_module * config, json_t * j_params, const char * username, json_t * j_scheme_data, json_t * j_credentials) {
-  json_t * j_return, * j_client_data, * j_error_list, * j_result;
+  json_t * j_return, * j_client_data = NULL, * j_error_list, * j_result, * j_pubkey = NULL, * j_query;
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL;
   char * challenge_hash = NULL, * message = NULL, * rpid = NULL;
   size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0;
-  int ret = G_OK, i;
+  int ret = G_OK, i, res;
   struct cbor_load_result cbor_result;
   cbor_item_t * item = NULL, * key = NULL, * auth_data = NULL, * att_stmt = NULL;
   
@@ -516,6 +564,11 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
     j_error_list = json_array();
     if (j_error_list != NULL) {
       do {
+        if (!json_is_string(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")) || !json_string_length(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId"))) {
+          json_array_append_new(j_error_list, json_string("rawId mandatory"));
+          ret = G_ERROR_PARAM;
+          break;
+        }
         if (!json_is_string(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")) || !json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON"))) {
           json_array_append_new(j_error_list, json_string("clientDataJSON mandatory"));
           ret = G_ERROR_PARAM;
@@ -710,6 +763,8 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
             ret = G_ERROR_PARAM;
             y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_object - Error check_attestation_fido_u2f");
             json_array_append_new(j_error_list, json_string("internal error"));
+          } else {
+            j_pubkey = json_incref(json_object_get(json_object_get(j_result, "data"), "pubkey"));
           }
           json_decref(j_result);
         } else {
@@ -726,21 +781,37 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
           j_return = json_pack("{si}", "result", ret);
         }
       } else {
-        j_return = json_pack("{si}", "result", G_OK);
+        // Store credential in the database
+        j_query = json_pack("{sss{sisOsO}s{sO}}",
+                            "table", 
+                            G_TABLE_WEBAUTHN_CREDENTIAL,
+                            "set",
+                              "gswc_status",
+                              1,
+                              "gswc_credential_id",
+                              json_object_get(json_object_get(j_scheme_data, "credential"), "rawId"),
+                              "gswc_public_key",
+                              j_pubkey,
+                            "where",
+                              "gswc_id",
+                              json_object_get(j_credentials, "gswc_id"));
+        res = h_update(config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          j_return = json_pack("{si}", "result", G_OK);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error h_update");
+          j_return = json_pack("{si}", "result", G_ERROR_DB);
+        }
       }
       json_decref(j_error_list);
+      json_decref(j_client_data);
+      json_decref(j_pubkey);
       o_free(client_data);
       o_free(challenge_b64);
       o_free(challenge_hash);
       o_free(att_obj);
       cbor_decref(&item);
-      
-      if (ret == G_ERROR_PARAM) {
-        j_return = json_pack("{sisO}", "result", ret, "error", j_error_list);
-      } else {
-        j_return = json_pack("{si}", "result", G_OK);
-      }
-      json_decref(j_error_list);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error allocating resources for j_error_list");
       j_return = json_pack("{si}", "result", G_ERROR);
@@ -1043,11 +1114,25 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
  * 
  */
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls) {
-  UNUSED(config);
-  UNUSED(http_request);
   UNUSED(j_scheme_trigger);
-  json_t * j_return = NULL;
+  json_t * j_return = NULL, * j_session = config->glewlwyd_module_callback_check_user_session(config, http_request, username), * j_credentials;
   
+  if (check_result_value(j_session, G_OK)) {
+    j_credentials = get_credentials_for_user(config, username);
+    if (check_result_value(j_credentials, G_OK)) {
+      j_return = json_pack("{sisO}", "result", G_OK, "response", json_object_get(j_credentials, "credentials"));
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger - Error get_credentials_for_user");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_credentials);
+  } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger - Error glewlwyd_module_callback_check_user_session");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  json_decref(j_session);
   return j_return;
 }
 
