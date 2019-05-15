@@ -336,6 +336,7 @@ struct config_module {
   json_t               * (* glewlwyd_module_callback_get_user)(struct config_module * config, const char * username);
   int                    (* glewlwyd_module_callback_set_user)(struct config_module * config, const char * username, json_t * j_user);
   int                    (* glewlwyd_module_callback_check_user_password)(struct config_module * config, const char * username, const char * password);
+  json_t               * (* glewlwyd_module_callback_check_user_session)(struct config_module * config, const struct _u_request * request, const char * username);
 };
 
 /**

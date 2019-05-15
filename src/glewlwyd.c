@@ -93,6 +93,7 @@ int main (int argc, char ** argv) {
   config->config_m->glewlwyd_module_callback_get_user = &glewlwyd_module_callback_get_user;
   config->config_m->glewlwyd_module_callback_set_user = &glewlwyd_module_callback_set_user;
   config->config_m->glewlwyd_module_callback_check_user_password = &glewlwyd_module_callback_check_user_password;
+  config->config_m->glewlwyd_module_callback_check_user_session = &glewlwyd_module_callback_check_user_session;
   config->config_file = NULL;
   config->port = GLEWLWYD_DEFAULT_PORT;
   config->api_prefix = NULL;

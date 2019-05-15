@@ -676,3 +676,24 @@ int glewlwyd_module_callback_check_user_password(struct config_module * config, 
   json_decref(j_result);
   return ret;
 }
+
+json_t * glewlwyd_module_callback_check_user_session(struct config_module * config, const struct _u_request * request, const char * username) {
+  char * session_uid = get_session_id(config->glewlwyd_config, request);
+  json_t * j_return, * j_result;
+  if (session_uid != NULL) {
+    j_result = get_current_user_for_session(config->glewlwyd_config, session_uid);
+    if (check_result_value(j_result, G_OK)) {
+      j_return = json_incref(j_result);
+    } else if (!check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_module_callback_check_user_password - Error get_current_user_for_session");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    }
+    json_decref(j_result);
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  o_free(session_uid);
+  return j_return;
+}
