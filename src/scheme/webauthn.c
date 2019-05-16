@@ -351,6 +351,36 @@ static json_t * get_credentials_from_session(struct config_module * config, cons
   return j_return;
 }
 
+static int check_pubkey_id(struct config_module * config, json_t * j_pubkey) {
+  json_t * j_query, * j_result;
+  int res, ret;
+  
+  j_query = json_pack("{sss[s]s{sOsi}}",
+                      "table",
+                      G_TABLE_WEBAUTHN_CREDENTIAL,
+                      "columns",
+                        "gswc_id",
+                      "where",
+                        "gswc_public_key",
+                        j_pubkey,
+                        "gswc_status",
+                        1);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result)) {
+      ret = G_OK;
+    } else {
+      ret = G_ERROR_NOT_FOUND;
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "check_credential_id - Error executing j_query");
+    ret = G_ERROR_DB;
+  }
+  return ret;
+}
+
 /**
  * 
  * Validate the attStmt object under the fido-u2f format
@@ -553,9 +583,9 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
  */
 static json_t * register_new_credential(struct config_module * config, json_t * j_params, const char * username, json_t * j_scheme_data, json_t * j_credentials) {
   json_t * j_return, * j_client_data = NULL, * j_error_list, * j_result, * j_pubkey = NULL, * j_query;
-  unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL;
+  unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL, * credential_id_b64 = NULL;
   char * challenge_hash = NULL, * message = NULL, * rpid = NULL;
-  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0;
+  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len;
   int ret = G_OK, i, res;
   struct cbor_load_result cbor_result;
   cbor_item_t * item = NULL, * key = NULL, * auth_data = NULL, * att_stmt = NULL;
@@ -732,19 +762,35 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
         }
         
         // Step 10
-        if (!(cbor_bs_handle[32] & FLAG_USER_PRESENT)) {
+        if (!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_USER_PRESENT)) {
           json_array_append_new(j_error_list, json_string("authData.userPresent not set"));
           ret = G_ERROR_PARAM;
           break;
         }
         
         // Step 11 ignored for now
-        //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", !!(cbor_bs_handle[32] & FLAG_USER_VERIFY));
-        //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Attested credential data: %d", !!(cbor_bs_handle[32] & FLAG_AT));
-        //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", !!(cbor_bs_handle[32] & FLAG_ED));
+        //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_USER_VERIFY));
+        //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Attested credential data: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_AT));
+        //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_ED));
         
         // Step 12 ignored for now (no extension)
-      
+        
+        credential_id_len = cbor_bs_handle[CRED_ID_L_OFFSET+1] | (cbor_bs_handle[CRED_ID_L_OFFSET] << 8);
+        credential_id_b64 = o_malloc(credential_id_len*2);
+        if (credential_id_b64 == NULL) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error o_malloc for credential_id_b64");
+          json_array_append_new(j_error_list, json_string("Internal error"));
+          ret = G_ERROR_PARAM;
+          break;
+        }
+        
+        if (!o_base64_encode(cbor_bs_handle+CRED_ID_L_OFFSET, credential_id_len, credential_id_b64, &credential_id_b64_len)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error o_base64_encode for credential_id_b64");
+          json_array_append_new(j_error_list, json_string("Internal error"));
+          ret = G_ERROR_PARAM;
+          break;
+        }
+        
         // Steps 13-14
         if (0 == o_strncmp("packed", (char *)fmt, MIN(fmt_len, o_strlen("packed")))) {
           json_array_append_new(j_error_list, json_string("fmt 'packed' not handled yet"));
@@ -781,27 +827,35 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
           j_return = json_pack("{si}", "result", ret);
         }
       } else {
-        // Store credential in the database
-        j_query = json_pack("{sss{sisOsO}s{sO}}",
-                            "table", 
-                            G_TABLE_WEBAUTHN_CREDENTIAL,
-                            "set",
-                              "gswc_status",
-                              1,
-                              "gswc_credential_id",
-                              json_object_get(json_object_get(j_scheme_data, "credential"), "rawId"),
-                              "gswc_public_key",
-                              j_pubkey,
-                            "where",
-                              "gswc_id",
-                              json_object_get(j_credentials, "gswc_id"));
-        res = h_update(config->conn, j_query, NULL);
-        json_decref(j_query);
-        if (res == H_OK) {
-          j_return = json_pack("{si}", "result", G_OK);
+        if ((res = check_pubkey_id(config, j_pubkey)) == G_OK) {
+          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Credential already registered");
+        } else if (res != G_ERROR_NOT_FOUND) {
+          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "register_new_credential - Error check_pubkey_id");
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error h_update");
-          j_return = json_pack("{si}", "result", G_ERROR_DB);
+          // Store credential in the database
+          j_query = json_pack("{sss{sisOsOss}s{sO}}",
+                              "table", 
+                              G_TABLE_WEBAUTHN_CREDENTIAL,
+                              "set",
+                                "gswc_status",
+                                1,
+                                "gswc_credential_id",
+                                json_object_get(json_object_get(j_scheme_data, "credential"), "rawId"),
+                                "gswc_public_key",
+                                j_pubkey,
+                                "gswc_credential_id",
+                                credential_id_b64,
+                              "where",
+                                "gswc_id",
+                                json_object_get(j_credentials, "gswc_id"));
+          res = h_update(config->conn, j_query, NULL);
+          json_decref(j_query);
+          if (res == H_OK) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error h_update");
+            j_return = json_pack("{si}", "result", G_ERROR_DB);
+          }
         }
       }
       json_decref(j_error_list);
@@ -811,6 +865,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
       o_free(challenge_b64);
       o_free(challenge_hash);
       o_free(att_obj);
+      o_free(credential_id_b64);
       cbor_decref(&item);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error allocating resources for j_error_list");
