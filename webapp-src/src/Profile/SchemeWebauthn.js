@@ -155,7 +155,6 @@ class SchemeWebauthn extends Component {
         });
       })
       .catch((err) => {
-        console.log(err);
         this.setState({status: "error registration"});
       });
     })
@@ -185,10 +184,67 @@ class SchemeWebauthn extends Component {
         },
       };
       
-      getCredentialDefaultArgs.publicKey.allowCredentials = this.state.idList;
+      var allowCredentials = [];
+      result.credentials.forEach((cred) => {
+        allowCredentials.push({
+          id: this.strToBin(cred),
+          type: "public-key"
+        });
+      });
+      
+      getCredentialDefaultArgs.publicKey.allowCredentials = allowCredentials;
+      
       navigator.credentials.get(getCredentialDefaultArgs)
       .then((assertion) => {
         this.setState({status: "validated"});
+        
+        const publicKeyCredential = {};
+
+        if ('id' in assertion) {
+          publicKeyCredential.id = assertion.id;
+        }
+        if ('type' in assertion) {
+          publicKeyCredential.type = assertion.type;
+        }
+        if ('rawId' in assertion) {
+          publicKeyCredential.rawId = this.binToStr(assertion.rawId);
+        }
+        if (!assertion.response) {
+          console.log("Get assertion response lacking 'response' attribute");
+        }
+
+        publicKeyCredential.response = {
+          clientDataJSON: this.binToStr(assertion.response.clientDataJSON),
+          authenticatorData: this.binToStr(assertion.response.authenticatorData),
+          signature: this.binToStr(assertion.response.signature),
+          userHandle: this.binToStr(assertion.response.userHandle)
+        };
+
+        // Check if transports are included in the registration response.
+        if (assertion.response.getTransports) {
+          response.transports = assertion.response.getTransports();
+        }
+
+        apiManager.glewlwydRequest("/auth/", "POST", 
+        {
+          username: this.state.profile.username, 
+          scheme_type: this.state.module, 
+          scheme_name: this.state.name, 
+          value: {
+            session: result.session, 
+            credential: publicKeyCredential
+          }
+        })
+        .then(() => {
+          messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-assertion-success")});
+        })
+        .fail((err) => {
+          if (err.status === 401) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-assertion-error")});
+          } else {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+          }
+        });
       })
       .catch((err) => {
         this.setState({status: "error validation"});

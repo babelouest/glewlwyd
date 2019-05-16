@@ -30,7 +30,7 @@ CREATE TABLE gs_webauthn_assertion (
   gswc_id INTEGER,
   gswa_session_hash TEXT NOT NULL,
   gswa_challenge_hash TEXT,
-  gswa_status SMALLINT DEFAULT 0, -- 0 new, 1 verified, 2 not verified, 3 error
+  gswa_status SMALLINT DEFAULT 0, -- 0 new, 1 verified, 2 not verified, 3 error, 4 cancelled
   FOREIGN KEY(gswu_id) REFERENCES gs_webauthn_user(gswu_id) ON DELETE CASCADE,
   FOREIGN KEY(gswc_id) REFERENCES gs_webauthn_credential(gswc_id) ON DELETE CASCADE
 );
