@@ -12,10 +12,12 @@ CREATE TABLE gs_webauthn_credential (
   gswc_id SERIAL PRIMARY KEY,
   gswu_id INTEGER NOT NULL,
   gswc_session_hash VARCHAR(128) NOT NULL,
+  gswc_name VARCHAR(128),
   gswc_challenge_hash VARCHAR(128),
-  gswc_credential_id VARCHAR(128),
+  gswc_credential_id VARCHAR(256),
   gswc_public_key TEXT DEFAULT NULL,
   gswc_created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  gswc_last_seen TIMESTAMP,
   gswc_status SMALLINT DEFAULT 0, -- 0 new, 1 registered, 2 error, 3 closed, 4 cancelled
   FOREIGN KEY(gswu_id) REFERENCES gs_webauthn_user(gswu_id) ON DELETE CASCADE
 );
