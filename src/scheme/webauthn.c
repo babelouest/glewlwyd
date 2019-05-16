@@ -290,11 +290,12 @@ static json_t * get_credentials_from_session(struct config_module * config, cons
   if (session_hash != NULL) {
     username_escaped = h_escape_string(config->conn, username);
     username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
-    j_query = json_pack("{sss[ssssss]s{sss{ssss}si}}",
+    j_query = json_pack("{sss[sssssss]s{sss{ssss}si}}",
                         "table",
                         G_TABLE_WEBAUTHN_CREDENTIAL,
                         "columns",
                           "gswc_id",
+                          "gswu_id",
                           "gswc_session_hash AS session_hash",
                           "gswc_challenge_hash AS challenge_hash",
                           "gswc_credential_id AS credential_id",
@@ -351,7 +352,7 @@ static json_t * get_credentials_from_session(struct config_module * config, cons
   return j_return;
 }
 
-static int check_pubkey_id(struct config_module * config, json_t * j_pubkey) {
+static int check_pubkey_id(struct config_module * config, json_t * j_pubkey, json_int_t gswu_id) {
   json_t * j_query, * j_result;
   int res, ret;
   
@@ -359,7 +360,7 @@ static int check_pubkey_id(struct config_module * config, json_t * j_pubkey) {
                       "table",
                       G_TABLE_WEBAUTHN_CREDENTIAL,
                       "columns",
-                        "gswc_id",
+                        "gswu_id",
                       "where",
                         "gswc_public_key",
                         j_pubkey,
@@ -369,7 +370,11 @@ static int check_pubkey_id(struct config_module * config, json_t * j_pubkey) {
   json_decref(j_query);
   if (res == H_OK) {
     if (json_array_size(j_result)) {
-      ret = G_OK;
+      if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gswu_id")) == gswu_id) {
+        ret = G_OK;
+      } else {
+        ret = G_ERROR_UNAUTHORIZED;
+      }
     } else {
       ret = G_ERROR_NOT_FOUND;
     }
@@ -827,8 +832,10 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
           j_return = json_pack("{si}", "result", ret);
         }
       } else {
-        if ((res = check_pubkey_id(config, j_pubkey)) == G_OK) {
+        if ((res = check_pubkey_id(config, j_pubkey, json_integer_value(json_object_get(j_credentials, "gswu_id")))) == G_OK) {
           j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Credential already registered");
+        } else if (res == G_ERROR_UNAUTHORIZED) {
+          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Credential unauthorized");
         } else if (res != G_ERROR_NOT_FOUND) {
           j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "register_new_credential - Error check_pubkey_id");
         } else {
