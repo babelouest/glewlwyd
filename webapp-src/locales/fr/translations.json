@@ -408,7 +408,9 @@
     "scheme-webauthn-register": "Enregistrer un nouveau composant",
     "scheme-webauthn-test-registration": "Valider l'enregistrement",
     "scheme-webauthn-register-credential-error": "Erreur lors de l'enregistrement du composant",
-    "scheme-webauthn-register-credential-success": "Le composant a été enregistré"
+    "scheme-webauthn-register-credential-success": "Le composant a été enregistré",
+    "scheme-webauthn-assertion-success": "Authentification validée",
+    "scheme-webauthn-assertion-error": "Erreur lors de l'authentification"
   },
   "modal": {
     "close": "Fermer",

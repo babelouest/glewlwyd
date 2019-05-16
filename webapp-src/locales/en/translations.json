@@ -408,7 +408,9 @@
     "scheme-webauthn-register": "Register a new component",
     "scheme-webauthn-test-registration": "Validate component",
     "scheme-webauthn-register-credential-error": "Error while registering component",
-    "scheme-webauthn-register-credential-success": "The new component has been registered"
+    "scheme-webauthn-register-credential-success": "The new component has been registered",
+    "scheme-webauthn-assertion-success": "Authentication succeeded",
+    "scheme-webauthn-assertion-error": "Authentication error"
   },
   "modal": {
     "close": "Close",
