@@ -884,6 +884,10 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
   return j_return;
 }
 
+static json_t * register_new_assertion(struct config_module * config, json_t * j_params, const char * username) {
+  return NULL;
+}
+
 /**
  * 
  * user_auth_scheme_module_load
@@ -1177,12 +1181,21 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
  */
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls) {
   UNUSED(j_scheme_trigger);
-  json_t * j_return = NULL, * j_session = config->glewlwyd_module_callback_check_user_session(config, http_request, username), * j_credentials;
+  json_t * j_return = NULL, * j_session = config->glewlwyd_module_callback_check_user_session(config, http_request, username), * j_credentials, * j_assertion;
   
   if (check_result_value(j_session, G_OK)) {
     j_credentials = get_credentials_for_user(config, username);
     if (check_result_value(j_credentials, G_OK)) {
-      j_return = json_pack("{sisO}", "result", G_OK, "response", json_object_get(j_credentials, "credentials"));
+      j_assertion = register_new_assertion(config, (json_t *)cls, username);
+      if (check_result_value(j_assertion, G_OK)) {
+        j_return = json_pack("{sis{sOsOsO}}", "result", G_OK, "response", json_object_get(j_credentials, "credentials"), "session", json_object_get(json_object_get(j_assertion, "assertion"), "session"), "challenge", json_object_get(json_object_get(j_assertion, "assertion"), "challenge"));
+      } else if (check_result_value(j_assertion, G_ERROR_UNAUTHORIZED)) {
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger - Error register_new_assertion");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      json_decref(j_assertion);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger - Error get_credentials_for_user");
       j_return = json_pack("{si}", "result", G_ERROR);
