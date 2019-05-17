@@ -410,7 +410,9 @@
     "scheme-webauthn-register-credential-error": "Erreur lors de l'enregistrement du composant",
     "scheme-webauthn-register-credential-success": "Le composant a été enregistré",
     "scheme-webauthn-assertion-success": "Authentification validée",
-    "scheme-webauthn-assertion-error": "Erreur lors de l'authentification"
+    "scheme-webauthn-assertion-error": "Erreur lors de l'authentification",
+    "scheme-webauthn-table-created_at": "Date d'enregistrement",
+    "scheme-webauthn-table-name": "Nom du dispositif"
   },
   "modal": {
     "close": "Fermer",

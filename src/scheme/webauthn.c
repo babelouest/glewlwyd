@@ -175,7 +175,7 @@ static json_t * get_credential_list(struct config_module * config, const char * 
                       "table",
                       G_TABLE_WEBAUTHN_CREDENTIAL,
                       "columns",
-                        "gswc_credential_id",
+                        "gswc_credential_id AS credential_id",
                         "gswc_name AS name",
                         "gswc_created_at AS created_at",
                         "gswc_status",
@@ -187,6 +187,8 @@ static json_t * get_credential_list(struct config_module * config, const char * 
                           username_clause);
   if (restrict_to_registered) {
     json_object_set_new(json_object_get(j_query, "where"), "gswc_status", json_integer(1));
+  } else {
+    json_object_set_new(json_object_get(j_query, "where"), "gswc_status", json_pack("{ssss}", "operator", "raw", "value", " IN (1,3,4)"));
   }
   res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
@@ -208,14 +210,11 @@ static json_t * get_credential_list(struct config_module * config, const char * 
             case 3:
               json_object_set_new(j_element, "status", json_string("closed"));
               break;
-            case 4:
-              json_object_set_new(j_element, "status", json_string("cancelled"));
-              break;
             default:
               break;
           }
           json_object_del(j_element, "gswc_status");
-          json_array_append(json_object_get(j_return, "credential"), json_object_get(j_element, "gswc_credential_id"));
+          json_array_append(json_object_get(j_return, "credential"), j_element);
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_credential_list - Error json_pack");
@@ -254,7 +253,7 @@ static json_t * generate_new_credential(struct config_module * config, json_t * 
                             G_TABLE_WEBAUTHN_CREDENTIAL,
                             "set",
                               "gswc_status",
-                              4,
+                              2,
                             "where",
                               "gswu_id",
                                 "operator",
@@ -334,7 +333,7 @@ static json_t * generate_new_assertion(struct config_module * config, json_t * j
                             G_TABLE_WEBAUTHN_ASSERTION,
                             "set",
                               "gswa_status",
-                              4,
+                              3,
                             "where",
                               "gswu_id",
                                 "operator",
@@ -442,6 +441,83 @@ static json_t * get_credential_from_session(struct config_module * config, const
   }
   o_free(session_hash);
   return j_return;
+}
+
+static json_t * get_credential(struct config_module * config, const char * username, const char * credential_id) {
+  json_t * j_query, * j_result, * j_return;
+  char * username_escaped, * username_clause;
+  int res;
+  
+  username_escaped = h_escape_string(config->conn, username);
+  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
+  j_query = json_pack("{sss[s]s{sss{ssss}s{ssss}}}",
+                      "table",
+                      G_TABLE_WEBAUTHN_CREDENTIAL,
+                      "columns",
+                        "gswc_id",
+                      "where",
+                        "gswc_credential_id",
+                        credential_id,
+                        "gswu_id",
+                          "operator",
+                          "raw",
+                          "value",
+                          username_clause,
+                        "gswc_status",
+                          "operator",
+                          "raw",
+                          "value",
+                          " IN (1,3,4)");
+  o_free(username_clause);
+  o_free(username_escaped);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result)) {
+      j_return = json_pack("{si}", "result", G_OK);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_credential - Error executing j_query");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  return j_return;
+}
+
+static int close_credential(struct config_module * config, const char * username, const char * credential_id) {
+  json_t * j_query;
+  char * username_escaped, * username_clause;
+  int res, ret;
+  
+  username_escaped = h_escape_string(config->conn, username);
+  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
+  j_query = json_pack("{sss{si}s{sss{ssss}}}",
+                      "table",
+                      G_TABLE_WEBAUTHN_CREDENTIAL,
+                      "set",
+                        "gswc_status",
+                        3,
+                      "where",
+                        "gswc_credential_id",
+                        credential_id,
+                        "gswu_id",
+                          "operator",
+                          "raw",
+                          "value",
+                          username_clause);
+  o_free(username_clause);
+  o_free(username_escaped);
+  res = h_update(config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    ret = G_OK;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_credential - Error executing j_query");
+    ret = G_ERROR_DB;
+  }
+  return ret;
 }
 
 static json_t * get_assertion_from_session(struct config_module * config, const char * username, const char * session) {
@@ -1216,6 +1292,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
   UNUSED(http_request);
   UNUSED(from_admin);
   json_t * j_return, * j_result, * j_credential, * j_user_id;
+  int res;
 
   if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "new-credential")) {
     j_user_id = get_user_id_from_username(config, username, 1);
@@ -1261,6 +1338,24 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     } else if (check_result_value(j_credential, G_ERROR_NOT_FOUND)) {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error get_credential_from_session");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_credential);
+  } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "close-credential")) {
+    j_credential = get_credential(config, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
+    if (check_result_value(j_credential, G_OK)) {
+      if ((res = close_credential(config, username, json_string_value(json_object_get(j_scheme_data, "credential_id")))) == G_OK) {
+        j_return = json_pack("{si}", "result", G_OK);
+      } else if (res == G_ERROR_PARAM) {
+        j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error get_credential");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+    } else if (check_result_value(j_credential, G_ERROR_NOT_FOUND)) {
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error get_credential");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
@@ -1300,6 +1395,8 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
     j_credential_list = get_credential_list(config, username, 0);
     if (check_result_value(j_credential_list, G_OK)) {
       j_return = json_pack("{sisO}", "result", G_OK, "response", json_object_get(j_credential_list, "credential"));
+    } else if (check_result_value(j_credential_list, G_ERROR_NOT_FOUND)) {
+      j_return = json_pack("{sis[]}", "result", G_OK, "response");
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register_get webauthn - Error get_credential_list");
       j_return = json_pack("{si}", "result", G_ERROR);
