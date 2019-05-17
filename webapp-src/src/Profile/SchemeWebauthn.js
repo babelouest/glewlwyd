@@ -15,13 +15,15 @@ class SchemeWebauthn extends Component {
       profile: props.profile,
       registered: false,
       registration: false,
-      idList: [],
+      credentialList: [],
       status: ""
     };
     
     this.getRegister = this.getRegister.bind(this);
     this.register = this.register.bind(this);
     this.testRegistration = this.testRegistration.bind(this);
+    this.editName = this.editName.bind(this);
+    this.close = this.close.bind(this);
     
     this.getRegister();
   }
@@ -48,10 +50,12 @@ class SchemeWebauthn extends Component {
       (s, byte) => s + String.fromCharCode(byte), ''
     ));
   }
+  
   getRegister() {
     if (this.state.profile) {
       apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
       .then((res) => {
+        this.setState({credentialList: res});
       })
       .fail((err) => {
         if (err.status === 401) {
@@ -187,7 +191,7 @@ class SchemeWebauthn extends Component {
       var allowCredentials = [];
       result.credentials.forEach((cred) => {
         allowCredentials.push({
-          id: this.strToBin(cred),
+          id: this.strToBin(cred.credential_id),
           type: "public-key"
         });
       });
@@ -258,7 +262,36 @@ class SchemeWebauthn extends Component {
     });
   }
   
+  editName(index) {
+  }
+  
+  close(index) {
+  }
+  
 	render() {
+    var credentialList = [];
+    this.state.credentialList.forEach((cred, index) => {
+      credentialList.push(
+        <tr key={index}>
+          <td>
+            {cred.created_at}
+          </td>
+          <td>
+            {cred.name}
+          </td>
+          <td>
+            <div className="btn-group" role="group">
+              <button type="button" className="btn btn-primary" onClick={(e) => this.editName(index)}>
+                <i className="fas fa-edit"></i>
+              </button>
+              <button type="button" className="btn btn-primary" onClick={(e) => this.close(index)}>
+                <i className="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      );
+    });
     return (
       <div>
         <div className="row">
@@ -268,6 +301,23 @@ class SchemeWebauthn extends Component {
         </div>
         <div className="row">
           <div className="col-md-12">
+            <table className="table table-responsive table-striped">
+              <thead>
+                <tr>
+                  <th>
+                    {i18next.t("profile.scheme-webauthn-table-created_at")}
+                  </th>
+                  <th>
+                    {i18next.t("profile.scheme-webauthn-table-name")}
+                  </th>
+                  <th>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {credentialList}
+              </tbody>
+            </table>
             {this.state.status}
           </div>
         </div>

@@ -410,7 +410,9 @@
     "scheme-webauthn-register-credential-error": "Error while registering component",
     "scheme-webauthn-register-credential-success": "The new component has been registered",
     "scheme-webauthn-assertion-success": "Authentication succeeded",
-    "scheme-webauthn-assertion-error": "Authentication error"
+    "scheme-webauthn-assertion-error": "Authentication error",
+    "scheme-webauthn-table-created_at": "Registration date",
+    "scheme-webauthn-table-name": "Device name"
   },
   "modal": {
     "close": "Close",
