@@ -22,6 +22,14 @@ class WebauthnParams extends Component {
       props.mod.parameters["pubKey-cred-params"] = [-7, -35, -36];
     }
     
+    if (!props.mod.parameters["credential-expiration"]) {
+      props.mod.parameters["credential-expiration"] = 120;
+    }
+    
+    if (!props.mod.parameters["credential-assertion"]) {
+      props.mod.parameters["credential-assertion"] = 120;
+    }
+    
     this.state = {
       config: props.config,
       mod: props.mod,
@@ -41,22 +49,6 @@ class WebauthnParams extends Component {
   }
   
   componentWillReceiveProps(nextProps) {
-    
-    if (!nextProps.mod) {
-      nextProps.mod = {parameters: {}};
-    }
-    
-    if (!nextProps.mod.parameters["challenge-length"]) {
-      nextProps.mod.parameters["challenge-length"] = 64;
-    }
-    
-    if (!nextProps.mod.parameters["rp-origin"]) {
-      nextProps.mod.parameters["rp-origin"] = location.protocol + "//" + location.host;
-    }
-    
-    if (!nextProps.mod.parameters["pubKey-cred-params"]) {
-      nextProps.mod.parameters["pubKey-cred-params"] = [-7, -35, -36];
-    }
     
     this.setState({
       config: nextProps.config,
@@ -97,6 +89,14 @@ class WebauthnParams extends Component {
       hasError = true;
       errorList["challenge-length"] = i18next.t("admin.mod-webauthn-challenge-length-error")
     }
+    if (!this.state.mod.parameters["credential-expiration"]) {
+      hasError = true;
+      errorList["credential-expiration"] = i18next.t("admin.mod-webauthn-credential-expiration-error")
+    }
+    if (!this.state.mod.parameters["credential-expiration"]) {
+      hasError = true;
+      errorList["credential-expiration"] = i18next.t("admin.mod-webauthn-credential-expiration-error")
+    }
     if (!this.state.mod.parameters["rp-origin"]) {
       hasError = true;
       errorList["rp-origin"] = i18next.t("admin.mod-webauthn-rp-origin-error")
@@ -121,6 +121,16 @@ class WebauthnParams extends Component {
           <label htmlFor="mod-webauthn-challenge-length">{i18next.t("admin.mod-webauthn-challenge-length")}</label>
           <input type="number" min="0" step="1" className={this.state.errorList["challenge-length"]?"form-control is-invalid":"form-control"} id="mod-webauthn-challenge-length" onChange={(e) => this.changeParam(e, "challenge-length")} value={this.state.mod.parameters["challenge-length"]} placeholder={i18next.t("admin.mod-webauthn-challenge-length-ph")} />
           {this.state.errorList["challenge-length"]?<span className="error-input">{i18next.t(this.state.errorList["challenge-length"])}</span>:""}
+        </div>
+        <div className="form-group">
+          <label htmlFor="mod-webauthn-credential-expiration">{i18next.t("admin.mod-webauthn-credential-expiration")}</label>
+          <input type="number" min="0" step="1" className={this.state.errorList["credential-expiration"]?"form-control is-invalid":"form-control"} id="mod-webauthn-credential-expiration" onChange={(e) => this.changeParam(e, "credential-expiration", true)} value={this.state.mod.parameters["credential-expiration"]} placeholder={i18next.t("admin.mod-webauthn-credential-expiration-ph")} />
+          {this.state.errorList["credential-expiration"]?<span className="error-input">{i18next.t(this.state.errorList["credential-expiration"])}</span>:""}
+        </div>
+        <div className="form-group">
+          <label htmlFor="mod-webauthn-credential-assertion">{i18next.t("admin.mod-webauthn-credential-assertion")}</label>
+          <input type="number" min="0" step="1" className={this.state.errorList["credential-assertion"]?"form-control is-invalid":"form-control"} id="mod-webauthn-credential-assertion" onChange={(e) => this.changeParam(e, "credential-assertion", true)} value={this.state.mod.parameters["credential-assertion"]} placeholder={i18next.t("admin.mod-webauthn-credential-assertion-ph")} />
+          {this.state.errorList["credential-assertion"]?<span className="error-input">{i18next.t(this.state.errorList["credential-assertion"])}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-webauthn-rp-origin">{i18next.t("admin.mod-webauthn-rp-origin")}</label>
