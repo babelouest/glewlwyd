@@ -8,6 +8,7 @@ import Navbar from './Navbar';
 import User from './User';
 import PasswordModal from './PasswordModal';
 import SchemePage from './SchemePage';
+import Confirm from '../Modal/Confirm';
 
 class App extends Component {
   constructor(props) {
@@ -19,7 +20,12 @@ class App extends Component {
       curNav: "profile",
       profileList: false,
       schemeList: [],
-      loggedIn: false
+      loggedIn: false,
+      confirmModal: {
+        title: "",
+        message: "",
+        callback: false
+      }
     };
     
     this.fetchProfile = this.fetchProfile.bind(this);
@@ -44,6 +50,16 @@ class App extends Component {
         });
       } else if (message.type === 'lang') {
         this.setState({lang: i18next.language});
+      } else if (message.type === 'confirm') {
+        var confirmModal = this.state.confirmModal;
+        confirmModal.title = message.title;
+        confirmModal.message = message.message;
+        confirmModal.callback = message.callback;
+        this.setState({confirmModal: confirmModal}, () => {
+          $("#confirmModal").modal({keyboard: false, show: true});
+        });
+      } else if (message.type === 'closeConfirm') {
+        $("#confirmModal").modal("hide");
       }
     });
     
@@ -104,6 +120,7 @@ class App extends Component {
         </div>
         <Notification/>
         <PasswordModal config={this.state.config} callback={this.closePasswordModal}/>
+        <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
       </div>
 		);
 	}
