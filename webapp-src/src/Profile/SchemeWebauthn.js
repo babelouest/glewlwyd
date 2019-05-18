@@ -167,7 +167,7 @@ class SchemeWebauthn extends Component {
         .then(() => {
           messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-register-credential-success")});
         })
-        .fail((err) => {
+        .fail((err, textStatus) => {
           if (err.status === 400) {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-register-credential-error")});
           } else {
@@ -218,6 +218,7 @@ class SchemeWebauthn extends Component {
       
       navigator.credentials.get(getCredentialDefaultArgs)
       .then((assertion) => {
+        console.log(assertion);
         
         const publicKeyCredential = {};
 
@@ -375,11 +376,12 @@ class SchemeWebauthn extends Component {
 	render() {
     var credentialList = [];
     this.state.credentialList.forEach((cred, index) => {
+      var createdAt = new Date(cred.created_at*1000);
       if (this.state.editIndex === index) {
         credentialList.push(
           <tr key={index}>
             <td>
-              {cred.created_at}
+              {createdAt.toLocaleString()}
             </td>
             <td>
               <form className="needs-validation" noValidate onSubmit={(e) => this.saveName(e, index)}>
@@ -405,7 +407,7 @@ class SchemeWebauthn extends Component {
         credentialList.push(
           <tr key={index}>
             <td>
-              {cred.created_at}
+              {createdAt.toLocaleString()}
             </td>
             <td>
               <span className="badge badge-success">
@@ -434,7 +436,7 @@ class SchemeWebauthn extends Component {
         credentialList.push(
           <tr key={index}>
             <td>
-              {cred.created_at}
+              {createdAt.toLocaleString()}
             </td>
             <td>
               <span className="badge badge-danger">
