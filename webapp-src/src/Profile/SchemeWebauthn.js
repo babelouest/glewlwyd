@@ -218,7 +218,6 @@ class SchemeWebauthn extends Component {
       
       navigator.credentials.get(getCredentialDefaultArgs)
       .then((assertion) => {
-        console.log(assertion);
         
         const publicKeyCredential = {};
 
@@ -360,7 +359,7 @@ class SchemeWebauthn extends Component {
         })
       .then((res) => {
         this.getRegister();
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-removed")});
+        messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-removed")});
       })
       .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
