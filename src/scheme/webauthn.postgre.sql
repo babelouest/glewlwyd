@@ -17,6 +17,7 @@ CREATE TABLE gs_webauthn_credential (
   gswc_challenge_hash VARCHAR(128),
   gswc_credential_id VARCHAR(256),
   gswc_public_key TEXT DEFAULT NULL,
+  gswc_counter INTEGER DEFAULT 0,
   gswc_created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   gswc_status SMALLINT DEFAULT 0, -- 0 new, 1 registered, 2 error, 3 disabled, 4 removed
   FOREIGN KEY(gswu_id) REFERENCES gs_webauthn_user(gswu_id) ON DELETE CASCADE
@@ -30,6 +31,8 @@ CREATE TABLE gs_webauthn_assertion (
   gswc_id INTEGER,
   gswa_session_hash VARCHAR(128) NOT NULL,
   gswa_challenge_hash VARCHAR(128),
+  gswa_counter INTEGER DEFAULT 0,
+  gswa_issued_at TIMESTAMP NOT NULL DEFAULT NOW(),
   gswa_status SMALLINT DEFAULT 0, -- 0 new, 1 verified, 2 not verified, 3 error
   FOREIGN KEY(gswu_id) REFERENCES gs_webauthn_user(gswu_id) ON DELETE CASCADE,
   FOREIGN KEY(gswc_id) REFERENCES gs_webauthn_credential(gswc_id) ON DELETE CASCADE
