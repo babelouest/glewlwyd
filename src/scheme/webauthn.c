@@ -687,7 +687,7 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
   char * message;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
-  gnutls_datum_t cert_dat;
+  gnutls_datum_t cert_dat, data, signature;
   unsigned char * cred_pub_key, data_signed[200], client_data_hash[32], * cbor_auth_data, cert_x[32], cert_y[32], pubkey_export[1024];
   size_t cred_pub_key_len, data_signed_offset = 0, client_data_hash_len = 32, cbor_auth_data_len, credential_id_len, pubkey_export_len = 1024;
   struct cbor_load_result cbor_result;
@@ -825,14 +825,11 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
       data_signed_offset+=32;
       
       // Let's verify sig over data_signed
-      gnutls_datum_t data = {
-        data_signed,
-        data_signed_offset
-      };
-      gnutls_datum_t signature = {
-        cbor_bytestring_handle(sig),
-        cbor_bytestring_length(sig)
-      };
+      data.data = data_signed;
+      data.size = data_signed_offset;
+      
+      signature.data = cbor_bytestring_handle(sig);
+      signature.size = cbor_bytestring_length(sig);
       
       if (gnutls_pubkey_verify_data2(pubkey, GNUTLS_SIGN_ECDSA_SHA256, 0, &data, &signature)) {
         json_array_append_new(j_error, json_string("Invalid signature"));
@@ -1329,7 +1326,6 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       
       // Step 15
       if (!generate_digest_raw(digest_SHA256, client_data, client_data_len, cdata_hash, &cdata_hash_len)) {
-      //if (!generate_digest_raw(digest_SHA256, (const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), cdata_hash, &cdata_hash_len)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error generate_digest_raw for cdata_hash");
         ret = G_ERROR_PARAM;
         break;
