@@ -405,11 +405,11 @@ static json_t * get_credential_from_session(struct config_module * config, json_
     username_escaped = h_escape_string(config->conn, username);
     username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
     if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-      expiration_clause = msprintf("< FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
+      expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
     } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-      expiration_clause = msprintf("< TO_TIMESTAMP(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
+      expiration_clause = msprintf("> TO_TIMESTAMP(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
     } else { // HOEL_DB_TYPE_SQLITE
-      expiration_clause = msprintf("< %u", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
+      expiration_clause = msprintf("> %u", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
     }
     j_query = json_pack("{sss[ssssss]s{sss{ssss}sis{ssss}}}",
                         "table",
@@ -585,11 +585,11 @@ static json_t * get_assertion_from_session(struct config_module * config, json_t
     username_escaped = h_escape_string(config->conn, username);
     username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
     if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-      expiration_clause = msprintf("< FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "assertion-expiration"))));
+      expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
     } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-      expiration_clause = msprintf("< TO_TIMESTAMP(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "assertion-expiration"))));
+      expiration_clause = msprintf("> TO_TIMESTAMP(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
     } else { // HOEL_DB_TYPE_SQLITE
-      expiration_clause = msprintf("< %u", (now - (unsigned int)json_integer_value(json_object_get(j_params, "assertion-expiration"))));
+      expiration_clause = msprintf("> %u", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
     }
     j_query = json_pack("{sss[ssss]s{sss{ssss}sis{ssss}}}",
                         "table",
@@ -1375,6 +1375,8 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       // Let's verify sig over data_signed
       data.data = data_signed;
       data.size = (auth_data_len+cdata_hash_len);
+      
+      y_log_message(Y_LOG_LEVEL_DEBUG, "auth_data_len %zu, cdata_hash_len %zu, total %zu", auth_data_len, cdata_hash_len, data.size);
 
       g_signature.data = signature;
       g_signature.size = signature_len;
@@ -1580,9 +1582,11 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
   size_t index;
   
   if (check_result_value(j_result, G_OK)) {
-    *cls = json_pack("{sOsOs[]}",
+    *cls = json_pack("{sOsOsOsOs[]}",
                      "challenge-length", json_object_get(j_parameters, "challenge-length"),
                      "rp-origin", json_object_get(j_parameters, "rp-origin"),
+                     "credential-expiration", json_object_get(j_parameters, "credential-expiration"),
+                     "credential-assertion", json_object_get(j_parameters, "credential-assertion"),
                      "pubKey-cred-params");
     json_array_foreach(json_object_get(j_parameters, "pubKey-cred-params"), index, j_element) {
       json_array_append_new(json_object_get((json_t *)*cls, "pubKey-cred-params"), json_pack("{sssO}", "type", "public-key", "alg", j_element));
