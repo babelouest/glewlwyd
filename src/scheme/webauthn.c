@@ -467,12 +467,13 @@ static json_t * get_credential(struct config_module * config, const char * usern
   
   username_escaped = h_escape_string(config->conn, username);
   username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
-  j_query = json_pack("{sss[ss]s{sss{ssss}s{ssss}}}",
+  j_query = json_pack("{sss[sss]s{sss{ssss}s{ssss}}}",
                       "table",
                       G_TABLE_WEBAUTHN_CREDENTIAL,
                       "columns",
                         "gswc_id",
                         "gswc_public_key AS public_key",
+                        "gswc_counter AS counter",
                       "where",
                         "gswc_credential_id",
                         credential_id,
@@ -1381,9 +1382,16 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         ret = G_ERROR_UNAUTHORIZED;
         break;
       }
+      
+      if ((json_integer_value(json_object_get(json_object_get(j_credential, "credential"), "counter")) || counter) && counter <= json_integer_value(json_object_get(json_object_get(j_credential, "credential"), "counter"))) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - counter invalid");
+        ret = G_ERROR_UNAUTHORIZED;
+        break;
+      }
     } while (0); // This is not a loop, but a structure where you can easily cancel the rest of the process with breaks
     
     if (ret == G_OK) {
+      // Update assertion
       j_query = json_pack("{sss{sisi}s{sO}}",
                           "table",
                           G_TABLE_WEBAUTHN_ASSERTION,
@@ -1401,6 +1409,25 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error executing j_query (1)");
         ret = G_ERROR_DB;
       }
+      
+      // Update counter in credential if necessary
+      if (counter) {
+        j_query = json_pack("{sss{si}s{sO}}",
+                            "table",
+                            G_TABLE_WEBAUTHN_CREDENTIAL,
+                            "set",
+                              "gswc_counter",
+                              counter,
+                            "where",
+                              "gswc_id",
+                              json_object_get(json_object_get(j_credential, "credential"), "gswc_id"));
+        res = h_update(config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res != H_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error executing j_query (2)");
+          ret = G_ERROR_DB;
+        }
+      }
     } else if (ret == G_ERROR_PARAM) {
       j_query = json_pack("{sss{sisi}s{sO}}",
                           "table",
@@ -1416,7 +1443,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       res = h_update(config->conn, j_query, NULL);
       json_decref(j_query);
       if (res != H_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error executing j_query (2)");
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error executing j_query (3)");
         ret = G_ERROR_DB;
       }
     } else {
@@ -1434,7 +1461,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       res = h_update(config->conn, j_query, NULL);
       json_decref(j_query);
       if (res != H_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error executing j_query (3)");
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error executing j_query (4)");
         ret = G_ERROR_DB;
       }
     }
