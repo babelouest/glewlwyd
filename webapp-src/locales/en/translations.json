@@ -412,7 +412,18 @@
     "scheme-webauthn-assertion-success": "Authentication succeeded",
     "scheme-webauthn-assertion-error": "Authentication error",
     "scheme-webauthn-table-created_at": "Registration date",
-    "scheme-webauthn-table-name": "Device name"
+    "scheme-webauthn-table-name": "Device name",
+    "scheme-webauthn-table-enabled": "Enabled",
+    "scheme-webauthn-btn-edit": "Edit name",
+    "scheme-webauthn-btn-switch-on": "Enable",
+    "scheme-webauthn-btn-switch-off": "Disable",
+    "scheme-webauthn-btn-remove": "Remove",
+    "scheme-webauthn-edit-placeholder": "Ex: Yubikey 5",
+    "scheme-webauthn-error-assertion": "Authentication error",
+    "scheme-webauthn-error-registration": "Registration error",
+    "scheme-webauthn-confirm-title": "Remove component",
+    "scheme-webauthn-confirm-message": "Do you want to remove this component?",
+    "scheme-webauthn-removed": "Component removed"
   },
   "modal": {
     "close": "Close",

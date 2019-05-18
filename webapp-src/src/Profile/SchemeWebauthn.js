@@ -16,14 +16,21 @@ class SchemeWebauthn extends Component {
       registered: false,
       registration: false,
       credentialList: [],
-      status: ""
+      editIndex: -1,
+      editValue: "",
+      removeIndex: -1
     };
     
     this.getRegister = this.getRegister.bind(this);
     this.register = this.register.bind(this);
     this.testRegistration = this.testRegistration.bind(this);
-    this.editName = this.editName.bind(this);
-    this.close = this.close.bind(this);
+    this.editNameCred = this.editNameCred.bind(this);
+    this.changeName = this.changeName.bind(this);
+    this.saveName = this.saveName.bind(this);
+    this.cancelSaveName = this.cancelSaveName.bind(this);
+    this.switchCred = this.switchCred.bind(this);
+    this.removeCred = this.removeCred.bind(this);
+    this.confirmRemoveCred = this.confirmRemoveCred.bind(this);
     
     this.getRegister();
   }
@@ -78,12 +85,21 @@ class SchemeWebauthn extends Component {
       }
     })
     .then((result) => {
+      
+      var excludeCredentials = [];
+      this.state.credentialList.forEach((cred) => {
+        excludeCredentials.push({
+          id: this.strToBin(cred.credential_id),
+          type: "public-key"
+        });
+      });
+      
       var createCredentialDefaultArgs = {
         publicKey: {
           authenticatorSelection: {
             requireResidentKey: false
           },
-              
+          
           rp: {
             name: result["rp-origin"]
           },
@@ -104,13 +120,14 @@ class SchemeWebauthn extends Component {
 
           timeout: 60000,
 
-          challenge: this.strToBin(result.challenge)
+          challenge: this.strToBin(result.challenge),
+          
+          excludeCredentials: excludeCredentials
         }
       };
 
       navigator.credentials.create(createCredentialDefaultArgs)
       .then((cred) => {
-        this.setState({status: "registered"});
         
         const publicKeyCredential = {};
 
@@ -156,17 +173,17 @@ class SchemeWebauthn extends Component {
           } else {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
           }
+        })
+        .always(() => {
+          this.getRegister();
         });
       })
       .catch((err) => {
-        this.setState({status: "error registration"});
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-error-registration")});
       });
     })
     .fail((err) => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
-    })
-    .always(() => {
-      this.getRegister();
     });
   }
   
@@ -179,15 +196,6 @@ class SchemeWebauthn extends Component {
       value: {}
     })
     .then((result) => {
-      // sample arguments for login
-      var getCredentialDefaultArgs = {
-        publicKey: {
-          timeout: 60000,
-          // allowCredentials: [newCredential] // see below
-          challenge: new Uint8Array(atob(result.challenge)).buffer
-        },
-      };
-      
       var allowCredentials = [];
       result.credentials.forEach((cred) => {
         allowCredentials.push({
@@ -196,11 +204,20 @@ class SchemeWebauthn extends Component {
         });
       });
       
-      getCredentialDefaultArgs.publicKey.allowCredentials = allowCredentials;
+      var getCredentialDefaultArgs = {
+        rp: {
+          name: result.user["rp-origin"]
+        },
+        
+        publicKey: {
+          timeout: 60000,
+          allowCredentials: allowCredentials,
+          challenge: this.strToBin(result.challenge)
+        }
+      };
       
       navigator.credentials.get(getCredentialDefaultArgs)
       .then((assertion) => {
-        this.setState({status: "validated"});
         
         const publicKeyCredential = {};
 
@@ -251,7 +268,7 @@ class SchemeWebauthn extends Component {
         });
       })
       .catch((err) => {
-        this.setState({status: "error validation"});
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-error-assertion")});
       });
     })
     .fail((err) => {
@@ -262,35 +279,187 @@ class SchemeWebauthn extends Component {
     });
   }
   
-  editName(index) {
+  editNameCred(index) {
+    this.setState({editIndex: index, editValue: this.state.credentialList[index].name});
   }
   
-  close(index) {
+  changeName(e) {
+    this.setState({editValue: e.target.value});
+  }
+  
+  saveName(e, index) {
+    e.preventDefault();
+    
+    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", 
+      {
+        username: this.state.profile.username, 
+        scheme_type: this.state.module, 
+        scheme_name: this.state.name,
+        value: {
+          register: "edit-credential",
+          credential_id: this.state.credentialList[index].credential_id,
+          name: this.state.editValue
+        }
+      })
+    .then((res) => {
+      this.setState({editIndex: -1, editValue: ""}, () => {
+        this.getRegister();
+      });
+    })
+    .fail((err) => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+    });
+  }
+  
+  cancelSaveName() {
+    this.setState({editIndex: -1, editValue: ""});
+  }
+  
+  switchCred(index) {
+    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", 
+      {
+        username: this.state.profile.username, 
+        scheme_type: this.state.module, 
+        scheme_name: this.state.name,
+        value: {
+          register: (this.state.credentialList[index].status==="registered"?"disable-credential":"enable-credential"),
+          credential_id: this.state.credentialList[index].credential_id
+        }
+      })
+    .then((res) => {
+      this.getRegister();
+    })
+    .fail((err) => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+    });
+  }
+
+  removeCred(index) {
+    this.setState({removeIndex: index}, () => {
+      messageDispatcher.sendMessage('App', {
+        type: 'confirm',
+        title: i18next.t("profile.scheme-webauthn-confirm-title"), 
+        message: i18next.t("profile.scheme-webauthn-confirm-message"),
+        callback: this.confirmRemoveCred
+      });
+    });
+  }
+  
+  confirmRemoveCred(result) {
+    if (result) {
+      apiManager.glewlwydRequest("/profile/scheme/register/", "POST", 
+        {
+          username: this.state.profile.username, 
+          scheme_type: this.state.module, 
+          scheme_name: this.state.name,
+          value: {
+            register: "remove-credential",
+            credential_id: this.state.credentialList[this.state.removeIndex].credential_id
+          }
+        })
+      .then((res) => {
+        this.getRegister();
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-removed")});
+      })
+      .fail((err) => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+      })
+      .always(() => {
+        messageDispatcher.sendMessage('App', {type: 'closeConfirm'});
+      });
+    } else {
+      messageDispatcher.sendMessage('App', {type: 'closeConfirm'});
+    }
   }
   
 	render() {
     var credentialList = [];
     this.state.credentialList.forEach((cred, index) => {
-      credentialList.push(
-        <tr key={index}>
-          <td>
-            {cred.created_at}
-          </td>
-          <td>
-            {cred.name}
-          </td>
-          <td>
-            <div className="btn-group" role="group">
-              <button type="button" className="btn btn-primary" onClick={(e) => this.editName(index)}>
-                <i className="fas fa-edit"></i>
-              </button>
-              <button type="button" className="btn btn-primary" onClick={(e) => this.close(index)}>
-                <i className="fas fa-trash"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-      );
+      if (this.state.editIndex === index) {
+        credentialList.push(
+          <tr key={index}>
+            <td>
+              {cred.created_at}
+            </td>
+            <td>
+              <form className="needs-validation" noValidate onSubmit={(e) => this.saveName(e, index)}>
+                <input type="text" className="form-control" value={this.state.editValue} onChange={(e) => this.changeName(e, index)} placeholder={i18next.t("profile.webauthn-edit-placeholder")} />
+              </form>
+            </td>
+            <td>
+              {i18next.t("admin.yes")}
+            </td>
+            <td>
+              <div className="btn-group" role="group">
+                <button type="button" className="btn btn-primary" onClick={(e) => this.saveName(e, index)} title={i18next.t("modal.ok")}>
+                  <i className="fas fa-save"></i>
+                </button>
+                <button type="button" className="btn btn-primary" onClick={(e) => this.cancelSaveName()} title={i18next.t("modal.close")}>
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        );
+      } else if (cred.status === "registered") {
+        credentialList.push(
+          <tr key={index}>
+            <td>
+              {cred.created_at}
+            </td>
+            <td>
+              <span className="badge badge-success">
+                {cred.name}
+              </span>
+            </td>
+            <td>
+              {i18next.t("admin.yes")}
+            </td>
+            <td>
+              <div className="btn-group" role="group">
+                <button type="button" className="btn btn-primary" onClick={(e) => this.switchCred(index)} title={i18next.t("profile.scheme-webauthn-btn-switch-off")}>
+                  <i className="fas fa-toggle-on"></i>
+                </button>
+                <button type="button" className="btn btn-primary" onClick={(e) => this.editNameCred(index)} title={i18next.t("profile.scheme-webauthn-btn-edit")}>
+                  <i className="fas fa-edit"></i>
+                </button>
+                <button type="button" className="btn btn-primary" onClick={(e) => this.removeCred(index)} title={i18next.t("profile.scheme-webauthn-btn-remove")}>
+                  <i className="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        );
+      } else {
+        credentialList.push(
+          <tr key={index}>
+            <td>
+              {cred.created_at}
+            </td>
+            <td>
+              <span className="badge badge-danger">
+                {cred.name}
+              </span>
+            </td>
+            <td>
+              {i18next.t("admin.no")}
+            </td>
+            <td>
+              <div className="btn-group" role="group">
+                <button type="button" className="btn btn-primary" onClick={(e) => this.switchCred(index)} title={i18next.t("profile.scheme-webauthn-btn-switch-on")}>
+                  <i className="fas fa-toggle-off"></i>
+                </button>
+                <button type="button" className="btn btn-primary" onClick={(e) => this.editNameCred(index)} title={i18next.t("profile.scheme-webauthn-btn-edit")}>
+                  <i className="fas fa-edit"></i>
+                </button>
+                <button type="button" className="btn btn-primary" onClick={(e) => this.removeCred(index)} title={i18next.t("profile.scheme-webauthn-btn-remove")}>
+                  <i className="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        );
+      }
     });
     return (
       <div>
@@ -311,6 +480,9 @@ class SchemeWebauthn extends Component {
                     {i18next.t("profile.scheme-webauthn-table-name")}
                   </th>
                   <th>
+                    {i18next.t("profile.scheme-webauthn-table-enabled")}
+                  </th>
+                  <th>
                   </th>
                 </tr>
               </thead>
@@ -318,7 +490,6 @@ class SchemeWebauthn extends Component {
                 {credentialList}
               </tbody>
             </table>
-            {this.state.status}
           </div>
         </div>
         <div className="row">

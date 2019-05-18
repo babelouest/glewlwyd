@@ -412,7 +412,18 @@
     "scheme-webauthn-assertion-success": "Authentification validée",
     "scheme-webauthn-assertion-error": "Erreur lors de l'authentification",
     "scheme-webauthn-table-created_at": "Date d'enregistrement",
-    "scheme-webauthn-table-name": "Nom du dispositif"
+    "scheme-webauthn-table-name": "Nom du dispositif",
+    "scheme-webauthn-table-enabled": "Actif",
+    "scheme-webauthn-btn-edit": "Modifier le nom",
+    "scheme-webauthn-btn-switch-on": "Activer",
+    "scheme-webauthn-btn-switch-off": "Désactiver",
+    "scheme-webauthn-btn-remove": "Supprimer",
+    "scheme-webauthn-edit-placeholder": "Ex: Yubikey 5",
+    "scheme-webauthn-error-assertion": "Erreur lors du test",
+    "scheme-webauthn-error-registration": "Erreur lors de l'enregistrement",
+    "scheme-webauthn-confirm-title": "Supprimer le dispositif",
+    "scheme-webauthn-confirm-message": "Voulez-vous supprimer le dispositif?",
+    "scheme-webauthn-removed": "Dispositif supprimé"
   },
   "modal": {
     "close": "Fermer",

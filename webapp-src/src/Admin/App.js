@@ -5,7 +5,7 @@ import messageDispatcher from '../lib/MessageDispatcher';
 import Notification from '../lib/Notification';
 
 import Confirm from '../Modal/Confirm';
-import Edit from '../Modal/Edit';
+import EditRecord from '../Modal/EditRecord';
 
 import Navbar from './Navbar';
 import Users from './Users';
@@ -175,7 +175,7 @@ class App extends Component {
             validateCallback: this.validateUser
           }
           this.setState({editModal: editModal}, () => {
-            $("#editModal").modal({keyboard: false, show: true});
+            $("#editRecordModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'client') {
           var editModal = {
@@ -187,7 +187,7 @@ class App extends Component {
             validateCallback: this.validateClient
           }
           this.setState({editModal: editModal}, () => {
-            $("#editModal").modal({keyboard: false, show: true});
+            $("#editRecordModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'scope') {
           var scopeModal = {
@@ -254,7 +254,7 @@ class App extends Component {
             add: true
           }
           this.setState({editModal: editModal}, () => {
-            $("#editModal").modal({keyboard: false, show: true});
+            $("#editRecordModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'client') {
           var editModal = {
@@ -267,7 +267,7 @@ class App extends Component {
             add: true
           }
           this.setState({editModal: editModal}, () => {
-            $("#editModal").modal({keyboard: false, show: true});
+            $("#editRecordModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'scope') {
           var scopeModal = {
@@ -621,13 +621,13 @@ class App extends Component {
         this.fetchUsers()
         .always(() => {
           this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
-            $("#editModal").modal("hide");
+            $("#editRecordModal").modal("hide");
           });
         });
       });
     } else {
       this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
-        $("#editModal").modal("hide");
+        $("#editRecordModal").modal("hide");
       });
     }
   }
@@ -645,13 +645,13 @@ class App extends Component {
         this.fetchUsers()
         .always(() => {
           this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
-            $("#editModal").modal("hide");
+            $("#editRecordModal").modal("hide");
           });
         });
       });
     } else {
       this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
-        $("#editModal").modal("hide");
+        $("#editRecordModal").modal("hide");
       });
     }
   }
@@ -694,13 +694,13 @@ class App extends Component {
         this.fetchUsers()
         .always(() => {
           this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, add: false}}, () => {
-            $("#editModal").modal("hide");
+            $("#editRecordModal").modal("hide");
           });
         });
       });
     } else {
       this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, add: false}}, () => {
-        $("#editModal").modal("hide");
+        $("#editRecordModal").modal("hide");
       });
     }
   }
@@ -719,13 +719,13 @@ class App extends Component {
         this.fetchClients()
         .always(() => {
           this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, add: false}}, () => {
-            $("#editModal").modal("hide");
+            $("#editRecordModal").modal("hide");
           });
         });
       });
     } else {
       this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, add: false}}, () => {
-        $("#editModal").modal("hide");
+        $("#editRecordModal").modal("hide");
       });
     }
   }
@@ -1194,7 +1194,7 @@ class App extends Component {
         </div>
         <Notification/>
         <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
-        <Edit title={this.state.editModal.title} pattern={this.state.editModal.pattern} source={this.state.editModal.source} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
+        <EditRecord title={this.state.editModal.title} pattern={this.state.editModal.pattern} source={this.state.editModal.source} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
         <ScopeEdit scope={this.state.scopeModal.data} add={this.state.scopeModal.add} modSchemes={this.state.modSchemes} callback={this.state.scopeModal.callback} />
         <ModEdit title={this.state.ModModal.title} role={this.state.ModModal.role} mod={this.state.ModModal.data} add={this.state.ModModal.add} types={this.state.ModModal.types} callback={this.state.ModModal.callback} config={this.state.config} />
         <PluginEdit title={this.state.PluginModal.title} mod={this.state.PluginModal.data} add={this.state.PluginModal.add} types={this.state.PluginModal.types} callback={this.state.PluginModal.callback} config={this.state.config} />
