@@ -1190,7 +1190,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * auth_data = NULL, rpid_hash[32] = {0}, * flags, cdata_hash[32] = {0}, 
                   data_signed[128] = {0}, signature[128] = {0}, pubkey_decoded[1024], * counter;
   char * challenge_hash = NULL, * rpid = NULL;
-  size_t client_data_len, challenge_b64_len, auth_data_len, rpid_hash_len = 32, cdata_hash_len = 32, signature_len = 128, pubkey_decoded_len;
+  size_t client_data_len, challenge_b64_len, auth_data_len, rpid_hash_len = 32, cdata_hash_len = 32, signature_len = 128, pubkey_decoded_len, counter_value = 0;
   json_t * j_client_data = NULL, * j_credential = NULL, * j_query;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
@@ -1336,27 +1336,33 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       }
       
       counter = auth_data + COUNTER_OFFSET;
+      counter_value = counter[3] | (counter[2] << 8) | (counter[1] << 16) | (counter[0] << 24);
       
-      if (gnutls_x509_crt_init(&cert)) {
+      if (gnutls_x509_crt_init(&cert) < 0) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error gnutls_x509_crt_init");
+        ret = G_ERROR;
         break;
       }
-      if (gnutls_pubkey_init(&pubkey)) {
+      if (gnutls_pubkey_init(&pubkey) < 0) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error gnutls_pubkey_init");
+        ret = G_ERROR;
         break;
       }
       if (!o_base64_decode((unsigned char *)json_string_value(json_object_get(json_object_get(j_credential, "credential"), "public_key")), json_string_length(json_object_get(json_object_get(j_credential, "credential"), "public_key")), pubkey_decoded, &pubkey_decoded_len)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error o_base64_decode pubkey_decoded");
+        ret = G_ERROR;
         break;
       }
       cert_dat.data = pubkey_decoded;
       cert_dat.size = pubkey_decoded_len;
       if ((ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error importing x509 certificate: %d", ret);
+        ret = G_ERROR;
         break;
       }
       if ((ret = gnutls_pubkey_import_x509(pubkey, cert, 0)) < 0) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error gnutls_pubkey_import_x509: %d", ret);
+        ret = G_ERROR;
         break;
       }
       
@@ -1383,7 +1389,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         break;
       }
       
-      if ((json_integer_value(json_object_get(json_object_get(j_credential, "credential"), "counter")) || counter) && counter <= json_integer_value(json_object_get(json_object_get(j_credential, "credential"), "counter"))) {
+      if ((json_integer_value(json_object_get(json_object_get(j_credential, "credential"), "counter")) || counter_value) && counter_value <= json_integer_value(json_object_get(json_object_get(j_credential, "credential"), "counter"))) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - counter invalid");
         ret = G_ERROR_UNAUTHORIZED;
         break;
@@ -1397,7 +1403,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
                           G_TABLE_WEBAUTHN_ASSERTION,
                           "set",
                             "gswa_counter",
-                            counter,
+                            counter_value,
                             "gswa_status",
                             1,
                           "where",
@@ -1408,24 +1414,24 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       if (res != H_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error executing j_query (1)");
         ret = G_ERROR_DB;
-      }
-      
-      // Update counter in credential if necessary
-      if (counter) {
-        j_query = json_pack("{sss{si}s{sO}}",
-                            "table",
-                            G_TABLE_WEBAUTHN_CREDENTIAL,
-                            "set",
-                              "gswc_counter",
-                              counter,
-                            "where",
-                              "gswc_id",
-                              json_object_get(json_object_get(j_credential, "credential"), "gswc_id"));
-        res = h_update(config->conn, j_query, NULL);
-        json_decref(j_query);
-        if (res != H_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error executing j_query (2)");
-          ret = G_ERROR_DB;
+      } else {
+        // Update counter in credential if necessary
+        if (counter) {
+          j_query = json_pack("{sss{si}s{sO}}",
+                              "table",
+                              G_TABLE_WEBAUTHN_CREDENTIAL,
+                              "set",
+                                "gswc_counter",
+                                counter_value,
+                              "where",
+                                "gswc_id",
+                                json_object_get(json_object_get(j_credential, "credential"), "gswc_id"));
+          res = h_update(config->conn, j_query, NULL);
+          json_decref(j_query);
+          if (res != H_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error executing j_query (2)");
+            ret = G_ERROR_DB;
+          }
         }
       }
     } else if (ret == G_ERROR_PARAM) {
@@ -1434,7 +1440,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
                           G_TABLE_WEBAUTHN_ASSERTION,
                           "set",
                             "gswa_counter",
-                            counter,
+                            counter_value,
                             "gswa_status",
                             2,
                           "where",
@@ -1452,7 +1458,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
                           G_TABLE_WEBAUTHN_ASSERTION,
                           "set",
                             "gswa_counter",
-                            counter,
+                            counter_value,
                             "gswa_status",
                             3,
                           "where",
