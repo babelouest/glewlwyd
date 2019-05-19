@@ -1185,13 +1185,13 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
 static int check_assertion(struct config_module * config, json_t * j_params, const char * username, json_t * j_scheme_data, json_t * j_assertion) {
   int ret, res;
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * auth_data = NULL, rpid_hash[32] = {0}, * flags, cdata_hash[32] = {0}, 
-                  data_signed[128] = {0}, signature[128] = {0}, pubkey_decoded[1024], * counter;
+                  data_signed[128] = {0}, sig[128] = {0}, pubkey_decoded[1024], * counter;
   char * challenge_hash = NULL, * rpid = NULL;
-  size_t client_data_len, challenge_b64_len, auth_data_len, rpid_hash_len = 32, cdata_hash_len = 32, signature_len = 128, pubkey_decoded_len, counter_value = 0;
+  size_t client_data_len, challenge_b64_len, auth_data_len, rpid_hash_len = 32, cdata_hash_len = 32, sig_len = 128, pubkey_decoded_len, counter_value = 0;
   json_t * j_client_data = NULL, * j_credential = NULL, * j_query;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
-  gnutls_datum_t cert_dat, data, g_signature;
+  gnutls_datum_t cert_dat, data, signature;
   
   if (j_scheme_data != NULL && j_assertion != NULL) {
     do {
@@ -1362,7 +1362,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         break;
       }
       
-      if (!o_base64url_decode((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), signature, &signature_len)) {
+      if (!o_base64url_decode((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), sig, &sig_len)) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error o_base64url_decode signature");
         ret = G_ERROR_PARAM;
         break;
@@ -1375,10 +1375,10 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       data.data = data_signed;
       data.size = (auth_data_len+cdata_hash_len);
       
-      g_signature.data = signature;
-      g_signature.size = signature_len;
+      signature.data = sig;
+      signature.size = sig_len;
       
-      if ((res = gnutls_pubkey_verify_data2(pubkey, GNUTLS_SIGN_ECDSA_SHA256, 0, &data, &g_signature)) < 0) {
+      if ((res = gnutls_pubkey_verify_data2(pubkey, GNUTLS_SIGN_ECDSA_SHA256, 0, &data, &signature)) < 0) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Invalid signature: %d", res);
         ret = G_ERROR_UNAUTHORIZED;
         break;
