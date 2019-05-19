@@ -1368,7 +1368,6 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         break;
       }
       
-      memset(data_signed, 0, 128);
       memcpy(data_signed, auth_data, auth_data_len);
       memcpy(data_signed+auth_data_len, cdata_hash, cdata_hash_len);
       
@@ -1376,8 +1375,6 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       data.data = data_signed;
       data.size = (auth_data_len+cdata_hash_len);
       
-      y_log_message(Y_LOG_LEVEL_DEBUG, "auth_data_len %zu, cdata_hash_len %zu, total %zu", auth_data_len, cdata_hash_len, data.size);
-
       g_signature.data = signature;
       g_signature.size = signature_len;
       
