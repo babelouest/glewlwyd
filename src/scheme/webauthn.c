@@ -701,8 +701,8 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
   gnutls_pubkey_t pubkey = NULL, g_key = NULL;
   gnutls_x509_crt_t cert = NULL;
   gnutls_datum_t cert_dat, data, signature, g_x, g_y;
-  unsigned char * cred_pub_key, data_signed[200], client_data_hash[32], * cbor_auth_data, cert_x[32], cert_y[32], pubkey_export[1024];
-  size_t cred_pub_key_len, data_signed_offset = 0, client_data_hash_len = 32, cbor_auth_data_len, credential_id_len, pubkey_export_len = 1024;
+  unsigned char * cred_pub_key, data_signed[200], client_data_hash[32], * cbor_auth_data, cert_x[32], cert_y[32], pubkey_export[1024], cert_export[4096];
+  size_t cred_pub_key_len, data_signed_offset = 0, client_data_hash_len = 32, cbor_auth_data_len, credential_id_len, pubkey_export_len = 1024, cert_export_len = 4096;
   struct cbor_load_result cbor_result;
   cbor_item_t * cbor_cose, * cbor_key, * cbor_value;
   
@@ -750,14 +750,19 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
       att_cert = cbor_array_get(x5c, 0);
       cert_dat.data = cbor_bytestring_handle(att_cert);
       cert_dat.size = cbor_bytestring_length(att_cert);
-      if ((ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER))) {
+      if ((ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
         json_array_append_new(j_error, json_string("Error importing x509 certificate"));
         y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error gnutls_pcert_import_x509_raw: %d", ret);
         break;
       }
-      if ((ret = gnutls_pubkey_import_x509(pubkey, cert, 0))) {
+      if ((ret = gnutls_pubkey_import_x509(pubkey, cert, 0)) < 0) {
         json_array_append_new(j_error, json_string("Error importing x509 certificate"));
         y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error gnutls_pubkey_import_x509: %d", ret);
+        break;
+      }
+      if ((ret = gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_PEM, cert_export, &cert_export_len)) < 0) {
+        json_array_append_new(j_error, json_string("Error exporting x509 certificate"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error gnutls_x509_crt_export: %d", ret);
         break;
       }
       if (!generate_digest_raw(digest_SHA256, client_data, o_strlen((char *)client_data), client_data_hash, &client_data_hash_len)) {
@@ -862,7 +867,7 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
         if (gnutls_pubkey_import_ecc_raw(g_key, GNUTLS_ECC_CURVE_SECP256R1, &g_x, &g_y) < 0) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "error gnutls_pubkey_import_ecc_raw");
         } else if (gnutls_pubkey_export(g_key, GNUTLS_X509_FMT_PEM, pubkey_export, &pubkey_export_len) >= 0) {
-          j_return = json_pack("{sis{ss%}}", "result", G_OK, "data", "pubkey", pubkey_export, pubkey_export_len);
+          j_return = json_pack("{sis{ss%ss%}}", "result", G_OK, "data", "pubkey", pubkey_export, pubkey_export_len, "cert", cert_export, cert_export_len);
         }
         gnutls_pubkey_deinit(g_key);
       }
@@ -891,7 +896,7 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
  * 
  */
 static json_t * register_new_credential(struct config_module * config, json_t * j_params, const char * username, json_t * j_scheme_data, json_t * j_credential) {
-  json_t * j_return, * j_client_data = NULL, * j_error_list, * j_result, * j_pubkey = NULL, * j_query;
+  json_t * j_return, * j_client_data = NULL, * j_error_list, * j_result, * j_pubkey = NULL, * j_cert = NULL, * j_query;
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL, * credential_id_b64 = NULL;
   char * challenge_hash = NULL, * message = NULL, * rpid = NULL;
   size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len;
@@ -1123,6 +1128,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
             json_array_append_new(j_error_list, json_string("internal error"));
           } else {
             j_pubkey = json_incref(json_object_get(json_object_get(j_result, "data"), "pubkey"));
+            j_cert = json_incref(json_object_get(json_object_get(j_result, "data"), "cert"));
           }
           json_decref(j_result);
         } else if (0 == o_strncmp("fido-u2f", (char *)fmt, MIN(fmt_len, o_strlen("fido-u2f")))) {
@@ -1136,6 +1142,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
             json_array_append_new(j_error_list, json_string("internal error"));
           } else {
             j_pubkey = json_incref(json_object_get(json_object_get(j_result, "data"), "pubkey"));
+            j_cert = json_incref(json_object_get(json_object_get(j_result, "data"), "cert"));
           }
           json_decref(j_result);
         } else {
@@ -1168,7 +1175,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
         }
         counter = cbor_bs_handle[COUNTER_OFFSET+3] | (cbor_bs_handle[COUNTER_OFFSET+2] << 8) | (cbor_bs_handle[COUNTER_OFFSET+1] << 16) | (cbor_bs_handle[COUNTER_OFFSET] << 24);
         // Store credential in the database
-        j_query = json_pack("{sss{siss%sOsOsi}s{sO}}",
+        j_query = json_pack("{sss{siss%sOsOsOsi}s{sO}}",
                             "table", 
                             G_TABLE_WEBAUTHN_CREDENTIAL,
                             "set",
@@ -1181,6 +1188,8 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
                               json_object_get(json_object_get(j_scheme_data, "credential"), "rawId"),
                               "gswc_public_key",
                               j_pubkey,
+                              "gswc_certificate",
+                              j_cert,
                               "gswc_counter",
                               counter,
                             "where",
@@ -1195,6 +1204,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
       json_decref(j_error_list);
       json_decref(j_client_data);
       json_decref(j_pubkey);
+      json_decref(j_cert);
       o_free(client_data);
       o_free(challenge_b64);
       o_free(challenge_hash);
