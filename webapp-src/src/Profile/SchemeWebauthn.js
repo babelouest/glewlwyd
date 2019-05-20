@@ -16,6 +16,7 @@ class SchemeWebauthn extends Component {
       registered: false,
       registration: false,
       credentialList: [],
+      credentialAvailable: false,
       editIndex: -1,
       editValue: "",
       removeIndex: -1
@@ -62,13 +63,19 @@ class SchemeWebauthn extends Component {
     if (this.state.profile) {
       apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
       .then((res) => {
-        this.setState({credentialList: res});
+        var credentialAvailable = false;
+        res.forEach(cred => {
+          if (cred.status == "registered") {
+            credentialAvailable = true;
+          }
+        });
+        this.setState({credentialList: res, credentialAvailable: credentialAvailable});
       })
       .fail((err) => {
         if (err.status === 401) {
-          this.setState({registration: i18next.t("profile.scheme-webauthn-register-status-not-registered"), registered: false});
+          this.setState({registration: i18next.t("profile.scheme-webauthn-register-status-not-registered"), registered: false, credentialList: []});
         } else {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }
       });
     }
@@ -101,47 +108,40 @@ class SchemeWebauthn extends Component {
           },
           
           rp: {
-            name: result["rp-origin"]
+            name: result.rpId.split("://")[1]
           },
           
-          authenticatorSelection: {
-            requireResidentKey: false
-          },
-
           user: {
             id: Uint8Array.from(atob(result.user.id), c => c.charCodeAt(0)),
             name: result.user.name,
             displayName: this.state.profile.name||result.user.name
           },
-
+          
           pubKeyCredParams: result["pubKey-cred-params"],
-
-          attestation: "direct",
-
-          timeout: 60000,
-
+          
           challenge: this.strToBin(result.challenge),
           
-          excludeCredentials: excludeCredentials
+          excludeCredentials: excludeCredentials,
+          
+          attestation: "direct",
+          
+          timeout: 60000
         }
       };
 
       navigator.credentials.create(createCredentialDefaultArgs)
       .then((cred) => {
         
-        const publicKeyCredential = {};
+        const credential = {};
 
         if ('id' in cred) {
-          publicKeyCredential.id = cred.id;
+          credential.id = cred.id;
         }
         if ('type' in cred) {
-          publicKeyCredential.type = cred.type;
+          credential.type = cred.type;
         }
         if ('rawId' in cred) {
-          publicKeyCredential.rawId = this.binToStr(cred.rawId);
-        }
-        if (!cred.response) {
-          console.log("Make Credential response lacking 'response' attribute");
+          credential.rawId = this.binToStr(cred.rawId);
         }
 
         const response = {};
@@ -153,7 +153,7 @@ class SchemeWebauthn extends Component {
           response.transports = cred.response.getTransports();
         }
 
-        publicKeyCredential.response = response;
+        credential.response = response;
         apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {
           username: this.state.profile.username, 
           scheme_type: this.state.module, 
@@ -161,7 +161,7 @@ class SchemeWebauthn extends Component {
           value: {
             register: "register-credential", 
             session: result.session, 
-            credential: publicKeyCredential
+            credential: credential
           }
         })
         .then(() => {
@@ -171,7 +171,7 @@ class SchemeWebauthn extends Component {
           if (err.status === 400) {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-register-credential-error")});
           } else {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           }
         })
         .always(() => {
@@ -183,7 +183,7 @@ class SchemeWebauthn extends Component {
       });
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
     });
   }
   
@@ -197,26 +197,19 @@ class SchemeWebauthn extends Component {
     })
     .then((result) => {
       var allowCredentials = [];
-      result.credentials.forEach((cred) => {
+      result.allowCredentials.forEach((cred) => {
         allowCredentials.push({
           id: this.strToBin(cred.credential_id),
           type: "public-key"
         });
       });
       
-      var getCredentialDefaultArgs = {
-        rp: {
-          name: result.user["rp-origin"]
-        },
-        
-        publicKey: {
-          timeout: 60000,
-          allowCredentials: allowCredentials,
-          challenge: this.strToBin(result.challenge)
-        }
+      var assertionRequest = {
+        allowCredentials: allowCredentials,
+        challenge: this.strToBin(result.challenge)
       };
       
-      navigator.credentials.get(getCredentialDefaultArgs)
+      navigator.credentials.get({"publicKey": assertionRequest})
       .then((assertion) => {
         
         const publicKeyCredential = {};
@@ -230,11 +223,9 @@ class SchemeWebauthn extends Component {
         if ('rawId' in assertion) {
           publicKeyCredential.rawId = this.binToStr(assertion.rawId);
         }
-        if (!assertion.response) {
-          console.log("Get assertion response lacking 'response' attribute");
-        }
-
+        
         publicKeyCredential.response = {
+          clientDataJSONHash: this.binToStr(window.crypto.subtle.digest("SHA-256", assertion.response.clientDataJSON)),
           clientDataJSON: this.binToStr(assertion.response.clientDataJSON),
           authenticatorData: this.binToStr(assertion.response.authenticatorData),
           signature: this.binToStr(assertion.response.signature),
@@ -263,7 +254,7 @@ class SchemeWebauthn extends Component {
           if (err.status === 401) {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-assertion-error")});
           } else {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           }
         });
       })
@@ -272,13 +263,13 @@ class SchemeWebauthn extends Component {
       });
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
     })
     .always(() => {
       this.getRegister();
     });
   }
-  
+
   editNameCred(index) {
     this.setState({editIndex: index, editValue: this.state.credentialList[index].name});
   }
@@ -307,7 +298,7 @@ class SchemeWebauthn extends Component {
       });
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
     });
   }
   
@@ -330,7 +321,7 @@ class SchemeWebauthn extends Component {
       this.getRegister();
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
     });
   }
 
@@ -362,7 +353,7 @@ class SchemeWebauthn extends Component {
         messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-removed")});
       })
       .fail((err) => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
       })
       .always(() => {
         messageDispatcher.sendMessage('App', {type: 'closeConfirm'});
@@ -502,7 +493,7 @@ class SchemeWebauthn extends Component {
           <div className="col-md-12">
             <div className="btn-group" role="group">
               <button type="button" className="btn btn-primary" onClick={(e) => this.register(e)}>{i18next.t("profile.scheme-webauthn-register")}</button>
-              <button type="button" className="btn btn-primary" onClick={(e) => this.testRegistration(e)}>{i18next.t("profile.scheme-webauthn-test-registration")}</button>
+              <button type="button" className="btn btn-primary" onClick={(e) => this.testRegistration(e)} disabled={!this.state.credentialAvailable}>{i18next.t("profile.scheme-webauthn-test-registration")}</button>
             </div>
           </div>
         </div>
