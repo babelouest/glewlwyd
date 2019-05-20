@@ -1696,7 +1696,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
                                 "user",
                                   "id", json_object_get(j_user_id, "user_id"),
                                   "name", username,
-                                "rp-origin", json_object_get((json_t *)cls, "rp-origin")
+                                "rpId", json_object_get((json_t *)cls, "rp-origin")
                              );
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error generate_new_credential");
@@ -1905,7 +1905,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
         }
         json_decref(j_assertion);
       } else if (check_result_value(j_credential, G_ERROR_NOT_FOUND)) {
-        j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger webauthn - Error get_credential_list");
         j_return = json_pack("{si}", "result", G_ERROR);
