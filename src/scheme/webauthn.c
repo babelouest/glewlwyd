@@ -674,20 +674,33 @@ static int check_pubkey_id(struct config_module * config, json_t * j_pubkey, jso
 
 /**
  * 
+ * Validate the attStmt object under the Android SafetyNet format
+ * https://w3c.github.io/webauthn/#android-safetynet-attestation
+ * (step) hey girl, in your eyes
+ * I see a picture of me all the time
+ * 
+ */
+static json_t * check_attestation_android_safetynet(struct config_module * config, json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * client_data) {
+  cbor_describe(att_stmt, stdout);
+  return NULL;
+}
+
+/**
+ * 
  * Validate the attStmt object under the fido-u2f format
  * https://w3c.github.io/webauthn/#fido-u2f-attestation
  * Gonna get to you girl
  * Really want you in my world
  * 
  */
-static json_t * check_attestation_fido_u2f(struct config_module * config, json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * clientDataJSON) {
+static json_t * check_attestation_fido_u2f(struct config_module * config, json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * client_data) {
   json_t * j_error = json_array(), * j_return;
   cbor_item_t * key, * x5c, * sig = NULL, * att_cert;
   int i, ret, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0;
   char * message;
-  gnutls_pubkey_t pubkey = NULL;
+  gnutls_pubkey_t pubkey = NULL, g_key = NULL;
   gnutls_x509_crt_t cert = NULL;
-  gnutls_datum_t cert_dat, data, signature;
+  gnutls_datum_t cert_dat, data, signature, g_x, g_y;
   unsigned char * cred_pub_key, data_signed[200], client_data_hash[32], * cbor_auth_data, cert_x[32], cert_y[32], pubkey_export[1024];
   size_t cred_pub_key_len, data_signed_offset = 0, client_data_hash_len = 32, cbor_auth_data_len, credential_id_len, pubkey_export_len = 1024;
   struct cbor_load_result cbor_result;
@@ -747,9 +760,9 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
         y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error gnutls_pubkey_import_x509: %d", ret);
         break;
       }
-      if (!generate_digest_raw(digest_SHA256, clientDataJSON, o_strlen((char *)clientDataJSON), client_data_hash, &client_data_hash_len)) {
+      if (!generate_digest_raw(digest_SHA256, client_data, o_strlen((char *)client_data), client_data_hash, &client_data_hash_len)) {
         json_array_append_new(j_error, json_string("Internal error"));
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error generate_digest_raw clientDataJSON");
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error generate_digest_raw client_data");
         break;
       }
 
@@ -839,11 +852,19 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
     if (json_array_size(j_error)) {
       j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
     } else {
-      if (o_base64_encode(cbor_bytestring_handle(att_cert), cbor_bytestring_length(att_cert), pubkey_export, &pubkey_export_len)) {
-        j_return = json_pack("{sis{ss%}}", "result", G_OK, "data", "pubkey", pubkey_export, pubkey_export_len);
+      g_x.data = cert_x;
+      g_x.size = 32;
+      g_y.data = cert_y;
+      g_y.size = 32;
+      if (gnutls_pubkey_init(&g_key)) {
+        json_array_append_new(j_error, json_string("check_attestation_fido_u2f - Error gnutls_pubkey_init"));
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error o_base64_encode pub_key");
-        j_return = json_pack("{si}", "result", G_ERROR);
+        if (gnutls_pubkey_import_ecc_raw(g_key, GNUTLS_ECC_CURVE_SECP256R1, &g_x, &g_y) < 0) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "error gnutls_pubkey_import_ecc_raw");
+        } else if (gnutls_pubkey_export(g_key, GNUTLS_X509_FMT_PEM, pubkey_export, &pubkey_export_len) >= 0) {
+          j_return = json_pack("{sis{ss%}}", "result", G_OK, "data", "pubkey", pubkey_export, pubkey_export_len);
+        }
+        gnutls_pubkey_deinit(g_key);
       }
     }
     json_decref(j_error);
@@ -1092,8 +1113,18 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
           json_array_append_new(j_error_list, json_string("fmt 'android-key' not handled yet"));
           ret = G_ERROR_PARAM;
         } else if (0 == o_strncmp("android-safetynet", (char *)fmt, MIN(fmt_len, o_strlen("android-safetynet")))) {
-          json_array_append_new(j_error_list, json_string("fmt 'android-safetynet' not handled yet"));
-          ret = G_ERROR_PARAM;
+          j_result = check_attestation_android_safetynet(config, j_params, auth_data, att_stmt, rpid_hash, rpid_hash_len, client_data);
+          if (check_result_value(j_result, G_ERROR_PARAM)) {
+            json_array_extend(j_error_list, json_object_get(j_result, "error"));
+            ret = G_ERROR_PARAM;
+          } else if (!check_result_value(j_result, G_OK)) {
+            ret = G_ERROR_PARAM;
+            y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_object - Error check_attestation_android_safetynet");
+            json_array_append_new(j_error_list, json_string("internal error"));
+          } else {
+            j_pubkey = json_incref(json_object_get(json_object_get(j_result, "data"), "pubkey"));
+          }
+          json_decref(j_result);
         } else if (0 == o_strncmp("fido-u2f", (char *)fmt, MIN(fmt_len, o_strlen("fido-u2f")))) {
           j_result = check_attestation_fido_u2f(config, j_params, auth_data, att_stmt, rpid_hash, rpid_hash_len, client_data);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
@@ -1111,6 +1142,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
           message = msprintf("fmt '%.*s' not handled by Glewlwyd Webauthn scheme", fmt_len, fmt);
           json_array_append_new(j_error_list, json_string(message));
           o_free(message);
+          ret = G_ERROR_PARAM;
         }
       } while (0); // This is not a loop, but a structure where you can easily cancel the rest of the process with breaks
       
@@ -1185,13 +1217,12 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
 static int check_assertion(struct config_module * config, json_t * j_params, const char * username, json_t * j_scheme_data, json_t * j_assertion) {
   int ret, res;
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * auth_data = NULL, rpid_hash[32] = {0}, * flags, cdata_hash[32] = {0}, 
-                  data_signed[128] = {0}, sig[128] = {0}, pubkey_decoded[1024], * counter;
+                  data_signed[128] = {0}, sig[128] = {0}, * counter;
   char * challenge_hash = NULL, * rpid = NULL;
-  size_t client_data_len, challenge_b64_len, auth_data_len, rpid_hash_len = 32, cdata_hash_len = 32, sig_len = 128, pubkey_decoded_len, counter_value = 0;
+  size_t client_data_len, challenge_b64_len, auth_data_len, rpid_hash_len = 32, cdata_hash_len = 32, sig_len = 128, counter_value = 0;
   json_t * j_client_data = NULL, * j_credential = NULL, * j_query;
   gnutls_pubkey_t pubkey = NULL;
-  gnutls_x509_crt_t cert = NULL;
-  gnutls_datum_t cert_dat, data, signature;
+  gnutls_datum_t pubkey_dat, data, signature;
   
   if (j_scheme_data != NULL && j_assertion != NULL) {
     do {
@@ -1223,7 +1254,6 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         ret = G_ERROR_PARAM;
         break;
       }
-      client_data[client_data_len] = '\0';
       j_client_data = json_loads((const char *)client_data, JSON_DECODE_ANY, NULL);
       if (j_client_data == NULL) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error parsing JSON client data");
@@ -1330,34 +1360,18 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         ret = G_ERROR_PARAM;
         break;
       }
-      
       counter = auth_data + COUNTER_OFFSET;
       counter_value = counter[3] | (counter[2] << 8) | (counter[1] << 16) | (counter[0] << 24);
       
-      if (gnutls_x509_crt_init(&cert) < 0) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error gnutls_x509_crt_init");
-        ret = G_ERROR;
-        break;
-      }
       if (gnutls_pubkey_init(&pubkey) < 0) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error gnutls_pubkey_init");
         ret = G_ERROR;
         break;
       }
-      if (!o_base64_decode((unsigned char *)json_string_value(json_object_get(json_object_get(j_credential, "credential"), "public_key")), json_string_length(json_object_get(json_object_get(j_credential, "credential"), "public_key")), pubkey_decoded, &pubkey_decoded_len)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error o_base64_decode pubkey_decoded");
-        ret = G_ERROR;
-        break;
-      }
-      cert_dat.data = pubkey_decoded;
-      cert_dat.size = pubkey_decoded_len;
-      if ((ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error importing x509 certificate: %d", ret);
-        ret = G_ERROR;
-        break;
-      }
-      if ((ret = gnutls_pubkey_import_x509(pubkey, cert, 0)) < 0) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error gnutls_pubkey_import_x509: %d", ret);
+      pubkey_dat.data = (unsigned char *)json_string_value(json_object_get(json_object_get(j_credential, "credential"), "public_key"));
+      pubkey_dat.size = json_string_length(json_object_get(json_object_get(j_credential, "credential"), "public_key"));
+      if ((ret = gnutls_pubkey_import(pubkey, &pubkey_dat, GNUTLS_X509_FMT_PEM)) < 0) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error gnutls_pubkey_import: %d", ret);
         ret = G_ERROR;
         break;
       }
@@ -1472,7 +1486,6 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
     o_free(auth_data);
     json_decref(j_client_data);
     json_decref(j_credential);
-    gnutls_x509_crt_deinit(cert);
     gnutls_pubkey_deinit(pubkey);
   } else {
     ret = G_ERROR_PARAM;
@@ -1876,13 +1889,13 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
           j_return = json_pack("{sis{sOsOsOs{sOss}sO}}", 
                               "result", G_OK, 
                               "response", 
-                                "credentials", json_object_get(j_credential, "credential"), 
+                                "allowCredentials", json_object_get(j_credential, "credential"), 
                                 "session", json_object_get(json_object_get(j_assertion, "assertion"), "session"), 
                                 "challenge", json_object_get(json_object_get(j_assertion, "assertion"), "challenge"),
                                 "user",
                                   "id", json_object_get(j_user_id, "user_id"),
                                   "name", username,
-                                "rp-origin", json_object_get((json_t *)cls, "rp-origin")
+                                "rpId", json_object_get((json_t *)cls, "rp-origin")
                               );
         } else if (check_result_value(j_assertion, G_ERROR_UNAUTHORIZED)) {
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
