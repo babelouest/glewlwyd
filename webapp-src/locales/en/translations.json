@@ -49,7 +49,12 @@
     "mail-trigger-ok": "Code Sent",
     "mail-trigger-error": "Error sending code",
     "mail-code-error": "Error while validating code",
-    "mail-code-invalid": "Invalid code"
+    "mail-code-invalid": "Invalid code",
+    "webauthn-login-title": "Webauthn Authentification",
+    "webauthn-login-button-title": "Run an authentification attempt on the server",
+    "webauthn-login-authentiate": "Login",
+    "webauthn-trigger-must-register": "You must register a webauthn device",
+    "webauthn-error-trigger": "Error while attempting to authenticate"
   },
   "admin": {
     "menu-users": "Users",
