@@ -313,7 +313,7 @@ static json_t * generate_new_credential(struct config_module * config, json_t * 
   return j_return;
 }
 
-static json_t * generate_new_assertion(struct config_module * config, json_t * j_params, const char * username) {
+static json_t * generate_new_assertion(struct config_module * config, json_t * j_params, const char * username, int mock) {
   json_t * j_query, * j_return;
   char * username_escaped, * username_clause, * challenge_hash;
   int res;
@@ -349,7 +349,7 @@ static json_t * generate_new_assertion(struct config_module * config, json_t * j
         json_decref(j_query);
         if (res == H_OK) {
           // Insert new assertion
-          j_query = json_pack("{sss{s{ss}sssssi}}",
+          j_query = json_pack("{sss{s{ss}sssssisi}}",
                               "table",
                               G_TABLE_WEBAUTHN_ASSERTION,
                               "values",
@@ -361,7 +361,9 @@ static json_t * generate_new_assertion(struct config_module * config, json_t * j
                                 "gswa_challenge_hash",
                                 challenge_hash,
                                 "gswa_status",
-                                0);
+                                0,
+                                "gswa_mock",
+                                mock);
           res = h_insert(config->conn, j_query, NULL);
           json_decref(j_query);
           if (res == H_OK) {
@@ -573,7 +575,7 @@ static int update_credential_name(struct config_module * config, const char * us
   return ret;
 }
 
-static json_t * get_assertion_from_session(struct config_module * config, json_t * j_params, const char * username, const char * session) {
+static json_t * get_assertion_from_session(struct config_module * config, json_t * j_params, const char * username, const char * session, int mock) {
   json_t * j_query, * j_result, * j_return;
   char * username_escaped, * username_clause, * expiration_clause;
   char * session_hash = generate_hash(config->hash_algorithm, session);
@@ -591,7 +593,7 @@ static json_t * get_assertion_from_session(struct config_module * config, json_t
     } else { // HOEL_DB_TYPE_SQLITE
       expiration_clause = msprintf("> %u", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
     }
-    j_query = json_pack("{sss[ssss]s{sss{ssss}sis{ssss}}}",
+    j_query = json_pack("{sss[ssss]s{sss{ssss}sis{ssss}si}}",
                         "table",
                         G_TABLE_WEBAUTHN_ASSERTION,
                         "columns",
@@ -613,7 +615,9 @@ static json_t * get_assertion_from_session(struct config_module * config, json_t
                             "operator",
                             "raw",
                             "value",
-                            expiration_clause);
+                            expiration_clause,
+                          "gswa_mock",
+                          mock);
     o_free(username_clause);
     o_free(username_escaped);
     o_free(expiration_clause);
@@ -895,7 +899,7 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
  * https://w3c.github.io/webauthn/#registering-a-new-credential
  * 
  */
-static json_t * register_new_credential(struct config_module * config, json_t * j_params, const char * username, json_t * j_scheme_data, json_t * j_credential) {
+static json_t * register_new_attestation(struct config_module * config, json_t * j_params, const char * username, json_t * j_scheme_data, json_t * j_credential) {
   json_t * j_return, * j_client_data = NULL, * j_error_list, * j_result, * j_pubkey = NULL, * j_cert = NULL, * j_query;
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL, * credential_id_b64 = NULL;
   char * challenge_hash = NULL, * message = NULL, * rpid = NULL;
@@ -920,13 +924,13 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
           break;
         }
         if ((client_data = o_malloc(json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON"))+1)) == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error allocating resources for client_data");
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error allocating resources for client_data");
           json_array_append_new(j_error_list, json_string("Internal error"));
           ret = G_ERROR_MEMORY;
           break;
         }
         if (!o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), client_data, &client_data_len)) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error o_base64_decode client_data");
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error o_base64_decode client_data");
           ret = G_ERROR_PARAM;
           break;
         }
@@ -949,7 +953,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
           break;
         }
         if ((challenge_b64 = o_malloc(json_string_length(json_object_get(j_client_data, "challenge"))+3)) == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error allocating resources for challenge_b64");
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error allocating resources for challenge_b64");
           json_array_append_new(j_error_list, json_string("Internal error"));
           ret = G_ERROR_MEMORY;
           break;
@@ -961,7 +965,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
         }
         challenge_b64[challenge_b64_len] = '\0';
         if ((challenge_hash = generate_hash(config->hash_algorithm, (const char *)challenge_b64)) == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error generate_hash for challenge_b64");
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error generate_hash for challenge_b64");
           json_array_append_new(j_error_list, json_string("Internal error"));
           ret = G_ERROR;
           break;
@@ -992,7 +996,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
         }
         
         if ((att_obj = o_malloc(json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attestationObject")))) == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error allocating resources for o_malloc");
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error allocating resources for o_malloc");
           ret = G_ERROR_MEMORY;
           break;
         }
@@ -1093,14 +1097,14 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
         credential_id_len = cbor_bs_handle[CRED_ID_L_OFFSET+1] | (cbor_bs_handle[CRED_ID_L_OFFSET] << 8);
         credential_id_b64 = o_malloc(credential_id_len*2);
         if (credential_id_b64 == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error o_malloc for credential_id_b64");
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error o_malloc for credential_id_b64");
           json_array_append_new(j_error_list, json_string("Internal error"));
           ret = G_ERROR_PARAM;
           break;
         }
         
         if (!o_base64_encode(cbor_bs_handle+CRED_ID_L_OFFSET, credential_id_len, credential_id_b64, &credential_id_b64_len)) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error o_base64_encode for credential_id_b64");
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error o_base64_encode for credential_id_b64");
           json_array_append_new(j_error_list, json_string("Internal error"));
           ret = G_ERROR_PARAM;
           break;
@@ -1167,7 +1171,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
           j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Credential unauthorized");
           status = 2;
         } else if (res != G_ERROR_NOT_FOUND) {
-          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "register_new_credential - Error check_certificate");
+          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "register_new_attestation - Error check_certificate");
           status = 2;
         } else {
           j_return = json_pack("{si}", "result", G_OK);
@@ -1198,7 +1202,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
         res = h_update(config->conn, j_query, NULL);
         json_decref(j_query);
         if (res != H_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error h_update");
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error h_update");
         }
       }
       json_decref(j_error_list);
@@ -1212,7 +1216,7 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
       o_free(credential_id_b64);
       cbor_decref(&item);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error allocating resources for j_error_list");
+      y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error allocating resources for j_error_list");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
   } else {
@@ -1283,7 +1287,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         break;
       }
       if ((challenge_b64 = o_malloc(json_string_length(json_object_get(j_client_data, "challenge"))+3)) == NULL) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error allocating resources for challenge_b64");
+        y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error allocating resources for challenge_b64");
         ret = G_ERROR_MEMORY;
         break;
       }
@@ -1294,7 +1298,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       }
       challenge_b64[challenge_b64_len] = '\0';
       if ((challenge_hash = generate_hash(config->hash_algorithm, (const char *)challenge_b64)) == NULL) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "register_new_credential - Error generate_hash for challenge_b64");
+        y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error generate_hash for challenge_b64");
         ret = G_ERROR;
         break;
       }
@@ -1711,7 +1715,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
   UNUSED(config);
   UNUSED(http_request);
   UNUSED(from_admin);
-  json_t * j_return, * j_result, * j_credential, * j_user_id;
+  json_t * j_return, * j_result, * j_credential, * j_user_id, * j_assertion;
   int res;
 
   if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "new-credential")) {
@@ -1743,7 +1747,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "register-credential")) {
     j_credential = get_credential_from_session(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "session")));
     if (check_result_value(j_credential, G_OK)) {
-      j_result = register_new_credential(config, (json_t *)cls, username, j_scheme_data, json_object_get(j_credential, "credential"));
+      j_result = register_new_attestation(config, (json_t *)cls, username, j_scheme_data, json_object_get(j_credential, "credential"));
       if (check_result_value(j_result, G_OK)) {
         j_return = json_pack("{si}", "result", G_OK);
       } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
@@ -1751,7 +1755,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       } else if (check_result_value(j_result, G_ERROR_PARAM)) {
         j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error register_new_credential");
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error register_new_attestation");
         j_return = json_pack("{si}", "result", G_ERROR);
       }
       json_decref(j_result);
@@ -1834,6 +1838,72 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     json_decref(j_credential);
+  } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "trigger-assertion")) {
+    j_user_id = get_user_id_from_username(config, username, 0);
+    if (check_result_value(j_user_id, G_OK)) {
+      j_credential = get_credential_list(config, username, 1);
+      if (check_result_value(j_credential, G_OK)) {
+        j_assertion = generate_new_assertion(config, (json_t *)cls, username, 1);
+        if (check_result_value(j_assertion, G_OK)) {
+          j_return = json_pack("{sis{sOsOsOs{sOss}sO}}", 
+                              "result", G_OK, 
+                              "response", 
+                                "allowCredentials", json_object_get(j_credential, "credential"), 
+                                "session", json_object_get(json_object_get(j_assertion, "assertion"), "session"), 
+                                "challenge", json_object_get(json_object_get(j_assertion, "assertion"), "challenge"),
+                                "user",
+                                  "id", json_object_get(j_user_id, "user_id"),
+                                  "name", username,
+                                "rpId", json_object_get((json_t *)cls, "rp-origin")
+                              );
+        } else if (check_result_value(j_assertion, G_ERROR_UNAUTHORIZED)) {
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger webauthn - Error register_new_assertion");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+        json_decref(j_assertion);
+      } else if (check_result_value(j_credential, G_ERROR_NOT_FOUND)) {
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger webauthn - Error get_credential_list");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      json_decref(j_credential);
+    } else if (check_result_value(j_user_id, G_ERROR_NOT_FOUND)) {
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error get_user_id_from_username");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_user_id);
+  } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "validate-assertion")) {
+    j_user_id = get_user_id_from_username(config, username, 0);
+    if (check_result_value(j_user_id, G_OK)) {
+      j_assertion = get_assertion_from_session(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "session")), 1);
+      if (check_result_value(j_assertion, G_OK)) {
+        if ((res = check_assertion(config, (json_t *)cls, username, j_scheme_data, json_object_get(j_assertion, "assertion"))) == G_OK) {
+          j_return = json_pack("{si}", "result", G_OK);
+        } else if (res == G_ERROR_UNAUTHORIZED) {
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error check_assertion");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+      } else if (check_result_value(j_assertion, G_ERROR_NOT_FOUND)) {
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error get_credential");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      json_decref(j_assertion);
+    } else if (check_result_value(j_user_id, G_ERROR_NOT_FOUND)) {
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate webauthn - Error get_user_id_from_username");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_user_id);
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
@@ -1916,7 +1986,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
     if (check_result_value(j_user_id, G_OK)) {
       j_credential = get_credential_list(config, username, 1);
       if (check_result_value(j_credential, G_OK)) {
-        j_assertion = generate_new_assertion(config, (json_t *)cls, username);
+        j_assertion = generate_new_assertion(config, (json_t *)cls, username, 0);
         if (check_result_value(j_assertion, G_OK)) {
           j_return = json_pack("{sis{sOsOsOs{sOss}sO}}", 
                               "result", G_OK, 
@@ -1987,7 +2057,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
 
   j_user_id = get_user_id_from_username(config, username, 0);
   if (check_result_value(j_user_id, G_OK)) {
-    j_assertion = get_assertion_from_session(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "session")));
+    j_assertion = get_assertion_from_session(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "session")), 0);
     if (check_result_value(j_assertion, G_OK)) {
       if ((res = check_assertion(config, (json_t *)cls, username, j_scheme_data, json_object_get(j_assertion, "assertion"))) == G_OK) {
         ret = G_OK;
