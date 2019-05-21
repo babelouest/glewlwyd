@@ -139,26 +139,26 @@ class WebauthnParams extends Component {
         </div>
         <div className="form-group">
           <label htmlFor="mod-webauthn-pubKey-cred-params">{i18next.t("admin.mod-webauthn-pubKey-cred-params")}</label>
-          <div className="input-group">
-            <div className="form-check">
+          <ul className="list-group">
+            <li className="list-group-item">
               <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-ecdsa-sha256-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-7)>-1} onChange={(e) => this.togglePubkey(e, -7)}/>
               <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-ecdsa-sha256-check">
                 {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-ecdsa-sha256")}
               </label>
-            </div>
-            <div className="form-check">
+            </li>
+            <li className="list-group-item">
               <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-ecdsa-sha384-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-35)>-1} onChange={(e) => this.togglePubkey(e, -35)}/>
               <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-ecdsa-sha384-check">
                 {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-ecdsa-sha384")}
               </label>
-            </div>
-            <div className="form-check">
+            </li>
+            <li className="list-group-item">
               <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-ecdsa-sha512-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-36)>-1} onChange={(e) => this.togglePubkey(e, -36)}/>
               <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-ecdsa-sha512-check">
                 {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-ecdsa-sha512")}
               </label>
-            </div>
-          </div>
+            </li>
+          </ul>
           {this.state.errorList["pubKey-cred-params"]?<span className="error-input">{i18next.t(this.state.errorList["pubKey-cred-params"])}</span>:""}
         </div>
       </div>
