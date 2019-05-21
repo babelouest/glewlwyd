@@ -49,7 +49,13 @@
     "mail-trigger-ok": "Code envoyé",
     "mail-trigger-error": "Erreur pendant l'envoi du code",
     "mail-code-error": "Erreur lors de la validation du code",
-    "mail-code-invalid": "Code invalide"
+    "mail-code-invalid": "Code invalide",
+    "webauthn-login-title": "Authentification Webauthn",
+    "webauthn-login-button-title": "Lancer une tentative d'authentification sur le serveur",
+    "webauthn-login-authentiate": "Authentification",
+    "webauthn-trigger-must-register": "Vous devez enregistrer un composant Webauthn",
+    "webauthn-error-trigger": "Erreur lors de la tentative d'authentification"
+    
   },
   "admin": {
     "menu-users": "Utilisateurs",

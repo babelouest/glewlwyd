@@ -5,6 +5,7 @@ import messageDispatcher from '../lib/MessageDispatcher';
 
 import MockSchemeForm from './scheme/MockSchemeForm';
 import EmailSchemeForm from './scheme/EmailSchemeForm';
+import WebauthnForm from './scheme/WebauthnForm';
 
 class SchemeAuthForm extends Component {
   constructor(props) {
@@ -30,6 +31,8 @@ class SchemeAuthForm extends Component {
       return (<MockSchemeForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>);
     } else if (this.state.scheme.scheme_type === "email") {
       return (<EmailSchemeForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>);
+    } else if (this.state.scheme.scheme_type === "webauthn") {
+      return (<WebauthnForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>);
     } else {
       return ("");
     }
