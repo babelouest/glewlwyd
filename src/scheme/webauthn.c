@@ -638,7 +638,7 @@ static json_t * get_assertion_from_session(struct config_module * config, json_t
   return j_return;
 }
 
-static int check_pubkey_id(struct config_module * config, json_t * j_pubkey, json_int_t gswu_id) {
+static int check_certificate(struct config_module * config, json_t * j_cert, json_int_t gswu_id) {
   json_t * j_query, * j_result;
   int res, ret;
   
@@ -648,8 +648,8 @@ static int check_pubkey_id(struct config_module * config, json_t * j_pubkey, jso
                       "columns",
                         "gswu_id",
                       "where",
-                        "gswc_public_key",
-                        j_pubkey,
+                        "gswc_certificate",
+                        j_cert,
                         "gswc_status",
                         1);
   res = h_select(config->conn, j_query, &j_result, NULL);
@@ -1160,14 +1160,14 @@ static json_t * register_new_credential(struct config_module * config, json_t * 
           j_return = json_pack("{si}", "result", ret);
         }
       } else {
-        if ((res = check_pubkey_id(config, j_pubkey, json_integer_value(json_object_get(j_credential, "gswu_id")))) == G_OK) {
+        if ((res = check_certificate(config, j_cert, json_integer_value(json_object_get(j_credential, "gswu_id")))) == G_OK) {
           j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Credential already registered");
           status = 2;
         } else if (res == G_ERROR_UNAUTHORIZED) {
           j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Credential unauthorized");
           status = 2;
         } else if (res != G_ERROR_NOT_FOUND) {
-          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "register_new_credential - Error check_pubkey_id");
+          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "register_new_credential - Error check_certificate");
           status = 2;
         } else {
           j_return = json_pack("{si}", "result", G_OK);
