@@ -13,7 +13,7 @@ class SchemeWebauthn extends Component {
       module: props.module,
       name: props.name,
       profile: props.profile,
-      createCredentialed: false,
+      registered: false,
       registration: false,
       credentialList: [],
       credentialAvailable: false,
@@ -22,7 +22,7 @@ class SchemeWebauthn extends Component {
       removeIndex: -1
     };
     
-    this.getRegister = this.getRegister.bind(this);
+    this.getCredentials = this.getCredentials.bind(this);
     this.createCredential = this.createCredential.bind(this);
     this.testAssertion = this.testAssertion.bind(this);
     this.editNameCred = this.editNameCred.bind(this);
@@ -33,7 +33,7 @@ class SchemeWebauthn extends Component {
     this.removeCred = this.removeCred.bind(this);
     this.confirmRemoveCred = this.confirmRemoveCred.bind(this);
     
-    this.getRegister();
+    this.getCredentials();
   }
 
   componentWillReceiveProps(nextProps) {
@@ -42,10 +42,10 @@ class SchemeWebauthn extends Component {
       module: nextProps.module,
       name: nextProps.name,
       profile: nextProps.profile,
-      createCredentialed: false,
+      registered: false,
       registration: false
     }, () => {
-      this.getRegister();
+      this.getCredentials();
     });
   }
   
@@ -59,13 +59,13 @@ class SchemeWebauthn extends Component {
     ));
   }
   
-  getRegister() {
+  getCredentials() {
     if (this.state.profile) {
-      apiManager.glewlwydRequest("/profile/scheme/createCredential/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
+      apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
       .then((res) => {
         var credentialAvailable = false;
         res.forEach(cred => {
-          if (cred.status == "createCredentialed") {
+          if (cred.status == "registered") {
             credentialAvailable = true;
           }
         });
@@ -73,7 +73,7 @@ class SchemeWebauthn extends Component {
       })
       .fail((err) => {
         if (err.status === 401) {
-          this.setState({registration: i18next.t("profile.scheme-webauthn-createCredential-status-not-createCredentialed"), createCredentialed: false, credentialList: []});
+          this.setState({registration: i18next.t("profile.scheme-webauthn-register-status-not-registered"), registered: false, credentialList: []});
         } else {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }
@@ -82,13 +82,13 @@ class SchemeWebauthn extends Component {
   }
   
   createCredential() {
-    apiManager.glewlwydRequest("/profile/scheme/createCredential/", "POST", 
+    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", 
     {
       username: this.state.profile.username, 
       scheme_type: this.state.module, 
       scheme_name: this.state.name, 
       value: {
-        createCredential: "new-credential"
+        register: "new-credential"
       }
     })
     .then((result) => {
@@ -154,28 +154,28 @@ class SchemeWebauthn extends Component {
         }
 
         credential.response = response;
-        apiManager.glewlwydRequest("/profile/scheme/createCredential/", "POST", {
+        apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {
           username: this.state.profile.username, 
           scheme_type: this.state.module, 
           scheme_name: this.state.name, 
           value: {
-            createCredential: "createCredential-credential", 
+            register: "register-credential", 
             session: result.session, 
             credential: credential
           }
         })
         .then(() => {
-          messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-createCredential-credential-success")});
+          messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-register-credential-success")});
         })
         .fail((err, textStatus) => {
           if (err.status === 400) {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-createCredential-credential-error")});
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-register-credential-error")});
           } else {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           }
         })
         .always(() => {
-          this.getRegister();
+          this.getCredentials();
         });
       })
       .catch((err) => {
@@ -188,12 +188,14 @@ class SchemeWebauthn extends Component {
   }
   
   testAssertion(e) {
-    apiManager.glewlwydRequest("/auth/scheme/trigger/", "POST", 
+    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", 
     {
       username: this.state.profile.username, 
       scheme_type: this.state.module, 
       scheme_name: this.state.name, 
-      value: {}
+      value: {
+        register: "trigger-assertion"
+      }
     })
     .then((result) => {
       var allowCredentials = [];
@@ -237,12 +239,13 @@ class SchemeWebauthn extends Component {
           response.transports = assertion.response.getTransports();
         }
 
-        apiManager.glewlwydRequest("/auth/", "POST", 
+        apiManager.glewlwydRequest("/profile/scheme/register/", "POST", 
         {
           username: this.state.profile.username, 
           scheme_type: this.state.module, 
           scheme_name: this.state.name, 
           value: {
+            register: "validate-assertion",
             session: result.session, 
             credential: publicKeyCredential
           }
@@ -266,7 +269,7 @@ class SchemeWebauthn extends Component {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
     })
     .always(() => {
-      this.getRegister();
+      this.getCredentials();
     });
   }
 
@@ -281,20 +284,20 @@ class SchemeWebauthn extends Component {
   saveName(e, index) {
     e.preventDefault();
     
-    apiManager.glewlwydRequest("/profile/scheme/createCredential/", "POST", 
+    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", 
       {
         username: this.state.profile.username, 
         scheme_type: this.state.module, 
         scheme_name: this.state.name,
         value: {
-          createCredential: "edit-credential",
+          register: "edit-credential",
           credential_id: this.state.credentialList[index].credential_id,
           name: this.state.editValue
         }
       })
     .then((res) => {
       this.setState({editIndex: -1, editValue: ""}, () => {
-        this.getRegister();
+        this.getCredentials();
       });
     })
     .fail((err) => {
@@ -307,18 +310,18 @@ class SchemeWebauthn extends Component {
   }
   
   switchCred(index) {
-    apiManager.glewlwydRequest("/profile/scheme/createCredential/", "POST", 
+    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", 
       {
         username: this.state.profile.username, 
         scheme_type: this.state.module, 
         scheme_name: this.state.name,
         value: {
-          createCredential: (this.state.credentialList[index].status==="createCredentialed"?"disable-credential":"enable-credential"),
+          register: (this.state.credentialList[index].status==="registered"?"disable-credential":"enable-credential"),
           credential_id: this.state.credentialList[index].credential_id
         }
       })
     .then((res) => {
-      this.getRegister();
+      this.getCredentials();
     })
     .fail((err) => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
@@ -338,18 +341,18 @@ class SchemeWebauthn extends Component {
   
   confirmRemoveCred(result) {
     if (result) {
-      apiManager.glewlwydRequest("/profile/scheme/createCredential/", "POST", 
+      apiManager.glewlwydRequest("/profile/scheme/register/", "POST", 
         {
           username: this.state.profile.username, 
           scheme_type: this.state.module, 
           scheme_name: this.state.name,
           value: {
-            createCredential: "remove-credential",
+            register: "remove-credential",
             credential_id: this.state.credentialList[this.state.removeIndex].credential_id
           }
         })
       .then((res) => {
-        this.getRegister();
+        this.getCredentials();
         messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-removed")});
       })
       .fail((err) => {
@@ -393,7 +396,7 @@ class SchemeWebauthn extends Component {
             </td>
           </tr>
         );
-      } else if (cred.status === "createCredentialed") {
+      } else if (cred.status === "registered") {
         credentialList.push(
           <tr key={index}>
             <td>
@@ -492,7 +495,7 @@ class SchemeWebauthn extends Component {
         <div className="row">
           <div className="col-md-12">
             <div className="btn-group" role="group">
-              <button type="button" className="btn btn-primary" onClick={(e) => this.createCredential(e)}>{i18next.t("profile.scheme-webauthn-createCredential")}</button>
+              <button type="button" className="btn btn-primary" onClick={(e) => this.createCredential(e)}>{i18next.t("profile.scheme-webauthn-register")}</button>
               <button type="button" className="btn btn-primary" onClick={(e) => this.testAssertion(e)} disabled={!this.state.credentialAvailable}>{i18next.t("profile.scheme-webauthn-test-registration")}</button>
             </div>
           </div>
