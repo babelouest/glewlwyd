@@ -698,7 +698,7 @@ static int check_certificate(struct config_module * config, json_t * j_cert, jso
 static json_t * check_attestation_android_safetynet(struct config_module * config, json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * client_data) {
   json_t * j_error = json_array(), * j_return;
   unsigned char pubkey_export[1024] = {0}, cert_export[4096] = {0}, client_data_hash[32], * nonce_base = NULL, nonce_base_hash[32], * nonce_base_hash_b64 = NULL, * header_cert_decoded;
-  char * message, * response_token;
+  char * message, * response_token, * header_x5c;
   size_t pubkey_export_len = 1024, cert_export_len = 4096, client_data_hash_len = 32, nonce_base_hash_len = 32, nonce_base_hash_b64_len = 0, header_cert_decoded_len = 0;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
@@ -706,7 +706,6 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
   int i, ret;
   jwt_t * j_response = NULL, * j_response_signed = NULL;
   json_t * j_header_x5c = NULL, * j_cert = NULL;
-  const char * header_x5c;
   gnutls_datum_t cert_dat;
   int has_ver = 0;
   
@@ -885,6 +884,7 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
     o_free(nonce_base_hash_b64);
     o_free(response_token);
     o_free(header_cert_decoded);
+    o_free(header_x5c);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error allocating resources for j_error");
     j_return = json_pack("{si}", "result", G_ERROR);
@@ -1477,9 +1477,10 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         ret = G_ERROR_PARAM;
         break;
       }
+      client_data[client_data_len] = '\0';
       j_client_data = json_loads((const char *)client_data, JSON_DECODE_ANY, NULL);
       if (j_client_data == NULL) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error parsing JSON client data");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error parsing JSON client data %s", client_data);
         ret = G_ERROR_PARAM;
         break;
       }
