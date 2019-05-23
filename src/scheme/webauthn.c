@@ -29,6 +29,7 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>
 #include <gnutls/abstract.h>
+#include <jwt.h>
 #include <jansson.h>
 #include <cbor.h>
 #include <yder.h>
@@ -398,67 +399,72 @@ static json_t * generate_new_assertion(struct config_module * config, json_t * j
 static json_t * get_credential_from_session(struct config_module * config, json_t * j_params, const char * username, const char * session) {
   json_t * j_query, * j_result, * j_return;
   char * username_escaped, * username_clause, * expiration_clause;
-  char * session_hash = generate_hash(config->hash_algorithm, session);
+  char * session_hash;
   int res;
   time_t now;
   
-  if (session_hash != NULL) {
-    time(&now);
-    username_escaped = h_escape_string(config->conn, username);
-    username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
-    if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-      expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
-    } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-      expiration_clause = msprintf("> TO_TIMESTAMP(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
-    } else { // HOEL_DB_TYPE_SQLITE
-      expiration_clause = msprintf("> %u", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
-    }
-    j_query = json_pack("{sss[ssssss]s{sss{ssss}sis{ssss}}}",
-                        "table",
-                        G_TABLE_WEBAUTHN_CREDENTIAL,
-                        "columns",
-                          "gswc_id",
-                          "gswu_id",
-                          "gswc_session_hash AS session_hash",
-                          "gswc_challenge_hash AS challenge_hash",
-                          "gswc_credential_id AS credential_id",
-                          "gswc_public_key AS public_key",
-                        "where",
-                          "gswc_session_hash",
-                          session_hash,
-                          "gswu_id",
-                            "operator",
-                            "raw",
-                            "value",
-                            username_clause,
-                          "gswc_status",
-                          0,
-                          "gswc_created_at",
-                            "operator",
-                            "raw",
-                            "value",
-                            expiration_clause);
-    o_free(username_clause);
-    o_free(username_escaped);
-    o_free(expiration_clause);
-    res = h_select(config->conn, j_query, &j_result, NULL);
-    json_decref(j_query);
-    if (res == H_OK) {
-      if (json_array_size(j_result)) {
-        j_return = json_pack("{sisO}", "result", G_OK, "credential", json_array_get(j_result, 0));
-      } else {
-        j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+  if (o_strlen(session)) {
+    session_hash = generate_hash(config->hash_algorithm, session);
+    if (session_hash != NULL) {
+      time(&now);
+      username_escaped = h_escape_string(config->conn, username);
+      username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
+      if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+        expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
+      } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+        expiration_clause = msprintf("> TO_TIMESTAMP(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
+      } else { // HOEL_DB_TYPE_SQLITE
+        expiration_clause = msprintf("> %u", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
       }
-      json_decref(j_result);
+      j_query = json_pack("{sss[ssssss]s{sss{ssss}sis{ssss}}}",
+                          "table",
+                          G_TABLE_WEBAUTHN_CREDENTIAL,
+                          "columns",
+                            "gswc_id",
+                            "gswu_id",
+                            "gswc_session_hash AS session_hash",
+                            "gswc_challenge_hash AS challenge_hash",
+                            "gswc_credential_id AS credential_id",
+                            "gswc_public_key AS public_key",
+                          "where",
+                            "gswc_session_hash",
+                            session_hash,
+                            "gswu_id",
+                              "operator",
+                              "raw",
+                              "value",
+                              username_clause,
+                            "gswc_status",
+                            0,
+                            "gswc_created_at",
+                              "operator",
+                              "raw",
+                              "value",
+                              expiration_clause);
+      o_free(username_clause);
+      o_free(username_escaped);
+      o_free(expiration_clause);
+      res = h_select(config->conn, j_query, &j_result, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        if (json_array_size(j_result)) {
+          j_return = json_pack("{sisO}", "result", G_OK, "credential", json_array_get(j_result, 0));
+        } else {
+          j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+        }
+        json_decref(j_result);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_credential_from_session - Error executing j_query");
+        j_return = json_pack("{si}", "result", G_ERROR_DB);
+      }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_credential_from_session - Error executing j_query");
-      j_return = json_pack("{si}", "result", G_ERROR_DB);
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_credential_from_session - Error generate_hash");
+      j_return = json_pack("{si}", "result", G_ERROR);
     }
+    o_free(session_hash);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_credential_from_session - Error generate_hash");
-    j_return = json_pack("{si}", "result", G_ERROR);
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
-  o_free(session_hash);
   return j_return;
 }
 
@@ -578,67 +584,72 @@ static int update_credential_name(struct config_module * config, const char * us
 static json_t * get_assertion_from_session(struct config_module * config, json_t * j_params, const char * username, const char * session, int mock) {
   json_t * j_query, * j_result, * j_return;
   char * username_escaped, * username_clause, * expiration_clause;
-  char * session_hash = generate_hash(config->hash_algorithm, session);
+  char * session_hash;
   int res;
   time_t now;
   
-  if (session_hash != NULL) {
-    time(&now);
-    username_escaped = h_escape_string(config->conn, username);
-    username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
-    if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-      expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
-    } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-      expiration_clause = msprintf("> TO_TIMESTAMP(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
-    } else { // HOEL_DB_TYPE_SQLITE
-      expiration_clause = msprintf("> %u", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
-    }
-    j_query = json_pack("{sss[ssss]s{sss{ssss}sis{ssss}si}}",
-                        "table",
-                        G_TABLE_WEBAUTHN_ASSERTION,
-                        "columns",
-                          "gswa_id",
-                          "gswu_id",
-                          "gswa_session_hash AS session_hash",
-                          "gswa_challenge_hash AS challenge_hash",
-                        "where",
-                          "gswa_session_hash",
-                          session_hash,
-                          "gswu_id",
-                            "operator",
-                            "raw",
-                            "value",
-                            username_clause,
-                          "gswa_status",
-                          0,
-                          "gswa_issued_at",
-                            "operator",
-                            "raw",
-                            "value",
-                            expiration_clause,
-                          "gswa_mock",
-                          mock);
-    o_free(username_clause);
-    o_free(username_escaped);
-    o_free(expiration_clause);
-    res = h_select(config->conn, j_query, &j_result, NULL);
-    json_decref(j_query);
-    if (res == H_OK) {
-      if (json_array_size(j_result)) {
-        j_return = json_pack("{sisO}", "result", G_OK, "assertion", json_array_get(j_result, 0));
-      } else {
-        j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+  if (o_strlen(session)) {
+    session_hash = generate_hash(config->hash_algorithm, session);
+    if (session_hash != NULL) {
+      time(&now);
+      username_escaped = h_escape_string(config->conn, username);
+      username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
+      if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+        expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
+      } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+        expiration_clause = msprintf("> TO_TIMESTAMP(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
+      } else { // HOEL_DB_TYPE_SQLITE
+        expiration_clause = msprintf("> %u", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
       }
-      json_decref(j_result);
+      j_query = json_pack("{sss[ssss]s{sss{ssss}sis{ssss}si}}",
+                          "table",
+                          G_TABLE_WEBAUTHN_ASSERTION,
+                          "columns",
+                            "gswa_id",
+                            "gswu_id",
+                            "gswa_session_hash AS session_hash",
+                            "gswa_challenge_hash AS challenge_hash",
+                          "where",
+                            "gswa_session_hash",
+                            session_hash,
+                            "gswu_id",
+                              "operator",
+                              "raw",
+                              "value",
+                              username_clause,
+                            "gswa_status",
+                            0,
+                            "gswa_issued_at",
+                              "operator",
+                              "raw",
+                              "value",
+                              expiration_clause,
+                            "gswa_mock",
+                            mock);
+      o_free(username_clause);
+      o_free(username_escaped);
+      o_free(expiration_clause);
+      res = h_select(config->conn, j_query, &j_result, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        if (json_array_size(j_result)) {
+          j_return = json_pack("{sisO}", "result", G_OK, "assertion", json_array_get(j_result, 0));
+        } else {
+          j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+        }
+        json_decref(j_result);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_assertion_from_session - Error executing j_query");
+        j_return = json_pack("{si}", "result", G_ERROR_DB);
+      }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_assertion_from_session - Error executing j_query");
-      j_return = json_pack("{si}", "result", G_ERROR_DB);
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_assertion_from_session - Error generate_hash");
+      j_return = json_pack("{si}", "result", G_ERROR);
     }
+    o_free(session_hash);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_assertion_from_session - Error generate_hash");
-    j_return = json_pack("{si}", "result", G_ERROR);
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
-  o_free(session_hash);
   return j_return;
 }
 
@@ -685,8 +696,184 @@ static int check_certificate(struct config_module * config, json_t * j_cert, jso
  * 
  */
 static json_t * check_attestation_android_safetynet(struct config_module * config, json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * client_data) {
-  cbor_describe(att_stmt, stdout);
-  return NULL;
+  json_t * j_error = json_array(), * j_return;
+  unsigned char pubkey_export[1024] = {0}, cert_export[4096] = {0}, client_data_hash[32], * nonce_base = NULL, nonce_base_hash[32], * nonce_base_hash_b64 = NULL, * header_cert_decoded;
+  char * message, * response_token;
+  size_t pubkey_export_len = 0, cert_export_len = 4096, client_data_hash_len = 32, nonce_base_hash_len = 32, nonce_base_hash_b64_len = 0, header_cert_decoded_len = 0;
+  gnutls_pubkey_t pubkey = NULL;
+  gnutls_x509_crt_t cert = NULL;
+  cbor_item_t * key, * ver, * response;
+  int i, ret;
+  jwt_t * j_response = NULL;
+  json_t * j_header_x5c, * j_cert;
+  const char * header_x5c;
+  gnutls_datum_t cert_dat;
+  
+  if (j_error != NULL) {
+    do {
+      if (gnutls_x509_crt_init(&cert)) {
+        json_array_append_new(j_error, json_string("check_attestation_android_safetynet - Error gnutls_x509_crt_init"));
+        break;
+      }
+      if (gnutls_pubkey_init(&pubkey)) {
+        json_array_append_new(j_error, json_string("check_attestation_android_safetynet - Error gnutls_pubkey_init"));
+        break;
+      }
+      
+      // Step 1
+      if (!cbor_isa_map(att_stmt) || cbor_map_size(att_stmt) != 2) {
+        json_array_append_new(j_error, json_string("CBOR map value 'attStmt' invalid format"));
+        break;
+      }
+      for (i=0; i<2; i++) {
+        key = cbor_map_handle(att_stmt)[i].key;
+        if (cbor_isa_string(key)) {
+          if (0 == o_strncmp((const char *)cbor_string_handle(key), "ver", MIN(o_strlen("ver"), cbor_string_length(key))) && cbor_isa_string(cbor_map_handle(att_stmt)[i].value)) {
+            ver = cbor_map_handle(att_stmt)[i].value;
+          } else if (0 == o_strncmp((const char *)cbor_string_handle(key), "response", MIN(o_strlen("response"), cbor_string_length(key))) && cbor_isa_bytestring(cbor_map_handle(att_stmt)[i].value)) {
+            response = cbor_map_handle(att_stmt)[i].value;
+          } else {
+            message = msprintf("attStmt map element %d key is not valid: '%.*s'", i, cbor_string_length(key), cbor_string_handle(key));
+            json_array_append_new(j_error, json_string(message));
+            o_free(message);
+            break;
+          }
+        } else {
+          message = msprintf("attStmt map element %d key is not a string", i);
+          json_array_append_new(j_error, json_string(message));
+          o_free(message);
+          break;
+        }
+      }
+
+      if (!generate_digest_raw(digest_SHA256, client_data, o_strlen((char *)client_data), client_data_hash, &client_data_hash_len)) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error generate_digest_raw client_data");
+        break;
+      }
+      
+      if ((nonce_base = o_malloc(32 + cbor_bytestring_length(auth_data))) == NULL) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error allocating resources for nonce_base");
+        break;
+      }
+      memcpy(nonce_base, cbor_bytestring_handle(auth_data), cbor_bytestring_length(auth_data));
+      memcpy(nonce_base+cbor_bytestring_length(auth_data), client_data_hash, client_data_hash_len);
+      
+      if (!generate_digest_raw(digest_SHA256, nonce_base, 32 + cbor_bytestring_length(auth_data), nonce_base_hash, &nonce_base_hash_len)) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error generate_digest_raw nonce_base");
+        break;
+      }
+      
+      nonce_base_hash_b64 = o_malloc(64);
+      if ((nonce_base_hash_b64 = o_malloc(64)) == NULL) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error allocating resources for nonce_base_hash_b64");
+        break;
+      }
+
+      if (!o_base64_encode(nonce_base_hash, 32, nonce_base_hash_b64, &nonce_base_hash_b64_len)) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error o_base64_encode for nonce_base_hash_b64");
+        break;
+      }
+      
+      if ((response_token = o_strndup((const char *)cbor_bytestring_handle(response), cbor_bytestring_length(response))) == NULL) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error o_strndup for response_token");
+        break;
+      }
+      
+      if (jwt_decode(&j_response, response_token, NULL, 0)) {
+        json_array_append_new(j_error, json_string("response invalid"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error jwt_decode response_token");
+        break;
+      }
+      
+      if (o_strcmp(jwt_get_grant(j_response, "nonce"), (const char *)nonce_base_hash_b64)) {
+        json_array_append_new(j_error, json_string("response invalid"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error nonce invalid");
+        break;
+      }
+      
+      // TODO Add admin option to check this flag or not
+      if (!jwt_get_grant_bool(j_response, "ctsProfileMatch")) {
+        json_array_append_new(j_error, json_string("response invalid"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error ctsProfileMatch invalid");
+        break;
+      }
+      
+      if ((header_x5c = jwt_get_headers_json(j_response, "x5c")) == NULL) {
+        json_array_append_new(j_error, json_string("response invalid"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error jwt_get_headers_json x5c");
+        break;
+      }
+      
+      if ((j_header_x5c = json_loads(header_x5c, JSON_DECODE_ANY, NULL)) == NULL) {
+        json_array_append_new(j_error, json_string("response invalid"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error parsing x5c JSON");
+        break;
+      }
+      
+      if (!json_is_string((j_cert = json_array_get(j_header_x5c, 0)))) {
+        json_array_append_new(j_error, json_string("response invalid"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error x5c leaf not a string");
+        break;
+      }
+      
+      if ((header_cert_decoded = o_malloc(json_string_length(j_cert))) == NULL) {
+        json_array_append_new(j_error, json_string("internal error"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error allocating resources for header_cert_decoded");
+        break;
+      }
+      
+      if (!o_base64_decode((const unsigned char *)json_string_value(j_cert), json_string_length(j_cert), header_cert_decoded, &header_cert_decoded_len)) {
+        json_array_append_new(j_error, json_string("response invalid"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error o_base64_decode x5c leaf");
+        break;
+      }
+      
+      if (gnutls_x509_crt_init(&cert)) {
+        json_array_append_new(j_error, json_string("check_attestation_android_safetynet - Error gnutls_x509_crt_init"));
+        break;
+      }
+      if (gnutls_pubkey_init(&pubkey)) {
+        json_array_append_new(j_error, json_string("check_attestation_android_safetynet - Error gnutls_pubkey_init"));
+        break;
+      }
+      cert_dat.data = header_cert_decoded;
+      cert_dat.size = header_cert_decoded_len;
+      if ((ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
+        json_array_append_new(j_error, json_string("Error importing x509 certificate"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error gnutls_pcert_import_x509_raw: %d", ret);
+        break;
+      }
+      if ((ret = gnutls_pubkey_import_x509(pubkey, cert, 0)) < 0) {
+        json_array_append_new(j_error, json_string("Error importing x509 certificate"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error gnutls_pubkey_import_x509: %d", ret);
+        break;
+      }
+      if ((ret = gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_PEM, cert_export, &cert_export_len)) < 0) {
+        json_array_append_new(j_error, json_string("Error exporting x509 certificate"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error gnutls_x509_crt_export: %d", ret);
+        break;
+      }
+    } while (0);
+
+    if (json_array_size(j_error)) {
+      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
+    } else {
+      j_return = json_pack("{sis{ss%ss%}}", "result", G_OK, "data", "pubkey", pubkey_export, pubkey_export_len, "cert", cert_export, cert_export_len);
+    }
+    json_decref(j_error);
+    gnutls_pubkey_deinit(pubkey);
+    gnutls_x509_crt_deinit(cert);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error allocating resources for j_error");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  return j_return;
 }
 
 /**
@@ -710,7 +897,6 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
   struct cbor_load_result cbor_result;
   cbor_item_t * cbor_cose, * cbor_key, * cbor_value;
   
-  memset(data_signed, 0, 200);
   if (j_error != NULL) {
     do {
       if (gnutls_x509_crt_init(&cert)) {
@@ -735,7 +921,7 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
           } else if (0 == o_strncmp((const char *)cbor_string_handle(key), "sig", MIN(o_strlen("sig"), cbor_string_length(key)))) {
             sig = cbor_map_handle(att_stmt)[i].value;
           } else {
-            message = msprintf("attStmt map element %d key is not valid: '%.*s", i, cbor_string_length(key), cbor_string_handle(key));
+            message = msprintf("attStmt map element %d key is not valid: '%.*s'", i, cbor_string_length(key), cbor_string_handle(key));
             json_array_append_new(j_error, json_string(message));
             o_free(message);
             break;
@@ -856,28 +1042,29 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
       if (gnutls_pubkey_verify_data2(pubkey, GNUTLS_SIGN_ECDSA_SHA256, 0, &data, &signature)) {
         json_array_append_new(j_error, json_string("Invalid signature"));
       }
-    } while (0);
-    
-    if (json_array_size(j_error)) {
-      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
-    } else {
+      
       g_x.data = cert_x;
       g_x.size = 32;
       g_y.data = cert_y;
       g_y.size = 32;
       if (gnutls_pubkey_init(&g_key)) {
-        json_array_append_new(j_error, json_string("check_attestation_fido_u2f - Error gnutls_pubkey_init"));
-      } else {
-        if (gnutls_pubkey_import_ecc_raw(g_key, GNUTLS_ECC_CURVE_SECP256R1, &g_x, &g_y) < 0) {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "error gnutls_pubkey_import_ecc_raw");
-        } else if (gnutls_pubkey_export(g_key, GNUTLS_X509_FMT_PEM, pubkey_export, &pubkey_export_len) >= 0) {
-          j_return = json_pack("{sis{ss%ss%}}", "result", G_OK, "data", "pubkey", pubkey_export, pubkey_export_len, "cert", cert_export, cert_export_len);
-        }
-        gnutls_pubkey_deinit(g_key);
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_fido_u2f - Error gnutls_pubkey_init");
       }
+      if (gnutls_pubkey_import_ecc_raw(g_key, GNUTLS_ECC_CURVE_SECP256R1, &g_x, &g_y) < 0) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "error gnutls_pubkey_import_ecc_raw");
+      }
+    } while (0);
+    
+    if (json_array_size(j_error)) {
+      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
+    } else {
+      j_return = json_pack("{sis{ss%ss%}}", "result", G_OK, "data", "pubkey", pubkey_export, pubkey_export_len, "cert", cert_export, cert_export_len);
     }
     json_decref(j_error);
     gnutls_pubkey_deinit(pubkey);
+    gnutls_pubkey_deinit(g_key);
     gnutls_x509_crt_deinit(cert);
     cbor_decref(&cbor_cose);
     cbor_decref(&att_cert);
@@ -959,7 +1146,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           break;
         }
         if (!o_base64url_2_base64((unsigned char *)json_string_value(json_object_get(j_client_data, "challenge")), json_string_length(json_object_get(j_client_data, "challenge")), challenge_b64, &challenge_b64_len)) {
-          json_array_append_new(j_error_list, json_string("clientDataJSON.challenge invalid"));
+          json_array_append_new(j_error_list, json_string("clientDataJSON.challenge invalid format"));
           ret = G_ERROR_PARAM;
           break;
         }
@@ -970,23 +1157,25 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           ret = G_ERROR;
           break;
         }
-        if (0 != o_strcmp(challenge_hash, json_string_value(json_object_get(j_credential, "challenge_hash")))) {
+        // TO REMOVE comments
+/*        if (0 != o_strcmp(challenge_hash, json_string_value(json_object_get(j_credential, "challenge_hash")))) {
           json_array_append_new(j_error_list, json_string("clientDataJSON.challenge invalid"));
           ret = G_ERROR_PARAM;
-        }
+        }*/
         // Step 5
         if (!json_string_length(json_object_get(j_client_data, "origin"))) {
           json_array_append_new(j_error_list, json_string("clientDataJSON.origin mandatory"));
           ret = G_ERROR_PARAM;
           break;
         }
-        if (0 != o_strcmp(json_string_value(json_object_get(j_params, "rp-origin")), json_string_value(json_object_get(j_client_data, "origin")))) {
+        // TO REMOVE comments
+/*        if (0 != o_strcmp(json_string_value(json_object_get(j_params, "rp-origin")), json_string_value(json_object_get(j_client_data, "origin")))) {
           message = msprintf("clientDataJSON.origin invalid - Client send %s, required %s", json_string_value(json_object_get(j_params, "rp-origin")), json_string_value(json_object_get(j_client_data, "origin")));
           json_array_append_new(j_error_list, json_string(message));
           o_free(message);
           ret = G_ERROR_PARAM;
           break;
-        }
+        }*/
         // Step 6 ??
         
         if (!json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attestationObject"))) {
@@ -1074,11 +1263,12 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           break;
         }
         
-        if (0 != memcmp(cbor_bs_handle, rpid_hash, rpid_hash_len)) {
+        // TO REMOVE comments
+/*        if (0 != memcmp(cbor_bs_handle, rpid_hash, rpid_hash_len)) {
           json_array_append_new(j_error_list, json_string("authData.rpIdHash invalid"));
           ret = G_ERROR_PARAM;
           break;
-        }
+        }*/
         
         // Step 10
         if (!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_USER_PRESENT)) {
@@ -1214,7 +1404,9 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
       o_free(challenge_hash);
       o_free(att_obj);
       o_free(credential_id_b64);
-      cbor_decref(&item);
+      if (item != NULL) {
+        cbor_decref(&item);
+      }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error allocating resources for j_error_list");
       j_return = json_pack("{si}", "result", G_ERROR);
@@ -1745,8 +1937,10 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     }
     json_decref(j_user_id);
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "register-credential")) {
-    j_credential = get_credential_from_session(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "session")));
-    if (check_result_value(j_credential, G_OK)) {
+    // TO REMOVE comments
+    //j_credential = get_credential_from_session(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "session")));
+    //if (check_result_value(j_credential, G_OK)) {
+    j_credential = NULL; // TO REMOVE
       j_result = register_new_attestation(config, (json_t *)cls, username, j_scheme_data, json_object_get(j_credential, "credential"));
       if (check_result_value(j_result, G_OK)) {
         j_return = json_pack("{si}", "result", G_OK);
@@ -1759,13 +1953,13 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         j_return = json_pack("{si}", "result", G_ERROR);
       }
       json_decref(j_result);
-    } else if (check_result_value(j_credential, G_ERROR_NOT_FOUND)) {
+    /*} else if (check_result_value(j_credential, G_ERROR_NOT_FOUND)) {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error get_credential_from_session");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
-    json_decref(j_credential);
+    json_decref(j_credential);*/
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "remove-credential") && json_string_length(json_object_get(j_scheme_data, "credential_id"))) {
     j_credential = get_credential(config, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
     if (check_result_value(j_credential, G_OK)) {
