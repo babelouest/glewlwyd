@@ -58,21 +58,25 @@ class User extends Component {
 
   initListAdd(patternList) {
     var listAddValue = {};
-    patternList.forEach((pat) => {
-      if (pat.list) {
-        listAddValue[pat.name] = "";
-      }
-    });
+    if (patternList) {
+      patternList.forEach((pat) => {
+        if (pat.list) {
+          listAddValue[pat.name] = "";
+        }
+      });
+    }
     return listAddValue;
   }
 
   initListConfirm(patternList) {
     var listEltConfirm = {};
-    patternList.forEach((pat) => {
-      if (pat.confirm) {
-        listEltConfirm[pat.name] = "";
-      }
-    });
+    if (patternList) {
+      patternList.forEach((pat) => {
+        if (pat.confirm) {
+          listEltConfirm[pat.name] = "";
+        }
+      });
+    }
     return listEltConfirm;
   }
 

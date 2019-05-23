@@ -1158,48 +1158,64 @@ class App extends Component {
   }
 
 	render() {
-		return (
-      <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
-        <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
-          <div className="card-header">
-            <Navbar active={this.state.curNav} config={this.state.config} loggedIn={this.state.loggedIn}/>
-          </div>
-          <div className="card-body">
-            <div id="carouselBody" className="carousel slide" data-ride="carousel">
-              <div className="carousel-inner">
-                <div className={"carousel-item" + (this.state.curNav==="users"?" active":"")}>
-                  <Users config={this.state.config} users={this.state.users} />
-                </div>
-                <div className={"carousel-item" + (this.state.curNav==="clients"?" active":"")}>
-                  <Clients config={this.state.config} clients={this.state.clients} />
-                </div>
-                <div className={"carousel-item" + (this.state.curNav==="scopes"?" active":"")}>
-                  <Scopes config={this.state.config} scopes={this.state.scopes} />
-                </div>
-                <div className={"carousel-item" + (this.state.curNav==="users-mod"?" active":"")}>
-                  <UserMod mods={this.state.modUsers} types={this.state.modTypes.user} />
-                </div>
-                <div className={"carousel-item" + (this.state.curNav==="clients-mod"?" active":"")}>
-                  <ClientMod mods={this.state.modClients} types={this.state.modTypes.client} />
-                </div>
-                <div className={"carousel-item" + (this.state.curNav==="auth-schemes"?" active":"")}>
-                  <SchemeMod mods={this.state.modSchemes} types={this.state.modTypes.scheme} />
-                </div>
-                <div className={"carousel-item" + (this.state.curNav==="plugins"?" active":"")}>
-                  <Plugin mods={this.state.plugins} types={this.state.modTypes.plugin}/>
+    if (this.state.config) {
+      return (
+        <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
+          <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
+            <div className="card-header">
+              <Navbar active={this.state.curNav} config={this.state.config} loggedIn={this.state.loggedIn}/>
+            </div>
+            <div className="card-body">
+              <div id="carouselBody" className="carousel slide" data-ride="carousel">
+                <div className="carousel-inner">
+                  <div className={"carousel-item" + (this.state.curNav==="users"?" active":"")}>
+                    <Users config={this.state.config} users={this.state.users} />
+                  </div>
+                  <div className={"carousel-item" + (this.state.curNav==="clients"?" active":"")}>
+                    <Clients config={this.state.config} clients={this.state.clients} />
+                  </div>
+                  <div className={"carousel-item" + (this.state.curNav==="scopes"?" active":"")}>
+                    <Scopes config={this.state.config} scopes={this.state.scopes} />
+                  </div>
+                  <div className={"carousel-item" + (this.state.curNav==="users-mod"?" active":"")}>
+                    <UserMod mods={this.state.modUsers} types={this.state.modTypes.user} />
+                  </div>
+                  <div className={"carousel-item" + (this.state.curNav==="clients-mod"?" active":"")}>
+                    <ClientMod mods={this.state.modClients} types={this.state.modTypes.client} />
+                  </div>
+                  <div className={"carousel-item" + (this.state.curNav==="auth-schemes"?" active":"")}>
+                    <SchemeMod mods={this.state.modSchemes} types={this.state.modTypes.scheme} />
+                  </div>
+                  <div className={"carousel-item" + (this.state.curNav==="plugins"?" active":"")}>
+                    <Plugin mods={this.state.plugins} types={this.state.modTypes.plugin}/>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+          <Notification/>
+          <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
+          <EditRecord title={this.state.editModal.title} pattern={this.state.editModal.pattern} source={this.state.editModal.source} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
+          <ScopeEdit scope={this.state.scopeModal.data} add={this.state.scopeModal.add} modSchemes={this.state.modSchemes} callback={this.state.scopeModal.callback} />
+          <ModEdit title={this.state.ModModal.title} role={this.state.ModModal.role} mod={this.state.ModModal.data} add={this.state.ModModal.add} types={this.state.ModModal.types} callback={this.state.ModModal.callback} config={this.state.config} />
+          <PluginEdit title={this.state.PluginModal.title} mod={this.state.PluginModal.data} add={this.state.PluginModal.add} types={this.state.PluginModal.types} callback={this.state.PluginModal.callback} config={this.state.config} />
         </div>
-        <Notification/>
-        <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
-        <EditRecord title={this.state.editModal.title} pattern={this.state.editModal.pattern} source={this.state.editModal.source} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
-        <ScopeEdit scope={this.state.scopeModal.data} add={this.state.scopeModal.add} modSchemes={this.state.modSchemes} callback={this.state.scopeModal.callback} />
-        <ModEdit title={this.state.ModModal.title} role={this.state.ModModal.role} mod={this.state.ModModal.data} add={this.state.ModModal.add} types={this.state.ModModal.types} callback={this.state.ModModal.callback} config={this.state.config} />
-        <PluginEdit title={this.state.PluginModal.title} mod={this.state.PluginModal.data} add={this.state.PluginModal.add} types={this.state.PluginModal.types} callback={this.state.PluginModal.callback} config={this.state.config} />
-      </div>
-		);
+      );
+    } else {
+      return (
+        <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
+          <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
+            <div className="card-header">
+              <h4>
+                <span className="badge badge-danger">
+                  {i18next.t("error-api-connect")}
+                </span>
+              </h4>
+            </div>
+          </div>
+        </div>
+      );
+    }
 	}
 }
 

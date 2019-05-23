@@ -68,6 +68,12 @@ class App extends Component {
     }
   }
   
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      config: props.config
+    });
+  }
+  
   fetchProfile() {
     apiManager.glewlwydRequest("/profile")
     .then((res) => {
@@ -99,30 +105,46 @@ class App extends Component {
   }
   
 	render() {
-		return (
-      <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
-        <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
-          <div className="card-header">
-            <Navbar active={this.state.curNav} config={this.state.config} loggedIn={this.state.loggedIn} schemeList={this.state.schemeList}/>
-          </div>
-          <div className="card-body">
-            <div id="carouselBody" className="carousel slide" data-ride="carousel">
-              <div className="carousel-inner">
-                <div className={"carousel-item" + (this.state.curNav==="profile"?" active":"")}>
-                  <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false}/>
-                </div>
-                <div className={"carousel-item" + (this.state.curNav!=="profile"?" active":"")}>
-                  <SchemePage config={this.state.config} module={this.state.curNav} name={this.state.module} profile={(this.state.profileList?this.state.profileList[0]:false)} />
+    if (this.state.config) {
+      return (
+        <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
+          <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
+            <div className="card-header">
+              <Navbar active={this.state.curNav} config={this.state.config} loggedIn={this.state.loggedIn} schemeList={this.state.schemeList}/>
+            </div>
+            <div className="card-body">
+              <div id="carouselBody" className="carousel slide" data-ride="carousel">
+                <div className="carousel-inner">
+                  <div className={"carousel-item" + (this.state.curNav==="profile"?" active":"")}>
+                    <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false}/>
+                  </div>
+                  <div className={"carousel-item" + (this.state.curNav!=="profile"?" active":"")}>
+                    <SchemePage config={this.state.config} module={this.state.curNav} name={this.state.module} profile={(this.state.profileList?this.state.profileList[0]:false)} />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+          <Notification/>
+          <PasswordModal config={this.state.config} callback={this.closePasswordModal}/>
+          <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
         </div>
-        <Notification/>
-        <PasswordModal config={this.state.config} callback={this.closePasswordModal}/>
-        <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
-      </div>
-		);
+      );
+    } else {
+      return (
+        <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
+          <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
+            <div className="card-header">
+              <h4>
+                <span className="badge badge-danger">
+                  {i18next.t("error-api-connect")}
+                </span>
+              </h4>
+            </div>
+          </div>
+        </div>
+      );
+    }
 	}
 }
 
