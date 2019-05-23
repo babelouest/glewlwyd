@@ -30,7 +30,9 @@ class App extends Component {
     this.checkScopeScheme = this.checkScopeScheme.bind(this);
     this.changeLang = this.changeLang.bind(this);
 
-    this.initProfile();
+    if (this.state.config) {
+      this.initProfile();
+    }
     
     messageDispatcher.subscribe('App', (message) => {
       if (message === "InitProfile") {
@@ -122,48 +124,64 @@ class App extends Component {
   }
 
 	render() {
-    var body = "";
-    if (this.state.loaded) {
-      if (this.state.newUser) {
-        body = <PasswordForm config={this.state.config} callbackInitProfile={this.initProfile}/>;
-      } else {
-        body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} showGrant={this.state.showGrant}/>;
+    if (this.state.config) {
+      var body = "";
+      if (this.state.loaded) {
+        if (this.state.newUser) {
+          body = <PasswordForm config={this.state.config} callbackInitProfile={this.initProfile}/>;
+        } else {
+          body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} showGrant={this.state.showGrant}/>;
+        }
       }
-    }
-    var langList = [];
-    ["en","fr"].forEach((lang, i) => {
-      if (lang === i18next.language) {
-        langList.push(<a className="dropdown-item active" href="#" key={i}>{lang}</a>);
-      } else {
-        langList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeLang(e, lang)} key={i}>{lang}</a>);
-      }
-    });
-		return (
-      <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
-        <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
-          <div className="card-header">
-            <div className="float-right">
-              <div className="dropdown">
-                <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i className="fas fa-globe-africa"></i> {i18next.t("select-lang")}
-                </button>
-                <div className="dropdown-menu" aria-labelledby="dropdownLang">
-                  {langList}
+      var langList = [];
+      ["en","fr"].forEach((lang, i) => {
+        if (lang === i18next.language) {
+          langList.push(<a className="dropdown-item active" href="#" key={i}>{lang}</a>);
+        } else {
+          langList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeLang(e, lang)} key={i}>{lang}</a>);
+        }
+      });
+      return (
+        <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
+          <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
+            <div className="card-header">
+              <div className="float-right">
+                <div className="dropdown">
+                  <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i className="fas fa-globe-africa"></i> {i18next.t("select-lang")}
+                  </button>
+                  <div className="dropdown-menu" aria-labelledby="dropdownLang">
+                    {langList}
+                  </div>
                 </div>
               </div>
+              <h2>{i18next.t("glewlwyd-sso-title")}</h2>
             </div>
-            <h2>{i18next.t("glewlwyd-sso-title")}</h2>
+            <div className="card-body">
+              {body}
+            </div>
+            <div className="card-footer">
+              <Buttons config={this.state.config} currentUser={this.state.currentUser} userList={this.state.userList} showGrant={this.state.showGrant} showGrantAsterisk={this.state.showGrantAsterisk}/>
+            </div>
           </div>
-          <div className="card-body">
-            {body}
-          </div>
-          <div className="card-footer">
-            <Buttons config={this.state.config} currentUser={this.state.currentUser} userList={this.state.userList} showGrant={this.state.showGrant} showGrantAsterisk={this.state.showGrantAsterisk}/>
+          <Notification/>
+        </div>
+      );
+    } else {
+      return (
+        <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
+          <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
+            <div className="card-header">
+              <h4>
+                <span className="badge badge-danger">
+                  {i18next.t("error-api-connect")}
+                </span>
+              </h4>
+            </div>
           </div>
         </div>
-        <Notification/>
-      </div>
-		);
+      );
+    }
 	}
 }
 

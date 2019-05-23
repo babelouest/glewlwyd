@@ -495,8 +495,8 @@ class SchemeWebauthn extends Component {
         <div className="row">
           <div className="col-md-12">
             <div className="btn-group" role="group">
-              <button type="button" className="btn btn-primary" onClick={(e) => this.createCredential(e)}>{i18next.t("profile.scheme-webauthn-register")}</button>
-              <button type="button" className="btn btn-primary" onClick={(e) => this.testAssertion(e)} disabled={!this.state.credentialAvailable}>{i18next.t("profile.scheme-webauthn-test-registration")}</button>
+              <button type="button" className="btn btn-primary" onClick={(e) => this.createCredential(e)} title={i18next.t("profile.scheme-webauthn-register-title")}>{i18next.t("profile.scheme-webauthn-register")}</button>
+              <button type="button" className="btn btn-primary" onClick={(e) => this.testAssertion(e)} disabled={!this.state.credentialAvailable} title={i18next.t("profile.scheme-webauthn-test-title")}>{i18next.t("profile.scheme-webauthn-test-registration")}</button>
             </div>
           </div>
         </div>

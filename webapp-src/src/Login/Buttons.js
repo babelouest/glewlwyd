@@ -78,10 +78,10 @@ class Buttons extends Component {
 
 	render() {
     var bAnother = "", asterisk = "";
-    var bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")} disabled={this.state.disableContinue}>
+    var bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")} disabled={this.state.disableContinue||""}>
       <i className="fas fa-play btn-icon"></i>{i18next.t("login.continue")}
     </button>;
-    var bGrant = <button type="button" className="btn btn-primary" onClick={this.clickGrant} title={this.state.bGrantTitle}>
+    var bGrant = <button type="button" className="btn btn-primary" onClick={this.clickGrant} title={this.state.bGrantTitle||""}>
       <i className="fas fa-user-cog btn-icon"></i>{this.state.bGrant}
     </button>;
     if (this.state.showGrantAsterisk) {
@@ -89,13 +89,15 @@ class Buttons extends Component {
     }
     if (this.state.currentUser) {
       var userList = [];
-      this.state.userList.forEach((user, index) => {
-        if (this.state.currentUser.username === user.username) {
-          userList.push(<a className="dropdown-item active" href="#" onClick={(e) => this.newUser(e, user.username)} key={index} alt={user.name || user.username}>{user.name || user.username}</a>);
-        } else {
-          userList.push(<a className="dropdown-item" href="#" onClick={(e) => this.newUser(e, user.username)} key={index} alt={user.name || user.username}>{user.name || user.username}</a>);
-        }
-      });
+      if (this.state.userList) {
+        this.state.userList.forEach((user, index) => {
+          if (this.state.currentUser.username === user.username) {
+            userList.push(<a className="dropdown-item active" href="#" onClick={(e) => this.newUser(e, user.username)} key={index} alt={user.name || user.username}>{user.name || user.username}</a>);
+          } else {
+            userList.push(<a className="dropdown-item" href="#" onClick={(e) => this.newUser(e, user.username)} key={index} alt={user.name || user.username}>{user.name || user.username}</a>);
+          }
+        });
+      }
       bAnother = 
       <div className="btn-group" role="group">
         <div className="dropdown">
@@ -130,7 +132,7 @@ class Buttons extends Component {
                     {asterisk}
                   </a>
                   <div className="dropdown-divider"></div>
-                  <a className="dropdown-item" href={this.state.config.ProfileUrl} target="_blank">{i18next.t("login.update-profile")}</a>
+                  <a className="dropdown-item" href={this.state.config.ProfileUrl||""} target="_blank">{i18next.t("login.update-profile")}</a>
                 </div>
               </div>
             </div>
