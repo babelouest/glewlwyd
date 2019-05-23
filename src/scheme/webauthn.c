@@ -699,27 +699,19 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
   json_t * j_error = json_array(), * j_return;
   unsigned char pubkey_export[1024] = {0}, cert_export[4096] = {0}, client_data_hash[32], * nonce_base = NULL, nonce_base_hash[32], * nonce_base_hash_b64 = NULL, * header_cert_decoded;
   char * message, * response_token;
-  size_t pubkey_export_len = 0, cert_export_len = 4096, client_data_hash_len = 32, nonce_base_hash_len = 32, nonce_base_hash_b64_len = 0, header_cert_decoded_len = 0;
+  size_t pubkey_export_len = 1024, cert_export_len = 4096, client_data_hash_len = 32, nonce_base_hash_len = 32, nonce_base_hash_b64_len = 0, header_cert_decoded_len = 0;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
-  cbor_item_t * key, * ver, * response;
+  cbor_item_t * key, * response;
   int i, ret;
-  jwt_t * j_response = NULL;
-  json_t * j_header_x5c, * j_cert;
+  jwt_t * j_response = NULL, * j_response_signed = NULL;
+  json_t * j_header_x5c = NULL, * j_cert = NULL;
   const char * header_x5c;
   gnutls_datum_t cert_dat;
+  int has_ver = 0;
   
   if (j_error != NULL) {
     do {
-      if (gnutls_x509_crt_init(&cert)) {
-        json_array_append_new(j_error, json_string("check_attestation_android_safetynet - Error gnutls_x509_crt_init"));
-        break;
-      }
-      if (gnutls_pubkey_init(&pubkey)) {
-        json_array_append_new(j_error, json_string("check_attestation_android_safetynet - Error gnutls_pubkey_init"));
-        break;
-      }
-      
       // Step 1
       if (!cbor_isa_map(att_stmt) || cbor_map_size(att_stmt) != 2) {
         json_array_append_new(j_error, json_string("CBOR map value 'attStmt' invalid format"));
@@ -729,7 +721,7 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
         key = cbor_map_handle(att_stmt)[i].key;
         if (cbor_isa_string(key)) {
           if (0 == o_strncmp((const char *)cbor_string_handle(key), "ver", MIN(o_strlen("ver"), cbor_string_length(key))) && cbor_isa_string(cbor_map_handle(att_stmt)[i].value)) {
-            ver = cbor_map_handle(att_stmt)[i].value;
+            has_ver = 1;
           } else if (0 == o_strncmp((const char *)cbor_string_handle(key), "response", MIN(o_strlen("response"), cbor_string_length(key))) && cbor_isa_bytestring(cbor_map_handle(att_stmt)[i].value)) {
             response = cbor_map_handle(att_stmt)[i].value;
           } else {
@@ -744,6 +736,12 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
           o_free(message);
           break;
         }
+      }
+      
+      if (!has_ver) {
+        json_array_append_new(j_error, json_string("version invalid"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error ver missing");
+        break;
       }
 
       if (!generate_digest_raw(digest_SHA256, client_data, o_strlen((char *)client_data), client_data_hash, &client_data_hash_len)) {
@@ -766,7 +764,6 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
         break;
       }
       
-      nonce_base_hash_b64 = o_malloc(64);
       if ((nonce_base_hash_b64 = o_malloc(64)) == NULL) {
         json_array_append_new(j_error, json_string("Internal error"));
         y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error allocating resources for nonce_base_hash_b64");
@@ -859,6 +856,18 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
         y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error gnutls_x509_crt_export: %d", ret);
         break;
       }
+      if ((ret = gnutls_pubkey_export(pubkey, GNUTLS_X509_FMT_PEM, pubkey_export, &pubkey_export_len)) < 0) {
+        json_array_append_new(j_error, json_string("Error exporting x509 certificate"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error gnutls_pubkey_export: %d", ret);
+        break;
+      }
+      
+      if (jwt_decode(&j_response_signed, response_token, pubkey_export, pubkey_export_len)) {
+        json_array_append_new(j_error, json_string("response invalid"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error jwt_decode response_token with signature");
+        break;
+      }
+      
     } while (0);
 
     if (json_array_size(j_error)) {
@@ -867,8 +876,15 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
       j_return = json_pack("{sis{ss%ss%}}", "result", G_OK, "data", "pubkey", pubkey_export, pubkey_export_len, "cert", cert_export, cert_export_len);
     }
     json_decref(j_error);
+    json_decref(j_header_x5c);
     gnutls_pubkey_deinit(pubkey);
     gnutls_x509_crt_deinit(cert);
+    jwt_free(j_response);
+    jwt_free(j_response_signed);
+    o_free(nonce_base);
+    o_free(nonce_base_hash_b64);
+    o_free(response_token);
+    o_free(header_cert_decoded);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error allocating resources for j_error");
     j_return = json_pack("{si}", "result", G_ERROR);
@@ -1055,6 +1071,11 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
         json_array_append_new(j_error, json_string("Internal error"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "error gnutls_pubkey_import_ecc_raw");
       }
+      if ((ret = gnutls_pubkey_export(g_key, GNUTLS_X509_FMT_PEM, pubkey_export, &pubkey_export_len)) < 0) {
+        json_array_append_new(j_error, json_string("Error exporting pubkey"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error gnutls_pubkey_export: %d", ret);
+        break;
+      }
     } while (0);
     
     if (json_array_size(j_error)) {
@@ -1157,25 +1178,23 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           ret = G_ERROR;
           break;
         }
-        // TO REMOVE comments
-/*        if (0 != o_strcmp(challenge_hash, json_string_value(json_object_get(j_credential, "challenge_hash")))) {
+        if (0 != o_strcmp(challenge_hash, json_string_value(json_object_get(j_credential, "challenge_hash")))) {
           json_array_append_new(j_error_list, json_string("clientDataJSON.challenge invalid"));
           ret = G_ERROR_PARAM;
-        }*/
+        }
         // Step 5
         if (!json_string_length(json_object_get(j_client_data, "origin"))) {
           json_array_append_new(j_error_list, json_string("clientDataJSON.origin mandatory"));
           ret = G_ERROR_PARAM;
           break;
         }
-        // TO REMOVE comments
-/*        if (0 != o_strcmp(json_string_value(json_object_get(j_params, "rp-origin")), json_string_value(json_object_get(j_client_data, "origin")))) {
+        if (0 != o_strcmp(json_string_value(json_object_get(j_params, "rp-origin")), json_string_value(json_object_get(j_client_data, "origin")))) {
           message = msprintf("clientDataJSON.origin invalid - Client send %s, required %s", json_string_value(json_object_get(j_params, "rp-origin")), json_string_value(json_object_get(j_client_data, "origin")));
           json_array_append_new(j_error_list, json_string(message));
           o_free(message);
           ret = G_ERROR_PARAM;
           break;
-        }*/
+        }
         // Step 6 ??
         
         if (!json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attestationObject"))) {
@@ -1263,12 +1282,11 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           break;
         }
         
-        // TO REMOVE comments
-/*        if (0 != memcmp(cbor_bs_handle, rpid_hash, rpid_hash_len)) {
+        if (0 != memcmp(cbor_bs_handle, rpid_hash, rpid_hash_len)) {
           json_array_append_new(j_error_list, json_string("authData.rpIdHash invalid"));
           ret = G_ERROR_PARAM;
           break;
-        }*/
+        }
         
         // Step 10
         if (!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_USER_PRESENT)) {
@@ -1301,7 +1319,6 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         }
         
         // Steps 13-14
-        y_log_message(Y_LOG_LEVEL_DEBUG, "fmt is %.*s", fmt_len, fmt);
         if (0 == o_strncmp("packed", (char *)fmt, MIN(fmt_len, o_strlen("packed")))) {
           json_array_append_new(j_error_list, json_string("fmt 'packed' not handled yet"));
           ret = G_ERROR_PARAM;
@@ -1937,10 +1954,8 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     }
     json_decref(j_user_id);
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "register-credential")) {
-    // TO REMOVE comments
-    //j_credential = get_credential_from_session(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "session")));
-    //if (check_result_value(j_credential, G_OK)) {
-    j_credential = NULL; // TO REMOVE
+    j_credential = get_credential_from_session(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "session")));
+    if (check_result_value(j_credential, G_OK)) {
       j_result = register_new_attestation(config, (json_t *)cls, username, j_scheme_data, json_object_get(j_credential, "credential"));
       if (check_result_value(j_result, G_OK)) {
         j_return = json_pack("{si}", "result", G_OK);
@@ -1953,13 +1968,13 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         j_return = json_pack("{si}", "result", G_ERROR);
       }
       json_decref(j_result);
-    /*} else if (check_result_value(j_credential, G_ERROR_NOT_FOUND)) {
+    } else if (check_result_value(j_credential, G_ERROR_NOT_FOUND)) {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error get_credential_from_session");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
-    json_decref(j_credential);*/
+    json_decref(j_credential);
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "remove-credential") && json_string_length(json_object_get(j_scheme_data, "credential_id"))) {
     j_credential = get_credential(config, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
     if (check_result_value(j_credential, G_OK)) {
