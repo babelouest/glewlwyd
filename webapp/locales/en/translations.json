@@ -49,7 +49,12 @@
     "mail-trigger-ok": "Code Sent",
     "mail-trigger-error": "Error sending code",
     "mail-code-error": "Error while validating code",
-    "mail-code-invalid": "Invalid code"
+    "mail-code-invalid": "Invalid code",
+    "webauthn-login-title": "Webauthn Authentification",
+    "webauthn-login-button-title": "Run an authentification attempt on the server",
+    "webauthn-login-authentiate": "Login",
+    "webauthn-trigger-must-register": "You must register a webauthn device",
+    "webauthn-error-trigger": "Error while attempting to authenticate"
   },
   "admin": {
     "menu-users": "Users",
@@ -384,7 +389,16 @@
     "mod-webauthn-pubKey-cred-params-error": "You must select at least one signature type",
     "mod-webauthn-pubKey-cred-params-label-ecdsa-sha256": "ECDSA w/ SHA-256",
     "mod-webauthn-pubKey-cred-params-label-ecdsa-sha384": "ECDSA w/ SHA-384",
-    "mod-webauthn-pubKey-cred-params-label-ecdsa-sha512": "ECDSA w/ SHA-512"
+    "mod-webauthn-pubKey-cred-params-label-ecdsa-sha512": "ECDSA w/ SHA-512",
+    "mod-webauthn-pubKey-cred-params-label-rsa-sha256": "RSA w/ SHA-256",
+    "mod-webauthn-pubKey-cred-params-label-rsa-sha384": "RSA w/ SHA-384",
+    "mod-webauthn-pubKey-cred-params-label-rsa-sha512": "RSA w/ SHA-512",
+    "mod-webauthn-safetynet-integrity-params": "Potential integrity verdict for Android SafetyNet devices",
+    "mod-webauthn-safetynet-integrity-ctsProfileMatch": "Expected ctsProfileMatch value",
+    "mod-webauthn-safetynet-integrity-basicIntegrity": "Expected basicIntegrity value",
+    "mod-webauthn-safetynet-integrity--1": "All",
+    "mod-webauthn-safetynet-integrity-0": "False",
+    "mod-webauthn-safetynet-integrity-1": "True"
   },
   "profile": {
     "requires-profile-scope": "Profile scope required",
@@ -411,8 +425,10 @@
     "scheme-mock-register-status-registered": "Registered",
     "scheme-mock-register-status-not-registered": "Not registered",
     "scheme-webauthn-title": "Web Authentication components",
-    "scheme-webauthn-register": "Register a new component",
-    "scheme-webauthn-test-registration": "Validate component",
+    "scheme-webauthn-register": "New component",
+    "scheme-webauthn-register-title": "Register a new component with your profile",
+    "scheme-webauthn-test-registration": "Test",
+    "scheme-webauthn-test-registration-title": "Test authentification",
     "scheme-webauthn-register-credential-error": "Error while registering component",
     "scheme-webauthn-register-credential-success": "The new component has been registered",
     "scheme-webauthn-assertion-success": "Authentication succeeded",
