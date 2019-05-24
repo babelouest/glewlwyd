@@ -389,7 +389,16 @@
     "mod-webauthn-pubKey-cred-params-error": "You must select at least one signature type",
     "mod-webauthn-pubKey-cred-params-label-ecdsa-sha256": "ECDSA w/ SHA-256",
     "mod-webauthn-pubKey-cred-params-label-ecdsa-sha384": "ECDSA w/ SHA-384",
-    "mod-webauthn-pubKey-cred-params-label-ecdsa-sha512": "ECDSA w/ SHA-512"
+    "mod-webauthn-pubKey-cred-params-label-ecdsa-sha512": "ECDSA w/ SHA-512",
+    "mod-webauthn-pubKey-cred-params-label-rsa-sha256": "RSA w/ SHA-256",
+    "mod-webauthn-pubKey-cred-params-label-rsa-sha384": "RSA w/ SHA-384",
+    "mod-webauthn-pubKey-cred-params-label-rsa-sha512": "RSA w/ SHA-512",
+    "mod-webauthn-safetynet-integrity-params": "Potential integrity verdict for Android SafetyNet devices",
+    "mod-webauthn-safetynet-integrity-ctsProfileMatch": "Expected ctsProfileMatch value",
+    "mod-webauthn-safetynet-integrity-basicIntegrity": "Expected basicIntegrity value",
+    "mod-webauthn-safetynet-integrity--1": "All",
+    "mod-webauthn-safetynet-integrity-0": "False",
+    "mod-webauthn-safetynet-integrity-1": "True"
   },
   "profile": {
     "requires-profile-scope": "Profile scope required",
