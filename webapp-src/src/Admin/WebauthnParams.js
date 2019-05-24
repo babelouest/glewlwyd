@@ -30,6 +30,14 @@ class WebauthnParams extends Component {
       props.mod.parameters["credential-assertion"] = 120;
     }
     
+    if (props.mod.parameters["ctsProfileMatch"] === undefined) {
+      props.mod.parameters["ctsProfileMatch"] = 1;
+    }
+    
+    if (props.mod.parameters["basicIntegrity"] === undefined) {
+      props.mod.parameters["basicIntegrity"] = 1;
+    }
+    
     this.state = {
       config: props.config,
       mod: props.mod,
@@ -46,6 +54,7 @@ class WebauthnParams extends Component {
     this.changeParam = this.changeParam.bind(this);
     this.checkParameters = this.checkParameters.bind(this);
     this.togglePubkey = this.togglePubkey.bind(this);
+    this.changeSIParam = this.changeSIParam.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -80,6 +89,12 @@ class WebauthnParams extends Component {
     } else {
       mod.parameters["pubKey-cred-params"].push(pubkey);
     }
+    this.setState({mod: mod});
+  }
+  
+  changeSIParam(e, param, value) {
+    var mod = this.state.mod;
+    mod.parameters[param] = value;
     this.setState({mod: mod});
   }
   
@@ -139,27 +154,75 @@ class WebauthnParams extends Component {
         </div>
         <div className="form-group">
           <label htmlFor="mod-webauthn-pubKey-cred-params">{i18next.t("admin.mod-webauthn-pubKey-cred-params")}</label>
-          <ul className="list-group">
-            <li className="list-group-item">
+          <ul>
+            <li>
               <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-ecdsa-sha256-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-7)>-1} onChange={(e) => this.togglePubkey(e, -7)}/>
               <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-ecdsa-sha256-check">
                 {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-ecdsa-sha256")}
               </label>
             </li>
-            <li className="list-group-item">
+            <li>
               <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-ecdsa-sha384-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-35)>-1} onChange={(e) => this.togglePubkey(e, -35)}/>
               <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-ecdsa-sha384-check">
                 {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-ecdsa-sha384")}
               </label>
             </li>
-            <li className="list-group-item">
+            <li>
               <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-ecdsa-sha512-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-36)>-1} onChange={(e) => this.togglePubkey(e, -36)}/>
               <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-ecdsa-sha512-check">
                 {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-ecdsa-sha512")}
               </label>
             </li>
+            <li>
+              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-rsa-sha256-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-36)>-1} onChange={(e) => this.togglePubkey(e, -257)}/>
+              <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-rsa-sha256-check">
+                {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-rsa-sha256")}
+              </label>
+            </li>
+            <li>
+              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-rsa-sha384-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-36)>-1} onChange={(e) => this.togglePubkey(e, -258)}/>
+              <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-rsa-sha384-check">
+                {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-rsa-sha384")}
+              </label>
+            </li>
+            <li>
+              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-rsa-sha512-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-36)>-1} onChange={(e) => this.togglePubkey(e, -259)}/>
+              <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-rsa-sha512-check">
+                {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-rsa-sha512")}
+              </label>
+            </li>
           </ul>
           {this.state.errorList["pubKey-cred-params"]?<span className="error-input">{i18next.t(this.state.errorList["pubKey-cred-params"])}</span>:""}
+        </div>
+        <hr/>
+        <div className="form-group">
+          <label>{i18next.t("admin.mod-webauthn-safetynet-integrity-params")}</label>
+        </div>
+        <div className="form-group">
+          <label htmlFor="mod-webauthn-safetynet-integrity-ctsProfileMatch">{i18next.t("admin.mod-webauthn-safetynet-integrity-ctsProfileMatch")}</label>
+          <div className="dropdown">
+            <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-webauthn-safetynet-integrity-ctsProfileMatch" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {i18next.t("admin.mod-webauthn-safetynet-integrity-" + this.state.mod.parameters["ctsProfileMatch"])}
+            </button>
+            <div className="dropdown-menu" aria-labelledby="mod-webauthn-safetynet-integrity-ctsProfileMatch">
+              <a className={"dropdown-item"+(this.state.mod.parameters["ctsProfileMatch"]===-1?" active":"")} href="#" onClick={(e) => this.changeSIParam(e, "ctsProfileMatch", -1)}>{i18next.t("admin.mod-webauthn-safetynet-integrity--1")}</a>
+              <a className={"dropdown-item"+(this.state.mod.parameters["ctsProfileMatch"]===0?" active":"")} href="#" onClick={(e) => this.changeSIParam(e, "ctsProfileMatch", 0)}>{i18next.t("admin.mod-webauthn-safetynet-integrity-0")}</a>
+              <a className={"dropdown-item"+(this.state.mod.parameters["ctsProfileMatch"]===1?" active":"")} href="#" onClick={(e) => this.changeSIParam(e, "ctsProfileMatch", 1)}>{i18next.t("admin.mod-webauthn-safetynet-integrity-1")}</a>
+            </div>
+          </div>
+        </div>
+        <div className="form-group">
+          <label htmlFor="mod-webauthn-safetynet-integrity-basicIntegrity">{i18next.t("admin.mod-webauthn-safetynet-integrity-basicIntegrity")}</label>
+          <div className="dropdown">
+            <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-webauthn-safetynet-integrity-basicIntegrity" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {i18next.t("admin.mod-webauthn-safetynet-integrity-" + this.state.mod.parameters["basicIntegrity"])}
+            </button>
+            <div className="dropdown-menu" aria-labelledby="mod-webauthn-safetynet-integrity-basicIntegrity">
+              <a className={"dropdown-item"+(this.state.mod.parameters["basicIntegrity"]===-1?" active":"")} href="#" onClick={(e) => this.changeSIParam(e, "basicIntegrity", -1)}>{i18next.t("admin.mod-webauthn-safetynet-integrity--1")}</a>
+              <a className={"dropdown-item"+(this.state.mod.parameters["basicIntegrity"]===0?" active":"")} href="#" onClick={(e) => this.changeSIParam(e, "basicIntegrity", 0)}>{i18next.t("admin.mod-webauthn-safetynet-integrity-0")}</a>
+              <a className={"dropdown-item"+(this.state.mod.parameters["basicIntegrity"]===1?" active":"")} href="#" onClick={(e) => this.changeSIParam(e, "basicIntegrity", 1)}>{i18next.t("admin.mod-webauthn-safetynet-integrity-1")}</a>
+            </div>
+          </div>
         </div>
       </div>
     );
