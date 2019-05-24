@@ -883,7 +883,7 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
     if (json_array_size(j_error)) {
       j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
     } else {
-      j_return = json_pack("{sis{ss%}}", "result", G_OK, "data", "cert", cert_export, cert_export_len);
+      j_return = json_pack("{sis{ss%}}", "result", G_OK, "data", "certificate", cert_export, cert_export_len);
     }
     json_decref(j_error);
     json_decref(j_header_x5c);
@@ -1216,7 +1216,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         // Step 9
         cbor_bs_handle = cbor_bytestring_handle(auth_data);
         if (o_strstr(json_string_value(json_object_get(j_params, "rp-origin")), "://") == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_object - rp-origin invalid");
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - rp-origin invalid");
           json_array_append_new(j_error, json_string("Internal error"));
           ret = G_ERROR_PARAM;
           break;
@@ -1224,7 +1224,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         
         rpid = o_strstr(json_string_value(json_object_get(j_params, "rp-origin")), "://")+3;
         if (!generate_digest_raw(digest_SHA256, (unsigned char *)rpid, o_strlen(rpid), rpid_hash, &rpid_hash_len)) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_object - Error generate_digest_raw");
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error generate_digest_raw");
           json_array_append_new(j_error, json_string("Internal error"));
           ret = G_ERROR_PARAM;
           break;
@@ -1280,13 +1280,13 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         cbor_cose = cbor_load(cred_pub_key, cred_pub_key_len, &cbor_result);
         if (cbor_result.error.code != CBOR_ERR_NONE) {
           json_array_append_new(j_error, json_string("Internal error"));
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error cbor_load cbor_cose");
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error cbor_load cbor_cose");
           break;
         }
         
         if (!cbor_isa_map(cbor_cose)) {
           json_array_append_new(j_error, json_string("Internal error"));
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error cbor_cose not a map");
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error cbor_cose not a map");
           break;
         }
         
@@ -1308,7 +1308,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         
         if (!has_x || !has_y || !key_type_valid || !key_alg_valid) {
           json_array_append_new(j_error, json_string("Invalid COSE key"));
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error invalid COSE key has_x %d && has_y %d && key_type_valid %d && key_alg_valid %d", has_x, has_y, key_type_valid, key_alg_valid);
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error invalid COSE key has_x %d && has_y %d && key_type_valid %d && key_alg_valid %d", has_x, has_y, key_type_valid, key_alg_valid);
           break;
         }
         
@@ -1318,15 +1318,15 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         g_y.size = 32;
         if (gnutls_pubkey_init(&g_key)) {
           json_array_append_new(j_error, json_string("Internal error"));
-          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_fido_u2f - Error gnutls_pubkey_init");
+          y_log_message(Y_LOG_LEVEL_DEBUG, "register_new_attestation - Error gnutls_pubkey_init");
         }
         if (gnutls_pubkey_import_ecc_raw(g_key, GNUTLS_ECC_CURVE_SECP256R1, &g_x, &g_y) < 0) {
           json_array_append_new(j_error, json_string("Internal error"));
-          y_log_message(Y_LOG_LEVEL_DEBUG, "error gnutls_pubkey_import_ecc_raw");
+          y_log_message(Y_LOG_LEVEL_DEBUG, "register_new_attestation - error gnutls_pubkey_import_ecc_raw");
         }
         if ((ret = gnutls_pubkey_export(g_key, GNUTLS_X509_FMT_PEM, pubkey_export, &pubkey_export_len)) < 0) {
           json_array_append_new(j_error, json_string("Error exporting pubkey"));
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error gnutls_pubkey_export: %d", ret);
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error gnutls_pubkey_export: %d", ret);
           break;
         }
         
@@ -1347,7 +1347,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
             ret = G_ERROR_PARAM;
           } else if (!check_result_value(j_result, G_OK)) {
             ret = G_ERROR_PARAM;
-            y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_object - Error check_attestation_android_safetynet");
+            y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error check_attestation_android_safetynet");
             json_array_append_new(j_error, json_string("internal error"));
           } else {
             j_cert = json_incref(json_object_get(json_object_get(j_result, "data"), "certificate"));
@@ -1360,7 +1360,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
             ret = G_ERROR_PARAM;
           } else if (!check_result_value(j_result, G_OK)) {
             ret = G_ERROR_PARAM;
-            y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_object - Error check_attestation_fido_u2f");
+            y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error check_attestation_fido_u2f");
             json_array_append_new(j_error, json_string("internal error"));
           } else {
             j_cert = json_incref(json_object_get(json_object_get(j_result, "data"), "certificate"));
@@ -1388,7 +1388,8 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Credential unauthorized");
           status = 2;
         } else if (res != G_ERROR_NOT_FOUND) {
-          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "register_new_attestation - Error check_certificate");
+          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Internal error");
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error check_certificate");
           status = 2;
         } else {
           j_return = json_pack("{si}", "result", G_OK);
