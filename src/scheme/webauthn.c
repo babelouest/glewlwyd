@@ -96,7 +96,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       if (json_object_get(j_params, "basicIntegrity") != NULL && (!json_is_integer(json_object_get(j_params, "basicIntegrity")) || json_integer_value(json_object_get(j_params, "basicIntegrity")) < -1 || json_integer_value(json_object_get(j_params, "basicIntegrity")) > 1)) {
         json_array_append_new(j_error, json_string("basicIntegrity is optional and must be an integer between -1 and 1"));
       }
-      if (json_object_get(j_params, "google-root-ca-r2") != NULL && (!json_is_string(json_object_get(j_params, "google-root-ca-r2")) || !json_string_length(json_object_get(j_params, "google-root-ca-r2")))) {
+      if (json_object_get(j_params, "google-root-ca-r2") != NULL && !json_is_string(json_object_get(j_params, "google-root-ca-r2"))) {
         json_array_append_new(j_error, json_string("google-root-ca-r2 is optional and must be a non empty string"));
       }
       if (json_array_size(j_error)) {
@@ -1982,7 +1982,7 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
                      "basicIntegrity",
                      json_object_get(j_parameters, "basicIntegrity")!=NULL?json_integer_value(json_object_get(j_parameters, "ctsProfileMatch")):-1,
                      "google-root-ca-r2",
-                     json_object_get(j_parameters, "google-root-ca-r2")!=NULL?json_object_get(j_parameters, "google-root-ca-r2"):json_null(),
+                     json_string_length(json_object_get(j_parameters, "google-root-ca-r2"))?json_object_get(j_parameters, "google-root-ca-r2"):json_null(),
                      "pubKey-cred-params");
     json_array_foreach(json_object_get(j_parameters, "pubKey-cred-params"), index, j_element) {
       json_array_append_new(json_object_get((json_t *)*cls, "pubKey-cred-params"), json_pack("{sssO}", "type", "public-key", "alg", j_element));
