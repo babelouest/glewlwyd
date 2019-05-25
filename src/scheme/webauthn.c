@@ -1970,6 +1970,7 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
   json_t * j_result = is_scheme_parameters_valid(j_parameters), * j_element;
   int ret;
   size_t index;
+  char * message;
   
   if (check_result_value(j_result, G_OK)) {
     *cls = json_pack("{sOsOsOsOsIsIsOs[]}",
@@ -1989,6 +1990,9 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
     }
     ret = G_OK;
   } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+    message = json_dumps(json_object_get(j_result, "error"), JSON_COMPACT);
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init webauthn - Error input parameters: %s", message);
+    o_free(message);
     ret = G_ERROR_PARAM;
   } else {
     ret = G_ERROR;
