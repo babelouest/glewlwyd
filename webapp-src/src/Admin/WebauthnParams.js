@@ -174,19 +174,19 @@ class WebauthnParams extends Component {
               </label>
             </li>
             <li>
-              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-rsa-sha256-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-36)>-1} onChange={(e) => this.togglePubkey(e, -257)}/>
+              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-rsa-sha256-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-257)>-1} onChange={(e) => this.togglePubkey(e, -257)} disabled={true}/>
               <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-rsa-sha256-check">
                 {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-rsa-sha256")}
               </label>
             </li>
             <li>
-              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-rsa-sha384-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-36)>-1} onChange={(e) => this.togglePubkey(e, -258)}/>
+              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-rsa-sha384-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-258)>-1} onChange={(e) => this.togglePubkey(e, -258)} disabled={true}/>
               <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-rsa-sha384-check">
                 {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-rsa-sha384")}
               </label>
             </li>
             <li>
-              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-rsa-sha512-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-36)>-1} onChange={(e) => this.togglePubkey(e, -259)}/>
+              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-rsa-sha512-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-259)>-1} onChange={(e) => this.togglePubkey(e, -259)} disabled={true}/>
               <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-rsa-sha512-check">
                 {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-rsa-sha512")}
               </label>
