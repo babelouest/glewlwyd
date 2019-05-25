@@ -704,11 +704,11 @@ static int check_certificate(struct config_module * config, json_t * j_cert, jso
   return ret;
 }
 
-static int validate_safetynet_ca_root(struct config_module * config, json_t * j_params, gnutls_x509_crt_t cert_leaf, json_t * j_header_x5c) {
+static int validate_safetynet_ca_root(json_t * j_params, gnutls_x509_crt_t cert_leaf, json_t * j_header_x5c) {
   gnutls_x509_crt_t cert_x509[(json_array_size(j_header_x5c)+1)], root_x509 = NULL;
   gnutls_x509_trust_list_t tlist = NULL;
-  int ret = G_OK, i;
-  unsigned int result;
+  int ret = G_OK;
+  unsigned int result, i;
   json_t * j_cert;
   unsigned char * header_cert_decoded;
   size_t header_cert_decoded_len, len;
@@ -813,7 +813,7 @@ static int validate_safetynet_ca_root(struct config_module * config, json_t * j_
  * I see a picture of me all the time
  * 
  */
-static json_t * check_attestation_android_safetynet(struct config_module * config, json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * client_data) {
+static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, const unsigned char * client_data) {
   json_t * j_error = json_array(), * j_return;
   unsigned char pubkey_export[1024] = {0}, cert_export[32] = {0}, cert_export_b64[64], client_data_hash[32], * nonce_base = NULL, nonce_base_hash[32], * nonce_base_hash_b64 = NULL, * header_cert_decoded;
   char * message, * response_token, * header_x5c, issued_to[128];
@@ -989,7 +989,7 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
         break;
       }
       if (json_object_get(j_params, "google-root-ca-r2") != json_null()) {
-        if ((ret = validate_safetynet_ca_root(config, j_params, cert, j_header_x5c)) == G_ERROR_UNAUTHORIZED) {
+        if ((ret = validate_safetynet_ca_root(j_params, cert, j_header_x5c)) == G_ERROR_UNAUTHORIZED) {
           json_array_append_new(j_error, json_string("Error x509 certificate chain validation"));
           break;
         } else if (ret != G_OK) {
@@ -1048,7 +1048,7 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
  * Really want you in my world
  * 
  */
-static json_t * check_attestation_fido_u2f(struct config_module * config, json_t * j_params, unsigned char * credential_id, size_t credential_id_len, unsigned char * cert_x, unsigned char * cert_y, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * client_data) {
+static json_t * check_attestation_fido_u2f(unsigned char * credential_id, size_t credential_id_len, unsigned char * cert_x, unsigned char * cert_y, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * client_data) {
   json_t * j_error = json_array(), * j_return;
   cbor_item_t * key, * x5c, * sig = NULL, * att_cert;
   int i, ret;
@@ -1195,13 +1195,14 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
  * https://w3c.github.io/webauthn/#registering-a-new-credential
  * 
  */
-static json_t * register_new_attestation(struct config_module * config, json_t * j_params, const char * username, json_t * j_scheme_data, json_t * j_credential) {
+static json_t * register_new_attestation(struct config_module * config, json_t * j_params, json_t * j_scheme_data, json_t * j_credential) {
   json_t * j_return, * j_client_data = NULL, * j_error, * j_result, * j_pubkey = NULL, * j_cert = NULL, * j_query, * j_element;
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL, * credential_id_b64 = NULL, * cbor_auth_data, * cred_pub_key, cert_x[32], cert_y[32], pubkey_export[1024];
   char * challenge_hash = NULL, * message = NULL, * rpid = NULL;
   size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, pubkey_export_len = 1024, index;
   uint32_t counter = 0;
-  int ret = G_OK, i, res, status, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0;
+  int ret = G_OK, res, status, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0;
+  unsigned int i;
   struct cbor_load_result cbor_result;
   cbor_item_t * item = NULL, * key = NULL, * auth_data = NULL, * att_stmt = NULL, * cbor_cose = NULL, * cbor_key, * cbor_value;
   gnutls_pubkey_t g_key = NULL;
@@ -1501,7 +1502,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           json_array_append_new(j_error, json_string("fmt 'android-key' not handled yet"));
           ret = G_ERROR_PARAM;
         } else if (0 == o_strncmp("android-safetynet", (char *)fmt, MIN(fmt_len, o_strlen("android-safetynet")))) {
-          j_result = check_attestation_android_safetynet(config, j_params, auth_data, att_stmt, rpid_hash, rpid_hash_len, client_data);
+          j_result = check_attestation_android_safetynet(j_params, auth_data, att_stmt, client_data);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             json_array_extend(j_error, json_object_get(j_result, "error"));
             ret = G_ERROR_PARAM;
@@ -1514,7 +1515,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           }
           json_decref(j_result);
         } else if (0 == o_strncmp("fido-u2f", (char *)fmt, MIN(fmt_len, o_strlen("fido-u2f")))) {
-          j_result = check_attestation_fido_u2f(config, j_params, (cbor_auth_data+CREDENTIAL_ID_OFFSET), credential_id_len, cert_x, cert_y, att_stmt, rpid_hash, rpid_hash_len, client_data);
+          j_result = check_attestation_fido_u2f((cbor_auth_data+CREDENTIAL_ID_OFFSET), credential_id_len, cert_x, cert_y, att_stmt, rpid_hash, rpid_hash_len, client_data);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             json_array_extend(j_error, json_object_get(j_result, "error"));
             ret = G_ERROR_PARAM;
@@ -1797,7 +1798,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         break;
       }
       
-      if ((json_integer_value(json_object_get(json_object_get(j_credential, "credential"), "counter")) || counter_value) && counter_value <= json_integer_value(json_object_get(json_object_get(j_credential, "credential"), "counter"))) {
+      if ((json_integer_value(json_object_get(json_object_get(j_credential, "credential"), "counter")) || counter_value) && counter_value <= (size_t)json_integer_value(json_object_get(json_object_get(j_credential, "credential"), "counter"))) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - counter invalid");
         ret = G_ERROR_UNAUTHORIZED;
         break;
@@ -2059,6 +2060,7 @@ int user_auth_scheme_module_close(struct config_module * config, void * cls) {
  * 
  */
 int user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls) {
+  UNUSED(cls);
   json_t * j_user_id, * j_credential;
   int ret;
   
@@ -2142,7 +2144,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "register-credential")) {
     j_credential = get_credential_from_session(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "session")));
     if (check_result_value(j_credential, G_OK)) {
-      j_result = register_new_attestation(config, (json_t *)cls, username, j_scheme_data, json_object_get(j_credential, "credential"));
+      j_result = register_new_attestation(config, (json_t *)cls, j_scheme_data, json_object_get(j_credential, "credential"));
       if (check_result_value(j_result, G_OK)) {
         j_return = json_pack("{si}", "result", G_OK);
       } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
@@ -2327,6 +2329,8 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
  */
 json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, int from_admin, const char * username, void * cls) {
   UNUSED(http_request);
+  UNUSED(from_admin);
+  UNUSED(cls);
   json_t * j_return, * j_user_id, * j_credential_list;
 
   j_user_id = get_user_id_from_username(config, username, 1);
@@ -2447,6 +2451,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
  * 
  */
 int user_auth_scheme_module_validate(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
+  UNUSED(http_request);
   int ret, res;
   json_t * j_user_id, * j_assertion;
 
