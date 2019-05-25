@@ -36,9 +36,9 @@
 #include <orcania.h>
 #include "../glewlwyd-common.h"
 
-#define G_TABLE_WEBAUTHN_USER "gs_webauthn_user"
+#define G_TABLE_WEBAUTHN_USER       "gs_webauthn_user"
 #define G_TABLE_WEBAUTHN_CREDENTIAL "gs_webauthn_credential"
-#define G_TABLE_WEBAUTHN_ASSERTION "gs_webauthn_assertion"
+#define G_TABLE_WEBAUTHN_ASSERTION  "gs_webauthn_assertion"
 
 #define SESSION_LENGTH 32
 #define USER_ID_LENGTH 32
@@ -57,6 +57,8 @@
 #define ATTESTED_CRED_DATA_OFFSET (COUNTER_OFFSET+COUNTER_LEN)
 #define CRED_ID_L_OFFSET (ATTESTED_CRED_DATA_OFFSET+AAGUID_LEN)
 #define CREDENTIAL_ID_OFFSET (ATTESTED_CRED_DATA_OFFSET+AAGUID_LEN+CRED_ID_L_LEN)
+
+#define SAFETYNET_ISSUED_TO "CN=attest.android.com"
 
 static json_t * is_scheme_parameters_valid(json_t * j_params) {
   json_t * j_return, * j_error, * j_element;
@@ -93,6 +95,9 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       }
       if (json_object_get(j_params, "basicIntegrity") != NULL && (!json_is_integer(json_object_get(j_params, "basicIntegrity")) || json_integer_value(json_object_get(j_params, "basicIntegrity")) < -1 || json_integer_value(json_object_get(j_params, "basicIntegrity")) > 1)) {
         json_array_append_new(j_error, json_string("basicIntegrity is optional and must be an integer between -1 and 1"));
+      }
+      if (json_object_get(j_params, "google-root-ca-r2") != NULL && (!json_is_string(json_object_get(j_params, "google-root-ca-r2")) || !json_string_length(json_object_get(j_params, "google-root-ca-r2")))) {
+        json_array_append_new(j_error, json_string("google-root-ca-r2 is optional and must be a non empty string"));
       }
       if (json_array_size(j_error)) {
         j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
@@ -693,6 +698,107 @@ static int check_certificate(struct config_module * config, json_t * j_cert, jso
   return ret;
 }
 
+static int validate_safetynet_ca_root(struct config_module * config, json_t * j_params, gnutls_x509_crt_t cert_leaf, json_t * j_header_x5c) {
+  gnutls_x509_crt_t cert_x509[(json_array_size(j_header_x5c)+1)], root_x509 = NULL;
+  gnutls_x509_trust_list_t tlist = NULL;
+  int ret = G_OK, i;
+  unsigned int result;
+  json_t * j_cert;
+  unsigned char * header_cert_decoded;
+  size_t header_cert_decoded_len, len;
+  gnutls_datum_t cert_dat;
+  FILE *fl;
+  char * cert_content;
+  
+  cert_x509[0] = cert_leaf;
+  for (i=1; i<json_array_size(j_header_x5c); i++) {
+    j_cert = json_array_get(j_header_x5c, i);
+    
+    if ((header_cert_decoded = o_malloc(json_string_length(j_cert))) != NULL) {
+      if (o_base64_decode((const unsigned char *)json_string_value(j_cert), json_string_length(j_cert), header_cert_decoded, &header_cert_decoded_len)) {
+        if (!gnutls_x509_crt_init(&cert_x509[i])) {
+          cert_dat.data = header_cert_decoded;
+          cert_dat.size = header_cert_decoded_len;
+          if ((ret = gnutls_x509_crt_import(cert_x509[i], &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_crt_import: %d", ret);
+            ret = G_ERROR;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_crt_init");
+          ret = G_ERROR;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error o_base64_decode x5c leaf");
+        ret = G_ERROR;
+      }
+      o_free(header_cert_decoded);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error allocating resources for header_cert_decoded");
+      ret = G_ERROR_MEMORY;
+    }
+  }
+  
+  if (ret == G_OK) {
+    fl = fopen(json_string_value(json_object_get(j_params, "google-root-ca-r2")), "r");
+    if (fl != NULL) {
+      fseek(fl, 0, SEEK_END);
+      len = ftell(fl);
+      cert_content = malloc(len);
+      if (cert_content != NULL) {
+        fseek(fl, 0, SEEK_SET);
+        fread(cert_content, 1, len, fl);
+        fclose(fl);
+        cert_dat.data = (unsigned char *)cert_content;
+        cert_dat.size = len;
+        if (!gnutls_x509_crt_init(&cert_x509[json_array_size(j_header_x5c)]) && 
+            !gnutls_x509_crt_import(cert_x509[json_array_size(j_header_x5c)], &cert_dat, GNUTLS_X509_FMT_DER)) {
+          if (!gnutls_x509_crt_init(&root_x509) && 
+              !gnutls_x509_crt_import(root_x509, &cert_dat, GNUTLS_X509_FMT_DER)) {
+            if (!gnutls_x509_trust_list_init(&tlist, 0)) {
+              if (gnutls_x509_trust_list_add_cas(tlist, &root_x509, 1, 0) >= 0) {
+                if (gnutls_x509_trust_list_verify_crt(tlist, cert_x509, (json_array_size(j_header_x5c)+1), 0, &result, NULL) >= 0) {
+                  if (!result) {
+                    ret = G_OK;
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "validate_safetynet_ca_root - certificate chain invalid");
+                    ret = G_ERROR;
+                  }
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_verify_crt");
+                  ret = G_ERROR;
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_add_cas");
+                ret = G_ERROR;
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_init");
+              ret = G_ERROR;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error import root cert");
+            ret = G_ERROR;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error import last cert");
+          ret = G_ERROR;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error allocating resources for cert_content");
+        ret = G_ERROR_MEMORY;
+      }
+      o_free(cert_content);
+    }
+  }
+  // Clean after me
+  for (i=1; i<json_array_size(j_header_x5c); i++) {
+    gnutls_x509_crt_deinit(cert_x509[i]);
+  }
+  gnutls_x509_crt_deinit(cert_x509[json_array_size(j_header_x5c)]);
+  gnutls_x509_trust_list_deinit(tlist, 1);
+  return ret;
+}
+
 /**
  * 
  * Validate the attStmt object under the Android SafetyNet format
@@ -704,8 +810,8 @@ static int check_certificate(struct config_module * config, json_t * j_cert, jso
 static json_t * check_attestation_android_safetynet(struct config_module * config, json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * client_data) {
   json_t * j_error = json_array(), * j_return;
   unsigned char pubkey_export[1024] = {0}, cert_export[32] = {0}, cert_export_b64[64], client_data_hash[32], * nonce_base = NULL, nonce_base_hash[32], * nonce_base_hash_b64 = NULL, * header_cert_decoded;
-  char * message, * response_token, * header_x5c;
-  size_t pubkey_export_len = 1024, cert_export_len = 32, cert_export_b64_len, client_data_hash_len = 32, nonce_base_hash_len = 32, nonce_base_hash_b64_len = 0, header_cert_decoded_len = 0;
+  char * message, * response_token, * header_x5c, issued_to[128];
+  size_t pubkey_export_len = 1024, cert_export_len = 32, cert_export_b64_len, issued_to_len = 128, client_data_hash_len = 32, nonce_base_hash_len = 32, nonce_base_hash_b64_len = 0, header_cert_decoded_len = 0;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
   cbor_item_t * key, * response;
@@ -865,6 +971,26 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
         json_array_append_new(j_error, json_string("Error exporting x509 certificate"));
         y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error gnutls_x509_crt_get_key_id: %d", ret);
         break;
+      }
+      if ((ret = gnutls_x509_crt_get_dn(cert, issued_to, &issued_to_len)) < 0) {
+        json_array_append_new(j_error, json_string("Error x509 dn"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error gnutls_x509_crt_get_dn: %d", ret);
+        break;
+      }
+      if (o_strnstr(issued_to, SAFETYNET_ISSUED_TO, issued_to_len) == NULL) {
+        json_array_append_new(j_error, json_string("Error x509 dn"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - safetynet certificate issued for %.*s", issued_to_len, issued_to);
+        break;
+      }
+      if (json_object_get(j_params, "google-root-ca-r2") != json_null()) {
+        if ((ret = validate_safetynet_ca_root(config, j_params, cert, j_header_x5c)) == G_ERROR_UNAUTHORIZED) {
+          json_array_append_new(j_error, json_string("Error x509 certificate chain validation"));
+          break;
+        } else if (ret != G_OK) {
+          json_array_append_new(j_error, json_string("internal error"));
+          y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - safetynet certificate chain certificate validation error");
+          break;
+        }
       }
       if (!o_base64_encode(cert_export, cert_export_len, cert_export_b64, &cert_export_b64_len)) {
         json_array_append_new(j_error, json_string("Internal error"));
@@ -1252,13 +1378,17 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           ret = G_ERROR_PARAM;
           break;
         }
+        if (!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_AT)) {
+          json_array_append_new(j_error, json_string("authData.Attested credential data not set"));
+          ret = G_ERROR_PARAM;
+          break;
+        }
         
         // Step 11 ignored for now
         //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_USER_VERIFY));
-        //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Attested credential data: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_AT));
-        //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_ED));
         
         // Step 12 ignored for now (no extension)
+        //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_ED));
         
         credential_id_len = cbor_bs_handle[CRED_ID_L_OFFSET+1] | (cbor_bs_handle[CRED_ID_L_OFFSET] << 8);
         credential_id_b64 = o_malloc(credential_id_len*2);
@@ -1842,7 +1972,7 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
   size_t index;
   
   if (check_result_value(j_result, G_OK)) {
-    *cls = json_pack("{sOsOsOsOsIsIs[]}",
+    *cls = json_pack("{sOsOsOsOsIsIsOs[]}",
                      "challenge-length", json_object_get(j_parameters, "challenge-length"),
                      "rp-origin", json_object_get(j_parameters, "rp-origin"),
                      "credential-expiration", json_object_get(j_parameters, "credential-expiration"),
@@ -1851,6 +1981,8 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
                      json_object_get(j_parameters, "ctsProfileMatch")!=NULL?json_integer_value(json_object_get(j_parameters, "ctsProfileMatch")):-1,
                      "basicIntegrity",
                      json_object_get(j_parameters, "basicIntegrity")!=NULL?json_integer_value(json_object_get(j_parameters, "ctsProfileMatch")):-1,
+                     "google-root-ca-r2",
+                     json_object_get(j_parameters, "google-root-ca-r2")!=NULL?json_object_get(j_parameters, "google-root-ca-r2"):json_null(),
                      "pubKey-cred-params");
     json_array_foreach(json_object_get(j_parameters, "pubKey-cred-params"), index, j_element) {
       json_array_append_new(json_object_get((json_t *)*cls, "pubKey-cred-params"), json_pack("{sssO}", "type", "public-key", "alg", j_element));
