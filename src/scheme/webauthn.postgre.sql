@@ -16,7 +16,7 @@ CREATE TABLE gs_webauthn_credential (
   gswc_name VARCHAR(128),
   gswc_challenge_hash VARCHAR(128),
   gswc_credential_id VARCHAR(256),
-  gswc_certificate TEXT DEFAULT NULL,
+  gswc_certificate VARCHAR(128),
   gswc_public_key TEXT DEFAULT NULL,
   gswc_counter INTEGER DEFAULT 0,
   gswc_created_at TIMESTAMP NOT NULL DEFAULT NOW(),
