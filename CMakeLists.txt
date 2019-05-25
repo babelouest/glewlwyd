@@ -309,7 +309,7 @@ endif ()
 if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 	set(MOCK_LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/mock.c)
 
-	set(MOCK_LIBS "-ldl")
+	set(MOCK_LIBS ${ULFIUS_LIBRARIES} "-ldl")
 
 	add_library(schememodmock MODULE ${MOCK_LIB_SRC})
 	set_target_properties(schememodmock PROPERTIES
@@ -322,13 +322,40 @@ option(WITH_SCHEME_EMAIL "Build e-mail scheme module" on)
 if (WITH_SCHEME_EMAIL)
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/email.c)
 
-	set(MOD_LIBS "-ldl")
+	set(MOD_LIBS ${ULFIUS_LIBRARIES} "-ldl")
 
 	add_library(schememodemail MODULE ${LIB_SRC})
 	set_target_properties(schememodemail PROPERTIES
 			COMPILE_OPTIONS -Wextra)
 	target_link_libraries(schememodemail ${MOD_LIBS})
 	set(CLIENT_MODULES ${CLIENT_MODULES} schememodemail)
+endif ()
+
+option(WITH_SCHEME_WEBAUTHN "Build Webauthn scheme module" on)
+if (WITH_SCHEME_WEBAUTHN)
+  include(FindLibJWT)
+  find_package(LibJWT REQUIRED)
+  if (LIBJWT_FOUND)
+      set(MOD_LIBS ${LIBJWT_LIBRARIES})
+      include_directories(${LIBJWT_INCLUDE_DIRS})
+  endif ()
+  
+  include(FindLibCBOR)
+  find_package(LibCBOR REQUIRED)
+  if (LIBCBOR_FOUND)
+      set(MOD_LIBS ${MOD_LIBS} ${LIBCBOR_LIBRARIES})
+      include_directories(${LIBCBOR_INCLUDE_DIRS})
+  endif ()
+  
+	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/webauthn.c)
+
+	set(MOD_LIBS ${ULFIUS_LIBRARIES} "-ldl")
+
+	add_library(schememodwebauthn MODULE ${LIB_SRC})
+	set_target_properties(schememodwebauthn PROPERTIES
+			COMPILE_OPTIONS -Wextra)
+	target_link_libraries(schememodwebauthn ${MOD_LIBS})
+	set(CLIENT_MODULES ${CLIENT_MODULES} schememodwebauthn)
 endif ()
 
 # plugins modules
