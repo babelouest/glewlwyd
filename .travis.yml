@@ -38,7 +38,7 @@ install:
 script:
   - echo "fake test" || true
   - mkdir build && pushd build
-  - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on ..
+  - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on -DWITH_SCHEME_WEBAUTHN=off ..
   - make
   - sudo make install
 #  - sudo ldconfig
