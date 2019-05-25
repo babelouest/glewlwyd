@@ -58,6 +58,10 @@
 #define CRED_ID_L_OFFSET (ATTESTED_CRED_DATA_OFFSET+AAGUID_LEN)
 #define CREDENTIAL_ID_OFFSET (ATTESTED_CRED_DATA_OFFSET+AAGUID_LEN+CRED_ID_L_LEN)
 
+#define ECDSA256 -7
+#define ECDSA384 -35
+#define ECDSA512 -36
+
 #define SAFETYNET_ISSUED_TO "CN=attest.android.com"
 
 static json_t * is_scheme_parameters_valid(json_t * j_params) {
@@ -85,8 +89,10 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       } else {
         json_array_foreach(json_object_get(j_params, "pubKey-cred-params"), index, j_element) {
           pubkey = json_integer_value(j_element);
-          if (pubkey != -7 && pubkey != -35 && pubkey != -36 && pubkey != -257 && pubkey != -258 && pubkey != -259) {
-            json_array_append_new(j_error, json_string("pubKey-cred-params elements values available are -7, -35, -36 (ECDSA) or -257, -258, -259 (RSA)"));
+          //if (pubkey != -7 && pubkey != -35 && pubkey != -36 && pubkey != -257 && pubkey != -258 && pubkey != -259) {
+          if (pubkey != ECDSA256 && pubkey != ECDSA384 && pubkey != ECDSA512) {
+            //json_array_append_new(j_error, json_string("pubKey-cred-params elements values available are -7, -35, -36 (ECDSA) or -257, -258, -259 (RSA)"));
+            json_array_append_new(j_error, json_string("pubKey-cred-params elements values available are -7, -35, -36 (ECDSA)"));
           }
         }
       }
@@ -1190,16 +1196,17 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
  * 
  */
 static json_t * register_new_attestation(struct config_module * config, json_t * j_params, const char * username, json_t * j_scheme_data, json_t * j_credential) {
-  json_t * j_return, * j_client_data = NULL, * j_error, * j_result, * j_pubkey = NULL, * j_cert = NULL, * j_query;
+  json_t * j_return, * j_client_data = NULL, * j_error, * j_result, * j_pubkey = NULL, * j_cert = NULL, * j_query, * j_element;
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL, * credential_id_b64 = NULL, * cbor_auth_data, * cred_pub_key, cert_x[32], cert_y[32], pubkey_export[1024];
   char * challenge_hash = NULL, * message = NULL, * rpid = NULL;
-  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, pubkey_export_len = 1024;
+  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, pubkey_export_len = 1024, index;
   uint32_t counter = 0;
   int ret = G_OK, i, res, status, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0;
   struct cbor_load_result cbor_result;
   cbor_item_t * item = NULL, * key = NULL, * auth_data = NULL, * att_stmt = NULL, * cbor_cose = NULL, * cbor_key, * cbor_value;
   gnutls_pubkey_t g_key = NULL;
   gnutls_datum_t g_x, g_y;
+  gnutls_ecc_curve_t curve = GNUTLS_ECC_CURVE_INVALID;
   
   if (j_scheme_data != NULL) {
     j_error = json_array();
@@ -1441,8 +1448,21 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
             memcpy(cert_y, cbor_bytestring_handle(cbor_value), 32);
           } else if (cbor_isa_uint(cbor_key) && cbor_get_int(cbor_key) == 1 && cbor_isa_uint(cbor_value) && cbor_get_int(cbor_value) == 2) {
             key_type_valid = 1;
-          } else if (cbor_isa_uint(cbor_key) && cbor_get_int(cbor_key) == 3 && cbor_isa_negint(cbor_value) && cbor_get_int(cbor_value) == 6) {
-            key_alg_valid = 1;
+          } else if (cbor_isa_uint(cbor_key) && cbor_get_int(cbor_key) == 3 && cbor_isa_negint(cbor_value)) {
+            if (cbor_get_int(cbor_value) == 6 || cbor_get_int(cbor_value) == 34 || cbor_get_int(cbor_value) == 35) {
+              json_array_foreach(json_object_get(j_params, "pubKey-cred-params"), index, j_element) {
+                if (cbor_get_int(cbor_value) == 6 && json_integer_value(json_object_get(j_element, "alg")) == ECDSA256) {
+                  key_alg_valid = 1;
+                  curve = GNUTLS_ECC_CURVE_SECP256R1;
+                } else if (cbor_get_int(cbor_value) == 34 && json_integer_value(json_object_get(j_element, "alg")) == ECDSA384) {
+                  key_alg_valid = 1;
+                  curve = GNUTLS_ECC_CURVE_SECP384R1;
+                } else if (cbor_get_int(cbor_value) == 35 && json_integer_value(json_object_get(j_element, "alg")) == ECDSA512) {
+                  key_alg_valid = 1;
+                  curve = GNUTLS_ECC_CURVE_SECP521R1;
+                }
+              }
+            }
           }
         }
         
@@ -1460,7 +1480,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           json_array_append_new(j_error, json_string("Internal error"));
           y_log_message(Y_LOG_LEVEL_DEBUG, "register_new_attestation - Error gnutls_pubkey_init");
         }
-        if (gnutls_pubkey_import_ecc_raw(g_key, GNUTLS_ECC_CURVE_SECP256R1, &g_x, &g_y) < 0) {
+        if (gnutls_pubkey_import_ecc_raw(g_key, curve, &g_x, &g_y) < 0) {
           json_array_append_new(j_error, json_string("Internal error"));
           y_log_message(Y_LOG_LEVEL_DEBUG, "register_new_attestation - error gnutls_pubkey_import_ecc_raw");
         }
@@ -1729,7 +1749,6 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       
       // Step 13 ignored for now
       //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", !!(*flags & FLAG_USER_VERIFY));
-      //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Attested credential data: %d", !!(*flags & FLAG_AT));
       //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", !!(*flags & FLAG_ED));
       
       // Step 14 ignored for now (no extension)
