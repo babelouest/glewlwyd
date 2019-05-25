@@ -703,9 +703,9 @@ static int check_certificate(struct config_module * config, json_t * j_cert, jso
  */
 static json_t * check_attestation_android_safetynet(struct config_module * config, json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * client_data) {
   json_t * j_error = json_array(), * j_return;
-  unsigned char pubkey_export[1024] = {0}, cert_export[4096] = {0}, client_data_hash[32], * nonce_base = NULL, nonce_base_hash[32], * nonce_base_hash_b64 = NULL, * header_cert_decoded;
+  unsigned char pubkey_export[1024] = {0}, cert_export[32] = {0}, cert_export_b64[64], client_data_hash[32], * nonce_base = NULL, nonce_base_hash[32], * nonce_base_hash_b64 = NULL, * header_cert_decoded;
   char * message, * response_token, * header_x5c;
-  size_t pubkey_export_len = 1024, cert_export_len = 4096, client_data_hash_len = 32, nonce_base_hash_len = 32, nonce_base_hash_b64_len = 0, header_cert_decoded_len = 0;
+  size_t pubkey_export_len = 1024, cert_export_len = 32, cert_export_b64_len, client_data_hash_len = 32, nonce_base_hash_len = 32, nonce_base_hash_b64_len = 0, header_cert_decoded_len = 0;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
   cbor_item_t * key, * response;
@@ -861,9 +861,14 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
         y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error gnutls_pubkey_import_x509: %d", ret);
         break;
       }
-      if ((ret = gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_PEM, cert_export, &cert_export_len)) < 0) {
+      if ((ret = gnutls_x509_crt_get_key_id(cert, GNUTLS_KEYID_USE_SHA256, cert_export, &cert_export_len)) < 0) {
         json_array_append_new(j_error, json_string("Error exporting x509 certificate"));
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error gnutls_x509_crt_export: %d", ret);
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error gnutls_x509_crt_get_key_id: %d", ret);
+        break;
+      }
+      if (!o_base64_encode(cert_export, cert_export_len, cert_export_b64, &cert_export_b64_len)) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error o_base64_encode cert_export");
         break;
       }
       if ((ret = gnutls_pubkey_export(pubkey, GNUTLS_X509_FMT_PEM, pubkey_export, &pubkey_export_len)) < 0) {
@@ -883,7 +888,7 @@ static json_t * check_attestation_android_safetynet(struct config_module * confi
     if (json_array_size(j_error)) {
       j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
     } else {
-      j_return = json_pack("{sis{ss%}}", "result", G_OK, "data", "certificate", cert_export, cert_export_len);
+      j_return = json_pack("{sis{ss%}}", "result", G_OK, "data", "certificate", cert_export_b64, cert_export_b64_len);
     }
     json_decref(j_error);
     json_decref(j_header_x5c);
@@ -919,8 +924,8 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
   gnutls_datum_t cert_dat, data, signature;
-  unsigned char data_signed[200], client_data_hash[32], cert_export[4096];
-  size_t data_signed_offset = 0, client_data_hash_len = 32, cert_export_len = 4096;
+  unsigned char data_signed[200], client_data_hash[32], cert_export[32], cert_export_b64[64];
+  size_t data_signed_offset = 0, client_data_hash_len = 32, cert_export_len = 32, cert_export_b64_len = 0;
   
   if (j_error != NULL) {
     do {
@@ -975,9 +980,14 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
         y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error gnutls_pubkey_import_x509: %d", ret);
         break;
       }
-      if ((ret = gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_PEM, cert_export, &cert_export_len)) < 0) {
+      if ((ret = gnutls_x509_crt_get_key_id(cert, GNUTLS_KEYID_USE_SHA256, cert_export, &cert_export_len)) < 0) {
         json_array_append_new(j_error, json_string("Error exporting x509 certificate"));
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error gnutls_x509_crt_export: %d", ret);
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error gnutls_x509_crt_get_key_id: %d", ret);
+        break;
+      }
+      if (!o_base64_encode(cert_export, cert_export_len, cert_export_b64, &cert_export_b64_len)) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_fido_u2f - Error o_base64_encode cert_export");
         break;
       }
       if (!generate_digest_raw(digest_SHA256, client_data, o_strlen((char *)client_data), client_data_hash, &client_data_hash_len)) {
@@ -1029,7 +1039,7 @@ static json_t * check_attestation_fido_u2f(struct config_module * config, json_t
     if (json_array_size(j_error)) {
       j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
     } else {
-      j_return = json_pack("{sis{ss%}}", "result", G_OK, "data", "certificate", cert_export, cert_export_len);
+      j_return = json_pack("{sis{ss%}}", "result", G_OK, "data", "certificate", cert_export_b64, cert_export_b64_len);
     }
     json_decref(j_error);
     gnutls_pubkey_deinit(pubkey);
