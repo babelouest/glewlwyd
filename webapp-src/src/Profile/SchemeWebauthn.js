@@ -166,6 +166,7 @@ class SchemeWebauthn extends Component {
         })
         .then(() => {
           messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-register-credential-success")});
+          this.getCredentials();
         })
         .fail((err, textStatus) => {
           if (err.status === 400) {
@@ -173,9 +174,6 @@ class SchemeWebauthn extends Component {
           } else {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           }
-        })
-        .always(() => {
-          this.getCredentials();
         });
       })
       .catch((err) => {
@@ -267,9 +265,6 @@ class SchemeWebauthn extends Component {
     })
     .fail((err) => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-    })
-    .always(() => {
-      this.getCredentials();
     });
   }
 
@@ -373,7 +368,7 @@ class SchemeWebauthn extends Component {
       if (this.state.editIndex === index) {
         credentialList.push(
           <tr key={index}>
-            <td>
+            <td className="d-none d-md-block">
               {createdAt.toLocaleString()}
             </td>
             <td>
@@ -381,7 +376,7 @@ class SchemeWebauthn extends Component {
                 <input type="text" className="form-control" value={this.state.editValue} onChange={(e) => this.changeName(e, index)} placeholder={i18next.t("profile.webauthn-edit-placeholder")} />
               </form>
             </td>
-            <td>
+            <td className="d-none d-md-block">
               {i18next.t("admin.yes")}
             </td>
             <td>
@@ -399,7 +394,7 @@ class SchemeWebauthn extends Component {
       } else if (cred.status === "registered") {
         credentialList.push(
           <tr key={index}>
-            <td>
+            <td className="d-none d-md-block">
               {createdAt.toLocaleString()}
             </td>
             <td>
@@ -407,7 +402,7 @@ class SchemeWebauthn extends Component {
                 {cred.name}
               </span>
             </td>
-            <td>
+            <td className="d-none d-md-block">
               {i18next.t("admin.yes")}
             </td>
             <td>
@@ -428,7 +423,7 @@ class SchemeWebauthn extends Component {
       } else {
         credentialList.push(
           <tr key={index}>
-            <td>
+            <td className="d-none d-md-block">
               {createdAt.toLocaleString()}
             </td>
             <td>
@@ -436,7 +431,7 @@ class SchemeWebauthn extends Component {
                 {cred.name}
               </span>
             </td>
-            <td>
+            <td className="d-none d-md-block">
               {i18next.t("admin.no")}
             </td>
             <td>
@@ -465,16 +460,21 @@ class SchemeWebauthn extends Component {
         </div>
         <div className="row">
           <div className="col-md-12">
+            <button type="button" className="btn btn-primary" onClick={(e) => this.getCredentials(e)}>{i18next.t("login.btn-reload")}</button>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col-md-12">
             <table className="table table-responsive table-striped">
               <thead>
                 <tr>
-                  <th>
+                  <th className="d-none d-md-block">
                     {i18next.t("profile.scheme-webauthn-table-created_at")}
                   </th>
                   <th>
                     {i18next.t("profile.scheme-webauthn-table-name")}
                   </th>
-                  <th>
+                  <th className="d-none d-md-block">
                     {i18next.t("profile.scheme-webauthn-table-enabled")}
                   </th>
                   <th>
