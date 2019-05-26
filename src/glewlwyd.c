@@ -1580,7 +1580,7 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
             if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
               j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
               if (j_parameters != NULL) {
-                if (module->user_auth_scheme_module_init(config->config_m, j_parameters, &cur_instance->cls) == G_OK) {
+                if (module->user_auth_scheme_module_init(config->config_m, j_parameters, cur_instance->name, &cur_instance->cls) == G_OK) {
                   cur_instance->enabled = 1;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
