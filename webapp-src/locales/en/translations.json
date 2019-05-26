@@ -401,7 +401,18 @@
     "mod-webauthn-safetynet-integrity-1": "True",
     "mod-webauthn-google-root-ca-r2": "Server local path to the root certificate 'GlobalSign Root CA — R2'",
     "mod-webauthn-google-root-ca-r2-ph": "Leave empty if no chain validation is required",
-    "mod-webauthn-google-root-ca-r2-download-link": "Download “GlobalSign Root CA — R2” from Google PKI"
+    "mod-webauthn-google-root-ca-r2-download-link": "Download “GlobalSign Root CA — R2” from Google PKI",
+    "mod-otp-otp-length": "Code length",
+    "mod-otp-otp-length-ph": "6 to 8 digits",
+    "mod-otp-otp-length-error": "Code length is mandatory",
+    "mod-otp-hotp-allow": "HOTP",
+    "mod-otp-hotp-window": "HOTP window",
+    "mod-otp-hotp-window-ph": "Ex: 1",
+    "mod-otp-hotp-window-error": "HOTP window is mandatory",
+    "mod-otp-totp-allow": "TOTP",
+    "mod-otp-totp-window": "TOTP window",
+    "mod-otp-totp-window-ph": "Ex: 1",
+    "mod-otp-totp-window-error": "TOTP window is mandatory"
   },
   "profile": {
     "requires-profile-scope": "Profile scope required",
