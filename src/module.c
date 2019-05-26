@@ -687,7 +687,7 @@ int add_user_auth_scheme_module(struct config_elements * config, json_t * j_modu
           cur_instance->guasmi_max_use = json_integer_value(json_object_get(j_module, "max_use"));
           cur_instance->enabled = 0;
           if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
-            if ((res = module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), &cur_instance->cls)) == G_OK) {
+            if ((res = module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), cur_instance->name, &cur_instance->cls)) == G_OK) {
               cur_instance->enabled = 1;
               ret = G_OK;
             } else if (res == G_ERROR_PARAM) {
@@ -806,7 +806,7 @@ int manage_user_auth_scheme_module(struct config_elements * config, const char *
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if ((res = instance->module->user_auth_scheme_module_init(config->config_m, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls)) == G_OK) {
+        if ((res = instance->module->user_auth_scheme_module_init(config->config_m, json_object_get(json_object_get(j_module, "module"), "parameters"), instance->name, &instance->cls)) == G_OK) {
           instance->enabled = 1;
           ret = G_OK;
         } else if (res == G_ERROR_PARAM) {
