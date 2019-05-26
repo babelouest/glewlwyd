@@ -109,11 +109,11 @@ class OTPParams extends Component {
       hasError = true;
       errorList["otp-length"] = i18next.t("admin.mod-otp-otp-length-error")
     }
-    if (this.state.mod.parameters["hotp-allow"] && this.state.mod.parameters["hotp-window"]) {
+    if (this.state.mod.parameters["hotp-allow"] && this.state.mod.parameters["hotp-window"] === "") {
       hasError = true;
       errorList["hotp-window"] = i18next.t("admin.mod-otp-hotp-window-error")
     }
-    if (this.state.mod.parameters["totp-allow"] && this.state.mod.parameters["totp-window"]) {
+    if (this.state.mod.parameters["totp-allow"] && this.state.mod.parameters["totp-window"] === "") {
       hasError = true;
       errorList["totp-window"] = i18next.t("admin.mod-otp-totp-window-error")
     }
