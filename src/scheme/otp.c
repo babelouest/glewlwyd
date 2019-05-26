@@ -49,13 +49,13 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       if (json_object_get(j_params, "hotp-allow") != NULL && !json_is_boolean(json_object_get(j_params, "hotp-allow"))) {
         json_array_append_new(j_error, json_string("hotp-allow is optional and must be a boolean"));
       }
-      if (json_object_get(j_params, "hotp-window") != NULL && json_integer_value(json_object_get(j_params, "hotp-window")) <= 0) {
+      if (json_object_get(j_params, "hotp-window") != NULL && json_integer_value(json_object_get(j_params, "hotp-window")) < 0) {
         json_array_append_new(j_error, json_string("hotp-window is optional and must be a positive integer"));
       }
       if (json_object_get(j_params, "totp-allow") != NULL && !json_is_boolean(json_object_get(j_params, "totp-allow"))) {
         json_array_append_new(j_error, json_string("totp-allow is optional and must be a boolean"));
       }
-      if (json_object_get(j_params, "totp-window") != NULL && json_integer_value(json_object_get(j_params, "totp-window")) <= 0) {
+      if (json_object_get(j_params, "totp-window") != NULL && json_integer_value(json_object_get(j_params, "totp-window")) < 0) {
         json_array_append_new(j_error, json_string("totp-window is optional and must be a positive integer"));
       }
       if (json_array_size(j_error)) {
@@ -112,7 +112,7 @@ static json_t * get_otp(struct config_module * config, const char * username) {
         json_object_del(json_array_get(j_result, 0), "time_step_size");
         json_object_del(json_array_get(j_result, 0), "start_offset");
       } else {
-        json_object_set_new(json_array_get(j_result, 0), "type", json_string("HOTP"));
+        json_object_set_new(json_array_get(j_result, 0), "type", json_string("TOTP"));
         json_object_del(json_array_get(j_result, 0), "moving_factor");
       }
       json_object_del(json_array_get(j_result, 0), "gso_otp_type");
@@ -130,7 +130,7 @@ static json_t * get_otp(struct config_module * config, const char * username) {
 
 static int set_otp(struct config_module * config, json_t * j_params, const char * username, json_t * j_scheme_data) {
   json_t * j_query, * j_otp;
-  int ret, res, type = 0==o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "HOTP")?0:1;
+  int ret, res, type = (0==o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "HOTP")?0:1);
   char * username_escaped, * username_clause;
   
   if (0 != o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "NONE")) {
@@ -138,14 +138,14 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
     if (check_result_value(j_otp, G_OK)) {
       username_escaped = h_escape_string(config->conn, username);
       username_clause = msprintf(" = UPPER('%s')", username_escaped);
-      j_query = json_pack("{sss{sO sO si sO sO sO sO so so}s{s{ssss}}}",
+      j_query = json_pack("{sss{sOsisisOsOsoso}s{s{ssss}sO}}",
                           "table",
                           GLEWLWYD_TABLE_OTP,
                           "set",
                             "gso_name",
                             json_object_get(j_scheme_data, "name"),
                             "gso_enabled",
-                            json_object_get(j_scheme_data, "enabled")==json_false()?json_false():json_true(),
+                            json_object_get(j_scheme_data, "enabled")==json_false()?0:1,
                             "gso_otp_type",
                             type,
                             "gso_secret",
@@ -161,7 +161,9 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
                               "operator",
                               "raw",
                               "value",
-                              username_clause);
+                              username_clause,
+                            "gso_mod_name",
+                            json_object_get(j_params, "mod_name"));
       o_free(username_clause);
       o_free(username_escaped);
       res = h_update(config->conn, j_query, NULL);
@@ -173,14 +175,14 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
         ret = G_ERROR_NOT_FOUND;
       }
     } else if (check_result_value(j_otp, G_ERROR_NOT_FOUND)) {
-      j_query = json_pack("{sss{sOsOsisOsOsososs}}",
+      j_query = json_pack("{sss{sOsisisOsOsosossss}}",
                           "table",
                           GLEWLWYD_TABLE_OTP,
                           "values",
                             "gso_name",
                             json_object_get(j_scheme_data, "name"),
                             "gso_enabled",
-                            json_object_get(j_scheme_data, "enabled")==json_false()?json_false():json_true(),
+                            json_object_get(j_scheme_data, "enabled")==json_false()?0:1,
                             "gso_otp_type",
                             type,
                             "gso_secret",
@@ -192,7 +194,9 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
                             "gso_totp_start_offset",
                             type==1?(json_object_get(j_scheme_data, "start_offset")!=NULL?json_integer(json_integer_value(json_object_get(j_scheme_data, "start_offset"))):json_integer(G_TOTP_DEFAULT_START_OFFSET)):json_null(),
                             "gso_username",
-                            username);
+                            username,
+                            "gso_mod_name",
+                            json_object_get(j_params, "mod_name"));
       res = h_insert(config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
@@ -209,7 +213,7 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
   } else {
     username_escaped = h_escape_string(config->conn, username);
     username_clause = msprintf(" = UPPER('%s')", username_escaped);
-    j_query = json_pack("{sss{s{ssss}}}",
+    j_query = json_pack("{sss{s{ssss}ss}}",
                         "table",
                         GLEWLWYD_TABLE_OTP,
                         "where",
@@ -217,7 +221,9 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
                             "operator",
                             "raw",
                             "value",
-                            username_clause);
+                            username_clause,
+                          "gso_mod_name",
+                          json_object_get(j_params, "mod_name"));
     o_free(username_clause);
     o_free(username_escaped);
     res = h_delete(config->conn, j_query, NULL);
@@ -362,6 +368,7 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
   char * message;
   
   if (check_result_value(j_result, G_OK)) {
+    json_object_set_new(j_parameters, "mod_name", json_string(mod_name));
     *cls = json_incref(j_parameters);
     ret = G_OK;
   } else if (check_result_value(j_result, G_ERROR_PARAM)) {
@@ -591,7 +598,9 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
   json_t * j_otp;
   time_t now;
   
-  if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
+  if (!json_string_length(json_object_get(j_scheme_data, "value"))) {
+    ret = G_ERROR_UNAUTHORIZED;
+  } else if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
     j_otp = get_otp(config, username);
     if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_otp, "otp"), "type")), "HOTP")) {
       if ((ret = oath_hotp_validate(json_string_value(json_object_get(json_object_get(j_otp, "otp"), "secret")),
@@ -608,6 +617,9 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
       }
     } else {
       time(&now);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "j_scheme_data %s", json_dumps(j_scheme_data, JSON_DECODE_ANY));
+      y_log_message(Y_LOG_LEVEL_DEBUG, "j_otp %s", json_dumps(j_otp, JSON_DECODE_ANY));
+      y_log_message(Y_LOG_LEVEL_DEBUG, "j_params %s", json_dumps((json_t *)cls, JSON_DECODE_ANY));
       if ((ret = oath_totp_validate(json_string_value(json_object_get(json_object_get(j_otp, "otp"), "secret")),
                                     json_string_length(json_object_get(json_object_get(j_otp, "otp"), "secret")),
                                     now,
