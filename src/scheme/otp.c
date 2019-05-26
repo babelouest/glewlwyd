@@ -85,7 +85,7 @@ static json_t * get_otp(struct config_module * config, const char * username) {
                       "table",
                       GLEWLWYD_TABLE_OTP,
                       "columns",
-                        "gso_name",
+                        "gso_name AS name",
                         SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gso_issued_at) AS issued_at", "gso_issued_at AS issued_at", "EXTRACT(EPOCH FROM gso_issued_at) AS issued_at"),
                         "gso_enabled",
                         "gso_otp_type",
@@ -138,7 +138,7 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
     if (check_result_value(j_otp, G_OK)) {
       username_escaped = h_escape_string(config->conn, username);
       username_clause = msprintf(" = UPPER('%s')", username_escaped);
-      j_query = json_pack("{sss{sOsOsisOsOsOsOsoso}s{s{ssss}}}",
+      j_query = json_pack("{sss{sO sO si sO sO sO sO so so}s{s{ssss}}}",
                           "table",
                           GLEWLWYD_TABLE_OTP,
                           "set",
@@ -150,8 +150,6 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
                             type,
                             "gso_secret",
                             json_object_get(j_scheme_data, "secret"),
-                            "gso_otp_window",
-                            json_object_get(j_scheme_data, "window")!=NULL?json_object_get(j_scheme_data, "window"):json_null(),
                             "gso_hotp_moving_factor",
                             type==0?(json_object_get(j_scheme_data, "moving_factor")!=NULL?json_object_get(j_scheme_data, "moving_factor"):0):json_null(),
                             "gso_totp_time_step_size",
@@ -175,7 +173,7 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
         ret = G_ERROR_NOT_FOUND;
       }
     } else if (check_result_value(j_otp, G_ERROR_NOT_FOUND)) {
-      j_query = json_pack("{sss{sOsOsisOsOsOsososs}}",
+      j_query = json_pack("{sss{sOsOsisOsOsososs}}",
                           "table",
                           GLEWLWYD_TABLE_OTP,
                           "values",
@@ -187,8 +185,6 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
                             type,
                             "gso_secret",
                             json_object_get(j_scheme_data, "secret"),
-                            "gso_otp_window",
-                            json_object_get(j_scheme_data, "window")!=NULL?json_object_get(j_scheme_data, "window"):json_null(),
                             "gso_hotp_moving_factor",
                             type==0?(json_object_get(j_scheme_data, "moving_factor")!=NULL?json_object_get(j_scheme_data, "moving_factor"):0):json_null(),
                             "gso_totp_time_step_size",
@@ -354,11 +350,12 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  *                    service and data
  * @parameter j_parameters: used to initialize an instance in JSON format
  *                          The module must validate itself its parameters
+ * @parameter mod_name: module name in glewlwyd service
  * @parameter cls: will contain an allocated void * pointer that will be sent back
  *                 as void * in all module functions
  * 
  */
-int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
+int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls) {
   UNUSED(config);
   json_t * j_result = is_scheme_parameters_valid(j_parameters);
   int ret;
@@ -466,22 +463,18 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
   if (json_is_object(j_scheme_data)) {
     if (json_string_length(json_object_get(j_scheme_data, "secret")) >= 8) {
       if (json_string_length(json_object_get(j_scheme_data, "name"))) {
-        if (json_integer_value(json_object_get(j_scheme_data, "window")) < 0) {
-          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "window is optional and must be a positive integer");
-        } else {
-          if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "HOTP")) {
-            if (json_integer_value(json_object_get(j_scheme_data, "moving_factor")) < 0) {
-              j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "moving_factor is optional and must be a positive integer or zero");
-            }
-          } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "TOTP")) {
-            if (json_integer_value(json_object_get(j_scheme_data, "time_step_size")) <= 0) {
-              j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "time_step_size is optional and must be a positive integer");
-            } else if (json_integer_value(json_object_get(j_scheme_data, "start_offset")) < 0) {
-              j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "start_offset is optional and must be a positive integer or zero");
-            }
-          } else if (0 != o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "NONE")) {
-            j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "type is mandatory and must have on of the following values: 'HOTP' or 'TOTP' or 'NONE'");
+        if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "HOTP")) {
+          if (json_integer_value(json_object_get(j_scheme_data, "moving_factor")) < 0) {
+            j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "moving_factor is optional and must be a positive integer or zero");
           }
+        } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "TOTP")) {
+          if (json_integer_value(json_object_get(j_scheme_data, "time_step_size")) <= 0) {
+            j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "time_step_size is optional and must be a positive integer");
+          } else if (json_integer_value(json_object_get(j_scheme_data, "start_offset")) < 0) {
+            j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "start_offset is optional and must be a positive integer or zero");
+          }
+        } else if (0 != o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "NONE")) {
+          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "type is mandatory and must have on of the following values: 'HOTP' or 'TOTP' or 'NONE'");
         }
       } else {
         j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "name is mandatory and must be non empty string");
@@ -527,6 +520,8 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
   j_otp = get_otp(config, username);
   if (check_result_value(j_otp, G_OK)) {
     j_return = json_pack("{sisO}", "result", G_OK, "response", json_object_get(j_otp, "otp"));
+  } else if (check_result_value(j_otp, G_ERROR_NOT_FOUND)) {
+    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register_get otp - Error get_otp");
@@ -602,7 +597,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
       if ((ret = oath_hotp_validate(json_string_value(json_object_get(json_object_get(j_otp, "otp"), "secret")),
                                     json_string_length(json_object_get(json_object_get(j_otp, "otp"), "secret")),
                                     json_integer_value(json_object_get(json_object_get(j_otp, "otp"), "moving_factor")),
-                                    json_integer_value(json_object_get(json_object_get(j_otp, "otp"), "window")),
+                                    json_integer_value(json_object_get((json_t *)cls, "window")),
                                     json_string_value(json_object_get(j_scheme_data, "value")))) >= 0) {
         ret = G_OK;
       } else if (ret == OATH_INVALID_OTP) {
@@ -618,7 +613,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
                                     now,
                                     json_integer_value(json_object_get(json_object_get(j_otp, "otp"), "time_step_size")),
                                     json_integer_value(json_object_get(json_object_get(j_otp, "otp"), "start_offset")),
-                                    json_integer_value(json_object_get(json_object_get(j_otp, "otp"), "window")),
+                                    json_integer_value(json_object_get((json_t *)cls, "window")),
                                     json_string_value(json_object_get(j_scheme_data, "value")))) >= 0) {
         ret = G_OK;
       } else if (ret == OATH_INVALID_OTP) {

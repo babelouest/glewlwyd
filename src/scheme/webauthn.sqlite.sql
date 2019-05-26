@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS gs_webauthn_user;
 
 CREATE TABLE gs_webauthn_user (
   gswu_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gswu_mod_name TEXT NOT NULL,
   gswu_username TEXT NOT NULL UNIQUE,
   gswu_user_id TEXT NOT NULL
 );
