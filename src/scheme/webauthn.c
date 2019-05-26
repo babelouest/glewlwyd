@@ -125,7 +125,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
  * Get the user_id associated with the username in the table G_TABLE_WEBAUTHN_USER
  * If user_id doesn't exist, create one, stores it, and return the new user_id
  */
-static json_t * get_user_id_from_username(struct config_module * config, const char * username, int create) {
+static json_t * get_user_id_from_username(struct config_module * config, json_t * j_param, const char * username, int create) {
   json_t * j_query, * j_result, * j_return;
   int res;
   char * username_escaped, * username_clause;
@@ -144,7 +144,9 @@ static json_t * get_user_id_from_username(struct config_module * config, const c
                           "operator",
                           "raw",
                           "value",
-                          username_clause);
+                          username_clause,
+                          "gswu_mod_name",
+                          json_object_get(j_param, "mod_name"));
   o_free(username_clause);
   o_free(username_escaped);
   res = h_select(config->conn, j_query, &j_result, NULL);
@@ -160,6 +162,8 @@ static json_t * get_user_id_from_username(struct config_module * config, const c
                             "table",
                             G_TABLE_WEBAUTHN_USER,
                             "values",
+                              "gswu_mod_name",
+                              json_object_get(j_param, "mod_name"),
                               "gswu_username",
                               username,
                               "gswu_user_id",
@@ -2016,11 +2020,12 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  *                    service and data
  * @parameter j_parameters: used to initialize an instance in JSON format
  *                          The module must validate itself its parameters
+ * @parameter mod_name: module name in glewlwyd service
  * @parameter cls: will contain an allocated void * pointer that will be sent back
  *                 as void * in all module functions
  * 
  */
-int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
+int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls) {
   UNUSED(config);
   json_t * j_result = is_scheme_parameters_valid(j_parameters), * j_element;
   int ret;
@@ -2095,11 +2100,10 @@ int user_auth_scheme_module_close(struct config_module * config, void * cls) {
  * 
  */
 int user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls) {
-  UNUSED(cls);
   json_t * j_user_id, * j_credential;
   int ret;
   
-  j_user_id = get_user_id_from_username(config, username, 0);
+  j_user_id = get_user_id_from_username(config, (json_t *)cls, username, 0);
   if (check_result_value(j_user_id, G_OK)) {
     j_credential = get_credential_list(config, username, 1);
     if (check_result_value(j_credential, G_OK)) {
@@ -2151,7 +2155,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
   int res;
 
   if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "new-credential")) {
-    j_user_id = get_user_id_from_username(config, username, 1);
+    j_user_id = get_user_id_from_username(config, (json_t *)cls, username, 1);
     if (check_result_value(j_user_id, G_OK)) {
       j_credential = generate_new_credential(config, (json_t *)cls, username);
       if (check_result_value(j_credential, G_OK)) {
@@ -2271,7 +2275,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     }
     json_decref(j_credential);
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "trigger-assertion")) {
-    j_user_id = get_user_id_from_username(config, username, 0);
+    j_user_id = get_user_id_from_username(config, (json_t *)cls, username, 0);
     if (check_result_value(j_user_id, G_OK)) {
       j_credential = get_credential_list(config, username, 1);
       if (check_result_value(j_credential, G_OK)) {
@@ -2310,7 +2314,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     }
     json_decref(j_user_id);
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "validate-assertion")) {
-    j_user_id = get_user_id_from_username(config, username, 0);
+    j_user_id = get_user_id_from_username(config, (json_t *)cls, username, 0);
     if (check_result_value(j_user_id, G_OK)) {
       j_assertion = get_assertion_from_session(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "session")), 1);
       if (check_result_value(j_assertion, G_OK)) {
@@ -2368,7 +2372,7 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
   UNUSED(cls);
   json_t * j_return, * j_user_id, * j_credential_list;
 
-  j_user_id = get_user_id_from_username(config, username, 1);
+  j_user_id = get_user_id_from_username(config, (json_t *)cls, username, 1);
   if (check_result_value(j_user_id, G_OK)) {
     j_credential_list = get_credential_list(config, username, 0);
     if (check_result_value(j_credential_list, G_OK)) {
@@ -2416,7 +2420,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
   json_t * j_return = NULL, * j_session = config->glewlwyd_module_callback_check_user_session(config, http_request, username), * j_credential, * j_assertion, * j_user_id;
   
   if (check_result_value(j_session, G_OK)) {
-    j_user_id = get_user_id_from_username(config, username, 0);
+    j_user_id = get_user_id_from_username(config, (json_t *)cls, username, 0);
     if (check_result_value(j_user_id, G_OK)) {
       j_credential = get_credential_list(config, username, 1);
       if (check_result_value(j_credential, G_OK)) {
@@ -2490,7 +2494,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
   int ret, res;
   json_t * j_user_id, * j_assertion;
 
-  j_user_id = get_user_id_from_username(config, username, 0);
+  j_user_id = get_user_id_from_username(config, (json_t *)cls, username, 0);
   if (check_result_value(j_user_id, G_OK)) {
     j_assertion = get_assertion_from_session(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "session")), 0);
     if (check_result_value(j_assertion, G_OK)) {

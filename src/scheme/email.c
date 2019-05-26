@@ -37,12 +37,12 @@
 #define GLEWLWYD_SCHEME_CODE_DEFAULT_LENGTH 6
 #define GLEWLWYD_SCHEME_CODE_DURATION 900
 
-static int generate_new_code(struct config_module * config, const char * username, char * code, size_t len) {
+static int generate_new_code(struct config_module * config, json_t * j_param, const char * username, char * code, size_t len) {
   json_t * j_query;
   int res, ret;
   char * code_hash = NULL;
   
-  j_query = json_pack("{sss{si}s{ss}}",
+  j_query = json_pack("{sss{si}s{sssO}}",
                       "table",
                       GLEWLWYD_SCHEME_CODE_TABLE,
                       "set",
@@ -50,16 +50,20 @@ static int generate_new_code(struct config_module * config, const char * usernam
                         0,
                        "where",
                         "gsc_username",
-                        username);
+                        username,
+                        "gsc_mod_name",
+                        json_object_get(j_param, "mod_name"));
   res = h_delete(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
     if (rand_code(code, len)) {
       if ((code_hash = generate_hash(config->hash_algorithm, code)) != NULL) {
-        j_query = json_pack("{sss{ssss}}",
+        j_query = json_pack("{sss{sOssss}}",
                             "table",
                             GLEWLWYD_SCHEME_CODE_TABLE,
                             "values",
+                              "gsc_mod_name",
+                              json_object_get(j_param, "mod_name"),
                               "gsc_username",
                               username,
                               "gsc_code_hash",
@@ -102,10 +106,12 @@ static int check_code(struct config_module * config, json_t * j_param, const cha
     } else { // HOEL_DB_TYPE_SQLITE
       issued_at_clause = msprintf("> %u", (now - json_integer_value(json_object_get(j_param, "code-duration"))));
     }
-    j_query = json_pack("{sss{sssssis{ssss}}}",
+    j_query = json_pack("{sss{sOsssssis{ssss}}}",
                         "table",
                         GLEWLWYD_SCHEME_CODE_TABLE,
                         "where",
+                          "gsc_mod_name",
+                          json_object_get(j_param, "mod_name"),
                           "gsc_username",
                           username,
                           "gsc_code_hash",
@@ -122,13 +128,15 @@ static int check_code(struct config_module * config, json_t * j_param, const cha
     json_decref(j_query);
     if (res == H_OK) {
       if (json_array_size(j_result)) {
-        j_query = json_pack("{sss{si}s{ssss}}",
+        j_query = json_pack("{sss{si}s{sOssss}}",
                             "table",
                             GLEWLWYD_SCHEME_CODE_TABLE,
                             "set",
                               "gsc_enabled",
                               0,
                              "where",
+                               "gsc_mod_name",
+                               json_object_get(j_param, "mod_name"),
                                "gsc_username",
                                username,
                                "gsc_code_hash",
@@ -362,11 +370,13 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * @parameter j_parameters: used to initialize an instance in JSON format
+ *                          The module must validate itself its parameters
+ * @parameter mod_name: module name in glewlwyd service
  * @parameter cls: must return an allocated void * pointer that will be sent back
  *                 as void * in all module functions
  * 
  */
-int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
+int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls) {
   UNUSED(config);
   json_t * j_result;
   int ret;
@@ -374,6 +384,7 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
   
   j_result = is_scheme_parameters_valid(j_parameters);
   if (check_result_value(j_result, G_OK)) {
+    json_object_set_new(j_parameters, "mod_name", json_string(mod_name));
     *cls = json_incref(j_parameters);
     ret = G_OK;
   } else {
@@ -532,7 +543,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
     if (check_result_value(j_user, G_OK)) {
       if ((code = o_malloc((json_integer_value(json_object_get(j_param, "code-length")) + 1)*sizeof(char))) != NULL) {
         memset(code, 0, (json_integer_value(json_object_get(j_param, "code-length")) + 1));
-        if (generate_new_code(config, username, code, json_integer_value(json_object_get(j_param, "code-length"))) == G_OK) {
+        if (generate_new_code(config, j_param, username, code, json_integer_value(json_object_get(j_param, "code-length"))) == G_OK) {
           if ((body = str_replace(json_string_value(json_object_get(j_param, "body-pattern")), "{CODE}", code)) != NULL) {
             if (ulfius_send_smtp_email(json_string_value(json_object_get(j_param, "host")),
                                        json_integer_value(json_object_get(j_param, "port")),

@@ -163,12 +163,14 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  *                    service and data
  * @parameter j_parameters: used to initialize an instance in JSON format
  *                          The module must validate itself its parameters
+ * @parameter mod_name: module name in glewlwyd service
  * @parameter cls: will contain an allocated void * pointer that will be sent back
  *                 as void * in all module functions
  * 
  */
-int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
+int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls) {
   UNUSED(config);
+  UNUSED(mod_name);
   if (json_object_get(j_parameters, "error") == NULL) {
     *cls = o_malloc(sizeof(struct mock_config));
     ((struct mock_config *)*cls)->j_param = json_incref(j_parameters);
