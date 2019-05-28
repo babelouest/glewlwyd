@@ -501,11 +501,11 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     if (json_object_get(j_scheme_data, "generate-secret") == json_true()) {
       secret_len = json_integer_value(json_object_get((json_t *)cls, "secret-minimum-size"))*sizeof(unsigned char);
       if ((secret = o_malloc(secret_len)) != NULL) {
-        if (!gnutls_rnd(GNUTLS_RND_NONCE, secret, secret_len)) {
+        if (!gnutls_rnd(GNUTLS_RND_KEY, secret, secret_len)) {
           if (oath_base32_encode(secret, secret_len, &secret_b32, &secret_b32_len) == OATH_OK) {
             j_return = json_pack("{sis{ss%}}", "result", G_OK, "response", "secret", secret_b32, secret_b32_len);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register otp - Error gnutls_rnd");
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register otp - Error oath_base32_encode");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
           o_free(secret_b32);
