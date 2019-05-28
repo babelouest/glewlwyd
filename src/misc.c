@@ -109,7 +109,7 @@ char * get_client_hostname(const struct _u_request * request) {
  * Generates a random long integer between 0 and max
  *
  */
-unsigned char random_at_most(unsigned char max) {
+unsigned char random_at_most(unsigned char max, int nonce) {
   unsigned char
   num_bins = (unsigned char) max + 1,
   num_rand = (unsigned char) 0xff,
@@ -118,7 +118,7 @@ unsigned char random_at_most(unsigned char max) {
 
   unsigned char x[1];
   do {
-    gnutls_rnd(GNUTLS_RND_NONCE, x, sizeof(x));
+    gnutls_rnd(nonce?GNUTLS_RND_NONCE:GNUTLS_RND_KEY, x, sizeof(x));
   }
   // This is carefully written not to overflow
   while (num_rand - defect <= (unsigned char)x[0]);
@@ -136,7 +136,26 @@ char * rand_string(char * str, size_t str_size) {
   
   if (str_size && str != NULL) {
     for (n = 0; n < str_size; n++) {
-      unsigned char key = random_at_most((sizeof(charset)) - 2);
+      unsigned char key = random_at_most((sizeof(charset)) - 2, 0);
+      str[n] = charset[key];
+    }
+    str[str_size] = '\0';
+    return str;
+  } else {
+    return NULL;
+  }
+}
+
+/**
+ * Generates a random string used as nonce and store it in str
+ */
+char * rand_string_nonce(char * str, size_t str_size) {
+  const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  size_t n;
+  
+  if (str_size && str != NULL) {
+    for (n = 0; n < str_size; n++) {
+      unsigned char key = random_at_most((sizeof(charset)) - 2, 1);
       str[n] = charset[key];
     }
     str[str_size] = '\0';
@@ -152,7 +171,7 @@ int rand_code(char * str, size_t str_size) {
   
   if (str_size && str != NULL) {
     for (n = 0; n < str_size; n++) {
-      unsigned char key = random_at_most((sizeof(charset)) - 2);
+      unsigned char key = random_at_most((sizeof(charset)) - 2, 0);
       str[n] = charset[key];
     }
     str[str_size] = '\0';
@@ -251,7 +270,7 @@ int generate_digest(digest_algorithm digest, const char * data, int use_salt, ch
     if(alg != GNUTLS_MAC_UNKNOWN) {
       if (o_strlen(data) > 0) {
         if (use_salt) {
-          rand_string(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+          rand_string_nonce(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
           intermediate = msprintf("%s%s", data, salt);
         } else {
           intermediate = o_strdup(data);
@@ -362,7 +381,7 @@ int generate_digest_pbkdf2(const char * data, const char * salt, char * out_dige
   if (salt != NULL) {
     memcpy(cur_salt, salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
   } else {
-    rand_string(my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+    rand_string_nonce(my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
     memcpy(cur_salt, my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
   }
   pbkdf2_hmac_sha256(o_strlen(data), (const uint8_t *)data, 1000, GLEWLWYD_DEFAULT_SALT_LENGTH, cur_salt, 32, dst);
