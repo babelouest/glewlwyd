@@ -10,6 +10,14 @@ class OTPParams extends Component {
       props.mod = {parameters: {}};
     }
     
+    if (!props.mod.parameters["secret-minimum-size"]) {
+      props.mod.parameters["secret-minimum-size"] = 16;
+    }
+
+    if (!props.mod.parameters["issuer"]) {
+      props.mod.parameters["issuer"] = location.host;
+    }
+
     if (!props.mod.parameters["otp-length"]) {
       props.mod.parameters["otp-length"] = 6;
     }
@@ -28,6 +36,10 @@ class OTPParams extends Component {
 
     if (!props.mod.parameters["totp-window"]) {
       props.mod.parameters["totp-window"] = 0;
+    }
+
+    if (!props.mod.parameters["totp-start-offset"]) {
+      props.mod.parameters["totp-start-offset"] = 0;
     }
 
     this.state = {
@@ -54,6 +66,14 @@ class OTPParams extends Component {
       nextProps.mod = {parameters: {}};
     }
     
+    if (!nextProps.mod.parameters["issuer"]) {
+      nextProps.mod.parameters["issuer"] = location.host;
+    }
+
+    if (nextProps.mod.parameters["secret-minimum-size"] === undefined) {
+      nextProps.mod.parameters["secret-minimum-size"] = 16;
+    }
+
     if (nextProps.mod.parameters["otp-length"] === undefined) {
       nextProps.mod.parameters["otp-length"] = 6;
     }
@@ -72,6 +92,10 @@ class OTPParams extends Component {
 
     if (nextProps.mod.parameters["totp-window"] === undefined) {
       nextProps.mod.parameters["totp-window"] = 0;
+    }
+
+    if (nextProps.mod.parameters["totp-start-offset"] === undefined) {
+      nextProps.mod.parameters["totp-start-offset"] = 0;
     }
 
     this.setState({
@@ -105,6 +129,14 @@ class OTPParams extends Component {
   
   checkParameters() {
     var errorList = {}, hasError = false;
+    if (!this.state.mod.parameters["issuer"]) {
+      hasError = true;
+      errorList["issuer"] = i18next.t("admin.mod-otp-issuer-error")
+    }
+    if (!this.state.mod.parameters["secret-minimum-size"]) {
+      hasError = true;
+      errorList["secret-minimum-size"] = i18next.t("admin.mod-otp-secret-minimum-size-error")
+    }
     if (!this.state.mod.parameters["otp-length"]) {
       hasError = true;
       errorList["otp-length"] = i18next.t("admin.mod-otp-otp-length-error")
@@ -116,6 +148,10 @@ class OTPParams extends Component {
     if (this.state.mod.parameters["totp-allow"] && this.state.mod.parameters["totp-window"] === "") {
       hasError = true;
       errorList["totp-window"] = i18next.t("admin.mod-otp-totp-window-error")
+    }
+    if (this.state.mod.parameters["totp-allow"] && this.state.mod.parameters["totp-start-offset"] === "") {
+      hasError = true;
+      errorList["totp-start-offset"] = i18next.t("admin.mod-otp-totp-start-offset-error")
     }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
@@ -129,6 +165,16 @@ class OTPParams extends Component {
   render() {
     return (
       <div>
+        <div className="form-group">
+          <label htmlFor="mod-otp-issuer">{i18next.t("admin.mod-otp-issuer")}</label>
+          <input type="text" className={this.state.errorList["issuer"]?"form-control is-invalid":"form-control"} id="mod-otp-issuer" onChange={(e) => this.changeParam(e, "issuer")} value={this.state.mod.parameters["issuer"]} placeholder={i18next.t("admin.mod-otp-issuer-ph")} />
+          {this.state.errorList["issuer"]?<span className="error-input">{i18next.t(this.state.errorList["issuer"])}</span>:""}
+        </div>
+        <div className="form-group">
+          <label htmlFor="mod-otp-secret-minimum-size">{i18next.t("admin.mod-otp-secret-minimum-size")}</label>
+          <input type="number" min="0" max="128" step="1" className={this.state.errorList["secret-minimum-size"]?"form-control is-invalid":"form-control"} id="mod-otp-secret-minimum-size" onChange={(e) => this.changeParam(e, "secret-minimum-size", 1)} value={this.state.mod.parameters["secret-minimum-size"]} placeholder={i18next.t("admin.mod-otp-secret-minimum-size-ph")} />
+          {this.state.errorList["secret-minimum-size"]?<span className="error-input">{i18next.t(this.state.errorList["secret-minimum-size"])}</span>:""}
+        </div>
         <div className="form-group">
           <label htmlFor="mod-otp-otp-length">{i18next.t("admin.mod-otp-otp-length")}</label>
           <input type="number" min="6" max="8" step="1" className={this.state.errorList["otp-length"]?"form-control is-invalid":"form-control"} id="mod-otp-otp-length" onChange={(e) => this.changeParam(e, "otp-length", 1)} value={this.state.mod.parameters["otp-length"]} placeholder={i18next.t("admin.mod-otp-otp-length-ph")} />
@@ -151,6 +197,11 @@ class OTPParams extends Component {
           <label htmlFor="mod-otp-totp-window">{i18next.t("admin.mod-otp-totp-window")}</label>
           <input type="number" min="0" max="16" step="1" className={this.state.errorList["totp-window"]?"form-control is-invalid":"form-control"} id="mod-otp-totp-window" onChange={(e) => this.changeParam(e, "totp-window", 1)} value={this.state.mod.parameters["totp-window"]} placeholder={i18next.t("admin.mod-otp-totp-window-ph")} disabled={!this.state.mod.parameters["totp-allow"]}/>
           {this.state.errorList["totp-window"]?<span className="error-input">{i18next.t(this.state.errorList["totp-window"])}</span>:""}
+        </div>
+        <div className="form-group">
+          <label htmlFor="mod-otp-totp-start-offset">{i18next.t("admin.mod-otp-totp-start-offset")}</label>
+          <input type="number" min="0" max="16" step="1" className={this.state.errorList["totp-start-offset"]?"form-control is-invalid":"form-control"} id="mod-otp-totp-start-offset" onChange={(e) => this.changeParam(e, "totp-window", 1)} value={this.state.mod.parameters["totp-window"]} placeholder={i18next.t("admin.mod-otp-totp-start-offset-ph")} disabled={!this.state.mod.parameters["totp-allow"]}/>
+          {this.state.errorList["totp-start-offset"]?<span className="error-input">{i18next.t(this.state.errorList["totp-start-offset"])}</span>:""}
         </div>
       </div>
     );

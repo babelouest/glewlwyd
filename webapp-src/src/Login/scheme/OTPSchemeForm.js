@@ -55,13 +55,13 @@ class OTPSchemeForm extends Component {
     return (
       <form action="#" id="otpSchemeForm">
         <div className="form-group">
-          <h5>{i18next.t("login.enter-value-otp-value")}</h5>
+          <h5>{i18next.t("login.otp-enter-value")}</h5>
         </div>
         <div className="form-group">
-          <label htmlFor="value">{i18next.t("login.value-value-label")}</label>
+          <label htmlFor="value">{i18next.t("login.otp-value-label")}</label>
           <input type="text" className="form-control" name="value" id="value" autoFocus="" required="" placeholder={i18next.t("login.error-value-expected", {value: (this.state.triggerResult)})} value={this.state.value||""} onChange={this.handleChangeMockValue}/>
         </div>
-        <button type="submit" name="but" id="but" className="btn btn-primary" onClick={(e) => this.validateMockValue(e)} title={i18next.t("login.value-value-button-title")}>{i18next.t("login.btn-ok")}</button>
+        <button type="submit" name="but" id="but" className="btn btn-primary" onClick={(e) => this.validateMockValue(e)} title={i18next.t("login.otp-button-title")}>{i18next.t("login.btn-ok")}</button>
       </form>
     );
   }

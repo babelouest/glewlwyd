@@ -23,6 +23,7 @@
     "update-profile": "Profile page",
     "logout": "Logout",
     "error-delete-session": "Error disconnecting",
+    "error-value-expected": "Value required",
     "grant-title": "The client {{client}} requires acces to the following scopes",
     "grant": "Grant access",
     "grant-change-title": "Change grant scope for client",
@@ -54,7 +55,10 @@
     "webauthn-login-button-title": "Run an authentification attempt on the server",
     "webauthn-login-authentiate": "Login",
     "webauthn-trigger-must-register": "You must register a webauthn device",
-    "webauthn-error-trigger": "Error while attempting to authenticate"
+    "webauthn-error-trigger": "Error while attempting to authenticate",
+    "otp-enter-value": "Enter one time password",
+    "otp-value-label": "Code",
+    "otp-button-title": "Validate"
   },
   "admin": {
     "menu-users": "Users",
@@ -402,6 +406,12 @@
     "mod-webauthn-google-root-ca-r2": "Server local path to the root certificate 'GlobalSign Root CA — R2'",
     "mod-webauthn-google-root-ca-r2-ph": "Leave empty if no chain validation is required",
     "mod-webauthn-google-root-ca-r2-download-link": "Download “GlobalSign Root CA — R2” from Google PKI",
+    "mod-otp-issuer": "Issuer",
+    "mod-otp-issuer-ph": "Ex: glewlwyd.tld",
+    "mod-otp-issuer-error": "Issuer is mandatory",
+    "mod-otp-secret-minimum-size": "Secret minimum size",
+    "mod-otp-secret-minimum-size-ph": "Ex: 16",
+    "mod-otp-secret-minimum-size-error": "Secret minimum size is mandatory",
     "mod-otp-otp-length": "Code length",
     "mod-otp-otp-length-ph": "6 to 8 digits",
     "mod-otp-otp-length-error": "Code length is mandatory",
@@ -412,7 +422,9 @@
     "mod-otp-totp-allow": "TOTP",
     "mod-otp-totp-window": "TOTP window",
     "mod-otp-totp-window-ph": "Ex: 1",
-    "mod-otp-totp-window-error": "TOTP window is mandatory"
+    "mod-otp-totp-window-error": "TOTP window is mandatory",
+    "mod-otp-totp-start-offset": "Start offset",
+    "mod-otp-totp-start-offset-ph": "Ex: 0"
   },
   "profile": {
     "requires-profile-scope": "Profile scope required",
@@ -459,7 +471,26 @@
     "scheme-webauthn-error-registration": "Registration error",
     "scheme-webauthn-confirm-title": "Remove component",
     "scheme-webauthn-confirm-message": "Do you want to remove this component?",
-    "scheme-webauthn-removed": "Component removed"
+    "scheme-webauthn-removed": "Component removed",
+    "scheme-otp-title": "HOTP/TOTP (One Time Password)",
+    "scheme-otp-type": "Type",
+    "scheme-otp-type-TOTP": "TOTP",
+    "scheme-otp-type-HOTP": "HOTP",
+    "scheme-otp-type-NONE": "None",
+    "scheme-otp-secret": "Shared secret",
+    "scheme-otp-secret-ph": "Must be Base32 encoded",
+    "scheme-otp-secret-error": "Shared secret is required",
+    "scheme-otp-moving_factor": "Moving factor",
+    "scheme-otp-moving_factor-ph": "Default 0",
+    "scheme-otp-moving_factor-error": "Moving factor is required",
+    "scheme-otp-time_step_size": "Step size (seconds)",
+    "scheme-otp-time_step_size-ph": "Default 30",
+    "scheme-otp-time_step_size-error": "Step size is required",
+    "scheme-otp-save": "Save",
+    "scheme-otp-save-ok": "OTP saved",
+    "scheme-otp-save-error": "Error while saving OTP",
+    "scheme-otp-generate-secret": "Generate",
+    "scheme-otp-none-specified": "No OTP specified"
   },
   "modal": {
     "close": "Close",

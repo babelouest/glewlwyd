@@ -23,6 +23,7 @@
     "update-profile": "Page de profil",
     "logout": "Se déconnecter",
     "error-delete-session": "Erreur lors de la déconnexion",
+    "error-value-expected": "Valeur requise",
     "grant-title": "Le client {{client}} demande les droits d'accès suivants",
     "grant": "Autoriser l'accès",
     "grant-change-title": "Changer l'accès aux droits pour le client",
@@ -54,8 +55,10 @@
     "webauthn-login-button-title": "Lancer une tentative d'authentification sur le serveur",
     "webauthn-login-authentiate": "Authentification",
     "webauthn-trigger-must-register": "Vous devez enregistrer un composant Webauthn",
-    "webauthn-error-trigger": "Erreur lors de la tentative d'authentification"
-    
+    "webauthn-error-trigger": "Erreur lors de la tentative d'authentification",
+    "otp-enter-value": "Entrer le code a usage unique",
+    "otp-value-label": "Code",
+    "otp-button-title": "Valider"
   },
   "admin": {
     "menu-users": "Utilisateurs",
@@ -403,6 +406,12 @@
     "mod-webauthn-google-root-ca-r2": "Chemin local sur le serveur vers le certificat 'GlobalSign Root CA — R2'",
     "mod-webauthn-google-root-ca-r2-ph": "Laisser vide pour ne pas valider la chaine de certificats",
     "mod-webauthn-google-root-ca-r2-download-link": "Télécharger “GlobalSign Root CA — R2” depuis le site Google PKI",
+    "mod-otp-issuer": "Origine",
+    "mod-otp-issuer-ph": "Ex: glewlwyd.tld",
+    "mod-otp-issuer-error": "L'origine est obligatoire",
+    "mod-otp-secret-minimum-size": "Longueur minimum du secret",
+    "mod-otp-secret-minimum-size-ph": "Ex: 16",
+    "mod-otp-secret-minimum-size-error": "La longueur minimum du secret est obligatoire",
     "mod-otp-otp-length": "Longueur du code",
     "mod-otp-otp-length-ph": "6 à 8 chiffres",
     "mod-otp-otp-length-error": "La longueur du code est obligatoire",
@@ -413,7 +422,9 @@
     "mod-otp-totp-allow": "TOTP",
     "mod-otp-totp-window": "Fenêtre de validité TOTP",
     "mod-otp-totp-window-ph": "Ex: 1",
-    "mod-otp-totp-window-error": "La fenêtre de validité TOTP est obligatoire"
+    "mod-otp-totp-window-error": "La fenêtre de validité TOTP est obligatoire",
+    "mod-otp-totp-start-offset": "Offset de départ",
+    "mod-otp-totp-start-offset-ph": "Ex: 0"
   },
   "profile": {
     "requires-profile-scope": "Scope profil requis",
@@ -466,11 +477,8 @@
     "scheme-otp-type-TOTP": "TOTP",
     "scheme-otp-type-HOTP": "HOTP",
     "scheme-otp-type-NONE": "Aucun",
-    "scheme-otp-name": "Nom",
-    "scheme-otp-name-ph": "Ex: Mon TOTP",
-    "scheme-otp-name-error": "Le nom est requis",
-    "scheme-otp-secret": "Secret partagé avec le serveur",
-    "scheme-otp-secret-ph": "Ex: monSecret",
+    "scheme-otp-secret": "Secret partagé",
+    "scheme-otp-secret-ph": "doit être encodé en Base32",
     "scheme-otp-secret-error": "Le secret est requis",
     "scheme-otp-moving_factor": "Facteur de position",
     "scheme-otp-moving_factor-ph": "Défaut 0",
@@ -478,12 +486,11 @@
     "scheme-otp-time_step_size": "Durée de validité (secondes)",
     "scheme-otp-time_step_size-ph": "Défaut 30",
     "scheme-otp-time_step_size-error": "La durée de validité est requise",
-    "scheme-otp-start_offset": "Offset de départ",
-    "scheme-otp-start_offset-ph": "Défaut 0",
-    "scheme-otp-start_offset-error": "L'offset de départ est requis",
     "scheme-otp-save": "Sauvegarder",
     "scheme-otp-save-ok": "OTP sauvegardé",
-    "scheme-otp-save-error": "Erreur lors de la sauvegarde"
+    "scheme-otp-save-error": "Erreur lors de la sauvegarde",
+    "scheme-otp-generate-secret": "Générer",
+    "scheme-otp-none-specified": "Pas d'OTP spécifié"
   },
   "modal": {
     "close": "Fermer",
