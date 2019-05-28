@@ -156,7 +156,7 @@ static json_t * get_user_id_from_username(struct config_module * config, json_t 
       j_return = json_pack("{siss}", "result", G_OK, "user_id", json_string_value(json_object_get(json_array_get(j_result, 0), "user_id")));
     } else if (create) {
       // Generates a new user_id, and stores it in the database
-      gnutls_rnd(GNUTLS_RND_NONCE, new_user_id, USER_ID_LENGTH);
+      gnutls_rnd(GNUTLS_RND_KEY, new_user_id, USER_ID_LENGTH);
       if (o_base64_encode(new_user_id, USER_ID_LENGTH, new_user_id_b64, &new_user_id_b64_len)) {
         j_query = json_pack("{sss{ssss}}",
                             "table",
