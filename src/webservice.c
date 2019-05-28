@@ -199,7 +199,13 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             if (user_session_update(config, u_map_get(request->map_cookie, config->session_key), u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (3)");
               response->status = 500;
-            }
+            } else {
+#ifdef DEBUG
+              ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", 0, 0);
+#else
+              ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", 1, 0);
+#endif
+          }
           } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
             response->status = 401;
           } else {
@@ -1626,14 +1632,25 @@ int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u
 int callback_glewlwyd_user_get_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_session;
-  char * session_uid;
+  char * session_uid, expires[129];
+  time_t now;
+  struct tm ts;
   
+  time(&now);
+  now += GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE;
+  ts = *gmtime(&now);
+  strftime(expires, 128, "%a, %d %b %Y %T %Z", &ts);
   if (!o_strlen(u_map_get(request->map_url, "impersonate"))) {
     session_uid = get_session_id(config, request);
     if (session_uid != NULL && o_strlen(session_uid)) {
       j_session = get_users_for_session(config, session_uid);
       if (check_result_value(j_session, G_OK)) {
         ulfius_set_json_body_response(response, 200, json_object_get(j_session, "session"));
+#ifdef DEBUG
+        ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", 0, 0);
+#else
+        ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", 1, 0);
+#endif
       } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
         response->status = 401;
       } else {
