@@ -7,6 +7,18 @@ import messageDispatcher from '../lib/MessageDispatcher';
 class ModEdit extends Component {
   constructor(props) {
     super(props);
+    
+    if (!props.mod) {
+      props.mod = {};
+    }
+    
+    if (!props.mod.expiration) {
+      props.mod.expiration = 600;
+    }
+    
+    if (!props.mod.max_use) {
+      props.mod.max_use = 0;
+    }
 
     this.state = {
       config: props.config,
@@ -57,6 +69,19 @@ class ModEdit extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
+    
+    if (!nextProps.mod) {
+      nextProps.mod = {};
+    }
+    
+    if (!nextProps.mod.expiration) {
+      nextProps.mod.expiration = 600;
+    }
+    
+    if (!nextProps.mod.max_use) {
+      nextProps.mod.max_use = 0;
+    }
+
     this.setState({
       config: nextProps.config,
       title: nextProps.title,

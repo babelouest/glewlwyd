@@ -220,7 +220,7 @@ static char * generate_client_access_token(struct _oauth2_config * config, const
   jwt = jwt_dup(config->jwt_key);
   if (jwt != NULL) {
     // Build jwt payload
-    rand_string(salt, OAUTH2_SALT_LENGTH);
+    rand_string_nonce(salt, OAUTH2_SALT_LENGTH);
     jwt_add_grant(jwt, "salt", salt);
     jwt_add_grant(jwt, "client_id", client_id);
     jwt_add_grant(jwt, "type", "client_token");
@@ -244,7 +244,7 @@ static char * generate_access_token(struct _oauth2_config * config, const char *
   char * token = NULL;
   
   if ((jwt = jwt_dup(config->jwt_key)) != NULL) {
-    rand_string(salt, OAUTH2_SALT_LENGTH);
+    rand_string_nonce(salt, OAUTH2_SALT_LENGTH);
     jwt_add_grant(jwt, "username", username);
     jwt_add_grant(jwt, "salt", salt);
     jwt_add_grant(jwt, "type", "access_token");
@@ -376,7 +376,7 @@ static char * generate_refresh_token(struct _oauth2_config * config, const char 
   
   if ((jwt = jwt_dup(config->jwt_key)) != NULL) {
     // Build jwt payload
-    rand_string(salt, OAUTH2_SALT_LENGTH);
+    rand_string_nonce(salt, OAUTH2_SALT_LENGTH);
     jwt_add_grant(jwt, "salt", salt);
     jwt_add_grant(jwt, "username", username);
     jwt_add_grant(jwt, "type", "refresh_token");
@@ -479,7 +479,7 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
   } else {
     code = o_malloc(33*sizeof(char));
     if (code != NULL) {
-      if (rand_string(code, 32) != NULL) {
+      if (rand_string_nonce(code, 32) != NULL) {
         code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code);
         if (code_hash != NULL) {
           time(&now);

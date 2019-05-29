@@ -72,6 +72,12 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
   if (json_is_object(j_params)) {
     j_error = json_array();
     if (j_error != NULL) {
+      if (!json_is_boolean(json_object_get(j_params, "session-mandatory"))) {
+        json_array_append_new(j_error, json_string("session-mandatory is mandatory and must be a boolean"));
+      }
+      if (json_object_get(j_params, "seed") != NULL && !json_is_string(json_object_get(j_params, "seed"))) {
+        json_array_append_new(j_error, json_string("seed is optional and must be a string"));
+      }
       if (json_integer_value(json_object_get(j_params, "challenge-length")) <= 0) {
         json_array_append_new(j_error, json_string("challenge-length is mandatory and must be a positive integer"));
       }
@@ -134,7 +140,7 @@ static json_t * get_user_id_from_username(struct config_module * config, json_t 
   
   username_escaped = h_escape_string(config->conn, username);
   username_clause = msprintf(" = UPPER('%s')", username_escaped);
-  j_query = json_pack("{sss[s]s{s{ssss}}}",
+  j_query = json_pack("{sss[s]s{s{ssss}sO}}",
                       "table",
                       G_TABLE_WEBAUTHN_USER,
                       "columns",
@@ -145,8 +151,8 @@ static json_t * get_user_id_from_username(struct config_module * config, json_t 
                           "raw",
                           "value",
                           username_clause,
-                          "gswu_mod_name",
-                          json_object_get(j_param, "mod_name"));
+                        "gswu_mod_name",
+                        json_object_get(j_param, "mod_name"));
   o_free(username_clause);
   o_free(username_escaped);
   res = h_select(config->conn, j_query, &j_result, NULL);
@@ -158,7 +164,7 @@ static json_t * get_user_id_from_username(struct config_module * config, json_t 
       // Generates a new user_id, and stores it in the database
       gnutls_rnd(GNUTLS_RND_KEY, new_user_id, USER_ID_LENGTH);
       if (o_base64_encode(new_user_id, USER_ID_LENGTH, new_user_id_b64, &new_user_id_b64_len)) {
-        j_query = json_pack("{sss{ssss}}",
+        j_query = json_pack("{sss{sOssss}}",
                             "table",
                             G_TABLE_WEBAUTHN_USER,
                             "values",
@@ -1898,6 +1904,13 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
 }
 
 /**
+ * Generates 1 to 5 random credentials using the seed and the username
+ */
+static json_t * generate_credential_fake(json_t * j_params, const char * username) {
+  return NULL;
+}
+
+/**
  * 
  * user_auth_scheme_module_load
  * 
@@ -2033,7 +2046,7 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
   char * message;
   
   if (check_result_value(j_result, G_OK)) {
-    *cls = json_pack("{sOsOsOsOsIsIsOs[]}",
+    *cls = json_pack("{sOsOsOsOsIsIsOsosss[]}",
                      "challenge-length", json_object_get(j_parameters, "challenge-length"),
                      "rp-origin", json_object_get(j_parameters, "rp-origin"),
                      "credential-expiration", json_object_get(j_parameters, "credential-expiration"),
@@ -2042,6 +2055,10 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
                      json_object_get(j_parameters, "ctsProfileMatch")!=NULL?json_integer_value(json_object_get(j_parameters, "ctsProfileMatch")):-1,
                      "basicIntegrity",
                      json_object_get(j_parameters, "basicIntegrity")!=NULL?json_integer_value(json_object_get(j_parameters, "ctsProfileMatch")):-1,
+                     "session-mandatory",
+                     json_object_get(j_parameters, "session-mandatory")!=NULL?json_object_get(j_parameters, "session-mandatory"):json_true(),
+                     "seed",
+                     !json_string_length(json_object_get(j_parameters, "seed"))?"":json_string_value(json_object_get(j_parameters, "seed")),
                      "google-root-ca-r2",
                      json_string_length(json_object_get(j_parameters, "google-root-ca-r2"))?json_object_get(j_parameters, "google-root-ca-r2"):json_null(),
                      "pubKey-cred-params");
@@ -2417,47 +2434,53 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
  */
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls) {
   UNUSED(j_scheme_trigger);
-  json_t * j_return = NULL, * j_session = config->glewlwyd_module_callback_check_user_session(config, http_request, username), * j_credential, * j_assertion, * j_user_id;
+  json_t * j_return = NULL, * j_session = config->glewlwyd_module_callback_check_user_session(config, http_request, username), * j_credential, * j_assertion, * j_user_id, * j_credential_fake;
   
-  if (check_result_value(j_session, G_OK)) {
-    j_user_id = get_user_id_from_username(config, (json_t *)cls, username, 0);
-    if (check_result_value(j_user_id, G_OK)) {
-      j_credential = get_credential_list(config, username, 1);
-      if (check_result_value(j_credential, G_OK)) {
-        j_assertion = generate_new_assertion(config, (json_t *)cls, username, 0);
-        if (check_result_value(j_assertion, G_OK)) {
-          j_return = json_pack("{sis{sOsOsOs{sOss}sO}}", 
-                              "result", G_OK, 
-                              "response", 
-                                "allowCredentials", json_object_get(j_credential, "credential"), 
-                                "session", json_object_get(json_object_get(j_assertion, "assertion"), "session"), 
-                                "challenge", json_object_get(json_object_get(j_assertion, "assertion"), "challenge"),
-                                "user",
-                                  "id", json_object_get(j_user_id, "user_id"),
-                                  "name", username,
-                                "rpId", json_object_get((json_t *)cls, "rp-origin")
-                              );
-        } else if (check_result_value(j_assertion, G_ERROR_UNAUTHORIZED)) {
+  if (check_result_value(j_session, G_OK) || json_object_get((json_t *)cls, "session-mandatory") == json_false()) {
+    j_credential_fake = generate_credential_fake((json_t *)cls, username);
+    if (check_result_value(j_credential_fake, G_OK)) {
+      j_user_id = get_user_id_from_username(config, (json_t *)cls, username, 0);
+      if (check_result_value(j_user_id, G_OK)) {
+        j_credential = get_credential_list(config, username, 1);
+        if (check_result_value(j_credential, G_OK)) {
+          j_assertion = generate_new_assertion(config, (json_t *)cls, username, 0);
+          if (check_result_value(j_assertion, G_OK)) {
+            j_return = json_pack("{sis{sOsOsOs{sOss}sO}}", 
+                                "result", G_OK, 
+                                "response", 
+                                  "allowCredentials", json_object_get(j_credential, "credential"), 
+                                  "session", json_object_get(json_object_get(j_assertion, "assertion"), "session"), 
+                                  "challenge", json_object_get(json_object_get(j_assertion, "assertion"), "challenge"),
+                                  "user",
+                                    "id", json_object_get(j_user_id, "user_id"),
+                                    "name", username,
+                                  "rpId", json_object_get((json_t *)cls, "rp-origin")
+                                );
+          } else if (check_result_value(j_assertion, G_ERROR_UNAUTHORIZED)) {
+            j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger webauthn - Error register_new_assertion");
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
+          json_decref(j_assertion);
+        } else if (check_result_value(j_credential, G_ERROR_NOT_FOUND)) {
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger webauthn - Error register_new_assertion");
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger webauthn - Error get_credential_list");
           j_return = json_pack("{si}", "result", G_ERROR);
         }
-        json_decref(j_assertion);
-      } else if (check_result_value(j_credential, G_ERROR_NOT_FOUND)) {
+        json_decref(j_credential);
+      } else if (check_result_value(j_user_id, G_ERROR_NOT_FOUND)) {
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger webauthn - Error get_credential_list");
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error get_user_id_from_username");
         j_return = json_pack("{si}", "result", G_ERROR);
       }
-      json_decref(j_credential);
-    } else if (check_result_value(j_user_id, G_ERROR_NOT_FOUND)) {
-      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      json_decref(j_user_id);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error get_user_id_from_username");
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger webauthn - Error generate_credential_fake");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
-    json_decref(j_user_id);
   } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   } else {
