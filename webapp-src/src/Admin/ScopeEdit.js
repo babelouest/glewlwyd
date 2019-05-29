@@ -186,7 +186,7 @@ class ScopeEdit extends Component {
     }
 		return (
     <div className="modal fade" id="editScopeModal" tabIndex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
-      <div className="modal-dialog" role="document">
+      <div className="modal-dialog modal-lg" role="document">
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title" id="confirmModalLabel">{this.state.title}</h5>
