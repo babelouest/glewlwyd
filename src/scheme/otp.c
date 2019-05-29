@@ -27,6 +27,7 @@
 
 #include <string.h>
 #include <jansson.h>
+#include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>
 #include <liboath/oath.h>
 #include <yder.h>

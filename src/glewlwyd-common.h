@@ -344,8 +344,9 @@ struct config_module {
  */
 const char * get_ip_source(const struct _u_request * request);
 char * get_client_hostname(const struct _u_request * request);
-unsigned char random_at_most(unsigned char max);
+unsigned char random_at_most(unsigned char max, int nonce);
 char * rand_string(char * str, size_t str_size);
+char * rand_string_nonce(char * str, size_t str_size);
 int rand_code(char * str, size_t str_size);
 char * join_json_string_array(json_t * j_array, const char * separator);
 char * url_encode(const char * str);
