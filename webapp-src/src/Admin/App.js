@@ -1031,6 +1031,9 @@ class App extends Component {
           })
           .fail(() => {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+          })
+          .always(() => {
+            this.fetchSchemeMods()
           });
         })
         .fail(() => {
@@ -1041,11 +1044,8 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
       })
       .always(() => {
-        this.fetchSchemeMods()
-        .always(() => {
-          this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
-            $("#editModModal").modal("hide");
-          });
+        this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+          $("#editModModal").modal("hide");
         });
       });
     } else {
