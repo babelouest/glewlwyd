@@ -475,7 +475,7 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
   size_t index;
   struct _user_auth_scheme_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[ssssss]ss}",
+  j_query = json_pack("{sss[sssssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "columns",
@@ -485,6 +485,7 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
                         "guasmi_parameters",
                         "guasmi_expiration AS expiration",
                         "guasmi_max_use AS max_use",
+                        "guasmi_allow_user_register",
                       "order_by",
                       "guasmi_module");
   res = h_select(config->conn, j_query, &j_result, NULL);
@@ -498,7 +499,9 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module_list - Error parsing parameters for module %s", json_string_value(json_object_get(j_element, "name")));
         json_object_set_new(j_element, "parameters", json_null());
       }
+      json_object_set(j_element, "allow_user_register", json_integer_value(json_object_get(j_element, "guasmi_allow_user_register"))?json_true():json_false());
       json_object_del(j_element, "guasmi_parameters");
+      json_object_del(j_element, "guasmi_allow_user_register");
       
       cur_instance = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_element, "name")));
       if (cur_instance != NULL) {
@@ -522,7 +525,7 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
   struct _user_auth_scheme_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[ssssss]s{ss}}",
+  j_query = json_pack("{sss[sssssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "columns",
@@ -532,6 +535,7 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
                         "guasmi_parameters",
                         "guasmi_expiration AS expiration",
                         "guasmi_max_use AS max_use",
+                        "guasmi_allow_user_register",
                       "where",
                         "guasmi_name",
                         name);
@@ -546,7 +550,9 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
         y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module_list - Error parsing parameters for module %s", json_string_value(json_object_get(json_array_get(j_result, 0), "name")));
         json_object_set_new(json_array_get(j_result, 0), "parameters", json_null());
       }
+      json_object_set(json_array_get(j_result, 0), "allow_user_register", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_allow_user_register"))?json_true():json_false());
       json_object_del(json_array_get(j_result, 0), "guasmi_parameters");
+      json_object_del(json_array_get(j_result, 0), "guasmi_allow_user_register");
       
       cur_instance = get_user_auth_scheme_module_instance(config, name);
       if (cur_instance != NULL) {
@@ -614,6 +620,9 @@ json_t * is_user_auth_scheme_module_valid(struct config_elements * config, json_
       if (json_object_get(j_module, "max_use") == NULL || !json_is_integer(json_object_get(j_module, "max_use")) || json_integer_value(json_object_get(j_module, "max_use")) < 0) {
         json_array_append_new(j_error_list, json_string("max_use is mandatory and must be a positive integer"));
       }
+      if (json_object_get(j_module, "allow_user_register") != NULL && !json_is_boolean(json_object_get(j_module, "allow_user_register"))) {
+        json_array_append_new(j_error_list, json_string("allow_user_register is optional and must be a boolean"));
+      }
       if (json_object_get(j_module, "parameters") == NULL || !json_is_object(json_object_get(j_module, "parameters"))) {
         json_array_append_new(j_error_list, json_string("Parameters is mandatory and must be a json object of at most 16k characters"));
       } else {
@@ -646,7 +655,7 @@ int add_user_auth_scheme_module(struct config_elements * config, json_t * j_modu
   int res, ret, i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOsOsOsssOsO}}",
+  j_query = json_pack("{sss{sOsOsOsssOsOsi}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "values",
@@ -661,7 +670,9 @@ int add_user_auth_scheme_module(struct config_elements * config, json_t * j_modu
                         "guasmi_expiration",
                         json_object_get(j_module, "expiration"),
                         "guasmi_max_use",
-                        json_object_get(j_module, "max_use"));
+                        json_object_get(j_module, "max_use"),
+                        "guasmi_allow_user_register",
+                        json_object_get(j_module, "allow_user_register")==json_false()?0:1);
   res = h_insert(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -685,6 +696,7 @@ int add_user_auth_scheme_module(struct config_elements * config, json_t * j_modu
           cur_instance->guasmi_id = json_integer_value(j_last_id);
           cur_instance->guasmi_expiration = json_integer_value(json_object_get(j_module, "expiration"));
           cur_instance->guasmi_max_use = json_integer_value(json_object_get(j_module, "max_use"));
+          cur_instance->guasmi_allow_user_register = json_object_get(j_module, "allow_user_register")!=json_false();
           cur_instance->enabled = 0;
           if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
             if ((res = module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), cur_instance->name, &cur_instance->cls)) == G_OK) {
@@ -728,7 +740,7 @@ int set_user_auth_scheme_module(struct config_elements * config, const char * na
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _user_auth_scheme_module_instance * scheme_instance = NULL;
   
-  j_query = json_pack("{sss{sOsssOsO}s{ss}}",
+  j_query = json_pack("{sss{sOsssOsOsi}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "set",
@@ -740,6 +752,8 @@ int set_user_auth_scheme_module(struct config_elements * config, const char * na
                         json_object_get(j_module, "expiration"),
                         "guasmi_max_use",
                         json_object_get(j_module, "max_use"),
+                        "guasmi_allow_user_register",
+                        json_object_get(j_module, "allow_user_register")==json_false()?0:1,
                       "where",
                         "guasmi_name",
                         name);
@@ -751,13 +765,14 @@ int set_user_auth_scheme_module(struct config_elements * config, const char * na
     if (scheme_instance != NULL) {
       scheme_instance->guasmi_expiration = json_integer_value(json_object_get(j_module, "expiration"));
       scheme_instance->guasmi_max_use = json_integer_value(json_object_get(j_module, "max_use"));
+      scheme_instance->guasmi_allow_user_register = json_object_get(j_module, "allow_user_register")!=json_false();
       ret = G_OK;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error get_user_auth_scheme_module_instance");
+      y_log_message(Y_LOG_LEVEL_ERROR, "set_user_auth_scheme_module - Error get_user_auth_scheme_module_instance");
       ret = G_ERROR;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error executing j_query");
+    y_log_message(Y_LOG_LEVEL_ERROR, "set_user_auth_scheme_module - Error executing j_query");
     ret = G_ERROR_DB;
   }
   return ret;

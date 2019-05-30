@@ -113,27 +113,31 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
   return j_return;
 }
 
-json_t * auth_register_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, int from_admin, const char * username, json_t * j_register_parameters, const struct _u_request * request) {
+json_t * auth_register_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, int delegate, json_t * j_register_parameters, const struct _u_request * request) {
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL, * j_response = NULL;
   
   if (json_is_object(j_register_parameters)) {
     scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
     if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
-      j_response = scheme_instance->module->user_auth_scheme_module_register(config->config_m, request, from_admin, username, j_register_parameters, scheme_instance->cls);
-      if (check_result_value(j_response, G_OK)) {
-        if (json_object_get(j_response, "response") != NULL) {
-          j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));
+      if (delegate || scheme_instance->guasmi_allow_user_register) {
+        j_response = scheme_instance->module->user_auth_scheme_module_register(config->config_m, request, username, j_register_parameters, scheme_instance->cls);
+        if (check_result_value(j_response, G_OK)) {
+          if (json_object_get(j_response, "response") != NULL) {
+            j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));
+          } else {
+            j_return = json_pack("{si}", "result", G_OK);
+          }
+        } else if (!check_result_value(j_response, G_ERROR)) {
+          j_return = json_incref(j_response);
         } else {
-          j_return = json_pack("{si}", "result", G_OK);
+          y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_user_scheme - Error user_auth_scheme_module_register");
+          j_return = json_pack("{si}", "result", G_ERROR);
         }
-      } else if (!check_result_value(j_response, G_ERROR)) {
-        j_return = json_incref(j_response);
+        json_decref(j_response);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_user_scheme - Error user_auth_scheme_module_register");
-        j_return = json_pack("{si}", "result", G_ERROR);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       }
-      json_decref(j_response);
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
@@ -143,13 +147,13 @@ json_t * auth_register_user_scheme(struct config_elements * config, const char *
   return j_return;
 }
 
-json_t * auth_register_get_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, int from_admin, const char * username, const struct _u_request * request) {
+json_t * auth_register_get_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, const struct _u_request * request) {
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL, * j_response = NULL;
   
   scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
   if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
-    j_response = scheme_instance->module->user_auth_scheme_module_register_get(config->config_m, request, from_admin, username, scheme_instance->cls);
+    j_response = scheme_instance->module->user_auth_scheme_module_register_get(config->config_m, request, username, scheme_instance->cls);
     if (check_result_value(j_response, G_OK)) {
       if (json_object_get(j_response, "response") != NULL) {
         j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));

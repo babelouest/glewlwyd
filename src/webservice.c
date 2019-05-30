@@ -304,7 +304,7 @@ int callback_glewlwyd_user_auth_register (const struct _u_request * request, str
     if (json_object_get(j_param, "username") != NULL && json_is_string(json_object_get(j_param, "username")) && json_string_length(json_object_get(j_param, "username"))) {
       if (0 == o_strcasecmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
         if (json_object_get(j_param, "scheme_type") != NULL && json_is_string(json_object_get(j_param, "scheme_type")) && json_string_length(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_is_string(json_object_get(j_param, "scheme_name")) && json_string_length(json_object_get(j_param, "scheme_name"))) {
-          j_result = auth_register_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), 0, json_string_value(json_object_get(j_param, "username")), json_object_get(j_param, "value"), request);
+          j_result = auth_register_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), 0, json_object_get(j_param, "value"), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             if (json_object_get(j_result, "error") != NULL) {
               ulfius_set_json_body_response(response, 400, json_object_get(j_result, "error"));
@@ -348,7 +348,7 @@ int callback_glewlwyd_user_auth_register_get (const struct _u_request * request,
     if (json_object_get(j_param, "username") != NULL && json_string_length(json_object_get(j_param, "username"))) {
       if (0 == o_strcasecmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
         if (json_object_get(j_param, "scheme_type") != NULL && json_string_length(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_string_length(json_object_get(j_param, "scheme_name"))) {
-          j_result = auth_register_get_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), 0, json_string_value(json_object_get(j_param, "username")), request);
+          j_result = auth_register_get_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             ulfius_set_string_body_response(response, 400, "bad scheme parameters");
           } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
@@ -388,7 +388,7 @@ int callback_glewlwyd_user_auth_register_delegate (const struct _u_request * req
     if (json_object_get(j_param, "username") != NULL && json_is_string(json_object_get(j_param, "username")) && json_string_length(json_object_get(j_param, "username"))) {
       if (0 == o_strcasecmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
         if (json_object_get(j_param, "scheme_type") != NULL && json_is_string(json_object_get(j_param, "scheme_type")) && json_string_length(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_is_string(json_object_get(j_param, "scheme_name")) && json_string_length(json_object_get(j_param, "scheme_name"))) {
-          j_result = auth_register_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), 1, json_string_value(json_object_get(j_param, "username")), json_object_get(j_param, "value"), request);
+          j_result = auth_register_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), 1, json_object_get(j_param, "value"), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             ulfius_set_string_body_response(response, 400, "bad scheme parameters");
           } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
@@ -428,7 +428,7 @@ int callback_glewlwyd_user_auth_register_get_delegate (const struct _u_request *
     if (json_object_get(j_param, "username") != NULL && json_string_length(json_object_get(j_param, "username"))) {
       if (0 == o_strcasecmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
         if (json_object_get(j_param, "scheme_type") != NULL && json_string_length(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_string_length(json_object_get(j_param, "scheme_name"))) {
-          j_result = auth_register_get_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), 1, json_string_value(json_object_get(j_param, "username")), request);
+          j_result = auth_register_get_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             ulfius_set_string_body_response(response, 400, "bad scheme parameters");
           } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
