@@ -175,18 +175,32 @@ class ModEdit extends Component {
     var schemeParams = "";
     if (this.state.role !== "scheme") {
       readonly = <div className="form-group">
-        <label htmlFor="mod-readonly">{i18next.t("admin.mod-readonly")}</label>
-        <input type="checkbox" className="form-control" id="mod-readonly" onChange={(e) => this.toggleReadonly(e)} checked={this.state.mod.readonly||this.state.mod.module==="http"||false} />
+        <div className="input-group mb-3">
+          <div className="input-group-prepend">
+            <label className="input-group-text" htmlFor="mod-readonly">{i18next.t("admin.mod-readonly")}</label>
+          </div>
+          <div className="input-group-text">
+            <input type="checkbox" className="form-control" id="mod-readonly" onChange={(e) => this.toggleReadonly(e)} checked={this.state.mod.readonly||this.state.mod.module==="http"||false} />
+          </div>
+        </div>
       </div>;
     } else {
       schemeParams = <div>
         <div className="form-group">
-          <label htmlFor="mod-expiration">{i18next.t("admin.mod-expiration")}</label>
-          <input type="number" min="0" step="1" className="form-control" id="mod-expiration" placeholder={i18next.t("admin.mod-expiration-ph")} value={this.state.mod.expiration} onChange={(e) => this.changeExpiration(e)}/>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-expiration">{i18next.t("admin.mod-expiration")}</label>
+            </div>
+            <input type="number" min="0" step="1" className="form-control" id="mod-expiration" placeholder={i18next.t("admin.mod-expiration-ph")} value={this.state.mod.expiration} onChange={(e) => this.changeExpiration(e)}/>
+          </div>
         </div>
         <div className="form-group">
-          <label htmlFor="mod-max-use">{i18next.t("admin.mod-max-use")}</label>
-          <input type="number" min="0" step="1" className="form-control" id="mod-max-use" placeholder={i18next.t("admin.mod-max-use-ph")} value={this.state.mod.max_use} onChange={(e) => this.changeMaxUse(e)}/>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-max-use">{i18next.t("admin.mod-max-use")}</label>
+            </div>
+            <input type="number" min="0" step="1" className="form-control" id="mod-max-use" placeholder={i18next.t("admin.mod-max-use-ph")} value={this.state.mod.max_use} onChange={(e) => this.changeMaxUse(e)}/>
+          </div>
         </div>
       </div>
     }
@@ -203,19 +217,31 @@ class ModEdit extends Component {
           <div className="modal-body">
             <form className="needs-validation" noValidate>
               <div className="form-group">
-                <label htmlFor="mod-name">{i18next.t("admin.mod-name")}</label>
-                <input type="text" className={"form-control" + (this.state.nameInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("admin.mod-name-ph")} maxLength="128" value={this.state.mod.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
-                <span className={"error-input" + (this.state.nameInvalid?"":" hidden")}>{this.state.nameInvalidMessage}</span>
+                <div className="input-group mb-3">
+                  <div className="input-group-prepend">
+                    <label className="input-group-text" htmlFor="mod-name">{i18next.t("admin.mod-name")}</label>
+                  </div>
+                  <input type="text" className={"form-control" + (this.state.nameInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("admin.mod-name-ph")} maxLength="128" value={this.state.mod.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
+                  <span className={"error-input" + (this.state.nameInvalid?"":" hidden")}>{this.state.nameInvalidMessage}</span>
+                </div>
               </div>
               <div className="form-group">
-                <label htmlFor="mod-display-name">{i18next.t("admin.mod-display-name")}</label>
-                <input type="text" className="form-control" id="mod-display-name" placeholder={i18next.t("admin.mod-display-name-ph")} maxLength="256" value={this.state.mod.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
+                <div className="input-group mb-3">
+                  <div className="input-group-prepend">
+                    <label className="input-group-text" htmlFor="mod-display-name">{i18next.t("admin.mod-display-name")}</label>
+                  </div>
+                  <input type="text" className="form-control" id="mod-display-name" placeholder={i18next.t("admin.mod-display-name-ph")} maxLength="256" value={this.state.mod.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
+                </div>
               </div>
               {schemeParams}
               <div className="form-group">
-                <label htmlFor="mod-type">{i18next.t("admin.mod-type")}</label>
-                {modType}
-                <span className={"error-input" + (this.state.typeInvalidMessage?"":" hidden")}>{this.state.typeInvalidMessage}</span>
+                <div className="input-group mb-3">
+                  <div className="input-group-prepend">
+                    <label className="input-group-text" htmlFor="mod-type">{i18next.t("admin.mod-type")}</label>
+                  </div>
+                  {modType}
+                  <span className={"error-input" + (this.state.typeInvalidMessage?"":" hidden")}>{this.state.typeInvalidMessage}</span>
+                </div>
               </div>
               {readonly}
               <ModEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />

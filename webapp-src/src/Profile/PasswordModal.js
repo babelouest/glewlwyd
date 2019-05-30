@@ -88,7 +88,7 @@ class PasswordModal extends Component {
   render() {
     return (
       <div className="modal fade" id="passwordModal" tabIndex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
-        <div className="modal-dialog" role="document">
+        <div className="modal-dialog modal-lg" role="document">
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title" id="confirmModalLabel">{i18next.t("profile.password-modal-title")}</h5>
@@ -99,18 +99,30 @@ class PasswordModal extends Component {
             <div className="modal-body">
               <form className="needs-validation" noValidate>
                 <div className="form-group">
-                  <label htmlFor="mod-old-password">{i18next.t("profile.password-modal-old-password")}</label>
-                  <input type="password" className={"form-control" + (this.state.oldPasswordInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("profile.password-modal-old-password-ph")} value={this.state.old_password} onChange={(e) => this.changeOldPassword(e)} />
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-old-password">{i18next.t("profile.password-modal-old-password")}</label>
+                    </div>
+                    <input type="password" className={"form-control" + (this.state.oldPasswordInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("profile.password-modal-old-password-ph")} value={this.state.old_password} onChange={(e) => this.changeOldPassword(e)} />
+                  </div>
                   <span className={"error-input" + (this.state.oldPasswordInvalid?"":" hidden")}>{this.state.oldPasswordInvalidMessage}</span>
                 </div>
                 <div className="form-group">
-                  <label htmlFor="mod-new-password">{i18next.t("profile.password-modal-new-password")}</label>
-                  <input type="password" className={"form-control" + (this.state.passwordInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("profile.password-modal-new-password-ph")} value={this.state.password} onChange={(e) => this.changeNewPassword(e)} />
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-new-password">{i18next.t("profile.password-modal-new-password")}</label>
+                    </div>
+                    <input type="password" className={"form-control" + (this.state.passwordInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("profile.password-modal-new-password-ph")} value={this.state.password} onChange={(e) => this.changeNewPassword(e)} />
+                  </div>
                   <span className={"error-input" + (this.state.passwordInvalid?"":" hidden")}>{this.state.passwordInvalidMessage}</span>
                 </div>
                 <div className="form-group">
-                  <label htmlFor="mod-new-password-confirm">{i18next.t("profile.password-modal-new-password-confirm")}</label>
-                  <input type="password" className={"form-control" + (this.state.passwordConfirmInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("profile.password-modal-new-password-confirm-ph")} value={this.state.password_confirm} onChange={(e) => this.changeNewPasswordConfirm(e)} />
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-new-password-confirm">{i18next.t("profile.password-modal-new-password-confirm")}</label>
+                    </div>
+                    <input type="password" className={"form-control" + (this.state.passwordConfirmInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("profile.password-modal-new-password-confirm-ph")} value={this.state.password_confirm} onChange={(e) => this.changeNewPasswordConfirm(e)} />
+                  </div>
                   <span className={"error-input" + (this.state.passwordConfirmInvalid?"":" hidden")}>{this.state.passwordConfirmInvalidMessage}</span>
                 </div>
               </form>

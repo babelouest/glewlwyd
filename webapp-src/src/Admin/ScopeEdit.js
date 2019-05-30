@@ -45,6 +45,8 @@ class ScopeEdit extends Component {
           this.state.callback(result, scope);
         }
       }
+    } else {
+      this.state.callback(result);
     }
   }
   
@@ -197,24 +199,42 @@ class ScopeEdit extends Component {
           <div className="modal-body">
             <form className="needs-validation" noValidate>
               <div className="form-group">
-                <label htmlFor="scope-name">{i18next.t("admin.scope-name")}</label>
-                <input type="text" className="form-control" id="scope-name" placeholder={i18next.t("admin.scope-name-ph")} maxLength="128" value={this.state.scope.name} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
+                <div className="input-group mb-3">
+                  <div className="input-group-prepend">
+                    <label className="input-group-text" className="input-group-text" htmlFor="scope-name">{i18next.t("admin.scope-name")}</label>
+                  </div>
+                  <input type="text" className="form-control" id="scope-name" placeholder={i18next.t("admin.scope-name-ph")} maxLength="128" value={this.state.scope.name} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
+                </div>
               </div>
               <div className="form-group">
-                <label htmlFor="scope-display-name">{i18next.t("admin.scope-display-name")}</label>
-                <input type="text" className="form-control" id="scope-display-name" placeholder={i18next.t("admin.scope-display-name-ph")} maxLength="256" value={this.state.scope.display_name} onChange={(e) => this.changeDisplayName(e)}/>
+                <div className="input-group mb-3">
+                  <div className="input-group-prepend">
+                    <label className="input-group-text" htmlFor="scope-display-name">{i18next.t("admin.scope-display-name")}</label>
+                  </div>
+                  <input type="text" className="form-control" id="scope-display-name" placeholder={i18next.t("admin.scope-display-name-ph")} maxLength="256" value={this.state.scope.display_name} onChange={(e) => this.changeDisplayName(e)}/>
+                </div>
               </div>
               <div className="form-group">
-                <label htmlFor="scope-description">{i18next.t("admin.scope-description")}</label>
-                <input type="text" className="form-control" id="scope-description" placeholder={i18next.t("admin.scope-description-ph")} maxLength="512" value={this.state.scope.description} onChange={(e) => this.changeDescription(e)}/>
+                <div className="input-group mb-3">
+                  <div className="input-group-prepend">
+                    <label className="input-group-text" htmlFor="scope-description">{i18next.t("admin.scope-description")}</label>
+                  </div>
+                  <input type="text" className="form-control" id="scope-description" placeholder={i18next.t("admin.scope-description-ph")} maxLength="512" value={this.state.scope.description} onChange={(e) => this.changeDescription(e)}/>
+                </div>
               </div>
               <hr/>
               <div className="form-group">
                 <h4>{i18next.t("admin.scope-auth-schemes-title")}</h4>
               </div>
               <div className="form-group">
-                <label htmlFor="scope-scheme-password">{i18next.t("admin.scope-scheme-password")}</label>
-                <input type="checkbox" className="form-control" id="scope-scheme-password" onChange={(e) => this.togglePasswordRequired(e)} checked={this.state.scope.password_required} />
+                <div className="input-group mb-3">
+                  <div className="input-group-prepend">
+                    <label className="input-group-text" htmlFor="scope-scheme-password">{i18next.t("admin.scope-scheme-password")}</label>
+                  </div>
+                  <div className="input-group-text">
+                    <input type="checkbox" className="form-control" id="scope-scheme-password" onChange={(e) => this.togglePasswordRequired(e)} checked={this.state.scope.password_required} />
+                  </div>
+                </div>
               </div>
               <div className="form-group">
                 {groupList}
