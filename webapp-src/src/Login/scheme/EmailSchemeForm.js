@@ -91,8 +91,12 @@ class EmailSchemeForm extends Component {
             <h5>{i18next.t("login.mail-enter-scheme-code")}</h5>
           </div>
           <div className="form-group">
-            <label htmlFor="code">{i18next.t("login.mail-code-label")}</label>
-            {inputCode}
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor="code">{i18next.t("login.mail-code-label")}</label>
+              </div>
+              {inputCode}
+            </div>
           </div>
           <div className="btn-group" role="group">
             {validateButton}

@@ -91,8 +91,12 @@ class MockSchemeForm extends Component {
             <h5>{i18next.t("login.enter-mock-scheme-value")}</h5>
           </div>
           <div className="form-group">
-            <label htmlFor="mockValue">{i18next.t("login.mock-value-label")}</label>
-            <input type="text" className="form-control" name="mockValue" id="mockValue" autoFocus="" required="" placeholder={i18next.t("login.error-mock-expected", {value: (this.state.triggerResult)})} value={this.state.mockValue||""} onChange={this.handleChangeMockValue}/>
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor="mockValue">{i18next.t("login.mock-value-label")}</label>
+              </div>
+              <input type="text" className="form-control" name="mockValue" id="mockValue" autoFocus="" required="" placeholder={i18next.t("login.error-mock-expected", {value: (this.state.triggerResult)})} value={this.state.mockValue||""} onChange={this.handleChangeMockValue}/>
+            </div>
           </div>
           <button type="submit" name="mockbut" id="mockbut" className="btn btn-primary" onClick={(e) => this.validateMockValue(e)} title={i18next.t("login.mock-value-button-title")}>{i18next.t("login.btn-ok")}</button>
         </form>

@@ -12,6 +12,7 @@ class GrantScope extends Component {
       currentUser: props.currentUser,
       client: props.client,
       scope: props.scope,
+      scheme: props.scheme,
       show: props.show
     };
     
@@ -23,7 +24,13 @@ class GrantScope extends Component {
 	}
   
   componentWillReceiveProps(nextProps) {
-    this.setState({config: nextProps.config, currentUser: nextProps.currentUser, client: nextProps.client, scope: nextProps.scope, show: nextProps.show});
+    this.setState({
+      config: nextProps.config, 
+      currentUser: nextProps.currentUser, 
+      client: nextProps.client, 
+      scope: nextProps.scope,
+      show: nextProps.show
+    });
   }
 
   handleToggleGrantScope(scope) {
@@ -56,12 +63,19 @@ class GrantScope extends Component {
     var scopeList = [];
     this.state.scope.forEach((scope, index) => {
       scopeList.push(
-      <li className="list-group-item" key={index}>
-        <div className="form-check">
-          <input className="form-check-input" type="checkbox" onChange={() => this.handleToggleGrantScope(scope)} id={"grant-" + scope.name} checked={scope.granted}/>
-          <label className="form-check-label" htmlFor={"grant-" + scope.name}>{scope.display_name}</label>
-        </div>
-      </li>);
+        <li className="list-group-item" key={index}>
+          <div className="form-check">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend input-group-text">
+                <input type="checkbox" className="form-control" onChange={() => this.handleToggleGrantScope(scope)} id={"grant-" + scope.name} checked={scope.granted}/>
+              </div>
+              <div className="input-group-text">
+                <label className="input-group-text" className="form-check-label" htmlFor={"grant-" + scope.name}>{scope.name}</label>
+              </div>
+            </div>
+          </div>
+        </li>
+      );
     });
     return (
     <div>
