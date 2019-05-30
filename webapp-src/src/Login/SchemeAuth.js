@@ -99,12 +99,11 @@ class SchemeAuth extends Component {
               if (scheme.scheme_authenticated) {
                 schemeList.push(<li className="list-group-item" key={"scheme-"+index}><span className="badge badge-success">{scheme.scheme_display_name}</span></li>);
               } else {
-                schemeList.push(<li className="list-group-item" key={"scheme-"+index}><a className="badge badge-secondary" href="#" onClick={(e) => this.handleSelectScheme(e, scheme)}>{scheme.scheme_display_name}</a></li>);
+                schemeList.push(<li className="list-group-item" key={"scheme-"+index}><a className="badge badge-primary" href="#" onClick={(e) => this.handleSelectScheme(e, scheme)}>{scheme.scheme_display_name}</a></li>);
               }
             });
             groupList.push(<li className="list-inline-item" key={"group-"+iGroup}>
               <ul className="list-group">
-                <li className="list-group-item"><span className="badge badge-primary">{group}</span></li>
                 {schemeList}
               </ul>
             </li>);
@@ -112,7 +111,7 @@ class SchemeAuth extends Component {
           }
           scopeList.push(
             <li className="list-group-item" key={"scope-"+iScope}>
-              <h3><span className="badge badge-secondary">{curScope.display_name}</span></h3>
+              <h3><span className="badge badge-secondary">{i18next.t("login.scheme-list-scope", {scope:curScope.display_name})}</span></h3>
               <ul className="list-inline">
                 {groupList}
               </ul>

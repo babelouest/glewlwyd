@@ -17,7 +17,6 @@ class App extends Component {
       config: props.config,
       loaded: false,
       lang: i18next.language,
-      grantScope: false,
       scope: [],
       scheme: false,
       client: false,
@@ -92,7 +91,7 @@ class App extends Component {
       if (showGrant) {
         this.setState({client: res.client, scope: res.scope, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk});
       } else {
-        apiManager.glewlwydRequest("/auth/scheme/?scope=" + scopeGranted.join(" "))
+        apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURI(scopeGranted.join(" ")))
         .then((schemeRes) => {
           this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk});
         })

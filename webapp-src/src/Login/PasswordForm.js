@@ -53,12 +53,20 @@ class PasswordForm extends Component {
           <h4>{i18next.t("login.enter-login-password")}</h4>
         </div>
         <div className="form-group">
-          <label htmlFor="username">{i18next.t("login.login")}</label>
-          <input type="text" className="form-control" name="username" id="username" autoFocus="" required="" placeholder={i18next.t("login.login-placeholder")} value={this.state.username} onChange={this.handleChangeUsername}/>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="username">{i18next.t("login.login")}</label>
+            </div>
+            <input type="text" className="form-control" name="username" id="username" autoFocus="" required="" placeholder={i18next.t("login.login-placeholder")} value={this.state.username} onChange={this.handleChangeUsername}/>
+          </div>
         </div>
         <div className="form-group">
-          <label htmlFor="password">{i18next.t("login.password")}</label>
-          <input type="password" className="form-control" name="password" id="password" required="" placeholder={i18next.t("login.password-placeholder")} value={this.state.password} onChange={this.handleChangePassword}/>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="password">{i18next.t("login.password")}</label>
+            </div>
+            <input type="password" className="form-control" name="password" id="password" required="" placeholder={i18next.t("login.password-placeholder")} value={this.state.password} onChange={this.handleChangePassword}/>
+          </div>
         </div>
         <button type="submit" name="loginbut" id="loginbut" className="btn btn-primary" onClick={(e) => this.validateLogin(e)} title={i18next.t("login.sign-in-title")}>{i18next.t("login.btn-ok")}</button>
       </form>

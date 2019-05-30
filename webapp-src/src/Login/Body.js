@@ -49,7 +49,7 @@ class Body extends Component {
         <div id="carouselBody" className="carousel slide" data-ride="carousel">
           <div className="carousel-inner">
             <div className={"carousel-item" + (this.state.showGrant?" active":"")}>
-              <GrantScope config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope}/>
+              <GrantScope config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme}/>
             </div>
             <div className={"carousel-item" + (!this.state.showGrant?" active":"")}>
               <SchemeAuth config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser} client={this.state.client}/>
