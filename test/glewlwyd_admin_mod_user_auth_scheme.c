@@ -89,7 +89,7 @@ END_TEST
 START_TEST(test_glwd_admin_get_mod_user_auth_scheme_add_OK)
 {
   char * url = msprintf("%s/mod/scheme/", SERVER_URI);
-  json_t * j_parameters = json_pack("{sssssssisis{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "expiration", 600, "max_use", 0, "parameters", "mock-value", MODULE_NAME);
+  json_t * j_parameters = json_pack("{sssssssisisos{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "expiration", 600, "max_use", 0, "allow_user_register", json_true(), "parameters", "mock-value", MODULE_NAME);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   o_free(url);
@@ -104,7 +104,7 @@ END_TEST
 START_TEST(test_glwd_admin_get_mod_user_auth_scheme_get)
 {
   char * url = msprintf("%s/mod/scheme/%s", SERVER_URI, MODULE_NAME), * url_404 = msprintf("%s/mod/scheme/error", SERVER_URI);
-  json_t * j_parameters = json_pack("{sssssss{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "parameters", "mock-value", MODULE_NAME);
+  json_t * j_parameters = json_pack("{sssssssos{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "allow_user_register", json_true(), "parameters", "mock-value", MODULE_NAME);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url_404, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL), 1);
@@ -129,6 +129,10 @@ START_TEST(test_glwd_admin_get_mod_user_auth_scheme_set_error_param)
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
+  j_parameters = json_pack("{sssss{ss}}", "display_name", MODULE_DISPLAY_NAME, "allow_user_register", "error", "parameters", "mock-value", MODULE_NAME);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  
   o_free(url);
 }
 END_TEST
@@ -136,7 +140,7 @@ END_TEST
 START_TEST(test_glwd_admin_get_mod_user_auth_scheme_set_OK)
 {
   char * url = msprintf("%s/mod/scheme/%s", SERVER_URI, MODULE_NAME);
-  json_t * j_parameters = json_pack("{sssisis{ss}}", "display_name", MODULE_DISPLAY_NAME, "expiration", 600, "max_use", 0, "parameters", "mock-value", MODULE_NAME);
+  json_t * j_parameters = json_pack("{sssisisos{ss}}", "display_name", MODULE_DISPLAY_NAME, "expiration", 600, "max_use", 0, "allow_user_register", json_true(), "parameters", "mock-value", MODULE_NAME);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   
