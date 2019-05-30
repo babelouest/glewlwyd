@@ -30,6 +30,7 @@ CREATE TABLE g_user_auth_scheme_module_instance (
   guasmi_module VARCHAR(128) NOT NULL,
   guasmi_expiration INT(11) NOT NULL DEFAULT 0,
   guasmi_max_use INT(11) DEFAULT 0, -- 0: unlimited
+  guasmi_allow_user_register TINYINT(1) DEFAULT 1,
   guasmi_name VARCHAR(128) NOT NULL,
   guasmi_display_name VARCHAR(256) DEFAULT '',
   guasmi_parameters MEDIUMBLOB

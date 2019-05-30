@@ -44,6 +44,7 @@ CREATE TABLE g_user_auth_scheme_module_instance (
   guasmi_module TEXT NOT NULL,
   guasmi_expiration INTEGER NOT NULL DEFAULT 0,
   guasmi_max_use INTEGER DEFAULT 0, -- 0: unlimited
+  guasmi_allow_user_register INTEGER DEFAULT 0,
   guasmi_name TEXT NOT NULL,
   guasmi_display_name TEXT DEFAULT '',
   guasmi_parameters TEXT
