@@ -134,8 +134,12 @@ class PluginEdit extends Component {
     var readonly = "";
     if (this.state.role !== "scheme") {
       readonly = <div className="form-group">
-        <label htmlFor="mod-readonly">{i18next.t("admin.mod-readonly")}</label>
-        <input type="checkbox" className="form-control" id="mod-readonly" onChange={(e) => this.toggleReadonly(e)} checked={this.state.mod.readonly||false} />
+        <div className="input-group mb-3">
+          <div className="input-group-prepend">
+            <label className="input-group-text" htmlFor="mod-readonly">{i18next.t("admin.mod-readonly")}</label>
+          </div>
+          <input type="checkbox" className="form-control" id="mod-readonly" onChange={(e) => this.toggleReadonly(e)} checked={this.state.mod.readonly||false} />
+        </div>
       </div>;
     }
 		return (
@@ -151,17 +155,29 @@ class PluginEdit extends Component {
             <div className="modal-body">
               <form className="needs-validation" noValidate>
                 <div className="form-group">
-                  <label htmlFor="mod-name">{i18next.t("admin.mod-name")}</label>
-                  <input type="text" className={"form-control" + (this.state.nameInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("admin.mod-name-ph")} maxLength="128" value={this.state.mod.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-name">{i18next.t("admin.mod-name")}</label>
+                    </div>
+                    <input type="text" className={"form-control" + (this.state.nameInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("admin.mod-name-ph")} maxLength="128" value={this.state.mod.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
+                  </div>
                   <span className={"error-input" + (this.state.nameInvalid?"":" hidden")}>{this.state.nameInvalidMessage}</span>
                 </div>
                 <div className="form-group">
-                  <label htmlFor="mod-display-name">{i18next.t("admin.mod-display-name")}</label>
-                  <input type="text" className="form-control" id="mod-display-name" placeholder={i18next.t("admin.mod-display-name-ph")} maxLength="256" value={this.state.mod.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-display-name">{i18next.t("admin.mod-display-name")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-display-name" placeholder={i18next.t("admin.mod-display-name-ph")} maxLength="256" value={this.state.mod.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
+                  </div>
                 </div>
                 <div className="form-group">
-                  <label htmlFor="mod-type">{i18next.t("admin.mod-type")}</label>
-                  {modType}
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-type">{i18next.t("admin.mod-type")}</label>
+                    </div>
+                    {modType}
+                  </div>
                   <span className={"error-input" + (this.state.typeInvalidMessage?"":" hidden")}>{this.state.typeInvalidMessage}</span>
                 </div>
                 <PluginEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />

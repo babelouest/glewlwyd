@@ -154,8 +154,14 @@ class DatabaseParams extends Component {
   
   render() {
     var useInternalConnection = <div className="form-group">
-      <label htmlFor="mod-database-use-internal-connection">{i18next.t("admin.mod-database-use-internal-connection")}</label>
-      <input type="checkbox" className="form-control" id="mod-database-use-internal-connection" onChange={(e) => this.toggleInternalConnection(e)} checked={this.state.mod.parameters["use-glewlwyd-connection"]} />
+      <div className="input-group mb-3">
+        <div className="input-group-prepend">
+          <label className="input-group-text" htmlFor="mod-database-use-internal-connection">{i18next.t("admin.mod-database-use-internal-connection")}</label>
+        </div>
+        <div className="input-group-text">
+          <input type="checkbox" className="form-control" id="mod-database-use-internal-connection" onChange={(e) => this.toggleInternalConnection(e)} checked={this.state.mod.parameters["use-glewlwyd-connection"]} />
+        </div>
+      </div>
     </div>;
     var selectDbType;
     var dbParams;
@@ -175,39 +181,67 @@ class DatabaseParams extends Component {
       </div>;
       if (this.state.mod.parameters["connection-type"] === "sqlite") {
         dbParams = <div className="form-group">
-          <label htmlFor="mod-database-sqlite-dbpath">{i18next.t("admin.mod-database-sqlite-dbpath")}</label>
-          <input type="text" className={this.state.errorList["sqlite-dbpath"]?"form-control is-invalid":"form-control"} id="mod-database-sqlite-dbpath" onChange={(e) => this.changeValue(e, "sqlite-dbpath")} value={this.state.mod.parameters["sqlite-dbpath"]} placeholder={i18next.t("admin.mod-database-sqlite-dbpath-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-database-sqlite-dbpath">{i18next.t("admin.mod-database-sqlite-dbpath")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["sqlite-dbpath"]?"form-control is-invalid":"form-control"} id="mod-database-sqlite-dbpath" onChange={(e) => this.changeValue(e, "sqlite-dbpath")} value={this.state.mod.parameters["sqlite-dbpath"]} placeholder={i18next.t("admin.mod-database-sqlite-dbpath-ph")} />
+          </div>
           {this.state.errorList["sqlite-dbpath"]?<span className="error-input">{i18next.t(this.state.errorList["sqlite-dbpath"])}</span>:""}
         </div>;
       } else if (this.state.mod.parameters["connection-type"] === "mariadb") {
         dbParams = <div><div className="form-group">
-          <label htmlFor="mod-database-mariadb-host">{i18next.t("admin.mod-database-mariadb-host")}</label>
-          <input type="text" className={this.state.errorList["mariadb-host"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-host" onChange={(e) => this.changeValue(e, "mariadb-host")} value={this.state.mod.parameters["mariadb-host"]} placeholder={i18next.t("admin.mod-database-mariadb-host-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-database-mariadb-host">{i18next.t("admin.mod-database-mariadb-host")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["mariadb-host"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-host" onChange={(e) => this.changeValue(e, "mariadb-host")} value={this.state.mod.parameters["mariadb-host"]} placeholder={i18next.t("admin.mod-database-mariadb-host-ph")} />
+          </div>
           {this.state.errorList["mariadb-host"]?<span className="error-input">{i18next.t(this.state.errorList["mariadb-host"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-database-mariadb-user">{i18next.t("admin.mod-database-mariadb-user")}</label>
-          <input type="text" className={this.state.errorList["mariadb-user"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-user" onChange={(e) => this.changeValue(e, "mariadb-user")} value={this.state.mod.parameters["mariadb-user"]} placeholder={i18next.t("admin.mod-database-mariadb-user-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-database-mariadb-user">{i18next.t("admin.mod-database-mariadb-user")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["mariadb-user"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-user" onChange={(e) => this.changeValue(e, "mariadb-user")} value={this.state.mod.parameters["mariadb-user"]} placeholder={i18next.t("admin.mod-database-mariadb-user-ph")} />
+          </div>
           {this.state.errorList["mariadb-user"]?<span className="error-input">{i18next.t(this.state.errorList["mariadb-user"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-database-mariadb-password">{i18next.t("admin.mod-database-mariadb-password")}</label>
-          <input type="password" className={this.state.errorList["mariadb-password"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-password" onChange={(e) => this.changeValue(e, "mariadb-password")} value={this.state.mod.parameters["mariadb-password"]} placeholder={i18next.t("admin.mod-database-mariadb-password-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-database-mariadb-password">{i18next.t("admin.mod-database-mariadb-password")}</label>
+            </div>
+            <input type="password" className={this.state.errorList["mariadb-password"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-password" onChange={(e) => this.changeValue(e, "mariadb-password")} value={this.state.mod.parameters["mariadb-password"]} placeholder={i18next.t("admin.mod-database-mariadb-password-ph")} />
+          </div>
           {this.state.errorList["mariadb-password"]?<span className="error-input">{i18next.t(this.state.errorList["mariadb-password"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-database-mariadb-dbname">{i18next.t("admin.mod-database-mariadb-dbname")}</label>
-          <input type="text" className={this.state.errorList["mariadb-dbname"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-dbname" onChange={(e) => this.changeValue(e, "mariadb-dbname")} value={this.state.mod.parameters["mariadb-dbname"]} placeholder={i18next.t("admin.mod-database-mariadb-dbname-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-database-mariadb-dbname">{i18next.t("admin.mod-database-mariadb-dbname")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["mariadb-dbname"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-dbname" onChange={(e) => this.changeValue(e, "mariadb-dbname")} value={this.state.mod.parameters["mariadb-dbname"]} placeholder={i18next.t("admin.mod-database-mariadb-dbname-ph")} />
+          </div>
           {this.state.errorList["mariadb-dbname"]?<span className="error-input">{i18next.t(this.state.errorList["mariadb-dbname"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-database-mariadb-port">{i18next.t("admin.mod-database-mariadb-port")}</label>
-          <input type="number" min="0" max="65535" step="1" className="form-control" id="mod-database-mariadb-port" onChange={(e) => this.changeValue(e, "mariadb-port")} value={this.state.mod.parameters["mariadb-port"]} placeholder={i18next.t("admin.mod-database-mariadb-port-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-database-mariadb-port">{i18next.t("admin.mod-database-mariadb-port")}</label>
+            </div>
+            <input type="number" min="0" max="65535" step="1" className="form-control" id="mod-database-mariadb-port" onChange={(e) => this.changeValue(e, "mariadb-port")} value={this.state.mod.parameters["mariadb-port"]} placeholder={i18next.t("admin.mod-database-mariadb-port-ph")} />
+          </div>
         </div></div>;
       } else if (this.state.mod.parameters["connection-type"] === "postgre") {
         dbParams = <div className="form-group">
-          <label htmlFor="mod-database-postgre-conninfo">{i18next.t("admin.mod-database-postgre-conninfo")}</label>
-          <input type="text" className={this.state.errorList["postgre-conninfo"]?"form-control is-invalid":"form-control"} id="mod-database-postgre-conninfo" onChange={(e) => this.changeValue(e, "postgre-conninfo")} value={this.state.mod.parameters["postgre-conninfo"]} placeholder={i18next.t("admin.mod-database-postgre-conninfo-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-database-postgre-conninfo">{i18next.t("admin.mod-database-postgre-conninfo")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["postgre-conninfo"]?"form-control is-invalid":"form-control"} id="mod-database-postgre-conninfo" onChange={(e) => this.changeValue(e, "postgre-conninfo")} value={this.state.mod.parameters["postgre-conninfo"]} placeholder={i18next.t("admin.mod-database-postgre-conninfo-ph")} />
+          </div>
           {this.state.errorList["postgre-conninfo"]?<span className="error-input">{i18next.t(this.state.errorList["postgre-conninfo"])}</span>:""}
         </div>;
       }
@@ -217,24 +251,44 @@ class DatabaseParams extends Component {
     for (var property in this.state.mod.parameters["data-format"]) {
       dataFormat.push(<div key={i++}>
         <div className="form-group">
-          <label htmlFor={"mod-database-data-format-name-"+property}>{i18next.t("admin.mod-database-data-format-property")}</label>
-          <input type="text" className="form-control" id={"mod-database-data-format-name-"+property} onChange={(e) => this.changeDataFormatProperty(e, property)} value={property} placeholder={i18next.t("admin.mod-database-data-format-property-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor={"mod-database-data-format-name-"+property}>{i18next.t("admin.mod-database-data-format-property")}</label>
+            </div>
+            <input type="text" className="form-control" id={"mod-database-data-format-name-"+property} onChange={(e) => this.changeDataFormatProperty(e, property)} value={property} placeholder={i18next.t("admin.mod-database-data-format-property-ph")} />
+          </div>
         </div>
         <div className="form-group">
-          <label htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-read")}</label>
-          <input type="checkbox" className="form-control" id={"mod-database-data-format-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "read")} checked={this.state.mod.parameters["data-format"][property]["read"]} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-read")}</label>
+            </div>
+            <input type="checkbox" className="form-control" id={"mod-database-data-format-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "read")} checked={this.state.mod.parameters["data-format"][property]["read"]} />
+          </div>
         </div>
         <div className="form-group">
-          <label htmlFor={"mod-database-data-format-write-"+property}>{i18next.t("admin.mod-database-data-format-write")}</label>
-          <input type="checkbox" className="form-control" id={"mod-database-data-format-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "write")} checked={this.state.mod.parameters["data-format"][property]["write"]} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor={"mod-database-data-format-write-"+property}>{i18next.t("admin.mod-database-data-format-write")}</label>
+            </div>
+            <input type="checkbox" className="form-control" id={"mod-database-data-format-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "write")} checked={this.state.mod.parameters["data-format"][property]["write"]} />
+          </div>
         </div>
         <div className="form-group">
-          <label htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-profile-read")}</label>
-          <input type="checkbox" className="form-control" id={"mod-database-data-format-profile-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-read")} checked={this.state.mod.parameters["data-format"][property]["profile-read"]} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-profile-read")}</label>
+            </div>
+            <input type="checkbox" className="form-control" id={"mod-database-data-format-profile-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-read")} checked={this.state.mod.parameters["data-format"][property]["profile-read"]} />
+          </div>
         </div>
         <div className="form-group">
-          <label htmlFor={"mod-database-data-format-profile-write-"+property}>{i18next.t("admin.mod-database-data-format-profile-write")}</label>
-          <input type="checkbox" className="form-control" id={"mod-database-data-format-profile-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-write")} checked={this.state.mod.parameters["data-format"][property]["profile-write"]} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor={"mod-database-data-format-profile-write-"+property}>{i18next.t("admin.mod-database-data-format-profile-write")}</label>
+            </div>
+            <input type="checkbox" className="form-control" id={"mod-database-data-format-profile-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-write")} checked={this.state.mod.parameters["data-format"][property]["profile-write"]} />
+          </div>
         </div>
       </div>);
     }

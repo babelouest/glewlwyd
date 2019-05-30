@@ -133,56 +133,104 @@ class EmailParams extends Component {
     return (
       <div>
         <div className="form-group">
-          <label htmlFor="mod-email-code-length">{i18next.t("admin.mod-email-code-length")}</label>
-          <input type="number" min="0" max="65536" step="1" className={this.state.errorList["code-length"]?"form-control is-invalid":"form-control"} id="mod-email-code-length" onChange={(e) => this.changeParam(e, "code-length")} value={this.state.mod.parameters["code-length"]} placeholder={i18next.t("admin.mod-email-code-length-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-code-length">{i18next.t("admin.mod-email-code-length")}</label>
+            </div>
+            <input type="number" min="0" max="65536" step="1" className={this.state.errorList["code-length"]?"form-control is-invalid":"form-control"} id="mod-email-code-length" onChange={(e) => this.changeParam(e, "code-length")} value={this.state.mod.parameters["code-length"]} placeholder={i18next.t("admin.mod-email-code-length-ph")} />
+          </div>
           {this.state.errorList["code-length"]?<span className="error-input">{i18next.t(this.state.errorList["code-length"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-email-code-duration">{i18next.t("admin.mod-email-code-duration")}</label>
-          <input type="number" min="0" max="65536" step="1" className={this.state.errorList["code-duration"]?"form-control is-invalid":"form-control"} id="mod-email-code-duration" onChange={(e) => this.changeParam(e, "code-duration")} value={this.state.mod.parameters["code-duration"]} placeholder={i18next.t("admin.mod-email-code-duration-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-code-duration">{i18next.t("admin.mod-email-code-duration")}</label>
+            </div>
+            <input type="number" min="0" max="65536" step="1" className={this.state.errorList["code-duration"]?"form-control is-invalid":"form-control"} id="mod-email-code-duration" onChange={(e) => this.changeParam(e, "code-duration")} value={this.state.mod.parameters["code-duration"]} placeholder={i18next.t("admin.mod-email-code-duration-ph")} />
+          </div>
           {this.state.errorList["code-duration"]?<span className="error-input">{i18next.t(this.state.errorList["code-duration"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-email-host">{i18next.t("admin.mod-email-host")}</label>
-          <input type="text" className={this.state.errorList["host"]?"form-control is-invalid":"form-control"} id="mod-email-host" onChange={(e) => this.changeParam(e, "host")} value={this.state.mod.parameters["host"]} placeholder={i18next.t("admin.mod-email-host-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-host">{i18next.t("admin.mod-email-host")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["host"]?"form-control is-invalid":"form-control"} id="mod-email-host" onChange={(e) => this.changeParam(e, "host")} value={this.state.mod.parameters["host"]} placeholder={i18next.t("admin.mod-email-host-ph")} />
+          </div>
           {this.state.errorList["host"]?<span className="error-input">{i18next.t(this.state.errorList["host"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-email-port">{i18next.t("admin.mod-email-port")}</label>
-          <input type="number" min="0" max="65536" step="1" className={this.state.errorList["port"]?"form-control is-invalid":"form-control"} id="mod-email-port" onChange={(e) => this.changeParam(e, "port", true)} value={this.state.mod.parameters["port"]} placeholder={i18next.t("admin.mod-email-port-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-port">{i18next.t("admin.mod-email-port")}</label>
+            </div>
+            <input type="number" min="0" max="65536" step="1" className={this.state.errorList["port"]?"form-control is-invalid":"form-control"} id="mod-email-port" onChange={(e) => this.changeParam(e, "port", true)} value={this.state.mod.parameters["port"]} placeholder={i18next.t("admin.mod-email-port-ph")} />
+          </div>
           {this.state.errorList["port"]?<span className="error-input">{i18next.t(this.state.errorList["port"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-email-use-tls">{i18next.t("admin.mod-email-use-tls")}</label>
-          <input type="checkbox" className="form-control" id="mod-email-use-tls" onChange={(e) => this.toggleUseTls()} checked={this.state.mod.parameters["use-tls"]||false} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-use-tls">{i18next.t("admin.mod-email-use-tls")}</label>
+            </div>
+            <div className="input-group-text">
+              <input type="checkbox" className="form-control" id="mod-email-use-tls" onChange={(e) => this.toggleUseTls()} checked={this.state.mod.parameters["use-tls"]||false} />
+            </div>
+          </div>
         </div>
         <div className="form-group">
-          <label htmlFor="mod-email-check-certificate">{i18next.t("admin.mod-email-check-certificate")}</label>
-          <input type="checkbox" disabled={!this.state.mod.parameters["use-tls"]} className="form-control" id="mod-email-check-certificate" onChange={(e) => this.toggleCheckServerCertificate()} checked={this.state.mod.parameters["check-certificate"]||false} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-check-certificate">{i18next.t("admin.mod-email-check-certificate")}</label>
+            </div>
+            <div className="input-group-text">
+              <input type="checkbox" className="form-control" disabled={!this.state.mod.parameters["use-tls"]} className="form-control" id="mod-email-check-certificate" onChange={(e) => this.toggleCheckServerCertificate()} checked={this.state.mod.parameters["check-certificate"]||false} />
+            </div>
+          </div>
         </div>
         <div className="form-group">
-          <label htmlFor="mod-email-user">{i18next.t("admin.mod-email-user")}</label>
-          <input type="text" className={this.state.errorList["user"]?"form-control is-invalid":"form-control"} id="mod-email-user" onChange={(e) => this.changeParam(e, "user")} value={this.state.mod.parameters["user"]} placeholder={i18next.t("admin.mod-email-user-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-user">{i18next.t("admin.mod-email-user")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["user"]?"form-control is-invalid":"form-control"} id="mod-email-user" onChange={(e) => this.changeParam(e, "user")} value={this.state.mod.parameters["user"]} placeholder={i18next.t("admin.mod-email-user-ph")} />
+          </div>
           {this.state.errorList["user"]?<span className="error-input">{i18next.t(this.state.errorList["user"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-email-password">{i18next.t("admin.mod-email-password")}</label>
-          <input type="password" className={this.state.errorList["password"]?"form-control is-invalid":"form-control"} id="mod-email-password" onChange={(e) => this.changeParam(e, "password")} value={this.state.mod.parameters["password"]} placeholder={i18next.t("admin.mod-email-password-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-password">{i18next.t("admin.mod-email-password")}</label>
+            </div>
+            <input type="password" className={this.state.errorList["password"]?"form-control is-invalid":"form-control"} id="mod-email-password" onChange={(e) => this.changeParam(e, "password")} value={this.state.mod.parameters["password"]} placeholder={i18next.t("admin.mod-email-password-ph")} />
+          </div>
           {this.state.errorList["password"]?<span className="error-input">{i18next.t(this.state.errorList["password"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-email-from">{i18next.t("admin.mod-email-from")}</label>
-          <input type="text" className={this.state.errorList["from"]?"form-control is-invalid":"form-control"} id="mod-email-from" onChange={(e) => this.changeParam(e, "from")} value={this.state.mod.parameters["from"]} placeholder={i18next.t("admin.mod-email-from-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-from">{i18next.t("admin.mod-email-from")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["from"]?"form-control is-invalid":"form-control"} id="mod-email-from" onChange={(e) => this.changeParam(e, "from")} value={this.state.mod.parameters["from"]} placeholder={i18next.t("admin.mod-email-from-ph")} />
+          </div>
           {this.state.errorList["from"]?<span className="error-input">{i18next.t(this.state.errorList["from"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-email-subject">{i18next.t("admin.mod-email-subject")}</label>
-          <input type="text" className={this.state.errorList["subject"]?"form-control is-invalid":"form-control"} id="mod-email-subject" onChange={(e) => this.changeParam(e, "subject")} value={this.state.mod.parameters["subject"]||""} placeholder={i18next.t("admin.mod-email-subject-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-subject">{i18next.t("admin.mod-email-subject")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["subject"]?"form-control is-invalid":"form-control"} id="mod-email-subject" onChange={(e) => this.changeParam(e, "subject")} value={this.state.mod.parameters["subject"]||""} placeholder={i18next.t("admin.mod-email-subject-ph")} />
+          </div>
           {this.state.errorList["subject"]?<span className="error-input">{i18next.t(this.state.errorList["subject"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-email-body-pattern">{i18next.t("admin.mod-email-body-pattern")}</label>
-          <textarea className={this.state.errorList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-email-body-pattern" onChange={(e) => this.changeParam(e, "body-pattern")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} >{this.state.mod.parameters["body-pattern"]||""}</textarea>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <span className="input-group-text" >{i18next.t("admin.mod-email-body-pattern")}</span>
+            </div>
+            <textarea className={this.state.errorList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-email-body-pattern" onChange={(e) => this.changeParam(e, "body-pattern")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} >{this.state.mod.parameters["body-pattern"]||""}</textarea>
+          </div>
           {this.state.errorList["body-pattern"]?<span className="error-input">{i18next.t(this.state.errorList["body-pattern"])}</span>:""}
         </div>
       </div>

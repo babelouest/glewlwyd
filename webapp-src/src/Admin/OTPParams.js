@@ -166,41 +166,77 @@ class OTPParams extends Component {
     return (
       <div>
         <div className="form-group">
-          <label htmlFor="mod-otp-issuer">{i18next.t("admin.mod-otp-issuer")}</label>
-          <input type="text" className={this.state.errorList["issuer"]?"form-control is-invalid":"form-control"} id="mod-otp-issuer" onChange={(e) => this.changeParam(e, "issuer")} value={this.state.mod.parameters["issuer"]} placeholder={i18next.t("admin.mod-otp-issuer-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-otp-issuer">{i18next.t("admin.mod-otp-issuer")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["issuer"]?"form-control is-invalid":"form-control"} id="mod-otp-issuer" onChange={(e) => this.changeParam(e, "issuer")} value={this.state.mod.parameters["issuer"]} placeholder={i18next.t("admin.mod-otp-issuer-ph")} />
+          </div>
           {this.state.errorList["issuer"]?<span className="error-input">{i18next.t(this.state.errorList["issuer"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-otp-secret-minimum-size">{i18next.t("admin.mod-otp-secret-minimum-size")}</label>
-          <input type="number" min="0" max="128" step="1" className={this.state.errorList["secret-minimum-size"]?"form-control is-invalid":"form-control"} id="mod-otp-secret-minimum-size" onChange={(e) => this.changeParam(e, "secret-minimum-size", 1)} value={this.state.mod.parameters["secret-minimum-size"]} placeholder={i18next.t("admin.mod-otp-secret-minimum-size-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-otp-secret-minimum-size">{i18next.t("admin.mod-otp-secret-minimum-size")}</label>
+            </div>
+            <input type="number" min="0" max="128" step="1" className={this.state.errorList["secret-minimum-size"]?"form-control is-invalid":"form-control"} id="mod-otp-secret-minimum-size" onChange={(e) => this.changeParam(e, "secret-minimum-size", 1)} value={this.state.mod.parameters["secret-minimum-size"]} placeholder={i18next.t("admin.mod-otp-secret-minimum-size-ph")} />
+          </div>
           {this.state.errorList["secret-minimum-size"]?<span className="error-input">{i18next.t(this.state.errorList["secret-minimum-size"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-otp-otp-length">{i18next.t("admin.mod-otp-otp-length")}</label>
-          <input type="number" min="6" max="8" step="1" className={this.state.errorList["otp-length"]?"form-control is-invalid":"form-control"} id="mod-otp-otp-length" onChange={(e) => this.changeParam(e, "otp-length", 1)} value={this.state.mod.parameters["otp-length"]} placeholder={i18next.t("admin.mod-otp-otp-length-ph")} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-otp-otp-length">{i18next.t("admin.mod-otp-otp-length")}</label>
+            </div>
+            <input type="number" min="6" max="8" step="1" className={this.state.errorList["otp-length"]?"form-control is-invalid":"form-control"} id="mod-otp-otp-length" onChange={(e) => this.changeParam(e, "otp-length", 1)} value={this.state.mod.parameters["otp-length"]} placeholder={i18next.t("admin.mod-otp-otp-length-ph")} />
+          </div>
           {this.state.errorList["otp-length"]?<span className="error-input">{i18next.t(this.state.errorList["otp-length"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-otp-hotp-allow">{i18next.t("admin.mod-otp-hotp-allow")}</label>
-          <input type="checkbox" className="form-control" id="mod-otp-hotp-allow" onChange={(e) => this.toggleParam("hotp-allow")} checked={this.state.mod.parameters["hotp-allow"]} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-otp-hotp-allow">{i18next.t("admin.mod-otp-hotp-allow")}</label>
+            </div>
+            <div className="input-group-text">
+              <input type="checkbox" className="form-control" id="mod-otp-hotp-allow" onChange={(e) => this.toggleParam("hotp-allow")} checked={this.state.mod.parameters["hotp-allow"]} />
+            </div>
+          </div>
         </div>
         <div className="form-group">
-          <label htmlFor="mod-otp-hotp-window">{i18next.t("admin.mod-otp-hotp-window")}</label>
-          <input type="number" min="0" max="16" step="1" className={this.state.errorList["hotp-window"]?"form-control is-invalid":"form-control"} id="mod-otp-hotp-window" onChange={(e) => this.changeParam(e, "hotp-window", 1)} value={this.state.mod.parameters["hotp-window"]} placeholder={i18next.t("admin.mod-otp-hotp-window-ph")} disabled={!this.state.mod.parameters["hotp-allow"]}/>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-otp-hotp-window">{i18next.t("admin.mod-otp-hotp-window")}</label>
+            </div>
+            <input type="number" min="0" max="16" step="1" className={this.state.errorList["hotp-window"]?"form-control is-invalid":"form-control"} id="mod-otp-hotp-window" onChange={(e) => this.changeParam(e, "hotp-window", 1)} value={this.state.mod.parameters["hotp-window"]} placeholder={i18next.t("admin.mod-otp-hotp-window-ph")} disabled={!this.state.mod.parameters["hotp-allow"]}/>
+          </div>
           {this.state.errorList["hotp-window"]?<span className="error-input">{i18next.t(this.state.errorList["hotp-window"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-otp-totp-allow">{i18next.t("admin.mod-otp-totp-allow")}</label>
-          <input type="checkbox" className="form-control" id="mod-otp-totp-allow" onChange={(e) => this.toggleParam("totp-allow")} checked={this.state.mod.parameters["totp-allow"]} />
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-otp-totp-allow">{i18next.t("admin.mod-otp-totp-allow")}</label>
+            </div>
+            <div className="input-group-text">
+              <input type="checkbox" className="form-control" id="mod-otp-totp-allow" onChange={(e) => this.toggleParam("totp-allow")} checked={this.state.mod.parameters["totp-allow"]} />
+            </div>
+          </div>
         </div>
         <div className="form-group">
-          <label htmlFor="mod-otp-totp-window">{i18next.t("admin.mod-otp-totp-window")}</label>
-          <input type="number" min="0" max="16" step="1" className={this.state.errorList["totp-window"]?"form-control is-invalid":"form-control"} id="mod-otp-totp-window" onChange={(e) => this.changeParam(e, "totp-window", 1)} value={this.state.mod.parameters["totp-window"]} placeholder={i18next.t("admin.mod-otp-totp-window-ph")} disabled={!this.state.mod.parameters["totp-allow"]}/>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-otp-totp-window">{i18next.t("admin.mod-otp-totp-window")}</label>
+            </div>
+            <input type="number" min="0" max="16" step="1" className={this.state.errorList["totp-window"]?"form-control is-invalid":"form-control"} id="mod-otp-totp-window" onChange={(e) => this.changeParam(e, "totp-window", 1)} value={this.state.mod.parameters["totp-window"]} placeholder={i18next.t("admin.mod-otp-totp-window-ph")} disabled={!this.state.mod.parameters["totp-allow"]}/>
+          </div>
           {this.state.errorList["totp-window"]?<span className="error-input">{i18next.t(this.state.errorList["totp-window"])}</span>:""}
         </div>
         <div className="form-group">
-          <label htmlFor="mod-otp-totp-start-offset">{i18next.t("admin.mod-otp-totp-start-offset")}</label>
-          <input type="number" min="0" max="16" step="1" className={this.state.errorList["totp-start-offset"]?"form-control is-invalid":"form-control"} id="mod-otp-totp-start-offset" onChange={(e) => this.changeParam(e, "totp-window", 1)} value={this.state.mod.parameters["totp-window"]} placeholder={i18next.t("admin.mod-otp-totp-start-offset-ph")} disabled={!this.state.mod.parameters["totp-allow"]}/>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-otp-totp-start-offset">{i18next.t("admin.mod-otp-totp-start-offset")}</label>
+            </div>
+            <input type="number" min="0" max="16" step="1" className={this.state.errorList["totp-start-offset"]?"form-control is-invalid":"form-control"} id="mod-otp-totp-start-offset" onChange={(e) => this.changeParam(e, "totp-window", 1)} value={this.state.mod.parameters["totp-window"]} placeholder={i18next.t("admin.mod-otp-totp-start-offset-ph")} disabled={!this.state.mod.parameters["totp-allow"]}/>
+          </div>
           {this.state.errorList["totp-start-offset"]?<span className="error-input">{i18next.t(this.state.errorList["totp-start-offset"])}</span>:""}
         </div>
       </div>

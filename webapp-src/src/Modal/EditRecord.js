@@ -94,7 +94,7 @@ class EditRecord extends Component {
           validInput = " is-invalid";
           errorJsx = <span className="error-input">{i18next.t(this.state.listError[pattern.name])}</span>
         }
-        labelJsx = <label htmlFor={"modal-edit-" + pattern.name}>{i18next.t(pattern.label)}</label>;
+        labelJsx = <label className="input-group-text" htmlFor={"modal-edit-" + pattern.name}>{i18next.t(pattern.label)}</label>;
         if (pattern.list) {
           if (!elt) {
             elt = [];
@@ -124,7 +124,7 @@ class EditRecord extends Component {
               listElements.push(<a className="dropdown-item" key={index} href="#" onClick={(e) => this.AddListElt(e, pattern.name, element)}>{element}</a>);
             });
             inputJsx = <div className="dropdown">
-              <button className="btn btn-secondary btn-sm dropdown-toggle" type="button" id={"modal-edit-" + pattern.name} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id={"modal-edit-" + pattern.name} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i className="fas fa-plus"></i>
               </button>
               <div className="dropdown-menu" aria-labelledby={"modal-edit-" + pattern.name}>
@@ -145,9 +145,13 @@ class EditRecord extends Component {
           });
         } else if (pattern.type === "boolean") {
           if (pattern.edit === false && !this.state.add) {
-            inputJsx = <input disabled="true" type="checkbox" className="form-control" id={"modal-edit-" + pattern.name} checked={elt} />
+            inputJsx = <div className="input-group-text">
+              <input disabled="true" type="checkbox" className="form-control" id={"modal-edit-" + pattern.name} checked={elt} />
+            </div>
           } else {
-            inputJsx = <input type="checkbox" className={"form-control" + validInput} id={"modal-edit-" + pattern.name} onChange={(e) => this.toggleBooleanElt(e, pattern.name)} checked={elt} />
+            inputJsx = <div className="input-group-text">
+              <input type="checkbox" className={"form-control" + validInput} id={"modal-edit-" + pattern.name} onChange={(e) => this.toggleBooleanElt(e, pattern.name)} checked={elt} />
+            </div>
           }
         } else if (pattern.type === "textarea") {
           if (pattern.edit === false && !this.state.add) {
@@ -179,9 +183,13 @@ class EditRecord extends Component {
     }
     return (
     <div className="form-group" key={key}>
-      {labelJsx}
-      {inputJsx}
-      <div>{listJsx}</div>
+      <div className="input-group mb-3">
+        <div className="input-group-prepend">
+          {labelJsx}
+        </div>
+        {inputJsx}
+        <div>{listJsx}</div>
+      </div>
       {errorJsx}
     </div>);
   }
@@ -315,13 +323,17 @@ class EditRecord extends Component {
       sourceLine.push(<a className="dropdown-item" key={index} href="#" onClick={(e) => this.changeSource(e, source.name)}>{source.display_name}</a>);
     });
     var sourceJsx = <div className="form-group">
-      <label htmlFor="modal-source">{i18next.t("admin.source")}</label>
-      <div className="dropdown">
-        <button className="btn btn-secondary btn-sm dropdown-toggle" type="button" id="modal-source" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-         {curSource||i18next.t("admin.source-dropdown")}
-        </button>
-        <div className="dropdown-menu" aria-labelledby="modal-source">
-          {sourceLine}
+      <div className="input-group mb-3">
+        <div className="input-group-prepend">
+          <label className="input-group-text" htmlFor="modal-source">{i18next.t("admin.source")}</label>
+        </div>
+        <div className="dropdown">
+          <button className="btn btn-secondary dropdown-toggle" type="button" id="modal-source" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+           {curSource||i18next.t("admin.source-dropdown")}
+          </button>
+          <div className="dropdown-menu" aria-labelledby="modal-source">
+            {sourceLine}
+          </div>
         </div>
       </div>
     </div>

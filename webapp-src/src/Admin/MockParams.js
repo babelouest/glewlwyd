@@ -88,9 +88,13 @@ class MockParams extends Component {
       }
       return (
         <div className="form-group">
-          <label htmlFor="mod-mock-username-prefix">{i18next.t("admin.mod-username-prefix")}</label>
-          <input type="text" className={"form-control" + validInput} id="mod-mock-username-prefix" placeholder={i18next.t("admin.mod-username-prefix-ph")} maxLength="256" value={this.state.mod.parameters["username-prefix"]||""} onChange={(e) => this.changeMockUserValue(e)}/>
-          {errorJsx}
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-mock-username-prefix">{i18next.t("admin.mod-username-prefix")}</label>
+            </div>
+            <input type="text" className={"form-control" + validInput} id="mod-mock-username-prefix" placeholder={i18next.t("admin.mod-username-prefix-ph")} maxLength="256" value={this.state.mod.parameters["username-prefix"]||""} onChange={(e) => this.changeMockUserValue(e)}/>
+            {errorJsx}
+          </div>
         </div>
       );
     } else if (this.state.role === "client") {
@@ -100,9 +104,13 @@ class MockParams extends Component {
       }
       return (
         <div className="form-group">
-          <label htmlFor="mod-mock-client-id-prefix">{i18next.t("admin.mod-client-id-prefix")}</label>
-          <input type="text" className={"form-control" + validInput} id="mod-mock-client-id-prefix" placeholder={i18next.t("admin.mod-client-id-prefix-ph")} maxLength="256" value={this.state.mod.parameters["client-id-prefix"]||""} onChange={(e) => this.changeMockClientValue(e)}/>
-          {errorJsx}
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-mock-client-id-prefix">{i18next.t("admin.mod-client-id-prefix")}</label>
+            </div>
+            <input type="text" className={"form-control" + validInput} id="mod-mock-client-id-prefix" placeholder={i18next.t("admin.mod-client-id-prefix-ph")} maxLength="256" value={this.state.mod.parameters["client-id-prefix"]||""} onChange={(e) => this.changeMockClientValue(e)}/>
+            {errorJsx}
+          </div>
         </div>
       );
     } else if (this.state.role === "scheme") {
@@ -112,9 +120,13 @@ class MockParams extends Component {
       }
       return (
         <div className="form-group">
-          <label htmlFor="mod-mock-scheme-value">{i18next.t("admin.mod-scheme-value")}</label>
-          <input type="text" className={"form-control" + validInput} id="mod-mock-scheme-value" placeholder={i18next.t("admin.mod-scheme-value-ph")} maxLength="256" value={this.state.mod.parameters["mock-value"]||""} onChange={(e) => this.changeMockSchemeValue(e)}/>
-          {errorJsx}
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-mock-scheme-value">{i18next.t("admin.mod-scheme-value")}</label>
+            </div>
+            <input type="text" className={"form-control" + validInput} id="mod-mock-scheme-value" placeholder={i18next.t("admin.mod-scheme-value-ph")} maxLength="256" value={this.state.mod.parameters["mock-value"]||""} onChange={(e) => this.changeMockSchemeValue(e)}/>
+            {errorJsx}
+          </div>
         </div>
       );
     } else {
