@@ -89,6 +89,8 @@
     "order": "Order",
     "move-up": "Move up",
     "choose-file": "Choose file",
+    "switch-off": "Disable",
+    "switch-on": "Enable",
     "confirm-delete-user-title": "Delete {{user}}",
     "confirm-delete-user": "Are you sure you want to delete {{name}} ({{username}})",
     "success-api-delete-user": "User deleted succesfully",

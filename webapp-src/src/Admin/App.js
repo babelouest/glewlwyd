@@ -385,6 +385,10 @@ class App extends Component {
             this.fetchScopes();
           });
         }
+      } else if (message.type === 'refresh') {
+        if (message.role === 'schemeMod') {
+          this.fetchSchemeMods();
+        }
       }
     });
     
