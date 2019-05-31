@@ -180,7 +180,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             o_free(session_uid);
           } else {
             if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
-              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Error login/password for username %s at IP Address %s", json_string_value(json_object_get(j_param, "username")), ip_source);
+              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Connexion invalid for username %s at IP Address %s", json_string_value(json_object_get(j_param, "username")), ip_source);
             }
             if ((session_uid = get_session_id(config, request)) != NULL && user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (2)");
@@ -205,7 +205,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
 #else
               ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", 1, 0);
 #endif
-          }
+            }
           } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
             response->status = 401;
           } else {
@@ -221,6 +221,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             ulfius_set_string_body_response(response, 400, "bad scheme parameters");
           } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - Connexion invalid for username %s at IP Address %s", json_string_value(json_object_get(j_param, "username")), ip_source);
             response->status = 401;
           } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
             response->status = 404;
