@@ -523,11 +523,15 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         if (secret_len >= json_integer_value(json_object_get((json_t *)cls, "secret_minimum_size")) && json_string_length(json_object_get(j_scheme_data, "secret")) < 256) {
           if (json_string_length(json_object_get(j_scheme_data, "secret")) >= 8) {
             if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "HOTP")) {
-              if (json_integer_value(json_object_get(j_scheme_data, "moving_factor")) < 0) {
+              if (json_object_get((json_t *)cls, "hotp-allow") == json_false()) {
+                j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "HOTP Type not allowed");
+              } else if (!json_is_integer(json_object_get(j_scheme_data, "moving_factor")) || json_integer_value(json_object_get(j_scheme_data, "moving_factor")) < 0) {
                 j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "moving_factor is optional and must be a positive integer or zero");
               }
             } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "TOTP")) {
-              if (json_integer_value(json_object_get(j_scheme_data, "time_step_size")) <= 0 || json_integer_value(json_object_get(j_scheme_data, "time_step_size")) > 120) {
+              if (json_object_get((json_t *)cls, "totp-allow") == json_false()) {
+                j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "TOTP Type not allowed");
+              } else if (json_integer_value(json_object_get(j_scheme_data, "time_step_size")) <= 0 || json_integer_value(json_object_get(j_scheme_data, "time_step_size")) > 120) {
                 j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "time_step_size is optional and must be a positive integer up to 120");
               }
             } else if (0 != o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "NONE")) {
