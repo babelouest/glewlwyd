@@ -89,6 +89,8 @@
     "order": "Rang",
     "move-up": "Monter",
     "choose-file": "Choisir un fichier",
+    "switch-off": "Désactiver",
+    "switch-on": "Activer",
     "confirm-delete-user-title": "Suppression de l'utilisateur {{user}}",
     "confirm-delete-user": "Êtes-vous sûr de vouloir supprimer l'utilisateur {{name}} ({{username}})",
     "success-api-delete-user": "Utilisateur supprimé",
