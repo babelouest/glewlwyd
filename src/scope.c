@@ -467,8 +467,6 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
       }
       json_decref(j_scope);
     }
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error get_auth_scheme_list_from_scope_list");
   }
   json_decref(j_user);
   o_free(session_hash);
