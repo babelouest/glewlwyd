@@ -70,6 +70,12 @@ class Navbar extends Component {
         </li>
       );
     });
+    var passwordJsx;
+    if (!this.state.config.params.delegate) {
+      passwordJsx = <li className={"nav-item" + (this.state.curNav==="password"?" active":"")}>
+        <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "password", null)}>{i18next.t("profile.menu-password")}</a>
+      </li>
+    }
 		return (
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
         <a className="navbar-brand" href="#">Glewlwyd</a>
@@ -81,9 +87,7 @@ class Navbar extends Component {
             <li className={"nav-item" + (this.state.curNav==="profile"?" active":"")}>
               <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "profile", null)}>{i18next.t("profile.menu-user")}</a>
             </li>
-            <li className={"nav-item" + (this.state.curNav==="password"?" active":"")}>
-              <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "password", null)}>{i18next.t("profile.menu-password")}</a>
-            </li>
+            {passwordJsx}
             {schemeList}
           </ul>
           <div className="btn-group" role="group">

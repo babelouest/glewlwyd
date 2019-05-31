@@ -21,6 +21,7 @@ class Users extends Component {
     this.searchUsers = this.searchUsers.bind(this);
     this.navigate = this.navigate.bind(this);
     this.navigatePerPage = this.navigatePerPage.bind(this);
+    this.delegateUser = this.delegateUser.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -64,6 +65,10 @@ class Users extends Component {
     messageDispatcher.sendMessage('App', {type: "search", role: "user", pattern: this.state.users.searchPattern, offset: this.state.users.offset, limit: limit});
   }
   
+  delegateUser(e, user) {
+    window.open(this.state.config.ProfileUrl + "?delegate=" + user.username, '_blank');
+  }
+  
 	render() {
     var users = [];
     this.state.users.list.forEach((user, index) => {
@@ -75,6 +80,9 @@ class Users extends Component {
         <td>{(user.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
         <td>
           <div className="btn-group" role="group">
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.delegateUser(e, user)} title={i18next.t("admin.delegate")}>
+              <i className="fas fa-id-card"></i>
+            </button>
             <button type="button" className="btn btn-secondary" onClick={(e) => this.editUser(e, user)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
             </button>
