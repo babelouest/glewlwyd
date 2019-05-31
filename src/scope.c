@@ -361,13 +361,13 @@ static int is_scheme_valid_for_session(struct config_elements * config, json_int
 int is_scope_list_valid_for_session(struct config_elements * config, const char * scope_list, const char * session_uid) {
   json_t * j_validated_scope_list = get_validated_auth_scheme_list_from_scope_list(config, scope_list, session_uid), * j_scope, * j_group, * j_scheme;
   int ret = G_OK, ret_group;
-  size_t index_scope, index_scheme;
-  const char * key_group;
+  size_t index_scheme;
+  const char * key_group, * key_scope;
   
   if (check_result_value(j_validated_scope_list, G_OK)) {
-    json_array_foreach(json_object_get(j_validated_scope_list, "scheme"), index_scope, j_scope) {
+    json_object_foreach(json_object_get(j_validated_scope_list, "scheme"), key_scope, j_scope) {
       if (ret == G_OK) {
-        if (json_object_get(j_scope, "available") == json_true() && json_object_get(j_scope, "password_required") == json_true() && json_object_get(j_scope, "password_authenticated") == json_false()) {
+        if ((json_object_get(j_scope, "available") == json_true() && json_object_get(j_scope, "password_required") == json_true() && json_object_get(j_scope, "password_authenticated") == json_false()) || json_object_get(j_scope, "available") == json_false()) {
           ret = G_ERROR_UNAUTHORIZED;
         } else {
           json_object_foreach(json_object_get(j_scope, "schemes"), key_group, j_group) {
@@ -467,6 +467,8 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
       }
       json_decref(j_scope);
     }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error get_auth_scheme_list_from_scope_list");
   }
   json_decref(j_user);
   o_free(session_hash);
