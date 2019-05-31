@@ -1641,7 +1641,7 @@ int callback_glewlwyd_user_get_profile (const struct _u_request * request, struc
   now += GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE;
   ts = *gmtime(&now);
   strftime(expires, 128, "%a, %d %b %Y %T %Z", &ts);
-  if (!o_strlen(u_map_get(request->map_url, "impersonate"))) {
+  if (!o_strlen(u_map_get(request->map_url, "username"))) {
     session_uid = get_session_id(config, request);
     if (session_uid != NULL && o_strlen(session_uid)) {
       j_session = get_users_for_session(config, session_uid);
