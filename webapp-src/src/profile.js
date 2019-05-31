@@ -22,8 +22,19 @@ var initApp = () => {
   .then((frontEndConfig) => {
     apiManager.request(frontEndConfig.GlewlwydUrl + "config/")
     .then((serverConfig) => {
-      apiManager.setConfig(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix);
-      var config = Object.assign({params: {scope: getParameterByName("scope"), client_id: getParameterByName("client_id"), callback_url: getParameterByName("callback_url")}}, frontEndConfig, serverConfig);
+      if (getParameterByName("delegate")) {
+        apiManager.setConfig(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix + "/delegate/" + getParameterByName("delegate"));
+      } else {
+        apiManager.setConfig(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix);
+      }
+      var config = Object.assign({
+        params: {
+          scope: getParameterByName("scope"), 
+          client_id: getParameterByName("client_id"), 
+          callback_url: getParameterByName("callback_url"),
+          delegate: getParameterByName("delegate")||false
+        }
+      }, frontEndConfig, serverConfig);
       ReactDOM.render(<App config={config} />, document.getElementById('root'));
     })
     .fail((error) => {

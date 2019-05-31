@@ -6,6 +6,7 @@ import Notification from '../lib/Notification';
 
 import Navbar from './Navbar';
 import User from './User';
+import UserDelegate from './UserDelegate';
 import PasswordModal from './PasswordModal';
 import SchemePage from './SchemePage';
 import Confirm from '../Modal/Confirm';
@@ -75,29 +76,39 @@ class App extends Component {
   }
   
   fetchProfile() {
-    apiManager.glewlwydRequest("/profile")
-    .then((res) => {
-      if (!res[0] || res[0].scope.indexOf(this.state.config.profile_scope) < 0) {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
-      } else {
-        this.setState({loggedIn: true, profileList: res}, () => {
-          apiManager.glewlwydRequest("/profile/scheme")
-          .then((res) => {
-            this.setState({schemeList: res});
-          })
-          .fail(() => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    if (!this.state.config.params.delegate) {
+      apiManager.glewlwydRequest("/profile")
+      .then((res) => {
+        if (!res[0] || res[0].scope.indexOf(this.state.config.profile_scope) < 0) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+        } else {
+          this.setState({loggedIn: true, profileList: res}, () => {
+            apiManager.glewlwydRequest("/profile/scheme")
+            .then((res) => {
+              this.setState({schemeList: res});
+            })
+            .fail(() => {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+            });
           });
+        }
+      })
+      .fail((error) => {
+        if (error.status === 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        }
+      });
+    } else {
+        apiManager.glewlwydRequest("/profile/scheme")
+        .then((res) => {
+          this.setState({loggedIn: true, profileList: [{username: this.state.config.params.delegate}], schemeList: res});
+        })
+        .fail(() => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         });
-      }
-    })
-    .fail((error) => {
-      if (error.status === 401) {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
-      } else {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-      }
-    });
+    }
   }
 
   closePasswordModal(result, data) {
@@ -106,6 +117,12 @@ class App extends Component {
   
 	render() {
     if (this.state.config) {
+      var userJsx = "";
+      if (this.state.config.params.delegate) {
+        userJsx = <UserDelegate config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} />
+      } else {
+        userJsx = <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false}/>
+      }
       return (
         <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
           <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
@@ -116,7 +133,7 @@ class App extends Component {
               <div id="carouselBody" className="carousel slide" data-ride="carousel">
                 <div className="carousel-inner">
                   <div className={"carousel-item" + (this.state.curNav==="profile"?" active":"")}>
-                    <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false}/>
+                    {userJsx}
                   </div>
                   <div className={"carousel-item" + (this.state.curNav!=="profile"?" active":"")}>
                     <SchemePage config={this.state.config} module={this.state.curNav} name={this.state.module} profile={(this.state.profileList?this.state.profileList[0]:false)} />
