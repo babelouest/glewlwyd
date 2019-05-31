@@ -54,7 +54,7 @@ class SchemeOTP extends Component {
             time_step_size: 30
           }});
         } else {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }
       })
       .always(() => {
@@ -125,7 +125,7 @@ class SchemeOTP extends Component {
       this.setState({myOtp: myOtp});
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
     });
   }
   
@@ -137,12 +137,12 @@ class SchemeOTP extends Component {
         hasError = true;
       }
       if (this.state.myOtp.type === "HOTP") {
-        if (this.state.myOtp.moving_factor === "") {
+        if (this.state.myOtp.moving_factor === "" || this.state.myOtp.moving_factor === undefined) {
           errorList.moving_factor = i18next.t("profile.scheme-otp-moving_factor-error");
           hasError = true;
         }
       } else if (this.state.myOtp.type === "TOTP") {
-        if (this.state.myOtp.time_step_size === "") {
+        if (this.state.myOtp.time_step_size === "" || this.state.myOtp.time_step_size === undefined) {
           errorList.time_step_size = i18next.t("profile.scheme-otp-time_step_size-error");
           hasError = true;
         }

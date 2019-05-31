@@ -18,27 +18,27 @@ class OTPParams extends Component {
       props.mod.parameters["issuer"] = location.host;
     }
 
-    if (!props.mod.parameters["otp-length"]) {
+    if (props.mod.parameters["otp-length"] === undefined) {
       props.mod.parameters["otp-length"] = 6;
     }
 
-    if (!props.mod.parameters["hotp-allow"]) {
+    if (props.mod.parameters["hotp-allow"] === undefined) {
       props.mod.parameters["hotp-allow"] = true;
     }
 
-    if (!props.mod.parameters["hotp-window"]) {
+    if (props.mod.parameters["hotp-window"] === undefined) {
       props.mod.parameters["hotp-window"] = 0;
     }
 
-    if (!props.mod.parameters["totp-allow"]) {
+    if (props.mod.parameters["totp-allow"] === undefined) {
       props.mod.parameters["totp-allow"] = true;
     }
 
-    if (!props.mod.parameters["totp-window"]) {
+    if (props.mod.parameters["totp-window"] === undefined) {
       props.mod.parameters["totp-window"] = 0;
     }
 
-    if (!props.mod.parameters["totp-start-offset"]) {
+    if (props.mod.parameters["totp-start-offset"] === undefined) {
       props.mod.parameters["totp-start-offset"] = 0;
     }
 

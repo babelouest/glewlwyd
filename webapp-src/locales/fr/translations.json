@@ -168,6 +168,7 @@
     "mod-expiration-ph": "Ex: 600",
     "mod-max-use": "Nombre maximal d'utilisation par session (0: illimité)",
     "mod-max-use-ph": "Ex: 2",
+    "mod-allow-user-register": "Autoriser les utilisateurs à s'enregistrer",
     "mod-type": "Type",
     "mod-type-select": "Choisir un type",
     "mod-readonly": "Lecture seule",

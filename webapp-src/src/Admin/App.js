@@ -419,7 +419,7 @@ class App extends Component {
       if (error.status === 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
       } else {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-connect")});
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
       }
     });
   }
