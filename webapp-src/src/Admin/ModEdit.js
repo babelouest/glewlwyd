@@ -20,6 +20,10 @@ class ModEdit extends Component {
       props.mod.max_use = 0;
     }
 
+    if (props.mod.allow_user_register === undefined) {
+      props.mod.allow_user_register = true;
+    }
+
     this.state = {
       config: props.config,
       title: props.title,
@@ -66,6 +70,7 @@ class ModEdit extends Component {
     this.changeDisplayName = this.changeDisplayName.bind(this);
     this.changeType = this.changeType.bind(this);
     this.toggleReadonly = this.toggleReadonly.bind(this);
+    this.toggleAllowUserRegister = this.toggleAllowUserRegister.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -80,6 +85,10 @@ class ModEdit extends Component {
     
     if (!nextProps.mod.max_use) {
       nextProps.mod.max_use = 0;
+    }
+
+    if (nextProps.mod.allow_user_register === undefined) {
+      nextProps.mod.allow_user_register = true;
     }
 
     this.setState({
@@ -143,6 +152,12 @@ class ModEdit extends Component {
     this.setState({mod: mod});
   }
   
+  toggleAllowUserRegister() {
+    var mod = this.state.mod;
+    mod.allow_user_register = !mod.allow_user_register;
+    this.setState({mod: mod});
+  }
+  
 	render() {
     var typeList = [];
     var modType;
@@ -174,7 +189,8 @@ class ModEdit extends Component {
     var readonly = "";
     var schemeParams = "";
     if (this.state.role !== "scheme") {
-      readonly = <div className="form-group">
+      readonly = 
+      <div className="form-group">
         <div className="input-group mb-3">
           <div className="input-group-prepend">
             <label className="input-group-text" htmlFor="mod-readonly">{i18next.t("admin.mod-readonly")}</label>
@@ -200,6 +216,16 @@ class ModEdit extends Component {
               <label className="input-group-text" htmlFor="mod-max-use">{i18next.t("admin.mod-max-use")}</label>
             </div>
             <input type="number" min="0" step="1" className="form-control" id="mod-max-use" placeholder={i18next.t("admin.mod-max-use-ph")} value={this.state.mod.max_use} onChange={(e) => this.changeMaxUse(e)}/>
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-allow-user-register">{i18next.t("admin.mod-allow-user-register")}</label>
+            </div>
+            <div className="input-group-text">
+              <input type="checkbox" className="form-control" id="mod-allow-user-register" onChange={(e) => this.toggleAllowUserRegister(e)} checked={this.state.mod.allow_user_register} />
+            </div>
           </div>
         </div>
       </div>
