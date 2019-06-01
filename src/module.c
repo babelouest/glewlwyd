@@ -1573,7 +1573,7 @@ int manage_plugin_module(struct config_elements * config, const char * name, int
       }
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
       if (instance->enabled) {
-        if (instance->module->plugin_module_close(config->config_p, instance->cls) == G_OK) {
+        if (instance->module->plugin_module_close(config->config_p, instance->name, instance->cls) == G_OK) {
           instance->enabled = 0;
           ret = G_OK;
         } else {

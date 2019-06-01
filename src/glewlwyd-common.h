@@ -234,7 +234,7 @@ struct _plugin_module {
   json_t * (* plugin_module_load)(struct config_plugin * config);
   int      (* plugin_module_unload)(struct config_plugin * config);
   int      (* plugin_module_init)(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls);
-  int      (* plugin_module_close)(struct config_plugin * config, void * cls);
+  int      (* plugin_module_close)(struct config_plugin * config, const char * name, void * cls);
 };
 
 /**
@@ -296,8 +296,8 @@ struct config_elements {
  */
 struct config_plugin {
   struct config_elements * glewlwyd_config;
-  int      (* glewlwyd_callback_add_plugin_endpoint)(struct config_plugin * config, const char * method, const char * prefix, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
-  int      (* glewlwyd_callback_remove_plugin_endpoint)(struct config_plugin * config, const char * method, const char * prefix, const char * url);
+  int      (* glewlwyd_callback_add_plugin_endpoint)(struct config_plugin * config, const char * method, const char * name, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
+  int      (* glewlwyd_callback_remove_plugin_endpoint)(struct config_plugin * config, const char * method, const char * name, const char * url);
   
   // Session callback functions
   json_t * (* glewlwyd_callback_check_session_valid)(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
@@ -419,6 +419,6 @@ int      user_auth_scheme_module_validate(struct config_module * config, const s
 json_t * plugin_module_load(struct config_plugin * config);
 int      plugin_module_unload(struct config_plugin * config);
 int      plugin_module_init(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls);
-int      plugin_module_close(struct config_plugin * config, void * cls);
+int      plugin_module_close(struct config_plugin * config, const char * name, void * cls);
 
 #endif
