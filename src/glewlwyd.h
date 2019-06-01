@@ -198,6 +198,7 @@ int delete_client_module(struct config_elements * config, const char * name);
 int manage_client_module(struct config_elements * config, const char * name, int action);
 
 // Plugin module functions
+json_t * get_plugin_module_list_for_user(struct config_elements * config);
 json_t * get_plugin_module_list(struct config_elements * config);
 json_t * get_plugin_module(struct config_elements * config, const char * name);
 json_t * is_plugin_module_valid(struct config_elements * config, json_t * j_module, int add);
@@ -268,6 +269,7 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
 int callback_glewlwyd_user_get_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_update_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_update_password (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_get_plugin_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_session_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_scheme_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_session (const struct _u_request * request, struct _u_response * response, void * user_data);
