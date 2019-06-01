@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 
 import apiManager from '../lib/APIManager';
-import messageDispatcher from '../lib/MessageDispatcher';
-import Notification from '../lib/Notification';
 
 class UserDelegate extends Component {
   constructor(props) {

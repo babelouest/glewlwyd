@@ -6,6 +6,7 @@ import Notification from '../lib/Notification';
 
 import Navbar from './Navbar';
 import User from './User';
+import Session from './Session';
 import UserDelegate from './UserDelegate';
 import PasswordModal from './PasswordModal';
 import SchemePage from './SchemePage';
@@ -36,6 +37,8 @@ class App extends Component {
       if (message.type === 'nav') {
         if (message.page === "password") {
           $("#passwordModal").modal({keyboard: false, show: true});
+        } else if (message.page === "session") {
+          this.setState({curNav: "session"});
         } else if (message.page === "profile") {
           this.setState({curNav: "profile"});
         } else {
@@ -117,7 +120,7 @@ class App extends Component {
   
 	render() {
     if (this.state.config) {
-      var userJsx = "";
+      var userJsx = "", sessionJsx;
       if (this.state.config.params.delegate) {
         userJsx = <UserDelegate config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} />
       } else {
@@ -135,7 +138,10 @@ class App extends Component {
                   <div className={"carousel-item" + (this.state.curNav==="profile"?" active":"")}>
                     {userJsx}
                   </div>
-                  <div className={"carousel-item" + (this.state.curNav!=="profile"?" active":"")}>
+                  <div className={"carousel-item" + (this.state.curNav==="session"?" active":"")}>
+                    <Session config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} />
+                  </div>
+                  <div className={"carousel-item" + (this.state.curNav!=="profile"&&this.state.curNav!=="session"?" active":"")}>
                     <SchemePage config={this.state.config} module={this.state.curNav} name={this.state.module} profile={(this.state.profileList?this.state.profileList[0]:false)} />
                   </div>
                 </div>
