@@ -28,6 +28,11 @@ DROP TABLE IF EXISTS gpg_refresh_token_scope;
 DROP TABLE IF EXISTS gpg_refresh_token;
 DROP TABLE IF EXISTS gpg_code_scope;
 DROP TABLE IF EXISTS gpg_code;
+DROP TABLE IF EXISTS gs_code;
+DROP TABLE IF EXISTS gs_webauthn_assertion;
+DROP TABLE IF EXISTS gs_webauthn_credential;
+DROP TABLE IF EXISTS gs_webauthn_user;
+DROP TABLE IF EXISTS gs_otp;
 
 CREATE TABLE g_user_module_instance (
   gumi_id INT(11) PRIMARY KEY AUTO_INCREMENT,
@@ -266,6 +271,70 @@ CREATE TABLE gpg_access_token_scope (
   FOREIGN KEY(gpga_id) REFERENCES gpg_access_token(gpga_id) ON DELETE CASCADE
 );
 
-INSERT INTO g_plugin_module_instance (gpmi_module, gpmi_name, gpmi_display_name, gpmi_parameters) VALUES ('oauth2-glewlwyd', 'glwd', 'OAuth2 Glewlwyd plugin', '{"url":"glwd","jwt-type":"sha","jwt-key-size":"256","key":"secret","access-token-duration":3600,"refresh-token-duration":1209600,"code-duration":600,"refresh-token-rolling":true,"auth-type-code-enabled":true,"auth-type-implicit-enabled":true,"auth-type-password-enabled":true,"auth-type-client-enabled":true,"auth-type-refresh-enabled":true,"scope":[{"name":"g_profile","refresh-token-rolling":true},{"name":"scope1","refresh-token-rolling":true},{"name":"scope2","refresh-token-rolling":false,"refresh-token-duration":7200}]}');
+CREATE TABLE gs_code (
+  gsc_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gsc_mod_name VARCHAR(128) NOT NULL,
+  gsc_issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gsc_username VARCHAR(128) NOT NULL,
+  gsc_enabled TINYINT(1) DEFAULT 1,
+  gsc_code_hash VARCHAR(128),
+  gsc_result TINYINT(1) DEFAULT 0
+);
+CREATE INDEX i_gssc_username ON gs_code(gsc_username);
+
+CREATE TABLE gs_webauthn_user (
+  gswu_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gswu_mod_name VARCHAR(128) NOT NULL,
+  gswu_username VARCHAR(128) UNIQUE NOT NULL,
+  gswu_user_id VARCHAR(128) NOT NULL
+);
+CREATE INDEX i_gswu_username ON gs_webauthn_user(gswu_username);
+
+CREATE TABLE gs_webauthn_credential (
+  gswc_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gswu_id INT(11) NOT NULL,
+  gswc_session_hash VARCHAR(128) NOT NULL,
+  gswc_name VARCHAR(128),
+  gswc_challenge_hash VARCHAR(128),
+  gswc_credential_id VARCHAR(256),
+  gswc_certificate VARCHAR(128),
+  gswc_public_key TEXT DEFAULT NULL,
+  gswc_counter INT(11) DEFAULT 0,
+  gswc_created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gswc_status TINYINT(1) DEFAULT 0, -- 0 new, 1 registered, 2 error, 3 disabled, 4 removed
+  FOREIGN KEY(gswu_id) REFERENCES gs_webauthn_user(gswu_id) ON DELETE CASCADE
+);
+CREATE INDEX i_gswc_credential_id ON gs_webauthn_credential(gswc_credential_id);
+CREATE INDEX i_gswc_session_hash ON gs_webauthn_credential(gswc_session_hash);
+
+CREATE TABLE gs_webauthn_assertion (
+  gswa_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gswu_id INT(11) NOT NULL,
+  gswc_id INT(11),
+  gswa_session_hash VARCHAR(128) NOT NULL,
+  gswa_challenge_hash VARCHAR(128),
+  gswa_counter INT(11) DEFAULT 0,
+  gswa_issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gswa_status TINYINT(1) DEFAULT 0, -- 0 new, 1 verified, 2 not verified, 3 error
+  gswa_mock TINYINT(1) DEFAULT 0,
+  FOREIGN KEY(gswu_id) REFERENCES gs_webauthn_user(gswu_id) ON DELETE CASCADE,
+  FOREIGN KEY(gswc_id) REFERENCES gs_webauthn_credential(gswc_id) ON DELETE CASCADE
+);
+CREATE INDEX i_gswa_session_hash ON gs_webauthn_assertion(gswa_session_hash);
+
+CREATE TABLE gs_otp (
+  gso_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gso_mod_name VARCHAR(128) NOT NULL,
+  gso_issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gso_last_used TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gso_username VARCHAR(128) NOT NULL,
+  gso_otp_type TINYINT(1) DEFAULT 0, -- 0 HOTP, 1 TOTP
+  gso_secret VARCHAR(128) NOT NULL,
+  gso_hotp_moving_factor INT(11),
+  gso_totp_time_step_size INT(11)
+);
+CREATE INDEX i_gsso_username ON gs_otp(gso_username);
+
+INSERT INTO g_plugin_module_instance (gpmi_module, gpmi_name, gpmi_display_name, gpmi_parameters) VALUES ('oauth2-glewlwyd', 'glwd', 'OAuth2 Glewlwyd plugin', '{"jwt-type":"sha","jwt-key-size":"256","key":"secret","access-token-duration":3600,"refresh-token-duration":1209600,"code-duration":600,"refresh-token-rolling":true,"auth-type-code-enabled":true,"auth-type-implicit-enabled":true,"auth-type-password-enabled":true,"auth-type-client-enabled":true,"auth-type-refresh-enabled":true,"scope":[{"name":"g_profile","refresh-token-rolling":true},{"name":"scope1","refresh-token-rolling":true},{"name":"scope2","refresh-token-rolling":false,"refresh-token-duration":7200}]}');
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 1);
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1);
