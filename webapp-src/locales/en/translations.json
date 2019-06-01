@@ -441,6 +441,7 @@
     "requires-profile-scope": "Profile scope required",
     "menu-user": "Personal data",
     "menu-password": "Password",
+    "menu-session": "Sessions",
     "hello": "Welcome {{name}}",
     "hello-delegate": "Delegate {{name}}",
     "save": "Save",
@@ -502,7 +503,8 @@
     "scheme-otp-save-ok": "OTP saved",
     "scheme-otp-save-error": "Error while saving OTP",
     "scheme-otp-generate-secret": "Generate",
-    "scheme-otp-none-specified": "No OTP specified"
+    "scheme-otp-none-specified": "No OTP specified",
+    "session-title": "Sessions and tokens"
   },
   "modal": {
     "close": "Close",

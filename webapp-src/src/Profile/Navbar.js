@@ -87,6 +87,9 @@ class Navbar extends Component {
             <li className={"nav-item" + (this.state.curNav==="profile"?" active":"")}>
               <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "profile", null)}>{i18next.t("profile.menu-user")}</a>
             </li>
+            <li className={"nav-item" + (this.state.curNav==="session"?" active":"")}>
+              <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "session", null)}>{i18next.t("profile.menu-session")}</a>
+            </li>
             {passwordJsx}
             {schemeList}
           </ul>
