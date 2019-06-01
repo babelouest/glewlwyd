@@ -35,7 +35,7 @@
  * - json_t * plugin_module_load(struct config_plugin * config)
  * - int plugin_module_unload(struct config_plugin * config)
  * - int plugin_module_init(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls)
- * - int plugin_module_close(struct config_plugin * config, void * cls)
+ * - int plugin_module_close(struct config_plugin * config, const char * name, void * cls)
  *
  * The purpose of Glewlwyd core is to provide a environment to manage users, clients, connections and scopes, and to provide webservices as modules
  * Although, the purpose of a plugin is to provide web services for specific goals.
@@ -44,8 +44,8 @@
  *
  * struct config_plugin {
  *   struct config_elements * glewlwyd_config;
- *   int      (* glewlwyd_callback_add_plugin_endpoint)(struct config_plugin * config, const char * method, const char * prefix, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
- *   int      (* glewlwyd_callback_remove_plugin_endpoint)(struct config_plugin * config, const char * method, const char * prefix, const char * url);
+ *   int      (* glewlwyd_callback_add_plugin_endpoint)(struct config_plugin * config, const char * method, const char * name, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
+ *   int      (* glewlwyd_callback_remove_plugin_endpoint)(struct config_plugin * config, const char * method, const char * name, const char * url);
  *   
  *   // Session callback functions
  *   json_t * (* glewlwyd_callback_check_session_valid)(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
@@ -191,8 +191,9 @@ int plugin_module_init(struct config_plugin * config, const char * name, json_t 
  * @parameter cls: pointer to the void * cls value allocated in client_module_init
  * 
  */
-int plugin_module_close(struct config_plugin * config, void * cls) {
+int plugin_module_close(struct config_plugin * config, const char * name, void * cls) {
   UNUSED(config);
+  UNUSED(name);
   UNUSED(cls);
   y_log_message(Y_LOG_LEVEL_DEBUG, "plugin_module_close - success");
   return G_OK;

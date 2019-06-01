@@ -531,7 +531,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     for (i=0; i<pointer_list_size((*config)->plugin_module_instance_list); i++) {
       struct _plugin_module_instance * instance = (struct _plugin_module_instance *)pointer_list_get_at((*config)->plugin_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->enabled && instance->module->plugin_module_close((*config)->config_p, instance->cls) != G_OK) {
+        if (instance->enabled && instance->module->plugin_module_close((*config)->config_p, instance->name, instance->cls) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error plugin_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
         }
         o_free(instance->name);

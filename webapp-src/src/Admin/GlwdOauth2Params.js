@@ -167,10 +167,6 @@ class GlwdOauth2Params extends Component {
   
   checkParameters() {
     var errorList = {}, hasError = false;
-    if (!this.state.mod.parameters["url"]) {
-      hasError = true;
-      errorList["url"] = "admin.mod-glwd-url-error"
-    }
     if (!this.state.mod.parameters["key"]) {
       hasError = true;
       errorList["key"] = "admin.mod-glwd-key-error"
@@ -297,15 +293,6 @@ class GlwdOauth2Params extends Component {
     });
     return (
       <div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-glwd-url">{i18next.t("admin.mod-glwd-url")}</label>
-            </div>
-            <input type="text" className={this.state.errorList["url"]?"form-control is-invalid":"form-control"} id="mod-glwd-url" onChange={(e) => this.changeParam(e, "url")} value={this.state.mod.parameters["url"]} placeholder={i18next.t("admin.mod-glwd-url-ph")} />
-          </div>
-          {this.state.errorList["url"]?<span className="error-input">{i18next.t(this.state.errorList["url"])}</span>:""}
-        </div>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">

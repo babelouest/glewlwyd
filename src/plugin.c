@@ -29,12 +29,12 @@
 #include <ctype.h>
 #include "glewlwyd.h"
 
-int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const char * method, const char * prefix, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data) {
+int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const char * method, const char * name, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data) {
   int ret;
   char * p_url;
 
-  if (config != NULL && config->glewlwyd_config != NULL && config->glewlwyd_config->instance != NULL && method != NULL && prefix != NULL && url != NULL && callback != NULL && 0 != o_strncasecmp(prefix, "auth", o_strlen("auth"))) {
-    p_url = msprintf("%s/%s", prefix, url);
+  if (config != NULL && config->glewlwyd_config != NULL && config->glewlwyd_config->instance != NULL && method != NULL && name != NULL && url != NULL && callback != NULL && 0 != o_strncasecmp(name, "auth", o_strlen("auth"))) {
+    p_url = msprintf("%s/%s", name, url);
     if (p_url != NULL) {
       y_log_message(Y_LOG_LEVEL_INFO, "add url %s %s/%s", method, config->glewlwyd_config->api_prefix, p_url);
       if (ulfius_add_endpoint_by_val(config->glewlwyd_config->instance, method, config->glewlwyd_config->api_prefix, p_url, GLEWLWYD_CALLBACK_PRIORITY_PLUGIN + priority, callback, user_data) != U_OK) {
@@ -55,12 +55,12 @@ int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const c
   return ret;
 }
 
-int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, const char * method, const char * prefix, const char * url) {
+int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, const char * method, const char * name, const char * url) {
   int ret;
   char * p_url;
 
-  if (config != NULL && config->glewlwyd_config != NULL && config->glewlwyd_config->instance != NULL && method != NULL && prefix != NULL && url != NULL) {
-    p_url = msprintf("%s/%s", prefix, url);
+  if (config != NULL && config->glewlwyd_config != NULL && config->glewlwyd_config->instance != NULL && method != NULL && name != NULL && url != NULL) {
+    p_url = msprintf("%s/%s", name, url);
     if (p_url != NULL) {
       ret = ulfius_remove_endpoint_by_val(config->glewlwyd_config->instance, method, config->glewlwyd_config->api_prefix, p_url);
       o_free(p_url);

@@ -1941,8 +1941,6 @@ static int check_parameters (json_t * j_params) {
   
   if (j_params == NULL) {
     return G_ERROR_PARAM;
-  } else if (json_object_get(j_params, "url") == NULL || !json_is_string(json_object_get(j_params, "url")) || !json_string_length(json_object_get(j_params, "url"))) {
-    return G_ERROR_PARAM;
   } else if (json_object_get(j_params, "jwt-type") == NULL || !json_is_string(json_object_get(j_params, "jwt-type"))) {
     return G_ERROR_PARAM;
   } else if (0 != o_strcmp("rsa", json_string_value(json_object_get(j_params, "jwt-type"))) &&
@@ -2234,14 +2232,14 @@ int plugin_module_init(struct config_plugin * config, const char * name, json_t 
                 }
                 ((struct _oauth2_config *)*cls)->glewlwyd_resource_config->jwt_alg = alg;
                 // Add endpoints
-                y_log_message(Y_LOG_LEVEL_DEBUG, "Add endpoints with plugin prefix %s", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")));
-                if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)*cls) != G_OK || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "POST", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_token, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "*", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_get_profile, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "profile/token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_refresh_token_list_get, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "profile/token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_disable_refresh_token, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "*", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "url")), "profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oauth2_clean, NULL)) {
+                y_log_message(Y_LOG_LEVEL_DEBUG, "Add endpoints with plugin prefix %s", name);
+                if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)*cls) != G_OK || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_token, (void*)*cls) || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_get_profile, (void*)*cls) || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "profile/token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_refresh_token_list_get, (void*)*cls) || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "profile/token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_disable_refresh_token, (void*)*cls) || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oauth2_clean, NULL)) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error adding endpoints");
                   ret = G_ERROR;
                 } else {
@@ -2279,7 +2277,7 @@ int plugin_module_init(struct config_plugin * config, const char * name, json_t 
   return ret;
 }
 
-int plugin_module_close(struct config_plugin * config, void * cls) {
+int plugin_module_close(struct config_plugin * config, const char * name, void * cls) {
   UNUSED(config);
   if (cls != NULL) {
     pthread_mutex_destroy(&((struct _oauth2_config *)cls)->insert_lock);
