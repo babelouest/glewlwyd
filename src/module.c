@@ -1279,6 +1279,32 @@ json_t * get_plugin_module_list(struct config_elements * config) {
   return j_return;
 }
 
+json_t * get_plugin_module_list_for_user(struct config_elements * config) {
+  json_t * j_module_list = get_plugin_module_list(config), * j_element, * j_return;
+  size_t index;
+  
+  if (check_result_value(j_module_list, G_OK)) {
+    j_return = json_pack("{sis[]}", "result", G_OK, "module");
+    if (j_return != NULL) {
+      json_array_foreach(json_object_get(j_module_list, "module"), index, j_element) {
+        if (json_object_get(j_element, "enabled") == json_true()) {
+          json_object_del(j_element, "parameters");
+          json_object_del(j_element, "enabled");
+          json_array_append(json_object_get(j_return, "module"), j_element);
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module_list_for_user - Error allocating resources for j_return");
+      j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module_list_for_user - Error get_plugin_module_list");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  json_decref(j_module_list);
+  return j_return;
+}
+
 json_t * get_plugin_module(struct config_elements * config, const char * name) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
