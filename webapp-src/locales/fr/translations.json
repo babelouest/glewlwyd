@@ -504,7 +504,21 @@
     "scheme-otp-save-error": "Erreur lors de la sauvegarde",
     "scheme-otp-generate-secret": "Générer",
     "scheme-otp-none-specified": "Pas d'OTP spécifié",
-    "session-title": "Sessions et tokens"
+    "session-title": "Sessions et tokens",
+    "session-table": "Sessions",
+    "session-token-oauth2-table": "Tokens Oauth2 {{name}}",
+    "session-table-last-login": "Dernière authentification",
+    "session-table-exiration": "Expire le",
+    "session-table-issued-for": "Adresse source",
+    "session-table-user-agent": "User Agent",
+    "session-enabled-true": "Actif",
+    "session-enabled-false": "Inactif",
+    "session-disabled": "Session désactivée",
+    "token-disabled": "Token désactivé",
+    "session-disable-title": "Désactiver une session",
+    "session-disable-message": "Voulez-vous supprimer cette session?",
+    "session-disable-token-title": "Désactiver un token",
+    "session-disable-token-message": "Voulez-vous désactiver ce token"
   },
   "modal": {
     "close": "Fermer",

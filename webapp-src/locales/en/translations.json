@@ -504,7 +504,21 @@
     "scheme-otp-save-error": "Error while saving OTP",
     "scheme-otp-generate-secret": "Generate",
     "scheme-otp-none-specified": "No OTP specified",
-    "session-title": "Sessions and tokens"
+    "session-title": "Sessions and tokens",
+    "session-table": "Sessions",
+    "session-token-oauth2-table": "Tokens Oauth2 {{name}}",
+    "session-table-last-login": "Last login",
+    "session-table-exiration": "Expires on",
+    "session-table-issued-for": "Source address",
+    "session-table-user-agent": "User Agent",
+    "session-enabled-true": "Enabled",
+    "session-enabled-false": "Disabled",
+    "session-disabled": "Session disabled",
+    "token-disabled": "Token disabled",
+    "session-disable-title": "Disable a session",
+    "session-disable-message": "Do you want to disable this session?",
+    "session-disable-token-title": "Disable a token",
+    "session-disable-token-message": "Do you want to disable this token"
   },
   "modal": {
     "close": "Close",
