@@ -2279,6 +2279,7 @@ int plugin_module_init(struct config_plugin * config, const char * name, json_t 
 
 int plugin_module_close(struct config_plugin * config, const char * name, void * cls) {
   UNUSED(config);
+  UNUSED(name);
   if (cls != NULL) {
     pthread_mutex_destroy(&((struct _oauth2_config *)cls)->insert_lock);
     jwt_free(((struct _oauth2_config *)cls)->jwt_key);
