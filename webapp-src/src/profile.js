@@ -27,6 +27,7 @@ var initApp = () => {
       } else {
         apiManager.setConfig(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix);
       }
+      apiManager.setConfigSub(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix);
       var config = Object.assign({
         params: {
           scope: getParameterByName("scope"), 

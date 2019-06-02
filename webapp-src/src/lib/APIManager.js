@@ -1,12 +1,25 @@
 class APIManager {
 	constructor() {
     this.GlewlwydApiPrefix = "";
+    this.GlewlwydApiPrefixSub = "";
 	}
 
   setConfig(GlewlwydApiPrefix) {
     this.GlewlwydApiPrefix = GlewlwydApiPrefix;
   }
 	
+  getConfig(GlewlwydApiPrefix) {
+    return this.GlewlwydApiPrefix;
+  }
+
+  setConfigSub(GlewlwydApiPrefix) {
+    this.GlewlwydApiPrefixSub = GlewlwydApiPrefix;
+  }
+	
+  getConfigSub(GlewlwydApiPrefix) {
+    return this.GlewlwydApiPrefixSub;
+  }
+
 	request(url, method="GET", data=false) {
     if (data && method !== "GET") {
   		return $.ajax({
@@ -26,7 +39,10 @@ class APIManager {
   glewlwydRequest(url, method="GET", data=false) {
     return this.request(this.GlewlwydApiPrefix + url, method, data);
   }
-	
+
+  glewlwydRequestSub(url, method="GET", data=false) {
+    return this.request(this.GlewlwydApiPrefixSub + url, method, data);
+  }
 }
 
 let apiManager = new APIManager();
