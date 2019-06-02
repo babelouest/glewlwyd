@@ -914,14 +914,15 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
 static json_t * refresh_token_list_get(struct _oauth2_config * config, const char * username, const char * pattern, size_t offset, size_t limit, const char * sort) {
   json_t * j_query, * j_result, * j_return, * j_element = NULL;
   int res;
-  size_t index = 0;
+  size_t index = 0, token_hash_dec_len = 0;
   char * pattern_escaped, * pattern_clause;
+  unsigned char token_hash_dec[128];
   
   j_query = json_pack("{sss[ssssssssss]s{ss}sisi}",
                       "table",
                       GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
                       "columns",
-                        "gpgr_token_hash AS token_hash",
+                        "gpgr_token_hash",
                         "gpgr_authorization_type",
                         "gpgr_client_id AS client_id",
                         SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpgr_issued_at) AS issued_at", "gpgr_issued_at AS issued_at", "EXTRACT(EPOCH FROM gpgr_issued_at) AS issued_at"),
@@ -956,6 +957,13 @@ static json_t * refresh_token_list_get(struct _oauth2_config * config, const cha
       json_object_set(j_element, "enabled", (json_integer_value(json_object_get(j_element, "gpgr_enabled"))?json_true():json_false()));
       json_object_del(j_element, "gpgr_rolling_expiration");
       json_object_del(j_element, "gpgr_enabled");
+      if (o_base64_2_base64url((unsigned char *)json_string_value(json_object_get(j_element, "gpgr_token_hash")), json_string_length(json_object_get(j_element, "gpgr_token_hash")), token_hash_dec, &token_hash_dec_len)) {
+        json_object_set_new(j_element, "token_hash", json_stringn((char *)token_hash_dec, token_hash_dec_len));
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_list_get - Error o_base64_2_base64url");
+        json_object_set_new(j_element, "token_hash", json_string("error"));
+      }
+      json_object_del(j_element, "gpgr_token_hash");
       switch(json_integer_value(json_object_get(j_element, "gpgr_authorization_type"))) {
         case GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE:
           json_object_set_new(j_element, "authorization_type", json_string("code"));
@@ -981,52 +989,61 @@ static json_t * refresh_token_list_get(struct _oauth2_config * config, const cha
 static int refresh_token_disable(struct _oauth2_config * config, const char * username, const char * token_hash) {
   json_t * j_query, * j_result;
   int res, ret;
+  unsigned char token_hash_dec[128];
+  size_t token_hash_dec_len = 0;
   
-  j_query = json_pack("{sss[ss]s{ssss}}",
-                      "table",
-                      GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
-                      "columns",
-                        "gpgr_id",
-                        "gpgr_enabled",
-                      "where",
-                        "gpgr_username",
-                        username,
-                        "gpgr_token_hash",
-                        token_hash);
-  res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
-  json_decref(j_query);
-  if (res == H_OK) {
-    if (json_array_size(j_result)) {
-      if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpgr_enabled"))) {
-        j_query = json_pack("{sss{si}s{ssss}}",
-                            "table",
-                            GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
-                            "set",
-                              "gpgr_enabled",
-                              0,
-                            "where",
-                              "gpgr_username",
-                              username,
-                              "gpgr_token_hash",
-                              token_hash);
-        res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
-        json_decref(j_query);
-        if (res == H_OK) {
-          ret = G_OK;
+  if (o_base64url_2_base64((unsigned char *)token_hash, o_strlen(token_hash), token_hash_dec, &token_hash_dec_len)) {
+    j_query = json_pack("{sss[ss]s{ssss%}}",
+                        "table",
+                        GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
+                        "columns",
+                          "gpgr_id",
+                          "gpgr_enabled",
+                        "where",
+                          "gpgr_username",
+                          username,
+                          "gpgr_token_hash",
+                          token_hash_dec,
+                          token_hash_dec_len);
+    res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      if (json_array_size(j_result)) {
+        if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpgr_enabled"))) {
+          j_query = json_pack("{sss{si}s{ssss%}}",
+                              "table",
+                              GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
+                              "set",
+                                "gpgr_enabled",
+                                0,
+                              "where",
+                                "gpgr_username",
+                                username,
+                                "gpgr_token_hash",
+                                token_hash_dec,
+                                token_hash_dec_len);
+          res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+          json_decref(j_query);
+          if (res == H_OK) {
+            ret = G_OK;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (2)");
+            ret = G_ERROR_DB;
+          }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (2)");
-          ret = G_ERROR_DB;
+          ret = G_ERROR_PARAM;
         }
       } else {
-        ret = G_ERROR_PARAM;
+        ret = G_ERROR_NOT_FOUND;
       }
+      json_decref(j_result);
     } else {
-      ret = G_ERROR_NOT_FOUND;
+      y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (1)");
+      ret = G_ERROR_DB;
     }
-    json_decref(j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (1)");
-    ret = G_ERROR_DB;
+    y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error o_base64url_2_base64");
+    ret = G_ERROR_PARAM;
   }
   return ret;
 }
