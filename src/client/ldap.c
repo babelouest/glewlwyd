@@ -118,7 +118,7 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly)
         json_array_append_new(j_error, json_string("search-scope is optional and must be a string"));
       } else if (json_object_get(j_params, "search-scope") == NULL) {
         json_object_set_new(j_params, "search-scope", json_string("one"));
-      } else if (0 == o_strcmp("one", json_string_value(json_object_get(j_params, "search-scope"))) || 0 == o_strcmp("subtree", json_string_value(json_object_get(j_params, "search-scope"))) || 0 == o_strcmp("children", json_string_value(json_object_get(j_params, "search-scope")))) {
+      } else if (0 != o_strcmp("one", json_string_value(json_object_get(j_params, "search-scope"))) && 0 != o_strcmp("subtree", json_string_value(json_object_get(j_params, "search-scope"))) && 0 != o_strcmp("children", json_string_value(json_object_get(j_params, "search-scope")))) {
         json_array_append_new(j_error, json_string("search-scope must have one of the following values: 'one', 'subtree', 'children'"));
       }
       if (json_object_get(j_params, "page-size") != NULL && (!json_is_integer(json_object_get(j_params, "page-size")) || json_integer_value(json_object_get(j_params, "page-size")) <= 0)) {
