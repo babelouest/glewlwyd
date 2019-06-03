@@ -138,8 +138,8 @@ class GlwdOauth2Params extends Component {
   changeScopeOverrideRefreshDuration(e, scope) {
     var mod = this.state.mod;
     mod.parameters["scope"].forEach((curScope) => {
-      if (curScope.name === scope) {
-        curScope["refresh-token-duration"] = e.target.value;
+      if (curScope.name === scope.name) {
+        curScope["refresh-token-duration"] = parseInt(e.target.value);
       }
     });
     this.setState({mod: mod});
@@ -148,7 +148,7 @@ class GlwdOauth2Params extends Component {
   toggleScopeOverrideRolling(e, scope) {
     var mod = this.state.mod;
     mod.parameters["scope"].forEach((curScope) => {
-      if (curScope.name === scope) {
+      if (curScope.name === scope.name) {
         curScope["refresh-token-rolling"] = !curScope["refresh-token-rolling"];
       }
     });
@@ -267,6 +267,7 @@ class GlwdOauth2Params extends Component {
       scopeOverrideList.push(
       <div key={index}>
         <hr/>
+        <h4>{scope.name}</h4>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
