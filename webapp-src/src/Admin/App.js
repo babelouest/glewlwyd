@@ -1115,7 +1115,14 @@ class App extends Component {
           })
           .fail(() => {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
-          });
+          })
+          .always(() => {
+            this.fetchPlugins()
+            .always(() => {
+              this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+                $("#editPluginModal").modal("hide");
+              });
+            });
         })
         .fail(() => {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
@@ -1124,13 +1131,6 @@ class App extends Component {
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
       })
-      .always(() => {
-        this.fetchPlugins()
-        .always(() => {
-          this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
-            $("#editPluginModal").modal("hide");
-          });
-        });
       });
     } else {
       $("#editPluginModal").modal("hide");

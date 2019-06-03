@@ -298,6 +298,7 @@
     "mod-glwd-cert": "Certificat public",
     "mod-glwd-scope-override-scope": "Scope",
     "mod-glwd-scope-override-refresh-duration": "Durée de vie du refresh token (secondes)",
+    "mod-glwd-scope-override-refresh-duration-ph": "Ex: 1209600",
     "mod-scope-override-refresh-rolling": "Rafraîchissement en continu",
     "mod-scope-override-delete": "Supprimer",
     "mod-glwd-url": "Préfixe URL",
