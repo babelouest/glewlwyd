@@ -18,8 +18,7 @@ class LDAPParams extends Component {
       mod: props.mod,
       role: props.role,
       check: props.check,
-      errorList: {},
-      passwordDisabled: (!props.mod.confidential||props.role!=="client")
+      errorList: {}
     };
     
     if (this.state.check) {
@@ -41,7 +40,6 @@ class LDAPParams extends Component {
     this.checkParameters = this.checkParameters.bind(this);
     this.deleteScopeMatch = this.deleteScopeMatch.bind(this);
     this.changeSearchScope = this.changeSearchScope.bind(this);
-    this.toggleConfidential = this.toggleConfidential.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -91,12 +89,6 @@ class LDAPParams extends Component {
     var mod = this.state.mod;
     mod.parameters["data-format"][property][value] = !mod.parameters["data-format"][property][value];
     this.setState({mod: mod});
-  }
-  
-  toggleConfidential() {
-    var mod = this.state.mod;
-    mod.parameters["confidential"] = !mod.parameters["confidential"];
-    this.setState({mod: mod, passwordDisabled: !mod.parameters["confidential"]});
   }
   
   deleteDataFormat(e, property) {
@@ -215,7 +207,7 @@ class LDAPParams extends Component {
         hasError = true;
         errorList["rdn-property"] = i18next.t("admin.mod-ldap-rdn-property-error")
       }
-      if (!this.state.passwordDisabled) {
+      if (!this.state.mod.readonly) {
         if (!this.state.mod.parameters["password-property"]) {
           hasError = true;
           errorList["password-property"] = i18next.t("admin.mod-ldap-password-property-error")
@@ -233,9 +225,9 @@ class LDAPParams extends Component {
     if (!hasError) {
       this.setState({errorList: {}}, () => {
         if (this.state.role === "user") {
-          messageDispatcher.sendMessage('ModEditUser', {type: "modValid"});
+          messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
         } else if (this.state.role === "client") {
-          messageDispatcher.sendMessage('ModEditClient', {type: "modValid"});
+          messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
         }
       });
     } else {
@@ -356,7 +348,7 @@ class LDAPParams extends Component {
       </div>
       );
     });
-    var usernameJsx = "", nameJsx = "", emailJsx = "", descriptionJsx = "", client_idJsx = "", confidentialJsx = "";
+    var usernameJsx = "", nameJsx = "", emailJsx = "", descriptionJsx = "", client_idJsx = "";
     if (this.state.role === "user") {
       usernameJsx = 
         <div className="form-group">
@@ -404,17 +396,6 @@ class LDAPParams extends Component {
               <label className="input-group-text" htmlFor="mod-ldap-description-property">{i18next.t("admin.mod-ldap-description-property")}</label>
             </div>
             <input type="text" className="form-control" id="mod-ldap-description-property" onChange={(e) => this.changeParam(e, "description-property", true)} value={this.state.mod.parameters["description-property"]} placeholder={i18next.t("admin.mod-ldap-description-property-ph")} />
-          </div>
-        </div>;
-      confidentialJsx =
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-ldap-confidential-property">{i18next.t("admin.mod-database-confidential-property")}</label>
-            </div>
-            <div className="input-group-text">
-              <input type="checkbox" className="form-control" id="mod-ldap-confidential-property" onChange={(e) => this.toggleConfidential()} checked={this.state.mod.parameters["confidential"]} />
-            </div>
           </div>
         </div>;
     }
@@ -504,31 +485,34 @@ class LDAPParams extends Component {
         {nameJsx}
         {emailJsx}
         {descriptionJsx}
-        {confidentialJsx}
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-ldap-password-property">{i18next.t("admin.mod-ldap-password-property")}</label>
             </div>
-            <input disabled={this.state.mod.readonly || this.state.passwordDisabled} type="text" className={this.state.errorList["password-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-password-property" onChange={(e) => this.changeParam(e, "password-property")} value={this.state.mod.parameters["password-property"]} placeholder={i18next.t("admin.mod-ldap-password-property-ph")} />
+            <input disabled={this.state.mod.readonly} type="text" className={this.state.errorList["password-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-password-property" onChange={(e) => this.changeParam(e, "password-property")} value={this.state.mod.parameters["password-property"]} placeholder={i18next.t("admin.mod-ldap-password-property-ph")} />
           </div>
           {this.state.errorList["password-property"]?<span className="error-input">{i18next.t(this.state.errorList["password-property"])}</span>:""}
         </div>
         <div className="form-group">
-          <label className="input-group-text" htmlFor="dropdownPasswordAlgorithm">{i18next.t("admin.mod-ldap-password-algorithm")}</label>
-          <div className="dropdown">
-            <button disabled={this.state.mod.readonly || this.state.passwordDisabled} className={this.state.errorList["password-algorithm"]?"btn btn-secondary dropdown-toggle is-invalid":"btn btn-secondary dropdown-toggle"} type="button" id={"dropdownPasswordAlgorithm"} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              {this.state.mod.parameters["password-algorithm"] || i18next.t("admin.mod-ldap-password-algorithm-select")}
-            </button>
-            <div className="dropdown-menu" aria-labelledby={"dropdownPasswordAlgorithm"}>
-              <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'SSHA')}>{i18next.t("admin.mod-ldap-password-algorithm-ssha")}</a>
-              <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'SHA')}>{i18next.t("admin.mod-ldap-password-algorithm-sha")}</a>
-              <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'SMD5')}>{i18next.t("admin.mod-ldap-password-algorithm-smd5")}</a>
-              <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'MD5')}>{i18next.t("admin.mod-ldap-password-algorithm-md5")}</a>
-              <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'PLAIN')}>{i18next.t("admin.mod-ldap-password-algorithm-plain")}</a>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="dropdownPasswordAlgorithm">{i18next.t("admin.mod-ldap-password-algorithm")}</label>
             </div>
+            <div className="dropdown">
+              <button disabled={this.state.mod.readonly} className={this.state.errorList["password-algorithm"]?"btn btn-secondary dropdown-toggle is-invalid":"btn btn-secondary dropdown-toggle"} type="button" id={"dropdownPasswordAlgorithm"} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {this.state.mod.parameters["password-algorithm"] || i18next.t("admin.mod-ldap-password-algorithm-select")}
+              </button>
+              <div className="dropdown-menu" aria-labelledby={"dropdownPasswordAlgorithm"}>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'SSHA')}>{i18next.t("admin.mod-ldap-password-algorithm-ssha")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'SHA')}>{i18next.t("admin.mod-ldap-password-algorithm-sha")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'SMD5')}>{i18next.t("admin.mod-ldap-password-algorithm-smd5")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'MD5')}>{i18next.t("admin.mod-ldap-password-algorithm-md5")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'PLAIN')}>{i18next.t("admin.mod-ldap-password-algorithm-plain")}</a>
+              </div>
+            </div>
+            {this.state.errorList["password-algorithm"]?<span className="error-input">{i18next.t(this.state.errorList["password-algorithm"])}</span>:""}
           </div>
-          {this.state.errorList["password-algorithm"]?<span className="error-input">{i18next.t(this.state.errorList["password-algorithm"])}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">

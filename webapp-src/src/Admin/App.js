@@ -870,6 +870,15 @@ class App extends Component {
           })
           .fail(() => {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+          })
+          .always(() => {
+            this.fetchUserMods()
+            .always(() => {
+              this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+                $("#editModModal").modal("hide");
+                this.fetchUsers();
+              });
+            });
           });
         })
         .fail(() => {
@@ -879,15 +888,6 @@ class App extends Component {
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
       })
-      .always(() => {
-        this.fetchUserMods()
-        .always(() => {
-          this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
-            $("#editModModal").modal("hide");
-            this.fetchUsers();
-          });
-        });
-      });
     } else {
       $("#editModModal").modal("hide");
     }
@@ -953,6 +953,15 @@ class App extends Component {
           })
           .fail(() => {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+          })
+          .always(() => {
+            this.fetchClientMods()
+            .always(() => {
+              this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+                $("#editModModal").modal("hide");
+                this.fetchClients();
+              });
+            });
           });
         })
         .fail(() => {
@@ -962,15 +971,6 @@ class App extends Component {
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
       })
-      .always(() => {
-        this.fetchClientMods()
-        .always(() => {
-          this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
-            $("#editModModal").modal("hide");
-            this.fetchClients();
-          });
-        });
-      });
     } else {
       $("#editModModal").modal("hide");
     }

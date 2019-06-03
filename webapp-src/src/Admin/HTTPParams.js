@@ -79,9 +79,7 @@ class HTTPParams extends Component {
     if (!hasError) {
       this.setState({errorList: {}}, () => {
         if (this.state.role === "user") {
-          messageDispatcher.sendMessage('ModEditUser', {type: "modValid"});
-        } else if (this.state.role === "client") {
-          messageDispatcher.sendMessage('ModEditClient', {type: "modValid"});
+          messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
         }
       });
     } else {
