@@ -314,7 +314,7 @@ int add_user_module(struct config_elements * config, json_t * j_module) {
         cur_instance->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
         cur_instance->module = module;
         cur_instance->enabled = 0;
-        cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
+        cur_instance->readonly = json_object_get(j_module, "readonly")==json_true()?1:0;
         if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
           if ((res = module->user_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls)) == G_OK) {
             cur_instance->enabled = 1;
@@ -350,6 +350,7 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
   json_t * j_query;
   int res, ret;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
+  struct _user_module_instance * cur_instance;
   
   j_query = json_pack("{sss{sOss}s{ss}}",
                       "table",
@@ -373,7 +374,13 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    ret = G_OK;
+    if ((cur_instance = get_user_module_instance(config, name)) != NULL) {
+      cur_instance->readonly = json_object_get(j_module, "readonly")==json_true()?1:0;
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error get_user_module_instance");
+      ret = G_ERROR;
+    }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error executing j_query");
     ret = G_ERROR_DB;
@@ -1078,7 +1085,7 @@ int add_client_module(struct config_elements * config, json_t * j_module) {
         cur_instance->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
         cur_instance->module = module;
         cur_instance->enabled = 0;
-        cur_instance->readonly = json_object_get(j_module, "readonly")==json_false()?0:1;
+        cur_instance->readonly = json_object_get(j_module, "readonly")==json_true()?1:0;
         if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
           if ((res = module->client_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls)) == G_OK) {
             cur_instance->enabled = 1;
@@ -1114,6 +1121,7 @@ int set_client_module(struct config_elements * config, const char * name, json_t
   json_t * j_query;
   int res, ret;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
+  struct _client_module_instance * cur_instance;
   
   j_query = json_pack("{sss{sOss}s{ss}}",
                       "table",
@@ -1138,7 +1146,13 @@ int set_client_module(struct config_elements * config, const char * name, json_t
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    ret = G_OK;
+    if ((cur_instance = get_client_module_instance(config, name)) != NULL) {
+      cur_instance->readonly = json_object_get(j_module, "readonly")==json_true()?1:0;
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error get_user_module_instance");
+      ret = G_ERROR;
+    }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_client_module - Error executing j_query");
     ret = G_ERROR_DB;
