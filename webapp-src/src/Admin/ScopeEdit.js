@@ -83,6 +83,10 @@ class ScopeEdit extends Component {
         i++;
       }
       group = "" + i;
+      while (scope.scheme[group] !== undefined) {
+        i++;
+        group = "" + i;
+      }
       scope.scheme[group] = [];
     }
     var newScheme = {scheme_name: scheme_name}
@@ -102,6 +106,9 @@ class ScopeEdit extends Component {
       scope.scheme[group].forEach((curScheme, index) => {
         if (curScheme.scheme_name === scheme.scheme_name) {
           scope.scheme[group].splice(index, 1);
+          if (!scope.scheme[group].length) {
+            delete(scope.scheme[group]);
+          }
         }
       });
     }
@@ -132,10 +139,10 @@ class ScopeEdit extends Component {
       });
     }
     // Build groups and scheme lists
-    for (var groupName in this.state.scope.scheme) {
+    $.each (this.state.scope.scheme, (groupName, scheme) => {
       var schemeList = [];
       var iScheme = 0;
-      this.state.scope.scheme[groupName].forEach((scheme, index) => {
+      scheme.forEach((scheme, index) => {
         // Add badge or
         if (schemeList.length) {
           schemeList.push(<span className="badge badge-secondary btn-icon-right" key={iScheme++}>{i18next.t("admin.or")}</span>);
@@ -158,7 +165,7 @@ class ScopeEdit extends Component {
         schemeList.push(
           <div className="dropdown" key={iScheme++}>
             <button className="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              {i18next.t("admin.scope-add-scheme-group")}
+              {i18next.t("admin.scope-add-scheme")}
             </button>
             <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
               {modSchemeListJsx}
@@ -171,7 +178,7 @@ class ScopeEdit extends Component {
           {schemeList}
         </div>
       </div>);
-    }
+    });
     if (modSchemeListName.length) {
       modSchemeListJsx = [];
       modSchemeListName.forEach((name, index) => {
