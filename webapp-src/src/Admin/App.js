@@ -248,7 +248,7 @@ class App extends Component {
             title: i18next.t("admin.add-user-title"),
             pattern: this.state.config.pattern.user,
             source: this.state.modUsers,
-            data: {},
+            data: {username: "", name: "", password: "", email: "", enabled: true, scope: []},
             callback: this.confirmAddUser,
             validateCallback: this.validateUser,
             add: true
@@ -261,7 +261,7 @@ class App extends Component {
             title: i18next.t("admin.add-client-title"),
             pattern: this.state.config.pattern.client,
             source: this.state.modClients,
-            data: {},
+            data: {client_id: "", confidential: false, enabled: true, name: "", password: "", redirect_uri: [], scope: []},
             callback: this.confirmAddClient,
             validateCallback: this.validateClient,
             add: true
@@ -711,7 +711,7 @@ class App extends Component {
 
   confirmAddClient(result, client) {
     if (result) {
-      var source = (user.source?"?source="+user.source:"");
+      var source = (client.source?"?source="+client.source:"");
       apiManager.glewlwydRequest("/client/" + source, "POST", client)
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-client")});
