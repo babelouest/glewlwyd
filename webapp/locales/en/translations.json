@@ -208,6 +208,7 @@
     "mod-data-format-message": "By default, any property can be added to a user as string, and is invisible in the user profile. To have multiple values or allow profile read/write, please specify it",
     "mod-database-data-format-property": "Property",
     "mod-database-data-format-property-ph": "Ex: postal-code",
+    "mod-database-data-format-multiple": "Multiple values",
     "mod-database-data-format-ldap-property": "LDAP Property",
     "mod-database-data-format-ldap-property-ph": "Ex: PostalCode",
     "mod-database-data-format-read": "Read (admin)",
