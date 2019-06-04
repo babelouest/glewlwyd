@@ -219,9 +219,9 @@ class EditRecord extends Component {
     this.state.pattern.forEach((pat, index) => {
       if (pat.list) {
         data[pat.name] = [];
-      } else if (pat.defaultValue) {
+      } else if (pat.defaultValue !== undefined) {
         data[pat.name] = pat.defaultValue;
-      } else {
+      } else if (pat.type !== "boolean") {
         data[pat.name] = "";
       }
     });
