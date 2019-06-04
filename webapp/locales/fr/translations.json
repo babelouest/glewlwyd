@@ -208,6 +208,7 @@
     "mod-data-format-message": "Par défaut, toute propriété supplémentaire est est stockée comme chaine de caractères et ne sera pas visible dans le profil utilisateur. Pour avoir des valeurs multiples ou autoriser une propriété dans le profil, veuillez le spécifier",
     "mod-database-data-format-property": "Propriété",
     "mod-database-data-format-property-ph": "Ex: postal-code",
+    "mod-database-data-format-multiple": "Multiple valeurs",
     "mod-database-data-format-ldap-property": "Propriété LDAP",
     "mod-database-data-format-ldap-property-ph": "Ex: PostalCode",
     "mod-database-data-format-read": "Lecture (admin)",
