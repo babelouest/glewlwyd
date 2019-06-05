@@ -570,7 +570,7 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
 }
 
 static char * get_login_url(struct _oauth2_config * config, const struct _u_request * request, const char * url, const char * client_id, const char * scope_list) {
-  char * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, json_string_value(json_object_get(config->j_params, "url"))),
+  char * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, json_string_value(json_object_get(config->j_params, "name"))),
        * url_params = generate_query_parameters(request->map_url, NULL),
        * url_callback = msprintf("%s/%s?%s", plugin_url, url, url_params),
        * login_url = config->glewlwyd_config->glewlwyd_callback_get_login_url(config->glewlwyd_config, client_id, scope_list, url_callback);
@@ -2020,7 +2020,7 @@ static int check_parameters (json_t * j_params) {
 
 json_t * plugin_module_load(struct config_plugin * config) {
   UNUSED(config);
-  return json_pack("{si ss ss ss s{ s{ssso} s{sssos[sss]} s{sssos[sss]} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ss so s{ssso} s{ssso} }}}",
+  return json_pack("{si ss ss ss s{ s{sssos[sss]} s{sssos[sss]} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ss so s{ssso} s{ssso} }}}",
                    "result",
                    G_OK,
                    
@@ -2034,12 +2034,6 @@ json_t * plugin_module_load(struct config_plugin * config) {
                    "Plugin for legacy Glewlwyd OAuth2 workflow",
                    
                    "parameters",
-                     "url",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_true(),
-                       
                      "jwt-type",
                        "type",
                        "list",
@@ -2168,6 +2162,7 @@ int plugin_module_init(struct config_plugin * config, const char * name, json_t 
       ((struct _oauth2_config *)*cls)->name = name;
       ((struct _oauth2_config *)*cls)->jwt_key = NULL;
       ((struct _oauth2_config *)*cls)->j_params = json_incref(j_parameters);
+      json_object_set_new(((struct _oauth2_config *)*cls)->j_params, "name", json_string(name));
       ((struct _oauth2_config *)*cls)->glewlwyd_config = config;
       ((struct _oauth2_config *)*cls)->glewlwyd_resource_config = o_malloc(sizeof(struct _glewlwyd_resource_config));
       if (((struct _oauth2_config *)*cls)->glewlwyd_resource_config != NULL) {
