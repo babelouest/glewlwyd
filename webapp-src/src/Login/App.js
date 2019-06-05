@@ -147,7 +147,7 @@ class App extends Component {
               <div className="float-right">
                 <div className="dropdown">
                   <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i className="fas fa-globe-africa"></i> {i18next.t("select-lang")}
+                    <i className="fas fa-globe-africa"></i>
                   </button>
                   <div className="dropdown-menu" aria-labelledby="dropdownLang">
                     {langList}

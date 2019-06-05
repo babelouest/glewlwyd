@@ -54,6 +54,8 @@ class App extends Component {
         });
       } else if (message.type === 'lang') {
         this.setState({lang: i18next.language});
+      } else if (message.type === 'profile') {
+        this.fetchProfile();
       } else if (message.type === 'confirm') {
         var confirmModal = this.state.confirmModal;
         confirmModal.title = message.title;
@@ -130,7 +132,7 @@ class App extends Component {
         <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
           <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
             <div className="card-header">
-              <Navbar active={this.state.curNav} config={this.state.config} loggedIn={this.state.loggedIn} schemeList={this.state.schemeList}/>
+              <Navbar active={this.state.curNav} config={this.state.config} loggedIn={this.state.loggedIn} schemeList={this.state.schemeList} profileList={this.state.profileList}/>
             </div>
             <div className="card-body">
               <div id="carouselBody" className="carousel slide" data-ride="carousel">

@@ -100,15 +100,13 @@ class Buttons extends Component {
       }
       bAnother = 
       <div className="btn-group" role="group">
-        <div className="dropdown">
-          <button className="btn btn-primary dropdown-toggle" type="button" id="selectNewUser" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i className="fas fa-users btn-icon"></i>{i18next.t("login.login-another")}
-          </button>
-          <div className="dropdown-menu" aria-labelledby="selectNewUser">
-            <a className="dropdown-item" href="#" onClick={(e) => this.newUser(e, false)}>{i18next.t("login.login-another-new")}</a>
-            <div className="dropdown-divider"></div>
-            {userList}
-          </div>
+        <button className="btn btn-primary dropdown-toggle" type="button" id="selectNewUser" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i className="fas fa-users btn-icon"></i>{i18next.t("login.login-another")}
+        </button>
+        <div className="dropdown-menu" aria-labelledby="selectNewUser">
+          <a className="dropdown-item" href="#" onClick={(e) => this.newUser(e, false)}>{i18next.t("login.login-another-new")}</a>
+          <div className="dropdown-divider"></div>
+          {userList}
         </div>
       </div>;
   		return (
@@ -122,18 +120,16 @@ class Buttons extends Component {
           <hr/>
           <div className="btn-group" role="group">
             <div className="btn-group" role="group">
-              <div className="dropdown">
-                <button className="btn btn-primary dropdown-toggle" type="button" id="selectNewUser" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i className="fas fa-user-cog btn-icon"></i>{i18next.t("login.login-handle")}{asterisk}
-                </button>
-                <div className="dropdown-menu" aria-labelledby="selectNewUser">
-                  <a className="dropdown-item" href="#" onClick={this.clickGrant} alt={this.state.bGrantTitle}>
-                    {this.state.bGrant}
-                    {asterisk}
-                  </a>
-                  <div className="dropdown-divider"></div>
-                  <a className="dropdown-item" href={this.state.config.ProfileUrl||""} target="_blank">{i18next.t("login.update-profile")}</a>
-                </div>
+              <button className="btn btn-primary dropdown-toggle" type="button" id="selectNewUser" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i className="fas fa-user-cog btn-icon"></i>{i18next.t("login.login-handle")}{asterisk}
+              </button>
+              <div className="dropdown-menu" aria-labelledby="selectNewUser">
+                <a className="dropdown-item" href="#" onClick={this.clickGrant} alt={this.state.bGrantTitle}>
+                  {this.state.bGrant}
+                  {asterisk}
+                </a>
+                <div className="dropdown-divider"></div>
+                <a className="dropdown-item" href={this.state.config.ProfileUrl||""} target="_blank">{i18next.t("login.update-profile")}</a>
               </div>
             </div>
             {bAnother}

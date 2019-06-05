@@ -11,7 +11,8 @@ class Navbar extends Component {
       config: props.config,
       curNav: "profile",
       loggedIn: props.loggedIn,
-      schemeList: props.schemeList
+      schemeList: props.schemeList,
+      profileList: props.profileList
     }
 
     messageDispatcher.subscribe('Navbar', (message) => {
@@ -20,10 +21,15 @@ class Navbar extends Component {
     this.navigate = this.navigate.bind(this);
     this.toggleLogin = this.toggleLogin.bind(this);
     this.changeLang = this.changeLang.bind(this);
+    this.changeProfile = this.changeProfile.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
-    this.setState({loggedIn: nextProps.loggedIn, schemeList: nextProps.schemeList});
+    this.setState({
+      loggedIn: nextProps.loggedIn, 
+      schemeList: nextProps.schemeList,
+      profileList: nextProps.profileList
+    });
   }
   
   navigate(e, page, type) {
@@ -53,9 +59,20 @@ class Navbar extends Component {
       messageDispatcher.sendMessage('App', {type: "lang"});
     });
   }
+  
+  changeProfile(e, profile) {
+    apiManager.glewlwydRequest("/auth/", "POST", {username: profile.username})
+    .then(() => {
+      messageDispatcher.sendMessage('App', {type: "profile"});
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
+    });
+  }
 
 	render() {
-    var langList = [], schemeList = [];
+    var langList = [], schemeList = [], profileList = [];
+    var profileDropdown;
     ["en","fr"].forEach((lang, i) => {
       if (lang === i18next.language) {
         langList.push(<a className="dropdown-item active" href="#" key={i}>{lang}</a>);
@@ -70,11 +87,32 @@ class Navbar extends Component {
         </li>
       );
     });
-    var passwordJsx;
-    if (!this.state.config.params.delegate) {
+    var passwordJsx, sessionJsx;
+    if (!this.state.config.params.delegate && this.state.profileList) {
       passwordJsx = <li className={"nav-item" + (this.state.curNav==="password"?" active":"")}>
         <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "password", null)}>{i18next.t("profile.menu-password")}</a>
       </li>
+    }
+    if (this.state.profileList) {
+      sessionJsx = <li className={"nav-item" + (this.state.curNav==="session"?" active":"")}>
+        <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "session", null)}>{i18next.t("profile.menu-session")}</a>
+      </li>
+    }
+    if (this.state.profileList) {
+      this.state.profileList.forEach((profile, index) => {
+        profileList.push(<a className={"dropdown-item"+(!index?" active":"")} href="#" onClick={(e) => this.changeProfile(e, profile)} key={index}>{profile.name||profile.username}</a>);
+      });
+    }
+    if (profileList.length) {
+      profileDropdown = 
+      <div className="btn-group" role="group">
+        <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i className="fas fa-user"></i>
+        </button>
+        <div className="dropdown-menu" aria-labelledby="dropdownProfile">
+          {profileList}
+        </div>
+      </div>
     }
 		return (
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
@@ -87,25 +125,22 @@ class Navbar extends Component {
             <li className={"nav-item" + (this.state.curNav==="profile"?" active":"")}>
               <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "profile", null)}>{i18next.t("profile.menu-user")}</a>
             </li>
-            <li className={"nav-item" + (this.state.curNav==="session"?" active":"")}>
-              <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "session", null)}>{i18next.t("profile.menu-session")}</a>
-            </li>
+            {sessionJsx}
             {passwordJsx}
             {schemeList}
           </ul>
           <div className="btn-group" role="group">
             <div className="btn-group" role="group">
-              <div className="dropdown">
-                <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i className="fas fa-globe-africa"></i> {i18next.t("select-lang")}
-                </button>
-                <div className="dropdown-menu" aria-labelledby="dropdownLang">
-                  {langList}
-                </div>
+              <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i className="fas fa-globe-africa"></i>
+              </button>
+              <div className="dropdown-menu" aria-labelledby="dropdownLang">
+                {langList}
               </div>
             </div>
+            {profileDropdown}
             <button type="button" className="btn btn-secondary" onClick={this.toggleLogin}>
-              <i className="fas fa-sign-in-alt btn-icon"></i>{this.state.loggedIn?i18next.t("admin.menu-logout"):i18next.t("admin.menu-login")}
+              <i className="fas fa-sign-in-alt btn-icon"></i>
             </button>
           </div>
         </div>
