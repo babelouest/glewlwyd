@@ -89,7 +89,11 @@ class DatabaseParams extends Component {
     if (!mod.parameters["data-format"]) {
       mod.parameters["data-format"] = {};
     }
-    mod.parameters["data-format"][""] = {multiple: false, read: true, write: true, "profile-read": false, "profile-write": false};
+    if (this.state.role === "user") {
+      mod.parameters["data-format"][""] = {multiple: false, read: true, write: true, "profile-read": false, "profile-write": false};
+    } else if (this.state.role === "client") {
+      mod.parameters["data-format"][""] = {multiple: false, read: true, write: true};
+    }
     this.setState({mod: mod});
   }
   
@@ -316,6 +320,26 @@ class DatabaseParams extends Component {
       } else if (this.state.role === "client") {
         dataFormat.push(<div key={i++}>
           {nameMultipleJsx}
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend input-group-text">
+                <input type="checkbox" className="form-control" id={"mod-database-data-format-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "read")} checked={this.state.mod.parameters["data-format"][property]["read"]} />
+              </div>
+              <div className="input-group-text">
+                <label className="input-group-text" htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-read")}</label>
+              </div>
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend input-group-text">
+                <input type="checkbox" className="form-control" id={"mod-database-data-format-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "write")} checked={this.state.mod.parameters["data-format"][property]["write"]} />
+              </div>
+              <div className="input-group-text">
+                <label className="input-group-text" htmlFor={"mod-database-data-format-write-"+property}>{i18next.t("admin.mod-database-data-format-write")}</label>
+              </div>
+            </div>
+          </div>
         </div>);
       }
     }
