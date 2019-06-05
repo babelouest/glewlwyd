@@ -1,5 +1,5 @@
 {
-	"GlewlwydApiUrl": "http://localhost:4593/",
+  "GlewlwydApiUrl": "http://localhost:4593/",
   "ProfileUrl": "http://localhost:4593/profile.html",
   "AdminUrl": "http://localhost:4593/index.html",
   "LoginUrl": "http://localhost:4593/login.html",
