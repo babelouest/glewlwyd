@@ -74,6 +74,7 @@
     },{
       "name": "confidential",
       "edit": true,
+      "defaultValue": false,
       "forceShow": true,
       "type": "boolean",
       "label": "admin.client-confidential"
@@ -99,6 +100,13 @@
       "forceShow": true,
       "label": "admin.client-redirect-uri",
       "placeholder": "admin.client-redirect-uri-ph"
+    },{
+      "name": "authorization_type",
+      "list": true,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-authorization-type",
+      "listElements": ["code","implicit","password","client","refresh"]
     },{
       "name": "enabled",
       "type": "boolean",
