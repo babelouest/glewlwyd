@@ -106,7 +106,7 @@
       "edit": true,
       "forceShow": true,
       "label": "admin.client-authorization-type",
-      "listElements": ["code","implicit","password","client","refresh"]
+      "listElements": ["code","token","password","client","refresh_token","delete_token"]
     },{
       "name": "enabled",
       "type": "boolean",
