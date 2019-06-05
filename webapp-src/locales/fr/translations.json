@@ -1,6 +1,5 @@
 {
   "glewlwyd-sso-title": "Service d'authentification unique Glewlwyd",
-  "select-lang": "Langage",
   "error-api-connect": "Erreur de connexion à l'API Glewlwyd",
   "login": {
     "hello": "Bonjour {{name}}",
@@ -70,8 +69,6 @@
     "menu-clients-mod": "Sources de données clients",
     "menu-auth-schemes": "Méthodes d'authentification",
     "menu-plugins": "Greffons",
-    "menu-login": "Connexion",
-    "menu-logout": "Déconnexion",
     "edit": "Éditer",
     "delete": "Supprimer",
     "delegate": "Modifier le profil",

@@ -44,7 +44,8 @@ class App extends Component {
       modSchemes: [],
       plugins: [],
       PluginModal: {title: "", data: {}, types: [], add: false, callback: false},
-      modTypes: {user: [], client: [], scheme: [], plugin: []}
+      modTypes: {user: [], client: [], scheme: [], plugin: []},
+      profileList: false
     }
     
     this.fetchApi = this.fetchApi.bind(this);
@@ -91,6 +92,8 @@ class App extends Component {
     messageDispatcher.subscribe('App', (message) => {
       if (message.type === 'nav') {
         this.setState({curNav: message.message});
+      } else if (message.type === 'profile') {
+        this.fetchApi();
       } else if (message.type === 'loggedIn') {
         this.setState({loggedIn: message.message}, () => {
           if (!this.state.loggedIn) {
@@ -400,24 +403,26 @@ class App extends Component {
   fetchApi() {
     apiManager.glewlwydRequest("/profile")
     .then((res) => {
-      if (!res[0] || res[0].scope.indexOf(this.state.config.admin_scope) < 0) {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
-      } else {
-        this.setState({loggedIn: true}, () => {
-          this.fetchUsers()
-          .always(() => {
-            this.fetchClients()
+      this.setState({profileList: res}, () => {
+        if (!res[0] || res[0].scope.indexOf(this.state.config.admin_scope) < 0) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+        } else {
+          this.setState({loggedIn: true}, () => {
+            this.fetchUsers()
             .always(() => {
-              this.fetchScopes();
+              this.fetchClients()
+              .always(() => {
+                this.fetchScopes();
+              });
+              this.fetchModTypes();
+              this.fetchUserMods();
+              this.fetchClientMods();
+              this.fetchSchemeMods();
+              this.fetchPlugins();
             });
-            this.fetchModTypes();
-            this.fetchUserMods();
-            this.fetchClientMods();
-            this.fetchSchemeMods();
-            this.fetchPlugins();
           });
-        });
-      }
+        }
+      });
     })
     .fail((error) => {
       if (error.status === 401) {
@@ -1167,7 +1172,7 @@ class App extends Component {
         <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
           <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
             <div className="card-header">
-              <Navbar active={this.state.curNav} config={this.state.config} loggedIn={this.state.loggedIn}/>
+              <Navbar active={this.state.curNav} config={this.state.config} loggedIn={this.state.loggedIn} profileList={this.state.profileList}/>
             </div>
             <div className="card-body">
               <div id="carouselBody" className="carousel slide" data-ride="carousel">

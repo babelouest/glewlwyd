@@ -26,7 +26,9 @@ class Session extends Component {
     this.disableToken = this.disableToken.bind(this);
     this.disableTokenConfirm = this.disableTokenConfirm.bind(this);
     
-    this.fetchLists();
+    if (this.state.profile) {
+      this.fetchLists();
+    }
   }
   
   componentWillReceiveProps(nextProps) {
@@ -34,7 +36,9 @@ class Session extends Component {
       config: nextProps.config,
       profile: nextProps.profile
     }, () => {
-      this.fetchLists();
+      if (this.state.profile) {
+        this.fetchLists();
+      }
     });
   }
   
