@@ -132,6 +132,7 @@
     "client-scope": "Scope",
     "client-redirect-uri": "Redirect URIs",
     "client-redirect-uri-ph": "Ex: https://example.com/",
+    "client-authorization-type": "Authorization types",
     "client-enabled": "Enabled",
     "client-client-id-mandatory": "Client ID is mandatory",
     "client-client-id-exists": "Client ID already exist",
