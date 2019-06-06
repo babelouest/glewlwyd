@@ -1,3 +1,8 @@
+DELETE FROM g_user_module_instance;
+DELETE FROM g_user_auth_scheme_module_instance;
+DELETE FROM g_client_module_instance;
+DELETE FROM g_client_module_instance;
+
 INSERT INTO g_user_module_instance (gumi_module, gumi_name, gumi_display_name, gumi_order, gumi_parameters) VALUES ('mock', 'mock', 'Mock user module', 0, '{"username-prefix":"","password":"password"}');
 INSERT INTO g_user_auth_scheme_module_instance (guasmi_module, guasmi_name, guasmi_display_name, guasmi_expiration, guasmi_parameters) VALUES ('mock', 'mock_scheme_42', 'Mock 42', 600, '{"mock-value":"42"}');
 INSERT INTO g_user_auth_scheme_module_instance (guasmi_module, guasmi_name, guasmi_display_name, guasmi_expiration, guasmi_parameters, guasmi_max_use) VALUES ('mock', 'mock_scheme_88', 'Mock 88', 600, '{"mock-value":"88"}', 1);
