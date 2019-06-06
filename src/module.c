@@ -1589,6 +1589,7 @@ int manage_plugin_module(struct config_elements * config, const char * name, int
       if (instance->enabled) {
         if (instance->module->plugin_module_close(config->config_p, instance->name, instance->cls) == G_OK) {
           instance->enabled = 0;
+          instance->cls = NULL;
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
