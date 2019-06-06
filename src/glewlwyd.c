@@ -407,15 +407,6 @@ void exit_server(struct config_elements ** config, int exit_value) {
   int i;
   
   if (config != NULL && *config != NULL) {
-    /* stop framework */
-    ulfius_stop_framework((*config)->instance);
-    ulfius_clean_instance((*config)->instance);
-    h_close_db((*config)->conn);
-    h_clean_connection((*config)->conn);
-    
-    // Cleaning data
-    o_free((*config)->instance);
-    
     for (i=0; i<pointer_list_size((*config)->user_module_instance_list); i++) {
       struct _user_module_instance * instance = (struct _user_module_instance *)pointer_list_get_at((*config)->user_module_instance_list, i);
       if (instance != NULL) {
@@ -561,6 +552,16 @@ void exit_server(struct config_elements ** config, int exit_value) {
     }
     pointer_list_clean((*config)->plugin_module_list);
     o_free((*config)->plugin_module_list);
+    
+    /* stop framework */
+    ulfius_stop_framework((*config)->instance);
+    ulfius_clean_instance((*config)->instance);
+    h_close_db((*config)->conn);
+    h_clean_connection((*config)->conn);
+    
+    // Cleaning data
+    o_free((*config)->instance);
+    
     
     o_free((*config)->config_file);
     o_free((*config)->api_prefix);
