@@ -104,7 +104,7 @@ class GlwdOauth2Params extends Component {
   
   changeJwtKeySize(e, size) {
     var mod = this.state.mod;
-    mod.parameters["jwt-key-size"] = type;
+    mod.parameters["jwt-key-size"] = size;
     this.setState({mod: mod});
   }
   
