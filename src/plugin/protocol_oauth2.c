@@ -1212,82 +1212,85 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
              * client_id = u_map_get(request->map_post_body, "client_id"),
              * redirect_uri = u_map_get(request->map_post_body, "redirect_uri");
   char * issued_for = get_client_hostname(request);
-  json_t * j_code, * j_body, * j_refresh_token, * j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, redirect_uri, NULL, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE);
+  json_t * j_code, * j_body, * j_refresh_token, * j_client;
   time_t now;
   char * refresh_token = NULL, * access_token = NULL;
   
   if (code == NULL || client_id == NULL || redirect_uri == NULL) {
     response->status = 400;
-  } else if (check_result_value(j_client, G_OK)) {
-    j_code = validate_authorization_code(config, code, client_id, redirect_uri);
-    if (check_result_value(j_code, G_OK)) {
-      time(&now);
-      if ((refresh_token = generate_refresh_token(config, client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
-        j_refresh_token = serialize_refresh_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpgc_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, json_integer_value(json_object_get(json_object_get(j_code, "code"), "refresh-token-duration")), json_object_get(json_object_get(j_code, "code"), "refresh-token-rolling")==json_true(), refresh_token, issued_for, u_map_get_case(request->map_header, "user-agent"));
-        if (check_result_value(j_refresh_token, G_OK)) {
-          if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
-            if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(j_refresh_token, "gpgr_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
-              if (disable_authorization_code(config, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpgc_id"))) == G_OK) {
-                j_body = json_pack("{sssssssisIss}",
-                                      "token_type",
-                                      "bearer",
-                                      "access_token",
-                                      access_token,
-                                      "refresh_token",
-                                      refresh_token,
-                                      "iat",
-                                      now,
-                                      "expires_in",
-                                      config->access_token_duration,
-                                      "scope",
-                                      json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")));
-                ulfius_set_json_body_response(response, 200, j_body);
-                json_decref(j_body);
+  } else {
+    j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, redirect_uri, NULL, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE);
+    if (check_result_value(j_client, G_OK)) {
+      j_code = validate_authorization_code(config, code, client_id, redirect_uri);
+      if (check_result_value(j_code, G_OK)) {
+        time(&now);
+        if ((refresh_token = generate_refresh_token(config, client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
+          j_refresh_token = serialize_refresh_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpgc_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, json_integer_value(json_object_get(json_object_get(j_code, "code"), "refresh-token-duration")), json_object_get(json_object_get(j_code, "code"), "refresh-token-rolling")==json_true(), refresh_token, issued_for, u_map_get_case(request->map_header, "user-agent"));
+          if (check_result_value(j_refresh_token, G_OK)) {
+            if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
+              if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(j_refresh_token, "gpgr_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
+                if (disable_authorization_code(config, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpgc_id"))) == G_OK) {
+                  j_body = json_pack("{sssssssisIss}",
+                                        "token_type",
+                                        "bearer",
+                                        "access_token",
+                                        access_token,
+                                        "refresh_token",
+                                        refresh_token,
+                                        "iat",
+                                        now,
+                                        "expires_in",
+                                        config->access_token_duration,
+                                        "scope",
+                                        json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")));
+                  ulfius_set_json_body_response(response, 200, j_body);
+                  json_decref(j_body);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error disable_authorization_code");
+                  j_body = json_pack("{ss}", "error", "server_error");
+                  ulfius_set_json_body_response(response, 500, j_body);
+                  json_decref(j_body);
+                }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error disable_authorization_code");
+                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error serialize_access_token");
                 j_body = json_pack("{ss}", "error", "server_error");
                 ulfius_set_json_body_response(response, 500, j_body);
                 json_decref(j_body);
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error serialize_access_token");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error generate_access_token");
               j_body = json_pack("{ss}", "error", "server_error");
               ulfius_set_json_body_response(response, 500, j_body);
               json_decref(j_body);
             }
+            o_free(access_token);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error generate_access_token");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error serialize_refresh_token");
             j_body = json_pack("{ss}", "error", "server_error");
             ulfius_set_json_body_response(response, 500, j_body);
             json_decref(j_body);
           }
-          o_free(access_token);
+          json_decref(j_refresh_token);
+          o_free(refresh_token);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error serialize_refresh_token");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error generate_refresh_token");
           j_body = json_pack("{ss}", "error", "server_error");
           ulfius_set_json_body_response(response, 500, j_body);
           json_decref(j_body);
         }
-        json_decref(j_refresh_token);
-        o_free(refresh_token);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_access_token_request - Error generate_refresh_token");
-        j_body = json_pack("{ss}", "error", "server_error");
-        ulfius_set_json_body_response(response, 500, j_body);
+        j_body = json_pack("{ss}", "error", "invalid_code");
+        ulfius_set_json_body_response(response, 403, j_body);
         json_decref(j_body);
       }
+      json_decref(j_code);
     } else {
-      j_body = json_pack("{ss}", "error", "invalid_code");
+      j_body = json_pack("{ss}", "error", "unauthorized_client");
       ulfius_set_json_body_response(response, 403, j_body);
       json_decref(j_body);
     }
-    json_decref(j_code);
-  } else {
-    j_body = json_pack("{ss}", "error", "unauthorized_client");
-    ulfius_set_json_body_response(response, 403, j_body);
-    json_decref(j_body);
+    json_decref(j_client);
   }
-  json_decref(j_client);
   o_free(issued_for);
   return U_CALLBACK_CONTINUE;
 }
@@ -2293,6 +2296,13 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
   UNUSED(config);
   UNUSED(name);
   if (cls != NULL) {
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "auth/");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "token/");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "profile/*");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "profile/");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "profile/token/");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "profile/token/:token_hash");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "profile/*");
     pthread_mutex_destroy(&((struct _oauth2_config *)cls)->insert_lock);
     jwt_free(((struct _oauth2_config *)cls)->jwt_key);
     json_decref(((struct _oauth2_config *)cls)->j_params);
