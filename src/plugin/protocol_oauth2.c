@@ -1634,7 +1634,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
         has_error = 1;
       }
       if (!has_error && !has_issues) {
-        if ((access_token = generate_client_access_token(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), scope_joined, now)) != NULL) {
+        if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), scope_joined, now)) != NULL) {
           if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS, 0, NULL, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), scope_joined, now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
             json_body = json_pack("{sssssIss}",
                                   "access_token", access_token,
