@@ -27,6 +27,7 @@ void print_response(struct _u_response * response) {
     json_decref(json_body);
   }
 }
+
 /**
  * json_t * json_search(json_t * haystack, json_t * needle)
  * jansson library addon
