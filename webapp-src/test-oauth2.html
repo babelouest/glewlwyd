@@ -1,0 +1,369 @@
+<!--
+ * 
+ * Glewlwyd SSO Authorization Server
+ *
+ * Test oauth2 behaviour
+ *
+ * Copyright 2019 Nicolas Mora <mail@babelouest.org>
+ * 
+ * The front-end application is under MIT Licence (MIT)
+ * 
+ * The MIT License (MIT)
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * 
+ -->
+<!doctype html>
+<html lang="en">
+	<head>
+		
+		<meta charset="utf-8">
+		<title>Glewlwyd test page</title>
+		<meta name="description" content="Glewlwyd OAuth2 Authorization Server">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<script src="js/jquery.min.js"></script>
+		<link rel="stylesheet" href="css/bootstrap.min.css" crossorigin="anonymous">
+		<script src="js/bootstrap.min.js" crossorigin="anonymous"></script>
+		<style>
+		body {
+		  padding-top: 40px;
+		  padding-bottom: 40px;
+		  background-color: #eee;
+		}
+
+		.form-signin {
+		  max-width: 330px;
+		  padding: 15px;
+		  margin: 0 auto;
+		}
+		.form-signin .form-signin-heading,
+		.form-signin .checkbox {
+		  margin-bottom: 10px;
+		}
+		.form-signin .checkbox {
+		  font-weight: normal;
+		}
+		.form-signin .form-control {
+		  position: relative;
+		  height: auto;
+		  -webkit-box-sizing: border-box;
+			 -moz-box-sizing: border-box;
+				  box-sizing: border-box;
+		  padding: 10px;
+		  font-size: 16px;
+		}
+		.form-signin .form-control:focus {
+		  z-index: 2;
+		}
+		.form-signin input[type="email"] {
+		  margin-bottom: -1px;
+		  border-bottom-right-radius: 0;
+		  border-bottom-left-radius: 0;
+		}
+		.form-signin input[type="password"] {
+		  margin-bottom: 10px;
+		  border-top-left-radius: 0;
+		  border-top-right-radius: 0;
+		}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+      <div class="row">
+        <div class="col-md-2">
+          <label for="response_type">response_type</label>
+        </div>
+        <div class="col-md-2">
+          <select id="response_type" class="form-control">
+            <option value="code">code</option>
+            <option value="authorization_code">authorization_code</option>
+            <option value="token">token</option>
+            <option value="password">password</option>
+            <option value="client_credentials">client_credentials</option>
+            <option value="refresh_token">refresh_token</option>
+            <option value="delete_token">delete_token</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="client_id">client</label>
+        </div>
+        <div class="col-md-2">
+          <select id="client_id" class="form-control">
+            <option value="client1_id">client1_id</option>
+            <option value="client2_id">client2_id</option>
+            <option value="client3_id">client3_id</option>
+            <option value="client4_id">client4_id</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="clientpassword">client password</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="clientpassword" name="clientpassword" value="" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="clientpassword">client confidential</label>
+        </div>
+        <div class="col-md-2">
+          <input type="checkbox" id="clientconfidential" name="clientconfidential" value="confidential" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="redirect_uri">redirect_uri</label>
+        </div>
+        <div class="col-md-2">
+          <select id="redirect_uri" class="form-control">
+            <option value="http://localhost/test-oauth2.html">uri_client1_1</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="scope">scope</label>
+        </div>
+        <div class="col-md-2">
+          <select id="scope" class="form-control" multiple size="3">
+            <option value="g_profile">g_profile</option>
+            <option value="full">full</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="state">state</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="state" name="state" value="xyz" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="username">username</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="username" name="username" value="" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="password">password</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="password" name="password" value="" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="code">code</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="code" name="code" value="" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="refresh_token">refresh_token</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="refresh_token" name="refresh_token" value="" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <button type="button" name="run" id="run" class="btn btn-lg btn-primary btn-block">Run test</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-8" id="result" name="result" style="word-wrap: break-word;">
+        </div>
+      </div>
+		</div>
+	</body>
+<script>
+  var glewlwyd_api = "api/glwd";
+  
+  var params;
+	function getQueryParams(qs) {
+		qs = qs.split('+').join(' ');
+
+		var params = {},
+			tokens,
+			re = /[?&]?([^=]+)=([^&]*)/g;
+
+		while (tokens = re.exec(qs)) {
+			params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
+		}
+
+		return params;
+	}
+	
+	window.onload = function () {
+		params = getQueryParams(location.search);
+		if (params.code) {
+		  $("#code").val(params.code);
+		}
+    if (params.access_token) {
+      $("#result").append("<div><strong>access_token</strong>: <code>" + params.access_token + "</code></div>");
+    }
+		params = getQueryParams(location.hash.substring(1));
+		if (params.code) {
+		  $("#code").val(params.code);
+		}
+    if (params.access_token) {
+      $("#result").append("<div><strong>access_token</strong>: <code>" + params.access_token + "</code></div>");
+    }
+	};
+
+  function setAuthHeader(xhr){
+    var creds = $("#client_id").val() + ':' + $("#clientpassword").val();
+    var basicScheme = btoa(creds);
+    var hashStr = "Basic "+basicScheme;
+    xhr.setRequestHeader('Authorization', hashStr);
+  }
+
+  $("#run").click(function () {
+    $("#result").empty();
+    switch ($("#response_type").val()) {
+      case "code":
+        var url = glewlwyd_api + "/auth?response_type=code&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&scope=" + $("#scope").val().join(" ");
+        window.location = url;
+        break;
+      case "authorization_code":
+        $.ajax({
+          type: "POST",
+          url: glewlwyd_api + "/token", 
+          data: {grant_type: "authorization_code", client_id: $("#client_id").val(), redirect_uri: $("#redirect_uri").val(), code: $("#code").val()},
+          beforeSend: function (xhr) {
+            if ($("#clientconfidential").is(':checked')) {
+              xhr.setRequestHeader ("Authorization", "Basic " + btoa($("#client_id").val() + ":" + $("#clientpassword").val()));
+            }
+          },
+          success: function (result, status, request) {
+            $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
+            for (var key in result) {
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+            }
+          },
+          error: function (error) {
+              $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+              $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+            }
+        });
+        break;
+      case "token":
+        var url = glewlwyd_api + "/auth?response_type=token&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&scope=" + $("#scope").val().join(" ");
+        window.location = url;
+        break;
+      case "password":
+        $.ajax({
+          type: "POST",
+          url: glewlwyd_api + "/token", 
+          data: {grant_type: "password", username: $("#username").val(), password: $("#password").val(), state: $("#state").val(), scope: $("#scope").val().join(" ")},
+          beforeSend: function (xhr) {
+            if ($("#clientconfidential").is(':checked')) {
+              xhr.setRequestHeader ("Authorization", "Basic " + btoa($("#client_id").val() + ":" + $("#clientpassword").val()));
+            }
+          },
+          success: function (result, status, request) {
+            $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
+            for (var key in result) {
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+            }
+          },
+          error: function (error) {
+            $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+            $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+          }
+        });
+        break;
+      case "client_credentials":
+        $.ajax
+        ({
+          type: "POST",
+          url: glewlwyd_api + "/token",
+          async: false,
+          headers: {
+            "Authorization": "Basic " + btoa($("#client_id").val() + ":" + $("#clientpassword").val())
+          },
+          data: {grant_type: "client_credentials", scope: $("#scope").val().join(" ")},
+          success: function (result, status, request) {
+            $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
+            for (var key in result) {
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+            }
+          },
+          error: function (error) {
+            $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+            $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+          }
+        });
+        break;
+      case "refresh_token":
+        $.ajax({
+          type: "POST",
+          url: glewlwyd_api + "/token", 
+          data: {grant_type: "refresh_token", refresh_token: $("#refresh_token").val()},
+          beforeSend: function (xhr) {
+            if ($("#clientconfidential").is(':checked')) {
+              xhr.setRequestHeader ("Authorization", "Basic " + btoa($("#client_id").val() + ":" + $("#clientpassword").val()));
+            }
+          },
+          success: function (result, status, request) {
+            $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
+            for (var key in result) {
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+            }
+          },
+          error:function (error) {
+            $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+            $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+          }
+        });
+        break;
+      case "delete_token":
+        $.ajax({
+          type: "POST",
+          url: glewlwyd_api + "/token", 
+          data: {grant_type: "delete_token", refresh_token: $("#refresh_token").val()},
+          beforeSend: function (xhr) {
+            if ($("#clientconfidential").is(':checked')) {
+              xhr.setRequestHeader ("Authorization", "Basic " + btoa($("#client_id").val() + ":" + $("#clientpassword").val()));
+            }
+          },
+          success: function (result, status, request) {
+            $("#result").append("<div class=\"alert alert-info\">Success</div>");
+          },
+          error:function (error) {
+            $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+            $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+          }
+        });
+        break;
+    }
+  });
+</script>
+</html>

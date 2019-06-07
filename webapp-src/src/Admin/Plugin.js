@@ -68,7 +68,7 @@ class Plugin extends Component {
       <thead>
         <tr>
           <th colSpan="3">
-            <h4>{i18next.t("admin.scheme-mod-list-title")}</h4>
+            <h4>{i18next.t("admin.plugin-mod-list-title")}</h4>
           </th>
           <th colSpan="1">
             <button type="button" className="btn btn-secondary" onClick={(e) => this.addMod(e)} title={i18next.t("admin.add")}>
