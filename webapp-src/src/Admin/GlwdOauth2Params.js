@@ -148,7 +148,7 @@ class GlwdOauth2Params extends Component {
   toggleScopeOverrideRolling(e, scope) {
     var mod = this.state.mod;
     mod.parameters["scope"].forEach((curScope) => {
-      if (curScope.name === scope.name) {
+      if (curScope.name === scope) {
         curScope["refresh-token-rolling"] = !curScope["refresh-token-rolling"];
       }
     });
@@ -279,7 +279,7 @@ class GlwdOauth2Params extends Component {
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-text">
-              <input type="checkbox" className="form-control" id={"mod-scope-override-refresh-rolling-"+scope.name} onChange={(e) => this.toggleScopeOverrideRolling(e, scope.name)} checked={scope["refresh-token-rolling"]} />
+              <input type="checkbox" className="form-control" id={"mod-glwd-scope-override-refresh-rolling-"+scope.name} onChange={(e) => this.toggleScopeOverrideRolling(e, scope.name)} checked={scope["refresh-token-rolling"]} />
             </div>
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor={"mod-glwd-scope-override-refresh-rolling-"+scope.name}>{i18next.t("admin.mod-scope-override-refresh-rolling")}</label>
