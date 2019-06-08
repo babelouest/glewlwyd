@@ -14,8 +14,7 @@ class SchemeOTP extends Component {
       name: props.name,
       profile: props.profile,
       myOtp: false,
-      errorList: {},
-      qrcode: false
+      errorList: {}
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -80,15 +79,9 @@ class SchemeOTP extends Component {
                 "algorithm=SHA1&" +
                 "period=" + this.state.myOtp.time_step_size;
     }
+    $('#qrcode').empty();
     if (this.state.qrcode) {
-      this.state.qrcode.clear();
-      if (url) {
-        this.state.qrcode.makeCode(url);
-      }
-    } else {
-      if (url) {
-        this.setState({qrcode: new QRCode(document.getElementById("qrcode"), url)});
-      }
+      $('#qrcode').qrcode(url);
     }
   }
   
