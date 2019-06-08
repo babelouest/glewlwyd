@@ -11,6 +11,7 @@
     "btn-ok": "Valider",
     "btn-reload": "Recharger",
     "sign-in-title": "Cliquer ici pour valider votre nom d'utilisateur et mot de passe",
+    "success-login": "Authentification réussie",
     "error-login": "Erreur lors de l'authentification",
     "error-change-user-api": "Erreur lors du changement d'utilisateur",
     "error-scheme-scope-api": "Erreur lors de la récupération des méthodes d'authentification pour les droits d'accès",
