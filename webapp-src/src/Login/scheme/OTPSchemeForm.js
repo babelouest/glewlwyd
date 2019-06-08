@@ -43,11 +43,11 @@ class OTPSchemeForm extends Component {
     
     apiManager.glewlwydRequest("/auth/", "POST", scheme)
     .then(() => {
-      messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.success-value")});
+      messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.success-login")});
       messageDispatcher.sendMessage('App', 'InitProfile');
     })
     .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-value")});
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
     });
   }
   

@@ -11,6 +11,7 @@
     "btn-ok": "OK",
     "btn-reload": "Reload",
     "sign-in-title": "Click here to validate your login and password",
+    "success-login": "Authentication success",
     "error-login": "Authentication error",
     "error-change-user-api": "Error changing user",
     "error-scheme-scope-api": "Errot while getting authorization schemes for scopes",
