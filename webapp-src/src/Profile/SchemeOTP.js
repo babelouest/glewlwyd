@@ -63,24 +63,26 @@ class SchemeOTP extends Component {
   }
   
   showQRCode() {
-    var url = encodeURI(i18next.t("profile.scheme-otp-none-specified"));
-    if (this.state.myOtp.type === "HOTP") {
-      url = "otpauth://hotp/" + this.state.myOtp.issuer + ":" + this.state.profile.username + "?" +
-                "issuer=" + encodeURI([location.protocol, '//', location.host].join('')) + "&" +
-                "secret=" + this.state.myOtp.secret + "&" +
-                "digits=" + this.state.myOtp.digits + "&" +
-                "algorithm=SHA1&" +
-                "counter=" + this.state.myOtp.moving_factor;
-    } else if (this.state.myOtp.type === "TOTP") {
-      url = "otpauth://totp/" + this.state.myOtp.issuer + ":" + this.state.profile.username + "?" +
-                "issuer=" + encodeURI([location.protocol, '//', location.host].join('')) + "&" +
-                "secret=" + this.state.myOtp.secret + "&" +
-                "digits=" + this.state.myOtp.digits + "&" +
-                "algorithm=SHA1&" +
-                "period=" + this.state.myOtp.time_step_size;
+    var url = false;
+    if (this.state.myOtp.issuer && this.state.profile.username && this.state.myOtp.secret && this.state.myOtp.digits) {
+      if (this.state.myOtp.type === "HOTP" && this.state.myOtp.moving_factor) {
+        url = "otpauth://hotp/" + this.state.myOtp.issuer + ":" + this.state.profile.username + "?" +
+                  "issuer=" + encodeURI([location.protocol, '//', location.host].join('')) + "&" +
+                  "secret=" + this.state.myOtp.secret + "&" +
+                  "digits=" + this.state.myOtp.digits + "&" +
+                  "algorithm=SHA1&" +
+                  "counter=" + this.state.myOtp.moving_factor;
+      } else if (this.state.myOtp.type === "TOTP" && this.state.myOtp.time_step_size) {
+        url = "otpauth://totp/" + this.state.myOtp.issuer + ":" + this.state.profile.username + "?" +
+                  "issuer=" + encodeURI([location.protocol, '//', location.host].join('')) + "&" +
+                  "secret=" + this.state.myOtp.secret + "&" +
+                  "digits=" + this.state.myOtp.digits + "&" +
+                  "algorithm=SHA1&" +
+                  "period=" + this.state.myOtp.time_step_size;
+      }
     }
     $('#qrcode').empty();
-    if (this.state.qrcode) {
+    if (url) {
       $('#qrcode').qrcode(url);
     }
   }
@@ -92,14 +94,18 @@ class SchemeOTP extends Component {
     } else {
       myOtp[param] = e.target.value;
     }
-    this.setState({myOtp: myOtp});
+    this.setState({myOtp: myOtp}, () => {
+      this.showQRCode();
+    });
   }
   
   changeType(e, type) {
     e.preventDefault();
     var myOtp = this.state.myOtp;
     myOtp.type = type;
-    this.setState({myOtp: myOtp});
+    this.setState({myOtp: myOtp}, () => {
+      this.showQRCode();
+    });
   }
   
   generateSecret() {
@@ -115,7 +121,9 @@ class SchemeOTP extends Component {
     .then((res) => {
       var myOtp = this.state.myOtp;
       myOtp.secret = res.secret;
-      this.setState({myOtp: myOtp});
+      this.setState({myOtp: myOtp}, () => {
+        this.showQRCode();
+      });
     })
     .fail((err) => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
