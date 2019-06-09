@@ -41,6 +41,7 @@ glewlwyd_scheme_mail
 glewlwyd_mod_user_irl
 glewlwyd_mod_client_irl
 glewlwyd_oauth2_irl
+glewlwyd_scheme_otp
 
 valgrind-*.txt
 *.json
