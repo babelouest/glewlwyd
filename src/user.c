@@ -128,8 +128,12 @@ json_t * auth_register_user_scheme(struct config_elements * config, const char *
           } else {
             j_return = json_pack("{si}", "result", G_OK);
           }
-        } else if (!check_result_value(j_response, G_ERROR)) {
-          j_return = json_incref(j_response);
+        } else if (j_response != NULL && !check_result_value(j_response, G_ERROR)) {
+          if (json_object_get(j_response, "response") != NULL) {
+            j_return = json_pack("{sIsO}", "result", json_integer_value(json_object_get(j_response, "result")), "register", json_object_get(j_response, "response"));
+          } else {
+            j_return = json_pack("{sI}", "result", json_integer_value(json_object_get(j_response, "result")));
+          }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_user_scheme - Error user_auth_scheme_module_register");
           j_return = json_pack("{si}", "result", G_ERROR);
