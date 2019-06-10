@@ -43,7 +43,7 @@ class WebauthnParams extends Component {
     }
     
     if (props.mod.parameters["seed"] === undefined) {
-      props.mod.parameters["seed"] = Math.random().toString(36).substring(7) + Math.random().toString(36).substring(7);
+      props.mod.parameters["seed"] = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     }
     
     this.state = {
@@ -116,7 +116,7 @@ class WebauthnParams extends Component {
   
   generateSeed() {
     var mod = this.state.mod;
-    mod.parameters["seed"] = Math.random().toString(36).substring(7) + Math.random().toString(36).substring(7);
+    mod.parameters["seed"] = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     this.setState({mod: mod});
   }
   
