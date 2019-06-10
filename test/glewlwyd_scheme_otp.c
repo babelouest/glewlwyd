@@ -29,6 +29,7 @@
 
 #define MODULE_MODULE "otp"
 #define MODULE_NAME "test_otp"
+#define MODULE_NAME_2 "test_otp_2"
 #define MODULE_DISPLAY_NAME "OTP scheme for test"
 #define MODULE_EXPIRATION 600
 #define MODULE_MAX_USE 0
@@ -41,6 +42,7 @@
 #define OTP_TOTP_OFFSET 0
 
 #define OTP_USER_SECRET "ZNCNGCWT3BCZW7FWUCRYGAYQWA======"
+#define OTP_USER_SECRET_2 "ZNCNGWWTWBCZW7FWUCRYGAYQWA======"
 
 #define OTP_USER_TYPE_TOTP "TOTP"
 #define OTP_USER_STEP_SIZE 30
@@ -160,35 +162,37 @@ END_TEST
 START_TEST(test_glwd_scheme_otp_irl_get_register)
 {
   json_t * j_params = json_pack("{sssssss{sssssi}}", 
-                       "username", USERNAME, 
-                       "scheme_type", MODULE_MODULE, 
-                       "scheme_name", MODULE_NAME, 
-                       "value", 
-                        "secret", OTP_USER_SECRET, 
-                        "type", OTP_USER_TYPE_HOTP, 
-                        "moving_factor", OTP_USER_MOVING_FACTOR),
+                               "username", USERNAME, 
+                               "scheme_type", MODULE_MODULE, 
+                               "scheme_name", MODULE_NAME, 
+                               "value", 
+                                "secret", OTP_USER_SECRET, 
+                                "type", OTP_USER_TYPE_HOTP, 
+                                "moving_factor", OTP_USER_MOVING_FACTOR),
          * j_result = json_pack("{sssssi}", 
                                 "secret", OTP_USER_SECRET, 
                                 "type", OTP_USER_TYPE_HOTP, 
                                 "moving_factor", OTP_USER_MOVING_FACTOR);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 404, NULL, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
   j_params = json_pack("{ssssss}", 
-                                "username", USERNAME, 
-                                "scheme_type", MODULE_MODULE, 
-                                "scheme_name", MODULE_NAME);
+                        "username", USERNAME, 
+                        "scheme_type", MODULE_MODULE, 
+                        "scheme_name", MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_params);
   json_decref(j_result);
   
   j_params = json_pack("{sssssss{ss}}", 
-                                "username", USERNAME, 
-                                "scheme_type", MODULE_MODULE, 
-                                "scheme_name", MODULE_NAME, 
-                                "value", 
-                                  "type", "NONE");
+                        "username", USERNAME, 
+                        "scheme_type", MODULE_MODULE, 
+                        "scheme_name", MODULE_NAME, 
+                        "value", 
+                          "type", "NONE");
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 404, NULL, NULL, NULL), 1);
   json_decref(j_params);
 }
 END_TEST
@@ -321,6 +325,122 @@ START_TEST(test_glwd_scheme_otp_irl_module_remove)
 }
 END_TEST
 
+START_TEST(test_glwd_scheme_otp_irl_collision_begin)
+{
+  json_t * j_parameters = json_pack("{sssssssisis{sssisisosisosisi}}", 
+                                    "module", MODULE_MODULE, 
+                                    "name", MODULE_NAME, 
+                                    "display_name", MODULE_DISPLAY_NAME, 
+                                    "expiration", MODULE_EXPIRATION, 
+                                    "max_use", MODULE_MAX_USE, 
+                                    "parameters", 
+                                      "issuer", OTP_ORIGIN,
+                                      "secret-minimum-size", OTP_SECRET_LENGTH,
+                                      "otp-length", OTP_CODE_LEGTH,
+                                      "hotp-allow", json_true(),
+                                      "hotp-window", OTP_HOTP_WINDOW,
+                                      "totp-allow", json_true(),
+                                      "totp-window", OTP_TOTP_WINDOW,
+                                      "totp-start-offset", OTP_TOTP_OFFSET);
+  
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  j_parameters = json_pack("{sssssssisis{sssisisosisosisi}}", 
+                            "module", MODULE_MODULE, 
+                            "name", MODULE_NAME_2, 
+                            "display_name", MODULE_DISPLAY_NAME, 
+                            "expiration", MODULE_EXPIRATION, 
+                            "max_use", MODULE_MAX_USE, 
+                            "parameters", 
+                              "issuer", OTP_ORIGIN,
+                              "secret-minimum-size", OTP_SECRET_LENGTH,
+                              "otp-length", OTP_CODE_LEGTH,
+                              "hotp-allow", json_true(),
+                              "hotp-window", OTP_HOTP_WINDOW,
+                              "totp-allow", json_true(),
+                              "totp-window", OTP_TOTP_WINDOW,
+                              "totp-start-offset", OTP_TOTP_OFFSET);
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_otp_irl_collision)
+{
+  json_t * j_parameters = json_pack("{sssssss{sssssi}}", 
+                                   "username", USERNAME, 
+                                   "scheme_type", MODULE_MODULE, 
+                                   "scheme_name", MODULE_NAME, 
+                                   "value", 
+                                    "secret", OTP_USER_SECRET, 
+                                    "type", OTP_USER_TYPE_TOTP, 
+                                    "time_step_size", OTP_USER_STEP_SIZE),
+          * j_result;
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  
+  j_parameters = json_pack("{sssssss{sssssi}}", 
+                                   "username", USERNAME, 
+                                   "scheme_type", MODULE_MODULE, 
+                                   "scheme_name", MODULE_NAME_2, 
+                                   "value", 
+                                    "secret", OTP_USER_SECRET_2, 
+                                    "type", OTP_USER_TYPE_HOTP, 
+                                    "moving_factor", OTP_USER_MOVING_FACTOR);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  
+  j_result = json_pack("{sssssi}", 
+                       "secret", OTP_USER_SECRET_2, 
+                       "type", OTP_USER_TYPE_HOTP, 
+                       "moving_factor", OTP_USER_MOVING_FACTOR);
+  j_parameters = json_pack("{ssssss}", 
+                        "username", USERNAME, 
+                        "scheme_type", MODULE_MODULE, 
+                        "scheme_name", MODULE_NAME_2);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, j_result, NULL, NULL), 1);
+  json_decref(j_parameters);
+  json_decref(j_result);
+
+  j_result = json_pack("{sssssi}", 
+                       "secret", OTP_USER_SECRET, 
+                       "type", OTP_USER_TYPE_TOTP, 
+                       "time_step_size", OTP_USER_STEP_SIZE);
+  j_parameters = json_pack("{ssssss}", 
+                        "username", USERNAME, 
+                        "scheme_type", MODULE_MODULE, 
+                        "scheme_name", MODULE_NAME);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, j_result, NULL, NULL), 1);
+  json_decref(j_parameters);
+  json_decref(j_result);
+
+  j_parameters = json_pack("{sssssss{ss}}", 
+                        "username", USERNAME, 
+                        "scheme_type", MODULE_MODULE, 
+                        "scheme_name", MODULE_NAME, 
+                        "value", 
+                          "type", "NONE");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+
+  j_parameters = json_pack("{sssssss{ss}}", 
+                        "username", USERNAME, 
+                        "scheme_type", MODULE_MODULE, 
+                        "scheme_name", MODULE_NAME_2, 
+                        "value", 
+                          "type", "NONE");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_otp_irl_collision_close)
+{
+  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/scheme/" MODULE_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/scheme/" MODULE_NAME_2, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -335,6 +455,9 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_otp_irl_authenticate_error);
   tcase_add_test(tc_core, test_glwd_scheme_otp_irl_authenticate_success);
   tcase_add_test(tc_core, test_glwd_scheme_otp_irl_module_remove);
+  tcase_add_test(tc_core, test_glwd_scheme_otp_irl_collision_begin);
+  tcase_add_test(tc_core, test_glwd_scheme_otp_irl_collision);
+  tcase_add_test(tc_core, test_glwd_scheme_otp_irl_collision_close);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
