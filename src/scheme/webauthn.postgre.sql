@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS gs_webauthn_user;
 CREATE TABLE gs_webauthn_user (
   gswu_id SERIAL PRIMARY KEY,
   gswu_mod_name VARCHAR(128) NOT NULL,
-  gswu_username VARCHAR(128) UNIQUE NOT NULL,
+  gswu_username VARCHAR(128) NOT NULL,
   gswu_user_id VARCHAR(128) NOT NULL
 );
 CREATE INDEX i_gswu_username ON gs_webauthn_user(gswu_username);
