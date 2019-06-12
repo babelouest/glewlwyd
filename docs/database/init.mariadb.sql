@@ -285,7 +285,7 @@ CREATE INDEX i_gssc_username ON gs_code(gsc_username);
 CREATE TABLE gs_webauthn_user (
   gswu_id INT(11) PRIMARY KEY AUTO_INCREMENT,
   gswu_mod_name VARCHAR(128) NOT NULL,
-  gswu_username VARCHAR(128) UNIQUE NOT NULL,
+  gswu_username VARCHAR(128) NOT NULL,
   gswu_user_id VARCHAR(128) NOT NULL
 );
 CREATE INDEX i_gswu_username ON gs_webauthn_user(gswu_username);
