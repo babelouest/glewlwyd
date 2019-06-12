@@ -1381,6 +1381,10 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         }
         
         rpid = o_strstr(json_string_value(json_object_get(j_params, "rp-origin")), "://")+3;
+        if (o_strchr(rpid, ':') != NULL) {
+          *o_strchr(rpid, ':') = '\0';
+        }
+        
         if (!generate_digest_raw(digest_SHA256, (unsigned char *)rpid, o_strlen(rpid), rpid_hash, &rpid_hash_len)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error generate_digest_raw");
           json_array_append_new(j_error, json_string("Internal error"));
@@ -1455,12 +1459,16 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         for (i=0; i<cbor_map_size(cbor_cose); i++) {
           cbor_key = cbor_map_handle(cbor_cose)[i].key;
           cbor_value = cbor_map_handle(cbor_cose)[i].value;
-          if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 1 && cbor_isa_bytestring(cbor_value) && cbor_bytestring_length(cbor_value) == 32) {
+          if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 1 && cbor_isa_bytestring(cbor_value)) {
             has_x = 1;
-            memcpy(cert_x, cbor_bytestring_handle(cbor_value), 32);
-          } else if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 2 && cbor_isa_bytestring(cbor_value) && cbor_bytestring_length(cbor_value) == 32) {
+            memcpy(cert_x, cbor_bytestring_handle(cbor_value), cbor_bytestring_length(cbor_value));
+            g_x.data = cert_x;
+            g_x.size = cbor_bytestring_length(cbor_value);
+          } else if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 2 && cbor_isa_bytestring(cbor_value)) {
             has_y = 1;
-            memcpy(cert_y, cbor_bytestring_handle(cbor_value), 32);
+            memcpy(cert_y, cbor_bytestring_handle(cbor_value), cbor_bytestring_length(cbor_value));
+            g_y.data = cert_y;
+            g_y.size = cbor_bytestring_length(cbor_value);
           } else if (cbor_isa_uint(cbor_key) && cbor_get_int(cbor_key) == 1 && cbor_isa_uint(cbor_value) && cbor_get_int(cbor_value) == 2) {
             key_type_valid = 1;
           } else if (cbor_isa_uint(cbor_key) && cbor_get_int(cbor_key) == 3 && cbor_isa_negint(cbor_value)) {
@@ -1484,24 +1492,26 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         if (!has_x || !has_y || !key_type_valid || !key_alg_valid) {
           json_array_append_new(j_error, json_string("Invalid COSE key"));
           y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error invalid COSE key has_x %d && has_y %d && key_type_valid %d && key_alg_valid %d", has_x, has_y, key_type_valid, key_alg_valid);
+          ret = G_ERROR_PARAM;
           break;
         }
         
-        g_x.data = cert_x;
-        g_x.size = 32;
-        g_y.data = cert_y;
-        g_y.size = 32;
         if (gnutls_pubkey_init(&g_key)) {
           json_array_append_new(j_error, json_string("Internal error"));
           y_log_message(Y_LOG_LEVEL_DEBUG, "register_new_attestation - Error gnutls_pubkey_init");
+          ret = G_ERROR_PARAM;
+          break;
         }
         if (gnutls_pubkey_import_ecc_raw(g_key, curve, &g_x, &g_y) < 0) {
           json_array_append_new(j_error, json_string("Internal error"));
           y_log_message(Y_LOG_LEVEL_DEBUG, "register_new_attestation - error gnutls_pubkey_import_ecc_raw");
+          ret = G_ERROR_PARAM;
+          break;
         }
         if ((ret = gnutls_pubkey_export(g_key, GNUTLS_X509_FMT_PEM, pubkey_export, &pubkey_export_len)) < 0) {
           json_array_append_new(j_error, json_string("Error exporting pubkey"));
           y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error gnutls_pubkey_export: %d", ret);
+          ret = G_ERROR_PARAM;
           break;
         }
         
@@ -2345,9 +2355,9 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       if (check_result_value(j_result, G_OK)) {
         j_return = json_pack("{si}", "result", G_OK);
       } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
-        j_return = json_pack("{sisO}", "result", G_ERROR_UNAUTHORIZED, "error", json_object_get(j_result, "error"));
+        j_return = json_pack("{sisO}", "result", G_ERROR_UNAUTHORIZED, "response", json_object_get(j_result, "error"));
       } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-        j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
+        j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "response", json_object_get(j_result, "error"));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error register_new_attestation");
         j_return = json_pack("{si}", "result", G_ERROR);
