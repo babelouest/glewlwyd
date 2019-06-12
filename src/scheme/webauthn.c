@@ -1062,7 +1062,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
  * Really want you in my world
  * 
  */
-static json_t * check_attestation_fido_u2f(unsigned char * credential_id, size_t credential_id_len, unsigned char * cert_x, unsigned char * cert_y, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * client_data) {
+static json_t * check_attestation_fido_u2f(unsigned char * credential_id, size_t credential_id_len, unsigned char * cert_x, size_t cert_x_len, unsigned char * cert_y, size_t cert_y_len, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * client_data) {
   json_t * j_error = json_array(), * j_return;
   cbor_item_t * key, * x5c, * sig = NULL, * att_cert;
   int i, ret;
@@ -1163,12 +1163,12 @@ static json_t * check_attestation_fido_u2f(unsigned char * credential_id, size_t
       data_signed[data_signed_offset] = 0x04;
       data_signed_offset++;
       
-      memcpy(data_signed+data_signed_offset, cert_x, 32);
-      data_signed_offset+=32;
+      memcpy(data_signed+data_signed_offset, cert_x, cert_x_len);
+      data_signed_offset+=cert_x_len;
       
-      memcpy(data_signed+data_signed_offset, cert_y, 32);
-      data_signed_offset+=32;
-      
+      memcpy(data_signed+data_signed_offset, cert_y, cert_y_len);
+      data_signed_offset+=cert_y_len;
+        
       // Let's verify sig over data_signed
       data.data = data_signed;
       data.size = data_signed_offset;
@@ -1211,9 +1211,9 @@ static json_t * check_attestation_fido_u2f(unsigned char * credential_id, size_t
  */
 static json_t * register_new_attestation(struct config_module * config, json_t * j_params, json_t * j_scheme_data, json_t * j_credential) {
   json_t * j_return, * j_client_data = NULL, * j_error, * j_result, * j_pubkey = NULL, * j_cert = NULL, * j_query, * j_element;
-  unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL, * credential_id_b64 = NULL, * cbor_auth_data, * cred_pub_key, cert_x[32], cert_y[32], pubkey_export[1024];
+  unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL, * credential_id_b64 = NULL, * cbor_auth_data, * cred_pub_key, cert_x[256], cert_y[256], pubkey_export[1024];
   char * challenge_hash = NULL, * message = NULL, * rpid = NULL;
-  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, pubkey_export_len = 1024, index;
+  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, cert_x_len, cert_y_len, pubkey_export_len = 1024, index;
   uint32_t counter = 0;
   int ret = G_OK, res, status, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0;
   unsigned int i;
@@ -1447,12 +1447,14 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         if (cbor_result.error.code != CBOR_ERR_NONE) {
           json_array_append_new(j_error, json_string("Internal error"));
           y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error cbor_load cbor_cose");
+          ret = G_ERROR_PARAM;
           break;
         }
         
         if (!cbor_isa_map(cbor_cose)) {
           json_array_append_new(j_error, json_string("Internal error"));
           y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error cbor_cose not a map");
+          ret = G_ERROR_PARAM;
           break;
         }
         
@@ -1462,11 +1464,13 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 1 && cbor_isa_bytestring(cbor_value)) {
             has_x = 1;
             memcpy(cert_x, cbor_bytestring_handle(cbor_value), cbor_bytestring_length(cbor_value));
+            cert_x_len = cbor_bytestring_length(cbor_value);
             g_x.data = cert_x;
             g_x.size = cbor_bytestring_length(cbor_value);
           } else if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 2 && cbor_isa_bytestring(cbor_value)) {
             has_y = 1;
             memcpy(cert_y, cbor_bytestring_handle(cbor_value), cbor_bytestring_length(cbor_value));
+            cert_y_len = cbor_bytestring_length(cbor_value);
             g_y.data = cert_y;
             g_y.size = cbor_bytestring_length(cbor_value);
           } else if (cbor_isa_uint(cbor_key) && cbor_get_int(cbor_key) == 1 && cbor_isa_uint(cbor_value) && cbor_get_int(cbor_value) == 2) {
@@ -1539,7 +1543,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           }
           json_decref(j_result);
         } else if (0 == o_strncmp("fido-u2f", (char *)fmt, MIN(fmt_len, o_strlen("fido-u2f")))) {
-          j_result = check_attestation_fido_u2f((cbor_auth_data+CREDENTIAL_ID_OFFSET), credential_id_len, cert_x, cert_y, att_stmt, rpid_hash, rpid_hash_len, client_data);
+          j_result = check_attestation_fido_u2f((cbor_auth_data+CREDENTIAL_ID_OFFSET), credential_id_len, cert_x, cert_x_len, cert_y, cert_y_len, att_stmt, rpid_hash, rpid_hash_len, client_data);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             json_array_extend(j_error, json_object_get(j_result, "error"));
             ret = G_ERROR_PARAM;
