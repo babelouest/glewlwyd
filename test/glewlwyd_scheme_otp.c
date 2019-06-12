@@ -216,7 +216,7 @@ START_TEST(test_glwd_scheme_otp_irl_authenticate_error)
                        "scheme_name", MODULE_NAME,
                        "value",
                          "value", "error");
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
   j_params = json_pack("{sssssss{si}}", 
@@ -225,7 +225,7 @@ START_TEST(test_glwd_scheme_otp_irl_authenticate_error)
                        "scheme_name", MODULE_NAME,
                        "value",
                          "value", 666777);
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
   j_params = json_pack("{sssssss{ss}}", 
@@ -234,7 +234,7 @@ START_TEST(test_glwd_scheme_otp_irl_authenticate_error)
                        "scheme_name", MODULE_NAME,
                        "value",
                          "value", "66677a");
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
   j_params = json_pack("{sssssss{ss}}", 
@@ -271,7 +271,7 @@ START_TEST(test_glwd_scheme_otp_irl_authenticate_success)
                        "scheme_name", MODULE_NAME,
                        "value",
                          "value", code);
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
   j_params = json_pack("{sssssss{ss}}", 
@@ -301,7 +301,7 @@ START_TEST(test_glwd_scheme_otp_irl_authenticate_success)
                        "scheme_name", MODULE_NAME,
                        "value",
                          "value", code);
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
   j_params = json_pack("{sssssss{ss}}", 
