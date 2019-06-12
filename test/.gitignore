@@ -37,11 +37,12 @@ glewlwyd_crud_client
 glewlwyd_crud_scope
 
 glewlwyd_mod_user_http
-glewlwyd_scheme_mail
 glewlwyd_mod_user_irl
 glewlwyd_mod_client_irl
 glewlwyd_oauth2_irl
+glewlwyd_scheme_mail
 glewlwyd_scheme_otp
+glewlwyd_scheme_webauthn
 
 valgrind-*.txt
 *.json
