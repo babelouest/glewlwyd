@@ -845,8 +845,8 @@ static int validate_safetynet_ca_root(json_t * j_params, gnutls_x509_crt_t cert_
  */
 static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, const unsigned char * client_data) {
   json_t * j_error = json_array(), * j_return;
-  unsigned char pubkey_export[1024] = {0}, cert_export[32] = {0}, cert_export_b64[64], client_data_hash[32], * nonce_base = NULL, nonce_base_hash[32], * nonce_base_hash_b64 = NULL, * header_cert_decoded;
-  char * message, * response_token, * header_x5c, issued_to[128];
+  unsigned char pubkey_export[1024] = {0}, cert_export[32] = {0}, cert_export_b64[64], client_data_hash[32], * nonce_base = NULL, nonce_base_hash[32], * nonce_base_hash_b64 = NULL, * header_cert_decoded = NULL;
+  char * message, * response_token, * header_x5c = NULL, issued_to[128];
   size_t pubkey_export_len = 1024, cert_export_len = 32, cert_export_b64_len, issued_to_len = 128, client_data_hash_len = 32, nonce_base_hash_len = 32, nonce_base_hash_b64_len = 0, header_cert_decoded_len = 0;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
@@ -2512,8 +2512,8 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       if (check_result_value(j_assertion, G_OK)) {
         if ((res = check_assertion(config, (json_t *)cls, username, j_scheme_data, json_object_get(j_assertion, "assertion"))) == G_OK) {
           j_return = json_pack("{si}", "result", G_OK);
-        } else if (res == G_ERROR_UNAUTHORIZED) {
-          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        } else if (res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM) {
+          j_return = json_pack("{si}", "result", res);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error check_assertion");
           j_return = json_pack("{si}", "result", G_ERROR);
