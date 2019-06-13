@@ -197,14 +197,15 @@ static json_t * get_user_id_from_username(struct config_module * config, json_t 
   return j_return;
 }
 
-static json_t * get_credential_list(struct config_module * config, const char * username, int restrict_to_registered) {
+static json_t * get_credential_list(struct config_module * config, json_t * j_params, const char * username, int restrict_to_registered) {
   json_t * j_query, * j_result, * j_return, * j_element;
   int res;
-  char * username_escaped, * username_clause;
+  char * username_escaped, * mod_name_escaped, * username_clause;
   size_t index;
   
   username_escaped = h_escape_string(config->conn, username);
-  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
+  mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
   j_query = json_pack("{sss[ssss]s{s{ssss}}}",
                       "table",
                       G_TABLE_WEBAUTHN_CREDENTIAL,
@@ -221,6 +222,7 @@ static json_t * get_credential_list(struct config_module * config, const char * 
                           username_clause);
   o_free(username_clause);
   o_free(username_escaped);
+  o_free(mod_name_escaped);
   if (restrict_to_registered) {
     json_object_set_new(json_object_get(j_query, "where"), "gswc_status", json_integer(1));
   } else {
@@ -263,7 +265,7 @@ static json_t * get_credential_list(struct config_module * config, const char * 
 
 static json_t * generate_new_credential(struct config_module * config, json_t * j_params, const char * username) {
   json_t * j_query, * j_return;
-  char * username_escaped, * username_clause, * challenge_hash;
+  char * username_escaped, * mod_name_escaped, * username_clause, * challenge_hash;
   int res;
   size_t challenge_b64_len, challenge_len = (size_t)json_integer_value(json_object_get(j_params, "challenge-length"));
   unsigned char challenge_b64[challenge_len*2], challenge[challenge_len+1];
@@ -276,7 +278,8 @@ static json_t * generate_new_credential(struct config_module * config, json_t * 
       rand_string(session, SESSION_LENGTH);
       if ((session_hash = generate_hash(config->hash_algorithm, session)) != NULL) {
         username_escaped = h_escape_string(config->conn, username);
-        username_clause = msprintf(" (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
+        mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+        username_clause = msprintf(" (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
         // Disable all credential with status 0 (new) of the same user
         j_query = json_pack("{sss{si}s{s{ssss+}si}}",
                             "table",
@@ -324,6 +327,7 @@ static json_t * generate_new_credential(struct config_module * config, json_t * 
         }
         o_free(username_clause);
         o_free(username_escaped);
+        o_free(mod_name_escaped);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_credential - Error generate_hash session");
         j_return = json_pack("{si}", "result", G_ERROR);
@@ -343,7 +347,7 @@ static json_t * generate_new_credential(struct config_module * config, json_t * 
 
 static json_t * generate_new_assertion(struct config_module * config, json_t * j_params, const char * username, int mock) {
   json_t * j_query, * j_return;
-  char * username_escaped, * username_clause, * challenge_hash;
+  char * username_escaped, * username_clause, * mod_name_escaped, * challenge_hash;
   int res;
   size_t challenge_b64_len, challenge_len = (size_t)json_integer_value(json_object_get(j_params, "challenge-length"));
   unsigned char challenge_b64[challenge_len*2], challenge[challenge_len+1];
@@ -357,7 +361,8 @@ static json_t * generate_new_assertion(struct config_module * config, json_t * j
       if ((session_hash = generate_hash(config->hash_algorithm, session)) != NULL) {
         if (mock < 2) {
           username_escaped = h_escape_string(config->conn, username);
-          username_clause = msprintf(" (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
+          mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+          username_clause = msprintf(" (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
           // Disable all assertions with status 0 (new) of the same user
           j_query = json_pack("{sss{si}s{s{ssss+}si}}",
                               "table",
@@ -406,6 +411,7 @@ static json_t * generate_new_assertion(struct config_module * config, json_t * j
             j_return = json_pack("{si}", "result", G_ERROR_DB);
           }
           o_free(username_clause);
+          o_free(mod_name_escaped);
           o_free(username_escaped);
         } else {
           j_return = json_pack("{sis{ssss}}", "result", G_OK, "assertion", "session", session, "challenge", challenge_b64);
@@ -429,7 +435,7 @@ static json_t * generate_new_assertion(struct config_module * config, json_t * j
 
 static json_t * get_credential_from_session(struct config_module * config, json_t * j_params, const char * username, const char * session) {
   json_t * j_query, * j_result, * j_return;
-  char * username_escaped, * username_clause, * expiration_clause;
+  char * username_escaped, * mod_name_escaped, * username_clause, * expiration_clause;
   char * session_hash;
   int res;
   time_t now;
@@ -439,7 +445,8 @@ static json_t * get_credential_from_session(struct config_module * config, json_
     if (session_hash != NULL) {
       time(&now);
       username_escaped = h_escape_string(config->conn, username);
-      username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
+      mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+      username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
       if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
         expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
       } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
@@ -474,6 +481,7 @@ static json_t * get_credential_from_session(struct config_module * config, json_
                               expiration_clause);
       o_free(username_clause);
       o_free(username_escaped);
+      o_free(mod_name_escaped);
       o_free(expiration_clause);
       res = h_select(config->conn, j_query, &j_result, NULL);
       json_decref(j_query);
@@ -499,13 +507,14 @@ static json_t * get_credential_from_session(struct config_module * config, json_
   return j_return;
 }
 
-static json_t * get_credential(struct config_module * config, const char * username, const char * credential_id) {
+static json_t * get_credential(struct config_module * config, json_t * j_params, const char * username, const char * credential_id) {
   json_t * j_query, * j_result, * j_return;
-  char * username_escaped, * username_clause;
+  char * username_escaped, * mod_name_escaped, * username_clause;
   int res;
   
   username_escaped = h_escape_string(config->conn, username);
-  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
+  mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
   j_query = json_pack("{sss[sss]s{sss{ssss}s{ssss}}}",
                       "table",
                       G_TABLE_WEBAUTHN_CREDENTIAL,
@@ -528,6 +537,7 @@ static json_t * get_credential(struct config_module * config, const char * usern
                           " IN (1,3)");
   o_free(username_clause);
   o_free(username_escaped);
+  o_free(mod_name_escaped);
   res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -544,13 +554,14 @@ static json_t * get_credential(struct config_module * config, const char * usern
   return j_return;
 }
 
-static int update_credential(struct config_module * config, const char * username, const char * credential_id, int status) {
+static int update_credential(struct config_module * config, json_t * j_params, const char * username, const char * credential_id, int status) {
   json_t * j_query;
-  char * username_escaped, * username_clause;
+  char * username_escaped, * mod_name_escaped, * username_clause;
   int res, ret;
   
   username_escaped = h_escape_string(config->conn, username);
-  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
+  mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
   j_query = json_pack("{sss{si}s{sss{ssss}}}",
                       "table",
                       G_TABLE_WEBAUTHN_CREDENTIAL,
@@ -567,6 +578,7 @@ static int update_credential(struct config_module * config, const char * usernam
                           username_clause);
   o_free(username_clause);
   o_free(username_escaped);
+  o_free(mod_name_escaped);
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -578,13 +590,14 @@ static int update_credential(struct config_module * config, const char * usernam
   return ret;
 }
 
-static int update_credential_name(struct config_module * config, const char * username, const char * credential_id, const char * name) {
+static int update_credential_name(struct config_module * config, json_t * j_params, const char * username, const char * credential_id, const char * name) {
   json_t * j_query;
-  char * username_escaped, * username_clause;
+  char * username_escaped, * mod_name_escaped, * username_clause;
   int res, ret;
   
   username_escaped = h_escape_string(config->conn, username);
-  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
+  mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
   j_query = json_pack("{sss{ss}s{sss{ssss}}}",
                       "table",
                       G_TABLE_WEBAUTHN_CREDENTIAL,
@@ -601,6 +614,7 @@ static int update_credential_name(struct config_module * config, const char * us
                           username_clause);
   o_free(username_clause);
   o_free(username_escaped);
+  o_free(mod_name_escaped);
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -614,7 +628,7 @@ static int update_credential_name(struct config_module * config, const char * us
 
 static json_t * get_assertion_from_session(struct config_module * config, json_t * j_params, const char * username, const char * session, int mock) {
   json_t * j_query, * j_result, * j_return;
-  char * username_escaped, * username_clause, * expiration_clause;
+  char * username_escaped, * mod_name_escaped, * username_clause, * expiration_clause;
   char * session_hash;
   int res;
   time_t now;
@@ -624,7 +638,8 @@ static json_t * get_assertion_from_session(struct config_module * config, json_t
     if (session_hash != NULL) {
       time(&now);
       username_escaped = h_escape_string(config->conn, username);
-      username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s'))", username_escaped);
+      mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+      username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
       if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
         expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
       } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
@@ -659,6 +674,7 @@ static json_t * get_assertion_from_session(struct config_module * config, json_t
                             mock);
       o_free(username_clause);
       o_free(username_escaped);
+      o_free(mod_name_escaped);
       o_free(expiration_clause);
       res = h_select(config->conn, j_query, &j_result, NULL);
       json_decref(j_query);
@@ -1425,9 +1441,16 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           break;
         }
         
-        if (!o_base64_encode(cbor_bs_handle+CRED_ID_L_OFFSET, credential_id_len, credential_id_b64, &credential_id_b64_len)) {
+        if (!o_base64_encode(cbor_bs_handle+CRED_ID_L_OFFSET+2, credential_id_len, credential_id_b64, &credential_id_b64_len)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error o_base64_encode for credential_id_b64");
           json_array_append_new(j_error, json_string("Internal error"));
+          ret = G_ERROR_PARAM;
+          break;
+        }
+        
+        // Compare credential_id_b64 with rawId
+        if (memcmp(credential_id_b64, json_string_value(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")), MIN(json_string_length(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")), credential_id_b64_len))) {
+          json_array_append_new(j_error, json_string("Invalid rawId"));
           ret = G_ERROR_PARAM;
           break;
         }
@@ -1437,9 +1460,6 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         // Extract credential ID
         cbor_auth_data_len = cbor_bytestring_length(auth_data);
         cbor_auth_data = cbor_bytestring_handle(auth_data);
-        
-        // A Cose key is a CBOR data embedded ina CBOR data
-        credential_id_len = cbor_auth_data[CRED_ID_L_OFFSET+1] | (cbor_auth_data[CRED_ID_L_OFFSET] << 8);
         
         cred_pub_key = cbor_auth_data+CREDENTIAL_ID_OFFSET+credential_id_len;
         cred_pub_key_len = cbor_auth_data_len-CREDENTIAL_ID_OFFSET-credential_id_len;
@@ -1661,7 +1681,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         ret = G_ERROR_PARAM;
         break;
       }
-      j_credential = get_credential(config, username, json_string_value(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")));
+      j_credential = get_credential(config, j_params, username, json_string_value(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")));
       if (check_result_value(j_credential, G_ERROR_NOT_FOUND)) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - credential ID not found");
         ret = G_ERROR_PARAM;
@@ -2278,7 +2298,7 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
   
   j_user_id = get_user_id_from_username(config, (json_t *)cls, username, 0);
   if (check_result_value(j_user_id, G_OK)) {
-    j_credential = get_credential_list(config, username, 1);
+    j_credential = get_credential_list(config, (json_t *)cls, username, 1);
     if (check_result_value(j_credential, G_OK)) {
       ret = GLEWLWYD_IS_REGISTERED;
     } else if (check_result_value(j_credential, G_ERROR_NOT_FOUND)) {
@@ -2375,9 +2395,9 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     }
     json_decref(j_credential);
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "remove-credential") && json_string_length(json_object_get(j_scheme_data, "credential_id"))) {
-    j_credential = get_credential(config, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
+    j_credential = get_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
     if (check_result_value(j_credential, G_OK)) {
-      if ((res = update_credential(config, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), 4)) == G_OK) {
+      if ((res = update_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), 4)) == G_OK) {
         j_return = json_pack("{si}", "result", G_OK);
       } else if (res == G_ERROR_PARAM) {
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -2393,9 +2413,9 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     }
     json_decref(j_credential);
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "disable-credential") && json_string_length(json_object_get(j_scheme_data, "credential_id"))) {
-    j_credential = get_credential(config, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
+    j_credential = get_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
     if (check_result_value(j_credential, G_OK)) {
-      if ((res = update_credential(config, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), 3)) == G_OK) {
+      if ((res = update_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), 3)) == G_OK) {
         j_return = json_pack("{si}", "result", G_OK);
       } else if (res == G_ERROR_PARAM) {
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -2411,9 +2431,9 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     }
     json_decref(j_credential);
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "enable-credential") && json_string_length(json_object_get(j_scheme_data, "credential_id"))) {
-    j_credential = get_credential(config, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
+    j_credential = get_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
     if (check_result_value(j_credential, G_OK)) {
-      if ((res = update_credential(config, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), 1)) == G_OK) {
+      if ((res = update_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), 1)) == G_OK) {
         j_return = json_pack("{si}", "result", G_OK);
       } else if (res == G_ERROR_PARAM) {
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -2429,9 +2449,9 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     }
     json_decref(j_credential);
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "edit-credential") && json_string_length(json_object_get(j_scheme_data, "credential_id")) && json_string_length(json_object_get(j_scheme_data, "name"))) {
-    j_credential = get_credential(config, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
+    j_credential = get_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
     if (check_result_value(j_credential, G_OK)) {
-      if ((res = update_credential_name(config, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), json_string_value(json_object_get(j_scheme_data, "name")))) == G_OK) {
+      if ((res = update_credential_name(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), json_string_value(json_object_get(j_scheme_data, "name")))) == G_OK) {
         j_return = json_pack("{si}", "result", G_OK);
       } else if (res == G_ERROR_PARAM) {
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -2449,7 +2469,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "trigger-assertion")) {
     j_user_id = get_user_id_from_username(config, (json_t *)cls, username, 0);
     if (check_result_value(j_user_id, G_OK)) {
-      j_credential = get_credential_list(config, username, 1);
+      j_credential = get_credential_list(config, (json_t *)cls, username, 1);
       if (check_result_value(j_credential, G_OK)) {
         j_assertion = generate_new_assertion(config, (json_t *)cls, username, 1);
         if (check_result_value(j_assertion, G_OK)) {
@@ -2545,7 +2565,7 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
 
   j_user_id = get_user_id_from_username(config, (json_t *)cls, username, 1);
   if (check_result_value(j_user_id, G_OK)) {
-    j_credential_list = get_credential_list(config, username, 0);
+    j_credential_list = get_credential_list(config, (json_t *)cls, username, 0);
     if (check_result_value(j_credential_list, G_OK)) {
       j_return = json_pack("{sisO}", "result", G_OK, "response", json_object_get(j_credential_list, "credential"));
     } else if (check_result_value(j_credential_list, G_ERROR_NOT_FOUND)) {
@@ -2596,7 +2616,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
     if (check_result_value(j_credential_fake, G_OK)) {
       j_user_id = get_user_id_from_username(config, (json_t *)cls, username, 0);
       if (check_result_value(j_user_id, G_OK)) {
-        j_credential = get_credential_list(config, username, 1);
+        j_credential = get_credential_list(config, (json_t *)cls, username, 1);
         if (check_result_value(j_credential, G_OK)) {
           j_assertion = generate_new_assertion(config, (json_t *)cls, username, 0);
           if (check_result_value(j_assertion, G_OK)) {
