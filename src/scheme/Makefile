@@ -41,7 +41,7 @@ libmodemail.so: email.o misc.o
 	$(CC) -shared -Wl,-soname,libmodemail.so -o libmodemail.so email.o misc.o $(LIBS)
 
 libmodwebauthn.so: webauthn.o misc.o
-	$(CC) -shared -Wl,-soname,libmodwebauthn.so -o libmodwebauthn.so webauthn.o misc.o $(LIBS) -lcbor
+	$(CC) -shared -Wl,-soname,libmodwebauthn.so -o libmodwebauthn.so webauthn.o misc.o $(LIBS) -lcbor -ljwt
 
 libmodotp.so: otp.o misc.o
 	$(CC) -shared -Wl,-soname,libmodotp.so -o libmodotp.so otp.o misc.o $(LIBS) -loath
