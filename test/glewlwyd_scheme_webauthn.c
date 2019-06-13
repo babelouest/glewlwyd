@@ -11,6 +11,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>
 #include <gnutls/abstract.h>
 #include <cbor.h>
@@ -377,7 +378,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
-  j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{}}}}",
+  j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
                            "scheme_type", MODULE_MODULE,
                            "scheme_name", MODULE_NAME,
@@ -389,9 +390,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
                               "id", credential_id_enc_url, credential_id_enc_url_len,
                               "rawId", credential_id_enc, credential_id_enc_len,
                               "type", "public-key",
-                              "response");
-  ck_assert_int_eq(json_object_set_new(json_object_get(json_object_get(json_object_get(j_credential, "value"), "credential"), "response"), "attestationObject", json_stringn((const char *)att_obj_ser_enc, att_obj_ser_enc_len)), 0);
-  ck_assert_int_eq(json_object_set_new(json_object_get(json_object_get(json_object_get(j_credential, "value"), "credential"), "response"), "clientDataJSON", json_stringn((const char *)client_data_json_enc, client_data_json_enc_len)), 0);
+                              "response",
+                                "attestationObject", att_obj_ser_enc, att_obj_ser_enc_len,
+                                "clientDataJSON", client_data_json_enc, client_data_json_enc_len);
   
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_credential, NULL, 200, NULL, NULL, NULL), 1);
 
