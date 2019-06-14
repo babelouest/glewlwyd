@@ -78,7 +78,6 @@ class WebauthnForm extends Component {
         }
         
         publicKeyCredential.response = {
-          clientDataJSONHash: this.binToStr(window.crypto.subtle.digest("SHA-256", assertion.response.clientDataJSON)),
           clientDataJSON: this.binToStr(assertion.response.clientDataJSON),
           authenticatorData: this.binToStr(assertion.response.authenticatorData),
           signature: this.binToStr(assertion.response.signature),
