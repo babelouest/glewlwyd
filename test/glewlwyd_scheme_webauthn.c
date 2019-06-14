@@ -216,6 +216,57 @@ START_TEST(test_glwd_scheme_webauthn_irl_new_credential)
 }
 END_TEST
 
+START_TEST(test_glwd_scheme_webauthn_irl_register_error_bad_formed_response)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "register", "new-credential"),
+         * j_result, * j_credential;
+  struct _u_response resp;
+  const char * session;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN];
+  size_t challenge_dec_len;
+  
+  ulfius_init_response(&resp);
+  
+  user_req.http_verb = o_strdup("POST");
+  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
+  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
+  
+  j_credential = json_pack("{ss ss ss s{ss ss ss s{ss ss ss s{ss ss}}}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                            "register", "register-credential",
+                            "session", session,
+                            "type", "public-key",
+                            "credential",
+                              "id", "error",
+                              "rawId", "error",
+                              "type", "public-key",
+                              "response",
+                                "attestationObject", "error",
+                                "clientDataJSON", "error");
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_credential, NULL, 400, NULL, NULL, NULL), 1);
+
+  json_decref(j_params);
+  json_decref(j_result);
+  json_decref(j_credential);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
 START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
 {
   json_t * j_params = json_pack("{sssssss{ss}}", 
@@ -1185,6 +1236,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_new_credential);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error_bad_formed_response);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_u2f_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_disable_credential_error);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_disable_credential_success);
