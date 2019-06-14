@@ -850,7 +850,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
   size_t pubkey_export_len = 1024, cert_export_len = 32, cert_export_b64_len, issued_to_len = 128, client_data_hash_len = 32, nonce_base_hash_len = 32, nonce_base_hash_b64_len = 0, header_cert_decoded_len = 0;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
-  cbor_item_t * key, * response;
+  cbor_item_t * key, * response = NULL;
   int i, ret;
   jwt_t * j_response = NULL, * j_response_signed = NULL;
   json_t * j_header_x5c = NULL, * j_cert = NULL;
@@ -920,6 +920,12 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
       if (!o_base64_encode(nonce_base_hash, 32, nonce_base_hash_b64, &nonce_base_hash_b64_len)) {
         json_array_append_new(j_error, json_string("Internal error"));
         y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error o_base64_encode for nonce_base_hash_b64");
+        break;
+      }
+      
+      if (response == NULL) {
+        json_array_append_new(j_error, json_string("response invalid"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error response missing");
         break;
       }
       
