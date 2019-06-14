@@ -1267,6 +1267,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         }
         if (!o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), client_data, &client_data_len)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error o_base64_decode client_data");
+          json_array_append_new(j_error, json_string("Internal error"));
           ret = G_ERROR_PARAM;
           break;
         }
