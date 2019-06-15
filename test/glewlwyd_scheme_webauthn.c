@@ -8067,6 +8067,1158 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
 }
 END_TEST
 
+START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_trigger_error_session_invalid)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "register", "trigger-assertion");
+
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
+
+  json_decref(j_params);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_error_session_invalid)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "register", "trigger-assertion"),
+         * j_result, * j_client_data, * j_attestation;
+  struct _u_response resp, resp_register;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTHENTICATOR_DATA_SIZE], auth_data_enc[AUTHENTICATOR_DATA_SIZE*2], * signature_enc;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, client_data_json_hash_len = 32, auth_data_enc_len, signature_enc_len;
+  const char * session, * challenge, * user_id, * username, * rpid;
+  char * client_data_json;
+  gnutls_datum_t key_data, signature;
+  gnutls_x509_privkey_t key = NULL;
+  gnutls_privkey_t privkey = NULL;
+  
+  ulfius_init_response(&resp);
+  ulfius_init_response(&resp_register);
+  
+  user_req.http_verb = o_strdup("POST");
+  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
+  ck_assert_ptr_ne((challenge = json_string_value(json_object_get(j_result, "challenge"))), NULL);
+  ck_assert_ptr_ne((rpid = json_string_value(json_object_get(j_result, "rpId"))), NULL);
+  ck_assert_ptr_ne((user_id = json_string_value(json_object_get(json_object_get(j_result, "user"), "id"))), NULL);
+  ck_assert_ptr_ne((username = json_string_value(json_object_get(json_object_get(j_result, "user"), "name"))), NULL);
+  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
+  
+  // Generate clientDataJSON
+  ck_assert_int_eq(o_base64_2_base64url((unsigned char *)challenge, o_strlen(challenge), challenge_b64url, &challenge_b64url_len), 1);
+  j_client_data = json_pack("{ss%s{}ssssss}",
+                            "challenge",
+                            challenge_b64url,
+                            challenge_b64url_len,
+                            "clientExtensions",
+                            "hashAlgorithm",
+                            "SHA-256",
+                            "origin",
+                            WEBAUTHN_RP_ORIGIN,
+                            "type",
+                            "webauthn.get");
+  
+  client_data_json = json_dumps(j_client_data, JSON_COMPACT);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  client_data_json_enc = o_malloc(client_data_json_enc_len+1);
+  ck_assert_ptr_ne(client_data_json_enc, NULL);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
+  ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
+  key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
+  key_data.size = o_strlen(CREDENTIAL_PRIVATE_KEY);
+  ck_assert_int_eq(gnutls_x509_privkey_import(key, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
+
+  // Generate credential_id
+  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  
+  // Let's build auth_data
+  memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
+  // Set rpId hash
+  key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
+  key_data.size = o_strlen(WEBAUTHN_RP_ID);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  // Set flags
+  *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
+  auth_data_len += 5;
+
+  key_data.data = (unsigned char *)client_data_json;
+  key_data.size = o_strlen(client_data_json);
+  client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  auth_data_len += client_data_json_hash_len;
+  
+  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  
+  key_data.data = auth_data;
+  key_data.size = auth_data_len;
+  
+  ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
+  
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  
+  j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                            "register", "validate-assertion",
+                            "session", session,
+                            "credential",
+                              "id", credential_id_enc_url, credential_id_enc_url_len,
+                              "rawId", credential_id_enc, credential_id_enc_len,
+                              "type", "public-key",
+                              "response",
+                                "clientDataJSON", client_data_json_enc,
+                                "authenticatorData", auth_data_enc,
+                                "signature", signature_enc);
+  
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_attestation, NULL, 401, NULL, NULL, NULL), 1);
+
+  /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp_register), U_OK);
+  printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
+  ck_assert_int_eq(resp_register.status, 200);*/
+  
+  json_decref(j_params);
+  json_decref(j_result);
+  json_decref(j_attestation);
+  ulfius_clean_response(&resp);
+  ulfius_clean_response(&resp_register);
+  o_free(client_data_json);
+  o_free(client_data_json_enc);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_challenge)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "register", "trigger-assertion"),
+         * j_result, * j_client_data, * j_attestation;
+  struct _u_response resp, resp_register;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTHENTICATOR_DATA_SIZE], auth_data_enc[AUTHENTICATOR_DATA_SIZE*2], * signature_enc;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, client_data_json_hash_len = 32, auth_data_enc_len, signature_enc_len;
+  const char * session, * challenge, * user_id, * username, * rpid;
+  char * client_data_json;
+  gnutls_datum_t key_data, signature;
+  gnutls_x509_privkey_t key = NULL;
+  gnutls_privkey_t privkey = NULL;
+  
+  ulfius_init_response(&resp);
+  ulfius_init_response(&resp_register);
+  
+  user_req.http_verb = o_strdup("POST");
+  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
+  ck_assert_ptr_ne((challenge = json_string_value(json_object_get(j_result, "challenge"))), NULL);
+  ck_assert_ptr_ne((rpid = json_string_value(json_object_get(j_result, "rpId"))), NULL);
+  ck_assert_ptr_ne((user_id = json_string_value(json_object_get(json_object_get(j_result, "user"), "id"))), NULL);
+  ck_assert_ptr_ne((username = json_string_value(json_object_get(json_object_get(j_result, "user"), "name"))), NULL);
+  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
+  
+  // Generate clientDataJSON
+  ck_assert_int_eq(o_base64_2_base64url((unsigned char *)challenge, o_strlen(challenge), challenge_b64url, &challenge_b64url_len), 1);
+  j_client_data = json_pack("{sss{}ssssss}",
+                            "challenge",
+                            "error",
+                            "clientExtensions",
+                            "hashAlgorithm",
+                            "SHA-256",
+                            "origin",
+                            WEBAUTHN_RP_ORIGIN,
+                            "type",
+                            "webauthn.get");
+  
+  client_data_json = json_dumps(j_client_data, JSON_COMPACT);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  client_data_json_enc = o_malloc(client_data_json_enc_len+1);
+  ck_assert_ptr_ne(client_data_json_enc, NULL);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
+  ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
+  key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
+  key_data.size = o_strlen(CREDENTIAL_PRIVATE_KEY);
+  ck_assert_int_eq(gnutls_x509_privkey_import(key, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
+
+  // Generate credential_id
+  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  
+  // Let's build auth_data
+  memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
+  // Set rpId hash
+  key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
+  key_data.size = o_strlen(WEBAUTHN_RP_ID);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  // Set flags
+  *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
+  auth_data_len += 5;
+
+  key_data.data = (unsigned char *)client_data_json;
+  key_data.size = o_strlen(client_data_json);
+  client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  auth_data_len += client_data_json_hash_len;
+  
+  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  
+  key_data.data = auth_data;
+  key_data.size = auth_data_len;
+  
+  ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
+  
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  
+  j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                            "register", "validate-assertion",
+                            "session", session,
+                            "credential",
+                              "id", credential_id_enc_url, credential_id_enc_url_len,
+                              "rawId", credential_id_enc, credential_id_enc_len,
+                              "type", "public-key",
+                              "response",
+                                "clientDataJSON", client_data_json_enc,
+                                "authenticatorData", auth_data_enc,
+                                "signature", signature_enc);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_attestation, NULL, 400, NULL, NULL, NULL), 1);
+
+  /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp_register), U_OK);
+  printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
+  ck_assert_int_eq(resp_register.status, 200);*/
+  
+  json_decref(j_params);
+  json_decref(j_result);
+  json_decref(j_attestation);
+  ulfius_clean_response(&resp);
+  ulfius_clean_response(&resp_register);
+  o_free(client_data_json);
+  o_free(client_data_json_enc);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_origin)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "register", "trigger-assertion"),
+         * j_result, * j_client_data, * j_attestation;
+  struct _u_response resp, resp_register;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTHENTICATOR_DATA_SIZE], auth_data_enc[AUTHENTICATOR_DATA_SIZE*2], * signature_enc;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, client_data_json_hash_len = 32, auth_data_enc_len, signature_enc_len;
+  const char * session, * challenge, * user_id, * username, * rpid;
+  char * client_data_json;
+  gnutls_datum_t key_data, signature;
+  gnutls_x509_privkey_t key = NULL;
+  gnutls_privkey_t privkey = NULL;
+  
+  ulfius_init_response(&resp);
+  ulfius_init_response(&resp_register);
+  
+  user_req.http_verb = o_strdup("POST");
+  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
+  ck_assert_ptr_ne((challenge = json_string_value(json_object_get(j_result, "challenge"))), NULL);
+  ck_assert_ptr_ne((rpid = json_string_value(json_object_get(j_result, "rpId"))), NULL);
+  ck_assert_ptr_ne((user_id = json_string_value(json_object_get(json_object_get(j_result, "user"), "id"))), NULL);
+  ck_assert_ptr_ne((username = json_string_value(json_object_get(json_object_get(j_result, "user"), "name"))), NULL);
+  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
+  
+  // Generate clientDataJSON
+  ck_assert_int_eq(o_base64_2_base64url((unsigned char *)challenge, o_strlen(challenge), challenge_b64url, &challenge_b64url_len), 1);
+  j_client_data = json_pack("{ss%s{}ssssss}",
+                            "challenge",
+                            challenge_b64url,
+                            challenge_b64url_len,
+                            "clientExtensions",
+                            "hashAlgorithm",
+                            "SHA-256",
+                            "origin",
+                            "error",
+                            "type",
+                            "webauthn.get");
+  
+  client_data_json = json_dumps(j_client_data, JSON_COMPACT);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  client_data_json_enc = o_malloc(client_data_json_enc_len+1);
+  ck_assert_ptr_ne(client_data_json_enc, NULL);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
+  ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
+  key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
+  key_data.size = o_strlen(CREDENTIAL_PRIVATE_KEY);
+  ck_assert_int_eq(gnutls_x509_privkey_import(key, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
+
+  // Generate credential_id
+  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  
+  // Let's build auth_data
+  memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
+  // Set rpId hash
+  key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
+  key_data.size = o_strlen(WEBAUTHN_RP_ID);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  // Set flags
+  *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
+  auth_data_len += 5;
+
+  key_data.data = (unsigned char *)client_data_json;
+  key_data.size = o_strlen(client_data_json);
+  client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  auth_data_len += client_data_json_hash_len;
+  
+  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  
+  key_data.data = auth_data;
+  key_data.size = auth_data_len;
+  
+  ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
+  
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  
+  j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                            "register", "validate-assertion",
+                            "session", session,
+                            "credential",
+                              "id", credential_id_enc_url, credential_id_enc_url_len,
+                              "rawId", credential_id_enc, credential_id_enc_len,
+                              "type", "public-key",
+                              "response",
+                                "clientDataJSON", client_data_json_enc,
+                                "authenticatorData", auth_data_enc,
+                                "signature", signature_enc);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_attestation, NULL, 400, NULL, NULL, NULL), 1);
+
+  /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp_register), U_OK);
+  printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
+  ck_assert_int_eq(resp_register.status, 200);*/
+  
+  json_decref(j_params);
+  json_decref(j_result);
+  json_decref(j_attestation);
+  ulfius_clean_response(&resp);
+  ulfius_clean_response(&resp_register);
+  o_free(client_data_json);
+  o_free(client_data_json_enc);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_type)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "register", "trigger-assertion"),
+         * j_result, * j_client_data, * j_attestation;
+  struct _u_response resp, resp_register;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTHENTICATOR_DATA_SIZE], auth_data_enc[AUTHENTICATOR_DATA_SIZE*2], * signature_enc;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, client_data_json_hash_len = 32, auth_data_enc_len, signature_enc_len;
+  const char * session, * challenge, * user_id, * username, * rpid;
+  char * client_data_json;
+  gnutls_datum_t key_data, signature;
+  gnutls_x509_privkey_t key = NULL;
+  gnutls_privkey_t privkey = NULL;
+  
+  ulfius_init_response(&resp);
+  ulfius_init_response(&resp_register);
+  
+  user_req.http_verb = o_strdup("POST");
+  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
+  ck_assert_ptr_ne((challenge = json_string_value(json_object_get(j_result, "challenge"))), NULL);
+  ck_assert_ptr_ne((rpid = json_string_value(json_object_get(j_result, "rpId"))), NULL);
+  ck_assert_ptr_ne((user_id = json_string_value(json_object_get(json_object_get(j_result, "user"), "id"))), NULL);
+  ck_assert_ptr_ne((username = json_string_value(json_object_get(json_object_get(j_result, "user"), "name"))), NULL);
+  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
+  
+  // Generate clientDataJSON
+  ck_assert_int_eq(o_base64_2_base64url((unsigned char *)challenge, o_strlen(challenge), challenge_b64url, &challenge_b64url_len), 1);
+  j_client_data = json_pack("{ss%s{}ssssss}",
+                            "challenge",
+                            challenge_b64url,
+                            challenge_b64url_len,
+                            "clientExtensions",
+                            "hashAlgorithm",
+                            "SHA-256",
+                            "origin",
+                            WEBAUTHN_RP_ORIGIN,
+                            "type",
+                            "error");
+  
+  client_data_json = json_dumps(j_client_data, JSON_COMPACT);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  client_data_json_enc = o_malloc(client_data_json_enc_len+1);
+  ck_assert_ptr_ne(client_data_json_enc, NULL);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
+  ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
+  key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
+  key_data.size = o_strlen(CREDENTIAL_PRIVATE_KEY);
+  ck_assert_int_eq(gnutls_x509_privkey_import(key, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
+
+  // Generate credential_id
+  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  
+  // Let's build auth_data
+  memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
+  // Set rpId hash
+  key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
+  key_data.size = o_strlen(WEBAUTHN_RP_ID);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  // Set flags
+  *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
+  auth_data_len += 5;
+
+  key_data.data = (unsigned char *)client_data_json;
+  key_data.size = o_strlen(client_data_json);
+  client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  auth_data_len += client_data_json_hash_len;
+  
+  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  
+  key_data.data = auth_data;
+  key_data.size = auth_data_len;
+  
+  ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
+  
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  
+  j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                            "register", "validate-assertion",
+                            "session", session,
+                            "credential",
+                              "id", credential_id_enc_url, credential_id_enc_url_len,
+                              "rawId", credential_id_enc, credential_id_enc_len,
+                              "type", "public-key",
+                              "response",
+                                "clientDataJSON", client_data_json_enc,
+                                "authenticatorData", auth_data_enc,
+                                "signature", signature_enc);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_attestation, NULL, 400, NULL, NULL, NULL), 1);
+
+  /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp_register), U_OK);
+  printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
+  ck_assert_int_eq(resp_register.status, 200);*/
+  
+  json_decref(j_params);
+  json_decref(j_result);
+  json_decref(j_attestation);
+  ulfius_clean_response(&resp);
+  ulfius_clean_response(&resp_register);
+  o_free(client_data_json);
+  o_free(client_data_json_enc);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_encoded)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "register", "trigger-assertion"),
+         * j_result, * j_client_data, * j_attestation;
+  struct _u_response resp, resp_register;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTHENTICATOR_DATA_SIZE], auth_data_enc[AUTHENTICATOR_DATA_SIZE*2], * signature_enc;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, client_data_json_hash_len = 32, auth_data_enc_len, signature_enc_len;
+  const char * session, * challenge, * user_id, * username, * rpid;
+  char * client_data_json;
+  gnutls_datum_t key_data, signature;
+  gnutls_x509_privkey_t key = NULL;
+  gnutls_privkey_t privkey = NULL;
+  
+  ulfius_init_response(&resp);
+  ulfius_init_response(&resp_register);
+  
+  user_req.http_verb = o_strdup("POST");
+  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
+  ck_assert_ptr_ne((challenge = json_string_value(json_object_get(j_result, "challenge"))), NULL);
+  ck_assert_ptr_ne((rpid = json_string_value(json_object_get(j_result, "rpId"))), NULL);
+  ck_assert_ptr_ne((user_id = json_string_value(json_object_get(json_object_get(j_result, "user"), "id"))), NULL);
+  ck_assert_ptr_ne((username = json_string_value(json_object_get(json_object_get(j_result, "user"), "name"))), NULL);
+  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
+  
+  // Generate clientDataJSON
+  ck_assert_int_eq(o_base64_2_base64url((unsigned char *)challenge, o_strlen(challenge), challenge_b64url, &challenge_b64url_len), 1);
+  j_client_data = json_pack("{ss%s{}ssssss}",
+                            "challenge",
+                            challenge_b64url,
+                            challenge_b64url_len,
+                            "clientExtensions",
+                            "hashAlgorithm",
+                            "SHA-256",
+                            "origin",
+                            WEBAUTHN_RP_ORIGIN,
+                            "type",
+                            "webauthn.get");
+  
+  client_data_json = json_dumps(j_client_data, JSON_COMPACT);
+  client_data_json[0]++;
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  client_data_json_enc = o_malloc(client_data_json_enc_len+1);
+  ck_assert_ptr_ne(client_data_json_enc, NULL);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
+  ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
+  key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
+  key_data.size = o_strlen(CREDENTIAL_PRIVATE_KEY);
+  ck_assert_int_eq(gnutls_x509_privkey_import(key, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
+
+  // Generate credential_id
+  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  
+  // Let's build auth_data
+  memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
+  // Set rpId hash
+  key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
+  key_data.size = o_strlen(WEBAUTHN_RP_ID);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  // Set flags
+  *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
+  auth_data_len += 5;
+
+  key_data.data = (unsigned char *)client_data_json;
+  key_data.size = o_strlen(client_data_json);
+  client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  auth_data_len += client_data_json_hash_len;
+  
+  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  
+  key_data.data = auth_data;
+  key_data.size = auth_data_len;
+  
+  ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
+  
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  
+  j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                            "register", "validate-assertion",
+                            "session", session,
+                            "credential",
+                              "id", credential_id_enc_url, credential_id_enc_url_len,
+                              "rawId", credential_id_enc, credential_id_enc_len,
+                              "type", "public-key",
+                              "response",
+                                "clientDataJSON", client_data_json_enc,
+                                "authenticatorData", auth_data_enc,
+                                "signature", signature_enc);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_attestation, NULL, 400, NULL, NULL, NULL), 1);
+
+  /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp_register), U_OK);
+  printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
+  ck_assert_int_eq(resp_register.status, 200);*/
+  
+  json_decref(j_params);
+  json_decref(j_result);
+  json_decref(j_attestation);
+  ulfius_clean_response(&resp);
+  ulfius_clean_response(&resp_register);
+  o_free(client_data_json);
+  o_free(client_data_json_enc);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_rp_id_hash)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "register", "trigger-assertion"),
+         * j_result, * j_client_data, * j_attestation;
+  struct _u_response resp, resp_register;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTHENTICATOR_DATA_SIZE], auth_data_enc[AUTHENTICATOR_DATA_SIZE*2], * signature_enc;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, client_data_json_hash_len = 32, auth_data_enc_len, signature_enc_len;
+  const char * session, * challenge, * user_id, * username, * rpid;
+  char * client_data_json;
+  gnutls_datum_t key_data, signature;
+  gnutls_x509_privkey_t key = NULL;
+  gnutls_privkey_t privkey = NULL;
+  
+  ulfius_init_response(&resp);
+  ulfius_init_response(&resp_register);
+  
+  user_req.http_verb = o_strdup("POST");
+  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
+  ck_assert_ptr_ne((challenge = json_string_value(json_object_get(j_result, "challenge"))), NULL);
+  ck_assert_ptr_ne((rpid = json_string_value(json_object_get(j_result, "rpId"))), NULL);
+  ck_assert_ptr_ne((user_id = json_string_value(json_object_get(json_object_get(j_result, "user"), "id"))), NULL);
+  ck_assert_ptr_ne((username = json_string_value(json_object_get(json_object_get(j_result, "user"), "name"))), NULL);
+  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
+  
+  // Generate clientDataJSON
+  ck_assert_int_eq(o_base64_2_base64url((unsigned char *)challenge, o_strlen(challenge), challenge_b64url, &challenge_b64url_len), 1);
+  j_client_data = json_pack("{ss%s{}ssssss}",
+                            "challenge",
+                            challenge_b64url,
+                            challenge_b64url_len,
+                            "clientExtensions",
+                            "hashAlgorithm",
+                            "SHA-256",
+                            "origin",
+                            WEBAUTHN_RP_ORIGIN,
+                            "type",
+                            "webauthn.get");
+  
+  client_data_json = json_dumps(j_client_data, JSON_COMPACT);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  client_data_json_enc = o_malloc(client_data_json_enc_len+1);
+  ck_assert_ptr_ne(client_data_json_enc, NULL);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
+  ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
+  key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
+  key_data.size = o_strlen(CREDENTIAL_PRIVATE_KEY);
+  ck_assert_int_eq(gnutls_x509_privkey_import(key, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
+
+  // Generate credential_id
+  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  
+  // Let's build auth_data
+  memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
+  // Set rpId hash
+  key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
+  key_data.size = o_strlen(WEBAUTHN_RP_ID);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  auth_data[0]++;
+  // Set flags
+  *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
+  auth_data_len += 5;
+
+  key_data.data = (unsigned char *)client_data_json;
+  key_data.size = o_strlen(client_data_json);
+  client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  auth_data_len += client_data_json_hash_len;
+  
+  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  
+  key_data.data = auth_data;
+  key_data.size = auth_data_len;
+  
+  ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
+  
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  
+  j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                            "register", "validate-assertion",
+                            "session", session,
+                            "credential",
+                              "id", credential_id_enc_url, credential_id_enc_url_len,
+                              "rawId", credential_id_enc, credential_id_enc_len,
+                              "type", "public-key",
+                              "response",
+                                "clientDataJSON", client_data_json_enc,
+                                "authenticatorData", auth_data_enc,
+                                "signature", signature_enc);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_attestation, NULL, 400, NULL, NULL, NULL), 1);
+
+  /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp_register), U_OK);
+  printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
+  ck_assert_int_eq(resp_register.status, 200);*/
+  
+  json_decref(j_params);
+  json_decref(j_result);
+  json_decref(j_attestation);
+  ulfius_clean_response(&resp);
+  ulfius_clean_response(&resp_register);
+  o_free(client_data_json);
+  o_free(client_data_json_enc);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_flag_user_present)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "register", "trigger-assertion"),
+         * j_result, * j_client_data, * j_attestation;
+  struct _u_response resp, resp_register;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTHENTICATOR_DATA_SIZE], auth_data_enc[AUTHENTICATOR_DATA_SIZE*2], * signature_enc;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, client_data_json_hash_len = 32, auth_data_enc_len, signature_enc_len;
+  const char * session, * challenge, * user_id, * username, * rpid;
+  char * client_data_json;
+  gnutls_datum_t key_data, signature;
+  gnutls_x509_privkey_t key = NULL;
+  gnutls_privkey_t privkey = NULL;
+  
+  ulfius_init_response(&resp);
+  ulfius_init_response(&resp_register);
+  
+  user_req.http_verb = o_strdup("POST");
+  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
+  ck_assert_ptr_ne((challenge = json_string_value(json_object_get(j_result, "challenge"))), NULL);
+  ck_assert_ptr_ne((rpid = json_string_value(json_object_get(j_result, "rpId"))), NULL);
+  ck_assert_ptr_ne((user_id = json_string_value(json_object_get(json_object_get(j_result, "user"), "id"))), NULL);
+  ck_assert_ptr_ne((username = json_string_value(json_object_get(json_object_get(j_result, "user"), "name"))), NULL);
+  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
+  
+  // Generate clientDataJSON
+  ck_assert_int_eq(o_base64_2_base64url((unsigned char *)challenge, o_strlen(challenge), challenge_b64url, &challenge_b64url_len), 1);
+  j_client_data = json_pack("{ss%s{}ssssss}",
+                            "challenge",
+                            challenge_b64url,
+                            challenge_b64url_len,
+                            "clientExtensions",
+                            "hashAlgorithm",
+                            "SHA-256",
+                            "origin",
+                            WEBAUTHN_RP_ORIGIN,
+                            "type",
+                            "webauthn.get");
+  
+  client_data_json = json_dumps(j_client_data, JSON_COMPACT);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  client_data_json_enc = o_malloc(client_data_json_enc_len+1);
+  ck_assert_ptr_ne(client_data_json_enc, NULL);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
+  ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
+  key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
+  key_data.size = o_strlen(CREDENTIAL_PRIVATE_KEY);
+  ck_assert_int_eq(gnutls_x509_privkey_import(key, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
+
+  // Generate credential_id
+  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  
+  // Let's build auth_data
+  memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
+  // Set rpId hash
+  key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
+  key_data.size = o_strlen(WEBAUTHN_RP_ID);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  // Set flags
+  *(auth_data+auth_data_len) = 0;
+  auth_data_len += 5;
+
+  key_data.data = (unsigned char *)client_data_json;
+  key_data.size = o_strlen(client_data_json);
+  client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  auth_data_len += client_data_json_hash_len;
+  
+  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  
+  key_data.data = auth_data;
+  key_data.size = auth_data_len;
+  
+  ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
+  
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  
+  j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                            "register", "validate-assertion",
+                            "session", session,
+                            "credential",
+                              "id", credential_id_enc_url, credential_id_enc_url_len,
+                              "rawId", credential_id_enc, credential_id_enc_len,
+                              "type", "public-key",
+                              "response",
+                                "clientDataJSON", client_data_json_enc,
+                                "authenticatorData", auth_data_enc,
+                                "signature", signature_enc);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_attestation, NULL, 400, NULL, NULL, NULL), 1);
+
+  /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp_register), U_OK);
+  printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
+  ck_assert_int_eq(resp_register.status, 200);*/
+  
+  json_decref(j_params);
+  json_decref(j_result);
+  json_decref(j_attestation);
+  ulfius_clean_response(&resp);
+  ulfius_clean_response(&resp_register);
+  o_free(client_data_json);
+  o_free(client_data_json_enc);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_hash)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "register", "trigger-assertion"),
+         * j_result, * j_client_data, * j_attestation;
+  struct _u_response resp, resp_register;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTHENTICATOR_DATA_SIZE], auth_data_enc[AUTHENTICATOR_DATA_SIZE*2], * signature_enc;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, client_data_json_hash_len = 32, auth_data_enc_len, signature_enc_len;
+  const char * session, * challenge, * user_id, * username, * rpid;
+  char * client_data_json;
+  gnutls_datum_t key_data, signature;
+  gnutls_x509_privkey_t key = NULL;
+  gnutls_privkey_t privkey = NULL;
+  
+  ulfius_init_response(&resp);
+  ulfius_init_response(&resp_register);
+  
+  user_req.http_verb = o_strdup("POST");
+  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
+  ck_assert_ptr_ne((challenge = json_string_value(json_object_get(j_result, "challenge"))), NULL);
+  ck_assert_ptr_ne((rpid = json_string_value(json_object_get(j_result, "rpId"))), NULL);
+  ck_assert_ptr_ne((user_id = json_string_value(json_object_get(json_object_get(j_result, "user"), "id"))), NULL);
+  ck_assert_ptr_ne((username = json_string_value(json_object_get(json_object_get(j_result, "user"), "name"))), NULL);
+  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
+  
+  // Generate clientDataJSON
+  ck_assert_int_eq(o_base64_2_base64url((unsigned char *)challenge, o_strlen(challenge), challenge_b64url, &challenge_b64url_len), 1);
+  j_client_data = json_pack("{ss%s{}ssssss}",
+                            "challenge",
+                            challenge_b64url,
+                            challenge_b64url_len,
+                            "clientExtensions",
+                            "hashAlgorithm",
+                            "SHA-256",
+                            "origin",
+                            WEBAUTHN_RP_ORIGIN,
+                            "type",
+                            "webauthn.get");
+  
+  client_data_json = json_dumps(j_client_data, JSON_COMPACT);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  client_data_json_enc = o_malloc(client_data_json_enc_len+1);
+  ck_assert_ptr_ne(client_data_json_enc, NULL);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
+  ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
+  key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
+  key_data.size = o_strlen(CREDENTIAL_PRIVATE_KEY);
+  ck_assert_int_eq(gnutls_x509_privkey_import(key, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
+
+  // Generate credential_id
+  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  
+  // Let's build auth_data
+  memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
+  // Set rpId hash
+  key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
+  key_data.size = o_strlen(WEBAUTHN_RP_ID);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  // Set flags
+  *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
+  auth_data_len += 5;
+
+  key_data.data = (unsigned char *)client_data_json;
+  key_data.size = o_strlen(client_data_json);
+  client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  auth_data[auth_data_len]++;
+  auth_data_len += client_data_json_hash_len;
+  
+  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  
+  key_data.data = auth_data;
+  key_data.size = auth_data_len;
+  
+  ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
+  
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  
+  j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                            "register", "validate-assertion",
+                            "session", session,
+                            "credential",
+                              "id", credential_id_enc_url, credential_id_enc_url_len,
+                              "rawId", credential_id_enc, credential_id_enc_len,
+                              "type", "public-key",
+                              "response",
+                                "clientDataJSON", client_data_json_enc,
+                                "authenticatorData", auth_data_enc,
+                                "signature", signature_enc);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_attestation, NULL, 401, NULL, NULL, NULL), 1);
+
+  /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp_register), U_OK);
+  printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
+  ck_assert_int_eq(resp_register.status, 200);*/
+  
+  json_decref(j_params);
+  json_decref(j_result);
+  json_decref(j_attestation);
+  ulfius_clean_response(&resp);
+  ulfius_clean_response(&resp_register);
+  o_free(client_data_json);
+  o_free(client_data_json_enc);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_signature)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "register", "trigger-assertion"),
+         * j_result, * j_client_data, * j_attestation;
+  struct _u_response resp, resp_register;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTHENTICATOR_DATA_SIZE], auth_data_enc[AUTHENTICATOR_DATA_SIZE*2], * signature_enc;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, client_data_json_hash_len = 32, auth_data_enc_len, signature_enc_len;
+  const char * session, * challenge, * user_id, * username, * rpid;
+  char * client_data_json;
+  gnutls_datum_t key_data, signature;
+  gnutls_x509_privkey_t key = NULL;
+  gnutls_privkey_t privkey = NULL;
+  
+  ulfius_init_response(&resp);
+  ulfius_init_response(&resp_register);
+  
+  user_req.http_verb = o_strdup("POST");
+  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
+  ck_assert_ptr_ne((challenge = json_string_value(json_object_get(j_result, "challenge"))), NULL);
+  ck_assert_ptr_ne((rpid = json_string_value(json_object_get(j_result, "rpId"))), NULL);
+  ck_assert_ptr_ne((user_id = json_string_value(json_object_get(json_object_get(j_result, "user"), "id"))), NULL);
+  ck_assert_ptr_ne((username = json_string_value(json_object_get(json_object_get(j_result, "user"), "name"))), NULL);
+  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
+  
+  // Generate clientDataJSON
+  ck_assert_int_eq(o_base64_2_base64url((unsigned char *)challenge, o_strlen(challenge), challenge_b64url, &challenge_b64url_len), 1);
+  j_client_data = json_pack("{ss%s{}ssssss}",
+                            "challenge",
+                            challenge_b64url,
+                            challenge_b64url_len,
+                            "clientExtensions",
+                            "hashAlgorithm",
+                            "SHA-256",
+                            "origin",
+                            WEBAUTHN_RP_ORIGIN,
+                            "type",
+                            "webauthn.get");
+  
+  client_data_json = json_dumps(j_client_data, JSON_COMPACT);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  client_data_json_enc = o_malloc(client_data_json_enc_len+1);
+  ck_assert_ptr_ne(client_data_json_enc, NULL);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
+  ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
+  key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
+  key_data.size = o_strlen(CREDENTIAL_PRIVATE_KEY);
+  ck_assert_int_eq(gnutls_x509_privkey_import(key, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
+
+  // Generate credential_id
+  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  
+  // Let's build auth_data
+  memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
+  // Set rpId hash
+  key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
+  key_data.size = o_strlen(WEBAUTHN_RP_ID);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  // Set flags
+  *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
+  auth_data_len += 5;
+
+  key_data.data = (unsigned char *)client_data_json;
+  key_data.size = o_strlen(client_data_json);
+  client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  auth_data_len += client_data_json_hash_len;
+  
+  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  
+  key_data.data = auth_data;
+  key_data.size = auth_data_len;
+  
+  ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
+  signature.data[0]++;
+  
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
+  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  
+  j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                            "register", "validate-assertion",
+                            "session", session,
+                            "credential",
+                              "id", credential_id_enc_url, credential_id_enc_url_len,
+                              "rawId", credential_id_enc, credential_id_enc_len,
+                              "type", "public-key",
+                              "response",
+                                "clientDataJSON", client_data_json_enc,
+                                "authenticatorData", auth_data_enc,
+                                "signature", signature_enc);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_attestation, NULL, 401, NULL, NULL, NULL), 1);
+
+  /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp_register), U_OK);
+  printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
+  ck_assert_int_eq(resp_register.status, 200);*/
+  
+  json_decref(j_params);
+  json_decref(j_result);
+  json_decref(j_attestation);
+  ulfius_clean_response(&resp);
+  ulfius_clean_response(&resp_register);
+  o_free(client_data_json);
+  o_free(client_data_json_enc);
+}
+END_TEST
+
 START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_success)
 {
   json_t * j_params = json_pack("{sssssss{ss}}", 
@@ -10873,6 +12025,16 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_enable_credential_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_edit_credential_error);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_edit_credential_success);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_trigger_error_session_invalid);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_error_session_invalid);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_invalid_challenge);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_invalid_origin);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_type);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_encoded);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_invalid_rp_id_hash);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_invalid_flag_user_present);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_hash);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_invalid_signature);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_auth_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_success);
