@@ -523,7 +523,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "NONE") || 0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "HOTP") || 0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "TOTP")) {
         if (0 != o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "NONE")) {
           if (oath_base32_decode(json_string_value(json_object_get(j_scheme_data, "secret")), json_string_length(json_object_get(j_scheme_data, "secret")), &secret, &secret_len) == OATH_OK) {
-            if (secret_len >= json_integer_value(json_object_get((json_t *)cls, "secret_minimum_size")) && json_string_length(json_object_get(j_scheme_data, "secret")) < 256) {
+            if (secret_len >= (size_t)json_integer_value(json_object_get((json_t *)cls, "secret_minimum_size")) && json_string_length(json_object_get(j_scheme_data, "secret")) < 256) {
               if (json_string_length(json_object_get(j_scheme_data, "secret")) >= 8) {
                 if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "HOTP")) {
                   if (json_object_get((json_t *)cls, "hotp-allow") == json_false()) {
@@ -664,7 +664,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
   char * secret_decoded = NULL;
   size_t secret_decoded_len;
   
-  if (!json_string_length(json_object_get(j_scheme_data, "value")) || json_string_length(json_object_get(j_scheme_data, "value")) != json_integer_value(json_object_get((json_t *)cls, "otp-length"))) {
+  if (!json_string_length(json_object_get(j_scheme_data, "value")) || json_string_length(json_object_get(j_scheme_data, "value")) != (size_t)json_integer_value(json_object_get((json_t *)cls, "otp-length"))) {
     ret = G_ERROR_UNAUTHORIZED;
   } else if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
     j_otp = get_otp(config, (json_t *)cls, username);
