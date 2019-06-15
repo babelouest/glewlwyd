@@ -1770,6 +1770,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       if (0 != o_strcmp(challenge_hash, json_string_value(json_object_get(j_assertion, "challenge_hash")))) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - clientDataJSON.challenge invalid");
         ret = G_ERROR_PARAM;
+        break;
       }
       // Step 9
       if (!json_string_length(json_object_get(j_client_data, "origin"))) {
