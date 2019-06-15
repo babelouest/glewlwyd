@@ -331,6 +331,26 @@ if (WITH_SCHEME_EMAIL)
 	set(CLIENT_MODULES ${CLIENT_MODULES} schememodemail)
 endif ()
 
+option(WITH_SCHEME_OTP "Build OTP scheme module" on)
+if (WITH_SCHEME_OTP)
+  include(FindLibOath)
+  find_package(LibOath REQUIRED)
+  if (LIBOATH_FOUND)
+      set(MOD_LIBS ${LIBOATH_LIBRARIES})
+      include_directories(${LIBOATH_INCLUDE_DIRS})
+  endif ()
+  
+	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/otp.c)
+
+	set(MOD_LIBS ${ULFIUS_LIBRARIES} "-ldl")
+
+	add_library(schememodotp MODULE ${LIB_SRC})
+	set_target_properties(schememodotp PROPERTIES
+			COMPILE_OPTIONS -Wextra)
+	target_link_libraries(schememodotp ${MOD_LIBS})
+	set(CLIENT_MODULES ${CLIENT_MODULES} schememodotp)
+endif ()
+
 option(WITH_SCHEME_WEBAUTHN "Build Webauthn scheme module" on)
 if (WITH_SCHEME_WEBAUTHN)
   include(FindLibJWT)
