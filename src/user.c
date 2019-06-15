@@ -700,7 +700,7 @@ json_t * glewlwyd_module_callback_check_user_session(struct config_module * conf
     }
     json_decref(j_result);
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR);
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   o_free(session_uid);
   return j_return;
