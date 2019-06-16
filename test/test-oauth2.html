@@ -99,6 +99,7 @@
             <option value="client_credentials">client_credentials</option>
             <option value="refresh_token">refresh_token</option>
             <option value="delete_token">delete_token</option>
+            <option value="test_token">test_token</option>
           </select>
         </div>
       </div>
@@ -201,6 +202,22 @@
         </div>
       </div>
       <div class="row">
+        <div class="col-md-2">
+          <label for="access_token">access_token</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="access_token" name="access_token" value="" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="url">url to test access_token</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="url" name="url" value="api/glwd/profile" class="form-control">
+        </div>
+      </div>
+      <div class="row">
         <div class="col-md-4">
           <button type="button" name="run" id="run" class="btn btn-lg btn-primary btn-block">Run test</button>
         </div>
@@ -235,6 +252,7 @@
 		  $("#code").val(params.code);
 		}
     if (params.access_token) {
+      $("#access_token").val(params.access_token);
       $("#result").append("<div><strong>access_token</strong>: <code>" + params.access_token + "</code></div>");
     }
 		params = getQueryParams(location.hash.substring(1));
@@ -242,7 +260,12 @@
 		  $("#code").val(params.code);
 		}
     if (params.access_token) {
+      $("#access_token").val(params.access_token);
       $("#result").append("<div><strong>access_token</strong>: <code>" + params.access_token + "</code></div>");
+    }
+    if (params.refresh_token) {
+      $("#refresh_token").val(params.refresh_token);
+      $("#result").append("<div><strong>refresh_token</strong>: <code>" + params.refresh_token + "</code></div>");
     }
 	};
 
@@ -271,6 +294,8 @@
             }
           },
           success: function (result, status, request) {
+            $("#refresh_token").val(result.refresh_token);
+            $("#access_token").val(result.access_token);
             $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
             for (var key in result) {
               $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
@@ -364,6 +389,20 @@
           },
           success: function (result, status, request) {
             $("#result").append("<div class=\"alert alert-info\">Success</div>");
+          },
+          error:function (error) {
+            $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+            $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+          }
+        });
+        break;
+      case "test_token":
+        $.ajax({
+          type: "GET",
+          url: $("#url").val(),
+          headers: {"Authorization": "Bearer " + $("#access_token").val()},
+          success: function (result, status, request) {
+            $("#result").append("<div class=\"alert alert-info\">"+JSON.stringify(result, null, 4)+"</div>");
           },
           error:function (error) {
             $("#result").append("<div class=\"alert alert-danger\">Error</div>");
