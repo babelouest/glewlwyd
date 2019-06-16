@@ -620,8 +620,8 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
   json_t * j_query, * j_result = NULL, * j_result_scope = NULL, * j_return, * j_element = NULL, * j_scope_param;
   int res;
   size_t index = 0;
-  json_int_t maximum_duration = config->refresh_token_duration;
-  int rolling_refresh = config->refresh_token_rolling;
+  json_int_t maximum_duration = config->refresh_token_duration, maximum_duration_override = -1;
+  int rolling_refresh = config->refresh_token_rolling, rolling_refresh_override = -1;
   
   if (code_hash != NULL) {
     if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
@@ -680,13 +680,19 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
                 json_object_update(j_element, j_scope_param);
                 json_decref(j_scope_param);
               }
-              if (json_object_get(j_element, "refresh-token-rolling") == json_false()) {
-                rolling_refresh = 0;
+              if (json_object_get(j_element, "refresh-token-rolling") != NULL && rolling_refresh_override != 0) {
+                rolling_refresh_override = json_object_get(j_element, "refresh-token-rolling")==json_true();
               }
-              if (json_object_get(j_element, "refresh-token-duration") != NULL && json_integer_value(json_object_get(j_element, "refresh-token-duration")) < maximum_duration) {
-                maximum_duration = json_integer_value(json_object_get(j_element, "refresh-token-duration"));
+              if (json_integer_value(json_object_get(j_element, "refresh-token-duration")) && (json_integer_value(json_object_get(j_element, "refresh-token-duration")) < maximum_duration_override || maximum_duration_override == -1)) {
+                maximum_duration_override = json_integer_value(json_object_get(j_element, "refresh-token-duration"));
               }
               json_array_append(json_object_get(json_array_get(j_result, 0), "scope"), j_element);
+            }
+            if (rolling_refresh_override > -1) {
+              rolling_refresh = rolling_refresh_override;
+            }
+            if (maximum_duration_override > -1) {
+              maximum_duration = maximum_duration_override;
             }
             json_object_set_new(json_array_get(j_result, 0), "scope_list", json_string(scope_list));
             json_object_set_new(json_array_get(j_result, 0), "refresh-token-rolling", rolling_refresh?json_true():json_false());
@@ -1849,6 +1855,10 @@ static int callback_oauth2_get_profile(const struct _u_request * request, struct
   json_t * j_profile = config->glewlwyd_config->glewlwyd_plugin_callback_get_user_profile(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")));
   
   if (check_result_value(j_profile, G_OK)) {
+    json_object_del(json_object_get(j_profile, "user"), "scope");
+    json_object_del(json_object_get(j_profile, "user"), "enabled");
+    json_object_del(json_object_get(j_profile, "user"), "source");
+    json_object_del(json_object_get(j_profile, "user"), "last_login");
     ulfius_set_json_body_response(response, 200, json_object_get(j_profile, "user"));
   } else {
     response->status = 404;
