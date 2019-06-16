@@ -207,7 +207,7 @@ int client_module_init(struct config_module * config, int readonly, json_t * j_p
     if (json_string_length(json_object_get(j_parameters, "client-id-prefix"))) {
       prefix = json_string_value(json_object_get(j_parameters, "client-id-prefix"));
     }
-    *cls = (void*)json_pack("[{ss+ ss ss so s[ss] s[ss] s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so s[ssssss] s[s] s[ss] so}]",
+    *cls = (void*)json_pack("[{ss+ ss ss so s[ssss] s[ss] s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so s[ssssss] s[s] s[ss] so}]",
                               "client_id",
                               prefix,
                               "client1_id",
@@ -220,6 +220,8 @@ int client_module_init(struct config_module * config, int readonly, json_t * j_p
                               "authorization_type",
                                 "code",
                                 "token",
+                                "refresh_token",
+                                "delete_token",
                               "redirect_uri",
                                 "../../test-oauth2.html?param=client1_cb1",
                                 "../../test-oauth2.html?param=client1_cb2",
