@@ -590,7 +590,7 @@ json_t * get_user_session_list(struct config_elements * config, const char * use
   char * pattern_escaped, * pattern_clause;
   unsigned char session_hash_url[128];
   
-  j_query = json_pack("{sss[ssssss]s{ss}sisi}",
+  j_query = json_pack("{sss[ssssss]s{ss}sisiss}",
                       "table",
                       GLEWLWYD_TABLE_USER_SESSION,
                       "columns",
@@ -606,7 +606,9 @@ json_t * get_user_session_list(struct config_elements * config, const char * use
                       "offset",
                       offset,
                       "limit",
-                      limit);
+                      limit,
+                      "order_by",
+                      "gus_last_login DESC");
   if (sort != NULL) {
     json_object_set_new(j_query, "order_by", json_string(sort));
   }
