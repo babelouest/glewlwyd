@@ -268,7 +268,7 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
   char * token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, token);
   json_t * j_query, * j_return, * j_last_id;
   int res, i;
-  char * issued_at_clause, * expires_at_clause, ** scope_array = NULL;
+  char * issued_at_clause, * expires_at_clause, * last_seen_clause, ** scope_array = NULL;
   
   if (pthread_mutex_lock(&config->insert_lock)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 serialize_refresh_token - Error pthread_mutex_lock");
@@ -284,13 +284,20 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
         issued_at_clause = msprintf("%u", (now));
       }
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
+        last_seen_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+      } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
+        last_seen_clause = msprintf("TO_TIMESTAMP(%u)", (now));
+      } else { // HOEL_DB_TYPE_SQLITE
+        last_seen_clause = msprintf("%u", (now));
+      }
+      if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
         expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)duration));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
         expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)duration ));
       } else { // HOEL_DB_TYPE_SQLITE
         expires_at_clause = msprintf("%u", (now + (unsigned int)duration));
       }
-      j_query = json_pack_ex(&error, 0, "{sss{si so ss so s{ss} s{ss} sI si ss ss ss}}",
+      j_query = json_pack_ex(&error, 0, "{sss{si so ss so s{ss} s{ss} s{ss} sI si ss ss ss}}",
                           "table",
                           GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
                           "values",
@@ -305,6 +312,9 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
                             "gpgr_issued_at",
                               "raw",
                               issued_at_clause,
+                            "gpgr_last_seen",
+                              "raw",
+                              last_seen_clause,
                             "gpgr_expires_at",
                               "raw",
                               expires_at_clause,
@@ -320,6 +330,7 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
                             user_agent!=NULL?user_agent:"");
       o_free(issued_at_clause);
       o_free(expires_at_clause);
+      o_free(last_seen_clause);
       res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
@@ -924,7 +935,7 @@ static json_t * refresh_token_list_get(struct _oauth2_config * config, const cha
   char * pattern_escaped, * pattern_clause;
   unsigned char token_hash_dec[128];
   
-  j_query = json_pack("{sss[ssssssssss]s{ss}sisi}",
+  j_query = json_pack("{sss[ssssssssss]s{ss}sisiss}",
                       "table",
                       GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
                       "columns",
@@ -944,7 +955,9 @@ static json_t * refresh_token_list_get(struct _oauth2_config * config, const cha
                       "offset",
                       offset,
                       "limit",
-                      limit);
+                      limit,
+                      "order_by",
+                      "gpgr_last_seen DESC");
   if (sort != NULL) {
     json_object_set_new(j_query, "order_by", json_string(sort));
   }
