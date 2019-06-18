@@ -192,6 +192,9 @@ class Session extends Component {
           {i18next.t("profile.session-table-exiration")}
         </th>
         <th>
+          {i18next.t("profile.session-table-client")}
+        </th>
+        <th>
           {i18next.t("profile.session-table-issued-for")}
         </th>
         <th>
@@ -213,6 +216,9 @@ class Session extends Component {
           </td>
           <td>
             {expiration.toLocaleString()}
+          </td>
+          <td>
+            {token.client_id}
           </td>
           <td>
             {token.issued_for}
