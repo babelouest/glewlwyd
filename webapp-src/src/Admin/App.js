@@ -1110,9 +1110,9 @@ class App extends Component {
 
   confirmEditPluginMod(result, mod) {
     if (result) {
-      apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name), "PUT", mod)
+      apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name) + "/disable/", "PUT")
       .then(() => {
-        apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name) + "/disable/", "PUT")
+        apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name), "PUT", mod)
         .then(() => {
           apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name) + "/enable/", "PUT")
           .then(() => {
