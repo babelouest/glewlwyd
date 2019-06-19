@@ -138,9 +138,9 @@ class EditRecord extends Component {
               displayVal = val.substring(0, val.indexOf("/"));
             }
             if (pattern.edit === false && !this.state.add) {
-              listJsx.push(<span className="badge badge-primary" key={index}>{displayVal}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span>);
+              listJsx.push(<span className="badge badge-primary btn-icon-right" key={index}>{displayVal}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span>);
             } else {
-              listJsx.push(<a href="#" onClick={(e) => this.deleteListElt(e, pattern.name, index)} key={index}><span className="badge badge-primary">{displayVal}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
+              listJsx.push(<a href="#" onClick={(e) => this.deleteListElt(e, pattern.name, index)} key={index}><span className="badge badge-primary btn-icon-right">{displayVal}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
             }
           });
         } else if (pattern.type === "boolean") {
@@ -161,7 +161,7 @@ class EditRecord extends Component {
           }
         } else if (pattern.type === "file") {
           if (elt) {
-            listJsx.push(<a href="#" key={0} onClick={(e) => this.deleteFile(e, pattern.name)}><span className="badge badge-primary">{elt.substring(0, elt.indexOf("/"))}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
+            listJsx.push(<a href="#" key={0} onClick={(e) => this.deleteFile(e, pattern.name)}><span className="badge badge-primary btn-icon-right">{elt.substring(0, elt.indexOf("/"))}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
           }
           if (pattern.edit || this.state.add) {
             inputJsx = <input type="file" className={"form-control" + validInput} onChange={(e) => this.uploadFile(e, pattern.name)} />
