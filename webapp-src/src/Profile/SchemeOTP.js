@@ -65,7 +65,7 @@ class SchemeOTP extends Component {
   showQRCode() {
     var url = false;
     if (this.state.myOtp.issuer && this.state.profile.username && this.state.myOtp.secret && this.state.myOtp.digits) {
-      if (this.state.myOtp.type === "HOTP" && this.state.myOtp.moving_factor) {
+      if (this.state.myOtp.type === "HOTP" && this.state.myOtp.moving_factor !== undefined) {
         url = "otpauth://hotp/" + this.state.myOtp.issuer + ":" + this.state.profile.username + "?" +
                   "issuer=" + encodeURI([location.protocol, '//', location.host].join('')) + "&" +
                   "secret=" + this.state.myOtp.secret + "&" +
