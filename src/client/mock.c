@@ -417,7 +417,7 @@ json_t * client_module_get(struct config_module * config, const char * client_id
   if (client_id != NULL && o_strlen(client_id)) {
     json_array_foreach((json_t *)cls, index, j_client) {
       if (0 == o_strcmp(client_id, json_string_value(json_object_get(j_client, "client_id")))) {
-        j_return = json_pack("{sisO}", "result", G_OK, "client", j_client);
+        j_return = json_pack("{siso}", "result", G_OK, "client", json_deep_copy(j_client));
         break;
       }
     }
