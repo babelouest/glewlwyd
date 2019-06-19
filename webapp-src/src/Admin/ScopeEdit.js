@@ -126,7 +126,7 @@ class ScopeEdit extends Component {
     this.state.modSchemes.forEach((scheme) => {
       if (scheme.enabled) {
         modSchemeListName.push(scheme.name);
-        modSchemeListDisplayName.push(scheme.display_name);
+        modSchemeListDisplayName.push(scheme.display_name||scheme.name);
       }
     });
     // Remove schemes that are already in the current scope
@@ -148,7 +148,7 @@ class ScopeEdit extends Component {
           schemeList.push(<span className="badge badge-secondary btn-icon-right" key={iScheme++}>{i18next.t("admin.or")}</span>);
         }
         // Add scheme
-        schemeList.push(<a href="#" key={iScheme++} onClick={(e) => this.handleRemoveScheme(e, groupName, scheme)}><span className="badge badge-primary btn-icon-right">{scheme.scheme_display_name}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
+        schemeList.push(<a href="#" key={iScheme++} onClick={(e) => this.handleRemoveScheme(e, groupName, scheme)}><span className="badge badge-primary btn-icon-right">{scheme.scheme_display_name||scheme.scheme_name}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
       });
       // Add badge
       if (groupList.length) {

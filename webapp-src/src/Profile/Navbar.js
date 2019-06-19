@@ -83,7 +83,7 @@ class Navbar extends Component {
     this.state.schemeList.forEach((scheme, index) => {
       schemeList.push(
         <li className={"nav-item" + (this.state.curNav===scheme.name?" active":"")} key={index}>
-          <a className="nav-link" href="#" onClick={(e) => this.navigate(e, scheme.name, scheme.module)}>{scheme.display_name}</a>
+          <a className="nav-link" href="#" onClick={(e) => this.navigate(e, scheme.name, scheme.module)}>{scheme.display_name||scheme.name}</a>
         </li>
       );
     });
