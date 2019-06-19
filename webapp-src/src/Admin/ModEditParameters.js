@@ -7,6 +7,7 @@ import HTTPParams from './HTTPParams';
 import EmailParams from './EmailParams';
 import WebauthnParams from './WebauthnParams';
 import OTPParams from './OTPParams';
+import PasswordParams from './PasswordParams';
 
 class ModEditParameters extends Component {
   constructor(props) {
@@ -44,6 +45,8 @@ class ModEditParameters extends Component {
       return <WebauthnParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
     } else if (this.state.mod.module === "otp") {
       return <OTPParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
+    } else if (this.state.mod.module === "retype-password") {
+      return <PasswordParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
     } else {
       return ("");
     }

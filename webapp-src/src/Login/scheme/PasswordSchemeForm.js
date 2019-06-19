@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 import apiManager from '../../lib/APIManager';
 import messageDispatcher from '../../lib/MessageDispatcher';
 
-class OTPSchemeForm extends Component {
+class PasswordSchemeForm extends Component {
   constructor(props) {
     super(props);
 
@@ -14,8 +14,8 @@ class OTPSchemeForm extends Component {
       value: ""
     };
     
-    this.validateOTPValue = this.validateOTPValue.bind(this);
-    this.handleChangeOTPValue = this.handleChangeOTPValue.bind(this);
+    this.validatePasswordValue = this.validatePasswordValue.bind(this);
+    this.handleChangePasswordValue = this.handleChangePasswordValue.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -26,18 +26,18 @@ class OTPSchemeForm extends Component {
     });
   }
   
-  handleChangeOTPValue(e) {
+  handleChangePasswordValue(e) {
     this.setState({value: e.target.value});
   }
   
-  validateOTPValue(e) {
+  validatePasswordValue(e) {
     e.preventDefault();
 		var scheme = {
       scheme_type: this.state.scheme.scheme_type,
       scheme_name: this.state.scheme.scheme_name,
       username: this.state.currentUser.username,
 			value: {
-				value: this.state.value
+				password: this.state.value
 			}
 		};
     
@@ -55,20 +55,20 @@ class OTPSchemeForm extends Component {
     return (
       <form action="#" id="otpSchemeForm">
         <div className="form-group">
-          <h5>{i18next.t("login.otp-enter-value")}</h5>
+          <h5>{i18next.t("login.password-enter-value")}</h5>
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="value">{i18next.t("login.otp-value-label")}</label>
+              <label className="input-group-text" htmlFor="value">{i18next.t("login.password-value-label")}</label>
             </div>
-            <input type="text" className="form-control" name="value" id="value" autoFocus="" required="" placeholder={i18next.t("login.error-value-expected", {value: (this.state.triggerResult)})} value={this.state.value||""} onChange={this.handleChangeOTPValue}/>
+            <input type="password" className="form-control" name="value" id="value" autoFocus="" required="" placeholder={i18next.t("login.error-value-expected", {value: (this.state.triggerResult)})} value={this.state.value||""} onChange={this.handleChangePasswordValue}/>
           </div>
         </div>
-        <button type="submit" name="but" id="but" className="btn btn-primary" onClick={(e) => this.validateOTPValue(e)} title={i18next.t("login.otp-button-title")}>{i18next.t("login.btn-ok")}</button>
+        <button type="submit" name="but" id="but" className="btn btn-primary" onClick={(e) => this.validatePasswordValue(e)} title={i18next.t("login.password-button-title")}>{i18next.t("login.btn-ok")}</button>
       </form>
     );
   }
 }
 
-export default OTPSchemeForm;
+export default PasswordSchemeForm;

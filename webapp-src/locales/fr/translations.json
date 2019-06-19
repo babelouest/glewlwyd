@@ -59,7 +59,10 @@
     "webauthn-error-trigger": "Erreur lors de la tentative d'authentification",
     "otp-enter-value": "Entrer le code a usage unique",
     "otp-value-label": "Code",
-    "otp-button-title": "Valider"
+    "otp-button-title": "Valider",
+    "password-enter-value": "Entrer votre mot de passe",
+    "password-value-label": "Mot de passe",
+    "password-button-title": "Valider"
   },
   "admin": {
     "menu-users": "Utilisateurs",

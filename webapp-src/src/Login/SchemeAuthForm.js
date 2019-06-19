@@ -7,6 +7,7 @@ import MockSchemeForm from './scheme/MockSchemeForm';
 import EmailSchemeForm from './scheme/EmailSchemeForm';
 import WebauthnForm from './scheme/WebauthnForm';
 import OTPSchemeForm from './scheme/OTPSchemeForm';
+import PasswordSchemeForm from './scheme/PasswordSchemeForm';
 
 class SchemeAuthForm extends Component {
   constructor(props) {
@@ -36,6 +37,8 @@ class SchemeAuthForm extends Component {
       return (<WebauthnForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>);
     } else if (this.state.scheme.scheme_type === "otp") {
       return (<OTPSchemeForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>);
+    } else if (this.state.scheme.scheme_type === "retype-password") {
+      return (<PasswordSchemeForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>);
     } else {
       return ("");
     }

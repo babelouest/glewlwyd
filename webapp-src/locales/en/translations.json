@@ -59,7 +59,10 @@
     "webauthn-error-trigger": "Error while attempting to authenticate",
     "otp-enter-value": "Enter one time password",
     "otp-value-label": "Code",
-    "otp-button-title": "Validate"
+    "otp-button-title": "Validate",
+    "password-enter-value": "Enter your password",
+    "password-value-label": "Password",
+    "password-button-title": "Validate"
   },
   "admin": {
     "menu-users": "Users",
