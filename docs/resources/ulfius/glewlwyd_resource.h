@@ -2,7 +2,7 @@
  *
  * Glewlwyd OAuth2 Authorization token check
  *
- * Copyright 2016-2018 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
  *
  * Version 20180607
  *
