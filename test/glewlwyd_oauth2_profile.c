@@ -41,7 +41,7 @@ END_TEST
 START_TEST(test_oauth2_profile_ok)
 {
   struct _u_request user_req;
-  json_t * j_body = json_pack("{ssso}", "username", USERNAME, "enabled", json_true());
+  json_t * j_body = json_pack("{ss}", "username", USERNAME);
   
   ulfius_init_request(&user_req);
   u_map_put(user_req.map_header, "Authorization", bearer_token);
