@@ -418,7 +418,7 @@ json_t * user_module_get(struct config_module * config, const char * username, v
   if (username != NULL && o_strlen(username)) {
     json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {
       if (0 == o_strcmp(username, json_string_value(json_object_get(j_user, "username")))) {
-        return json_pack("{sisO}", "result", G_OK, "user", j_user);
+        return json_pack("{siso}", "result", G_OK, "user", json_deep_copy(j_user));
         break;
       }
     }
