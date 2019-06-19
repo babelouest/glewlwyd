@@ -188,7 +188,7 @@ class EditRecord extends Component {
           {labelJsx}
         </div>
         {inputJsx}
-        <div>{listJsx}</div>
+        <div className="btn-icon-right">{listJsx}</div>
       </div>
       {errorJsx}
     </div>);
