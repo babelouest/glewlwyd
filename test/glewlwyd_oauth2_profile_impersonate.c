@@ -23,7 +23,7 @@ struct _u_request admin_req;
 
 START_TEST(test_oauth2_get_profile_ok)
 {
-  json_t * j_body = json_pack("{ssso}", "username", USERNAME_IMPERSONATE, "enabled", json_true());
+  json_t * j_body = json_pack("{ss}", "username", USERNAME_IMPERSONATE);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/glwd/profile?impersonate=" USERNAME_IMPERSONATE, NULL, NULL, NULL, NULL, 200, j_body, NULL, NULL), 1);
   json_decref(j_body);
