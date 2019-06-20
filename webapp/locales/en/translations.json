@@ -4,6 +4,8 @@
   "login": {
     "hello": "Hello {{name}}",
     "enter-login-password": "Please enter your login and password",
+    "enter-login": "Please enter your username",
+    "welcome-login": "Welcome {{username}}",
     "login": "Login",
     "login-placeholder": "Your username",
     "password": "Password",
@@ -59,7 +61,10 @@
     "webauthn-error-trigger": "Error while attempting to authenticate",
     "otp-enter-value": "Enter one time password",
     "otp-value-label": "Code",
-    "otp-button-title": "Validate"
+    "otp-button-title": "Validate",
+    "password-enter-value": "Enter your password",
+    "password-value-label": "Password",
+    "password-button-title": "Validate"
   },
   "admin": {
     "menu-users": "Users",
@@ -513,6 +518,7 @@
     "session-token-oauth2-table": "Tokens Oauth2 {{name}}",
     "session-table-last-login": "Last login",
     "session-table-exiration": "Expires on",
+    "session-table-client": "Client",
     "session-table-issued-for": "Source address",
     "session-table-user-agent": "User Agent",
     "session-enabled-true": "Enabled",
