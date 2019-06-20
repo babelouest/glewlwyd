@@ -4,6 +4,8 @@
   "login": {
     "hello": "Hello {{name}}",
     "enter-login-password": "Please enter your login and password",
+    "enter-login": "Please enter your username",
+    "welcome-login": "Welcome {{username}}",
     "login": "Login",
     "login-placeholder": "Your username",
     "password": "Password",

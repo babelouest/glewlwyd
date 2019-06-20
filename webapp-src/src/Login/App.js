@@ -6,12 +6,14 @@ import Notification from '../lib/Notification';
 import Buttons from './Buttons';
 import Body from './Body';
 import PasswordForm from './PasswordForm';
+import NoPasswordForm from './NoPasswordForm';
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       newUser: false,
+      newUserScheme: props.scheme,
       userList: [],
       currentUser: false,
       config: props.config,
@@ -45,7 +47,7 @@ class App extends Component {
   }
 
   initProfile() {
-    apiManager.glewlwydRequest("/profile")
+    apiManager.glewlwydRequest("/profile_list")
     .then((res) => {
       var newState = {};
       if (res.length) {
@@ -127,7 +129,11 @@ class App extends Component {
       var body = "";
       if (this.state.loaded) {
         if (this.state.newUser) {
-          body = <PasswordForm config={this.state.config} callbackInitProfile={this.initProfile}/>;
+          if (!this.state.newUserScheme) {
+            body = <PasswordForm config={this.state.config} callbackInitProfile={this.initProfile}/>;
+          } else {
+            body = <NoPasswordForm config={this.state.config} callbackInitProfile={this.initProfile} scheme={this.state.newUserScheme}/>;
+          }
         } else {
           body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} showGrant={this.state.showGrant}/>;
         }

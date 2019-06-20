@@ -36,7 +36,7 @@ class Navbar extends Component {
 
   toggleLogin() {
     if (this.state.loggedIn) {
-      apiManager.glewlwydRequest("/auth/", "DELETE")
+      apiManager.glewlwydRequest("/auth/?username=" + encodeURI(this.state.profileList[0].username), "DELETE")
       .then(() => {
         messageDispatcher.sendMessage('App', {type: 'loggedIn', loggedIn: false});
       })
