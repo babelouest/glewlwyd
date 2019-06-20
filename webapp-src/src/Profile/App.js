@@ -82,7 +82,7 @@ class App extends Component {
   
   fetchProfile() {
     if (!this.state.config.params.delegate) {
-      apiManager.glewlwydRequest("/profile")
+      apiManager.glewlwydRequest("/profile_list")
       .then((res) => {
         if (!res[0] || res[0].scope.indexOf(this.state.config.profile_scope) < 0) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});

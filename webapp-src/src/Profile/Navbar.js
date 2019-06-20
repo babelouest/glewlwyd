@@ -40,7 +40,7 @@ class Navbar extends Component {
 
   toggleLogin() {
     if (this.state.loggedIn) {
-      apiManager.glewlwydRequest("/auth/", "DELETE")
+      apiManager.glewlwydRequest("/auth/?username=" + encodeURI(this.state.profileList[0].username), "DELETE")
       .then(() => {
         messageDispatcher.sendMessage('App', {type: 'loggedIn', loggedIn: false});
       })
@@ -81,11 +81,13 @@ class Navbar extends Component {
       }
     });
     this.state.schemeList.forEach((scheme, index) => {
-      schemeList.push(
-        <li className={"nav-item" + (this.state.curNav===scheme.name?" active":"")} key={index}>
-          <a className="nav-link" href="#" onClick={(e) => this.navigate(e, scheme.name, scheme.module)}>{scheme.display_name||scheme.name}</a>
-        </li>
-      );
+      if (scheme.module !== "retype-password") { // Because scheme retype-password has no user configuration
+        schemeList.push(
+          <li className={"nav-item" + (this.state.curNav===scheme.name?" active":"")} key={index}>
+            <a className="nav-link" href="#" onClick={(e) => this.navigate(e, scheme.name, scheme.module)}>{scheme.display_name||scheme.name}</a>
+          </li>
+        );
+      }
     });
     var passwordJsx, sessionJsx;
     if (!this.state.config.params.delegate && this.state.profileList) {

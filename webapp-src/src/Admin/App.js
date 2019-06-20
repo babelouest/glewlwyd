@@ -401,7 +401,7 @@ class App extends Component {
   }
   
   fetchApi() {
-    apiManager.glewlwydRequest("/profile")
+    apiManager.glewlwydRequest("/profile_list")
     .then((res) => {
       this.setState({profileList: res}, () => {
         if (!res[0] || res[0].scope.indexOf(this.state.config.admin_scope) < 0) {
