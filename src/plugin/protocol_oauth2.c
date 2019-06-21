@@ -460,7 +460,7 @@ static json_t * check_client_valid(struct _oauth2_config * config, const char * 
         }
       }
       if (!uri_found) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, callback_uri '%s' is invalid for the client '%s'", redirect_uri, client_id);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, redirect_uri '%s' is invalid for the client '%s'", redirect_uri, client_id);
       }
       if (!authorization_type_enabled) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, authorization type is not enabled for the client '%s'", client_id);
