@@ -23,14 +23,14 @@ struct _u_request user_req;
 
 START_TEST(test_glwd_auth_profile_get_error)
 {
-  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "profile/", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "profile_list/", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
 }
 END_TEST
 
 START_TEST(test_glwd_auth_profile_get)
 {
   json_t * j_result = json_string(USERNAME);
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile_list/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
 }
 END_TEST
@@ -49,7 +49,7 @@ START_TEST(test_glwd_auth_update_ok)
   ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "profile/", NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   j_profile = json_pack("{ssssss}", "username", USERNAME, "name", NAME "-new", "email", EMAIL "-new");
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile/", NULL, NULL, NULL, NULL, 200, j_profile, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile_list/", NULL, NULL, NULL, NULL, 200, j_profile, NULL, NULL), 1);
   json_decref(j_profile);
 }
 END_TEST

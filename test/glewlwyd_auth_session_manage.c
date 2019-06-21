@@ -137,7 +137,7 @@ START_TEST(test_auth_session_manage_delete_ok)
   ulfius_init_request(&req);
   ulfius_init_request(&test_req);
   ulfius_init_response(&resp);
-  test_req.http_url = o_strdup(SERVER_URI "/profile/");
+  test_req.http_url = o_strdup(SERVER_URI "/profile_list/");
   req.http_verb = strdup("POST");
   req.http_url = msprintf("%s/auth/", SERVER_URI);
   snprintf(my_user_agent, 32, "glwd-auth-test-%04d", rand());
