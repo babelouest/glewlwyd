@@ -64,7 +64,13 @@
     "otp-button-title": "Validate",
     "password-enter-value": "Enter your password",
     "password-value-label": "Password",
-    "password-button-title": "Validate"
+    "password-button-title": "Validate",
+    "login-choose-scheme": "Scheme",
+    "mock-title": "Mock value",
+    "mail-title": "E-mail code",
+    "webauthn-title": "Webauthn",
+    "otp-title": "One time password",
+    "password-title": "Password"
   },
   "admin": {
     "menu-users": "Users",

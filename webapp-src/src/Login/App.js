@@ -36,12 +36,14 @@ class App extends Component {
     }
     
     messageDispatcher.subscribe('App', (message) => {
-      if (message === "InitProfile") {
+      if (message.type === "InitProfile") {
         this.initProfile();
-      } else if (message == "NewUser") {
+      } else if (message.type === "NewUser") {
         this.setState({newUser: true});
-      } else if (message == "ToggleGrant") {
+      } else if (message.type === "ToggleGrant") {
         this.setState({showGrant: !this.state.showGrant});
+      } else if (message.type === "newUserScheme") {
+        this.setState({newUserScheme: message.scheme});
       }
     });
   }
@@ -57,8 +59,8 @@ class App extends Component {
       newState.userList = res;
       newState.loaded = true;
       this.setState(newState, () => {
-        if (this.state.config.params.client_id && this.state.config.params.scope) {
-          this.checkClientScope(this.state.config.params.client_id, this.state.config.params.scope);
+        if (this.state.config.params.scope) {
+          this.checkClientScope(this.state.config.params.client_id||false, this.state.config.params.scope);
         } else if (this.state.config.params.scope) {
           this.checkScopeScheme(this.state.config.params.scope);
         } else {
@@ -75,36 +77,38 @@ class App extends Component {
   }
 
   checkClientScope(clientId, scopeList) {
-    apiManager.glewlwydRequest("/auth/grant/" + encodeURI(clientId) + "/" + encodeURI(scopeList))
-    .then((res) => {
-      var scopeGranted = [];
-      var scopeGrantedDetails = {};
-      var showGrant = true;
-      var showGrantAsterisk = false;
-      res.scope.forEach((scope) => {
-        if (scope.granted) {
-          showGrant = false;
-          scopeGranted.push(scope.name);
-          scopeGrantedDetails[scope.name] = scope;
-        } else {
-          showGrantAsterisk = true;
-        }
-      });
-      if (showGrant) {
-        this.setState({client: res.client, scope: res.scope, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk});
-      } else {
+    if (clientId) {
+      apiManager.glewlwydRequest("/auth/grant/" + encodeURI(clientId) + "/" + encodeURI(scopeList))
+      .then((res) => {
+        var scopeGranted = [];
+        var scopeGrantedDetails = {};
+        var showGrant = true;
+        var showGrantAsterisk = false;
+        res.scope.forEach((scope) => {
+          if (scope.granted) {
+            showGrant = false;
+            scopeGranted.push(scope.name);
+            scopeGrantedDetails[scope.name] = scope;
+          } else {
+            showGrantAsterisk = true;
+          }
+        });
         apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURI(scopeGranted.join(" ")))
         .then((schemeRes) => {
-          this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk});
+          this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk}, () => {
+            if (showGrant) {
+              this.setState({client: res.client, scope: res.scope, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk});
+            }
+          });
         })
         .fail((error) => {
           messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
         });
-      }
-    })
-    .fail((error) => {
-      messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-grant-api")});
-    });
+      })
+      .fail((error) => {
+        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-grant-api")});
+      });
+    }
   }
   
   checkScopeScheme(scopeList) {
@@ -126,6 +130,45 @@ class App extends Component {
 
 	render() {
     if (this.state.config) {
+      for (var scope in this.state.scheme) {
+        var curScope = this.state.scheme[scope];
+        if (curScope.isAuth) {
+          scopeList.push(
+          <li className="list-group-item" key={"scope-"+iScope}>
+            <h3><span className="badge badge-success">{curScope.display_name}</span></h3>
+          </li>
+          );
+        } else {
+          var groupList = [];
+          var iGroup = 0;
+          for (var group in curScope.schemes) {
+            var schemeList = [];
+            curScope.schemes[group].forEach((scheme, index) => {
+              if (scheme.scheme_authenticated) {
+                schemeList.push(<li className="list-group-item" key={"scheme-"+index}><span className="badge badge-success">{scheme.scheme_display_name}</span></li>);
+              } else {
+                schemeList.push(<li className="list-group-item" key={"scheme-"+index}><a className="badge badge-primary" href="#" onClick={(e) => this.handleSelectScheme(e, scheme)}>{scheme.scheme_display_name}</a></li>);
+              }
+            });
+            groupList.push(<li className="list-inline-item" key={"group-"+iGroup}>
+              <ul className="list-group">
+                {schemeList}
+              </ul>
+            </li>);
+            iGroup++;
+          }
+          scopeList.push(
+            <li className="list-group-item" key={"scope-"+iScope}>
+              <h3><span className="badge badge-secondary">{i18next.t("login.scheme-list-scope", {scope:curScope.display_name})}</span></h3>
+              <ul className="list-inline">
+                {groupList}
+              </ul>
+            </li>
+          );
+        }
+        iScope++;
+      }
+
       var body = "";
       if (this.state.loaded) {
         if (this.state.newUser) {
@@ -166,7 +209,7 @@ class App extends Component {
               {body}
             </div>
             <div className="card-footer">
-              <Buttons config={this.state.config} currentUser={this.state.currentUser} userList={this.state.userList} showGrant={this.state.showGrant} showGrantAsterisk={this.state.showGrantAsterisk}/>
+              <Buttons config={this.state.config} currentUser={this.state.currentUser} userList={this.state.userList} showGrant={this.state.showGrant} showGrantAsterisk={this.state.showGrantAsterisk} newUser={this.state.newUser} newUserScheme={this.state.newUserScheme}/>
             </div>
           </div>
           <Notification/>
