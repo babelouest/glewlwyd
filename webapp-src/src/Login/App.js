@@ -30,6 +30,7 @@ class App extends Component {
     this.checkClientScope = this.checkClientScope.bind(this);
     this.checkScopeScheme = this.checkScopeScheme.bind(this);
     this.changeLang = this.changeLang.bind(this);
+    this.parseSchemes = this.parseSchemes.bind(this);
 
     if (this.state.config) {
       this.initProfile();
@@ -128,6 +129,42 @@ class App extends Component {
     });
   }
 
+  parseSchemes() {
+    var canContinue = true;
+    var schemeForm = false;
+    var newScheme = this.state.scheme;
+    for (var scope in newScheme) {
+      if (newScheme[scope].password_required && !newScheme[scope].password_authenticated) {
+        newScheme[scope].isAuth = false;
+      } else {
+        newScheme[scope].isAuth = true;
+        for (var group in newScheme[scope].schemes) {
+          var curGroup = newScheme[scope].schemes[group];
+          var grpIsAuth = false;
+          curGroup.forEach((scheme) => {
+            if (scheme.scheme_authenticated) {
+              grpIsAuth = true;
+            } else if (!grpIsAuth && !schemeForm) {
+              schemeForm = scheme;
+            }
+            if (grpIsAuth && !!schemeForm) {
+              schemeForm = false;
+            }
+          });
+          curGroup.isAuth = grpIsAuth;
+          if (!grpIsAuth) {
+            newScheme[scope].isAuth = false;
+          }
+        }
+      }
+      if (!newScheme[scope].isAuth) {
+        canContinue = false;
+      }
+    }
+    messageDispatcher.sendMessage('Buttons', {value: "enableContinue", canContinue: canContinue});
+    this.setState({scheme: newScheme, canContinue: canContinue, curSchemeForm: schemeForm});
+  }
+  
 	render() {
     if (this.state.config) {
       for (var scope in this.state.scheme) {
