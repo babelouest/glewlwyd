@@ -25,6 +25,8 @@ class NoPasswordForm extends Component {
   
   componentWillReceiveProps(nextProps) {
     this.setState({
+      config: nextProps.config,
+      scheme: nextProps.scheme,
       config: nextProps.config
     });
   }
@@ -83,6 +85,8 @@ class NoPasswordForm extends Component {
           </div>
           <div className="form-group">
             {curScheme}
+          </div>
+          <div className="form-group">
           </div>
         </div>
       );

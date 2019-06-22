@@ -43,7 +43,7 @@ class SchemeAuth extends Component {
     var newScheme = this.state.scheme;
     for (var scope in newScheme) {
       if (newScheme[scope].password_required && !newScheme[scope].password_authenticated) {
-        scope.isAuth = false;
+        newScheme[scope].isAuth = false;
       } else {
         newScheme[scope].isAuth = true;
         for (var group in newScheme[scope].schemes) {
@@ -82,44 +82,6 @@ class SchemeAuth extends Component {
     var scopeList = [];
     var iScope = 0;
     if (!this.state.canContinue) {
-      for (var scope in this.state.scheme) {
-        var curScope = this.state.scheme[scope];
-        if (curScope.isAuth) {
-          scopeList.push(
-          <li className="list-group-item" key={"scope-"+iScope}>
-            <h3><span className="badge badge-success">{curScope.display_name}</span></h3>
-          </li>
-          );
-        } else {
-          var groupList = [];
-          var iGroup = 0;
-          for (var group in curScope.schemes) {
-            var schemeList = [];
-            curScope.schemes[group].forEach((scheme, index) => {
-              if (scheme.scheme_authenticated) {
-                schemeList.push(<li className="list-group-item" key={"scheme-"+index}><span className="badge badge-success">{scheme.scheme_display_name}</span></li>);
-              } else {
-                schemeList.push(<li className="list-group-item" key={"scheme-"+index}><a className="badge badge-primary" href="#" onClick={(e) => this.handleSelectScheme(e, scheme)}>{scheme.scheme_display_name}</a></li>);
-              }
-            });
-            groupList.push(<li className="list-inline-item" key={"group-"+iGroup}>
-              <ul className="list-group">
-                {schemeList}
-              </ul>
-            </li>);
-            iGroup++;
-          }
-          scopeList.push(
-            <li className="list-group-item" key={"scope-"+iScope}>
-              <h3><span className="badge badge-secondary">{i18next.t("login.scheme-list-scope", {scope:curScope.display_name})}</span></h3>
-              <ul className="list-inline">
-                {groupList}
-              </ul>
-            </li>
-          );
-        }
-        iScope++;
-      }
       var schemeForm = "";
       var separator = "";
       if (this.state.curSchemeForm) {

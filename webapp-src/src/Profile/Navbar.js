@@ -48,7 +48,16 @@ class Navbar extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
       });
     } else {
-      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURI([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURI(this.state.config.profile_scope);
+      this.state.config.sessionSchemes.forEach((scheme) => {
+        if (scheme.scheme_default) {
+          scheme.scheme_default.forEach((page) => {
+            if (page === "admin") {
+              schemeDefault = scheme.scheme_name;
+            }
+          });
+        }
+      });
+      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURI([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURI(this.state.config.profile_scope) + "&scheme=" + encodeURI(schemeDefault);
     }
   }
 

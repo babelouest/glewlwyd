@@ -34,6 +34,16 @@ class Body extends Component {
   }
 
 	render() {
+    var grant;
+    if (this.state.client) {
+      grant = <div id="carouselBody" className="carousel slide" data-ride="carousel">
+        <div className="carousel-inner">
+          <div className={"carousel-item" + (this.state.showGrant?" active":"")}>
+            <GrantScope config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme}/>
+          </div>
+        </div>
+      </div>;
+    }
 		return (
       <div>
         <div className="row">
@@ -46,16 +56,7 @@ class Body extends Component {
             <hr/>
           </div>
         </div>
-        <div id="carouselBody" className="carousel slide" data-ride="carousel">
-          <div className="carousel-inner">
-            <div className={"carousel-item" + (this.state.showGrant?" active":"")}>
-              <GrantScope config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme}/>
-            </div>
-            <div className={"carousel-item" + (!this.state.showGrant?" active":"")}>
-              <SchemeAuth config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser} client={this.state.client}/>
-            </div>
-          </div>
-        </div>
+        {grant}
       </div>
 		);
 	}

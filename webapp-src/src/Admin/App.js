@@ -404,7 +404,7 @@ class App extends Component {
     apiManager.glewlwydRequest("/profile_list")
     .then((res) => {
       this.setState({profileList: res}, () => {
-        if (!res[0] || res[0].scope.indexOf(this.state.config.admin_scope) < 0) {
+        if (!res[0]) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
         } else {
           this.setState({loggedIn: true}, () => {
@@ -443,6 +443,8 @@ class App extends Component {
     }).fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      } else {
+        this.setState({loggedIn: true});
       }
     });
   }
@@ -457,6 +459,8 @@ class App extends Component {
     }).fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      } else {
+        this.setState({loggedIn: true});
       }
     });
   }
@@ -486,6 +490,8 @@ class App extends Component {
     }).fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      } else {
+        this.setState({loggedIn: true});
       }
     });
   }
@@ -497,6 +503,8 @@ class App extends Component {
     }).fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      } else {
+        this.setState({loggedIn: true});
       }
     });
   }
@@ -508,6 +516,8 @@ class App extends Component {
     }).fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      } else {
+        this.setState({loggedIn: true});
       }
     });
   }
@@ -519,6 +529,8 @@ class App extends Component {
     }).fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      } else {
+        this.setState({loggedIn: true});
       }
     });
   }
@@ -530,6 +542,8 @@ class App extends Component {
     }).fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      } else {
+        this.setState({loggedIn: true});
       }
     });
   }
@@ -541,6 +555,8 @@ class App extends Component {
     }).fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      } else {
+        this.setState({loggedIn: true});
       }
     });
   }

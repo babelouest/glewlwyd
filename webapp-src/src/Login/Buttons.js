@@ -10,6 +10,8 @@ class Buttons extends Component {
       config: props.config,
       userList: props.userList,
       currentUser: props.currentUser,
+      newUser: props.newUser,
+      newUserScheme: props.newUserScheme,
       disableContinue: true,
       showGrant: props.showGrant,
       bGrantTitle: props.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
@@ -21,6 +23,7 @@ class Buttons extends Component {
     this.clickGrant = this.clickGrant.bind(this);
     this.clickContinue = this.clickContinue.bind(this);
     this.newUser = this.newUser.bind(this);
+    this.changeSessionScheme = this.changeSessionScheme.bind(this);
     
     messageDispatcher.subscribe('Buttons', (message) => {
       if (message.value === "enableContinue") {
@@ -35,6 +38,8 @@ class Buttons extends Component {
       currentUser: nextProps.currentUser,
       config: nextProps.config,
       showGrant: nextProps.showGrant,
+      newUser: nextProps.newUser,
+      newUserScheme: nextProps.newUserScheme,
       bGrantTitle: nextProps.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
       bGrant: nextProps.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change"),
       showGrantAsterisk: nextProps.showGrantAsterisk
@@ -44,7 +49,7 @@ class Buttons extends Component {
   clickLogout() {
     apiManager.glewlwydRequest("/auth/", "DELETE")
     .then(() => {
-      messageDispatcher.sendMessage('App', 'InitProfile');
+      messageDispatcher.sendMessage('App', {type: 'InitProfile'});
     })
     .fail(() => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
@@ -52,7 +57,7 @@ class Buttons extends Component {
   }
   
   clickGrant() {
-    messageDispatcher.sendMessage('App', 'ToggleGrant');
+    messageDispatcher.sendMessage('App', {type: 'ToggleGrant'});
   }
   
   clickContinue() {
@@ -64,16 +69,21 @@ class Buttons extends Component {
   newUser(e, user) {
     e.preventDefault();
     if (!user) {
-      messageDispatcher.sendMessage('App', 'NewUser');
+      messageDispatcher.sendMessage('App', {type: 'NewUser'});
     } else {
       apiManager.glewlwydRequest("/auth/", "POST", {username: user})
       .then(() => {
-        messageDispatcher.sendMessage('App', 'InitProfile');
+        messageDispatcher.sendMessage('App', {type: 'InitProfile'});
       })
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
       });
     }
+  }
+  
+  changeSessionScheme(e, scheme) {
+    e.preventDefault();
+    messageDispatcher.sendMessage('App', {type: 'newUserScheme', scheme: scheme});
   }
 
 	render() {
@@ -136,6 +146,40 @@ class Buttons extends Component {
           </div>
         </div>
   		);
+    } else if (this.state.newUser) {
+      var schemeList = [];
+      if (this.state.config.sessionSchemes && this.state.config.sessionSchemes.length) {
+        this.state.config.sessionSchemes.forEach((scheme, index) => {
+          if (scheme.scheme_name === this.state.newUserScheme) {
+            schemeList.push(
+              <a key={index} className="dropdown-item active" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name)} alt={i18next.t(scheme.display_name)}>
+                {i18next.t(scheme.display_name)}
+              </a>
+            );
+          } else {
+            schemeList.push(
+              <a key={index} className="dropdown-item" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name)} alt={i18next.t(scheme.display_name)}>
+                {i18next.t(scheme.display_name)}
+              </a>
+            );
+          }
+        });
+        return (
+          <div className="btn-group" role="group">
+            <div className="btn-group" role="group">
+              <button className="btn btn-primary dropdown-toggle" type="button" id="selectNewUser" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i className="fas fa-user-lock btn-icon"></i>{i18next.t("login.login-choose-scheme")}
+              </button>
+              <div className="dropdown-menu" aria-labelledby="selectNewUser">
+                {schemeList}
+              </div>
+            </div>
+            {bAnother}
+          </div>
+        );
+      } else {
+        return ("");
+      }
     } else {
       return ("");
     }

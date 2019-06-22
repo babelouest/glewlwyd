@@ -64,7 +64,13 @@
     "otp-button-title": "Valider",
     "password-enter-value": "Entrer votre mot de passe",
     "password-value-label": "Mot de passe",
-    "password-button-title": "Valider"
+    "password-button-title": "Valider",
+    "login-choose-scheme": "Schéma",
+    "mock-title": "Valeur factice",
+    "mail-title": "Code courriel",
+    "webauthn-title": "Webauthn",
+    "otp-title": "Code à usage unique",
+    "password-title": "Mot de passe"
   },
   "admin": {
     "menu-users": "Utilisateurs",
