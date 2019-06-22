@@ -18,10 +18,7 @@ class SchemeAuth extends Component {
       show: props.show
     };
     
-    this.parseSchemes = this.parseSchemes.bind(this);
     this.handleSelectScheme = this.handleSelectScheme.bind(this);
-    
-    this.parseSchemes();
   }
   
   componentWillReceiveProps(nextProps) {
@@ -32,45 +29,7 @@ class SchemeAuth extends Component {
       currentUser: nextProps.currentUser,
       canContinue: !nextProps.scheme,
       show: nextProps.show
-    }, () => {
-      this.parseSchemes();
     });
-  }
-  
-  parseSchemes() {
-    var canContinue = true;
-    var schemeForm = false;
-    var newScheme = this.state.scheme;
-    for (var scope in newScheme) {
-      if (newScheme[scope].password_required && !newScheme[scope].password_authenticated) {
-        newScheme[scope].isAuth = false;
-      } else {
-        newScheme[scope].isAuth = true;
-        for (var group in newScheme[scope].schemes) {
-          var curGroup = newScheme[scope].schemes[group];
-          var grpIsAuth = false;
-          curGroup.forEach((scheme) => {
-            if (scheme.scheme_authenticated) {
-              grpIsAuth = true;
-            } else if (!grpIsAuth && !schemeForm) {
-              schemeForm = scheme;
-            }
-            if (grpIsAuth && !!schemeForm) {
-              schemeForm = false;
-            }
-          });
-          curGroup.isAuth = grpIsAuth;
-          if (!grpIsAuth) {
-            newScheme[scope].isAuth = false;
-          }
-        }
-      }
-      if (!newScheme[scope].isAuth) {
-        canContinue = false;
-      }
-    }
-    messageDispatcher.sendMessage('Buttons', {value: "enableContinue", canContinue: canContinue});
-    this.setState({scheme: newScheme, canContinue: canContinue, curSchemeForm: schemeForm});
   }
   
   handleSelectScheme(e, scheme) {
