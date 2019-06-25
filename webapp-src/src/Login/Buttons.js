@@ -12,8 +12,9 @@ class Buttons extends Component {
       currentUser: props.currentUser,
       newUser: props.newUser,
       newUserScheme: props.newUserScheme,
-      disableContinue: true,
+      canContinue: props.canContinue,
       showGrant: props.showGrant,
+      schemeListRequired: props.schemeListRequired,
       bGrantTitle: props.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
       bGrant: props.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change"),
       showGrantAsterisk: props.showGrantAsterisk
@@ -25,11 +26,6 @@ class Buttons extends Component {
     this.newUser = this.newUser.bind(this);
     this.changeSessionScheme = this.changeSessionScheme.bind(this);
     
-    messageDispatcher.subscribe('Buttons', (message) => {
-      if (message.value === "enableContinue") {
-        this.setState({disableContinue: !message.canContinue});
-      }
-    });
   }
 
   componentWillReceiveProps(nextProps) {
@@ -40,6 +36,8 @@ class Buttons extends Component {
       showGrant: nextProps.showGrant,
       newUser: nextProps.newUser,
       newUserScheme: nextProps.newUserScheme,
+      canContinue: nextProps.canContinue,
+      schemeListRequired: nextProps.schemeListRequired,
       bGrantTitle: nextProps.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
       bGrant: nextProps.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change"),
       showGrantAsterisk: nextProps.showGrantAsterisk
@@ -88,7 +86,7 @@ class Buttons extends Component {
 
 	render() {
     var bAnother = "", asterisk = "";
-    var bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")} disabled={this.state.disableContinue||""}>
+    var bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")} disabled={!this.state.canContinue}>
       <i className="fas fa-play btn-icon"></i>{i18next.t("login.continue")}
     </button>;
     var bGrant = <button type="button" className="btn btn-primary" onClick={this.clickGrant} title={this.state.bGrantTitle||""}>
@@ -130,10 +128,10 @@ class Buttons extends Component {
           <hr/>
           <div className="btn-group" role="group">
             <div className="btn-group" role="group">
-              <button className="btn btn-primary dropdown-toggle" type="button" id="selectNewUser" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <button className="btn btn-primary dropdown-toggle" type="button" id="selectGrant" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i className="fas fa-user-cog btn-icon"></i>{i18next.t("login.login-handle")}{asterisk}
               </button>
-              <div className="dropdown-menu" aria-labelledby="selectNewUser">
+              <div className="dropdown-menu" aria-labelledby="selectGrant">
                 <a className="dropdown-item" href="#" onClick={this.clickGrant} alt={this.state.bGrantTitle}>
                   {this.state.bGrant}
                   {asterisk}
@@ -152,14 +150,14 @@ class Buttons extends Component {
         this.state.config.sessionSchemes.forEach((scheme, index) => {
           if (scheme.scheme_name === this.state.newUserScheme) {
             schemeList.push(
-              <a key={index} className="dropdown-item active" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name)} alt={i18next.t(scheme.display_name)}>
-                {i18next.t(scheme.display_name)}
+              <a key={index} className="dropdown-item active" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name)} alt={i18next.t(scheme.scheme_display_name)}>
+                {i18next.t(scheme.scheme_display_name)}
               </a>
             );
           } else {
             schemeList.push(
-              <a key={index} className="dropdown-item" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name)} alt={i18next.t(scheme.display_name)}>
-                {i18next.t(scheme.display_name)}
+              <a key={index} className="dropdown-item" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name)} alt={i18next.t(scheme.scheme_display_name)}>
+                {i18next.t(scheme.scheme_display_name)}
               </a>
             );
           }
@@ -167,10 +165,10 @@ class Buttons extends Component {
         return (
           <div className="btn-group" role="group">
             <div className="btn-group" role="group">
-              <button className="btn btn-primary dropdown-toggle" type="button" id="selectNewUser" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <button className="btn btn-primary dropdown-toggle" type="button" id="selectScheme" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i className="fas fa-user-lock btn-icon"></i>{i18next.t("login.login-choose-scheme")}
               </button>
-              <div className="dropdown-menu" aria-labelledby="selectNewUser">
+              <div className="dropdown-menu" aria-labelledby="selectScheme">
                 {schemeList}
               </div>
             </div>

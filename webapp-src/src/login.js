@@ -25,16 +25,16 @@ var initApp = () => {
       apiManager.setConfig(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix);
       var config = Object.assign({
         params: {
-          scope: getParameterByName("scope"), 
-          client_id: getParameterByName("client_id"), 
-          callback_url: getParameterByName("callback_url")
+          scope: getParameterByName("scope")||false, 
+          client_id: getParameterByName("client_id")||false, 
+          callback_url: getParameterByName("callback_url")||false,
+          scheme: getParameterByName("scheme")||false
         }
       }, frontEndConfig, serverConfig);
-      var scheme = getParameterByName("scheme")||false;
-      ReactDOM.render(<App config={config} scheme={scheme}/>, document.getElementById('root'));
+      ReactDOM.render(<App config={config}/>, document.getElementById('root'));
     })
     .fail((error) => {
-      ReactDOM.render(<App config={false} scheme={false}/>, document.getElementById('root'));
+      ReactDOM.render(<App config={false}/>, document.getElementById('root'));
     });
   });
 }

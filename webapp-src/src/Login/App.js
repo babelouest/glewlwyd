@@ -21,9 +21,12 @@ class App extends Component {
       lang: i18next.language,
       scope: [],
       scheme: false,
+      schemeListRequired: false,
+      passwordRequired: false,
       client: false,
       showGrant: true,
       showGrantAsterisk: false,
+      canContinue: false
     };
 
     this.initProfile = this.initProfile.bind(this);
@@ -60,8 +63,8 @@ class App extends Component {
       newState.userList = res;
       newState.loaded = true;
       this.setState(newState, () => {
-        if (this.state.config.params.scope) {
-          this.checkClientScope(this.state.config.params.client_id||false, this.state.config.params.scope);
+        if (this.state.config.params.client_id && this.state.config.params.scope) {
+          this.checkClientScope(this.state.config.params.client_id, this.state.config.params.scope);
         } else if (this.state.config.params.scope) {
           this.checkScopeScheme(this.state.config.params.scope);
         } else {
@@ -98,7 +101,9 @@ class App extends Component {
         .then((schemeRes) => {
           this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk}, () => {
             if (showGrant) {
-              this.setState({client: res.client, scope: res.scope, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk});
+              this.setState({client: res.client, scope: res.scope, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk}, () => {
+                this.parseSchemes();
+              });
             }
           });
         })
@@ -115,7 +120,9 @@ class App extends Component {
   checkScopeScheme(scopeList) {
     apiManager.glewlwydRequest("/auth/scheme/?scope=" + scopeList)
     .then((schemeRes) => {
-      this.setState({scope: scopeList.split(" "), scheme: schemeRes, showGrant: false, showGrantAsterisk: false});
+      this.setState({scope: scopeList.split(" "), scheme: schemeRes, showGrant: false, showGrantAsterisk: false}, () => {
+        this.parseSchemes();
+      });
     })
     .fail((error) => {
       messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
@@ -131,42 +138,39 @@ class App extends Component {
 
   parseSchemes() {
     var canContinue = true;
-    var schemeForm = false;
-    var newScheme = this.state.scheme;
-    for (var scope in newScheme) {
-      if (newScheme[scope].password_required && !newScheme[scope].password_authenticated) {
-        newScheme[scope].isAuth = false;
+    var passwordRequired = false;
+    var schemeListRequired = false;
+    for (var scopeName in this.state.scheme) {
+      var scope = this.state.scheme[scopeName];
+      if (scope.available && scope.password_required && !scope.password_authenticated) {
+        canContinue = false;
+        passwordRequired = true;
+        schemeListRequired = false;
+        break;
       } else {
-        newScheme[scope].isAuth = true;
-        for (var group in newScheme[scope].schemes) {
-          var curGroup = newScheme[scope].schemes[group];
-          var grpIsAuth = false;
-          curGroup.forEach((scheme) => {
+        for (var groupName in scope.schemes) {
+          var group = scope.schemes[groupName];
+          var groupAuthenticated = false;
+          schemeListRequired = group;
+          group.forEach((scheme) => {
             if (scheme.scheme_authenticated) {
-              grpIsAuth = true;
-            } else if (!grpIsAuth && !schemeForm) {
-              schemeForm = scheme;
-            }
-            if (grpIsAuth && !!schemeForm) {
-              schemeForm = false;
+              groupAuthenticated = true;
+              schemeListRequired = false;
             }
           });
-          curGroup.isAuth = grpIsAuth;
-          if (!grpIsAuth) {
-            newScheme[scope].isAuth = false;
+          if (!groupAuthenticated) {
+            canContinue = false;
           }
         }
       }
-      if (!newScheme[scope].isAuth) {
-        canContinue = false;
-      }
     }
-    messageDispatcher.sendMessage('Buttons', {value: "enableContinue", canContinue: canContinue});
-    this.setState({scheme: newScheme, canContinue: canContinue, curSchemeForm: schemeForm});
+    this.setState({canContinue: canContinue, passwordRequired: passwordRequired, schemeListRequired: schemeListRequired});
   }
   
 	render() {
     if (this.state.config) {
+      var scopeList = [];
+      var iScope = 0;
       for (var scope in this.state.scheme) {
         var curScope = this.state.scheme[scope];
         if (curScope.isAuth) {
@@ -246,7 +250,7 @@ class App extends Component {
               {body}
             </div>
             <div className="card-footer">
-              <Buttons config={this.state.config} currentUser={this.state.currentUser} userList={this.state.userList} showGrant={this.state.showGrant} showGrantAsterisk={this.state.showGrantAsterisk} newUser={this.state.newUser} newUserScheme={this.state.newUserScheme}/>
+              <Buttons config={this.state.config} currentUser={this.state.currentUser} userList={this.state.userList} showGrant={this.state.showGrant} showGrantAsterisk={this.state.showGrantAsterisk} newUser={this.state.newUser} newUserScheme={this.state.newUserScheme} canContinue={this.state.canContinue} schemeListRequired={this.state.schemeListRequired}/>
             </div>
           </div>
           <Notification/>
