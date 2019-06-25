@@ -55,7 +55,7 @@ int callback_default (const struct _u_request * request, struct _u_response * re
   return U_CALLBACK_CONTINUE;
 }
 
-int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_check_user_profile_valid (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   char * session_uid;
   json_t * j_user;
@@ -73,6 +73,28 @@ int callback_glewlwyd_check_user_session (const struct _u_request * request, str
         }
         ret = U_CALLBACK_UNAUTHORIZED;
       }
+    } else {
+      ret = U_CALLBACK_UNAUTHORIZED;
+    }
+    json_decref(j_user);
+  } else {
+    ret = U_CALLBACK_UNAUTHORIZED;
+  }
+  o_free(session_uid);
+  return ret;
+}
+
+int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  char * session_uid;
+  json_t * j_user;
+  int ret;
+  
+  if ((session_uid = get_session_id(config, request)) != NULL) {
+    j_user = get_current_user_for_session(config, session_uid);
+    if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
+      response->shared_data = json_incref(json_object_get(j_user, "user"));
+      ret = U_CALLBACK_CONTINUE;
     } else {
       ret = U_CALLBACK_UNAUTHORIZED;
     }

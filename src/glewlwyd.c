@@ -248,7 +248,7 @@ int main (int argc, char ** argv) {
 
   // User profile
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile_list/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_profile_valid, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/password", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_password, (void*)config);
