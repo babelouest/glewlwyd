@@ -407,19 +407,17 @@ class App extends Component {
         if (!res[0]) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
         } else {
-          this.setState({loggedIn: true}, () => {
-            this.fetchUsers()
+          this.fetchUsers()
+          .always(() => {
+            this.fetchClients()
             .always(() => {
-              this.fetchClients()
-              .always(() => {
-                this.fetchScopes();
-              });
-              this.fetchModTypes();
-              this.fetchUserMods();
-              this.fetchClientMods();
-              this.fetchSchemeMods();
-              this.fetchPlugins();
+              this.fetchScopes();
             });
+            this.fetchModTypes();
+            this.fetchUserMods();
+            this.fetchClientMods();
+            this.fetchSchemeMods();
+            this.fetchPlugins();
           });
         }
       });
@@ -439,12 +437,13 @@ class App extends Component {
       var curUsers = this.state.users;
       curUsers.list = users;
       curUsers.pattern = this.state.config.pattern.user;
-      this.setState({users: curUsers});
+      this.setState({users: curUsers, loggedIn: true});
     }).fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: true});
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+        this.setState({loggedIn: false});
       }
     });
   }
@@ -460,7 +459,7 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: true});
+        this.setState({loggedIn: false});
       }
     });
   }
@@ -491,7 +490,7 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: true});
+        this.setState({loggedIn: false});
       }
     });
   }
@@ -504,7 +503,7 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: true});
+        this.setState({loggedIn: false});
       }
     });
   }
@@ -517,7 +516,7 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: true});
+        this.setState({loggedIn: false});
       }
     });
   }
@@ -530,7 +529,7 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: true});
+        this.setState({loggedIn: false});
       }
     });
   }
@@ -543,7 +542,7 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: true});
+        this.setState({loggedIn: false});
       }
     });
   }
@@ -556,7 +555,7 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: true});
+        this.setState({loggedIn: false});
       }
     });
   }
