@@ -32,7 +32,7 @@ json_t * get_scope_list(struct config_elements * config, const char * pattern, s
   size_t index;
   char * pattern_escaped, * pattern_clause;
 
-  j_query = json_pack("{sss[ssss]sisi}",
+  j_query = json_pack("{sss[ssss]sisiss}",
                       "table",
                       GLEWLWYD_TABLE_SCOPE,
                       "columns",
@@ -43,7 +43,9 @@ json_t * get_scope_list(struct config_elements * config, const char * pattern, s
                       "limit",
                       limit,
                       "offset",
-                      offset);
+                      offset,
+                      "order_by",
+                      "gs_name");
   if (o_strlen(pattern)) {
     pattern_escaped = h_escape_string(config->conn, pattern);
     pattern_clause = msprintf("IN (SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name LIKE '%%%s%%' OR gs_display_name LIKE '%%%s%%' OR gs_description LIKE '%%%s%%')", pattern_escaped, pattern_escaped, pattern_escaped);
