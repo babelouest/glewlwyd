@@ -260,6 +260,7 @@ int callback_glewlwyd_check_user_session (const struct _u_request * request, str
 int callback_glewlwyd_check_admin_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_check_admin_session_delegate (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_close_check_session (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_check_user_profile_valid (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_auth_trigger (const struct _u_request * request, struct _u_response * response, void * user_data);
