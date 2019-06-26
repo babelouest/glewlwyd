@@ -334,6 +334,7 @@ CREATE INDEX i_gsso_username ON gs_otp(gso_username);
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 0);
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 0);
 INSERT INTO g_user_module_instance (gumi_module, gumi_order, gumi_name, gumi_display_name, gumi_parameters, gumi_readonly) VALUES ('database', 0, 'database', 'Database backend', '{"use-glewlwyd-connection":true}', 0);
+INSERT INTO g_client_module_instance (gcmi_module, gcmi_order, gcmi_name, gcmi_display_name, gcmi_parameters, gcmi_readonly) VALUES ('database', 0, 'database', 'Database backend', '{"use-glewlwyd-connection":true,"data-format":{"redirect_uri":{"multiple":true,"read":true,"write":true},"authorization_type":{"multiple":true,"read":true,"write":true}}}', 0);
 INSERT INTO g_user_auth_scheme_module_instance (guasmi_module, guasmi_name, guasmi_display_name, guasmi_expiration, guasmi_parameters) VALUES ('retype-password', 'pwd', 'Password', 600, '{}');
 INSERT INTO g_user (gu_username, gu_name, gu_password, gu_enabled) VALUES ('admin', 'The Administrator', crypt('password', gen_salt('bf')), 1);
 INSERT INTO g_user_scope (gus_name) VALUES ('g_admin');
