@@ -36,7 +36,6 @@
     "grant-auth": "Authenticate",
     "error-grant-api": "Error while saving grant",
     "error-set-grant": "Error while saving grant access to client",
-    "scheme-list-show": "Show authentication factors",
     "scheme-list-scope": "Scope: {{scope}}",
     "enter-mock-scheme-value": "Enter mock scheme value",
     "mock-value-label": "Mock value",

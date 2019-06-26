@@ -36,7 +36,6 @@
     "grant-auth": "Autoriser",
     "error-set-grant": "Erreur lors de l'enregistrement des droits au client",
     "error-grant-api": "Erreur lors de l'enregistrement de l'autorisation",
-    "scheme-list-show": "Montrer les facteurs d'authentification",
     "scheme-list-scope": "Scope: {{scope}}",
     "enter-mock-scheme-value": "Entrer la valeur factice",
     "mock-value-label": "Valeur factice",
