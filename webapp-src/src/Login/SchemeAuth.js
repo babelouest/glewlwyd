@@ -10,10 +10,9 @@ class SchemeAuth extends Component {
 
     this.state = {
       config: props.config,
-      client: props.client,
       scheme: props.scheme,
+      schemeListRequired: props.schemeListRequired,
       currentUser: props.currentUser,
-      curSchemeForm: false,
       canContinue: !props.scheme,
       show: props.show
     };
@@ -24,8 +23,8 @@ class SchemeAuth extends Component {
   componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
-      client: nextProps.client,
       scheme: nextProps.scheme,
+      schemeListRequired: nextProps.schemeListRequired,
       currentUser: nextProps.currentUser,
       canContinue: !nextProps.scheme,
       show: nextProps.show
@@ -34,43 +33,40 @@ class SchemeAuth extends Component {
   
   handleSelectScheme(e, scheme) {
     e.preventDefault();
-    this.setState({curSchemeForm: scheme});
+    this.setState({scheme: scheme});
   }
 
   render() {
-    var scopeList = [];
     var iScope = 0;
     if (!this.state.canContinue) {
       var schemeForm = "";
       var separator = "";
-      if (this.state.curSchemeForm) {
-        schemeForm = <SchemeAuthForm config={this.state.config} scheme={this.state.curSchemeForm} currentUser={this.state.currentUser}/>;
+      var schemeList = [];
+      if (this.state.scheme) {
+        schemeForm = <SchemeAuthForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>;
         separator = <div className="row">
             <div className="col-md-12">
               <hr/>
             </div>
           </div>;
       }
+      if (this.state.schemeListRequired) {
+        this.state.schemeListRequired.forEach((scheme, index) => {
+          schemeList.push(
+            <a className="dropdown-item" key={index} href="#" onClick={(e) => this.handleSelectScheme(e, scheme)}>{scheme.scheme_display_name}</a>
+          );
+        });
+      }
       return (
         <div>
           {schemeForm}
           {separator}
-          <div id="accordionScheme">
-            <div className="card">
-              <div className="card-header" id="headingOne">
-                <h5 className="mb-0">
-                  <button className="btn btn-link" data-toggle="collapse" data-target="#collapseScheme" aria-expanded="true" aria-controls="collapseScheme">
-                    {i18next.t("login.scheme-list-show")}
-                  </button>
-                </h5>
-              </div>
-              <div id="collapseScheme" className="collapse" aria-labelledby="headingOne" data-parent="#accordionScheme">
-                <div className="card-body">
-                  <ul className="list-group">
-                    {scopeList}
-                  </ul>
-                </div>
-              </div>
+          <div className="btn-group" role="group">
+            <button className="btn btn-primary dropdown-toggle" type="button" id="selectScheme" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i className="fas fa-user-lock btn-icon"></i>{i18next.t("login.login-choose-scheme")}
+            </button>
+            <div className="dropdown-menu" aria-labelledby="selectScheme">
+              {schemeList}
             </div>
           </div>
         </div>
