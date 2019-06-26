@@ -42,7 +42,7 @@ class App extends Component {
       if (message.type === "InitProfile") {
         this.initProfile();
       } else if (message.type === "NewUser") {
-        this.setState({newUser: true});
+        this.setState({newUser: true, scheme: false});
       } else if (message.type === "ToggleGrant") {
         this.setState({showGrant: !this.state.showGrant});
       } else if (message.type === "newUserScheme") {
@@ -80,46 +80,44 @@ class App extends Component {
   }
 
   checkClientScope(clientId, scopeList) {
-    if (clientId) {
-      apiManager.glewlwydRequest("/auth/grant/" + encodeURI(clientId) + "/" + encodeURI(scopeList))
-      .then((res) => {
-        var scopeGranted = [];
-        var scopeGrantedDetails = {};
-        var showGrant = true;
-        var showGrantAsterisk = false;
-        res.scope.forEach((scope) => {
-          if (scope.granted) {
-            showGrant = false;
-            scopeGranted.push(scope.name);
-            scopeGrantedDetails[scope.name] = scope;
-          } else {
-            showGrantAsterisk = true;
-          }
-        });
+    apiManager.glewlwydRequest("/auth/grant/" + encodeURI(clientId) + "/" + encodeURI(scopeList))
+    .then((res) => {
+      var scopeGranted = [];
+      var scopeGrantedDetails = {};
+      var showGrant = true;
+      var showGrantAsterisk = false;
+      res.scope.forEach((scope) => {
+        if (scope.granted) {
+          showGrant = false;
+          scopeGranted.push(scope.name);
+          scopeGrantedDetails[scope.name] = scope;
+        } else {
+          showGrantAsterisk = true;
+        }
+      });
+      if (scopeGranted.length) {
         apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURI(scopeGranted.join(" ")))
         .then((schemeRes) => {
           this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk}, () => {
-            if (showGrant) {
-              this.setState({client: res.client, scope: res.scope, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk}, () => {
-                this.parseSchemes();
-              });
-            }
+            this.parseSchemes();
           });
         })
         .fail((error) => {
           messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
         });
-      })
-      .fail((error) => {
-        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-grant-api")});
-      });
-    }
+      } else {
+        this.setState({client: res.client, scope: res.scope, showGrant: true, showGrantAsterisk: true});
+      }
+    })
+    .fail((error) => {
+      messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-grant-api")});
+    });
   }
   
   checkScopeScheme(scopeList) {
     apiManager.glewlwydRequest("/auth/scheme/?scope=" + scopeList)
     .then((schemeRes) => {
-      this.setState({scope: scopeList.split(" "), scheme: schemeRes, showGrant: false, showGrantAsterisk: false}, () => {
+      this.setState({scheme: schemeRes, showGrant: false, showGrantAsterisk: false}, () => {
         this.parseSchemes();
       });
     })
@@ -128,6 +126,42 @@ class App extends Component {
     });
   }
 
+  parseSchemes() {
+    var canContinue = true;
+    var passwordRequired = false;
+    var schemeListRequired = false;
+    var scheme = false;
+    for (var scopeName in this.state.scheme) {
+      var scope = this.state.scheme[scopeName];
+      if (scope.available && scope.password_required && !scope.password_authenticated) {
+        canContinue = false;
+        passwordRequired = true;
+        schemeListRequired = false;
+        scheme = false;
+        break;
+      } else if (!schemeListRequired) {
+        for (var groupName in scope.schemes) {
+          var group = scope.schemes[groupName];
+          var groupAuthenticated = false;
+          schemeListRequired = group;
+          scheme = group[0];
+          group.forEach((curScheme) => {
+            if (curScheme.scheme_authenticated) {
+              groupAuthenticated = true;
+              schemeListRequired = false;
+              scheme = false;
+            }
+          });
+          if (!groupAuthenticated) {
+            canContinue = false;
+            break;
+          }
+        }
+      }
+    }
+    this.setState({canContinue: canContinue, passwordRequired: passwordRequired, schemeListRequired: schemeListRequired, scheme: scheme});
+  }
+  
   changeLang(e, lang) {
     i18next.changeLanguage(lang)
     .then(() => {
@@ -135,91 +169,18 @@ class App extends Component {
     });
   }
 
-  parseSchemes() {
-    var canContinue = true;
-    var passwordRequired = false;
-    var schemeListRequired = false;
-    for (var scopeName in this.state.scheme) {
-      var scope = this.state.scheme[scopeName];
-      if (scope.available && scope.password_required && !scope.password_authenticated) {
-        canContinue = false;
-        passwordRequired = true;
-        schemeListRequired = false;
-        break;
-      } else {
-        for (var groupName in scope.schemes) {
-          var group = scope.schemes[groupName];
-          var groupAuthenticated = false;
-          schemeListRequired = group;
-          group.forEach((scheme) => {
-            if (scheme.scheme_authenticated) {
-              groupAuthenticated = true;
-              schemeListRequired = false;
-            }
-          });
-          if (!groupAuthenticated) {
-            canContinue = false;
-          }
-        }
-      }
-    }
-    this.setState({canContinue: canContinue, passwordRequired: passwordRequired, schemeListRequired: schemeListRequired});
-  }
-  
 	render() {
     if (this.state.config) {
-      var scopeList = [];
-      var iScope = 0;
-      for (var scope in this.state.scheme) {
-        var curScope = this.state.scheme[scope];
-        if (curScope.isAuth) {
-          scopeList.push(
-          <li className="list-group-item" key={"scope-"+iScope}>
-            <h3><span className="badge badge-success">{curScope.display_name}</span></h3>
-          </li>
-          );
-        } else {
-          var groupList = [];
-          var iGroup = 0;
-          for (var group in curScope.schemes) {
-            var schemeList = [];
-            curScope.schemes[group].forEach((scheme, index) => {
-              if (scheme.scheme_authenticated) {
-                schemeList.push(<li className="list-group-item" key={"scheme-"+index}><span className="badge badge-success">{scheme.scheme_display_name}</span></li>);
-              } else {
-                schemeList.push(<li className="list-group-item" key={"scheme-"+index}><a className="badge badge-primary" href="#" onClick={(e) => this.handleSelectScheme(e, scheme)}>{scheme.scheme_display_name}</a></li>);
-              }
-            });
-            groupList.push(<li className="list-inline-item" key={"group-"+iGroup}>
-              <ul className="list-group">
-                {schemeList}
-              </ul>
-            </li>);
-            iGroup++;
-          }
-          scopeList.push(
-            <li className="list-group-item" key={"scope-"+iScope}>
-              <h3><span className="badge badge-secondary">{i18next.t("login.scheme-list-scope", {scope:curScope.display_name})}</span></h3>
-              <ul className="list-inline">
-                {groupList}
-              </ul>
-            </li>
-          );
-        }
-        iScope++;
-      }
-
       var body = "";
       if (this.state.loaded) {
         if (this.state.newUser) {
-          console.log(this.state.scheme);
           if (!this.state.scheme) {
             body = <PasswordForm config={this.state.config} callbackInitProfile={this.initProfile}/>;
           } else {
             body = <NoPasswordForm config={this.state.config} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
           }
         } else {
-          body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} showGrant={this.state.showGrant}/>;
+          body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} showGrant={this.state.showGrant}/>;
         }
       }
       var langList = [];

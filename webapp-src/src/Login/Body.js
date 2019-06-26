@@ -15,6 +15,7 @@ class Body extends Component {
       client: props.client,
       scope: props.scope,
       scheme: props.scheme,
+      schemeListRequired: props.schemeListRequired,
       showGrant: props.showGrant
     };
     
@@ -29,20 +30,27 @@ class Body extends Component {
       client: nextProps.client,
       scope: nextProps.scope,
       scheme: nextProps.scheme,
+      schemeListRequired: nextProps.schemeListRequired,
       showGrant: nextProps.showGrant
     });
   }
 
 	render() {
-    var grant;
-    if (this.state.client) {
-      grant = <div id="carouselBody" className="carousel slide" data-ride="carousel">
+    var content;
+    if (this.state.showGrant) {
+      content = <div id="carouselBody" className="carousel slide" data-ride="carousel">
         <div className="carousel-inner">
           <div className={"carousel-item" + (this.state.showGrant?" active":"")}>
-            <GrantScope config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme}/>
+            <GrantScope config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope}/>
           </div>
         </div>
       </div>;
+    } else {
+      content = <div className="row">
+        <div className="col-md-12">
+          <SchemeAuth config={this.state.config} currentUser={this.state.currentUser} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} />
+        </div>
+      </div>
     }
 		return (
       <div>
@@ -56,7 +64,7 @@ class Body extends Component {
             <hr/>
           </div>
         </div>
-        {grant}
+        {content}
       </div>
 		);
 	}

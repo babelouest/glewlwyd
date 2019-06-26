@@ -12,7 +12,6 @@ class GrantScope extends Component {
       currentUser: props.currentUser,
       client: props.client,
       scope: props.scope,
-      scheme: props.scheme,
       show: props.show
     };
     
