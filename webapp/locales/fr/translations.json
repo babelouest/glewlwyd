@@ -1,8 +1,12 @@
 {
   "glewlwyd-sso-title": "Service d'authentification unique Glewlwyd",
   "error-api-connect": "Erreur de connexion à l'API Glewlwyd",
+  "title-login": "Se connecter",
+  "title-logout": "Se déconnecter",
   "login": {
     "hello": "Bonjour {{name}}",
+    "btn-ok": "Valider",
+    "btn-reload": "Recharger",
     "enter-login-password": "Veuillez entrer votre nom d'utilisateur et votre mot de passe",
     "enter-login": "Veuillez entrer votre nom d'utilisateur",
     "welcome-login": "Bienvenue {{username}}",
@@ -10,8 +14,6 @@
     "login-placeholder": "Votre nom d'utlisateur",
     "password": "Mot de passe",
     "password-placeholder": "Votre mot de passe",
-    "btn-ok": "Valider",
-    "btn-reload": "Recharger",
     "sign-in-title": "Cliquer ici pour valider votre nom d'utilisateur et mot de passe",
     "success-login": "Authentification réussie",
     "error-login": "Erreur lors de l'authentification",
@@ -41,6 +43,7 @@
     "error-mock-expected": "La réponse est {{value}}",
     "mock-value-button-title": "Ça ne devrait pas être si dur que ça...",
     "wish-message": "Quel est votre souhait?",
+    "cant-continue-message": "Vous n'avez pas les droits pour continuer",
     "error-mock-value": "Erreur de la valeur factice",
     "error-mock-trigger": "Erreur lors du déclenchement de la valeur factice",
     "mock-trigger-must-register": "Vous devez enregistrer la valeur factice dans la page profil",
@@ -64,7 +67,13 @@
     "otp-button-title": "Valider",
     "password-enter-value": "Entrer votre mot de passe",
     "password-value-label": "Mot de passe",
-    "password-button-title": "Valider"
+    "password-button-title": "Valider",
+    "login-choose-scheme": "Schéma",
+    "mock-title": "Valeur factice",
+    "mail-title": "Code courriel",
+    "webauthn-title": "Webauthn",
+    "otp-title": "Code à usage unique",
+    "password-title": "Mot de passe"
   },
   "admin": {
     "menu-users": "Utilisateurs",
