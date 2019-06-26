@@ -77,7 +77,7 @@ class Navbar extends Component {
   }
 
 	render() {
-    var langList = [], profileList = [], profileDropdown;
+    var langList = [], profileList = [], profileDropdown, loginButton;
     ["en","fr"].forEach((lang, i) => {
       if (lang === i18next.language) {
         langList.push(<a className="dropdown-item active" href="#" key={i}>{lang}</a>);
@@ -100,6 +100,15 @@ class Navbar extends Component {
           {profileList}
         </div>
       </div>
+    }
+    if (this.state.loggedIn) {
+      loginButton = <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t("title-logout")}>
+        <i className="fas btn-icon fa-sign-out-alt"></i>
+      </button>
+    } else {
+      loginButton = <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t("title-login")}>
+        <i className="fas btn-icon fa-sign-in-alt"></i>
+      </button>
     }
 		return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
@@ -143,9 +152,7 @@ class Navbar extends Component {
               </div>
             </div>
             {profileDropdown}
-            <button type="button" className="btn btn-secondary" onClick={this.toggleLogin}>
-              <i className="fas fa-sign-in-alt btn-icon"></i>
-            </button>
+            {loginButton}
           </div>
         </form>
       </div>
