@@ -13,14 +13,13 @@ class App extends Component {
     super(props);
     this.state = {
       newUser: false,
-      newUserScheme: props.scheme,
       userList: [],
       currentUser: false,
       config: props.config,
       loaded: false,
       lang: i18next.language,
       scope: [],
-      scheme: false,
+      scheme: props.config.params.scheme,
       schemeListRequired: false,
       passwordRequired: false,
       client: false,
@@ -47,7 +46,7 @@ class App extends Component {
       } else if (message.type === "ToggleGrant") {
         this.setState({showGrant: !this.state.showGrant});
       } else if (message.type === "newUserScheme") {
-        this.setState({newUserScheme: message.scheme});
+        this.setState({scheme: message.scheme});
       }
     });
   }
@@ -213,10 +212,11 @@ class App extends Component {
       var body = "";
       if (this.state.loaded) {
         if (this.state.newUser) {
-          if (!this.state.newUserScheme) {
+          console.log(this.state.scheme);
+          if (!this.state.scheme) {
             body = <PasswordForm config={this.state.config} callbackInitProfile={this.initProfile}/>;
           } else {
-            body = <NoPasswordForm config={this.state.config} callbackInitProfile={this.initProfile} scheme={this.state.newUserScheme}/>;
+            body = <NoPasswordForm config={this.state.config} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
           }
         } else {
           body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} showGrant={this.state.showGrant}/>;
@@ -250,7 +250,7 @@ class App extends Component {
               {body}
             </div>
             <div className="card-footer">
-              <Buttons config={this.state.config} currentUser={this.state.currentUser} userList={this.state.userList} showGrant={this.state.showGrant} showGrantAsterisk={this.state.showGrantAsterisk} newUser={this.state.newUser} newUserScheme={this.state.newUserScheme} canContinue={this.state.canContinue} schemeListRequired={this.state.schemeListRequired}/>
+              <Buttons config={this.state.config} currentUser={this.state.currentUser} userList={this.state.userList} showGrant={this.state.showGrant} showGrantAsterisk={this.state.showGrantAsterisk} newUser={this.state.newUser} scheme={this.state.scheme} canContinue={this.state.canContinue} schemeListRequired={this.state.schemeListRequired}/>
             </div>
           </div>
           <Notification/>

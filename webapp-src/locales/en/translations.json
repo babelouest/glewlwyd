@@ -1,6 +1,8 @@
 {
   "glewlwyd-sso-title": "Glewlwyd Single Sign-On service",
   "error-api-connect": "Error connecting to Glewlwyd API",
+  "title-login": "Log in",
+  "title-logout": "Log out",
   "login": {
     "hello": "Hello {{name}}",
     "btn-ok": "OK",
