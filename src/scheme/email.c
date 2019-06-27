@@ -535,6 +535,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
   json_t * j_user, * j_param = (json_t *)cls;
   int ret;
   char * code = NULL, * body;
+  const char * ip_source = get_ip_source(http_request);
 
   if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
     j_user = config->glewlwyd_module_callback_get_user(config, username);
@@ -555,6 +556,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
                                        NULL,
                                        json_string_value(json_object_get(j_param, "subject")),
                                        body) == G_OK) {
+              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Scheme email - code sent for username %s at IP Address %s", username, ip_source);
               ret = G_OK;
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error ulfius_send_smtp_email");
