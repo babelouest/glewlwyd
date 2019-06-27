@@ -42,7 +42,8 @@ class App extends Component {
       if (message.type === "InitProfile") {
         this.initProfile();
       } else if (message.type === "NewUser") {
-        this.setState({newUser: true, scheme: false});
+        this.setState({newUser: true, currentUser: false, scheme: this.state.config.params.scheme}, () => {
+        });
       } else if (message.type === "ToggleGrant") {
         this.setState({showGrant: !this.state.showGrant});
       } else if (message.type === "newUserScheme") {
@@ -110,7 +111,11 @@ class App extends Component {
       }
     })
     .fail((error) => {
-      messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-grant-api")});
+      if (error.status === 404) {
+        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-unavailable")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-grant-api")});
+      }
     });
   }
   
@@ -122,7 +127,11 @@ class App extends Component {
       });
     })
     .fail((error) => {
-      messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
+      if (error.status === 404) {
+        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-unavailable")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
+      }
     });
   }
 
@@ -132,29 +141,31 @@ class App extends Component {
     var schemeListRequired = false;
     var scheme = false;
     for (var scopeName in this.state.scheme) {
-      var scope = this.state.scheme[scopeName];
-      if (scope.available && scope.password_required && !scope.password_authenticated) {
-        canContinue = false;
-        passwordRequired = true;
-        schemeListRequired = false;
-        scheme = false;
-        break;
-      } else if (!schemeListRequired) {
-        for (var groupName in scope.schemes) {
-          var group = scope.schemes[groupName];
-          var groupAuthenticated = false;
-          schemeListRequired = group;
-          scheme = group[0];
-          group.forEach((curScheme) => {
-            if (curScheme.scheme_authenticated) {
-              groupAuthenticated = true;
-              schemeListRequired = false;
-              scheme = false;
+      if (canContinue) {
+        var scope = this.state.scheme[scopeName];
+        if (scope.available && scope.password_required && !scope.password_authenticated) {
+          canContinue = false;
+          passwordRequired = true;
+          schemeListRequired = false;
+          scheme = false;
+          break;
+        } else if (!schemeListRequired && canContinue) {
+          for (var groupName in scope.schemes) {
+            var group = scope.schemes[groupName];
+            var groupAuthenticated = false;
+            schemeListRequired = group;
+            scheme = group[0];
+            group.forEach((curScheme) => {
+              if (curScheme.scheme_authenticated) {
+                groupAuthenticated = true;
+                schemeListRequired = false;
+                scheme = false;
+              }
+            });
+            if (!groupAuthenticated) {
+              canContinue = false;
+              break;
             }
-          });
-          if (!groupAuthenticated) {
-            canContinue = false;
-            break;
           }
         }
       }
@@ -173,9 +184,10 @@ class App extends Component {
     if (this.state.config) {
       var body = "";
       if (this.state.loaded) {
-        if (this.state.newUser) {
+        if (this.state.newUser || this.state.passwordRequired) {
+          console.log(this.state.scheme);
           if (!this.state.scheme) {
-            body = <PasswordForm config={this.state.config} callbackInitProfile={this.initProfile}/>;
+            body = <PasswordForm config={this.state.config} currentUser={this.state.currentUser} callbackInitProfile={this.initProfile}/>;
           } else {
             body = <NoPasswordForm config={this.state.config} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
           }
@@ -211,7 +223,15 @@ class App extends Component {
               {body}
             </div>
             <div className="card-footer">
-              <Buttons config={this.state.config} currentUser={this.state.currentUser} userList={this.state.userList} showGrant={this.state.showGrant} showGrantAsterisk={this.state.showGrantAsterisk} newUser={this.state.newUser} scheme={this.state.scheme} canContinue={this.state.canContinue} schemeListRequired={this.state.schemeListRequired}/>
+              <Buttons config={this.state.config} 
+                       currentUser={this.state.currentUser} 
+                       userList={this.state.userList} 
+                       showGrant={this.state.showGrant} 
+                       showGrantAsterisk={this.state.showGrantAsterisk} 
+                       newUser={this.state.newUser} 
+                       newUserScheme={this.state.scheme} 
+                       canContinue={this.state.canContinue} 
+                       schemeListRequired={this.state.schemeListRequired} />
             </div>
           </div>
           <Notification/>

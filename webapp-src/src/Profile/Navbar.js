@@ -48,6 +48,7 @@ class Navbar extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
       });
     } else {
+      var schemeDefault = "";
       this.state.config.sessionSchemes.forEach((scheme) => {
         if (scheme.scheme_default) {
           scheme.scheme_default.forEach((page) => {

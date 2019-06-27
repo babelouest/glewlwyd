@@ -6,20 +6,28 @@ import messageDispatcher from '../lib/MessageDispatcher';
 class PasswordForm extends Component {
   constructor(props) {
     super(props);
+    
     this.state = {
-      username: "",
+      username: (props.currentUser?props.currentUser.username:""),
       password: "",
-      config: props.config
+      config: props.config,
+      currentUser: props.currentUser
     };
 
     this.handleChangeUsername = this.handleChangeUsername.bind(this);
     this.handleChangePassword = this.handleChangePassword.bind(this);
     this.validateLogin = this.validateLogin.bind(this);
-    
-    messageDispatcher.subscribe('PasswordForm', (message) => {
-    });
   }
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      username: (nextProps.currentUser?nextProps.currentUser.username:""),
+      password: "",
+      config: nextProps.config,
+      currentUser: nextProps.currentUser
+    });
+  }
+  
   handleChangeUsername(e) {
     this.setState({username: e.target.value});
   }
@@ -47,6 +55,12 @@ class PasswordForm extends Component {
   }
 
 	render() {
+    var inputUsername;
+    if (this.state.currentUser) {
+      inputUsername = <input type="text" className="form-control" name="username" id="username" disabled="true" value={this.state.currentUser.username} />
+    } else {
+      inputUsername = <input type="text" className="form-control" name="username" id="username" autoFocus="" required="" placeholder={i18next.t("login.login-placeholder")} value={this.state.username} onChange={this.handleChangeUsername}/>;
+    }
 		return (
       <form action="#" id="passwordForm">
         <div className="form-group">
@@ -57,7 +71,7 @@ class PasswordForm extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="username">{i18next.t("login.login")}</label>
             </div>
-            <input type="text" className="form-control" name="username" id="username" autoFocus="" required="" placeholder={i18next.t("login.login-placeholder")} value={this.state.username} onChange={this.handleChangeUsername}/>
+            {inputUsername}
           </div>
         </div>
         <div className="form-group">
