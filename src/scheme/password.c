@@ -106,9 +106,9 @@ json_t * user_auth_scheme_module_load(struct config_module * config) {
                    "name",
                    "retype-password",
                    "display_name",
-                   "Password authentification",
+                   "Short session password",
                    "description",
-                   "Glewlwyd authentification via user password",
+                   "Glewlwyd authentification via user password with a short session duration",
                    "parameters");
 }
 
