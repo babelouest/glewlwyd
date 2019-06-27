@@ -1342,7 +1342,7 @@ int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_res
           response->status = 500;
         }
       } else if (check_result_value(j_user_valid, G_ERROR_PARAM)) {
-        ulfius_set_json_body_response(response, 400, json_object_get(j_user_valid, "user"));
+        ulfius_set_json_body_response(response, 400, json_object_get(j_user_valid, "error"));
       } else if (!check_result_value(j_user_valid, G_OK)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user - Error is_user_valid");
         response->status = 500;
@@ -1481,7 +1481,7 @@ int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_r
           response->status = 500;
         }
       } else if (check_result_value(j_client_valid, G_ERROR_PARAM)) {
-        ulfius_set_json_body_response(response, 400, json_object_get(j_client_valid, "client"));
+        ulfius_set_json_body_response(response, 400, json_object_get(j_client_valid, "error"));
       } else if (!check_result_value(j_client_valid, G_OK)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client - Error is_client_valid");
         response->status = 500;
