@@ -201,6 +201,12 @@ set(LIBS ${LIBS} ${HOEL_LIBRARIES})
 
 target_link_libraries(glewlwyd ${LIBS})
 
+option(INSECURE_COOKIE "Use insecure cookies" off)
+
+if (INSECURE_COOKIE)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DG_INSECURE_COOKIE")
+endif ()
+
 option(WITH_MOCK "Build Mock modules" off)
 
 # user modules

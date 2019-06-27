@@ -20,11 +20,15 @@
 #
 
 CC=gcc
-CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
+CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS) $(COOKIEFLAG)
 LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius -lhoel -lgnutls -lconfig -ljwt -lnettle -lhogweed
 OBJECTS=glewlwyd.o misc.o static_file_callback.o webservice.o session.o user.o scope.o plugin.o client.o module.o
 PREFIX=/usr/local
 CONFIG_FILE=../glewlwyd2.conf
+
+ifdef INSECURE_COOKIE
+COOKIEFLAG=-DG_INSECURE_COOKIE
+endif
 
 all: release
 
