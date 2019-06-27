@@ -146,17 +146,31 @@ class Buttons extends Component {
     } else if (this.state.newUser) {
       var schemeList = [];
       if (this.state.config.sessionSchemes && this.state.config.sessionSchemes.length) {
+        if (!this.state.newUserScheme) {
+          schemeList.push(
+            <a key={0} className="dropdown-item active" href="#" onClick={(e) => this.changeSessionScheme(e, false)} alt={i18next.t("login.password-title")}>
+              {i18next.t("login.password-title")}
+            </a>
+          );
+        } else {
+          schemeList.push(
+            <a key={0} className="dropdown-item" href="#" onClick={(e) => this.changeSessionScheme(e, false)} alt={i18next.t("login.password-title")}>
+              {i18next.t("login.password-title")}
+            </a>
+          );
+        }
+        schemeList.push(<div key={1} className="dropdown-divider"></div>);
         this.state.config.sessionSchemes.forEach((scheme, index) => {
           if (scheme.show_nopassword_form !== false) {
             if (scheme.scheme_name === this.state.newUserScheme) {
               schemeList.push(
-                <a key={index} className="dropdown-item active" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name)} alt={i18next.t(scheme.scheme_display_name)}>
+                <a key={(index+2)} className="dropdown-item active" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name)} alt={i18next.t(scheme.scheme_display_name)}>
                   {i18next.t(scheme.scheme_display_name)}
                 </a>
               );
             } else {
               schemeList.push(
-                <a key={index} className="dropdown-item" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name)} alt={i18next.t(scheme.scheme_display_name)}>
+                <a key={(index+2)} className="dropdown-item" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name)} alt={i18next.t(scheme.scheme_display_name)}>
                   {i18next.t(scheme.scheme_display_name)}
                 </a>
               );
@@ -170,10 +184,6 @@ class Buttons extends Component {
                 <i className="fas fa-user-lock btn-icon"></i>{i18next.t("login.login-choose-scheme")}
               </button>
               <div className="dropdown-menu" aria-labelledby="selectScheme">
-                <a className="dropdown-item" href="#" onClick={(e) => this.changeSessionScheme(e, false)} alt={i18next.t("login.password-title")}>
-                  {i18next.t("login.password-title")}
-                </a>
-                <div className="dropdown-divider"></div>
                 {schemeList}
               </div>
             </div>

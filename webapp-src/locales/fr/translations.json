@@ -19,6 +19,7 @@
     "error-login": "Erreur lors de l'authentification",
     "error-change-user-api": "Erreur lors du changement d'utilisateur",
     "error-scheme-scope-api": "Erreur lors de la récupération des méthodes d'authentification pour les droits d'accès",
+    "error-scheme-scope-unavailable": "Vous n'avez pas les droits suffisants pour obtenir ces accès",
     "continue": "Continuer",
     "continue-title": "Continuer vers l'application cliente",
     "login-another": "Changer d'utilisateur",
@@ -348,7 +349,7 @@
     "mod-glwd-access-token-duration-error": "La durée de vie doit être supérieure à 0",
     "mod-glwd-refresh-token-duration-error": "La durée de vie doit être supérieure à 0",
     "mod-glwd-code-duration-error": "La durée de vie doit être supérieure à 0",
-    "requires-admin-scope": "Profil administrateur requis",
+    "requires-admin-scope": "Droits administrateur requis",
     "success-api-delete-user": "Utilisateur supprimé",
     "error-api-delete-user": "Erreur de suppression de l'utilisateur",
     "success-api-delete-client": "Client supprimé",
@@ -455,7 +456,7 @@
     "mod-otp-totp-start-offset-ph": "Ex: 0"
   },
   "profile": {
-    "requires-profile-scope": "Scope profil requis",
+    "requires-profile-scope": "Droits de profil requis",
     "menu-user": "Données personnelles",
     "menu-password": "Mot de passe",
     "menu-session": "Sessions",

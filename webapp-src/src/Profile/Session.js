@@ -11,6 +11,7 @@ class Session extends Component {
     this.state = {
       config: props.config,
       profile: props.profile,
+      loggedIn: props.loggedIn,
       sessionList: [],
       plugins: {
         oauth2: {
@@ -34,7 +35,8 @@ class Session extends Component {
   componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
-      profile: nextProps.profile
+      profile: nextProps.profile,
+      loggedIn: nextProps.loggedIn
     }, () => {
       if (this.state.profile) {
         this.fetchLists();
@@ -43,31 +45,33 @@ class Session extends Component {
   }
   
   fetchLists() {
-    apiManager.glewlwydRequest("/profile/session")
-    .then((res) => {
-      this.setState({sessionList: res});
-    })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-    });
-    apiManager.glewlwydRequest("/profile/plugin")
-    .then((res) => {
-      res.forEach((plugin) => {
-        if (plugin.module === "oauth2-glewlwyd") {
-          apiManager.glewlwydRequestSub("/" + plugin.name + "/profile/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
-          .then((resPlugin) => {
-            var plugins = this.state.plugins;
-            plugins.oauth2[plugin.name] = resPlugin;
-            this.setState({plugins: plugins});
-          })
-          .fail((err) => {
-          });
-        }
+    if (this.state.loggedIn) {
+      apiManager.glewlwydRequest("/profile/session")
+      .then((res) => {
+        this.setState({sessionList: res});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
       });
-    })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-    });
+      apiManager.glewlwydRequest("/profile/plugin")
+      .then((res) => {
+        res.forEach((plugin) => {
+          if (plugin.module === "oauth2-glewlwyd") {
+            apiManager.glewlwydRequestSub("/" + plugin.name + "/profile/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
+            .then((resPlugin) => {
+              var plugins = this.state.plugins;
+              plugins.oauth2[plugin.name] = resPlugin;
+              this.setState({plugins: plugins});
+            })
+            .fail((err) => {
+            });
+          }
+        });
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      });
+    }
   }
   
   getTable(header, rows) {

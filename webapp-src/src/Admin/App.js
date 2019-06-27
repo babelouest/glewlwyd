@@ -408,7 +408,7 @@ class App extends Component {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
         } else {
           this.fetchUsers()
-          .always(() => {
+          .then(() => {
             this.fetchClients()
             .always(() => {
               this.fetchScopes();

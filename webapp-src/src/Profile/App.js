@@ -92,8 +92,12 @@ class App extends Component {
             .then((res) => {
               this.setState({schemeList: res});
             })
-            .fail(() => {
-              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+            .fail((error) => {
+              if (error.status === 401) {
+                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+              } else {
+                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+              }
             });
           });
         }
@@ -141,10 +145,10 @@ class App extends Component {
                     {userJsx}
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="session"?" active":"")}>
-                    <Session config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} />
+                    <Session config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} loggedIn={this.state.loggedIn} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav!=="profile"&&this.state.curNav!=="session"?" active":"")}>
-                    <SchemePage config={this.state.config} module={this.state.curNav} name={this.state.module} profile={(this.state.profileList?this.state.profileList[0]:false)} />
+                    <SchemePage config={this.state.config} module={this.state.curNav} name={this.state.module} profile={(this.state.profileList?this.state.profileList[0]:false)}/>
                   </div>
                 </div>
               </div>
