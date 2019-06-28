@@ -7,7 +7,7 @@ CREATE TABLE g_user (
   gu_id SERIAL PRIMARY KEY,
   gu_username VARCHAR(128) NOT NULL UNIQUE,
   gu_name VARCHAR(256) DEFAULT '',
-  gu_email VARCHAR(512),
+  gu_email VARCHAR(512) DEFAULT '',
   gu_password VARCHAR(256),
   gu_enabled SMALLINT DEFAULT 1
 );

@@ -7,7 +7,7 @@ CREATE TABLE g_user (
   gu_id INTEGER PRIMARY KEY AUTOINCREMENT,
   gu_username TEXT NOT NULL UNIQUE,
   gu_name TEXT DEFAULT '',
-  gu_email TEXT,
+  gu_email TEXT DEFAULT '',
   gu_password TEXT,
   gu_enabled INTEGER DEFAULT 1
 );
