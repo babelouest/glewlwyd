@@ -145,11 +145,15 @@ class GlwdOauth2Params extends Component {
     this.setState({mod: mod});
   }
   
-  toggleScopeOverrideRolling(e, scope) {
+  toggleScopeOverrideRolling(e, scope, value) {
     var mod = this.state.mod;
     mod.parameters["scope"].forEach((curScope) => {
       if (curScope.name === scope) {
-        curScope["refresh-token-rolling"] = !curScope["refresh-token-rolling"];
+        if (value === undefined) {
+          delete (curScope["refresh-token-rolling"]);
+        } else {
+          curScope["refresh-token-rolling"] = value;
+        }
       }
     });
     this.setState({mod: mod});
@@ -278,11 +282,18 @@ class GlwdOauth2Params extends Component {
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
-            <div className="input-group-text">
-              <input type="checkbox" className="form-control" id={"mod-glwd-scope-override-refresh-rolling-"+scope.name} onChange={(e) => this.toggleScopeOverrideRolling(e, scope.name)} checked={scope["refresh-token-rolling"]} />
-            </div>
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor={"mod-glwd-scope-override-refresh-rolling-"+scope.name}>{i18next.t("admin.mod-scope-override-refresh-rolling")}</label>
+            </div>
+            <div className="dropdown">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id={"mod-glwd-scope-override-refresh-rolling-"+scope.name} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {i18next.t("admin.glwd-scope-override-refresh-rolling-value-" + scope["refresh-token-rolling"])}
+              </button>
+              <div className="dropdown-menu" aria-labelledby="mod-glwd-jwt-type">
+                <a className={"dropdown-item"+(scope["refresh-token-rolling"]===undefined?" active":"")} href="#" onClick={(e) => this.toggleScopeOverrideRolling(e, scope.name, undefined)}>{i18next.t("admin.glwd-scope-override-refresh-rolling-value-undefined")}</a>
+                <a className={"dropdown-item"+(scope["refresh-token-rolling"]===true?" active":"")} href="#" onClick={(e) => this.toggleScopeOverrideRolling(e, scope.name, true)}>{i18next.t("admin.glwd-scope-override-refresh-rolling-value-true")}</a>
+                <a className={"dropdown-item"+(scope["refresh-token-rolling"]===false?" active":"")} href="#" onClick={(e) => this.toggleScopeOverrideRolling(e, scope.name, false)}>{i18next.t("admin.glwd-scope-override-refresh-rolling-value-false")}</a>
+              </div>
             </div>
           </div>
         </div>
