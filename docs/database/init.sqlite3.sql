@@ -174,7 +174,7 @@ CREATE TABLE g_user (
   gu_id INTEGER PRIMARY KEY AUTOINCREMENT,
   gu_username TEXT NOT NULL UNIQUE,
   gu_name TEXT DEFAULT '',
-  gu_email TEXT,
+  gu_email TEXT DEFAULT '',
   gu_password TEXT,
   gu_enabled INTEGER DEFAULT 1
 );
@@ -336,7 +336,7 @@ INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_requi
 INSERT INTO g_user_module_instance (gumi_module, gumi_order, gumi_name, gumi_display_name, gumi_parameters, gumi_readonly) VALUES ('database', 0, 'database', 'Database backend', '{"use-glewlwyd-connection":true}', 0);
 INSERT INTO g_client_module_instance (gcmi_module, gcmi_order, gcmi_name, gcmi_display_name, gcmi_parameters, gcmi_readonly) VALUES ('database', 0, 'database', 'Database backend', '{"use-glewlwyd-connection":true,"data-format":{"redirect_uri":{"multiple":true,"read":true,"write":true},"authorization_type":{"multiple":true,"read":true,"write":true}}}', 0);
 INSERT INTO g_user_auth_scheme_module_instance (guasmi_module, guasmi_name, guasmi_display_name, guasmi_expiration, guasmi_parameters) VALUES ('retype-password', 'pwd', 'Password', 600, '{}');
-INSERT INTO g_user (gu_username, gu_name, gu_password, gu_email, gu_enabled) VALUES ('admin', 'The Administrator', '', 'fOfvZC/wR2cUSTWbW6YZueGyyDuFqwkoFlcNlRYWJscxYTVOVFJ3VWFHdVJQT0pU', 1);
+INSERT INTO g_user (gu_username, gu_name, gu_password, gu_email, gu_enabled) VALUES ('admin', 'The Administrator', 'fOfvZC/wR2cUSTWbW6YZueGyyDuFqwkoFlcNlRYWJscxYTVOVFJ3VWFHdVJQT0pU', '', 1);
 INSERT INTO g_user_scope (gus_name) VALUES ('g_admin');
 INSERT INTO g_scope_group (gs_id, gsg_name) VALUES ((SELECT gs_id FROM g_scope WHERE gs_name = 'g_admin'), '0');
 INSERT INTO g_scope_group_auth_scheme_module_instance (gsg_id, guasmi_id) VALUES ((SELECT gsg_id FROM g_scope_group WHERE gsg_name = '0' AND gs_id = (SELECT gs_id FROM g_scope WHERE gs_name = 'g_admin')), (SELECT guasmi_id FROM g_user_auth_scheme_module_instance WHERE guasmi_name = 'pwd'));
