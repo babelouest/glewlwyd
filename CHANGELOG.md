@@ -1,12 +1,21 @@
 # Glewlwyd Changelog
 
-## 2.0.0
+## 2.0.0 Beta 1
 
 - Massive rework for the better good
 - Introduction of modules to handle different backend users, clients and authentication scheme
-  - Backends: Database, LDAP or HTTP authentication
-  - Schemes: password, HOTP/TOTP, e-mail verification, webauthn, FIDO
-- Introduction of plugins to handle authentication workflows (OAuth2, OpenID connect, SAML, etc.)
+- Backends:
+  - Database (user and client)
+  - LDAP (user and client)
+  - HTTP (user only)
+- Schemes:
+  - password
+  - HOTP/TOTP
+  - Code sent by e-mail
+  - webauthn
+- Introduction of plugins to handle authentication workflows
+  - Legacy OAuth2 workflow
+- User Interface revamped
 
 ## 1.4.9
 
