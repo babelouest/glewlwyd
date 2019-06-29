@@ -4,6 +4,10 @@
 
 Single Sign On authentication server.
 
+Glewlwyd 2.0 Beta 1 is out! Glewlwyd 2.0 is not complete yet but you can install the Beta version, check out the new features and send feedbacks if you feel like it.
+
+Important! Due to database reworking of the application, you can't upgrade an existing installation from Glewlwyd 1.x to Glewlwyd 2.x.
+
 ![logged in](docs/screenshots/logged%20in.png)
 
 ## Installation
