@@ -6,19 +6,13 @@ Single Sign On authentication server.
 
 ![logged in](docs/screenshots/logged%20in.png)
 
-This is the development branch for the next release 2.0. The next release is currently under development.
-
-See issue [#35 (Glewlwyd 2.0 Roadmap)](https://github.com/babelouest/glewlwyd/issues/35) for the general architecture and design.
-
-A beta release will come out when it's ready, any help is welcome!
-
 ## Installation
 
 The full installation documentation is available in the [install documentation](docs/INSTALL.md).
 
-## Configuration
+## Getting started
 
-The full configuration documentation is available in the [config documentation](docs/CONFIG.md).
+The [Getting started documentation](docs/GETTING_STARTED.md) will help you complete the installation of Glewlwyd.
 
 ## Core API
 
