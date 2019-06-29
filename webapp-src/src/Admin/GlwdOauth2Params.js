@@ -22,6 +22,7 @@ class GlwdOauth2Params extends Component {
     props.mod.parameters["auth-type-client-enabled"]!==undefined?"":(props.mod.parameters["auth-type-client-enabled"] = true);
     props.mod.parameters["auth-type-refresh-enabled"]!==undefined?"":(props.mod.parameters["auth-type-refresh-enabled"] = true);
     props.mod.parameters["scope"]?"":(props.mod.parameters["scope"] = []);
+    props.mod.parameters["additional-parameters"]?"":(props.mod.parameters["additional-parameters"] = []);
 
     this.state = {
       config: props.config,
@@ -45,6 +46,10 @@ class GlwdOauth2Params extends Component {
     this.addScopeOverride = this.addScopeOverride.bind(this);
     this.changeScopeOverrideRefreshDuration = this.changeScopeOverrideRefreshDuration.bind(this);
     this.toggleScopeOverrideRolling = this.toggleScopeOverrideRolling.bind(this);
+    this.addAdditionalParameter = this.addAdditionalParameter.bind(this);
+    this.setAdditionalPropertyUserParameter = this.setAdditionalPropertyUserParameter.bind(this);
+    this.setAdditionalPropertyTokenParameter = this.setAdditionalPropertyTokenParameter.bind(this);
+    this.deleteAdditionalProperty = this.deleteAdditionalProperty.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -65,6 +70,7 @@ class GlwdOauth2Params extends Component {
     nextProps.mod.parameters["auth-type-client-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-client-enabled"] = true);
     nextProps.mod.parameters["auth-type-refresh-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-refresh-enabled"] = true);
     nextProps.mod.parameters["scope"]?"":(nextProps.mod.parameters["scope"] = []);
+    nextProps.mod.parameters["additional-parameters"]?"":(nextProps.mod.parameters["additional-parameters"] = []);
 
     this.setState({
       config: nextProps.config,
@@ -169,28 +175,102 @@ class GlwdOauth2Params extends Component {
     this.setState({mod: mod});
   }
   
+  addAdditionalParameter() {
+    var mod = this.state.mod;
+    mod.parameters["additional-parameters"].push({
+      "user-parameter": "", 
+      "token-parameter": "", 
+      "token-changed": false
+    });
+    this.setState({mod: mod, newScopeOverride: false});
+  }
+  
+  setAdditionalPropertyUserParameter(e, index) {
+    var mod = this.state.mod;
+    if (mod.parameters["additional-parameters"][index]) {
+      mod.parameters["additional-parameters"][index]["user-parameter"] = e.target.value;
+      if (!mod.parameters["additional-parameters"][index]["token-changed"]) {
+        mod.parameters["additional-parameters"][index]["token-parameter"] = e.target.value;
+      }
+    }
+    this.setState({mod: mod, newScopeOverride: false});
+  }
+  
+  setAdditionalPropertyTokenParameter(e, index) {
+    var mod = this.state.mod;
+    if (mod.parameters["additional-parameters"][index]) {
+      mod.parameters["additional-parameters"][index]["token-parameter"] = e.target.value;
+      mod.parameters["additional-parameters"][index]["token-changed"] = true;
+    }
+    this.setState({mod: mod, newScopeOverride: false});
+  }
+  
+  deleteAdditionalProperty(e, index) {
+    var mod = this.state.mod;
+    if (mod.parameters["additional-parameters"][index]) {
+      mod.parameters["additional-parameters"].splice(index, 1);
+    }
+    this.setState({mod: mod, newScopeOverride: false});
+  }
+  
   checkParameters() {
     var errorList = {}, hasError = false;
     if (!this.state.mod.parameters["key"]) {
       hasError = true;
-      errorList["key"] = "admin.mod-glwd-key-error"
+      errorList["key"] = "admin.mod-glwd-key-error";
     }
     if (this.state.mod.parameters["jwt-type"] !== "sha" && !this.state.mod.parameters["cert"]) {
       hasError = true;
-      errorList["cert"] = "admin.mod-glwd-cert-error"
+      errorList["cert"] = "admin.mod-glwd-cert-error";
     }
     if (!this.state.mod.parameters["access-token-duration"]) {
       hasError = true;
-      errorList["access-token-duration"] = "admin.mod-glwd-access-token-duration-error"
+      errorList["access-token-duration"] = "admin.mod-glwd-access-token-duration-error";
     }
     if (!this.state.mod.parameters["refresh-token-duration"]) {
       hasError = true;
-      errorList["refresh-token-duration"] = "admin.mod-glwd-refresh-token-duration-error"
+      errorList["refresh-token-duration"] = "admin.mod-glwd-refresh-token-duration-error";
     }
     if (!this.state.mod.parameters["code-duration"]) {
       hasError = true;
-      errorList["code-duration"] = "admin.mod-glwd-code-duration-error"
+      errorList["code-duration"] = "admin.mod-glwd-code-duration-error";
     }
+    this.state.mod.parameters["additional-parameters"].forEach((addParam, index) => {
+      if (!addParam["user-parameter"]) {
+        hasError = true;
+        if (!errorList["additional-parameters"]) {
+          errorList["additional-parameters"] = [];
+        }
+        if (!errorList["additional-parameters"][index]) {
+          errorList["additional-parameters"][index] = {};
+        }
+        errorList["additional-parameters"][index]["user"] = "admin.mod-glwd-additional-parameter-user-parameter-error";
+      }
+      if (!addParam["token-parameter"]) {
+        hasError = true;
+        if (!errorList["additional-parameters"]) {
+          errorList["additional-parameters"] = [];
+        }
+        if (!errorList["additional-parameters"][index]) {
+          errorList["additional-parameters"][index] = {};
+        }
+        errorList["additional-parameters"][index]["token"] = "admin.mod-glwd-additional-parameter-token-parameter-error";
+      } else if (addParam["token-parameter"] === "username" || 
+                 addParam["token-parameter"] === "salt" || 
+                 addParam["token-parameter"] === "type" ||
+                 addParam["token-parameter"] === "iat" ||
+                 addParam["token-parameter"] === "expires_in" ||
+                 addParam["token-parameter"] === "scope") {
+        hasError = true;
+        if (!errorList["additional-parameters"]) {
+          errorList["additional-parameters"] = [];
+        }
+        if (!errorList["additional-parameters"][index]) {
+          errorList["additional-parameters"][index] = {};
+        }
+        errorList["additional-parameters"][index]["token"] = "admin.mod-glwd-additional-parameter-token-parameter-invalid-error";
+      }
+    });
     if (!hasError) {
       this.setState({errorList: {}}, () => {
         messageDispatcher.sendMessage('ModPlugin', {type: "modValid"});
@@ -201,7 +281,7 @@ class GlwdOauth2Params extends Component {
   }
   
   render() {
-    var keyJsx, certJsx, scopeOverrideList = [], scopeList = [];
+    var keyJsx, certJsx, scopeOverrideList = [], scopeList = [], additionalParametersList = [];
     if (this.state.mod.parameters["jwt-type"] === "sha") {
       keyJsx =
         <div className="form-group">
@@ -298,6 +378,37 @@ class GlwdOauth2Params extends Component {
           </div>
         </div>
         <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteScopeOverride(e, scope.name)} title={i18next.t("admin.mod-scope-override-delete")}>
+          <i className="fas fa-trash"></i>
+        </button>
+      </div>
+      );
+    });
+    this.state.mod.parameters["additional-parameters"].forEach((parameter, index) => {
+      var hasUserError = this.state.errorList["additional-parameters"] && this.state.errorList["additional-parameters"][index] && this.state.errorList["additional-parameters"][index]["user"];
+      var hasTokenError = this.state.errorList["additional-parameters"] && this.state.errorList["additional-parameters"][index] && this.state.errorList["additional-parameters"][index]["token"];
+      additionalParametersList.push(
+      <div key={index}>
+        <hr/>
+        <h4>{parameter["user-parameter"]||i18next.t("admin.mod-additional-parameter-new")}</h4>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor={"mod-glwd-additional-parameter-user-parameter-"+parameter["user-parameter"]}>{i18next.t("admin.mod-glwd-additional-parameter-user-parameter")}</label>
+            </div>
+            <input type="text" className={hasUserError?"form-control is-invalid":"form-control"} id={"mod-glwd-additional-parameter-user-parameter-"+parameter["user-parameter"]} onChange={(e) => this.setAdditionalPropertyUserParameter(e, index)} value={parameter["user-parameter"]} placeholder={i18next.t("admin.mod-glwd-additional-parameter-user-parameter-ph")} />
+            {hasUserError?<span className="error-input">{i18next.t(this.state.errorList["additional-parameters"][index]["user"])}</span>:""}
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor={"mod-glwd-additional-parameter-token-parameter-"+parameter["token-parameter"]}>{i18next.t("admin.mod-glwd-additional-parameter-token-parameter")}</label>
+            </div>
+            <input type="text" className={hasTokenError?"form-control is-invalid":"form-control"} id={"mod-glwd-additional-parameter-token-parameter-"+parameter["token-parameter"]} onChange={(e) => this.setAdditionalPropertyTokenParameter(e, index)} value={parameter["token-parameter"]} placeholder={i18next.t("admin.mod-glwd-additional-parameter-token-parameter-ph")} />
+          </div>
+          {hasTokenError?<span className="error-input">{i18next.t(this.state.errorList["additional-parameters"][index]["token"])}</span>:""}
+        </div>
+        <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteAdditionalProperty(e, index)} title={i18next.t("admin.mod-additional-parameter-token-delete")}>
           <i className="fas fa-trash"></i>
         </button>
       </div>
@@ -452,6 +563,28 @@ class GlwdOauth2Params extends Component {
                   </button>
                 </div>
                 {scopeOverrideList}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionAddParam">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseAddParam" aria-expanded="true" aria-controls="collapseAddParam">
+                  {i18next.t("admin.mod-glwd-additional-parameter")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapseAddParam" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionAddParam">
+              <div className="card-body">
+                <p>{i18next.t("admin.mod-glwd-additional-parameter-message")}</p>
+                <div className="btn-group" role="group">
+                  <button type="button" className="btn btn-secondary" onClick={this.addAdditionalParameter} title={i18next.t("admin.mod-glwd-additional-parameter-add")}>
+                    <i className="fas fa-plus"></i>
+                  </button>
+                </div>
+                {additionalParametersList}
               </div>
             </div>
           </div>
