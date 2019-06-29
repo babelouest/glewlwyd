@@ -17,7 +17,7 @@ NBSP=`echo 64-${CHRLEN}|bc`
 printf "Run $1"
 printf_new " " $NBSP
 
-$1 $2 $3 $4 $5 $6 $7 $8 $9 1>$1.log 2>$1.err
+$1 $2 $3 $4 $5 $6 $7 $8 $9 1>$1.log 2>&1
 
 if [ $? -ne 0 ]
 then

@@ -23,22 +23,22 @@ GLEWLWYD_SOURCE=./src
 GLEWLWYD_TESTS=./test
 
 all:
-	cd $(GLEWLWYD_SOURCE) && $(MAKE)
+	cd $(GLEWLWYD_SOURCE) && $(MAKE) $*
 
 debug:
-	cd $(GLEWLWYD_SOURCE) && $(MAKE) debug
+	cd $(GLEWLWYD_SOURCE) && $(MAKE) debug $*
 
 install:
-	cd $(GLEWLWYD_SOURCE) && $(MAKE) install
+	cd $(GLEWLWYD_SOURCE) && $(MAKE) install $*
 
 memcheck:
-	cd $(GLEWLWYD_SOURCE) && $(MAKE) memcheck
+	cd $(GLEWLWYD_SOURCE) && $(MAKE) memcheck $*
 
 test-debug:
-	cd $(GLEWLWYD_SOURCE) && $(MAKE) test-debug
+	cd $(GLEWLWYD_SOURCE) && $(MAKE) test-debug $*
 
-test:
-	cd $(GLEWLWYD_TESTS) && $(MAKE) test
+check:
+	cd $(GLEWLWYD_TESTS) && $(MAKE) test $*
 
 clean:
 	cd $(GLEWLWYD_SOURCE) && $(MAKE) clean

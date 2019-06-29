@@ -1,8 +1,8 @@
 # Glewlwyd OAuth 2 endpoints specifications
 
-This document is intended to describe Glewlwyd oauth 2 implementation.
+This document is intended to describe Glewlwyd OAuth 2 plugin implementation.
 
-OAuth endpoints are used to authenticate the user, and to send tokens or other authentication and identification data. The complete specification is available in the [OAuth 2 RFC document](https://tools.ietf.org/html/rfc6749). If you see an issue or have a question on Glewlwyd OAuth 2 implementation, you can open an issue or send an email at the following address [mail@babelouest.org](mail@babelouest.org).
+OAuth endpoints are used to authenticate the user, and to send tokens or other authentication and identification data. The complete specification is available in the [OAuth 2 RFC document](https://tools.ietf.org/html/rfc6749). If you see an issue or have a question on Glewlwyd OAuth 2 plugin implementation, you can open an issue or send an email to the following address [mail@babelouest.org](mail@babelouest.org).
 
 - [Endpoints authentication](#endpoints-authentication)
 - [Prefix](#prefix)
@@ -19,6 +19,9 @@ OAuth endpoints are used to authenticate the user, and to send tokens or other a
   - [Client Credentials Grant](#client-credentials-grant)
   - [Refresh token](#refresh-token)
   - [Invalidate refresh token](#invalidate-refresh-token)
+- [Manage refresh tokens endpoints](#manage-refresh-tokens-endpoints)
+  - [List refresh tokens](#list-refresh-tokens)
+  - [Disable a refresh token by its signature](#disable-a-refresh-token-by-its-signature)
 
 ## Endpoints authentication
 
@@ -26,15 +29,11 @@ Authentication has different faces, and differs with the authorization scheme.
 
 ## Prefix
 
-All URIs are based on the prefix you will setup. In this document, all API endpoints will assume they use the prefix `/api`, and all static file endpoints will assume they use the prefix `/app`.
+All URIs are based on the prefix you will setup. In this document, all API endpoints will assume they use the prefix `/api/glwd`, and all static file endpoints will assume they use the prefix `/app`.
 
 ## Login and grant URIs
 
-In this document, the login URI will be displayed as `http://login.html` and the grant URI will be displayed as `http://grant.html`, this will be replaced by the values from your environment that you can define in the config file.
-
-## Scope
-
-In this document, we assume that scope is enabled in glewlwyd server configuration. If scope is disabled, then all scope values will be ignored in all requests and no scope will be sent in the responses.
+In this document, the login URI will be displayed as `http://login.html`, this will be replaced by the values from your environment that you can define in the config file.
 
 ## OAuth 2 endpoints
 
@@ -47,11 +46,12 @@ This is a multi-method, multi-parameters, versatile endpoint, used to provide au
 
 #### URL
 
-`/api/auth`
+`/api/glwd/auth`
 
 #### Method
 
 `GET`
+`POST`
 
 ### Token endpoint
 
@@ -65,7 +65,7 @@ This endpoint is used to provide tokens to the user. It handles the following au
 
 #### URL
 
-`/api/token`
+`/api/glwd/token`
 
 #### Method
 
@@ -79,13 +79,14 @@ Each scheme is described in the following chapter. The description may not be as
 
 #### URL
 
-`/api/auth`
+`/api/glwd/auth`
 
 #### Method
 
 `GET`
+`POST`
 
-#### URL Parameters
+#### URL (GET) or body (POST) Parameters
 
 Required
 
@@ -116,15 +117,13 @@ See login paragraph for details.
 
 Code 302
 
-Redirect to `http://grant.html?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}&additional_parameters` for grant access.
-
-See grant paragraph for details.
+Redirect to `http://login.html?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}&additional_parameters` for grant access.
 
 ##### Success response
 
 Code 302
 
-Redirect to `redirect_uri`#code=`code`&state=`state`
+Redirect to `redirect_uri`?code=`code`&state=`state`
 
 with `redirect_uri` specified in the request, a `code` generated for the access, and the state specified in the request if any.
 
@@ -134,7 +133,7 @@ Scope is not allowed for this user
 
 Code 302
 
-Redirect to `redirect_uri`#error=invalid_scope&state=`state`
+Redirect to `redirect_uri`?error=invalid_scope&state=`state`
 
 with `redirect_uri` specified in the request, `invalid_scope` as error value, and the state specified in the request if any.
 
@@ -144,7 +143,7 @@ Client is invalid, redirect_uri is invalid for this client, or client is not all
 
 Code 302
 
-Redirect to `redirect_uri`#error=unauthorized_client&state=`state`
+Redirect to `redirect_uri`?error=unauthorized_client&state=`state`
 
 with `redirect_uri` specified in the request, `unauthorized_client` as error value, and the state specified in the request if any.
 
@@ -152,7 +151,7 @@ with `redirect_uri` specified in the request, `unauthorized_client` as error val
 
 #### URL
 
-`/api/token`
+`/api/glwd/token`
 
 #### Method
 
@@ -200,7 +199,7 @@ The combination code/redirect_uri/client_id is incorrect.
 
 #### URL
 
-`/api/auth`
+`/api/glwd/auth`
 
 #### Method
 
@@ -273,7 +272,7 @@ with `redirect_uri` specified in the request, `unauthorized_client` as error val
 
 #### URL
 
-`/api/token`
+`/api/glwd/token`
 
 #### Method
 
@@ -315,7 +314,7 @@ username or password invalid.
 
 #### URL
 
-`/api/token`
+`/api/glwd/token`
 
 #### Method
 
@@ -366,7 +365,7 @@ Send a new access_token based on a valid refresh_token
 
 #### URL
 
-`/api/token`
+`/api/glwd/token`
 
 #### Method
 
@@ -408,7 +407,7 @@ Mark a refresh_token as invalid, to prevent further access_token to be generated
 
 #### URL
 
-`/api/token`
+`/api/glwd/token`
 
 #### Method
 
@@ -432,3 +431,92 @@ Code 200
 Code 400
 
 Error input parameters
+
+## Manage refresh tokens endpoints
+
+The following endpoints require a valid session cookie to identify the user. If the user has the scope `g_admin`, it's possible to impersonate a user with the optional query parameter `?username={username}`.
+
+### List refresh tokens
+
+#### URL
+
+`/api/glwd/profile/token`
+
+#### Method
+
+`GET`
+
+#### URL Parameters
+
+Optional
+
+```
+`offset`: number, the offset to start the list, default 0
+`limit`: number, the number of elements to return, default 100
+`pattern`: text, a pattern to filter results, pattern will filter the properties `user_agent` or `issued_for`
+`sort`: text, the column to order the results, values available are `authorization_type`, `client_id`, `issued_at`, `last_seen`, `expires_at`, `issued_for`, `user_agent`, `enabled` and `rolling_expiration`
+`desc`: no value, is set, the column specified in the `sort` parameter will be orderd by descending order, otherwise ascending
+```
+
+#### Result
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[{
+  "token_hash": text, refresh token hash signature
+  "authorization_type": text, authorization type used to generate this refresh token, value can be "code" or "password"
+  "client_id": text, client_id this refresh token was sent to
+  "issued_at": number, date when this refresh token was issued, epoch time format
+  "expires_at": number, date when this refresh token will expire, epoch time format
+  "last_seen": number, last date when this refresh token was used to generate an access token, epoch time format
+  "rolling_expiration": boolean, wether this refresh token is a rolling token, i.e. its expiration date will be postponed on each use to generate a new access token
+  "issued_for": text, IP address of the device which requested this refresh token
+  "user_agent": text, user-agent of the device which requested this refresh token
+  "enabled": boolean, set to true if this refresh token is enabled, i.e. can be used to generate new access tokens, or not
+}]
+```
+
+#### Error Response
+
+Code 403
+
+Access denied
+
+### Disable a refresh token by its signature
+
+#### URL
+
+`/api/glwd/profile/token/{token_hash}`
+
+#### Method
+
+`DELETE`
+
+#### URL Parameters
+
+Required
+
+```
+`token_hash`: text, hash value of the refresh token to disable, must be url-encoded
+```
+
+#### Result
+
+#### Success response
+
+Code 200
+
+#### Error Response
+
+Code 403
+
+Access denied
+
+Code 404
+
+Refresh token hash not found for this user

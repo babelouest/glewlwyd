@@ -1,0 +1,65 @@
+#
+# Glewlwyd authentication scheme
+#
+# Makefile used to build the software
+#
+# Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License
+# as published by the Free Software Foundation;
+# version 2.1 of the License.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+# GNU GENERAL PUBLIC LICENSE for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this library.	If not, see <http://www.gnu.org/licenses/>.
+#
+
+DEST=/usr/local
+MODULES_TARGET=$(DEST)/lib/glewlwyd/scheme
+CC=gcc
+CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
+LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius
+TARGET=libmodemail.so libmodwebauthn.so libmodotp.so libmodpassword.so
+
+all: release
+
+%.o: %.c ../glewlwyd.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) $<
+
+misc.o: ../misc.c ../glewlwyd-common.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) ../misc.c
+
+libmodmock.so: mock.o misc.o
+	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o misc.o $(LIBS)
+
+libmodemail.so: email.o misc.o
+	$(CC) -shared -Wl,-soname,libmodemail.so -o libmodemail.so email.o misc.o $(LIBS)
+
+libmodwebauthn.so: webauthn.o misc.o
+	$(CC) -shared -Wl,-soname,libmodwebauthn.so -o libmodwebauthn.so webauthn.o misc.o $(LIBS) -lcbor -ljwt
+
+libmodotp.so: otp.o misc.o
+	$(CC) -shared -Wl,-soname,libmodotp.so -o libmodotp.so otp.o misc.o $(LIBS) -loath
+
+libmodpassword.so: password.o misc.o
+	$(CC) -shared -Wl,-soname,libmodpassword.so -o libmodpassword.so password.o misc.o $(LIBS)
+
+clean:
+	rm -f *.o *.so
+
+debug: ADDITIONALFLAGS=-DDEBUG -g -O0
+
+debug: libmodmock.so $(TARGET)
+
+release: ADDITIONALFLAGS=-O3
+
+release: $(TARGET)
+
+install:
+	mkdir -p $(MODULES_TARGET)
+	cp -f *.so $(MODULES_TARGET)

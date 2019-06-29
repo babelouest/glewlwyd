@@ -1,16 +1,15 @@
 /**
  *
- * Glewlwyd OAuth2 Authorization Server
+ * Glewlwyd SSO Server
  *
- * OAuth2 authentiation server
- * Users are authenticated with a LDAP server
- * or users stored in the database 
- * Provides Json Web Tokens (jwt)
+ * Authentiation server
+ * Users are authenticated via various backend available: database, ldap
+ * Using various authentication methods available: password, OTP, send code, etc.
  * 
  * main functions definitions
  * and main process start
  *
- * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -27,13 +26,14 @@
  *
  */
 
+#include <string.h>
 #include <getopt.h>
-#include <signal.h>
-#include <ctype.h>
 #include <libconfig.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <signal.h>
+#include <dirent.h>
+#include <dlfcn.h>
+#include <gnutls/gnutls.h>
+#include <crypt.h>
 
 #include "glewlwyd.h"
 
@@ -53,55 +53,110 @@ int main (int argc, char ** argv) {
   if (config == NULL) {
     fprintf(stderr, "Memory error - config\n");
     return 1;
+  } else if ((config->config_p = o_malloc(sizeof(struct config_plugin))) == NULL) {
+    fprintf(stderr, "Memory error - config_p\n");
+    o_free(config);
+    return 1;
+  } else if ((config->config_m = o_malloc(sizeof(struct config_module))) == NULL) {
+    fprintf(stderr, "Memory error - config_m\n");
+    o_free(config->config_p);
+    o_free(config);
+    return 1;
   }
+
+  // Init plugin config structure
+  config->config_p->glewlwyd_config = config;
+  config->config_p->glewlwyd_callback_add_plugin_endpoint = &glewlwyd_callback_add_plugin_endpoint;
+  config->config_p->glewlwyd_callback_remove_plugin_endpoint = &glewlwyd_callback_remove_plugin_endpoint;
+  config->config_p->glewlwyd_callback_check_session_valid = &glewlwyd_callback_check_session_valid;
+  config->config_p->glewlwyd_callback_check_user_valid = &glewlwyd_callback_check_user_valid;
+  config->config_p->glewlwyd_callback_check_client_valid = &glewlwyd_callback_check_client_valid;
+  config->config_p->glewlwyd_callback_get_client_granted_scopes = &glewlwyd_callback_get_client_granted_scopes;
+  config->config_p->glewlwyd_callback_trigger_session_used = &glewlwyd_callback_trigger_session_used;
+  config->config_p->glewlwyd_callback_get_plugin_external_url = &glewlwyd_callback_get_plugin_external_url;
+  config->config_p->glewlwyd_callback_get_login_url = &glewlwyd_callback_get_login_url;
+  config->config_p->glewlwyd_callback_generate_hash = &glewlwyd_callback_generate_hash;
+  config->config_p->glewlwyd_plugin_callback_get_user_list = &glewlwyd_plugin_callback_get_user_list;
+  config->config_p->glewlwyd_plugin_callback_get_user = &glewlwyd_plugin_callback_get_user;
+  config->config_p->glewlwyd_plugin_callback_get_user_profile = &glewlwyd_plugin_callback_get_user_profile;
+  config->config_p->glewlwyd_plugin_callback_add_user = &glewlwyd_plugin_callback_add_user;
+  config->config_p->glewlwyd_plugin_callback_set_user = &glewlwyd_plugin_callback_set_user;
+  config->config_p->glewlwyd_plugin_callback_delete_user = &glewlwyd_plugin_callback_delete_user;
   
   // Init config structure with default values
+  config->config_m->external_url = NULL;
+  config->config_m->login_url = NULL;
+  config->config_m->admin_scope = NULL;
+  config->config_m->profile_scope = NULL;
+  config->config_m->conn = NULL;
+  config->config_m->glewlwyd_config = config;
+  config->config_m->glewlwyd_module_callback_get_user = &glewlwyd_module_callback_get_user;
+  config->config_m->glewlwyd_module_callback_set_user = &glewlwyd_module_callback_set_user;
+  config->config_m->glewlwyd_module_callback_check_user_password = &glewlwyd_module_callback_check_user_password;
+  config->config_m->glewlwyd_module_callback_check_user_session = &glewlwyd_module_callback_check_user_session;
   config->config_file = NULL;
-  config->url_prefix = NULL;
+  config->port = GLEWLWYD_DEFAULT_PORT;
+  config->api_prefix = NULL;
+  config->external_url = NULL;
+  config->cookie_domain = NULL;
   config->log_mode = Y_LOG_MODE_NONE;
   config->log_level = Y_LOG_LEVEL_NONE;
   config->log_file = NULL;
-  config->use_scope = 1;
-  config->conn = NULL;
-  config->instance = o_malloc(sizeof(struct _u_instance));
-  config->allow_origin = NULL;
-  config->static_files_path = NULL;
-  config->static_files_prefix = NULL;
-  config->auth_ldap = NULL;
-  config->auth_http = NULL;
-  config->refresh_token_expiration = GLEWLWYD_REFRESH_TOKEN_EXP_DEFAULT;
-  config->access_token_expiration = GLEWLWYD_ACCESS_TOKEN_EXP_DEFAULT;
-  config->code_expiration = GLEWLWYD_CODE_EXPIRATION_DEFAULT;
-  config->auth_code_match_ip_address = 1;
-  config->jwt_decode_key = NULL;
-  config->jwt = NULL;
-  config->session_key = o_strdup(GLEWLWYD_SESSION_KEY_DEFAULT);
-  config->session_expiration = GLEWLWYD_SESSION_EXPIRATION_DEFAULT;
-  config->admin_scope = o_strdup(GLEWLWYD_ADMIN_SCOPE);
-  config->profile_scope = o_strdup(GLEWLWYD_PROFILE_SCOPE);
-  config->additional_property_name = NULL;
+  config->allow_origin = o_strdup(GLEWLWYD_DEFAULT_ALLOW_ORIGIN);
   config->use_secure_connection = 0;
   config->secure_connection_key_file = NULL;
   config->secure_connection_pem_file = NULL;
-  config->hash_algorithm = o_strdup(GLEWLWYD_DEFAULT_HASH_ALGORITHM);
-  config->reset_password = 0;
-  config->reset_password_config = NULL;
+  config->secure_connection_ca_file = NULL;
+  config->conn = NULL;
+  config->session_key = o_strdup(GLEWLWYD_DEFAULT_SESSION_KEY);
+  config->session_expiration = GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE;
+  config->salt_length = GLEWLWYD_DEFAULT_SALT_LENGTH;
+  config->hash_algorithm = digest_SHA256;
   config->login_url = NULL;
-  config->grant_url = NULL;
-  if (config->instance == NULL) {
-    fprintf(stderr, "Memory error - config->instance\n");
-    return 1;
-  }
-  ulfius_init_instance(config->instance, GLEWLWYD_DEFAULT_PORT, NULL, NULL);
-
-  config->mime_types = o_malloc(sizeof(struct _u_map));
-  if (config->mime_types == NULL) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "init - Error allocating resources for config->mime_types, aborting");
-    exit_server(&config, GLEWLWYD_ERROR);
-  }
-  u_map_init(config->mime_types);
-  u_map_put(config->mime_types, "*", "application/octet-stream");
+  config->user_module_path = NULL;
+  config->user_module_list = NULL;
+  config->user_module_instance_list = NULL;
+  config->client_module_path = NULL;
+  config->client_module_list = NULL;
+  config->client_module_instance_list = NULL;
+  config->user_auth_scheme_module_path = NULL;
+  config->user_auth_scheme_module_list = NULL;
+  config->user_auth_scheme_module_instance_list = NULL;
+  config->plugin_module_path = NULL;
+  config->plugin_module_list = NULL;
+  config->plugin_module_instance_list = NULL;
+  config->admin_scope = NULL;
+  config->profile_scope = NULL;
   
+  config->static_file_config = o_malloc(sizeof(struct _static_file_config));
+  if (config->static_file_config == NULL) {
+    fprintf(stderr, "Error allocating resources for config->static_file_config, aborting\n");
+    return 2;
+  }
+  config->static_file_config->files_path = NULL;
+  config->static_file_config->url_prefix = NULL;
+  config->static_file_config->redirect_on_404 = NULL;
+  config->static_file_config->map_header = o_malloc(sizeof(struct _u_map));
+  if (config->static_file_config->map_header == NULL) {
+    fprintf(stderr, "init - Error allocating resources for config->static_file_config->map_header, aborting\n");
+    return 2;
+  }
+  u_map_init(config->static_file_config->map_header);
+  config->static_file_config->mime_types = o_malloc(sizeof(struct _u_map));
+  if (config->static_file_config->mime_types == NULL) {
+    fprintf(stderr, "init - Error allocating resources for config->static_file_config->mime_types, aborting\n");
+    return 2;
+  }
+  u_map_init(config->static_file_config->mime_types);
+  u_map_put(config->static_file_config->mime_types, "*", "application/octet-stream");
+  config->instance = o_malloc(sizeof(struct _u_instance));
+  if (config->instance == NULL) {
+    fprintf(stderr, "Error allocating resources for config->instance, aborting\n");
+    return 2;
+  }
+  
+  ulfius_init_instance(config->instance, config->port, NULL, NULL);
+
   if (pthread_mutex_init(&global_handler_close_lock, NULL) || 
       pthread_cond_init(&global_handler_close_cond, NULL)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "init - Error initializing global_handler_close_lock or global_handler_close_cond");
@@ -135,99 +190,162 @@ int main (int argc, char ** argv) {
     exit_server(&config, GLEWLWYD_ERROR);
   }
   
+  // Initialize module config structure
+  config->config_m->external_url = config->external_url;
+  config->config_m->login_url = config->login_url;
+  config->config_m->admin_scope = config->admin_scope;
+  config->config_m->profile_scope = config->profile_scope;
+  config->config_m->conn = config->conn;
+  config->config_m->hash_algorithm = config->hash_algorithm;
+
+  // Initialize user modules
+  if (init_user_module_list(config) != G_OK) {
+    fprintf(stderr, "Error initializing user modules\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  if (load_user_module_instance_list(config) != G_OK) {
+    fprintf(stderr, "Error loading user modules instances\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  
+  // Initialize client modules
+  if (init_client_module_list(config) != G_OK) {
+    fprintf(stderr, "Error initializing client modules\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  if (load_client_module_instance_list(config) != G_OK) {
+    fprintf(stderr, "Error loading client modules instances\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  
+  // Initialize user auth scheme modules
+  if (init_user_auth_scheme_module_list(config) != G_OK) {
+    fprintf(stderr, "Error initializing user auth scheme modules\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  if (load_user_auth_scheme_module_instance_list(config) != G_OK) {
+    fprintf(stderr, "Error loading user auth scheme modules instances\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  
+  // Initialize plugins
+  if (init_plugin_module_list(config) != G_OK) {
+    fprintf(stderr, "Error initializing plugins modules\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  if (load_plugin_module_instance_list(config) != G_OK) {
+    fprintf(stderr, "Error loading plugins modules instances\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  
   // At this point, we declare all API endpoints and configure 
   
-  // Authorization endpoint
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_authorization, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_authorization, (void*)config);
-
-  // Token endpoint
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_token, (void*)config);
-
   // Authentication
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_validate_user_session, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_auth, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/scheme/trigger/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_auth_trigger, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/scheme/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_schemes_from_scopes, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_delete_session, (void*)config);
 
-  // Current user scope grant endpoints
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/auth/grant/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/auth/grant/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_session_scope_grant, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/auth/grant/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_scope_grant, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/auth/grant/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_scope_delete, (void*)config);
+  // User profile
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile_list/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_profile_valid, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/password", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_password, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile/plugin", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_plugin_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_session_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/profile/session/:session_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile/scheme", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_scheme_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/profile/scheme/register/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_auth_register, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/scheme/register/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_auth_register_get, (void*)config);
 
-  // Current user endpoints
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_session_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/profile/refresh_token", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/refresh_token", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_refresh_token_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/refresh_token", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_refresh_token_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/profile/session", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/profile/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_session_profile, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/profile/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_session_profile, (void*)config);
-  if (config->reset_password) {
-    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/profile/reset_password/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_send_reset_user_profile, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/profile/reset_password/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_reset_user_profile, (void*)config);
-  }
+  // Grant scopes endpoints
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/auth/grant/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/grant/:client_id/:scope_list", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_session_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/auth/grant/:client_id/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_session_scope_grant, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/auth/grant/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
 
-  // Authorization type callbacks
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/authorization/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/authorization/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_authorization, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/authorization/:authorization_type", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/authorization/:authorization_type", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_authorization, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/authorization/:authorization_type", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_authorization, (void*)config);
+  // User profile by delegation
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/delegate/:username/profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session_delegate, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/delegate/:username/profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/delegate/:username/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/delegate/:username/profile/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_session_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/delegate/:username/profile/plugin", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_plugin_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/delegate/:username/profile/session/:session_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/delegate/:username/profile/scheme", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_scheme_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/delegate/:username/profile/scheme/register/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_auth_register_delegate, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/delegate/:username/profile/scheme/register/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_auth_register_get_delegate, (void*)config);
 
-  // Scope endpoints
-  if (config->use_scope) {
-    ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/scope/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/scope/:scope", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_list_scope, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/scope/:scope", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_scope, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/scope/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_scope, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/scope/:scope", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_scope, (void*)config);
-    ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/scope/:scope", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_scope, (void*)config);
-  }
+  // Modules check session
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/mod/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/mod/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
 
-  // User endpoints
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/user/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/user/:username/:action", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_list_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/refresh_token", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_refresh_token_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/refresh_token", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_refresh_token_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/user/:username/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_session_user, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/user/:username/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_session_user, (void*)config);
-  if (config->reset_password) {
-    ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/user/:username/reset_password", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_send_reset_user, (void*)config);
-  }
+  // Get all module types available
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/type/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_module_type_list, (void*)config);
+  
+  // User modules management
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_module_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/user/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/mod/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_user_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/user/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/mod/user/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_user_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/user/:name/:action", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_manage_user_module, (void*)config);
 
-  // Client endpoints
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/client/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_list_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/client/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_client, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_client, (void*)config);
+  // User auth scheme modules management
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/scheme/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_auth_scheme_module_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/scheme/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_auth_scheme_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/mod/scheme/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_user_auth_scheme_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/scheme/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_auth_scheme_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/mod/scheme/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_user_auth_scheme_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/scheme/:name/:action", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_manage_user_auth_scheme_module, (void*)config);
 
-  // Resource endpoints
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/resource/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "*", config->url_prefix, "/resource/:resource", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_scope_admin, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_list_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->url_prefix, "/resource/:resource", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->url_prefix, "/resource/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "PUT", config->url_prefix, "/resource/:resource", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_resource, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->url_prefix, "/resource/:resource", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_resource, (void*)config);
+  // Client modules management
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/client/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_client_module_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/client/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_client_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/mod/client/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_client_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/client/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_client_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/mod/client/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_client_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/client/:name/:action", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_manage_client_module, (void*)config);
 
+  // Plugin modules management
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/plugin/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_plugin_module_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/plugin/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_plugin_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/mod/plugin/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_plugin_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/plugin/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_plugin_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/mod/plugin/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_plugin_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/plugin/:name/:action", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_manage_plugin_module, (void*)config);
+
+  // Users CRUD
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/user/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/user/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_user, (void*)config);
+  
+  // Clients CRUD
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/client/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/client/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/client/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_client_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/client/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_client, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_client, (void*)config);
+  
+  // Scopes CRUD
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/scope/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/scope/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/scope/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_scope_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/scope/:scope", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_scope, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/scope/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_scope, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/scope/:scope", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_scope, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/scope/:scope", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_scope, (void*)config);
+  
   // Other configuration
-  ulfius_add_endpoint_by_val(config->instance, "GET", "/", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_root, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", "/config/", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_ZERO, &callback_glewlwyd_options, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->static_files_prefix, "*", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_static_file, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->static_file_config->url_prefix, "*", GLEWLWYD_CALLBACK_PRIORITY_FILE, &callback_static_file, (void*)config->static_file_config);
   ulfius_set_default_endpoint(config->instance, &callback_default, (void*)config);
 
   // Set default headers
@@ -236,14 +354,26 @@ int main (int argc, char ** argv) {
   u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
 
-  y_log_message(Y_LOG_LEVEL_INFO, "Start glewlwyd on port %d, prefix: %s, secure: %s", config->instance->port, config->url_prefix, config->use_secure_connection?"true":"false");
-  
+  y_log_message(Y_LOG_LEVEL_INFO, "Start glewlwyd on port %d, prefix: %s, secure: %s", config->instance->port, config->api_prefix, config->use_secure_connection?"true":"false");
+    
   if (config->use_secure_connection) {
     char * key_file = get_file_content(config->secure_connection_key_file);
     char * pem_file = get_file_content(config->secure_connection_pem_file);
     if (key_file != NULL && pem_file != NULL) {
-      res = ulfius_start_secure_framework(config->instance, key_file, pem_file);
+      if (config->secure_connection_ca_file != NULL) {
+        char * ca_file = get_file_content(config->secure_connection_ca_file);
+        if (ca_file != NULL) {
+          res = ulfius_start_secure_ca_trust_framework(config->instance, key_file, pem_file, ca_file);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error ca_file: %s", config->secure_connection_ca_file);
+          res = U_ERROR_PARAMS;
+        }
+        o_free(ca_file);
+      } else {
+        res = ulfius_start_secure_framework(config->instance, key_file, pem_file);
+      }
     } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error server certificate: %s - %s", config->secure_connection_key_file, config->secure_connection_pem_file);
       res = U_ERROR_PARAMS;
     }
     o_free(key_file);
@@ -251,6 +381,7 @@ int main (int argc, char ** argv) {
   } else {
     res = ulfius_start_framework(config->instance);
   }
+  
   if (res == U_OK) {
     // Wait until stop signal is broadcasted
     pthread_mutex_lock(&global_handler_close_lock);
@@ -272,96 +403,198 @@ int main (int argc, char ** argv) {
  * Exit properly the server by closing opened connections, databases and files
  */
 void exit_server(struct config_elements ** config, int exit_value) {
-
+  int i;
+  
   if (config != NULL && *config != NULL) {
+    for (i=0; i<pointer_list_size((*config)->user_module_instance_list); i++) {
+      struct _user_module_instance * instance = (struct _user_module_instance *)pointer_list_get_at((*config)->user_module_instance_list, i);
+      if (instance != NULL) {
+        if (instance->enabled && instance->module->user_module_close((*config)->config_m, instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        }
+        o_free(instance->name);
+        o_free(instance);
+      }
+    }
+    pointer_list_clean((*config)->user_module_instance_list);
+    o_free((*config)->user_module_instance_list);
+    
+    for (i=0; i<pointer_list_size((*config)->user_module_list); i++) {
+      struct _user_module * module = (struct _user_module *)pointer_list_get_at((*config)->user_module_list, i);
+      if (module != NULL) {
+        if (module->user_module_unload((*config)->config_m) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_module_unload for module '%s'", module->name);
+        }
+/* 
+ * dlclose() makes valgrind not useful when it comes to libraries
+ * they say it's not relevant to use it anyway
+ * I'll let it here until I'm sure
+ */
+#ifndef DEBUG
+        if (dlclose(module->file_handle)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
+        }
+#endif
+        o_free(module->name);
+        o_free(module->display_name);
+        o_free(module->description);
+        json_decref(module->parameters);
+        o_free(module);
+      }
+    }
+    pointer_list_clean((*config)->user_module_list);
+    o_free((*config)->user_module_list);
+    
+    for (i=0; i<pointer_list_size((*config)->client_module_instance_list); i++) {
+      struct _client_module_instance * instance = (struct _client_module_instance *)pointer_list_get_at((*config)->client_module_instance_list, i);
+      if (instance != NULL) {
+        if (instance->enabled && instance->module->client_module_close((*config)->config_m, instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error client_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        }
+        o_free(instance->name);
+        o_free(instance);
+      }
+    }
+    pointer_list_clean((*config)->client_module_instance_list);
+    o_free((*config)->client_module_instance_list);
+    
+    for (i=0; i<pointer_list_size((*config)->client_module_list); i++) {
+      struct _client_module * module = (struct _client_module *)pointer_list_get_at((*config)->client_module_list, i);
+      if (module != NULL) {
+        if (module->client_module_unload((*config)->config_m) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error client_module_unload for module '%s'", module->name);
+        }
+/* 
+ * dlclose() makes valgrind not useful when it comes to libraries
+ * they say it's not relevant to use it anyway
+ * I'll let it here until I'm sure
+ */
+#ifndef DEBUG
+        if (dlclose(module->file_handle)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
+        }
+#endif
+        o_free(module->name);
+        o_free(module->display_name);
+        o_free(module->description);
+        json_decref(module->parameters);
+        o_free(module);
+      }
+    }
+    pointer_list_clean((*config)->client_module_list);
+    o_free((*config)->client_module_list);
+    
+    for (i=0; i<pointer_list_size((*config)->user_auth_scheme_module_instance_list); i++) {
+      struct _user_auth_scheme_module_instance * instance = (struct _user_auth_scheme_module_instance *)pointer_list_get_at((*config)->user_auth_scheme_module_instance_list, i);
+      if (instance != NULL) {
+        if (instance->enabled && instance->module->user_auth_scheme_module_close((*config)->config_m, instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_auth_scheme_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        }
+        o_free(instance->name);
+        o_free(instance);
+      }
+    }
+    pointer_list_clean((*config)->user_auth_scheme_module_instance_list);
+    o_free((*config)->user_auth_scheme_module_instance_list);
+    
+    for (i=0; i<pointer_list_size((*config)->user_auth_scheme_module_list); i++) {
+      struct _user_auth_scheme_module * module = (struct _user_auth_scheme_module *)pointer_list_get_at((*config)->user_auth_scheme_module_list, i);
+      if (module != NULL) {
+        if (module->user_auth_scheme_module_unload((*config)->config_m) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_auth_scheme_module_unload for module '%s'", module->name);
+        }
+#ifndef DEBUG
+        if (dlclose(module->file_handle)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
+        }
+#endif
+        o_free(module->name);
+        o_free(module->display_name);
+        o_free(module->description);
+        json_decref(module->parameters);
+        o_free(module);
+      }
+    }
+    pointer_list_clean((*config)->user_auth_scheme_module_list);
+    o_free((*config)->user_auth_scheme_module_list);
+    
+    for (i=0; i<pointer_list_size((*config)->plugin_module_instance_list); i++) {
+      struct _plugin_module_instance * instance = (struct _plugin_module_instance *)pointer_list_get_at((*config)->plugin_module_instance_list, i);
+      if (instance != NULL) {
+        if (instance->enabled && instance->module->plugin_module_close((*config)->config_p, instance->name, instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error plugin_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        }
+        o_free(instance->name);
+        o_free(instance);
+      }
+    }
+    pointer_list_clean((*config)->plugin_module_instance_list);
+    o_free((*config)->plugin_module_instance_list);
+    
+    for (i=0; i<pointer_list_size((*config)->plugin_module_list); i++) {
+      struct _plugin_module * module = (struct _plugin_module *)pointer_list_get_at((*config)->plugin_module_list, i);
+      if (module != NULL) {
+        if (module->plugin_module_unload((*config)->config_p) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error plugin_module_unload for module '%s'", module->name);
+        }
+#ifndef DEBUG
+        if (dlclose(module->file_handle)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
+        }
+#endif
+        o_free(module->name);
+        o_free(module->display_name);
+        o_free(module->description);
+        json_decref(module->parameters);
+        o_free(module);
+      }
+    }
+    pointer_list_clean((*config)->plugin_module_list);
+    o_free((*config)->plugin_module_list);
+    
     /* stop framework */
     ulfius_stop_framework((*config)->instance);
     ulfius_clean_instance((*config)->instance);
     h_close_db((*config)->conn);
     h_clean_connection((*config)->conn);
-    y_close_logs();
     
     // Cleaning data
     o_free((*config)->instance);
+    
+    
     o_free((*config)->config_file);
-    o_free((*config)->url_prefix);
-    o_free((*config)->log_file);
-    o_free((*config)->allow_origin);
-    o_free((*config)->static_files_path);
-    o_free((*config)->static_files_prefix);
-    o_free((*config)->jwt_decode_key);
-    o_free((*config)->session_key);
+    o_free((*config)->api_prefix);
+    o_free((*config)->cookie_domain);
     o_free((*config)->admin_scope);
     o_free((*config)->profile_scope);
+    o_free((*config)->external_url);
+    o_free((*config)->log_file);
+    o_free((*config)->allow_origin);
     o_free((*config)->secure_connection_key_file);
     o_free((*config)->secure_connection_pem_file);
-    o_free((*config)->hash_algorithm);
+    o_free((*config)->secure_connection_ca_file);
+    o_free((*config)->session_key);
     o_free((*config)->login_url);
-    o_free((*config)->grant_url);
-    o_free((*config)->additional_property_name);
-    if ((*config)->reset_password_config != NULL) {
-      o_free((*config)->reset_password_config->smtp_host);
-      o_free((*config)->reset_password_config->smtp_user);
-      o_free((*config)->reset_password_config->smtp_password);
-      o_free((*config)->reset_password_config->email_from);
-      o_free((*config)->reset_password_config->email_subject);
-      o_free((*config)->reset_password_config->email_template);
-      o_free((*config)->reset_password_config->page_url_prefix);
-      o_free((*config)->reset_password_config);
-    }
-    jwt_free((*config)->jwt);
-    u_map_clean_full((*config)->mime_types);
-    if ((*config)->auth_ldap != NULL) {
-      o_free((*config)->auth_ldap->uri);
-      o_free((*config)->auth_ldap->bind_dn);
-      o_free((*config)->auth_ldap->bind_passwd);
-      
-      o_free((*config)->auth_ldap->base_search_user);
-      o_free((*config)->auth_ldap->filter_user_read);
-      o_free((*config)->auth_ldap->login_property_user_read);
-      o_free((*config)->auth_ldap->scope_property_user_read);
-      o_free((*config)->auth_ldap->additional_property_value_read);
-      o_free((*config)->auth_ldap->name_property_user_read);
-      o_free((*config)->auth_ldap->email_property_user_read);
-      o_free((*config)->auth_ldap->rdn_property_user_write);
-      free_string_array((*config)->auth_ldap->login_property_user_write);
-      free_string_array((*config)->auth_ldap->scope_property_user_write);
-      free_string_array((*config)->auth_ldap->name_property_user_write);
-      free_string_array((*config)->auth_ldap->email_property_user_write);
-      free_string_array((*config)->auth_ldap->additional_property_value_write);
-      o_free((*config)->auth_ldap->password_property_user_write);
-      o_free((*config)->auth_ldap->password_algorithm_user_write);
-      free_string_array((*config)->auth_ldap->object_class_user_write);
-      
-      o_free((*config)->auth_ldap->base_search_client);
-      o_free((*config)->auth_ldap->filter_client_read);
-      o_free((*config)->auth_ldap->client_id_property_client_read);
-      o_free((*config)->auth_ldap->scope_property_client_read);
-      o_free((*config)->auth_ldap->name_property_client_read);
-      o_free((*config)->auth_ldap->description_property_client_read);
-      o_free((*config)->auth_ldap->redirect_uri_property_client_read);
-      o_free((*config)->auth_ldap->confidential_property_client_read);
-      o_free((*config)->auth_ldap->rdn_property_client_write);
-      free_string_array((*config)->auth_ldap->client_id_property_client_write);
-      free_string_array((*config)->auth_ldap->scope_property_client_write);
-      free_string_array((*config)->auth_ldap->name_property_client_write);
-      free_string_array((*config)->auth_ldap->description_property_client_write);
-      free_string_array((*config)->auth_ldap->redirect_uri_property_client_write);
-      free_string_array((*config)->auth_ldap->confidential_property_client_write);
-      o_free((*config)->auth_ldap->password_property_client_write);
-      o_free((*config)->auth_ldap->password_algorithm_client_write);
-      free_string_array((*config)->auth_ldap->object_class_client_write);
-      
-      o_free((*config)->auth_ldap);
-    }
-    if ((*config)->auth_http != NULL) {
-      o_free((*config)->auth_http->url);
-      o_free((*config)->auth_http);
+    o_free((*config)->user_module_path);
+    o_free((*config)->client_module_path);
+    o_free((*config)->user_auth_scheme_module_path);
+    o_free((*config)->plugin_module_path);
+    
+    if ((*config)->static_file_config != NULL) {
+      u_map_clean_full((*config)->static_file_config->mime_types);
+      u_map_clean_full((*config)->static_file_config->map_header);
+      o_free((*config)->static_file_config->files_path);
+      o_free((*config)->static_file_config->url_prefix);
+      o_free((*config)->static_file_config);
     }
     
+    o_free((*config)->config_p);
+    o_free((*config)->config_m);
     o_free(*config);
     (*config) = NULL;
   }
+
+  y_close_logs();
   exit(exit_value);
 }
 
@@ -394,7 +627,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
             config->config_file = o_strdup(optarg);
             if (config->config_file == NULL) {
               fprintf(stderr, "Error allocating config->config_file, exiting\n");
-              exit_server(&config, GLEWLWYD_STOP);
+              return 0;
             }
           } else {
             fprintf(stderr, "Error!\nNo config file specified\n");
@@ -415,10 +648,10 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
           break;
         case 'u':
           if (optarg != NULL) {
-            config->url_prefix = o_strdup(optarg);
-            if (config->url_prefix == NULL) {
-              fprintf(stderr, "Error allocating config->url_prefix, exiting\n");
-              exit_server(&config, GLEWLWYD_STOP);
+            config->api_prefix = o_strdup(optarg);
+            if (config->api_prefix == NULL) {
+              fprintf(stderr, "Error allocating config->api_prefix, exiting\n");
+              return 0;
             }
           } else {
             fprintf(stderr, "Error!\nNo URL prefix specified\n");
@@ -430,7 +663,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
             tmp = o_strdup(optarg);
             if (tmp == NULL) {
               fprintf(stderr, "Error allocating log_mode, exiting\n");
-              exit_server(&config, GLEWLWYD_STOP);
+              return 0;
             }
             one_log_mode = strtok(tmp, ",");
             while (one_log_mode != NULL) {
@@ -474,7 +707,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
             config->log_file = o_strdup(optarg);
             if (config->log_file == NULL) {
               fprintf(stderr, "Error allocating config->log_file, exiting\n");
-              exit_server(&config, GLEWLWYD_STOP);
+              return 0;
             }
           } else {
             fprintf(stderr, "Error!\nNo log file specified\n");
@@ -483,11 +716,11 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
           break;
         case 'h':
           print_help(stdout);
-          exit_server(&config, GLEWLWYD_STOP);
+          return 0;
           break;
         case 'v':
           fprintf(stdout, "%s\n", _GLEWLWYD_VERSION_);
-          exit_server(&config, GLEWLWYD_STOP);
+          return 0;
           break;
       }
       
@@ -537,7 +770,7 @@ void print_help(FILE * output) {
   fprintf(output, "-l --log-level=LEVEL\n");
   fprintf(output, "\tLog level\n");
   fprintf(output, "\tNONE, ERROR, WARNING, INFO, DEBUG\n");
-  fprintf(output, "\tdefault: ERROR\n");
+  fprintf(output, "\tdefault: INFO\n");
   fprintf(output, "-f --log-file=PATH\n");
   fprintf(output, "\tPath for log file if log mode file is specified\n");
   fprintf(output, "-v --version\n");
@@ -557,81 +790,16 @@ void exit_handler(int signal) {
 }
 
 /**
- *
- * Read the content of a file and return it as a char *
- * returned value must be o_free'd after use
- *
- */
-char * get_file_content(const char * file_path) {
-  char * buffer = NULL;
-  size_t length, res;
-  FILE * f;
-
-  f = fopen (file_path, "rb");
-  if (f) {
-    fseek (f, 0, SEEK_END);
-    length = ftell (f);
-    fseek (f, 0, SEEK_SET);
-    buffer = o_malloc((length+1)*sizeof(char));
-    if (buffer) {
-      res = fread (buffer, 1, length, f);
-      if (res != length) {
-        fprintf(stderr, "fread warning, reading %zu while expecting %zu", res, length);
-      }
-      // Add null character at the end of buffer, just in case
-      buffer[length] = '\0';
-    }
-    fclose (f);
-  }
-  
-  return buffer;
-}
-
-/**
  * Initialize the application configuration based on the config file content
  * Read the config file, get mandatory variables and devices
  */
 int build_config_from_file(struct config_elements * config) {
   
   config_t cfg;
-  config_setting_t * root = NULL, * database = NULL, * auth = NULL, * jwt = NULL, * mime_type_list = NULL, * mime_type = NULL, * reset_password_config = NULL;
-  const char * cur_prefix = NULL, * cur_log_mode = NULL, * cur_log_level = NULL, * cur_log_file = NULL, * one_log_mode = NULL, * cur_hash_algorithm = NULL, 
-             * db_type = NULL, * db_sqlite_path = NULL, * db_mariadb_host = NULL, * db_mariadb_user = NULL, * db_mariadb_password = NULL,
-             * db_mariadb_dbname = NULL, * cur_allow_origin = NULL, * cur_static_files_path = NULL, * cur_static_files_prefix = NULL,
-             * cur_session_key = NULL, * cur_admin_scope = NULL, * cur_profile_scope = NULL, * cur_additional_property_name = NULL, 
-             * cur_auth_ldap_uri = NULL, * cur_auth_ldap_bind_dn = NULL, * cur_auth_ldap_bind_passwd = NULL, * cur_auth_ldap_search_scope = NULL,
-             * cur_auth_ldap_base_search_user = NULL, * cur_auth_ldap_filter_user_read = NULL,
-             * cur_auth_ldap_login_property_user_read = NULL, * cur_auth_ldap_name_property_user_read = NULL,
-             * cur_auth_ldap_email_property_user_read = NULL, * cur_auth_ldap_scope_property_user_read = NULL, * cur_auth_ldap_scope_property_user_match = NULL,
-             * cur_auth_ldap_additional_property_value_read = NULL, * cur_auth_ldap_additional_property_value_write = NULL,
-             * cur_auth_ldap_rdn_property_user_write = NULL, * cur_auth_ldap_login_property_user_write = NULL,
-             * cur_auth_ldap_name_property_user_write = NULL, * cur_auth_ldap_email_property_user_write = NULL,
-             * cur_auth_ldap_scope_property_user_write = NULL, * cur_auth_ldap_password_property_user_write = NULL,
-             * cur_auth_ldap_password_algorithm_user_write = NULL, * cur_auth_ldap_object_class_user_write = NULL,
-             * cur_auth_ldap_base_search_client = NULL, * cur_auth_ldap_filter_client_read = NULL,
-             * cur_auth_ldap_client_id_property_client_read = NULL, * cur_auth_ldap_name_property_client_read = NULL,
-             * cur_auth_ldap_scope_property_client_read = NULL, * cur_auth_ldap_description_property_client_read = NULL,
-             * cur_auth_ldap_redirect_uri_property_client_read = NULL, * cur_auth_ldap_confidential_property_client_read = NULL,
-             * cur_auth_ldap_client_id_property_client_write = NULL, * cur_auth_ldap_rdn_property_client_write = NULL,
-             * cur_auth_ldap_name_property_client_write = NULL, * cur_auth_ldap_scope_property_client_write = NULL, * cur_auth_ldap_scope_property_client_match = NULL,
-             * cur_auth_ldap_description_property_client_write = NULL, * cur_auth_ldap_redirect_uri_property_client_write = NULL,
-             * cur_auth_ldap_confidential_property_client_write = NULL, * cur_auth_ldap_password_property_client_write = NULL,
-             * cur_auth_ldap_password_algorithm_client_write = NULL, * cur_auth_ldap_object_class_client_write = NULL,
-             * cur_rsa_key_file = NULL, * cur_rsa_pub_file = NULL, * cur_ecdsa_key_file = NULL, * cur_ecdsa_pub_file = NULL, * cur_sha_secret = NULL,
-             * extension = NULL, * mime_type_value = NULL, * cur_secure_connection_key_file = NULL, * cur_secure_connection_pem_file = NULL,
-             * cur_grant_url = NULL, * cur_login_url = NULL, * cur_reset_password_smtp_host = NULL, * cur_reset_password_smtp_user = NULL,
-             * cur_reset_password_smtp_password = NULL, * cur_reset_password_email_from = NULL, * cur_reset_password_email_subject = NULL,
-             * cur_reset_password_email_template_path = NULL, * cur_reset_password_page_url_prefix = NULL,
-             * cur_auth_http_auth_url = NULL;
-  int db_mariadb_port = 0, cur_key_size = 512;
-  int cur_http_auth = 0, cur_database_auth = 0, cur_ldap_auth = 0, cur_use_scope = 0, cur_use_rsa = 0, cur_use_ecdsa = 0, cur_use_sha = 0,
-      cur_use_secure_connection = 0, cur_auth_ldap_user_write = 0, cur_auth_ldap_client_write = 0, cur_auth_http_check_server_certificate = 1, i;
-  ber_int_t cur_auth_ldap_page_size = 0;
-  
-  // JWT autocheck
-  time_t now;
-  char * session_token;
-  jwt_t * jwt_check = NULL;
+  config_setting_t * root = NULL, * database = NULL, * mime_type_list = NULL, * mime_type = NULL;
+  const char * str_value = NULL, * str_value_2 = NULL, * str_value_3 = NULL, * str_value_4 = NULL, * str_value_5 = NULL;
+  int int_value = 0, i;
+  char * one_log_mode;
   
   config_init(&cfg);
   
@@ -642,28 +810,34 @@ int build_config_from_file(struct config_elements * config) {
   }
   
   if (config->instance->port == GLEWLWYD_DEFAULT_PORT) {
-    int port;
     // Get Port number to listen to
-    config_lookup_int(&cfg, "port", &port);
-    config->instance->port = (uint)port;
+    if (config_lookup_int(&cfg, "port", &int_value) == CONFIG_TRUE) {
+      config->instance->port = (uint)int_value;
+    }
   }
   
-  if (config->url_prefix == NULL) {
-    // Get prefix url
-    if (config_lookup_string(&cfg, "url_prefix", &cur_prefix)) {
-      config->url_prefix = o_strdup(cur_prefix);
-      if (config->url_prefix == NULL) {
-        fprintf(stderr, "Error allocating config->url_prefix, exiting\n");
-        config_destroy(&cfg);
-        return 0;
-      }
+  if (config->api_prefix == NULL && config_lookup_string(&cfg, "api_prefix", &str_value) == CONFIG_TRUE) {
+    config->api_prefix = o_strdup(str_value);
+    if (config->api_prefix == NULL) {
+      fprintf(stderr, "Error allocating config->api_prefix, exiting\n");
+      config_destroy(&cfg);
+      return 0;
+    }
+  }
+
+  if (config->cookie_domain == NULL && config_lookup_string(&cfg, "cookie_domain", &str_value) == CONFIG_TRUE) {
+    config->cookie_domain = o_strdup(str_value);
+    if (config->cookie_domain == NULL) {
+      fprintf(stderr, "Error allocating config->cookie_domain, exiting\n");
+      config_destroy(&cfg);
+      return 0;
     }
   }
 
   if (config->log_mode == Y_LOG_MODE_NONE) {
     // Get log mode
-    if (config_lookup_string(&cfg, "log_mode", &cur_log_mode)) {
-      one_log_mode = strtok((char *)cur_log_mode, ",");
+    if (config_lookup_string(&cfg, "log_mode", &str_value) == CONFIG_TRUE) {
+      one_log_mode = strtok((char *)str_value, ",");
       while (one_log_mode != NULL) {
         if (0 == strncmp("console", one_log_mode, strlen("console"))) {
           config->log_mode += Y_LOG_MODE_CONSOLE;
@@ -675,8 +849,8 @@ int build_config_from_file(struct config_elements * config) {
           config->log_mode += Y_LOG_MODE_FILE;
           // Get log file path
           if (config->log_file == NULL) {
-            if (config_lookup_string(&cfg, "log_file", &cur_log_file)) {
-              config->log_file = o_strdup(cur_log_file);
+            if (config_lookup_string(&cfg, "log_file", &str_value_2) == CONFIG_TRUE) {
+              config->log_file = o_strdup(str_value_2);
               if (config->log_file == NULL) {
                 fprintf(stderr, "Error allocating config->log_file, exiting\n");
                 config_destroy(&cfg);
@@ -696,30 +870,30 @@ int build_config_from_file(struct config_elements * config) {
   
   if (config->log_level == Y_LOG_LEVEL_NONE) {
     // Get log level
-    if (config_lookup_string(&cfg, "log_level", &cur_log_level)) {
-      if (0 == strncmp("NONE", cur_log_level, strlen("NONE"))) {
+    if (config_lookup_string(&cfg, "log_level", &str_value) == CONFIG_TRUE) {
+      if (0 == strncmp("NONE", str_value, strlen("NONE"))) {
         config->log_level = Y_LOG_LEVEL_NONE;
-      } else if (0 == strncmp("ERROR", cur_log_level, strlen("ERROR"))) {
+      } else if (0 == strncmp("ERROR", str_value, strlen("ERROR"))) {
         config->log_level = Y_LOG_LEVEL_ERROR;
-      } else if (0 == strncmp("WARNING", cur_log_level, strlen("WARNING"))) {
+      } else if (0 == strncmp("WARNING", str_value, strlen("WARNING"))) {
         config->log_level = Y_LOG_LEVEL_WARNING;
-      } else if (0 == strncmp("INFO", cur_log_level, strlen("INFO"))) {
+      } else if (0 == strncmp("INFO", str_value, strlen("INFO"))) {
         config->log_level = Y_LOG_LEVEL_INFO;
-      } else if (0 == strncmp("DEBUG", cur_log_level, strlen("DEBUG"))) {
+      } else if (0 == strncmp("DEBUG", str_value, strlen("DEBUG"))) {
         config->log_level = Y_LOG_LEVEL_DEBUG;
       }
     }
   }
 
-  if (!y_init_logs(GLEWLWYD_LOG_NAME, config->log_mode, config->log_level, config->log_file, "Starting Glewlwyd Oauth2 authentication service")) {
+  if (!y_init_logs(GLEWLWYD_LOG_NAME, config->log_mode, config->log_level, config->log_file, "Starting Glewlwyd SSO authentication service")) {
     fprintf(stderr, "Error initializing logs\n");
-    exit_server(&config, GLEWLWYD_ERROR);
+    return 0;
   }
   
   if (config->allow_origin == NULL) {
     // Get allow-origin value for CORS
-    if (config_lookup_string(&cfg, "allow_origin", &cur_allow_origin)) {
-      config->allow_origin = o_strdup(cur_allow_origin);
+    if (config_lookup_string(&cfg, "allow_origin", &str_value) == CONFIG_TRUE) {
+      config->allow_origin = o_strdup(str_value);
       if (config->allow_origin == NULL) {
         fprintf(stderr, "Error allocating config->allow_origin, exiting\n");
         config_destroy(&cfg);
@@ -728,45 +902,30 @@ int build_config_from_file(struct config_elements * config) {
     }
   }
   
-  config_lookup_int(&cfg, "refresh_token_expiation", (int *)&config->refresh_token_expiration);
-  config_lookup_int(&cfg, "access_token_expiration", (int *)&config->access_token_expiration);
-  config_lookup_int(&cfg, "session_expiration", (int *)&config->session_expiration);
-  config_lookup_int(&cfg, "code_expiration", (int *)&config->code_expiration);
-  config_lookup_bool(&cfg, "auth_code_match_ip_address", (int *)&config->auth_code_match_ip_address);
-  
-  config_lookup_string(&cfg, "session_key", &cur_session_key);
-  if (cur_session_key != NULL) {
+  if (config_lookup_string(&cfg, "session_key", &str_value) == CONFIG_TRUE) {
     o_free(config->session_key);
-    config->session_key = strdup(cur_session_key);
+    config->session_key = strdup(str_value);
   }
   
-  config_lookup_string(&cfg, "admin_scope", &cur_admin_scope);
-  if (cur_admin_scope != NULL) {
-    o_free(config->admin_scope);
-    config->admin_scope = strdup(cur_admin_scope);
+  if (config_lookup_string(&cfg, "external_url", &str_value) != CONFIG_TRUE) {
+    fprintf(stderr, "external_url is mandatory, exiting\n");
+    config_destroy(&cfg);
+    return 0;
+  } else {
+    config->external_url = strdup(str_value);
+    if (config->external_url == NULL) {
+      fprintf(stderr, "Error allocating resources for config->external_url, exiting\n");
+      config_destroy(&cfg);
+      return 0;
+    }
   }
   
-  config_lookup_string(&cfg, "profile_scope", &cur_profile_scope);
-  if (cur_profile_scope != NULL) {
-    o_free(config->profile_scope);
-    config->profile_scope = strdup(cur_profile_scope);
-  }
-  
-  config_lookup_string(&cfg, "additional_property_name", &cur_additional_property_name);
-  if (cur_additional_property_name != NULL) {
-    config->additional_property_name = strdup(cur_additional_property_name);
-  }
-  
-  config_lookup_bool(&cfg, "use_scope", &cur_use_scope);
-  config->use_scope = cur_use_scope;
-  
-  config_lookup_string(&cfg, "login_url", &cur_login_url);
-  if (cur_login_url == NULL) {
+  if (config_lookup_string(&cfg, "login_url", &str_value) != CONFIG_TRUE) {
     fprintf(stderr, "login_url is mandatory, exiting\n");
     config_destroy(&cfg);
     return 0;
   } else {
-    config->login_url = strdup(cur_login_url);
+    config->login_url = strdup(str_value);
     if (config->login_url == NULL) {
       fprintf(stderr, "Error allocating resources for config->login_url, exiting\n");
       config_destroy(&cfg);
@@ -774,153 +933,40 @@ int build_config_from_file(struct config_elements * config) {
     }
   }
   
-  config_lookup_string(&cfg, "grant_url", &cur_grant_url);
-  if (cur_grant_url == NULL) {
-    fprintf(stderr, "grant_url is mandatory, exiting\n");
-    config_destroy(&cfg);
-    return 0;
-  } else {
-    config->grant_url = strdup(cur_grant_url);
-    if (config->grant_url == NULL) {
-      fprintf(stderr, "Error allocating resources for config->grant_url, exiting\n");
+  // Get path that serve static files
+  if (config_lookup_string(&cfg, "static_files_path", &str_value) == CONFIG_TRUE) {
+    config->static_file_config->files_path = o_strdup(str_value);
+    if (config->static_file_config->files_path == NULL) {
+      fprintf(stderr, "Error allocating config->files_path, exiting\n");
       config_destroy(&cfg);
       return 0;
-    }
-  }
-  
-  root = config_root_setting(&cfg);
-  config_lookup_bool(&cfg, "reset_password", &config->reset_password);
-  if (config->reset_password) {
-    reset_password_config = config_setting_get_member(root, "reset_password_config");
-    if (reset_password_config != NULL) {
-      config->reset_password_config = o_malloc(sizeof(struct _reset_password_config));
-      if (config->reset_password_config != NULL) {
-        config->reset_password_config->smtp_host = NULL;
-        config->reset_password_config->smtp_port = GLEWLWYD_RESET_PASSWORD_DEFAULT_SMTP_PORT;
-        config->reset_password_config->smtp_use_tls = 0;
-        config->reset_password_config->smtp_verify_certificate = 0;
-        config->reset_password_config->smtp_user = NULL;
-        config->reset_password_config->smtp_password = NULL;
-        
-        config->reset_password_config->token_expiration = GLEWLWYD_RESET_PASSWORD_DEFAULT_TOKEN_EXPIRATION;
-        config->reset_password_config->email_from = NULL;
-        config->reset_password_config->email_subject = NULL;
-        config->reset_password_config->email_template = NULL;
-        config->reset_password_config->page_url_prefix = NULL;
-        
-        if (config_setting_lookup_string(reset_password_config, "smtp_host", &cur_reset_password_smtp_host) == CONFIG_TRUE) {
-          if ((config->reset_password_config->smtp_host = o_strdup(cur_reset_password_smtp_host)) == NULL) {
-            fprintf(stderr, "Error allocating config->reset_password_config->smtp_host, exiting\n");
-            config_destroy(&cfg);
-            return 0;
-          }
-        }
-        config_setting_lookup_int(reset_password_config, "smtp_port", (int *)&config->reset_password_config->smtp_port);
-        config_setting_lookup_bool(reset_password_config, "smtp_use_tls", &config->reset_password_config->smtp_use_tls);
-        config_setting_lookup_bool(reset_password_config, "smtp_verify_certificate", &config->reset_password_config->smtp_verify_certificate);
-        if (config_setting_lookup_string(reset_password_config, "smtp_user", &cur_reset_password_smtp_user) == CONFIG_TRUE) {
-          if ((config->reset_password_config->smtp_user = o_strdup(cur_reset_password_smtp_user)) == NULL) {
-            fprintf(stderr, "Error allocating config->reset_password_config->smtp_user, exiting\n");
-            config_destroy(&cfg);
-            return 0;
-          }
-        }
-        if (config_setting_lookup_string(reset_password_config, "smtp_password", &cur_reset_password_smtp_password) == CONFIG_TRUE) {
-          if ((config->reset_password_config->smtp_password = o_strdup(cur_reset_password_smtp_password)) == NULL) {
-            fprintf(stderr, "Error allocating config->reset_password_config->smtp_password, exiting\n");
-            config_destroy(&cfg);
-            return 0;
-          }
-        }
-        config_setting_lookup_int(reset_password_config, "token_expiration", (int *)&config->reset_password_config->token_expiration);
-        if (config_setting_lookup_string(reset_password_config, "email_from", &cur_reset_password_email_from) == CONFIG_TRUE) {
-          if ((config->reset_password_config->email_from = o_strdup(cur_reset_password_email_from)) == NULL) {
-            fprintf(stderr, "Error allocating config->reset_password_config->email_from, exiting\n");
-            config_destroy(&cfg);
-            return 0;
-          }
-        }
-        if (config_setting_lookup_string(reset_password_config, "email_subject", &cur_reset_password_email_subject) == CONFIG_TRUE) {
-          if ((config->reset_password_config->email_subject = o_strdup(cur_reset_password_email_subject)) == NULL) {
-            fprintf(stderr, "Error allocating config->reset_password_config->email_subject, exiting\n");
-            config_destroy(&cfg);
-            return 0;
-          }
-        }
-        if (config_setting_lookup_string(reset_password_config, "email_template", &cur_reset_password_email_template_path) == CONFIG_TRUE) {
-          if ((config->reset_password_config->email_template = get_file_content(cur_reset_password_email_template_path)) == NULL) {
-            fprintf(stderr, "Error email_template, exiting\n");
-            config_destroy(&cfg);
-            return 0;
-          }
-        }
-        if (config_setting_lookup_string(reset_password_config, "page_url_prefix", &cur_reset_password_page_url_prefix) == CONFIG_TRUE) {
-          if ((config->reset_password_config->page_url_prefix = o_strdup(cur_reset_password_page_url_prefix)) == NULL) {
-            fprintf(stderr, "Error allocating config->reset_password_config->page_url_prefix, exiting\n");
-            config_destroy(&cfg);
-            return 0;
-          }
-        }
-        
-        if (config->reset_password_config->smtp_host == NULL || config->reset_password_config->email_from == NULL || config->reset_password_config->email_subject == NULL || config->reset_password_config->email_template == NULL || config->reset_password_config->page_url_prefix == NULL) {
-          fprintf(stderr, "Error reset_password, mandatory parameters are missing, exiting %s %s %s %s %s\n", config->reset_password_config->smtp_host, config->reset_password_config->email_from, config->reset_password_config->email_subject, config->reset_password_config->email_template, config->reset_password_config->page_url_prefix);
-          config_destroy(&cfg);
-          return 0;
-        }
-      } else {
-        fprintf(stderr, "Error allocating config->reset_password_config, exiting\n");
-        config_destroy(&cfg);
-        return 0;
-      }
-    } else {
-      fprintf(stderr, "Error no reset_password_config values, exiting\n");
-      config_destroy(&cfg);
-      return 0;
-    }
-  }
-  
-  if (config->static_files_path == NULL) {
-    // Get path that serve static files
-    if (config_lookup_string(&cfg, "static_files_path", &cur_static_files_path)) {
-      config->static_files_path = o_strdup(cur_static_files_path);
-      if (config->static_files_path == NULL) {
-        fprintf(stderr, "Error allocating config->static_files_path, exiting\n");
-        config_destroy(&cfg);
-        return 0;
-      }
-    }
-  }
-
-  if (config->static_files_prefix == NULL) {
-    // Get prefix url
-    if (config_lookup_string(&cfg, "static_files_prefix", &cur_static_files_prefix)) {
-      config->static_files_prefix = o_strdup(cur_static_files_prefix);
-      if (config->static_files_prefix == NULL) {
-        fprintf(stderr, "Error allocating config->static_files_prefix, exiting\n");
-        config_destroy(&cfg);
-        return 0;
-      }
     }
   }
   
   // Populate mime types u_map
   mime_type_list = config_lookup(&cfg, "static_files_mime_types");
   if (mime_type_list != NULL) {
-    for (i=0; i<config_setting_length(mime_type_list); i++) {
+    int len = config_setting_length(mime_type_list);
+    for (i=0; i<len; i++) {
       mime_type = config_setting_get_elem(mime_type_list, i);
       if (mime_type != NULL) {
-        if (config_setting_lookup_string(mime_type, "extension", &extension) && config_setting_lookup_string(mime_type, "type", &mime_type_value)) {
-          u_map_put(config->mime_types, extension, mime_type_value);
+        if (config_setting_lookup_string(mime_type, "extension", &str_value) == CONFIG_TRUE && 
+            config_setting_lookup_string(mime_type, "mime_type", &str_value_2) == CONFIG_TRUE) {
+          u_map_put(config->static_file_config->mime_types, str_value, str_value_2);
         }
       }
     }
   }
   
-  if (config_lookup_bool(&cfg, "use_secure_connection", &cur_use_secure_connection)) {
-    if (config_lookup_string(&cfg, "secure_connection_key_file", &cur_secure_connection_key_file) && config_lookup_string(&cfg, "secure_connection_pem_file", &cur_secure_connection_pem_file)) {
-      config->use_secure_connection = cur_use_secure_connection;
-      config->secure_connection_key_file = o_strdup(cur_secure_connection_key_file);
-      config->secure_connection_pem_file = o_strdup(cur_secure_connection_pem_file);
+  if (config_lookup_bool(&cfg, "use_secure_connection", &int_value) == CONFIG_TRUE) {
+    if (config_lookup_string(&cfg, "secure_connection_key_file", &str_value) == CONFIG_TRUE && 
+        config_lookup_string(&cfg, "secure_connection_pem_file", &str_value_2) == CONFIG_TRUE) {
+      config->use_secure_connection = int_value;
+      config->secure_connection_key_file = o_strdup(str_value);
+      config->secure_connection_pem_file = o_strdup(str_value_2);
+      if (config_lookup_string(&cfg, "secure_connection_ca_file", &str_value) == CONFIG_TRUE) {
+        config->secure_connection_ca_file = o_strdup(str_value);
+      }
     } else {
       fprintf(stderr, "Error secure connection is active but certificate is not valid, exiting\n");
       config_destroy(&cfg);
@@ -929,35 +975,37 @@ int build_config_from_file(struct config_elements * config) {
   }
   
   // Get token hash algorithm
-  if (config_lookup_string(&cfg, "hash_algorithm", &cur_hash_algorithm)) {
-    o_free(config->hash_algorithm);
-    config->hash_algorithm = o_strdup(cur_hash_algorithm);
-    if (config->hash_algorithm == NULL) {
-      fprintf(stderr, "Error allocating config->hash_algorithm, exiting\n");
+  if (config_lookup_string(&cfg, "hash_algorithm", &str_value) == CONFIG_TRUE) {
+    if (!strcmp("SHA1", str_value)) {
+      config->hash_algorithm = digest_SHA1;
+    } else if (!strcmp("SHA224", str_value)) {
+      config->hash_algorithm = digest_SHA224;
+    } else if (!strcmp("SHA256", str_value)) {
+      config->hash_algorithm = digest_SHA256;
+    } else if (!strcmp("SHA384", str_value)) {
+      config->hash_algorithm = digest_SHA384;
+    } else if (!strcmp("SHA512", str_value)) {
+      config->hash_algorithm = digest_SHA512;
+    } else if (!strcmp("MD5", str_value)) {
+      config->hash_algorithm = digest_MD5;
+    } else {
       config_destroy(&cfg);
-      return 0;
-    } else if (config->hash_algorithm == NULL || 
-              (strcmp("SHA1", config->hash_algorithm) &&
-              strcmp("SHA256", config->hash_algorithm) &&
-              strcmp("SHA512", config->hash_algorithm) &&
-              strcmp("MD5", config->hash_algorithm))) {
-      config_destroy(&cfg);
-      fprintf(stderr, "Error token hash algorithm: %s\n", config->hash_algorithm);
+      fprintf(stderr, "Error token hash algorithm: %s\n", str_value);
       return 0;
     }
   }
   
+  root = config_root_setting(&cfg);
   database = config_setting_get_member(root, "database");
   if (database != NULL) {
-    if (config_setting_lookup_string(database, "type", &db_type) == CONFIG_TRUE) {
+    if (config_setting_lookup_string(database, "type", &str_value) == CONFIG_TRUE) {
       if (0) {
         // I know, this is for the code below to work
-#ifdef _HOEL_SQLITE
-        } else if (0 == strncmp(db_type, "sqlite3", strlen("sqlite3"))) {
-        if (config_setting_lookup_string(database, "path", &db_sqlite_path) == CONFIG_TRUE) {
-          config->conn = h_connect_sqlite(db_sqlite_path);
+      } else if (0 == strncmp(str_value, "sqlite3", strlen("sqlite3"))) {
+        if (config_setting_lookup_string(database, "path", &str_value_2) == CONFIG_TRUE) {
+          config->conn = h_connect_sqlite(str_value_2);
           if (config->conn == NULL) {
-            fprintf(stderr, "Error opening sqlite database %s\n", db_sqlite_path);
+            fprintf(stderr, "Error opening sqlite database %s\n", str_value_2);
             config_destroy(&cfg);
             return 0;
           } else {
@@ -972,21 +1020,26 @@ int build_config_from_file(struct config_elements * config) {
           fprintf(stderr, "Error, no sqlite database specified\n");
           return 0;
         }
-#endif
-#ifdef _HOEL_MARIADB
-      } else if (0 == strncmp(db_type, "mariadb", strlen("mariadb"))) {
-        config_setting_lookup_string(database, "host", &db_mariadb_host);
-        config_setting_lookup_string(database, "user", &db_mariadb_user);
-        config_setting_lookup_string(database, "password", &db_mariadb_password);
-        config_setting_lookup_string(database, "dbname", &db_mariadb_dbname);
-        config_setting_lookup_int(database, "port", &db_mariadb_port);
-        config->conn = h_connect_mariadb(db_mariadb_host, db_mariadb_user, db_mariadb_password, db_mariadb_dbname, db_mariadb_port, NULL);
+      } else if (0 == strncmp(str_value, "mariadb", strlen("mariadb"))) {
+        config_setting_lookup_string(database, "host", &str_value_2);
+        config_setting_lookup_string(database, "user", &str_value_3);
+        config_setting_lookup_string(database, "password", &str_value_4);
+        config_setting_lookup_string(database, "dbname", &str_value_5);
+        config_setting_lookup_int(database, "port", &int_value);
+        config->conn = h_connect_mariadb(str_value_2, str_value_3, str_value_4, str_value_5, int_value, NULL);
         if (config->conn == NULL) {
-          fprintf(stderr, "Error opening mariadb database %s\n", db_mariadb_dbname);
+          fprintf(stderr, "Error opening mariadb database %s\n", str_value_5);
           config_destroy(&cfg);
           return 0;
         }
-#endif
+      } else if (0 == strncmp(str_value, "postgre", strlen("postgre"))) {
+        config_setting_lookup_string(database, "conninfo", &str_value_2);
+        config->conn = h_connect_pgsql(str_value_2);
+        if (config->conn == NULL) {
+          fprintf(stderr, "Error opening postgre database %s\n", str_value_5);
+          config_destroy(&cfg);
+          return 0;
+        }
       } else {
         config_destroy(&cfg);
         fprintf(stderr, "Error, database type unknown\n");
@@ -1002,597 +1055,44 @@ int build_config_from_file(struct config_elements * config) {
     fprintf(stderr, "Error, no database setting found\n");
     return 0;
   }
+
+  if (config_lookup_string(&cfg, "admin_scope", &str_value) == CONFIG_TRUE) {
+    config->admin_scope = strdup(str_value);
+  }
   
-  auth = config_setting_get_member(root, "authentication");
-  if (auth != NULL) {
-    config_setting_lookup_bool(auth, "http_auth", &cur_http_auth);
-    config->has_auth_http = cur_http_auth;
-    if (config->has_auth_http &&
-        config->use_scope) {
-      config_destroy(&cfg);
-      fprintf(stderr, "Error, due to security concerns you can not use authentication via HTTP together with scopes\n");
-      return 0;
-    }
-    config_setting_lookup_bool(auth, "database_auth", &cur_database_auth);
-    config->has_auth_database = cur_database_auth;
-    config_setting_lookup_bool(auth, "ldap_auth", &cur_ldap_auth);
-    config->has_auth_ldap = cur_ldap_auth;
-
-    if (config->has_auth_http) {
-      config_setting_lookup_string(auth, "http_auth_url", &cur_auth_http_auth_url);
-      if (cur_auth_http_auth_url != NULL) {
-        config->auth_http = o_malloc(sizeof(struct _auth_http));
-        if (config->auth_http == NULL) {
-          config_destroy(&cfg);
-          fprintf(stderr, "Error allocating resources for config->auth_http\n");
-          return 0;
-        } else {
-          config_setting_lookup_bool(auth, "http_auth_check_certificate", &cur_auth_http_check_server_certificate);
-          config->auth_http->check_server_certificate = cur_auth_http_check_server_certificate;
-          config->auth_http->url = o_strdup(cur_auth_http_auth_url);
-          if (config->auth_http->url == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_http->url\n");
-            return 0;
-          }
-        }
-      } else {
-        config_destroy(&cfg);
-        fprintf(stderr, "Error, auth http error parameters\n");
-        return 0;
-      }
-    }
-    
-    if (config->has_auth_ldap) {
-      config_setting_lookup_string(auth, "uri", &cur_auth_ldap_uri);
-      config_setting_lookup_string(auth, "bind_dn", &cur_auth_ldap_bind_dn);
-      config_setting_lookup_string(auth, "bind_passwd", &cur_auth_ldap_bind_passwd);
-      config_setting_lookup_string(auth, "search_scope", &cur_auth_ldap_search_scope);
-      config_setting_lookup_int(auth, "page_size", &cur_auth_ldap_page_size);
-
-      config_setting_lookup_string(auth, "base_search_user", &cur_auth_ldap_base_search_user);
-      config_setting_lookup_string(auth, "filter_user_read", &cur_auth_ldap_filter_user_read);
-      config_setting_lookup_string(auth, "login_property_user_read", &cur_auth_ldap_login_property_user_read);
-      config_setting_lookup_string(auth, "name_property_user_read", &cur_auth_ldap_name_property_user_read);
-      config_setting_lookup_string(auth, "email_property_user_read", &cur_auth_ldap_email_property_user_read);
-      config_setting_lookup_string(auth, "additional_property_value_read", &cur_auth_ldap_additional_property_value_read);
-      if (config->use_scope) {
-        config_setting_lookup_string(auth, "scope_property_user_read", &cur_auth_ldap_scope_property_user_read);
-        config_setting_lookup_string(auth, "scope_property_user_match", &cur_auth_ldap_scope_property_user_match);
-      }
-      
-      config_setting_lookup_bool(auth, "ldap_user_write", &cur_auth_ldap_user_write);
-      config_setting_lookup_string(auth, "rdn_property_user_write", &cur_auth_ldap_rdn_property_user_write);
-      config_setting_lookup_string(auth, "login_property_user_write", &cur_auth_ldap_login_property_user_write);
-      config_setting_lookup_string(auth, "name_property_user_write", &cur_auth_ldap_name_property_user_write);
-      config_setting_lookup_string(auth, "email_property_user_write", &cur_auth_ldap_email_property_user_write);
-      config_setting_lookup_string(auth, "additional_property_value_write", &cur_auth_ldap_additional_property_value_write);
-      if (config->use_scope) {
-        config_setting_lookup_string(auth, "scope_property_user_write", &cur_auth_ldap_scope_property_user_write);
-      }
-      config_setting_lookup_string(auth, "password_property_user_write", &cur_auth_ldap_password_property_user_write);
-      config_setting_lookup_string(auth, "password_algorithm_user_write", &cur_auth_ldap_password_algorithm_user_write);
-      config_setting_lookup_string(auth, "object_class_user_write", &cur_auth_ldap_object_class_user_write);
-      
-      config_setting_lookup_string(auth, "base_search_client", &cur_auth_ldap_base_search_client);
-      config_setting_lookup_string(auth, "filter_client_read", &cur_auth_ldap_filter_client_read);
-      config_setting_lookup_string(auth, "client_id_property_client_read", &cur_auth_ldap_client_id_property_client_read);
-      config_setting_lookup_string(auth, "name_property_client_read", &cur_auth_ldap_name_property_client_read);
-      config_setting_lookup_string(auth, "description_property_client_read", &cur_auth_ldap_description_property_client_read);
-      config_setting_lookup_string(auth, "redirect_uri_property_client_read", &cur_auth_ldap_redirect_uri_property_client_read);
-      config_setting_lookup_string(auth, "confidential_property_client_read", &cur_auth_ldap_confidential_property_client_read);
-      if (config->use_scope) {
-        config_setting_lookup_string(auth, "scope_property_client_read", &cur_auth_ldap_scope_property_client_read);
-        config_setting_lookup_string(auth, "scope_property_client_match", &cur_auth_ldap_scope_property_client_match);
-      }
-      
-      config_setting_lookup_bool(auth, "ldap_client_write", &cur_auth_ldap_client_write);
-      config_setting_lookup_string(auth, "rdn_property_client_write", &cur_auth_ldap_rdn_property_client_write);
-      config_setting_lookup_string(auth, "client_id_property_client_write", &cur_auth_ldap_client_id_property_client_write);
-      config_setting_lookup_string(auth, "name_property_client_write", &cur_auth_ldap_name_property_client_write);
-      config_setting_lookup_string(auth, "description_property_client_write", &cur_auth_ldap_description_property_client_write);
-      config_setting_lookup_string(auth, "redirect_uri_property_client_write", &cur_auth_ldap_redirect_uri_property_client_write);
-      config_setting_lookup_string(auth, "confidential_property_client_write", &cur_auth_ldap_confidential_property_client_write);
-      if (config->use_scope) {
-        config_setting_lookup_string(auth, "scope_property_client_write", &cur_auth_ldap_scope_property_client_write);
-      }
-      config_setting_lookup_string(auth, "password_property_client_write", &cur_auth_ldap_password_property_client_write);
-      config_setting_lookup_string(auth, "password_algorithm_client_write", &cur_auth_ldap_password_algorithm_client_write);
-      config_setting_lookup_string(auth, "object_class_client_write", &cur_auth_ldap_object_class_client_write);
-      
-      if (cur_auth_ldap_uri != NULL &&
-          cur_auth_ldap_bind_dn != NULL &&
-          cur_auth_ldap_bind_passwd != NULL &&
-          
-          cur_auth_ldap_base_search_user != NULL &&
-          cur_auth_ldap_filter_user_read != NULL &&
-          cur_auth_ldap_login_property_user_read != NULL &&
-          cur_auth_ldap_name_property_user_read != NULL &&
-          cur_auth_ldap_email_property_user_read != NULL &&
-          cur_auth_ldap_additional_property_value_read != NULL &&
-          (cur_auth_ldap_scope_property_user_read != NULL || !config->use_scope) &&
-          
-          (!cur_auth_ldap_user_write ||
-          (cur_auth_ldap_rdn_property_user_write != NULL &&
-          cur_auth_ldap_login_property_user_write != NULL &&
-          cur_auth_ldap_name_property_user_write != NULL &&
-          cur_auth_ldap_email_property_user_write != NULL &&
-          cur_auth_ldap_additional_property_value_write != NULL &&
-          (cur_auth_ldap_scope_property_user_write != NULL || !config->use_scope) &&
-          cur_auth_ldap_password_property_user_write != NULL &&
-          cur_auth_ldap_password_algorithm_user_write != NULL &&
-          cur_auth_ldap_object_class_user_write != NULL)) &&
-          
-          cur_auth_ldap_base_search_client != NULL &&
-          cur_auth_ldap_filter_client_read != NULL &&
-          cur_auth_ldap_client_id_property_client_read != NULL &&
-          cur_auth_ldap_name_property_client_read != NULL &&
-          cur_auth_ldap_description_property_client_read != NULL &&
-          cur_auth_ldap_redirect_uri_property_client_read != NULL &&
-          cur_auth_ldap_confidential_property_client_read != NULL &&
-          (cur_auth_ldap_scope_property_client_read != NULL || !config->use_scope) &&
-          
-          (!cur_auth_ldap_client_write ||
-          (cur_auth_ldap_rdn_property_client_write != NULL &&
-          cur_auth_ldap_client_id_property_client_write != NULL &&
-          cur_auth_ldap_name_property_client_write != NULL &&
-          cur_auth_ldap_description_property_client_write != NULL &&
-          cur_auth_ldap_redirect_uri_property_client_write != NULL &&
-          cur_auth_ldap_confidential_property_client_write != NULL &&
-          (cur_auth_ldap_scope_property_client_write != NULL || !config->use_scope) &&
-          cur_auth_ldap_password_property_client_write != NULL &&
-          cur_auth_ldap_password_algorithm_client_write != NULL &&
-          cur_auth_ldap_object_class_client_write != NULL))) {
-        config->auth_ldap = o_malloc(sizeof(struct _auth_ldap));
-        if (config->auth_ldap == NULL) {
-          config_destroy(&cfg);
-          fprintf(stderr, "Error allocating resources for config->auth_ldap\n");
-          return 0;
-        } else {
-          memset(config->auth_ldap, 0, sizeof(struct _auth_ldap));
-          config->auth_ldap->search_scope = LDAP_SCOPE_ONELEVEL;
-          config->auth_ldap->page_size = GLEWLWYD_DEFAULT_LDAP_PAGE_SIZE;
-          
-          config->auth_ldap->uri = o_strdup(cur_auth_ldap_uri);
-          if (config->auth_ldap->uri == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->uri\n");
-            return 0;
-          }
-          config->auth_ldap->bind_dn = o_strdup(cur_auth_ldap_bind_dn);
-          if (config->auth_ldap->bind_dn == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->bind_dn\n");
-            return 0;
-          }
-          config->auth_ldap->bind_passwd = o_strdup(cur_auth_ldap_bind_passwd);
-          if (config->auth_ldap->bind_passwd == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->bind_passwd\n");
-            return 0;
-          }
-          if (cur_auth_ldap_search_scope != NULL) {
-            if (0 == o_strcmp("onelevel", cur_auth_ldap_search_scope)) {
-              config->auth_ldap->search_scope = LDAP_SCOPE_ONELEVEL;
-            } else if (0 == o_strcmp("subtree", cur_auth_ldap_search_scope)) {
-              config->auth_ldap->search_scope = LDAP_SCOPE_SUBTREE;
-            } else if (0 == o_strcmp("children", cur_auth_ldap_search_scope)) {
-              config->auth_ldap->search_scope = LDAP_SCOPE_CHILDREN;
-            } else {
-              config_destroy(&cfg);
-              fprintf(stderr, "Error search_scope error, values available are 'onelevel', 'subtree' or 'children'\n");
-              return 0;
-            }
-          }
-          
-          if (cur_auth_ldap_page_size > 0) {
-            config->auth_ldap->page_size = cur_auth_ldap_page_size;
-          }
-          
-          config->auth_ldap->base_search_user = o_strdup(cur_auth_ldap_base_search_user);
-          if (config->auth_ldap->base_search_user == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->base_search_user\n");
-            return 0;
-          }
-          config->auth_ldap->filter_user_read = o_strdup(cur_auth_ldap_filter_user_read);
-          if (config->auth_ldap->filter_user_read == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->filter_user_read\n");
-            return 0;
-          }
-          config->auth_ldap->login_property_user_read = o_strdup(cur_auth_ldap_login_property_user_read);
-          if (config->auth_ldap->login_property_user_read == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->login_property_user_read\n");
-            return 0;
-          }
-          if (config->use_scope) {
-            config->auth_ldap->scope_property_user_read = o_strdup(cur_auth_ldap_scope_property_user_read);
-            if (config->auth_ldap->scope_property_user_read == NULL) {
-              config_destroy(&cfg);
-              fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_user_read\n");
-              return 0;
-            }
-            if (cur_auth_ldap_scope_property_user_match != NULL) {
-              if (0 == o_strcasecmp("equals", cur_auth_ldap_scope_property_user_match)) {
-                config->auth_ldap->scope_property_user_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_EQUALS;
-              } else if (0 == o_strcasecmp("contains", cur_auth_ldap_scope_property_user_match)) {
-                config->auth_ldap->scope_property_user_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_CONTAINS;
-              } else if (0 == o_strcasecmp("startswith", cur_auth_ldap_scope_property_user_match)) {
-                config->auth_ldap->scope_property_user_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_STARTSWITH;
-              } else if (0 == o_strcasecmp("endswith", cur_auth_ldap_scope_property_user_match)) {
-                config->auth_ldap->scope_property_user_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_ENDSWITH;
-              } else {
-                config_destroy(&cfg);
-                fprintf(stderr, "Error scope_property_user_match, values available are 'equals', 'contains', 'startswith' or 'endswith'\n");
-                return 0;
-              }
-            }
-          }
-          config->auth_ldap->name_property_user_read = o_strdup(cur_auth_ldap_name_property_user_read);
-          if (config->auth_ldap->name_property_user_read == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->name_property_user_read\n");
-            return 0;
-          }
-          config->auth_ldap->email_property_user_read = o_strdup(cur_auth_ldap_email_property_user_read);
-          if (config->auth_ldap->email_property_user_read == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->email_property_user_read\n");
-            return 0;
-          }
-          config->auth_ldap->additional_property_value_read = o_strdup(cur_auth_ldap_additional_property_value_read);
-          if (config->auth_ldap->additional_property_value_read == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->additional_property_value_read\n");
-            return 0;
-          }
-          config->auth_ldap->user_write = cur_auth_ldap_user_write;
-          config->auth_ldap->rdn_property_user_write = o_strdup(cur_auth_ldap_rdn_property_user_write);
-          if (config->auth_ldap->rdn_property_user_write == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->rdn_property_user_write\n");
-            return 0;
-          }
-          if (split_string(cur_auth_ldap_login_property_user_write, ",", &config->auth_ldap->login_property_user_write) < 1) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->login_property_user_write\n");
-            return 0;
-          }
-          if (config->use_scope) {
-            if (split_string(cur_auth_ldap_scope_property_user_write, ",", &config->auth_ldap->scope_property_user_write) < 1) {
-              config_destroy(&cfg);
-              fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_user_write\n");
-              return 0;
-            }
-          }
-          if (split_string(cur_auth_ldap_name_property_user_write, ",", &config->auth_ldap->name_property_user_write) < 1) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->name_property_user_write\n");
-            return 0;
-          }
-          if (split_string(cur_auth_ldap_email_property_user_write, ",", &config->auth_ldap->email_property_user_write) < 1) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->email_property_user_write\n");
-            return 0;
-          }
-          if (split_string(cur_auth_ldap_additional_property_value_write, ",", &config->auth_ldap->additional_property_value_write) < 1) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->additional_property_value_write\n");
-            return 0;
-          }
-          config->auth_ldap->password_property_user_write = o_strdup(cur_auth_ldap_password_property_user_write);
-          if (config->auth_ldap->password_property_user_write == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->password_property_user_write\n");
-            return 0;
-          }
-          config->auth_ldap->password_algorithm_user_write = o_strdup(cur_auth_ldap_password_algorithm_user_write);
-          if (config->auth_ldap->password_algorithm_user_write == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->password_algorithm_user_write\n");
-            return 0;
-          } else if (strcmp("SHA1", config->auth_ldap->password_algorithm_user_write) &&
-                     strcmp("SSHA", config->auth_ldap->password_algorithm_user_write) &&
-                     strcmp("SHA224", config->auth_ldap->password_algorithm_user_write) &&
-                     strcmp("SSHA224", config->auth_ldap->password_algorithm_user_write) &&
-                     strcmp("SHA256", config->auth_ldap->password_algorithm_user_write) &&
-                     strcmp("SSHA256", config->auth_ldap->password_algorithm_user_write) &&
-                     strcmp("SHA384", config->auth_ldap->password_algorithm_user_write) &&
-                     strcmp("SSHA384", config->auth_ldap->password_algorithm_user_write) &&
-                     strcmp("SHA512", config->auth_ldap->password_algorithm_user_write) &&
-                     strcmp("SSHA512", config->auth_ldap->password_algorithm_user_write) &&
-                     strcmp("MD5", config->auth_ldap->password_algorithm_user_write) &&
-                     strcmp("SMD5", config->auth_ldap->password_algorithm_user_write) &&
-                     strcmp("CRYPT", config->auth_ldap->password_algorithm_user_write)) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error user algorithm name unknown\n");
-            return 0;
-          }
-          if (split_string(cur_auth_ldap_object_class_user_write, ",", &config->auth_ldap->object_class_user_write) < 1) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->object_class_user_write\n");
-            return 0;
-          }
-          
-          config->auth_ldap->base_search_client = o_strdup(cur_auth_ldap_base_search_client);
-          if (config->auth_ldap->base_search_client == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->base_search_client\n");
-            return 0;
-          }
-          config->auth_ldap->filter_client_read = o_strdup(cur_auth_ldap_filter_client_read);
-          if (config->auth_ldap->filter_client_read == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->filter_client_read\n");
-            return 0;
-          }
-          config->auth_ldap->client_id_property_client_read = o_strdup(cur_auth_ldap_client_id_property_client_read);
-          if (config->auth_ldap->client_id_property_client_read == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->client_id_property_client_read\n");
-            return 0;
-          }
-          if (config->use_scope) {
-            config->auth_ldap->scope_property_client_read = o_strdup(cur_auth_ldap_scope_property_client_read);
-            if (config->auth_ldap->scope_property_client_read == NULL) {
-              config_destroy(&cfg);
-              fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_client_read\n");
-              return 0;
-            }
-            if (cur_auth_ldap_scope_property_client_match != NULL) {
-              if (0 == o_strcasecmp("equals", cur_auth_ldap_scope_property_client_match)) {
-                config->auth_ldap->scope_property_client_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_EQUALS;
-              } else if (0 == o_strcasecmp("contains", cur_auth_ldap_scope_property_client_match)) {
-                config->auth_ldap->scope_property_client_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_CONTAINS;
-              } else if (0 == o_strcasecmp("startswith", cur_auth_ldap_scope_property_client_match)) {
-                config->auth_ldap->scope_property_client_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_STARTSWITH;
-              } else if (0 == o_strcasecmp("endswith", cur_auth_ldap_scope_property_client_match)) {
-                config->auth_ldap->scope_property_client_match = GLEWLWYD_SCOPE_PROPERTY_MATCH_ENDSWITH;
-              } else {
-                config_destroy(&cfg);
-                fprintf(stderr, "Error scope_property_client_match, values available are 'equals', 'contains', 'startswith' or 'endswith'\n");
-                return 0;
-              }
-            }
-          }
-          config->auth_ldap->name_property_client_read = o_strdup(cur_auth_ldap_name_property_client_read);
-          if (config->auth_ldap->name_property_client_read == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->name_property_client_read\n");
-            return 0;
-          }
-          config->auth_ldap->description_property_client_read = o_strdup(cur_auth_ldap_description_property_client_read);
-          if (config->auth_ldap->description_property_client_read == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->description_property_client_read\n");
-            return 0;
-          }
-          config->auth_ldap->redirect_uri_property_client_read = o_strdup(cur_auth_ldap_redirect_uri_property_client_read);
-          if (config->auth_ldap->redirect_uri_property_client_read == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->redirect_uri_property_client_read\n");
-            return 0;
-          }
-          config->auth_ldap->confidential_property_client_read = o_strdup(cur_auth_ldap_confidential_property_client_read);
-          if (config->auth_ldap->confidential_property_client_read == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->confidential_property_client_read\n");
-            return 0;
-          }
-          config->auth_ldap->client_write = cur_auth_ldap_client_write;
-          config->auth_ldap->rdn_property_client_write = o_strdup(cur_auth_ldap_rdn_property_client_write);
-          if (config->auth_ldap->rdn_property_client_write == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->rdn_property_client_write\n");
-            return 0;
-          }
-          if (split_string(cur_auth_ldap_client_id_property_client_write, ",", &config->auth_ldap->client_id_property_client_write) < 1) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->client_id_property_client_write\n");
-            return 0;
-          }
-          if (config->use_scope) {
-            if (split_string(cur_auth_ldap_scope_property_client_write, ",", &config->auth_ldap->scope_property_client_write) < 1) {
-              config_destroy(&cfg);
-              fprintf(stderr, "Error allocating resources for config->auth_ldap->scope_property_client_write\n");
-              return 0;
-            }
-          }
-          if (split_string(cur_auth_ldap_name_property_client_write, ",", &config->auth_ldap->name_property_client_write) < 1) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->name_property_client_write\n");
-            return 0;
-          }
-          if (split_string(cur_auth_ldap_description_property_client_write, ",", &config->auth_ldap->description_property_client_write) < 1) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->description_property_client_write\n");
-            return 0;
-          }
-          if (split_string(cur_auth_ldap_redirect_uri_property_client_write, ",", &config->auth_ldap->redirect_uri_property_client_write) < 1) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->redirect_uri_property_client_write\n");
-            return 0;
-          }
-          if (split_string(cur_auth_ldap_confidential_property_client_write, ",", &config->auth_ldap->confidential_property_client_write) < 1) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->confidential_property_client_write\n");
-            return 0;
-          }
-          config->auth_ldap->password_property_client_write = o_strdup(cur_auth_ldap_password_property_client_write);
-          if (config->auth_ldap->password_property_client_write == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->password_property_client_write\n");
-            return 0;
-          }
-          config->auth_ldap->password_algorithm_client_write = o_strdup(cur_auth_ldap_password_algorithm_client_write);
-          if (config->auth_ldap->password_algorithm_client_write == NULL) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->password_algorithm_client_write\n");
-            return 0;
-          } else if (strcmp("SHA1", config->auth_ldap->password_algorithm_client_write) &&
-                     strcmp("SSHA", config->auth_ldap->password_algorithm_client_write) &&
-                     strcmp("SHA224", config->auth_ldap->password_algorithm_client_write) &&
-                     strcmp("SSHA224", config->auth_ldap->password_algorithm_client_write) &&
-                     strcmp("SHA256", config->auth_ldap->password_algorithm_client_write) &&
-                     strcmp("SSHA256", config->auth_ldap->password_algorithm_client_write) &&
-                     strcmp("SHA384", config->auth_ldap->password_algorithm_client_write) &&
-                     strcmp("SSHA384", config->auth_ldap->password_algorithm_client_write) &&
-                     strcmp("SHA512", config->auth_ldap->password_algorithm_client_write) &&
-                     strcmp("SSHA512", config->auth_ldap->password_algorithm_client_write) &&
-                     strcmp("MD5", config->auth_ldap->password_algorithm_client_write) &&
-                     strcmp("SMD5", config->auth_ldap->password_algorithm_client_write) &&
-                     strcmp("CRYPT", config->auth_ldap->password_algorithm_client_write)) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error user algorithm name unknown\n");
-            return 0;
-          }
-          if (split_string(cur_auth_ldap_object_class_client_write, ",", &config->auth_ldap->object_class_client_write) < 1) {
-            config_destroy(&cfg);
-            fprintf(stderr, "Error allocating resources for config->auth_ldap->object_class_client_write\n");
-            return 0;
-          }
-        }
-      } else {
-        config_destroy(&cfg);
-        fprintf(stderr, "Error, auth ldap error parameters\n");
-        return 0;
-      }
-    }
+  if (config_lookup_string(&cfg, "profile_scope", &str_value) == CONFIG_TRUE) {
+    config->profile_scope = strdup(str_value);
+  }
+  
+  if (config_lookup_string(&cfg, "user_module_path", &str_value) == CONFIG_TRUE) {
+    config->user_module_path = strdup(str_value);
   } else {
     config_destroy(&cfg);
-    fprintf(stderr, "Error, no auth parameters\n");
+    fprintf(stderr, "Error, user_module_path is mandatory\n");
     return 0;
   }
-
-  jwt = config_setting_get_member(root, "jwt");
-  if (jwt != NULL) {
-    config_setting_lookup_bool(jwt, "use_rsa", &cur_use_rsa);
-    config_setting_lookup_bool(jwt, "use_ecdsa", &cur_use_ecdsa);
-    config_setting_lookup_bool(jwt, "use_sha", &cur_use_sha);
-    config_setting_lookup_int(jwt, "key_size", &cur_key_size);
-    if (cur_key_size != 256 && cur_key_size != 384 && cur_key_size != 512) {
-      config_destroy(&cfg);
-      fprintf(stderr, "Error, key_size incorrect, values available are 256, 384 or 512\n");
-      return 0;
-    }
-    if (cur_use_rsa) {
-      config_setting_lookup_string(jwt, "rsa_key_file", &cur_rsa_key_file);
-      config_setting_lookup_string(jwt, "rsa_pub_file", &cur_rsa_pub_file);
-      if (cur_rsa_key_file != NULL && cur_rsa_pub_file != NULL) {
-        char * key;
-        size_t key_len;
-        
-        jwt_new(&(config->jwt));
-        key = get_file_content(cur_rsa_key_file);
-        if (key != NULL) {
-          key_len = strlen(key);
-          if (cur_key_size == 256) {
-            jwt_set_alg(config->jwt, JWT_ALG_RS256, (const unsigned char *)key, key_len);
-          } else if (cur_key_size == 384) {
-            jwt_set_alg(config->jwt, JWT_ALG_RS384, (const unsigned char *)key, key_len);
-          } else if (cur_key_size == 512) {
-            jwt_set_alg(config->jwt, JWT_ALG_RS512, (const unsigned char *)key, key_len);
-          }
-          o_free(key);
-        } else {
-          config_destroy(&cfg);
-          fprintf(stderr, "Error, rsa_key_file content incorrect\n");
-          return 0;
-        }
-        
-        config->jwt_decode_key = get_file_content(cur_rsa_pub_file);
-        if (config->jwt_decode_key == NULL) {
-          config_destroy(&cfg);
-          fprintf(stderr, "Error, rsa_pub_file content incorrect\n");
-          return 0;
-        }
-      } else {
-        config_destroy(&cfg);
-        fprintf(stderr, "Error, rsa_key_file or rsa_pub_file incorrect\n");
-        return 0;
-      }
-    } else if (cur_use_ecdsa) {
-      config_setting_lookup_string(jwt, "ecdsa_key_file", &cur_ecdsa_key_file);
-      config_setting_lookup_string(jwt, "ecdsa_pub_file", &cur_ecdsa_pub_file);
-      if (cur_ecdsa_key_file != NULL && cur_ecdsa_pub_file != NULL) {
-        char * key;
-        size_t key_len;
-        
-        jwt_new(&(config->jwt));
-        key = get_file_content(cur_ecdsa_key_file);
-        if (key != NULL) {
-          key_len = strlen(key);
-          if (cur_key_size == 256) {
-            jwt_set_alg(config->jwt, JWT_ALG_ES256, (const unsigned char *)key, key_len);
-          } else if (cur_key_size == 384) {
-            jwt_set_alg(config->jwt, JWT_ALG_ES384, (const unsigned char *)key, key_len);
-          } else if (cur_key_size == 512) {
-            jwt_set_alg(config->jwt, JWT_ALG_ES512, (const unsigned char *)key, key_len);
-          }
-          o_free(key);
-        } else {
-          config_destroy(&cfg);
-          fprintf(stderr, "Error, ecdsa_key_file content incorrect\n");
-          return 0;
-        }
-        
-        config->jwt_decode_key = get_file_content(cur_ecdsa_pub_file);
-        if (config->jwt_decode_key == NULL) {
-          config_destroy(&cfg);
-          fprintf(stderr, "Error, ecdsa_pub_file content incorrect\n");
-          return 0;
-        }
-      } else {
-        config_destroy(&cfg);
-        fprintf(stderr, "Error, ecdsa_key_file or ecdsa_pub_file incorrect\n");
-        return 0;
-      }
-    } else if (cur_use_sha) {
-      jwt_new(&(config->jwt));
-      config_setting_lookup_string(jwt, "sha_secret", &cur_sha_secret);
-      if (cur_sha_secret != NULL) {
-        if (cur_key_size == 256) {
-          jwt_set_alg(config->jwt, JWT_ALG_HS256, (const unsigned char *)cur_sha_secret, strlen(cur_sha_secret));
-        } else if (cur_key_size == 384) {
-          jwt_set_alg(config->jwt, JWT_ALG_HS384, (const unsigned char *)cur_sha_secret, strlen(cur_sha_secret));
-        } else if (cur_key_size == 512) {
-          jwt_set_alg(config->jwt, JWT_ALG_HS512, (const unsigned char *)cur_sha_secret, strlen(cur_sha_secret));
-        }
-        config->jwt_decode_key = o_strdup(cur_sha_secret);
-      } else {
-        config_destroy(&cfg);
-        fprintf(stderr, "Error, sha_secret incorrect\n");
-        return 0;
-      }
-    } else {
-      config_destroy(&cfg);
-      fprintf(stderr, "Error, no jwt algorithm selected\n");
-      return 0;
-    }
-    // Perform autocheck of the jwt configuration to validate the certificates
-    time(&now);
-    session_token = generate_session_token(config, GLEWLWYD_CHECK_JWT_USERNAME, "127.0.0.1", now);
-    if (session_token != NULL) {
-      if (jwt_decode(&jwt_check, session_token, (const unsigned char *)config->jwt_decode_key, strlen(config->jwt_decode_key)) || jwt_get_alg(jwt_check) != jwt_get_alg(config->jwt)) {
-        fprintf(stderr, "Error autocheck jwt, step session_token validate\n");
-        o_free(session_token);
-        jwt_free(jwt_check);
-        config_destroy(&cfg);
-        return 0;
-      }
-      // JWT config valid
-      o_free(session_token);
-      jwt_free(jwt_check);
-    } else {
-      fprintf(stderr, "Error autocheck jwt, step session_token generate\n");
-      config_destroy(&cfg);
-      return 0;
-    }
+  
+  if (config_lookup_string(&cfg, "client_module_path", &str_value) == CONFIG_TRUE) {
+    config->client_module_path = strdup(str_value);
   } else {
     config_destroy(&cfg);
-    fprintf(stderr, "Error, no jwt parameters\n");
+    fprintf(stderr, "Error, client_module_path is mandatory\n");
+    return 0;
+  }
+  
+  if (config_lookup_string(&cfg, "user_auth_scheme_module_path", &str_value) == CONFIG_TRUE) {
+    config->user_auth_scheme_module_path = strdup(str_value);
+  } else {
+    config_destroy(&cfg);
+    fprintf(stderr, "Error, user_auth_scheme_module_path is mandatory\n");
+    return 0;
+  }
+  
+  if (config_lookup_string(&cfg, "plugin_module_path", &str_value) == CONFIG_TRUE) {
+    config->plugin_module_path = strdup(str_value);
+  } else {
+    config_destroy(&cfg);
+    fprintf(stderr, "Error, plugin_module_path is mandatory\n");
     return 0;
   }
   
@@ -1610,10 +1110,10 @@ int check_config(struct config_elements * config) {
     config->instance->port = GLEWLWYD_DEFAULT_PORT;
   }
   
-  if (config->url_prefix == NULL) {
-    config->url_prefix = o_strdup(GLEWLWYD_DEFAULT_PREFIX);
-    if (config->url_prefix == NULL) {
-      fprintf(stderr, "Error allocating url_prefix, exit\n");
+  if (config->api_prefix == NULL) {
+    config->api_prefix = o_strdup(GLEWLWYD_DEFAULT_PREFIX);
+    if (config->api_prefix == NULL) {
+      fprintf(stderr, "Error allocating api_prefix, exit\n");
       return 0;
     }
   }
@@ -1635,202 +1135,965 @@ int check_config(struct config_elements * config) {
   return 1;
 }
 
-/**
- * Return the filename extension
- */
-const char * get_filename_ext(const char *path) {
-    const char *dot = strrchr(path, '.');
-    if(!dot || dot == path) return "*";
-    if (strchr(dot, '?') != NULL) {
-      *strchr(dot, '?') = '\0';
-    }
-    return dot;
-}
-
-/**
- * Return the source ip address of the request
- * Based on the header value "X-Forwarded-For" if set, which means the request is forwarded by a proxy
- * otherwise the call is direct, return the client_address
- */
-const char * get_ip_source(const struct _u_request * request) {
-  const char * ip_source = u_map_get(request->map_header, "X-Forwarded-For");
+int module_instance_parameters_check(const char * module_parameters, const char * instance_parameters) {
+  json_t * j_parameters = json_loads(module_parameters, JSON_DECODE_ANY, NULL), * j_instance_parameters = json_loads(instance_parameters, JSON_DECODE_ANY, NULL), * j_parameter, * j_value;
+  int ret = G_OK;
+  const char * key;
   
-  if (ip_source == NULL) {
-    struct sockaddr_in * in_source = (struct sockaddr_in *)request->client_address;
-    if (in_source != NULL) {
-      ip_source = inet_ntoa(in_source->sin_addr);
-    } else {
-      ip_source = "NOT_FOUND";
-    }
-  }
-  
-  return ip_source;
-};
-
-/**
- * Converts a hex character to its integer value
- */
-char from_hex(char ch) {
-  return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
-}
-
-/**
- * Converts an integer value to its hex character
- */
-char to_hex(char code) {
-  static char hex[] = "0123456789abcdef";
-  return hex[code & 15];
-}
-
-/**
- * Returns a url-encoded version of str
- * IMPORTANT: be sure to o_free() the returned string after use 
- * Thanks Geek Hideout!
- * http://www.geekhideout.com/urlcode.shtml
- */
-char * url_encode(char * str) {
-  char * pstr = str, * buf = o_malloc(strlen(str) * 3 + 1), * pbuf = buf;
-  while (* pstr) {
-    if (isalnum(* pstr) || * pstr == '-' || * pstr == '_' || * pstr == '.' || * pstr == '~') 
-      * pbuf++ = * pstr;
-    else if (* pstr == ' ') 
-      * pbuf++ = '+';
-    else 
-      * pbuf++ = '%', * pbuf++ = to_hex(* pstr >> 4), * pbuf++ = to_hex(* pstr & 15);
-    pstr++;
-  }
-  * pbuf = '\0';
-  return buf;
-}
-
-/**
- * Returns a url-decoded version of str
- * IMPORTANT: be sure to o_free() the returned string after use
- * Thanks Geek Hideout!
- * http://www.geekhideout.com/urlcode.shtml
- */
-char * url_decode(char * str) {
-  char * pstr = str, * buf = o_malloc(strlen(str) + 1), * pbuf = buf;
-  while (* pstr) {
-    if (* pstr == '%') {
-      if (pstr[1] && pstr[2]) {
-        * pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
-        pstr += 2;
+  json_object_foreach(j_parameters, key, j_parameter) {
+    if (json_object_get(j_parameter, "mandatory") == json_true() && json_object_get(j_instance_parameters, key) == NULL) {
+      ret = G_ERROR_PARAM;
+      break;
+    } else if ((j_value = json_object_get(j_instance_parameters, key)) != NULL) {
+      if ((0 == o_strcmp("string", json_string_value(json_object_get(j_parameter, "type"))) || 0 == o_strcmp("list", json_string_value(json_object_get(j_parameter, "type")))) && !json_is_string(j_value)) {
+        ret = G_ERROR_PARAM;
+        break;
+      } else if (0 == o_strcmp("number", json_string_value(json_object_get(j_parameter, "type"))) && !json_is_number(j_value)) {
+        ret = G_ERROR_PARAM;
+        break;
+      } else if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_parameter, "type"))) && !json_is_boolean(j_value)) {
+        ret = G_ERROR_PARAM;
+        break;
       }
-    } else if (* pstr == '+') { 
-      * pbuf++ = ' ';
-    } else {
-      * pbuf++ = * pstr;
     }
-    pstr++;
   }
-  * pbuf = '\0';
-  return buf;
+  json_decref(j_parameters);
+  json_decref(j_instance_parameters);
+  
+  return ret;
 }
 
-/**
- *
- * Generates a query string based on url and post parameters of a request
- * Returned value must be o_free'd after use
- *
- */
-char * generate_query_parameters(const struct _u_request * request) {
-  char * query = NULL, * param, * tmp, * value;
-  const char ** keys;
-  struct _u_map params;
+int init_user_module_list(struct config_elements * config) {
+  int ret = G_OK;
+  struct _user_module * cur_user_module = NULL;
+  DIR * modules_directory;
+  struct dirent * in_file;
+  char * file_path;
+  void * file_handle;
+  json_t * j_parameters;
+  
+  config->user_module_list = o_malloc(sizeof(struct _pointer_list));
+  if (config->user_module_list != NULL) {
+    pointer_list_init(config->user_module_list);
+    // read module_path and load modules
+    if (NULL == (modules_directory = opendir(config->user_module_path))) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error reading libraries folder %s", config->user_module_path);
+      ret = G_ERROR;
+    } else {
+      while ((in_file = readdir(modules_directory))) {
+        if (in_file->d_type == DT_REG) {
+          file_path = msprintf("%s/%s", config->user_module_path, in_file->d_name);
+          
+          if (file_path == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error allocating resources for file_path");
+            ret = G_ERROR_MEMORY;
+          } else {
+            file_handle = dlopen(file_path, RTLD_LAZY);
+            
+            if (file_handle != NULL) {
+              cur_user_module = o_malloc(sizeof(struct _user_module));
+              if (cur_user_module != NULL) {
+                cur_user_module->name = NULL;
+                cur_user_module->parameters = NULL;
+                cur_user_module->file_handle = file_handle;
+                *(void **) (&cur_user_module->user_module_load) = dlsym(file_handle, "user_module_load");
+                *(void **) (&cur_user_module->user_module_unload) = dlsym(file_handle, "user_module_unload");
+                *(void **) (&cur_user_module->user_module_init) = dlsym(file_handle, "user_module_init");
+                *(void **) (&cur_user_module->user_module_close) = dlsym(file_handle, "user_module_close");
+                *(void **) (&cur_user_module->user_module_count_total) = dlsym(file_handle, "user_module_count_total");
+                *(void **) (&cur_user_module->user_module_get_list) = dlsym(file_handle, "user_module_get_list");
+                *(void **) (&cur_user_module->user_module_get) = dlsym(file_handle, "user_module_get");
+                *(void **) (&cur_user_module->user_module_get_profile) = dlsym(file_handle, "user_module_get_profile");
+                *(void **) (&cur_user_module->user_module_is_valid) = dlsym(file_handle, "user_module_is_valid");
+                *(void **) (&cur_user_module->user_module_add) = dlsym(file_handle, "user_module_add");
+                *(void **) (&cur_user_module->user_module_update) = dlsym(file_handle, "user_module_update");
+                *(void **) (&cur_user_module->user_module_update_profile) = dlsym(file_handle, "user_module_update_profile");
+                *(void **) (&cur_user_module->user_module_delete) = dlsym(file_handle, "user_module_delete");
+                *(void **) (&cur_user_module->user_module_check_password) = dlsym(file_handle, "user_module_check_password");
+                *(void **) (&cur_user_module->user_module_update_password) = dlsym(file_handle, "user_module_update_password");
+                
+                if (cur_user_module->user_module_load != NULL &&
+                    cur_user_module->user_module_unload != NULL &&
+                    cur_user_module->user_module_init != NULL &&
+                    cur_user_module->user_module_close != NULL &&
+                    cur_user_module->user_module_count_total != NULL &&
+                    cur_user_module->user_module_get_list != NULL &&
+                    cur_user_module->user_module_get != NULL &&
+                    cur_user_module->user_module_get_profile != NULL &&
+                    cur_user_module->user_module_is_valid != NULL &&
+                    cur_user_module->user_module_add != NULL &&
+                    cur_user_module->user_module_update != NULL &&
+                    cur_user_module->user_module_update_profile != NULL &&
+                    cur_user_module->user_module_delete != NULL &&
+                    cur_user_module->user_module_check_password != NULL &&
+                    cur_user_module->user_module_update_password != NULL) {
+                  j_parameters = cur_user_module->user_module_load(config->config_m);
+                  if (check_result_value(j_parameters, G_OK)) {
+                    cur_user_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
+                    cur_user_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
+                    cur_user_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
+                    cur_user_module->parameters = json_deep_copy(json_object_get(j_parameters, "parameters"));
+                    if (o_strlen(cur_user_module->name) && get_user_module_lib(config, cur_user_module->name) == NULL) {
+                      if (pointer_list_append(config->user_module_list, (void*)cur_user_module)) {
+                        y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s - %s", file_path, cur_user_module->name);
+                      } else {
+                        cur_user_module->user_module_unload(config->config_m);
+                        dlclose(file_handle);
+                        o_free(cur_user_module->name);
+                        o_free(cur_user_module->display_name);
+                        o_free(cur_user_module->description);
+                        json_decref(cur_user_module->parameters);
+                        o_free(cur_user_module);
+                        y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error pointer_list_append");
+                        ret = G_ERROR;
+                      }
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - User module with name '%s' already present or name empty", cur_user_module->name);
+                      cur_user_module->user_module_unload(config->config_m);
+                      dlclose(file_handle);
+                      o_free(cur_user_module->name);
+                      o_free(cur_user_module->display_name);
+                      o_free(cur_user_module->description);
+                      json_decref(cur_user_module->parameters);
+                      o_free(cur_user_module);
+                      ret = G_ERROR_PARAM;
+                    }
+                  } else {
+                    dlclose(file_handle);
+                    o_free(cur_user_module);
+                    y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error user_module_init for module %s", file_path);
+                    ret = G_ERROR_MEMORY;
+                  }
+                  json_decref(j_parameters);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error module %s has not all required functions", file_path);
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_load: %s", (cur_user_module->user_module_load != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_unload: %s", (cur_user_module->user_module_unload != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_init: %s", (cur_user_module->user_module_init != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_close: %s", (cur_user_module->user_module_close != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_count_total: %s", (cur_user_module->user_module_count_total != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get_list: %s", (cur_user_module->user_module_get_list != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get: %s", (cur_user_module->user_module_get != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_get_profile: %s", (cur_user_module->user_module_get_profile != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_is_valid: %s", (cur_user_module->user_module_is_valid != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_add: %s", (cur_user_module->user_module_add != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update: %s", (cur_user_module->user_module_update != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update_profile: %s", (cur_user_module->user_module_update_profile != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_delete: %s", (cur_user_module->user_module_delete != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_check_password: %s", (cur_user_module->user_module_check_password != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_module_update_password: %s", (cur_user_module->user_module_update_password != NULL?"found":"not found"));
+                  dlclose(file_handle);
+                  o_free(cur_user_module);
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error allocating resources for cur_user_module");
+                dlclose(file_handle);
+                ret = G_ERROR_MEMORY;
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error opening module file %s, reason: %s", file_path, dlerror());
+            }
+          }
+          o_free(file_path);
+        }
+      }
+      closedir(modules_directory);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error allocating resources for config->user_module_list");
+    ret = G_ERROR_MEMORY;
+  }
+  
+  return ret;
+}
+
+int load_user_module_instance_list(struct config_elements * config) {
+  json_t * j_query, * j_result, * j_instance, * j_parameters;
+  int res, ret, i;
+  size_t index;
+  struct _user_module_instance * cur_instance;
+  struct _user_module * module = NULL;
+  
+  config->user_module_instance_list = o_malloc(sizeof(struct _pointer_list));
+  if (config->user_module_instance_list != NULL) {
+    pointer_list_init(config->user_module_instance_list);
+    j_query = json_pack("{sss[sssss]ss}",
+                        "table",
+                        GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
+                        "columns",
+                          "gumi_module AS module",
+                          "gumi_name AS name",
+                          "gumi_order AS order_by",
+                          "gumi_parameters AS parameters",
+                          "gumi_readonly AS readonly",
+                        "order_by",
+                        "gumi_order");
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      json_array_foreach(j_result, index, j_instance) {
+        module = NULL;
+        for (i=0; i<pointer_list_size(config->user_module_list); i++) {
+          module = (struct _user_module *)pointer_list_get_at(config->user_module_list, i);
+          if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
+            break;
+          } else {
+            module = NULL;
+          }
+        }
+        if (module != NULL) {
+          cur_instance = o_malloc(sizeof(struct _user_module_instance));
+          if (cur_instance != NULL) {
+            cur_instance->cls = NULL;
+            cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+            cur_instance->module = module;
+            cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
+            if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
+              j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+              if (j_parameters != NULL) {
+                if (module->user_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls) == G_OK) {
+                  cur_instance->enabled = 1;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                  cur_instance->enabled = 0;
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
+                cur_instance->enabled = 0;
+              }
+              json_decref(j_parameters);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error reallocating resources for user_module_instance_list");
+              o_free(cur_instance->name);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error allocating resources for cur_instance");
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
+        }
+      }
+      json_decref(j_result);
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error executing j_query");
+      ret = G_ERROR;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error allocating resource for config->user_module_instance_list");
+    ret = G_ERROR_MEMORY;
+  }
+  return ret;
+}
+
+struct _user_module_instance * get_user_module_instance(struct config_elements * config, const char * name) {
   int i;
-  
-  u_map_init(&params);
-  
-  keys = u_map_enum_keys(request->map_url);
-  for (i=0; keys[i] != NULL; i++) {
-    u_map_put(&params, keys[i], u_map_get(request->map_url, keys[i]));
-  }
-  
-  keys = u_map_enum_keys(request->map_post_body);
-  for (i=0; keys[i] != NULL; i++) {
-    u_map_put(&params, keys[i], u_map_get(request->map_post_body, keys[i]));
-  }
-  
-  keys = u_map_enum_keys(&params);
-  for (i=0; keys[i] != NULL; i++) {
-    value = url_encode((char *)u_map_get(request->map_url, keys[i]));
-    param = msprintf("%s=%s", keys[i], value);
-    o_free(value);
-    if (query == NULL) {
-      query = o_strdup(param);
-    } else {
-      tmp = msprintf("%s&%s", query, param);
-      o_free(query);
-      query = tmp;
+  struct _user_module_instance * cur_instance;
+
+  for (i=0; i<pointer_list_size(config->user_module_instance_list); i++) {
+    cur_instance = (struct _user_module_instance *)pointer_list_get_at(config->user_module_instance_list, i);
+    if (cur_instance != NULL && 0 == o_strcmp(cur_instance->name, name)) {
+      return cur_instance;
     }
-    o_free(param);
   }
-  
-  u_map_clean(&params);
-  
-  return query;
+  return NULL;
 }
 
-/**
- * 
- * Escapes any special chars (RFC 4515) from a string representing a
- * a search filter assertion value.
- * 
- * You must o_free the returned value after use
- *
- */
-char * escape_ldap(const char * input) {
-  char * tmp, * to_return = NULL;
-  size_t len, i;
-  
-  if (input != NULL) {
-    to_return = strdup("");
-    len = strlen(input);
-    for (i=0; i < len && to_return != NULL; i++) {
-      unsigned char c = input[i];
-      if (c == '*') {
-        // escape asterisk
-        tmp = msprintf("%s\\2a", to_return);
-        o_free(to_return);
-        to_return = tmp;
-      } else if (c == '(') {
-        // escape left parenthesis
-        tmp = msprintf("%s\\28", to_return);
-        o_free(to_return);
-        to_return = tmp;
-      } else if (c == ')') {
-        // escape right parenthesis
-        tmp = msprintf("%s\\29", to_return);
-        o_free(to_return);
-        to_return = tmp;
-      } else if (c == '\\') {
-        // escape backslash
-        tmp = msprintf("%s\\5c", to_return);
-        o_free(to_return);
-        to_return = tmp;
-      } else if ((c & 0x80) == 0) {
-        // regular 1-byte UTF-8 char
-        tmp = msprintf("%s%c", to_return, c);
-        o_free(to_return);
-        to_return = tmp;
-      } else if (((c & 0xE0) == 0xC0) && i < (len-2)) { 
-        // higher-order 2-byte UTF-8 chars
-        tmp = msprintf("%s\\%02x\\%02x", to_return, input[i], input[i+1]);
-        o_free(to_return);
-        to_return = tmp;
-      } else if (((c & 0xF0) == 0xE0) && i < (len-3)) { 
-        // higher-order 3-byte UTF-8 chars
-        tmp = msprintf("%s\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2]);
-        o_free(to_return);
-        to_return = tmp;
-      } else if (((c & 0xF8) == 0xF0) && i < (len-4)) { 
-        // higher-order 4-byte UTF-8 chars
-        tmp = msprintf("%s\\%02x\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2], input[i+3]);
-        o_free(to_return);
-        to_return = tmp;
-      }
+struct _user_module * get_user_module_lib(struct config_elements * config, const char * name) {
+  int i;
+  struct _user_module * module;
+
+  for (i=0; i<pointer_list_size(config->user_module_list); i++) {
+    module = (struct _user_module *)pointer_list_get_at(config->user_module_list, i);
+    if (module != NULL && 0 == o_strcmp(module->name, name)) {
+      return module;
     }
   }
-  return to_return;
+  return NULL;
+}
+
+int init_user_auth_scheme_module_list(struct config_elements * config) {
+  int ret = G_OK;
+  struct _user_auth_scheme_module * cur_user_auth_scheme_module = NULL;
+  DIR * modules_directory;
+  struct dirent * in_file;
+  char * file_path;
+  void * file_handle;
+  json_t * j_module;
+  
+  config->user_auth_scheme_module_list = o_malloc(sizeof(struct _pointer_list));
+  if (config->user_auth_scheme_module_list != NULL) {
+    pointer_list_init(config->user_auth_scheme_module_list);
+    // read module_path and load modules
+    if (NULL == (modules_directory = opendir(config->user_auth_scheme_module_path))) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error reading libraries folder %s", config->user_auth_scheme_module_path);
+      ret = G_ERROR;
+    } else {
+      while ((in_file = readdir(modules_directory))) {
+        if (in_file->d_type == DT_REG) {
+          file_path = msprintf("%s/%s", config->user_auth_scheme_module_path, in_file->d_name);
+          
+          if (file_path == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error allocating resources for file_path");
+            ret = G_ERROR_MEMORY;
+          } else {
+            file_handle = dlopen(file_path, RTLD_LAZY);
+            
+            if (file_handle != NULL) {
+              cur_user_auth_scheme_module = o_malloc(sizeof(struct _user_auth_scheme_module));
+              if (cur_user_auth_scheme_module != NULL) {
+                cur_user_auth_scheme_module->name = NULL;
+                cur_user_auth_scheme_module->file_handle = file_handle;
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_load) = dlsym(file_handle, "user_auth_scheme_module_load");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_unload) = dlsym(file_handle, "user_auth_scheme_module_unload");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_init) = dlsym(file_handle, "user_auth_scheme_module_init");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_close) = dlsym(file_handle, "user_auth_scheme_module_close");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_register) = dlsym(file_handle, "user_auth_scheme_module_register");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_register_get) = dlsym(file_handle, "user_auth_scheme_module_register_get");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_validate) = dlsym(file_handle, "user_auth_scheme_module_validate");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_trigger) = dlsym(file_handle, "user_auth_scheme_module_trigger");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_can_use) = dlsym(file_handle, "user_auth_scheme_module_can_use");
+                
+                if (cur_user_auth_scheme_module->user_auth_scheme_module_load != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_unload != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_init != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_close != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_register != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_register_get != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_can_use != NULL) {
+                  j_module = cur_user_auth_scheme_module->user_auth_scheme_module_load(config->config_m);
+                  if (check_result_value(j_module, G_OK)) {
+                    cur_user_auth_scheme_module->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
+                    cur_user_auth_scheme_module->display_name = o_strdup(json_string_value(json_object_get(j_module, "display_name")));
+                    cur_user_auth_scheme_module->description = o_strdup(json_string_value(json_object_get(j_module, "description")));
+                    cur_user_auth_scheme_module->parameters = json_deep_copy(json_object_get(j_module, "parameters"));
+                    if (o_strlen(cur_user_auth_scheme_module->name) && get_user_auth_scheme_module_lib(config, cur_user_auth_scheme_module->name) == NULL) {
+                      if (pointer_list_append(config->user_auth_scheme_module_list, cur_user_auth_scheme_module)) {
+                        y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
+                      } else {
+                        cur_user_auth_scheme_module->user_auth_scheme_module_unload(config->config_m);
+                        dlclose(file_handle);
+                        o_free(cur_user_auth_scheme_module->name);
+                        o_free(cur_user_auth_scheme_module->display_name);
+                        o_free(cur_user_auth_scheme_module->description);
+                        json_decref(cur_user_auth_scheme_module->parameters);
+                        o_free(cur_user_auth_scheme_module);
+                        y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error reallocating resources for user_auth_scheme_module_list");
+                        ret = G_ERROR_MEMORY;
+                      }
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - User auth scheme module with name '%s' already present or name empty", cur_user_auth_scheme_module->name);
+                      cur_user_auth_scheme_module->user_auth_scheme_module_unload(config->config_m);
+                      dlclose(file_handle);
+                      o_free(cur_user_auth_scheme_module->name);
+                      o_free(cur_user_auth_scheme_module->display_name);
+                      o_free(cur_user_auth_scheme_module->description);
+                      json_decref(cur_user_auth_scheme_module->parameters);
+                      o_free(cur_user_auth_scheme_module);
+                      ret = G_ERROR;
+                    }
+                  } else {
+                    dlclose(file_handle);
+                    o_free(cur_user_auth_scheme_module);
+                    y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error user_auth_scheme_module_load for module %s", file_path);
+                    ret = G_ERROR_MEMORY;
+                  }
+                  json_decref(j_module);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error module %s has not all required functions", file_path);
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_load: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_load != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_unload: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_unload != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_init: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_init != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_close: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_close != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_register: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_register != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_register_get: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_register_get != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_validate: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_trigger: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_can_use: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_can_use != NULL?"found":"not found"));
+                  dlclose(file_handle);
+                  o_free(cur_user_auth_scheme_module);
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error allocating resources for cur_user_auth_scheme_module");
+                dlclose(file_handle);
+                ret = G_ERROR_MEMORY;
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error opening module file %s, reason: %s", file_path, dlerror());
+            }
+          }
+          o_free(file_path);
+        }
+      }
+      closedir(modules_directory);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error allocating resources for config->user_auth_scheme_module_list");
+    ret = G_ERROR_MEMORY;
+  }
+  
+  return ret;
+}
+
+int load_user_auth_scheme_module_instance_list(struct config_elements * config) {
+  json_t * j_query, * j_result, * j_instance, * j_parameters;
+  int res, ret, i;
+  size_t index;
+  struct _user_auth_scheme_module_instance * cur_instance;
+  struct _user_auth_scheme_module * module = NULL;
+  
+  config->user_auth_scheme_module_instance_list = o_malloc(sizeof(struct _pointer_list));
+  if (config->user_auth_scheme_module_instance_list != NULL) {
+    pointer_list_init(config->user_auth_scheme_module_instance_list);
+    j_query = json_pack("{sss[sssssss]}",
+                        "table",
+                        GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
+                        "columns",
+                          "guasmi_id",
+                          "guasmi_module AS module",
+                          "guasmi_name AS name",
+                          "guasmi_expiration",
+                          "guasmi_max_use",
+                          "guasmi_allow_user_register",
+                          "guasmi_parameters AS parameters");
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      json_array_foreach(j_result, index, j_instance) {
+        module = NULL;
+        for (i=0; i<pointer_list_size(config->user_auth_scheme_module_list); i++) {
+          module = (struct _user_auth_scheme_module *)pointer_list_get_at(config->user_auth_scheme_module_list, i);
+          if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
+            break;
+          } else {
+            module = NULL;
+          }
+        }
+        if (module != NULL) {
+          cur_instance = o_malloc(sizeof(struct _user_auth_scheme_module_instance));
+          if (cur_instance != NULL) {
+            cur_instance->cls = NULL;
+            cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+            cur_instance->module = module;
+            cur_instance->guasmi_id = json_integer_value(json_object_get(j_instance, "guasmi_id"));
+            cur_instance->guasmi_expiration = json_integer_value(json_object_get(j_instance, "guasmi_expiration"));
+            cur_instance->guasmi_max_use = json_integer_value(json_object_get(j_instance, "guasmi_max_use"));
+            cur_instance->guasmi_allow_user_register = json_integer_value(json_object_get(j_instance, "guasmi_allow_user_register"));
+            if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
+              j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+              if (j_parameters != NULL) {
+                if (module->user_auth_scheme_module_init(config->config_m, j_parameters, cur_instance->name, &cur_instance->cls) == G_OK) {
+                  cur_instance->enabled = 1;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                  cur_instance->enabled = 0;
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error parsing parameters for module %s: '%s'", cur_instance->name, json_string_value(json_object_get(j_instance, "parameters")));
+                o_free(cur_instance->name);
+              }
+              json_decref(j_parameters);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error reallocating resources for user_auth_scheme_module_instance_list");
+              o_free(cur_instance->name);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error allocating resources for cur_instance");
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
+        }
+      }
+      json_decref(j_result);
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error executing j_query");
+      ret = G_ERROR;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error allocating resources for config->user_auth_scheme_module_instance_list");
+    ret = G_ERROR_MEMORY;
+  }
+  return ret;
+}
+
+struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * name) {
+  int i;
+  struct _user_auth_scheme_module_instance * cur_instance;
+
+  for (i=0; i<pointer_list_size(config->user_auth_scheme_module_instance_list); i++) {
+    cur_instance = pointer_list_get_at(config->user_auth_scheme_module_instance_list, i);
+    if (0 == o_strcmp(cur_instance->name, name)) {
+      return cur_instance;
+    }
+  }
+  return NULL;
+}
+
+struct _user_auth_scheme_module * get_user_auth_scheme_module_lib(struct config_elements * config, const char * name) {
+  int i;
+  struct _user_auth_scheme_module * module;
+
+  for (i=0; i<pointer_list_size(config->user_auth_scheme_module_list); i++) {
+    module = (struct _user_auth_scheme_module *)pointer_list_get_at(config->user_auth_scheme_module_list, i);
+    if (module != NULL && 0 == o_strcmp(module->name, name)) {
+      return module;
+    }
+  }
+  return NULL;
+}
+
+int init_client_module_list(struct config_elements * config) {
+  int ret = G_OK;
+  struct _client_module * cur_client_module = NULL;
+  DIR * modules_directory;
+  struct dirent * in_file;
+  char * file_path;
+  void * file_handle;
+  json_t * j_parameters;
+  
+  config->client_module_list = o_malloc(sizeof(struct _pointer_list));
+  if (config->client_module_list != NULL) {
+    pointer_list_init(config->client_module_list);
+    // read module_path and load modules
+    if (NULL == (modules_directory = opendir(config->client_module_path))) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error reading libraries folder %s", config->client_module_path);
+      ret = G_ERROR;
+    } else {
+      while ((in_file = readdir(modules_directory))) {
+        if (in_file->d_type == DT_REG) {
+          file_path = msprintf("%s/%s", config->client_module_path, in_file->d_name);
+          
+          if (file_path == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error allocating resources for file_path");
+            ret = G_ERROR_MEMORY;
+          } else {
+            file_handle = dlopen(file_path, RTLD_LAZY);
+            
+            if (file_handle != NULL) {
+              cur_client_module = o_malloc(sizeof(struct _client_module));
+              if (cur_client_module != NULL) {
+                cur_client_module->name = NULL;
+                cur_client_module->file_handle = file_handle;
+                *(void **) (&cur_client_module->client_module_load) = dlsym(file_handle, "client_module_load");
+                *(void **) (&cur_client_module->client_module_unload) = dlsym(file_handle, "client_module_unload");
+                *(void **) (&cur_client_module->client_module_init) = dlsym(file_handle, "client_module_init");
+                *(void **) (&cur_client_module->client_module_close) = dlsym(file_handle, "client_module_close");
+                *(void **) (&cur_client_module->client_module_count_total) = dlsym(file_handle, "client_module_count_total");
+                *(void **) (&cur_client_module->client_module_get_list) = dlsym(file_handle, "client_module_get_list");
+                *(void **) (&cur_client_module->client_module_get) = dlsym(file_handle, "client_module_get");
+                *(void **) (&cur_client_module->client_module_is_valid) = dlsym(file_handle, "client_module_is_valid");
+                *(void **) (&cur_client_module->client_module_add) = dlsym(file_handle, "client_module_add");
+                *(void **) (&cur_client_module->client_module_update) = dlsym(file_handle, "client_module_update");
+                *(void **) (&cur_client_module->client_module_delete) = dlsym(file_handle, "client_module_delete");
+                *(void **) (&cur_client_module->client_module_check_password) = dlsym(file_handle, "client_module_check_password");
+                
+                if (cur_client_module->client_module_load != NULL &&
+                    cur_client_module->client_module_unload != NULL &&
+                    cur_client_module->client_module_init != NULL &&
+                    cur_client_module->client_module_close != NULL &&
+                    cur_client_module->client_module_count_total != NULL &&
+                    cur_client_module->client_module_get_list != NULL &&
+                    cur_client_module->client_module_get != NULL &&
+                    cur_client_module->client_module_is_valid != NULL &&
+                    cur_client_module->client_module_add != NULL &&
+                    cur_client_module->client_module_update != NULL &&
+                    cur_client_module->client_module_delete != NULL &&
+                    cur_client_module->client_module_check_password != NULL) {
+                  j_parameters = cur_client_module->client_module_load(config->config_m);
+                  if (check_result_value(j_parameters, G_OK)) {
+                    cur_client_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
+                    cur_client_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
+                    cur_client_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
+                    cur_client_module->parameters = json_deep_copy(json_object_get(j_parameters, "parameters"));
+                    if (o_strlen(cur_client_module->name) && get_client_module_lib(config, cur_client_module->name) == NULL) {
+                      if (pointer_list_append(config->client_module_list, cur_client_module)) {
+                        y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_client_module->name);
+                      } else {
+                        cur_client_module->client_module_unload(config->config_m);
+                        dlclose(file_handle);
+                        o_free(cur_client_module->name);
+                        o_free(cur_client_module->display_name);
+                        o_free(cur_client_module->description);
+                        json_decref(cur_client_module->parameters);
+                        o_free(cur_client_module);
+                        y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error reallocating resources for client_module_list");
+                        ret = G_ERROR_MEMORY;
+                      }
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Client module with name '%s' already present or name empty", cur_client_module->name);
+                      cur_client_module->client_module_unload(config->config_m);
+                      dlclose(file_handle);
+                      o_free(cur_client_module->name);
+                      o_free(cur_client_module->display_name);
+                      o_free(cur_client_module->description);
+                      json_decref(cur_client_module->parameters);
+                      o_free(cur_client_module);
+                      ret = G_ERROR;
+                    }
+                  } else {
+                    dlclose(file_handle);
+                    o_free(cur_client_module);
+                    y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error client_module_load for module %s", file_path);
+                    ret = G_ERROR_MEMORY;
+                  }
+                  json_decref(j_parameters);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error module %s has not all required functions", file_path);
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_load: %s", (cur_client_module->client_module_load != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_unload: %s", (cur_client_module->client_module_unload != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_init: %s", (cur_client_module->client_module_init != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_close: %s", (cur_client_module->client_module_close != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_count_total: %s", (cur_client_module->client_module_count_total != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_get_list: %s", (cur_client_module->client_module_get_list != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_get: %s", (cur_client_module->client_module_get != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_is_valid: %s", (cur_client_module->client_module_is_valid != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_add: %s", (cur_client_module->client_module_add != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_update: %s", (cur_client_module->client_module_update != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_delete: %s", (cur_client_module->client_module_delete != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - client_module_check_password: %s", (cur_client_module->client_module_check_password != NULL?"found":"not found"));
+                  dlclose(file_handle);
+                  o_free(cur_client_module);
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error allocating resources for cur_client_module");
+                dlclose(file_handle);
+                ret = G_ERROR_MEMORY;
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error opening module file %s, reason: %s", file_path, dlerror());
+            }
+          }
+          o_free(file_path);
+        }
+      }
+      closedir(modules_directory);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error allocating resources for config->client_module_list");
+    ret = G_ERROR_MEMORY;
+  }
+  
+  return ret;
+}
+
+int load_client_module_instance_list(struct config_elements * config) {
+  json_t * j_query, * j_result, * j_instance, * j_parameters;
+  int res, ret, i;
+  size_t index;
+  struct _client_module_instance * cur_instance;
+  struct _client_module * module = NULL;
+  
+  config->client_module_instance_list = o_malloc(sizeof(struct _pointer_list));
+  if (config->client_module_instance_list != NULL) {
+    pointer_list_init(config->client_module_instance_list);
+    j_query = json_pack("{sss[sssss]ss}",
+                        "table",
+                        GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
+                        "columns",
+                          "gcmi_module AS module",
+                          "gcmi_name AS name",
+                          "gcmi_order AS order_by",
+                          "gcmi_parameters AS parameters",
+                          "gcmi_readonly AS readonly",
+                        "order_by",
+                        "gcmi_order");
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      json_array_foreach(j_result, index, j_instance) {
+        module = NULL;
+        for (i=0; i<pointer_list_size(config->client_module_list); i++) {
+          module = pointer_list_get_at(config->client_module_list, i);
+          if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
+            break;
+          } else {
+            module = NULL;
+          }
+        }
+        if (module != NULL) {
+          cur_instance = o_malloc(sizeof(struct _client_module_instance));
+          if (cur_instance != NULL) {
+            cur_instance->cls = NULL;
+            cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+            cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
+            cur_instance->module = module;
+            if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
+              j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+              if (j_parameters != NULL) {
+                if (module->client_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls) == G_OK) {
+                  cur_instance->enabled = 1;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                  cur_instance->enabled = 0;
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error parsing module parameters %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
+                cur_instance->enabled = 0;
+              }
+              json_decref(j_parameters);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error reallocating resources for client_module_instance_list");
+              o_free(cur_instance->name);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error allocating resources for cur_instance");
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
+        }
+      }
+      json_decref(j_result);
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error executing j_query");
+      ret = G_ERROR;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error allocating resources for config->client_module_instance_list");
+    ret = G_ERROR;
+  }
+  return ret;
+}
+
+struct _client_module_instance * get_client_module_instance(struct config_elements * config, const char * name) {
+  int i;
+  struct _client_module_instance * cur_instance;
+
+  for (i=0; i<pointer_list_size(config->client_module_instance_list); i++) {
+    cur_instance = pointer_list_get_at(config->client_module_instance_list, i);
+    if (0 == o_strcmp(cur_instance->name, name)) {
+      return cur_instance;
+    }
+  }
+  return NULL;
+}
+
+struct _client_module * get_client_module_lib(struct config_elements * config, const char * name) {
+  int i;
+  struct _client_module * module;
+
+  for (i=0; i<pointer_list_size(config->client_module_list); i++) {
+    module = (struct _client_module *)pointer_list_get_at(config->client_module_list, i);
+    if (module != NULL && 0 == o_strcmp(module->name, name)) {
+      return module;
+    }
+  }
+  return NULL;
+}
+
+int init_plugin_module_list(struct config_elements * config) {
+  int ret = G_OK;
+  struct _plugin_module * cur_plugin_module = NULL;
+  DIR * modules_directory;
+  struct dirent * in_file;
+  char * file_path;
+  void * file_handle;
+  json_t * j_result;
+  
+  config->plugin_module_list = o_malloc(sizeof(struct _pointer_list));
+  if (config->plugin_module_list != NULL) {
+    pointer_list_init(config->plugin_module_list);
+    // read module_path and load modules
+    if (NULL == (modules_directory = opendir(config->plugin_module_path))) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error reading libraries folder %s", config->plugin_module_path);
+      ret = G_ERROR;
+    } else {
+      while ((in_file = readdir(modules_directory))) {
+        if (in_file->d_type == DT_REG) {
+          file_path = msprintf("%s/%s", config->plugin_module_path, in_file->d_name);
+          
+          if (file_path == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error allocating resources for file_path");
+            ret = G_ERROR_MEMORY;
+          } else {
+            file_handle = dlopen(file_path, RTLD_LAZY);
+            
+            if (file_handle != NULL) {
+              cur_plugin_module = o_malloc(sizeof(struct _client_module));
+              if (cur_plugin_module != NULL) {
+                cur_plugin_module->name = NULL;
+                cur_plugin_module->file_handle = file_handle;
+                *(void **) (&cur_plugin_module->plugin_module_load) = dlsym(file_handle, "plugin_module_load");
+                *(void **) (&cur_plugin_module->plugin_module_unload) = dlsym(file_handle, "plugin_module_unload");
+                *(void **) (&cur_plugin_module->plugin_module_init) = dlsym(file_handle, "plugin_module_init");
+                *(void **) (&cur_plugin_module->plugin_module_close) = dlsym(file_handle, "plugin_module_close");
+                
+                if (cur_plugin_module->plugin_module_load != NULL &&
+                    cur_plugin_module->plugin_module_unload != NULL &&
+                    cur_plugin_module->plugin_module_init != NULL &&
+                    cur_plugin_module->plugin_module_close != NULL) {
+                  j_result = cur_plugin_module->plugin_module_load(config->config_p);
+                  if (check_result_value(j_result, G_OK)) {
+                    cur_plugin_module->name = o_strdup(json_string_value(json_object_get(j_result, "name")));
+                    cur_plugin_module->display_name = o_strdup(json_string_value(json_object_get(j_result, "display_name")));
+                    cur_plugin_module->description = o_strdup(json_string_value(json_object_get(j_result, "description")));
+                    cur_plugin_module->parameters = json_deep_copy(json_object_get(j_result, "parameters"));
+                    if (o_strlen(cur_plugin_module->name) && get_plugin_module_lib(config, cur_plugin_module->name) == NULL) {
+                      if (pointer_list_append(config->plugin_module_list, cur_plugin_module)) {
+                        y_log_message(Y_LOG_LEVEL_INFO, "Loading plugin module %s - %s", file_path, cur_plugin_module->name);
+                      } else {
+                        cur_plugin_module->plugin_module_unload(config->config_p);
+                        dlclose(file_handle);
+                        o_free(cur_plugin_module->name);
+                        o_free(cur_plugin_module->display_name);
+                        o_free(cur_plugin_module->description);
+                        json_decref(cur_plugin_module->parameters);
+                        o_free(cur_plugin_module);
+                        y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error reallocating resources for client_module_list");
+                        ret = G_ERROR_MEMORY;
+                      }
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Plugin module with name '%s' already present or name empty", cur_plugin_module->name);
+                      cur_plugin_module->plugin_module_unload(config->config_p);
+                      dlclose(file_handle);
+                      o_free(cur_plugin_module->name);
+                      o_free(cur_plugin_module->display_name);
+                      o_free(cur_plugin_module->description);
+                      json_decref(cur_plugin_module->parameters);
+                      o_free(cur_plugin_module);
+                      ret = G_ERROR;
+                    }
+                  } else {
+                    dlclose(file_handle);
+                    o_free(cur_plugin_module->name);
+                    o_free(cur_plugin_module->display_name);
+                    o_free(cur_plugin_module->description);
+                    json_decref(cur_plugin_module->parameters);
+                    o_free(cur_plugin_module);
+                    y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error client_module_init for module %s", file_path);
+                    ret = G_ERROR_MEMORY;
+                  }
+                  json_decref(j_result);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error module %s has not all required functions", file_path);
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - plugin_module_load: %s", (cur_plugin_module->plugin_module_load != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - plugin_module_unload: %s", (cur_plugin_module->plugin_module_unload != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - plugin_module_init: %s", (cur_plugin_module->plugin_module_init != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - plugin_module_close: %s", (cur_plugin_module->plugin_module_close != NULL?"found":"not found"));
+                  dlclose(file_handle);
+                  o_free(cur_plugin_module);
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error allocating resources for cur_client_module");
+                dlclose(file_handle);
+                ret = G_ERROR_MEMORY;
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error opening module file %s, reason: %s", file_path, dlerror());
+            }
+          }
+          o_free(file_path);
+        }
+      }
+      closedir(modules_directory);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error allocating resources for config->client_module_list");
+    ret = G_ERROR_MEMORY;
+  }
+  
+  return ret;
+}
+
+int load_plugin_module_instance_list(struct config_elements * config) {
+  json_t * j_query, * j_result, * j_instance, * j_parameters;
+  int res, ret, i;
+  size_t index;
+  struct _plugin_module_instance * cur_instance;
+  struct _plugin_module * module = NULL;
+  
+  config->plugin_module_instance_list = o_malloc(sizeof(struct _pointer_list));
+  if (config->plugin_module_instance_list != NULL) {
+    pointer_list_init(config->plugin_module_instance_list);
+    j_query = json_pack("{sss[sss]}",
+                        "table",
+                        GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
+                        "columns",
+                          "gpmi_module AS module",
+                          "gpmi_name AS name",
+                          "gpmi_parameters AS parameters");
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      json_array_foreach(j_result, index, j_instance) {
+        module = NULL;
+        for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {
+          module = pointer_list_get_at(config->plugin_module_list, i);
+          if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
+            break;
+          } else {
+            module = NULL;
+          }
+        }
+        if (module != NULL) {
+          cur_instance = o_malloc(sizeof(struct _plugin_module_instance));
+          if (cur_instance != NULL) {
+            cur_instance->cls = NULL;
+            cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+            cur_instance->module = module;
+            if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
+              j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+              if (j_parameters != NULL) {
+                if (module->plugin_module_init(config->config_p, cur_instance->name, j_parameters, &cur_instance->cls) == G_OK) {
+                  cur_instance->enabled = 1;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                  cur_instance->enabled = 0;
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error parsing parameters for module %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
+                cur_instance->enabled = 0;
+              }
+              json_decref(j_parameters);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error reallocating resources for client_module_instance_list");
+              o_free(cur_instance->name);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error allocating resources for cur_instance");
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
+        }
+      }
+      json_decref(j_result);
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error executing j_query");
+      ret = G_ERROR;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error allocating resources for config->client_module_instance_list");
+    ret = G_ERROR;
+  }
+  return ret;
+}
+
+struct _plugin_module_instance * get_plugin_module_instance(struct config_elements * config, const char * name) {
+  int i;
+  struct _plugin_module_instance * cur_instance;
+
+  for (i=0; i<pointer_list_size(config->plugin_module_instance_list); i++) {
+    cur_instance = (struct _plugin_module_instance *)pointer_list_get_at(config->plugin_module_instance_list, i);
+    if (cur_instance != NULL && 0 == o_strcmp(cur_instance->name, name)) {
+      return cur_instance;
+    }
+  }
+  return NULL;
+}
+
+struct _plugin_module * get_plugin_module_lib(struct config_elements * config, const char * name) {
+  int i;
+  struct _plugin_module * module;
+
+  for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {
+    module = (struct _plugin_module *)pointer_list_get_at(config->plugin_module_list, i);
+    if (module != NULL && 0 == o_strcmp(module->name, name)) {
+      return module;
+    }
+  }
+  return NULL;
 }
