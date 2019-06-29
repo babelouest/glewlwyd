@@ -26,7 +26,7 @@ START_TEST(test_glwd_admin_authorization_list)
   json_t * j_authorization_code = json_string("authorization_code");
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_authorization_code, NULL, NULL);
-  free(url);
+  o_free(url);
   json_decref(j_authorization_code);
   ck_assert_int_eq(res, 1);
 }
@@ -38,7 +38,7 @@ START_TEST(test_glwd_admin_authorization_authorization_code)
   json_t * j_authorization_code = json_string("authorization_code");
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_authorization_code, NULL, NULL);
-  free(url);
+  o_free(url);
   json_decref(j_authorization_code);
   ck_assert_int_eq(res, 1);
 }
@@ -49,7 +49,7 @@ START_TEST(test_glwd_admin_authorization_not_found)
   char * url = msprintf("%s/authorization/not_found", SERVER_URI);
   
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
@@ -75,7 +75,7 @@ START_TEST(test_glwd_admin_authorization_update_authorization_code_ok)
   json_decref(json_body);
   ck_assert_int_eq(res, 1);
   
-  free(url);
+  o_free(url);
 }
 END_TEST
 
@@ -90,7 +90,7 @@ START_TEST(test_glwd_admin_authorization_update_authorization_code_invalid)
   json_decref(json_body);
   ck_assert_int_eq(res, 1);
   
-  free(url);
+  o_free(url);
 }
 END_TEST
 
@@ -134,14 +134,16 @@ int main(int argc, char *argv[])
   u_map_put(auth_req.map_post_body, "password", PASSWORD);
   u_map_put(auth_req.map_post_body, "scope", SCOPE_LIST);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
-  if (res == U_OK) {
+  if (res == U_OK && auth_resp.status == 200) {
     json_t * json_body = ulfius_get_json_body_response(&auth_resp, NULL);
     char * bearer_token = msprintf("Bearer %s", (json_string_value(json_object_get(json_body, "access_token"))));
     y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USERNAME);
     u_map_put(user_req.map_header, "Authorization", bearer_token);
-    free(bearer_token);
+    o_free(bearer_token);
     json_decref(json_body);
     do_test = 1;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication");
   }
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);

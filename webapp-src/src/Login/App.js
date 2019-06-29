@@ -1,0 +1,258 @@
+import React, { Component } from 'react';
+
+import apiManager from '../lib/APIManager';
+import messageDispatcher from '../lib/MessageDispatcher';
+import Notification from '../lib/Notification';
+import Buttons from './Buttons';
+import Body from './Body';
+import PasswordForm from './PasswordForm';
+import NoPasswordForm from './NoPasswordForm';
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      newUser: false,
+      userList: [],
+      currentUser: false,
+      config: props.config,
+      loaded: false,
+      lang: i18next.language,
+      scope: [],
+      scheme: props.config.params.scheme,
+      schemeListRequired: false,
+      passwordRequired: false,
+      client: false,
+      showGrant: true,
+      showGrantAsterisk: false,
+      canContinue: false
+    };
+
+    this.initProfile = this.initProfile.bind(this);
+    this.checkClientScope = this.checkClientScope.bind(this);
+    this.checkScopeScheme = this.checkScopeScheme.bind(this);
+    this.changeLang = this.changeLang.bind(this);
+    this.parseSchemes = this.parseSchemes.bind(this);
+
+    if (this.state.config) {
+      this.initProfile();
+    }
+    
+    messageDispatcher.subscribe('App', (message) => {
+      if (message.type === "InitProfile") {
+        this.initProfile();
+      } else if (message.type === "NewUser") {
+        this.setState({newUser: true, currentUser: false, scheme: this.state.config.params.scheme}, () => {
+        });
+      } else if (message.type === "ToggleGrant") {
+        this.setState({showGrant: !this.state.showGrant});
+      } else if (message.type === "newUserScheme") {
+        this.setState({scheme: message.scheme});
+      }
+    });
+  }
+
+  initProfile() {
+    apiManager.glewlwydRequest("/profile_list")
+    .then((res) => {
+      var newState = {};
+      if (res.length) {
+        newState.currentUser = res[0];
+      }
+      newState.newUser = false;
+      newState.userList = res;
+      newState.loaded = true;
+      this.setState(newState, () => {
+        if (this.state.config.params.client_id && this.state.config.params.scope) {
+          this.checkClientScope(this.state.config.params.client_id, this.state.config.params.scope);
+        } else if (this.state.config.params.scope) {
+          this.checkScopeScheme(this.state.config.params.scope);
+        } else {
+          this.setState({showGrant: false, showGrantAsterisk: false});
+        }
+      });
+    })
+    .fail((error) => {
+      if (error.status != 401) {
+        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("error-api-connect")});
+      }
+      this.setState({newUser: true, currentUser: false, userList: [], loaded: true});
+    });
+  }
+
+  checkClientScope(clientId, scopeList) {
+    apiManager.glewlwydRequest("/auth/grant/" + encodeURI(clientId) + "/" + encodeURI(scopeList))
+    .then((res) => {
+      var scopeGranted = [];
+      var scopeGrantedDetails = {};
+      var showGrant = true;
+      var showGrantAsterisk = false;
+      res.scope.forEach((scope) => {
+        if (scope.granted) {
+          showGrant = false;
+          scopeGranted.push(scope.name);
+          scopeGrantedDetails[scope.name] = scope;
+        } else {
+          showGrantAsterisk = true;
+        }
+      });
+      if (scopeGranted.length) {
+        apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURI(scopeGranted.join(" ")))
+        .then((schemeRes) => {
+          this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk}, () => {
+            this.parseSchemes();
+          });
+        })
+        .fail((error) => {
+          messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
+        });
+      } else {
+        this.setState({client: res.client, scope: res.scope, showGrant: true, showGrantAsterisk: true});
+      }
+    })
+    .fail((error) => {
+      if (error.status === 404) {
+        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-unavailable")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-grant-api")});
+      }
+    });
+  }
+  
+  checkScopeScheme(scopeList) {
+    apiManager.glewlwydRequest("/auth/scheme/?scope=" + scopeList)
+    .then((schemeRes) => {
+      this.setState({scheme: schemeRes, showGrant: false, showGrantAsterisk: false}, () => {
+        this.parseSchemes();
+      });
+    })
+    .fail((error) => {
+      if (error.status === 404) {
+        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-unavailable")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
+      }
+    });
+  }
+
+  parseSchemes() {
+    var canContinue = true;
+    var passwordRequired = false;
+    var schemeListRequired = false;
+    var scheme = false;
+    for (var scopeName in this.state.scheme) {
+      if (canContinue) {
+        var scope = this.state.scheme[scopeName];
+        if (scope.available && scope.password_required && !scope.password_authenticated) {
+          canContinue = false;
+          passwordRequired = true;
+          schemeListRequired = false;
+          scheme = false;
+          break;
+        } else if (!schemeListRequired && canContinue) {
+          for (var groupName in scope.schemes) {
+            var group = scope.schemes[groupName];
+            var groupAuthenticated = false;
+            schemeListRequired = group;
+            scheme = group[0];
+            group.forEach((curScheme) => {
+              if (curScheme.scheme_authenticated) {
+                groupAuthenticated = true;
+                schemeListRequired = false;
+                scheme = false;
+              }
+            });
+            if (!groupAuthenticated) {
+              canContinue = false;
+              break;
+            }
+          }
+        }
+      }
+    }
+    this.setState({canContinue: canContinue, passwordRequired: passwordRequired, schemeListRequired: schemeListRequired, scheme: scheme});
+  }
+  
+  changeLang(e, lang) {
+    i18next.changeLanguage(lang)
+    .then(() => {
+      this.setState({lang: lang});
+    });
+  }
+
+	render() {
+    if (this.state.config) {
+      var body = "";
+      if (this.state.loaded) {
+        if (this.state.newUser || this.state.passwordRequired) {
+          console.log(this.state.scheme);
+          if (!this.state.scheme) {
+            body = <PasswordForm config={this.state.config} currentUser={this.state.currentUser} callbackInitProfile={this.initProfile}/>;
+          } else {
+            body = <NoPasswordForm config={this.state.config} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
+          }
+        } else {
+          body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} showGrant={this.state.showGrant}/>;
+        }
+      }
+      var langList = [];
+      ["en","fr"].forEach((lang, i) => {
+        if (lang === i18next.language) {
+          langList.push(<a className="dropdown-item active" href="#" key={i}>{lang}</a>);
+        } else {
+          langList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeLang(e, lang)} key={i}>{lang}</a>);
+        }
+      });
+      return (
+        <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
+          <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
+            <div className="card-header">
+              <div className="float-right">
+                <div className="dropdown">
+                  <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i className="fas fa-globe-africa"></i>
+                  </button>
+                  <div className="dropdown-menu" aria-labelledby="dropdownLang">
+                    {langList}
+                  </div>
+                </div>
+              </div>
+              <h2>{i18next.t("glewlwyd-sso-title")}</h2>
+            </div>
+            <div className="card-body">
+              {body}
+            </div>
+            <div className="card-footer">
+              <Buttons config={this.state.config} 
+                       currentUser={this.state.currentUser} 
+                       userList={this.state.userList} 
+                       showGrant={this.state.showGrant} 
+                       showGrantAsterisk={this.state.showGrantAsterisk} 
+                       newUser={this.state.newUser} 
+                       newUserScheme={this.state.scheme} 
+                       canContinue={this.state.canContinue} 
+                       schemeListRequired={this.state.schemeListRequired} />
+            </div>
+          </div>
+          <Notification/>
+        </div>
+      );
+    } else {
+      return (
+        <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
+          <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
+            <div className="card-header">
+              <h4>
+                <span className="badge badge-danger">
+                  {i18next.t("error-api-connect")}
+                </span>
+              </h4>
+            </div>
+          </div>
+        </div>
+      );
+    }
+	}
+}
+
+export default App;

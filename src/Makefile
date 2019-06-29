@@ -1,9 +1,9 @@
 #
-# Glewlwyd OAuth2 Authorization Server
+# Glewlwyd SSO Server
 #
 # Makefile used to build the software
 #
-# Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
+# Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -20,27 +20,42 @@
 #
 
 CC=gcc
-#CC=clang
-CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
-LIBS=-lc -lulfius -lyder -ljansson -lorcania -lhoel -ljwt -lconfig -lldap -llber -luuid -lgnutls -lcrypt
-OBJECTS=glewlwyd.o authorization.o oauth.o webservice.o token.o user.o client.o admin.o scope.o resource.o password.o
+CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS) $(COOKIEFLAG)
+LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius -lhoel -lgnutls -lconfig -ljwt -lnettle -lhogweed
+OBJECTS=glewlwyd.o misc.o static_file_callback.o webservice.o session.o user.o scope.o plugin.o client.o module.o
 PREFIX=/usr/local
-CONFIG_FILE=../glewlwyd.conf
+CONFIG_FILE=../glewlwyd2.conf
+
+ifdef INSECURE_COOKIE
+COOKIEFLAG=-DG_INSECURE_COOKIE
+endif
 
 all: release
 
 clean:
 	rm -f *.o glewlwyd valgrind.txt
+	cd user && $(MAKE) clean
+	cd client && $(MAKE) clean
+	cd scheme && $(MAKE) clean
+	cd plugin && $(MAKE) clean
 
-debug: ADDITIONALFLAGS=-DDEBUG -g -O0
+debug: ADDITIONALFLAGS=-Wunreachable-code -DDEBUG -g -O0
 
 debug: glewlwyd
+	cd user && $(MAKE) debug
+	cd client && $(MAKE) debug
+	cd scheme && $(MAKE) debug
+	cd plugin && $(MAKE) debug
 
 release: ADDITIONALFLAGS=-O3
 
 release: glewlwyd
+	cd user && $(MAKE)
+	cd client && $(MAKE)
+	cd scheme && $(MAKE)
+	cd plugin && $(MAKE)
 
-%.o: %.c glewlwyd.h
+%.o: %.c glewlwyd.h glewlwyd-common.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
 glewlwyd: $(OBJECTS)
@@ -53,4 +68,8 @@ test-debug: debug
 	./glewlwyd --config-file=$(CONFIG_FILE)
 
 install: glewlwyd
-	install -f glewlwyd $(PREFIX)/bin
+	install glewlwyd $(PREFIX)/bin
+	cd user && $(MAKE) install
+	cd client && $(MAKE) install
+	cd scheme && $(MAKE) install
+	cd plugin && $(MAKE) install

@@ -15,19 +15,19 @@
 
 #define SERVER_URI "http://localhost:4593/api"
 #define USERNAME "user1"
-#define PASSWORD "MyUser1Password!"
+#define PASSWORD "password"
 #define SCOPE_LIST "scope1 scope2"
 #define CLIENT "client3_id"
-#define CLIENT_PASSWORD "client3_password"
-#define REDIRECT_URI_ENCODED "..%%2fapp%%2ftest-token.html%%3fparam%%3dclient3_cb"
-#define REDIRECT_URI "../app/test-token.html?param=client3_cb"
+#define CLIENT_PASSWORD "password"
+#define REDIRECT_URI "../../test-oauth2.html?param=client3"
+#define REDIRECT_URI_ENCODED "..%2f..%2ftest-oauth2.html%3fparam%3dclient3"
 
 struct _u_request user_req;
 char * code;
 
-START_TEST(test_glwd_code_code_invalid)
+START_TEST(test_oauth2_code_code_invalid)
 {
-  char * url = msprintf("%s/token/", SERVER_URI);
+  char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
   u_map_put(&body, "grant_type", "authorization_code");
@@ -35,18 +35,18 @@ START_TEST(test_glwd_code_code_invalid)
   u_map_put(&body, "redirect_uri", REDIRECT_URI);
   u_map_put(&body, "code", "invalid");
   
-  free(user_req.http_verb);
+  o_free(user_req.http_verb);
   user_req.http_verb = NULL;
   int res = run_simple_test(&user_req, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
 
-START_TEST(test_glwd_code_client_invalid)
+START_TEST(test_oauth2_code_client_invalid)
 {
-  char * url = msprintf("%s/token/", SERVER_URI);
+  char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
   u_map_put(&body, "grant_type", "authorization_code");
@@ -54,18 +54,18 @@ START_TEST(test_glwd_code_client_invalid)
   u_map_put(&body, "redirect_uri", REDIRECT_URI);
   u_map_put(&body, "code", code);
   
-  free(user_req.http_verb);
+  o_free(user_req.http_verb);
   user_req.http_verb = NULL;
   int res = run_simple_test(&user_req, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 403, NULL, "unauthorized_client", NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
 
-START_TEST(test_glwd_code_redirect_uri_invalid)
+START_TEST(test_oauth2_code_redirect_uri_invalid)
 {
-  char * url = msprintf("%s/token/", SERVER_URI);
+  char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
   u_map_put(&body, "grant_type", "authorization_code");
@@ -73,18 +73,18 @@ START_TEST(test_glwd_code_redirect_uri_invalid)
   u_map_put(&body, "redirect_uri", "invalid");
   u_map_put(&body, "code", code);
   
-  free(user_req.http_verb);
+  o_free(user_req.http_verb);
   user_req.http_verb = NULL;
   int res = run_simple_test(&user_req, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
 
-START_TEST(test_glwd_code_ok)
+START_TEST(test_oauth2_code_ok)
 {
-  char * url = msprintf("%s/token/", SERVER_URI);
+  char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
   u_map_init(&body);
   u_map_put(&body, "grant_type", "authorization_code");
@@ -92,10 +92,10 @@ START_TEST(test_glwd_code_ok)
   u_map_put(&body, "redirect_uri", REDIRECT_URI);
   u_map_put(&body, "code", code);
   
-  free(user_req.http_verb);
+  o_free(user_req.http_verb);
   user_req.http_verb = NULL;
   int res = run_simple_test(&user_req, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 200, NULL, "refresh_token", NULL);
-  free(url);
+  o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
 }
@@ -107,11 +107,11 @@ static Suite *glewlwyd_suite(void)
   TCase *tc_core;
 
   s = suite_create("Glewlwyd code client confidential");
-  tc_core = tcase_create("test_glwd_code");
-  tcase_add_test(tc_core, test_glwd_code_code_invalid);
-  tcase_add_test(tc_core, test_glwd_code_client_invalid);
-  tcase_add_test(tc_core, test_glwd_code_redirect_uri_invalid);
-  tcase_add_test(tc_core, test_glwd_code_ok);
+  tc_core = tcase_create("test_oauth2_code");
+  tcase_add_test(tc_core, test_oauth2_code_code_invalid);
+  tcase_add_test(tc_core, test_oauth2_code_client_invalid);
+  tcase_add_test(tc_core, test_oauth2_code_redirect_uri_invalid);
+  tcase_add_test(tc_core, test_oauth2_code_ok);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
@@ -123,9 +123,10 @@ int main(int argc, char *argv[])
   int number_failed = 0;
   Suite *s;
   SRunner *sr;
-  struct _u_request auth_req, scope_req;
-  struct _u_response auth_resp, code_resp;
-  int res, do_test = 0;
+  struct _u_request auth_req, scope_req, register_req;
+  struct _u_response auth_resp, scope_resp, code_resp;
+  json_t * j_body, * j_register;
+  int res, do_test = 0, i;
   char * url;
   
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
@@ -134,54 +135,86 @@ int main(int argc, char *argv[])
   ulfius_init_request(&auth_req);
   ulfius_init_request(&user_req);
   ulfius_init_request(&scope_req);
+  ulfius_init_request(&register_req);
+  ulfius_init_response(&scope_resp);
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
-  auth_req.http_url = msprintf("%s/auth/user", SERVER_URI);
-  u_map_put(auth_req.map_post_body, "username", USERNAME);
-  u_map_put(auth_req.map_post_body, "password", PASSWORD);
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{ssss}", "username", USERNAME, "password", PASSWORD);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
-  if (res == U_OK) {
-    y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USERNAME);
-    int i;
+  if (res == U_OK && auth_resp.status == 200) {
     for (i=0; i<auth_resp.nb_cookies; i++) {
       char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
       u_map_put(user_req.map_header, "Cookie", cookie);
+      u_map_put(auth_req.map_header, "Cookie", cookie);
       u_map_put(scope_req.map_header, "Cookie", cookie);
-      free(cookie);
+      u_map_put(register_req.map_header, "Cookie", cookie);
+      o_free(cookie);
     }
     ulfius_clean_response(&auth_resp);
-    
     ulfius_init_response(&auth_resp);
-    scope_req.http_verb = strdup("POST");
-    scope_req.http_url = msprintf("%s/auth/grant", SERVER_URI);
-    u_map_put(scope_req.map_post_body, "scope", SCOPE_LIST);
-    u_map_put(scope_req.map_post_body, "client_id", CLIENT);
-    scope_req.auth_basic_user = strdup(CLIENT);
-    scope_req.auth_basic_password = strdup(CLIENT_PASSWORD);
-    if (ulfius_send_http_request(&scope_req, &auth_resp) != U_OK || auth_resp.status != 200) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "Grant scope %s for %s error %d", CLIENT, SCOPE_LIST, auth_resp.status);
-    } else {
-      ulfius_init_response(&code_resp);
-      user_req.http_verb = strdup("GET");
-      user_req.http_url = msprintf(SERVER_URI "/auth?response_type=code&login_validated=true&state=xyzabcd&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI_ENCODED "&scope=" SCOPE_LIST);
-      user_req.auth_basic_user = strdup(CLIENT);
-      user_req.auth_basic_password = strdup(CLIENT_PASSWORD);
-      if (ulfius_send_http_request(&user_req, &code_resp) != U_OK) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "Get code error");
-      } else if (strstr(u_map_get(code_resp.map_header, "Location"), "code=") != NULL) {
-        code = o_strdup(strstr(u_map_get(code_resp.map_header, "Location"), "code=")+strlen("code="));
-        if (strchr(code, '&') != NULL) {
-          *strchr(code, '&') = '\0';
+    
+    j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "register", json_true());
+    run_simple_test(&register_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+    
+    j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "code", "42");
+    ulfius_set_json_body_request(&auth_req, j_body);
+    json_decref(j_body);
+    res = ulfius_send_http_request(&auth_req, &auth_resp);
+    if (res == U_OK && auth_resp.status == 200) {
+      
+      j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "register", json_true());
+      run_simple_test(&register_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+      json_decref(j_register);
+
+      ulfius_clean_response(&auth_resp);
+      ulfius_init_response(&auth_resp);
+      j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "code", "95");
+      ulfius_set_json_body_request(&auth_req, j_body);
+      json_decref(j_body);
+      res = ulfius_send_http_request(&auth_req, &auth_resp);
+      if (res == U_OK && auth_resp.status == 200) {
+        y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USERNAME);
+    
+        scope_req.http_verb = strdup("PUT");
+        scope_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
+        j_body = json_pack("{ss}", "scope", SCOPE_LIST);
+        ulfius_set_json_body_request(&scope_req, j_body);
+        json_decref(j_body);
+        if (ulfius_send_http_request(&scope_req, &scope_resp) != U_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
+        } else {
+          ulfius_init_response(&code_resp);
+          user_req.http_verb = strdup("GET");
+          user_req.http_url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&scope=%s", SERVER_URI, CLIENT, REDIRECT_URI_ENCODED, SCOPE_LIST);
+          if (ulfius_send_http_request(&user_req, &code_resp) != U_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Get code error");
+          } else if (o_strstr(u_map_get(code_resp.map_header, "Location"), "code=") != NULL) {
+            code = o_strdup(strstr(u_map_get(code_resp.map_header, "Location"), "code=")+strlen("code="));
+            if (strchr(code, '&') != NULL) {
+              *strchr(code, '&') = '\0';
+            }
+            do_test = 1;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error, no code given");
+          }
+          ulfius_clean_response(&code_resp);
         }
-        do_test = 1;
+        ulfius_clean_response(&scope_resp);
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "Error, no code given");
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error auth scheme 95");
       }
-      ulfius_clean_response(&code_resp);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error auth scheme 42");
     }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error auth password");
   }
   ulfius_clean_response(&auth_resp);
-  
+
   if (do_test) {
     s = glewlwyd_suite();
     sr = srunner_create(s);
@@ -189,21 +222,34 @@ int main(int argc, char *argv[])
     srunner_run_all(sr, CK_VERBOSE);
     number_failed = srunner_ntests_failed(sr);
     srunner_free(sr);
+    
+    j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "register", json_false());
+    run_simple_test(&register_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+    
+    j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "register", json_false());
+    run_simple_test(&register_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
+    json_decref(j_register);
+    
   }
   
-  free(scope_req.http_verb);
-  scope_req.http_verb = msprintf("DELETE");
-    if (ulfius_send_http_request(&auth_req, NULL) != U_OK) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "Remove grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
-    }
+  j_body = json_pack("{ss}", "scope", "");
+  ulfius_set_json_body_request(&scope_req, j_body);
+  json_decref(j_body);
+  if (0 && ulfius_send_http_request(&scope_req, NULL) != U_OK) {
+    y_log_message(Y_LOG_LEVEL_INFO, "Remove grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
+  }
   
-  url = msprintf("%s/auth/user/", SERVER_URI);
+  url = msprintf("%s/auth/", SERVER_URI);
   run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
-  free(url);
+  o_free(url);
   
   ulfius_clean_request(&auth_req);
-  ulfius_clean_request(&scope_req);
   ulfius_clean_request(&user_req);
+  ulfius_clean_request(&scope_req);
+  ulfius_clean_request(&register_req);
+  
+  y_close_logs();
 
   return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

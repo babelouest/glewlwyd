@@ -1,66 +1,72 @@
 # Glewlwyd API description
 
-This document is intended to describe all data API endpoints. Data API endpoints are Glewlwyd specific endpoints used to manage data such as users, passwords, clients, scope names, resources, and disable refresh tokens.
-
-For OAuth 2 endpoints specification, please read the document [OAUTH2.md](OAUTH2.md).
+This document is intended to describe Glewlwyd's core API endpoints. Glewlwyd's core API endpoints are used to manage core functionalities data.
 
 - [Endpoints authentication](#endpoints-authentication)
 - [Prefix](#prefix)
 - [Content-type](#content-type)
 - [Error response](#error-response)
-- [Authentication API](#authentication-api)
-  - [Authenticate a user with its login and password](#authenticate-a-user-with-its-login-and-password)
-  - [Disable current session cookie](#disable-current-session-cookie)
-- [Grant scope API](#grant-scope-api)
-  - [Get user scope grant](#get-user-scope-grant)
-  - [Grant access to scope for a client](#grant-access-to-scope-for-a-client)
-  - [Delete grant access to scope for a client](#delete-grant-access-to-scope-for-a-client)
-- [Profile API](#profile-api)
-  - [Get current profile](#get-current-profile)
-  - [Update current profile](#update-current-profile)
-  - [Get current profile's refresh token list](#get-current-profiles-refresh-token-list)
-  - [Revoke a refresh token from current profile's list](#revoke-a-refresh-token-from-current-profiles-list)
-  - [Get current profile's session list](#get-current-profiles-session-list)
-  - [Revoke a session from current profile's list](#revoke-a-session-from-current-profiles-list)
-  - [Send an email to reset a user's password](#send-an-email-to-reset-a-users-password)
-  - [Reset a user profile' password](#reset-a-user-profile-password)
-- [Authorization type API](#authorization-type-api)
-  - [Get all authorization type status](#get-all-authorization-type-status)
-  - [Get a specific authorization type status](#get-a-specific-authorization-type-status)
-  - [Update one response type status](#update-one-response-type-status)
-- [Scope API](#scope-api)
-  - [Get the list of available scopes](#scope-api)
-  - [Get a specific scope](#get-a-specific-scope)
-  - [Add a new scope](#add-a-new-scope)
-  - [Update a scope](#update-a-scope)
-  - [Delete an existing scope](#delete-an-existing-scope)
-- [User API](#user-api)
-  - [Get the list of users](#get-the-list-of-users)
-  - [Get a specific user](#get-a-specific-user)
-  - [Create a new user](#create-a-new-user)
-  - [Update an existing user](#update-an-existing-user)
-  - [Delete an existing user](#delete-an-existing-user)
-  - [Get an existing user's refresh token list](#get-an-existing-users-refresh-token-list)
-  - [Revoke a refresh token from an existing user's list](#revoke-a-refresh-token-from-an-existing-users-list)
-  - [Get an existing user's session list](#get-an-existing-users-session-list)
-  - [Revoke a session from an existing user's list](#revoke-a-session-from-an-existing-users-list)
-  - [Send an email to reset a user's password](#send-an-email-to-reset-a-users-password-1)
-- [Client API](#client-api)
-  - [Get the list of clients](#get-the-list-of-clients)
-  - [Get a specific client](#get-a-specific-client)
-  - [Create a new client](#create-a-new-client)
-  - [Update an existing client](#update-an-existing-client)
-  - [Delete an existing client](#delete-an-existing-client)
-- [Resource API](#resource-api)
-  - [List available resources](#list-available-resources)
-  - [Get a specific resource](#get-a-specific-resource)
-  - [Add a new resource](#add-a-new-resource)
-  - [Update an existing resource](#update-an-existing-resource)
-  - [Delete an existing resource](#delete-an-existing-resource)
+- Plugins and modules management
+  - Get list of all plugin instances available
+  - Get all user module instances available
+  - Get a user module instance
+  - Add a new user module instance
+  - Update an existing user module instance
+  - Delete an existing user module instance
+  - Enable or disable an existing user module instance
+  - Get all client module instances available
+  - Get a client module instance
+  - Add a new client module instance
+  - Update an existing client module instance
+  - Delete an existing client module instance
+  - Enable or disable an existing client module instance
+  - Get all user auth scheme module instances available
+  - Get a user auth scheme module instance
+  - Add a new user auth scheme module instance
+  - Update an existing user auth scheme module instance
+  - Delete an existing user auth scheme module instance
+  - Enable or disable an existing user auth scheme module instance
+  - Get all plugin module instances available
+  - Get a plugin module instance
+  - Add a new plugin module instance
+  - Update an existing plugin module instance
+  - Delete an existing plugin module instance
+  - Enable or disable an existing plugin module instance
+- Users management
+  - Get a list of users available
+  - Get a user
+  - Add a new user
+  - Update an existing user
+  - Delete an existing user
+- Clients management
+  - Get a list of clients available
+  - Get a client
+  - Add a new client
+  - Update an existing client
+  - Delete an existing client
+- Scopes management
+  - Get a list of scopes available
+  - Get a scope
+  - Add a new scope
+  - Update an existing scope
+  - Delete an existing scope
+- User authentication
+  - Authenticate a user with password
+  - Authenticate a user with an authentication scheme
+  - Trigger a scheme
+  - Change current user with another user authenticated in this session
+- User profile
+  - Get list of connected profiles
+  - Update current profile
+  - Change user password for current profile
+  - Get sessions for current profile
+  - Disable a session for current profile
+  - Register an auth scheme for current profile
+  - Get registration on an auth scheme for current profile
 
 ## Endpoints authentication
 
-All the endpoints require proper authentication to provide their service. The authentication method used is [Bearer Token](https://tools.ietf.org/html/rfc6750). For each endpoint, the scope required will be defined in the `Security` paragraph. The admin scope name is `g_admin`, but this value can be changed in the configuration file.
+All the endpoints require proper authentication to provide their service. The authentication method used is a session cookie. For each endpoint, the scope required will be defined in the `Security` paragraph. The admin scope name is `g_admin`, the profile scope name is `g_profile`, but these values can be changed in the configuration file.
 
 ## Prefix
 
@@ -74,85 +80,21 @@ All request and response body use `application/json` content-type.
 
 The HTTP status codes used are the following:
 - 200 OK: no error
-- 400 Invalid parameters: The user has sent invalid data. The details of all the errors are sent in the response body
+- 400 Invalid parameters: The user has sent invalid data. The details of all the errors may be present in the response body
+- 401 Unauthorized: The user isn't authorized
+- 403 Forbidden: The user isn't allowed
 - 404 Not found: The specified resource doesn't exist
 - 500 Server error: An error occurred on the server
 
-## Authentication API
+## Plugins and modules management
 
-### Authenticate a user with its login and password
+### Get all modules available
 
-#### URL
-
-`/api/auth/user/`
-
-#### Method
-
-`POST`
-
-#### Security
-
-none
-
-#### Data Parameters
-
-Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
-
-```
-username: text, required
-password: text, required
-remember: text, optional
-```
-
-#### Success response
-
-Code 200
-
-A session cookie containing a valid token. If `remember` is equal to the string value `true`, the session cookie will have a max_age equal to config value `session_expiration`, otherwise, the session cookie will expire at the end of the session.
-
-#### Error Response
-
-Code 400
-
-Error input parameters
-
-Content: json array containing all errors
-
-### Disable current session cookie
+Return the list of all modules available for all types of modules
 
 #### URL
 
-`/api/auth/user/`
-
-#### Method
-
-`DELETE`
-
-#### Security
-
-Session token
-
-#### Success response
-
-Code 200
-
-Stored session cookie will be disabled.
-
-Code 400
-
-Error input parameters
-
-Content: json array containing all errors
-
-## Grant scope API
-
-### Get user scope grant
-
-Return the list of scope available for the connected user
-
-#### URL
-
-`/api/auth/grant`
+`/api/mod/type/`
 
 #### Method
 
@@ -160,7 +102,7 @@ Return the list of scope available for the connected user
 
 #### Security
 
-Session token or header bearer token
+User with scope `g_admin` authorized.
 
 #### URL Parameters
 
@@ -171,178 +113,47 @@ Code 200
 Content
 
 ```javascript
-[
-  {
-    name: text,
-    description: text
-  }
-]
-```
-
-### Grant access to scope for a client
-
-#### URL
-
-`/api/auth/grant`
-
-#### Method
-
-`POST`
-
-#### Security
-
-Session token or header bearer token
-
-#### Data Parameters
-
-Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
-
-```
-client_id: text, required
-scope: text, required, list of scope values separated by space
-```
-
-#### Success response
-
-Code 200
-
-#### Error Response
-
-Code 400
-
-Error input parameters
-
-Content: json array containing all errors
-
-### Delete grant access to scope for a client
-
-#### URL
-
-`/api/auth/grant`
-
-#### Method
-
-`DELETE`
-
-#### Security
-
-Session token or header bearer token
-
-#### Data Parameters
-
-Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
-
-```
-client_id: text, required
-scope: text, required, list of scope values separated by space
-```
-
-#### Success response
-
-Code 200
-
-#### Error Response
-
-Code 400
-
-Error input parameters
-
-Content: json array containing all errors
-
-## Profile API
-
-### Get current profile
-
-#### URL
-
-`/api/profile/`
-
-#### Method
-
-`GET`
-
-#### Security
-
-Session token or header bearer token
-
-#### Success response - Session cookie
-
-This response is obtained when the user access this API with a valid session cookie. i.e. from the page `/app/profile.html`.
-
-Code 200
-
-Content
-
-```javascript
 {
-  name: text,
-  email: text,
-  login: text,
-  scope: [ // Array of strings of all the scopes available for the user
+  user: [
+    name: string,
+    display_name: string
+    description: string,
+    parameters: object, the parameters of the module for initialization
+  ],
+  client: [
+    name: string,
+    display_name: string
+    description: string,
+    parameters: object, the parameters of the module for initialization
+  ],
+  scheme: [
+    name: string,
+    display_name: string
+    description: string,
+    parameters: object, the parameters of the module for initialization
+  ],
+  plugin: [
+    name: string,
+    display_name: string
+    description: string,
+    parameters: object, the parameters of the plugin for initialization
   ]
 }
 ```
 
-#### Success response - OAuth2 token
-
-This response is obtained when the user access this API with a valid OAuth2 token. i.e. from a third-party application.
-
-Code 200
-
-Content
+Example
 
 ```javascript
-{
-  name: text,
-  email: text,
-  login: text,
-  scope: [ // Array of strings of the scopes available in the current token
-  ]
-}
+TODO
 ```
 
-### Update current profile
+### Get all user module instances available
+
+Return the list of all instances available for user modules
 
 #### URL
 
-`/api/profile/`
-
-#### Method
-
-`POST`
-
-#### Security
-
-Session token or header bearer token
-
-#### Data Parameters
-
-```javascript
-{
-  name: text, maximum 256 characters, optional
-  old_password: text, optional
-  new_password: text, mandatory if old_password is set
-}
-// At least one optional value must be set
-```
-
-#### Success response
-
-Code 200
-
-#### Error Response
-
-Code 400
-
-Error input parameters
-
-Content: json array containing all errors
-
-### Get current profile's refresh token list
-
-#### URL
-
-`/api/profile/refresh_token/`
+`/api/mod/user/`
 
 #### Method
 
@@ -350,246 +161,10 @@ Content: json array containing all errors
 
 #### Security
 
-Session token or header bearer token
-
-#### Success response
-
-Code 200
-
-Content
-
-```javascript
-[
-  {
-    token_hash: text,
-    authorization_type: text,
-    ip_source: text,
-    enabled: boolean,
-    issued_at: numeric,
-    last_seen: numeric,
-    expired_at: numeric
-  }
-]
-```
-
-### Revoke a refresh token from current profile's list
-
-#### URL
-
-`/api/profile/refresh_token/`
-
-#### Method
-
-`DELETE`
-
-#### Security
-
-Session token or header bearer token
-
-#### Data Parameters
-
-```javascript
-{
-  token_hash: text, required
-}
-```
-
-#### Success response
-
-Code 200
-
-### Get current profile's refresh token list
-
-#### URL
-
-`/api/profile/refresh_token/`
-
-#### Method
-
-`GET`
-
-#### Security
-
-Session token or header bearer token
-
-#### Success response
-
-Code 200
-
-Content
-
-```javascript
-[
-  {
-    token_hash: text,
-    authorization_type: text,
-    ip_source: text,
-    enabled: boolean,
-    issued_at: numeric,
-    last_seen: numeric,
-    expired_at: numeric
-  }
-]
-```
-
-### Revoke a refresh token from current profile's list
-
-#### URL
-
-`/api/profile/refresh_token/`
-
-#### Method
-
-`DELETE`
-
-#### Security
-
-Session token or header bearer token
-
-#### Data Parameters
-
-```javascript
-{
-  token_hash: text, required
-}
-```
-
-#### Success response
-
-Code 200
-
-### Get current profile's session list
-
-#### URL
-
-`/api/profile/session/`
-
-#### Method
-
-`GET`
-
-#### Security
-
-Session token or header bearer token
-
-#### Success response
-
-Code 200
-
-Content
-
-```javascript
-[
-  {
-    session_hash: text,
-    ip_source: text,
-    enabled: boolean,
-    issued_at: numeric,
-    last_seen: numeric,
-    expired_at: numeric
-  }
-]
-```
-
-### Revoke a session from current profile's list
-
-#### URL
-
-`/api/profile/session/`
-
-#### Method
-
-`DELETE`
-
-#### Security
-
-Session token or header bearer token
-
-#### Data Parameters
-
-```javascript
-{
-  session_hash: text, required
-}
-```
-
-#### Success response
-
-Code 200
-
-### Send an email to reset a user's password
-
-#### URL
-
-`/profile/reset_password/{username}`
-
-#### Method
-
-`POST`
+User with scope `g_admin` authorized.
 
 #### URL Parameters
 
-`username`: a valid username that has en email registered
-
-#### Success response
-
-Code 200
-
-#### Error response
-
-Code 400
-
-Username specified has no e-mail.
-
-### Reset a user profile' password
-
-#### URL
-
-`/profile/reset_password/{username}`
-
-#### Method
-
-`PUT`
-
-#### URL Parameters
-
-`username`: a valid username that has en email registered
-
-#### Data parameters
-
-Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
-
-```
-token: text, token sent to the user via e-mail, mandatory
-password: text, at least 8 characters, mandatory
-```
-
-#### Success response
-
-Code 200
-
-#### Error response
-
-Code 400
-
-Token or password invalid.
-
-## Authorization type API
-
-### Get all authorization type status
-
-#### URL
-
-`/api/authorization/`
-
-#### Method
-
-`GET`
-
-#### Security
-
-Scope required: `g_admin`
-
 #### Success response
 
 Code 200
@@ -597,20 +172,30 @@ Code 200
 Content
 
 ```javascript
-[
-  {
-    name: text,
-    description: text,
-    enabled: boolean
-  }
-]
+[{
+  module: string, name of the module
+  name: string, name of the instance
+  display_name: string
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number
+  readonly: boolean
+  enabled: boolean
+}]
 ```
 
-### Get a specific authorization type status
+Example
+
+```javascript
+TODO
+```
+
+### Get a user module instance
+
+Return the details of a user module instance
 
 #### URL
 
-`/api/authorization/{authorization_type}`
+`/api/mod/user/{name}`
 
 #### Method
 
@@ -618,7 +203,11 @@ Content
 
 #### Security
 
-Scope required: `g_admin`
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the instance
 
 #### Success response
 
@@ -628,138 +217,33 @@ Content
 
 ```javascript
 {
-  name: text,
-  description: text,
+  module: string, name of the module
+  name: string, name of the instance
+  display_name: string
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number
+  readonly: boolean
   enabled: boolean
 }
 ```
 
-#### Error Response
+Example
+
+```javascript
+TODO
+```
 
 Code 404
 
-Resource not found
+Module not found
 
-### Update one response type status
+### Add a new user module instance
 
-#### URL
-
-`/api/authorization/{authorization_type}`
-
-#### Method
-
-`PUT`
-
-#### Security
-
-Scope required: `g_admin`
-
-#### URL Parameters
-
-Required
-
-`authorization_type`: authorization type name
-
-#### Data Parameters
-
-```javascript
-{
-  description: text, maximum 256 characters, optional
-  enabled: boolean, optional
-}
-```
-
-#### Success response
-
-Code 200
-
-#### Error Response
-
-Code 404
-
-Resource not found
-
-Code 400
-
-Error input parameters
-
-Content: json array containing all errors
-
-## Scope API
-
-### Get the list of available scopes
+Add a new user module instance
 
 #### URL
 
-`/api/scope`
-
-#### Method
-
-`GET`
-
-#### Security
-
-Scope required: `g_admin`
-
-#### Success response
-
-Code 200
-
-Content
-
-```javascript
-[
-  {
-    name: text,
-    description: text
-  }
-]
-```
-
-### Get a specific scope
-
-#### URL
-
-`/api/scope/{scope_name}`
-
-#### Method
-
-`GET`
-
-#### Security
-
-Scope required: `g_admin`
-
-#### URL Parameters
-
-Required
-
-`scope_name`: name of the scope
-
-#### Success response
-
-Code 200
-
-Content
-
-```javascript
-{
-  name: text,
-  description: text
-}
-```
-
-#### Error Response
-
-Code 404
-
-Resource not found
-
-### Add a new scope
-
-#### URL
-
-`/api/scope`
+`/api/mod/user/`
 
 #### Method
 
@@ -767,14 +251,18 @@ Resource not found
 
 #### Security
 
-Scope required: `g_admin`
+User with scope `g_admin` authorized.
 
-#### Data Parameters
+#### Body Parameters
 
 ```javascript
 {
-  name: text, maximum 128 characters, name must be unique, mandatory
-  description: text, maximum 512 characters, optional
+  module: string, name of the module, must be an existing user module available
+  name: string, name of the instance, maximum 128 characters
+  display_name: string, long name of the instance, maximum 256 characters
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number, priority of this instance to get a user
+  readonly: boolean, set to true if the instance is in read only mode
 }
 ```
 
@@ -782,19 +270,21 @@ Scope required: `g_admin`
 
 Code 200
 
-#### Error Response
+Instance added
 
 Code 400
 
 Error input parameters
 
-Content: json array containing all errors
+Content
 
-### Update a scope
+A javascript array with the error messages
+
+### Update an existing user module instance
 
 #### URL
 
-`/api/scope/{scope_name}`
+`/api/mod/user/{name}`
 
 #### Method
 
@@ -802,19 +292,20 @@ Content: json array containing all errors
 
 #### Security
 
-Scope required: `g_admin`
+User with scope `g_admin` authorized.
 
 #### URL Parameters
 
-Required
+`name`: name of the instance
 
-`scope_name`: name of the scope
-
-#### Data Parameters
+#### Body Parameters
 
 ```javascript
 {
-  description: text, maximum 512 characters, optional
+  display_name: string, long name of the instance, maximum 256 characters
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number, priority of this instance to get a user
+  readonly: boolean, set to true if the instance is in read only mode
 }
 ```
 
@@ -822,23 +313,25 @@ Required
 
 Code 200
 
-#### Error Response
+Instance updated
 
 Code 404
 
-Resource not found
+Instance not found
 
 Code 400
 
 Error input parameters
 
-Content: json array containing all errors
+Content
 
-### Delete an existing scope
+A javascript array with the error messages
+
+### Delete an existing user module instance
 
 #### URL
 
-`/api/scope/{scope_name}`
+`/api/mod/user/{name}`
 
 #### Method
 
@@ -846,175 +339,27 @@ Content: json array containing all errors
 
 #### Security
 
-Scope required: `g_admin`
+User with scope `g_admin` authorized.
 
 #### URL Parameters
 
-Required
-
-`scope_name`: name of the scope
+`name`: name of the instance
 
 #### Success response
 
 Code 200
 
-#### Error Response
+Instance removed
 
 Code 404
 
-Resource not found
+Instance not found
 
-## User API
-
-The user API allows user CRUD. You can have LDAP or Database backend to store users, or both. Once a user is created in a backend, ldap or database, it can be modified, but the login or the backend can't be updated.
-
-### Get the list of users
+### Enable or disable an existing user module instance
 
 #### URL
 
-`/api/user?source&search&offset&limit`
-
-#### Method
-
-`GET`
-
-#### Security
-
-Scope required: `g_admin`
-
-#### URL Parameters
-
-Optional
-
-`source`: source to get the user data: values can be `database`, `ldap` or `all` default is `all`
-
-`search`: search pattern for name, login or email. API will return any user that match the corresponding pattern.
-
-`offset`: offset to start the list result, default is 0
-
-`limit`: number of users to list, default is 20
-
-#### Success response
-
-Code 200
-
-Content
-
-```javascript
-[ // An array of user objects
-  {
-    source: text,
-    name: text,
-    email: text,
-    login: text,
-    enabled: boolean,
-		additional_property_name: text, optional, set if additional_property_name is set in the config file
-		additional_property_value: text, optional, set if additional_property_name is set in the config file
-    scope: [ // Array of strings
-    ]
-  }
-]
-```
-
-### Get a specific user
-
-#### URL
-
-`/api/user/{login}?source`
-
-#### Method
-
-`GET`
-
-#### Security
-
-Scope required: `g_admin`
-
-#### URL Parameters
-
-Required
-
-`login`: user login
-
-Optional
-
-`source`: source to get the user data: values can be `database`, `ldap` or `all` default is `all`
-
-#### Success response
-
-Code 200
-
-Content
-
-```javascript
-{
-  source: text,
-  name: text,
-  email: text,
-  login: text,
-  enabled: boolean,
-	additional_property_name: text, optional, set if additional_property_name is set in the config file
-	additional_property_value: text, optional, set if additional_property_name is set in the config file
-  scope: [ // Array of strings
-  ]
-}
-```
-
-#### Error Response
-
-Code 404
-
-Resource not found
-
-### Create a new user
-
-#### URL
-
-`/api/user`
-
-#### Method
-
-`POST`
-
-#### Security
-
-Scope required: `g_admin`
-
-#### Data Parameters
-
-```javascript
-{
-  source: text, values can be "database" or "ldap", optional, default is "database"
-  name: text, maximum 256 characters, optional
-  email: text, maximum 256 characters, optional
-  login: text, maximum 128 characters, mandatory
-  password: text, minimum 8 characters, mandatory
-	additional_property_value: text, maximum 512 characters, optional, set if additional_property_name is set in the config file
-  enabled: boolean, default true
-  scope: [ // Array of strings
-  ]
-}
-```
-
-#### Success response
-
-Code 200
-
-#### Error Response
-
-Code 400
-
-Error input parameters
-
-Content: json array containing all errors
-
-### Update an existing user
-
-If no password is specified in the request, the password is not changed.
-
-#### URL
-
-`/api/user/{login}?source`
+`/api/mod/user/{name}/{action}`
 
 #### Method
 
@@ -1022,29 +367,139 @@ If no password is specified in the request, the password is not changed.
 
 #### Security
 
-Scope required: `g_admin`
+User with scope `g_admin` authorized.
 
 #### URL Parameters
 
-Required
+`name`: name of the instance
+`action`: either `enable` or `disable`
 
-`login`: user login
+#### Success response
 
-Optional
+Code 200
 
-`source`: source to get the user data: values can be `database`, `ldap` or `all` default is `all`
+Action executed
 
-#### Data Parameters
+Code 404
+
+Instance not found
+
+### Get all client module instances available
+
+Return the list of all instances available for client modules
+
+#### URL
+
+`/api/mod/client/`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[{
+  module: string, name of the module
+  name: string, name of the instance
+  display_name: string
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number
+  readonly: boolean
+  enabled: boolean
+}]
+```
+
+Example
+
+```javascript
+TODO
+```
+
+### Get a client module instance
+
+Return the details of a client module instance
+
+#### URL
+
+`/api/mod/client/{name}`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the instance
+
+#### Success response
+
+Code 200
+
+Content
 
 ```javascript
 {
-  name: text, maximum 256 characters, optional
-  email: text, maximum 256 characters, optional
-  password: text, minimum 8 characters, optional
-  enabled: boolean, default true
-	additional_property_value: text, maximum 512 characters, optional, set if additional_property_name is set in the config file
-  scope: [ // Array of strings
-  ]
+  module: string, name of the module
+  name: string, name of the instance
+  display_name: string
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number
+  readonly: boolean
+  enabled: boolean
+}
+```
+
+Example
+
+```javascript
+TODO
+```
+
+Code 404
+
+Module not found
+
+### Add a new client module instance
+
+Add a new client module instance
+
+#### URL
+
+`/api/mod/client/`
+
+#### Method
+
+`POST`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### Body Parameters
+
+```javascript
+{
+  module: string, name of the module, must be an existing client module available
+  name: string, name of the instance, maximum 128 characters
+  display_name: string, long name of the instance, maximum 256 characters
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number, priority of this instance to get a client
+  readonly: boolean, set to true if the instance is in read only mode
 }
 ```
 
@@ -1052,23 +507,834 @@ Optional
 
 Code 200
 
-#### Error Response
-
-Code 404
-
-Resource not found
+Instance added
 
 Code 400
 
 Error input parameters
 
-Content: json array containing all errors
+Content
+
+A javascript array with the error messages
+
+### Update an existing client module instance
+
+#### URL
+
+`/api/mod/client/{name}`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the instance
+
+#### Body Parameters
+
+```javascript
+{
+  display_name: string, long name of the instance, maximum 256 characters
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number, priority of this instance to get a client
+  readonly: boolean, set to true if the instance is in read only mode
+}
+```
+
+#### Success response
+
+Code 200
+
+Instance updated
+
+Code 404
+
+Instance not found
+
+Code 400
+
+Error input parameters
+
+Content
+
+A javascript array with the error messages
+
+### Delete an existing client module instance
+
+#### URL
+
+`/api/mod/client/{name}`
+
+#### Method
+
+`DELETE`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the instance
+
+#### Success response
+
+Code 200
+
+Instance removed
+
+Code 404
+
+Instance not found
+
+### Enable or disable an existing client module instance
+
+#### URL
+
+`/api/mod/client/{name}/{action}`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the instance
+`action`: either `enable` or `disable`
+
+#### Success response
+
+Code 200
+
+Action executed
+
+Code 404
+
+Instance not found
+
+### Get all user auth scheme module instances available
+
+Return the list of all instances available for user auth scheme modules
+
+#### URL
+
+`/api/mod/scheme/`
+
+#### Method
+
+`GET`
+
+#### Security
+
+user with scope `g_admin` authorized.
+
+#### URL Parameters
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[{
+  module: string, name of the module
+  name: string, name of the instance
+  display_name: string
+  parameters: object, parameters used for the initialization of this instance
+  enabled: boolean
+}]
+```
+
+Example
+
+```javascript
+TODO
+```
+
+### Get a user auth scheme module instance
+
+Return the details of a user auth scheme module instance
+
+#### URL
+
+`/api/mod/scheme/{name}`
+
+#### Method
+
+`GET`
+
+#### Security
+
+user with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the instance
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+{
+  module: string, name of the module
+  name: string, name of the instance
+  display_name: string
+  parameters: object, parameters used for the initialization of this instance
+  enabled: boolean
+}
+```
+
+Example
+
+```javascript
+TODO
+```
+
+Code 404
+
+Module not found
+
+### Add a new user auth scheme module instance
+
+Add a new user auth scheme module instance
+
+#### URL
+
+`/api/mod/scheme/`
+
+#### Method
+
+`POST`
+
+#### Security
+
+user with scope `g_admin` authorized.
+
+#### Body Parameters
+
+```javascript
+{
+  module: string, name of the module, must be an existing user auth scheme module available
+  name: string, name of the instance, maximum 128 characters
+  display_name: string, long name of the instance, maximum 256 characters
+  duration: number, duration of the scheme authentication in seconds
+  max_use: number, maximum use of the scheme authentication per session
+  parameters: object, parameters used for the initialization of this instance
+}
+```
+
+#### Success response
+
+Code 200
+
+Instance added
+
+Code 400
+
+Error input parameters
+
+Content
+
+A javascript array with the error messages
+
+### Update an existing user auth scheme module instance
+
+#### URL
+
+`/api/mod/scheme/{name}`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+user with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the instance
+
+#### Body Parameters
+
+```javascript
+{
+  display_name: string, long name of the instance, maximum 256 characters
+  duration: number, duration of the scheme authentication in seconds
+  max_use: number, maximum use of the scheme authentication per session
+  parameters: object, parameters used for the initialization of this instance
+}
+```
+
+#### Success response
+
+Code 200
+
+Instance updated
+
+Code 404
+
+Instance not found
+
+Code 400
+
+Error input parameters
+
+Content
+
+A javascript array with the error messages
+
+### Delete an existing user auth scheme module instance
+
+#### URL
+
+`/api/mod/scheme/{name}`
+
+#### Method
+
+`DELETE`
+
+#### Security
+
+user with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the instance
+
+#### Success response
+
+Code 200
+
+Instance removed
+
+Code 404
+
+Instance not found
+
+### Enable or disable an existing user auth scheme module instance
+
+#### URL
+
+`/api/mod/scheme/{name}/{action}`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+user with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the instance
+`action`: either `enable` or `disable`
+
+#### Success response
+
+Code 200
+
+Action executed
+
+Code 404
+
+Instance not found
+
+### Get all plugin module instances available
+
+Return the list of all instances available for plugin modules
+
+#### URL
+
+`/api/mod/plugin/`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[{
+  module: string, name of the module
+  name: string, name of the instance
+  display_name: string
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number
+  readonly: boolean
+  enabled: boolean
+}]
+```
+
+Example
+
+```javascript
+TODO
+```
+
+### Get a plugin module instance
+
+Return the details of a plugin module instance
+
+#### URL
+
+`/api/mod/plugin/{name}`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the instance
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+{
+  module: string, name of the module
+  name: string, name of the instance
+  display_name: string
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number
+  readonly: boolean
+  enabled: boolean
+}
+```
+
+Example
+
+```javascript
+TODO
+```
+
+Code 404
+
+Module not found
+
+### Add a new plugin module instance
+
+Add a new plugin module instance
+
+#### URL
+
+`/api/mod/plugin/`
+
+#### Method
+
+`POST`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### Body Parameters
+
+```javascript
+{
+  module: string, name of the module, must be an existing plugin module available
+  name: string, name of the instance, maximum 128 characters
+  display_name: string, long name of the instance, maximum 256 characters
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number, priority of this instance to get a plugin
+  readonly: boolean, set to true if the instance is in read only mode
+}
+```
+
+#### Success response
+
+Code 200
+
+Instance added
+
+Code 400
+
+Error input parameters
+
+Content
+
+A javascript array with the error messages
+
+### Update an existing plugin module instance
+
+#### URL
+
+`/api/mod/plugin/{name}`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the instance
+
+#### Body Parameters
+
+```javascript
+{
+  display_name: string, long name of the instance, maximum 256 characters
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number, priority of this instance to get a plugin
+  readonly: boolean, set to true if the instance is in read only mode
+}
+```
+
+#### Success response
+
+Code 200
+
+Instance updated
+
+Code 404
+
+Instance not found
+
+Code 400
+
+Error input parameters
+
+Content
+
+A javascript array with the error messages
+
+### Delete an existing plugin module instance
+
+#### URL
+
+`/api/mod/plugin/{name}`
+
+#### Method
+
+`DELETE`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the instance
+
+#### Success response
+
+Code 200
+
+Instance removed
+
+Code 404
+
+Instance not found
+
+### Enable or disable an existing plugin module instance
+
+#### URL
+
+`/api/mod/plugin/{name}/{action}`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the instance
+`action`: either `enable` or `disable`
+
+#### Success response
+
+Code 200
+
+Action executed
+
+Code 404
+
+Instance not found
+
+## Users management
+
+### Get a list of users available
+
+Return a list of users available
+
+#### URL
+
+`/api/user/`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`offset`: number, the offset to start the list, default 0
+`limit`: number, the maximal number of elements in the list, default 100
+`source`: string, the instance name to limit the result, if not set, all instances will be used
+`pattern`: string, the pattern to filter the result
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[{
+  username: string, mandatory
+  scope:[
+    scope_value: string, mandatory, array can be empty
+  ],
+  enabled: boolean, mandatory
+  name: string, optional
+  email: string, optional
+  other values: string or array of strings, optional, depends on what's returned by the module instance
+}]
+```
+
+Example
+
+```javascript
+[
+  {
+    username: "user1",
+    scope: [
+      "g_profile",
+      "scope1",
+      "scope2"
+    ],
+    enabled: true,
+    name: "Dave Lopper",
+    email: "user1@glewlwyd",
+    alias: [
+      "dev",
+      "plop"
+    ]
+  },
+  {
+    username: "user2",
+    scope: [
+      "g_profile"
+    ],
+    enabled: true,
+    name: "Dave Lopper 2",
+    email: "user2@glewlwyd"
+  }
+]
+```
+
+### Get a user
+
+Return the details of a plugin module instance
+
+#### URL
+
+`/api/user/{username}`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`username`: username to return, mandatory
+`source`: user module instance to look for the user, optional, if not set look on all instances
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+{
+  username: string, mandatory
+  scope:[
+    scope_value: string, mandatory, array can be empty
+  ],
+  enabled: boolean, mandatory
+  name: string, optional
+  email: string, optional
+  other values: string or array of strings, optional, depends on what's returned by the module instance
+}
+```
+
+Example
+
+```javascript
+{
+  username: "user1",
+  scope: [
+    "g_profile",
+    "scope1",
+    "scope2"
+  ],
+  enabled: true,
+  name: "Dave Lopper",
+  email: "user1@glewlwyd",
+  alias: [
+    "dev",
+    "plop"
+  ]
+}
+```
+
+Code 404
+
+User not found
+
+### Add a new user
+
+#### URL
+
+`/api/user/`
+
+#### Method
+
+`POST`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`source`: user module instance to look for the user, optional, if not set, the first instance in write mode in order rank will host the new user
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+  scope:[
+    scope_value: string, mandatory, array can be empty
+  ],
+  password: string, optional, if not set, the user won't be able to authenticate
+  enabled: boolean, optional, default true
+  name: string, optional
+  email: string, optional
+  other values: string or array of strings, optional, depends on the module instance
+}
+```
+
+#### Success response
+
+Code 200
+
+User added
+
+Code 400
+
+Error input parameters
+
+Content
+
+A javascript array with the error messages
+
+### Update an existing user
+
+#### URL
+
+`/api/user/{username}`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`username`: username of the user to update
+`source`: user module instance to look for the user, optional, if not set look on all instances
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+  scope:[
+    scope_value: string, mandatory, array can be empty
+  ],
+  enabled: boolean, optional, default true
+  name: string, optional
+  email: string, optional
+  other values: string or array of strings, optional, depends on the module instance
+}
+```
+
+#### Success response
+
+Code 200
+
+User updated
+
+Code 404
+
+User not found
+
+Code 400
+
+Error input parameters
+
+Content
+
+A javascript array with the error messages
 
 ### Delete an existing user
 
 #### URL
 
-`/api/user/{login}?source`
+`/api/user/{username}`
 
 #### Method
 
@@ -1076,33 +1342,31 @@ Content: json array containing all errors
 
 #### Security
 
-Scope required: `g_admin`
+User with scope `g_admin` authorized.
 
 #### URL Parameters
 
-Required
-
-`login`: user login
-
-Optional
-
-`source`: source to get the user data: values can be `database`, `ldap` or `all` default is `all`
+`username`: username of the user to delete
 
 #### Success response
 
 Code 200
 
-#### Error Response
+User removed
 
 Code 404
 
-Resource not found
+User not found
 
-### Get an existing user's refresh token list
+## Clients management
+
+### Get a list of clients available
+
+Return a list of clients available
 
 #### URL
 
-`/api/user/{login}/refresh_token/`
+`/api/client/`
 
 #### Method
 
@@ -1110,206 +1374,74 @@ Resource not found
 
 #### Security
 
-Scope required: `g_admin`
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`offset`: number, the offset to start the list, default 0
+`limit`: number, the maximal number of elements in the list, default 100
+`source`: string, the instance name to limit the result, if not set, all instances will be used
+`pattern`: string, the pattern to filter the result
 
 #### Success response
 
 Code 200
 
 Content
+
+```javascript
+[{
+  client_id: string, mandatory
+  scope:[
+    scope_value: string, mandatory, array can be empty
+  ],
+  enabled: boolean, mandatory
+  name: string, optional
+  description: string, optional
+  confidential: boolean, optional
+  other values: string or array of strings, optional, depends on what's returned by the module instance
+}]
+```
+
+Example
 
 ```javascript
 [
   {
-    token_hash: text,
-    authorization_type: text,
-    ip_source: text,
-    enabled: boolean,
-    issued_at: numeric,
-    last_seen: numeric,
-    expired_at: numeric
-  }
-]
-```
-
-### Revoke a refresh token from an existing user's list
-
-#### URL
-
-`/api/user/{login}/refresh_token/`
-
-#### Method
-
-`DELETE`
-
-#### Security
-
-Scope required: `g_admin`
-
-#### Data Parameters
-
-```javascript
-{
-  token_hash: text, required
-}
-```
-
-#### Success response
-
-Code 200
-
-### Get an existing user's session list
-
-#### URL
-
-`/api/user/{login}/session/`
-
-#### Method
-
-`GET`
-
-#### Security
-
-Scope required: `g_admin`
-
-#### Success response
-
-Code 200
-
-Content
-
-```javascript
-[
-  {
-    session_hash: text,
-    ip_source: text,
-    enabled: boolean,
-    issued_at: numeric,
-    last_seen: numeric,
-    expired_at: numeric
-  }
-]
-```
-
-### Revoke a session from an existing user's list
-
-#### URL
-
-`/api/user/{login}/session/`
-
-#### Method
-
-`DELETE`
-
-#### Security
-
-Scope required: `g_admin`
-
-#### Data Parameters
-
-```javascript
-{
-  session_hash: text, required
-}
-```
-
-#### Success response
-
-Code 200
-
-### Send an email to reset a user's password
-
-#### URL
-
-`/user/{username}/reset_password`
-
-#### Method
-
-`POST`
-
-#### Security
-
-Scope required: `g_admin`
-
-#### URL Parameters
-
-`username`: a valid username that has en email registered
-
-#### Success response
-
-Code 200
-
-#### Error response
-
-Code 400
-
-Username specified has no e-mail.
-
-## Client API
-
-The client API allows client CRUD. You can have LDAP or Database backend to store clients, or both. If you use both, then the LDAP backend is checked first, if no client with this credentials exist, then the Database backend is checked. If you use the LDAP backend, make sure that the client specified in `bind_dn` config file parameter has proper credentials to list, create, modify and update entries.
-
-### Get the list of clients
-
-#### URL
-
-`/api/client?source&search&offset&limit`
-
-#### Method
-
-`GET`
-
-#### Security
-
-Scope required: `g_admin`
-
-#### URL Parameters
-
-Optional
-
-`source`: source to get the client data: values can be `database`, `ldap` or `all` default is `all`
-
-`search`: search pattern for name, description or client_id. API will return any client that match the corresponding pattern.
-
-`offset`: offset to start the list result, default is 0
-
-`limit`: number of users to list, default is 20
-
-#### Success response
-
-Code 200
-
-Content
-
-```javascript
-[ // An array of client objects
-  {
-    source: text,
-    name: text,
-    description: text,
-    client_id: text,
-    confidential: boolean,
-    enabled: boolean,
-    scope: [ // Array of strings
+    client_id: "client1",
+    scope: [
+      "scope1",
+      "scope2"
     ],
+    enabled: true,
+    name: "First client",
+    confidential: true,
     redirect_uri: [
-      {
-        name: text,
-        uri: text,
-        enabled: true
-      }
+      "http://example.com/"
+    ]
+  },
+  {
+    client_id: "client2",
+    scope: [
+      "scope1"
     ],
-    authorization_type: [ // Array of strings
+    enabled: true,
+    name: "Second client",
+    confidential: false,
+    redirect_uri: [
+      "http://another.example.com"
     ]
   }
 ]
 ```
 
-### Get a specific client
+### Get a client
+
+Return the details of a plugin module instance
 
 #### URL
 
-`/api/client/{client_id}?source`
+`/api/client/{client_id}`
 
 #### Method
 
@@ -1317,17 +1449,12 @@ Content
 
 #### Security
 
-Scope required: `g_admin`
+User with scope `g_admin` authorized.
 
 #### URL Parameters
 
-Required
-
-`client_id`: client_id
-
-Optional
-
-`source`: source to get the client data: values can be `database`, `ldap` or `all` default is `all`
+`client_id`: client_id to return, mandatory
+`source`: client module instance to look for the client, optional, if not set look on all instances
 
 #### Success response
 
@@ -1337,37 +1464,45 @@ Content
 
 ```javascript
 {
-  source: text,
-  name: text,
-  description: text,
-  client_id: text,
-  confidential: boolean,
-  enabled: boolean,
-  scope: [ // Array of strings
+  client_id: string, mandatory
+  scope:[
+    scope_value: string, mandatory, array can be empty
   ],
+  enabled: boolean, mandatory
+  name: string, optional
+  description: string, optional
+  confidential: boolean, optional
+  other values: string or array of strings, optional, depends on what's returned by the module instance
+}
+```
+
+Example
+
+```javascript
+{
+  client_id: "client1",
+  scope: [
+    "scope1",
+    "scope2"
+  ],
+  enabled: true,
+  name: "First client",
+  confidential: true,
   redirect_uri: [
-    {
-      name: text,
-      uri: text,
-      enabled: true
-    }
-  ],
-  authorization_type: [ // Array of strings
+    "http://example.com/"
   ]
 }
 ```
 
-#### Error Response
-
 Code 404
 
-Resource not found
+Client not found
 
-### Create a new client
+### Add a new client
 
 #### URL
 
-`/api/client`
+`/api/client/`
 
 #### Method
 
@@ -1375,30 +1510,25 @@ Resource not found
 
 #### Security
 
-Scope required: `g_admin`
+User with scope `g_admin` authorized.
 
-#### Data Parameters
+#### URL Parameters
+
+`source`: client module instance to look for the client, optional, if not set, the first instance in write mode in order rank will host the new client
+
+#### Body Parameters
 
 ```javascript
 {
-  source: text, optional, values can be "ldap" or "database", default is "database"
-  name: text, maximum 128 characters, mandatory
-  description: text, maximum 256 characters, optional
-  client_id: text, maximum 128 characters, must be unique, mandatory
-  confidential: boolean, optional, default false
+  client_id: string, mandatory
+  scope:[
+    scope_value: string, mandatory, array can be empty
+  ],
+  password: string, optional, if not set, the client won't be able to authenticate
   enabled: boolean, optional, default true
-  password: text, minimum 8 characters, mandatory if confidential is true
-  scope: [ // Array of strings, at least one value is mandatory if confidential is true
-  ],
-  redirect_uri: [ // Array of redirect_uri, at least one value is mandatory
-    {
-      name: text, maximum 128 characters, mandatory, must be unique within the client
-      uri: text, maximum 512 characters, mandatory
-      enabled: boolean, optional, default true
-    }
-  ],
-  authorization_type: [ // Array of strings, must be valid authorization_type
-  ]
+  name: string, optional
+  description: string, optional
+  other values: string or array of strings, optional, depends on the module instance
 }
 ```
 
@@ -1406,21 +1536,21 @@ Scope required: `g_admin`
 
 Code 200
 
-#### Error Response
+Client added
 
 Code 400
 
 Error input parameters
 
-Content: json array containing all errors
+Content
+
+A javascript array with the error messages
 
 ### Update an existing client
 
-If no password is specified in the request, the password is not changed.
-
 #### URL
 
-`/api/client/{client_id}?source`
+`/api/client/{client_id}`
 
 #### Method
 
@@ -1428,39 +1558,26 @@ If no password is specified in the request, the password is not changed.
 
 #### Security
 
-Scope required: `g_admin`
+User with scope `g_admin` authorized.
 
 #### URL Parameters
 
-Required
+`client_id`: client_id of the client to update
+`source`: client module instance to look for the client, optional, if not set look on all instances
 
-`client_id`: client client_id
-
-Optional
-
-`source`: source to get the client data: values can be `database`, `ldap` or `all` default is `all`
-
-#### Data Parameters
+#### Body Parameters
 
 ```javascript
 {
-  name: text, maximum 128 characters, mandatory
-  description: text, maximum 256 characters, optional
-  client_id: text, maximum 128 characters, must be unique, mandatory
-  confidential: boolean, optional, default false
+  client_id: string, mandatory
+  scope:[
+    scope_value: string, mandatory, array can be empty
+  ],
+  password: string, optional, if not set, the client won't be able to authenticate
   enabled: boolean, optional, default true
-  password: text, minimum 8 characters, mandatory if confidential is true
-  scope: [ // Array of strings, at least one value is mandatory if confidential is true
-  ],
-  redirect_uri: [ // Array of redirect_uri, at least one value is mandatory
-    {
-      name: text, maximum 128 characters, mandatory, must be unique within the client
-      uri: text, maximum 512 characters, mandatory
-      enabled: boolean, optional, default true
-    }
-  ],
-  authorization_type: [ // Array of strings, must be valid authorization_type
-  ]
+  name: string, optional
+  description: string, optional
+  other values: string or array of strings, optional, depends on the module instance
 }
 ```
 
@@ -1468,23 +1585,25 @@ Optional
 
 Code 200
 
-#### Error Response
+Client updated
 
 Code 404
 
-Resource not found
+Client not found
 
 Code 400
 
 Error input parameters
 
-Content: json array containing all errors
+Content
+
+A javascript array with the error messages
 
 ### Delete an existing client
 
 #### URL
 
-`/api/client/{client_id}?source`
+`/api/client/{client_id}`
 
 #### Method
 
@@ -1492,37 +1611,31 @@ Content: json array containing all errors
 
 #### Security
 
-Scope required: `g_admin`
+User with scope `g_admin` authorized.
 
 #### URL Parameters
 
-Required
-
-`client_id`: client client_id
-
-Optional
-
-`source`: source to get the client data: values can be `database`, `ldap` or `all` default is `all`
+`client_id`: client_id of the client to delete
 
 #### Success response
 
 Code 200
 
-#### Error Response
+Client removed
 
 Code 404
 
-Resource not found
+Client not found
 
-## Resource API
+## Scopes management
 
-These endpoints allows resource management, although since tokens are JWT, there is no need for resource services to contact Glewlwyd, so it's just an FYI.
+### Get a list of scopes available
 
-### List available resources
+Return a list of scopes available
 
 #### URL
 
-`/api/resource`
+`/api/scope/`
 
 #### Method
 
@@ -1530,7 +1643,424 @@ These endpoints allows resource management, although since tokens are JWT, there
 
 #### Security
 
-Scope required: `g_admin`
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`offset`: number, the offset to start the list, default 0
+`limit`: number, the maximal number of elements in the list, default 100
+`source`: string, the instance name to limit the result, if not set, all instances will be used
+`pattern`: string, the pattern to filter the result
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[{
+  name: string, mandatory
+  display_name: string, mandatory
+  description: string, mandatory
+  password_required: boolean, mandatory
+  scheme: {
+    group_name: [
+      {
+        scheme_type: module type, string, mandatory
+        scheme_name: module name, string, mandatory
+        scheme_display_name: module display name, string, mandatory
+      }
+    ]
+  }
+}]
+```
+
+Example
+
+```javascript
+[
+  {
+    name: "scope1",
+    display_name: "First scope",
+    description: "The first scope",
+    password_required: true,
+    scheme: {
+      group1: [
+        {
+          scheme_type: "mock",
+          scheme_name: "mock1",
+          scheme_display_name: "First mock scheme"
+        },
+        {
+          scheme_type: "mock",
+          scheme_name: "mock2",
+          scheme_display_name: "Second mock scheme"
+        }
+      ]
+    }
+  },
+  {
+    name: "scope2",
+    scope: [
+      "scope1"
+    ],
+    enabled: true,
+    name: "Second scope",
+    confidential: false,
+    redirect_uri: [
+      "http://another.example.com"
+    ]
+  }
+]
+```
+
+### Get a scope
+
+Return the details of a plugin module instance
+
+#### URL
+
+`/api/scope/{name}`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name to return, mandatory
+`source`: scope module instance to look for the scope, optional, if not set look on all instances
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+{
+  name: string, mandatory
+  scope:[
+    scope_value: string, mandatory, array can be empty
+  ],
+  enabled: boolean, mandatory
+  name: string, optional
+  description: string, optional
+  confidential: boolean, optional
+  other values: string or array of strings, optional, depends on what's returned by the module instance
+}
+```
+
+Example
+
+```javascript
+{
+  name: "scope1",
+  scope: [
+    "scope1",
+    "scope2"
+  ],
+  enabled: true,
+  name: "First scope",
+  confidential: true,
+  redirect_uri: [
+    "http://example.com/"
+  ]
+}
+```
+
+Code 404
+
+Scope not found
+
+### Add a new scope
+
+#### URL
+
+`/api/scope/`
+
+#### Method
+
+`POST`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`source`: scope module instance to look for the scope, optional, if not set, the first instance in write mode in order rank will host the new scope
+
+#### Body Parameters
+
+```javascript
+{
+  name: string, mandatory
+  scope:[
+    scope_value: string, mandatory, array can be empty
+  ],
+  password: string, optional, if not set, the scope won't be able to authenticate
+  enabled: boolean, optional, default true
+  name: string, optional
+  description: string, optional
+  other values: string or array of strings, optional, depends on the module instance
+}
+```
+
+#### Success response
+
+Code 200
+
+Scope added
+
+Code 400
+
+Error input parameters
+
+Content
+
+A javascript array with the error messages
+
+### Update an existing scope
+
+#### URL
+
+`/api/scope/{name}`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the scope to update
+`source`: scope module instance to look for the scope, optional, if not set look on all instances
+
+#### Body Parameters
+
+```javascript
+{
+  name: string, mandatory
+  scope:[
+    scope_value: string, mandatory, array can be empty
+  ],
+  password: string, optional, if not set, the scope won't be able to authenticate
+  enabled: boolean, optional, default true
+  name: string, optional
+  description: string, optional
+  other values: string or array of strings, optional, depends on the module instance
+}
+```
+
+#### Success response
+
+Code 200
+
+Scope updated
+
+Code 404
+
+Scope not found
+
+Code 400
+
+Error input parameters
+
+Content
+
+A javascript array with the error messages
+
+### Delete an existing scope
+
+#### URL
+
+`/api/scope/{name}`
+
+#### Method
+
+`DELETE`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`name`: name of the scope to delete
+
+#### Success response
+
+Code 200
+
+Scope removed
+
+Code 404
+
+Scope not found
+
+## User authentication
+
+### Authenticate a user with password
+
+#### URL
+
+`/api/auth`
+
+#### Method
+
+`POST`
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+  password: string, mandatory
+}
+```
+
+#### Success response
+
+Code 200
+
+User authenticated
+
+Code 400
+
+Error input parameters
+
+Code 401
+
+Authentication failure
+
+### Authenticate a user with an authentication scheme
+
+#### URL
+
+`/api/auth`
+
+#### Method
+
+`POST`
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: string, mandatory
+  scheme_name: string: mandatory
+  value: object, mandatory, content depends on the scheme
+}
+```
+
+#### Success response
+
+Code 200
+
+User authenticated
+
+Code 400
+
+Error input parameters
+
+Code 401
+
+Authentication failure
+
+### Trigger a scheme
+
+#### URL
+
+`/api/auth/scheme/trigger`
+
+#### Method
+
+`POST`
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: string, mandatory
+  scheme_name: string: mandatory
+  value: object, mandatory, content depends on the scheme
+}
+```
+
+#### Success response
+
+Code 200
+
+User authenticated
+
+Code 400
+
+Error input parameters
+
+Code 401
+
+Authentication failure
+
+### Change current user with another user authenticated in this session
+
+#### URL
+
+`/api/auth`
+
+#### Method
+
+`POST`
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+}
+```
+
+#### Success response
+
+Code 200
+
+Current user changed
+
+Code 400
+
+Error input parameters
+
+Code 401
+
+Authentication failure
+
+## User profile
+
+### Get list of connected profiles
+
+The first element in the returned array is the current user
+
+#### URL
+
+`/api/profile`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_profile` authorized.
 
 #### Success response
 
@@ -1541,18 +2071,102 @@ Content
 ```javascript
 [
   {
-    name: text,
-    description: text,
-    uri: text
+    username: string, mandatory
+    scope:[
+      scope_value: string, mandatory, array can be empty
+    ],
+    name: string, optional
+    email: string, optional
+    other values: string or array of strings, optional, depends on what's returned by the module instance for the profile
   }
 ]
 ```
 
-### Get a specific resource
+Code 401
+
+No enabled authenticated user for this session
+
+### Update current profile
 
 #### URL
 
-`/api/resource/{resource_name}`
+`/api/profile`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_profile` authorized.
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+  name: string, optional
+  other values: string or array of strings, optional, depends on what's exptected by the module instance for the profile
+}
+```
+
+#### Success response
+
+Code 200
+
+User updated
+
+Code 400
+
+Error input parameters
+
+Content
+
+A javascript array with the error messages
+
+### Change user password for current profile
+
+#### URL
+
+`/api/profile/password`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_profile` authorized.
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory, same username as current user
+  old_password: string, mandatory
+  password: string, mandatory
+}
+```
+
+#### Success response
+
+Code 200
+
+User password updated
+
+Code 400
+
+Error input parameters
+
+Content
+
+A javascript array with the error messages
+
+### Get sessions for current profile
+
+#### URL
+
+`/api/profile/session`
 
 #### Method
 
@@ -1560,13 +2174,7 @@ Content
 
 #### Security
 
-Scope required: `g_admin`
-
-#### URL Parameters
-
-Required
-
-`resource_name`: name of the resource
+User with scope `g_profile` authorized.
 
 #### Success response
 
@@ -1575,105 +2183,27 @@ Code 200
 Content
 
 ```javascript
-{
-  name: text,
-  description: text,
-  uri: text
-}
+[
+  {
+    session_hash: string,
+    user_agent: string,
+    issued_for: string,
+    expiration: string,
+    last_login: string,
+    enabled: string
+  }
+]
 ```
 
-#### Error Response
+Code 401
 
-Code 404
+No enabled authenticated user for this session
 
-Resource not found
-
-### Add a new resource
+### Disable a session for current profile
 
 #### URL
 
-`/api/resource`
-
-#### Method
-
-`POST`
-
-#### Security
-
-Scope required: `g_admin`
-
-#### Data Parameters
-
-```javascript
-{
-  name: text, maximum 128 characters, mandatory
-  description: text, maximum 256 characters, optional
-  uri: text, maximum 128 characters, mandatory
-}
-```
-
-#### Success response
-
-Code 200
-
-#### Error Response
-
-Code 400
-
-Error input parameters
-
-Content: json array containing all errors
-
-### Update an existing resource
-
-#### URL
-
-`/api/resource/{resource_name}`
-
-#### Method
-
-`PUT`
-
-#### Security
-
-Scope required: `g_admin`
-
-#### URL Parameters
-
-Required
-
-`resource_name`: name of the resource
-
-#### Data Parameters
-
-```javascript
-{
-  description: text, maximum 256 characters, optional
-  uri: text, maximum 128 characters, mandatory
-}
-```
-
-#### Success response
-
-Code 200
-
-#### Error Response
-
-Code 404
-
-Resource not found
-
-Code 400
-
-Error input parameters
-
-Content: json array containing all errors
-
-### Delete an existing resource
-
-#### URL
-
-`/api/resourceError binding to ldap server mode/:resource_name`
+`/api/profile/session/{session_hash}`
 
 #### Method
 
@@ -1681,20 +2211,101 @@ Content: json array containing all errors
 
 #### Security
 
-Scope required: `g_admin`
-
-#### URL Parameters
-
-Required
-
-`resource_name`: name of the resource
+User with scope `g_profile` authorized.
 
 #### Success response
 
 Code 200
 
-#### Error Response
+Session disabled
 
-Code 404
+Code 401
 
-Resource not found
+No enabled authenticated user for this session
+
+### Register an auth scheme for current profile
+
+#### URL
+
+`/api/profile/scheme/register/`
+
+#### Method
+
+`POST`
+
+#### Security
+
+User with scope `g_profile` authorized.
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: string, mandatory
+  scheme_name: string: mandatory
+  value: object, mandatory, content depends on the scheme
+}
+```
+
+#### Success response
+
+Code 200
+
+Scheme registered
+
+Code 400
+
+Error input parameters
+
+Content
+
+A javascript array with the error messages
+
+Code 401
+
+No enabled authenticated user for this session
+
+### Get registration on an auth scheme for current profile
+
+#### URL
+
+`/api/profile/scheme/register/`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_profile` authorized.
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: string, mandatory
+  scheme_name: string: mandatory
+}
+```
+
+#### Success response
+
+Code 200
+
+Content
+
+Depends on the scheme
+
+Code 400
+
+Error input parameters
+
+Content
+
+A javascript array with the error messages
+
+Code 401
+
+No enabled authenticated user for this session
