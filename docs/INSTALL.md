@@ -51,15 +51,16 @@ libsqlite3
 libconfig
 libgnutls
 libssl
+libjwt
 ```
 
 For example, to install Glewlwyd with the `glewlwyd-full_2.0.0_Debian_stretch_x86_64.tar.gz` package downloaded on the `releases` page, you must execute the following commands:
 
 ```shell
-$ sudo apt install -y autoconf automake make pkg-config libjansson-dev libssl-dev libcurl3 libconfig9 libcurl3-gnutls libgnutls30 libgcrypt20 libmicrohttpd12 libsqlite3-0 libmariadbclient18 libtool libsystemd-dev
-$ wget https://github.com/benmcollins/libjwt/archive/v1.9.0.tar.gz
-$ tar -zxvf v1.10.1.tar.gz
-$ cd libjwt-1.10.1
+$ sudo apt install -y autoconf automake make libtool sqlite3 libsqlite3-dev libmariadbclient-dev libpq-dev libgnutls-dev libconfig-dev libssl-dev libldap2-dev liboath-dev libsystemd-dev
+$ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz
+$ tar -zxvf v1.10.2.tar.gz
+$ cd libjwt-1.10.2
 $ autoreconf -i
 $ ./configure
 $ make && sudo make install
@@ -86,7 +87,7 @@ You must install the following libraries including their header files:
 libsystemd
 libmicrohttpd
 libjansson
-libcurl-gnutl
+libcurl-gnutls
 libldap2
 libmariadbclient
 libsqlite3
@@ -99,14 +100,14 @@ libsystemd
 On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install those dependencies using the following command:
 
 ```shell
-$ sudo apt-get install libsystemd-dev libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libldap2-dev libmariadbclient-dev libsqlite3-dev libconfig-dev libgnutls28-dev libssl-dev
+$ sudo apt-get install autoconf automake libtool sqlite3 libsqlite3-dev libmysqlclient-dev libpq-dev libgnutls-dev libconfig-dev libssl-dev libldap2-dev liboath-dev
 ```
 
 #### Journald logs
 
 The library libsystemd-dev is required if you want to log messages in journald service. If you don't want or can't have journald, you can compile yder library without journald support. See [Yder documentation](https://github.com/babelouest/yder).
 
-### Libssl vs libgnutls
+### Libssl vs GnuTLS
 
 Both libraries are mentioned required, but you can get rid of libssl if you install `libjwt` with the option `--without-openssl`. `gnutls` 3.5.8 minimum is required. For this documentation to be compatible with most Linux distributions (at least the one I use), I don't remove libssl from the required libraries yet.
 
@@ -123,12 +124,11 @@ Download and install libjwt, then download Glewlwyd from GitHub, then use the CM
 ```shell
 # Install libjwt
 # libtool and autoconf may be required, install them with 'sudo apt-get install libtool autoconf'
-$ git clone https://github.com/benmcollins/libjwt.git
-$ cd libjwt/
-$ autoreconf -i
-$ ./configure # use ./configure --without-openssl to use gnutls instead, you must have gnutls 3.5.8 minimum
-$ make
-$ sudo make install
+$ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz -O libjwt-1.10.2.tar.gz
+$ tar xzf libjwt-1.10.2.tar.gz
+$ cd libjwt-1.10.2 && autoreconf -i && ./configure && make && sudo make install # use ./configure --without-openssl to use gnutls instead, you must have gnutls 3.5.8 minimum
+- rm -rf libjwt-1.10.2
+- sudo ldconfig
 
 # Install Glewlwyd
 $ git clone https://github.com/babelouest/glewlwyd.git
@@ -202,9 +202,9 @@ Algorithms available are SHA1, SHA256, SHA512, MD5.
 
 Then, use the script that fit your database back-end and Digest algorithm in the [database](database) folder:
 
-- `database/init.mariadb.sql`
-- `database/init-sqlite3.sql`
-- `database/init.postgre.sql`
+- `docs/database/init.mariadb.sql`
+- `docs/database/init.sqlite3.sql`
+- `docs/database/init.postgre.sql`
 
 Note: PostgreSQL requires the extension `pgcrypto` enabled to encrypt users and clients passwords.
 
@@ -227,19 +227,15 @@ $ sqlite3 /var/cache/glewlwyd/glewlwyd.db < database/init.sqlite3.sql
 
 #### Security warning!
 
-Those scripts create a valid database that allow to use glewlwyd but to avoid potential security issues, you must change the admin password when you connect to the application
+Those scripts create a valid database that allow to use glewlwyd but to avoid potential security issues, you must change the admin password when you first connect to the application.
 
-#### Admin scope value
+#### Built-in scope values
 
-If you want to use a different name for admin scope (default is `g_admin`), you must update the init script with your own `gs_name` value before running it, change the last line which reads:
-
-```sql
-INSERT INTO g_scope (gs_name, gs_description) VALUES ('g_admin', 'Glewlwyd admin scope');
-```
+If you want to use a different name for admin scope (default is `g_admin`), or the profile scope (default is `g_profile`), you must update the init script with your own value before running it, change the lines below line 338 accordingly.
 
 #### Administrator user
 
-An administrator must be present in the back-end to use the application (manage scopes, users, clients, resources, authorization types).
+An administrator must be present in the back-end to manage the application (manage scopes, users, clients, resources, authorization types).
 
 An administrator in the LDAP back-end is a user who has the `admin_scope` (default `g_admin`) in its scope list.
 
@@ -281,29 +277,10 @@ By default, Glewlwyd is available on TCP port 4593.
 
 ## Front-end application
 
-All front-end pages have a minimal design, feel free to modify them for your own need, or create your own application. The source code is available in `/webapp-src` and requires nodejs and npm to build.
+All front-end pages have a minimal design, feel free to modify them for your own need, or create your own application. The source code is available in `/webapp-src` and requires nodejs and npm or yarn to build.
 
 The built front-end files are located in the webapp/ directory.
 
-### Login, Grant access and reset password pages
+### Login, Admin and Profile pages
 
-These pages are used when a user requires some access to Glewlwyd. They are simple html pages with a small JavaScript/JQuery application in it to provide the expected behavior, and vanilla bootstrap 3 for the visual part. Fell free to update them to fit your needs or to adapt the front-end to your identity.
-
-#### Login Page
-
-![Login Page](screenshots/login.png)
-
-![Logged In](screenshots/logged%20in.png)
-
-This page is used when the user needs to log-in to Glewlwyd with its login/password and/or to redirect to a client with the access to the resource.
-
-### Glewlwyd endpoints for the client
-
-There is no universal OAuth2 client configuration but they usually require some or all of the following data:
-
-- Authorization endpoint: This is the endpoint where the code or the implicit token is requested, the default value for Glewlwyd is [https://glewlwyd.tld/api/auth](https://glewlwyd.tld/api/auth)
-- Token endpoint: This is the endpoint where the OAuth2 token is requested by auth type code, the default value for Glewlwyd is [https://glewlwyd.tld/api/token](https://glewlwyd.tld/api/token)
-- Client Id: Must match the Client Id settings you provided in Glewlwyd
-- Response Type: Must match one of the allowed response type you set in Glewlwyd: `implicit` (sometimes called `token`), `code`
-- Scope: One or many scopes that will be requested by the client, multiple values must be separated by a space, i.e. `scope1 scope2`
-- Profile endpoint: On some clients, they require a profile endpoint that will get some of the connected user profile data, the default value for Glewlwyd is [https://glewlwyd.tld/api/profile](https://glewlwyd.tld/api/profile)
+These pages are used when a user requires some access to Glewlwyd. They are simple html pages with a small JavaScript/JQuery application in it to provide the expected behavior, and vanilla bootstrap 4 for the visual consistency. Glewlwyd front-end source code is under license MIT. Fell free to update them to fit your needs or to adapt the front-end to your identity.
