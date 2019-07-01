@@ -1,6 +1,6 @@
 # Glewlwyd Changelog
 
-## 2.0.0 Beta 1
+## 2.0.0-b1
 
 - Massive rework for the better good
 - Introduction of modules to handle different backend users, clients and authentication scheme
