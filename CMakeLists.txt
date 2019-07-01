@@ -131,6 +131,7 @@ include(FindOrcania)
 find_package(Orcania ${ORCANIA_VERSION_REQUIRED} QUIET) # try to find orcania
 if (NOT ORCANIA_FOUND)
 	include(DownloadProject)
+  message(STATUS "Download Orcania ${ORCANIA_VERSION_REQUIRED}")
 	download_project(PROJ orcania # ... otherwise, download archive
 			URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_REQUIRED}.tar.gz"
 			QUIET)
@@ -147,6 +148,7 @@ include(FindYder)
 find_package(Yder ${YDER_VERSION_REQUIRED} QUIET) # try to find Yder
 if (NOT YDER_FOUND)
 	include(DownloadProject)
+  message(STATUS "Download Yder ${YDER_VERSION_REQUIRED}")
 	option(CHECK_ORCANIA "specific param" off)
 	download_project(PROJ yder # ... otherwise, download archive
 			URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_REQUIRED}.tar.gz"
@@ -168,6 +170,7 @@ if (NOT ULFIUS_FOUND)
 	option(WITH_WEBSOCKET "specific param" off)
 	option(INSTALL_HEADER "specific param" off)
 	option(CHECK_YDER "specific param" off)
+  message(STATUS "Download Ulfius ${ULFIUS_VERSION_REQUIRED}")
 	download_project(PROJ ulfius
 			URL "https://github.com/babelouest/ulfius/archive/v${ULFIUS_VERSION_REQUIRED}.tar.gz"
 			QUIET)
@@ -188,6 +191,7 @@ if (NOT HOEL_FOUND)
 	include(DownloadProject)
 	option(INSTALL_HEADER "specific param" off)
 	option(CHECK_YDER "specific param" off)
+  message(STATUS "Download Hoel ${HOEL_VERSION_REQUIRED}")
 	download_project(PROJ hoel
 			URL "https://github.com/babelouest/hoel/archive/v${HOEL_VERSION_REQUIRED}.tar.gz"
 			QUIET)
@@ -363,7 +367,7 @@ if (WITH_SCHEME_OTP)
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/otp.c)
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, liboath0 (>= 2.6.0)")
 
-	set(MOD_LIBS ${ULFIUS_LIBRARIES} "-ldl")
+	set(MOD_LIBS ${ULFIUS_LIBRARIES} ${MOD_LIBS} "-ldl")
 
 	add_library(schememodotp MODULE ${LIB_SRC})
 	set_target_properties(schememodotp PROPERTIES
@@ -389,11 +393,11 @@ if (WITH_SCHEME_WEBAUTHN)
   endif ()
   
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/webauthn.c)
-  if (${RELEASE_CODENAME} NOT MATCHES "Stretch")
+  if (NOT ${RELEASE_CODENAME} STREQUAL "Stretch")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcbor0 (>= 0.5.0), libjwt0 (>= 1.10.1)")
   endif ()
 
-	set(MOD_LIBS ${ULFIUS_LIBRARIES} "-ldl")
+	set(MOD_LIBS ${ULFIUS_LIBRARIES} ${MOD_LIBS} "-ldl")
 
 	add_library(schememodwebauthn MODULE ${LIB_SRC})
 	set_target_properties(schememodwebauthn PROPERTIES
@@ -426,11 +430,11 @@ if (WITH_PLUGIN_OAUTH2)
     endif ()
     
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oauth2.c)
-  if (${RELEASE_CODENAME} NOT MATCHES "Stretch")
+  if (NOT ${RELEASE_CODENAME} STREQUAL "Stretch")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= 1.9.0)")
   endif ()
 
-	set(MOD_LIBS "-ldl")
+	set(MOD_LIBS ${MOD_LIBS} "-ldl")
 
 	add_library(protocol_oauth2 MODULE ${LIB_SRC})
 	set_target_properties(protocol_oauth2 PROPERTIES
@@ -542,11 +546,11 @@ endif ()
 # install target
 
 install(TARGETS glewlwyd
-	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES docs/glewlwyd.conf.sample
-	DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/glewlwyd RENAME glewlwyd.conf COMPONENT config)
+		DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/glewlwyd RENAME glewlwyd.conf COMPONENT config)
 install(DIRECTORY webapp/
-	DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/glewlwyd/webapp/ COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/glewlwyd/webapp/ COMPONENT runtime)
 install(TARGETS ${USER_MODULES}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/user)
 install(TARGETS ${CLIENT_MODULES}
@@ -556,17 +560,17 @@ install(TARGETS ${SCHEME_MODULES}
 install(TARGETS ${PLUGIN_MODULES}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/plugin)
 install(DIRECTORY docs/database/
-	DESTINATION ${CMAKE_INSTALL_DOCDIR}/database/ COMPONENT runtime)
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}/database/ COMPONENT runtime)
 install(FILES README.md
-	DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
 install(FILES docs/API.md
-	DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
 install(FILES docs/INSTALL.md
-	DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
 install(FILES docs/glewlwyd.service
-	DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
 install(FILES docs/glewlwyd-init
-	DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_DOCDIR}/ COMPONENT runtime)
 
 set(TARGETS glewlwyd)
 
