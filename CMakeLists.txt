@@ -24,13 +24,13 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 set(PROGRAM_VERSION_MAJOR "2")
 set(PROGRAM_VERSION_MINOR "0")
-set(PROGRAM_VERSION_PATCH "0")
+set(PROGRAM_VERSION_PATCH "0-b1")
 set(PROJECT_DESCRIPTION "OAuth2 authentication server providing Json Web Tokens")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_REQUIRED "2.0.0")
-set(YDER_VERSION_REQUIRED "1.4.5")
-set(ULFIUS_VERSION_REQUIRED "2.6.0")
-set(HOEL_VERSION_REQUIRED "1.4.9")
+set(YDER_VERSION_REQUIRED "1.4.6")
+set(ULFIUS_VERSION_REQUIRED "2.6.1")
+set(HOEL_VERSION_REQUIRED "1.4.10")
 
 set(USER_MODULES_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/user/")
 set(USER_MODULES "")
@@ -207,6 +207,18 @@ if (INSECURE_COOKIE)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DG_INSECURE_COOKIE")
 endif ()
 
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.3.4)")
+
+execute_process(COMMAND lsb_release -is
+    OUTPUT_VARIABLE DISTRIB_CODENAME
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+execute_process(COMMAND lsb_release -cs
+    OUTPUT_VARIABLE RELEASE_CODENAME
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 option(WITH_MOCK "Build Mock modules" off)
 
 # user modules
@@ -245,6 +257,7 @@ if (WITH_USER_LDAP)
 		include_directories(${LDAP_INCLUDE_DIRS})
 	endif ()
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${USER_MODULES_SRC_PATH}/ldap.c)
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap-2.4-2 (>= 2.4.7)")
 
 	add_library(usermodldap MODULE ${LIB_SRC})
 	set_target_properties(usermodldap PROPERTIES
@@ -302,6 +315,7 @@ if (WITH_CLIENT_LDAP)
 		include_directories(${LDAP_INCLUDE_DIRS})
 	endif ()
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${CLIENT_MODULES_SRC_PATH}/ldap.c)
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap-2.4-2 (>= 2.4.7)")
 
 	add_library(clientmodldap MODULE ${LIB_SRC})
 	set_target_properties(clientmodldap PROPERTIES
@@ -334,7 +348,7 @@ if (WITH_SCHEME_EMAIL)
 	set_target_properties(schememodemail PROPERTIES
 			COMPILE_OPTIONS -Wextra)
 	target_link_libraries(schememodemail ${MOD_LIBS})
-	set(CLIENT_MODULES ${CLIENT_MODULES} schememodemail)
+	set(SCHEME_MODULES ${SCHEME_MODULES} schememodemail)
 endif ()
 
 option(WITH_SCHEME_OTP "Build OTP scheme module" on)
@@ -347,6 +361,7 @@ if (WITH_SCHEME_OTP)
   endif ()
   
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/otp.c)
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, liboath0 (>= 2.6.0)")
 
 	set(MOD_LIBS ${ULFIUS_LIBRARIES} "-ldl")
 
@@ -354,13 +369,13 @@ if (WITH_SCHEME_OTP)
 	set_target_properties(schememodotp PROPERTIES
 			COMPILE_OPTIONS -Wextra)
 	target_link_libraries(schememodotp ${MOD_LIBS})
-	set(CLIENT_MODULES ${CLIENT_MODULES} schememodotp)
+	set(SCHEME_MODULES ${SCHEME_MODULES} schememodotp)
 endif ()
 
 option(WITH_SCHEME_WEBAUTHN "Build Webauthn scheme module" on)
 if (WITH_SCHEME_WEBAUTHN)
   include(FindLibJWT)
-  find_package(LibJWT REQUIRED)
+  find_package(LibJWT REQUIRED "1.10.1")
   if (LIBJWT_FOUND)
       set(MOD_LIBS ${LIBJWT_LIBRARIES})
       include_directories(${LIBJWT_INCLUDE_DIRS})
@@ -374,6 +389,9 @@ if (WITH_SCHEME_WEBAUTHN)
   endif ()
   
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/webauthn.c)
+  if (NOT (${DISTRIB_CODENAME} MATCHES "Debian" AND ${RELEASE_CODENAME} MATCHES "Stretch"))
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcbor0 (>= 0.5.0), libjwt0 (>= 1.10.1)")
+  endif ()
 
 	set(MOD_LIBS ${ULFIUS_LIBRARIES} "-ldl")
 
@@ -381,7 +399,7 @@ if (WITH_SCHEME_WEBAUTHN)
 	set_target_properties(schememodwebauthn PROPERTIES
 			COMPILE_OPTIONS -Wextra)
 	target_link_libraries(schememodwebauthn ${MOD_LIBS})
-	set(CLIENT_MODULES ${CLIENT_MODULES} schememodwebauthn)
+	set(SCHEME_MODULES ${SCHEME_MODULES} schememodwebauthn)
 endif ()
 
 # plugins modules
@@ -401,13 +419,16 @@ endif ()
 option(WITH_PLUGIN_OAUTH2 "Build legacy oauth2 plugin module" on)
 if (WITH_PLUGIN_OAUTH2)
     include(FindLibJWT)
-    find_package(LibJWT REQUIRED)
+    find_package(LibJWT REQUIRED "1.9.0")
     if (LIBJWT_FOUND)
         set(MOD_LIBS ${LIBJWT_LIBRARIES})
         include_directories(${LIBJWT_INCLUDE_DIRS})
     endif ()
     
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oauth2.c)
+  if (NOT (${DISTRIB_CODENAME} MATCHES "Debian" AND ${RELEASE_CODENAME} MATCHES "Stretch"))
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= 1.9.0)")
+  endif ()
 
 	set(MOD_LIBS "-ldl")
 
@@ -415,7 +436,7 @@ if (WITH_PLUGIN_OAUTH2)
 	set_target_properties(protocol_oauth2 PROPERTIES
 			COMPILE_OPTIONS -Wextra)
 	target_link_libraries(protocol_oauth2 ${MOD_LIBS})
-	set(CLIENT_MODULES ${CLIENT_MODULES} protocol_oauth2)
+	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oauth2)
 endif ()
 
 # tests
@@ -455,24 +476,24 @@ if (BUILD_GLEWLWYD_TESTING)
 					glewlwyd_crud_user
 					glewlwyd_crud_client
 					glewlwyd_crud_scope 
-                    glewlwyd_oauth2_auth_code 
-                    glewlwyd_oauth2_code 
-                    glewlwyd_oauth2_code_client_confidential 
-                    glewlwyd_oauth2_implicit 
-                    glewlwyd_oauth2_resource_owner_pwd_cred 
-                    glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential 
-                    glewlwyd_oauth2_client_cred 
-                    glewlwyd_oauth2_refresh_token 
-                    glewlwyd_oauth2_refresh_token_client_confidential 
-                    glewlwyd_oauth2_delete_token 
-                    glewlwyd_oauth2_delete_token_client_confidential 
-                    glewlwyd_oauth2_profile 
-                    glewlwyd_oauth2_refresh_manage 
-                    glewlwyd_oauth2_refresh_manage_session
-                    glewlwyd_mod_user_http
-                    glewlwyd_mod_user_irl
-                    glewlwyd_mod_client_irl
-                    glewlwyd_oauth2_irl)
+					glewlwyd_oauth2_auth_code 
+					glewlwyd_oauth2_code 
+					glewlwyd_oauth2_code_client_confidential 
+					glewlwyd_oauth2_implicit 
+					glewlwyd_oauth2_resource_owner_pwd_cred 
+					glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential 
+					glewlwyd_oauth2_client_cred 
+					glewlwyd_oauth2_refresh_token 
+					glewlwyd_oauth2_refresh_token_client_confidential 
+					glewlwyd_oauth2_delete_token 
+					glewlwyd_oauth2_delete_token_client_confidential 
+					glewlwyd_oauth2_profile 
+					glewlwyd_oauth2_refresh_manage 
+					glewlwyd_oauth2_refresh_manage_session
+					glewlwyd_mod_user_http
+					glewlwyd_mod_user_irl
+					glewlwyd_mod_client_irl
+					glewlwyd_oauth2_irl)
 
 		configure_file(
 				"${CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
@@ -484,35 +505,35 @@ if (BUILD_GLEWLWYD_TESTING)
 			add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
 			target_include_directories(${t} PUBLIC ${TST_DIR})
 			target_link_libraries(${t} PUBLIC ${LIBS})
-            if (NOT ${t} MATCHES "_irl$")
-                add_test(NAME ${t}
-                        WORKING_DIRECTORY ${TST_DIR}
-                        COMMAND ${t})
-            elseif (${t} MATCHES "_user_irl$")
-                FILE(GLOB UserJsonIrl ${TST_DIR}/mod_user_*.json)
-                foreach (j ${UserJsonIrl})
-                    add_test(NAME "${t}_${COUNTER}"
-                            WORKING_DIRECTORY ${TST_DIR}
-                            COMMAND ${t} ${j})
-                    MATH(EXPR COUNTER "${COUNTER}+1")
-                endforeach ()
-            elseif (${t} MATCHES "_client_irl$")
-                FILE(GLOB UserJsonIrl ${TST_DIR}/mod_client_*.json)
-                foreach (j ${UserJsonIrl})
-                    add_test(NAME "${t}_${COUNTER}"
-                            WORKING_DIRECTORY ${TST_DIR}
-                            COMMAND ${t} ${j})
-                    MATH(EXPR COUNTER "${COUNTER}+1")
-                endforeach ()
-            elseif (${t} MATCHES "_oauth2_irl$")
-                FILE(GLOB UserJsonIrl ${TST_DIR}/plugin_oauth2_*.json)
-                foreach (j ${UserJsonIrl})
-                    add_test(NAME "${t}_${COUNTER}"
-                            WORKING_DIRECTORY ${TST_DIR}
-                            COMMAND ${t} ${j})
-                    MATH(EXPR COUNTER "${COUNTER}+1")
-                endforeach ()
-            endif ()
+      if (NOT ${t} MATCHES "_irl$")
+        add_test(NAME ${t}
+                WORKING_DIRECTORY ${TST_DIR}
+                COMMAND ${t})
+      elseif (${t} MATCHES "_user_irl$")
+        FILE(GLOB UserJsonIrl ${TST_DIR}/mod_user_*.json)
+        foreach (j ${UserJsonIrl})
+            add_test(NAME "${t}_${COUNTER}"
+                    WORKING_DIRECTORY ${TST_DIR}
+                    COMMAND ${t} ${j})
+            MATH(EXPR COUNTER "${COUNTER}+1")
+        endforeach ()
+      elseif (${t} MATCHES "_client_irl$")
+        FILE(GLOB UserJsonIrl ${TST_DIR}/mod_client_*.json)
+        foreach (j ${UserJsonIrl})
+            add_test(NAME "${t}_${COUNTER}"
+                    WORKING_DIRECTORY ${TST_DIR}
+                    COMMAND ${t} ${j})
+            MATH(EXPR COUNTER "${COUNTER}+1")
+        endforeach ()
+      elseif (${t} MATCHES "_oauth2_irl$")
+        FILE(GLOB UserJsonIrl ${TST_DIR}/plugin_oauth2_*.json)
+        foreach (j ${UserJsonIrl})
+            add_test(NAME "${t}_${COUNTER}"
+                    WORKING_DIRECTORY ${TST_DIR}
+                    COMMAND ${t} ${j})
+            MATH(EXPR COUNTER "${COUNTER}+1")
+        endforeach ()
+      endif ()
 		endforeach ()
         
 	endif ()
@@ -581,7 +602,7 @@ set(CPACK_GENERATOR "TGZ;DEB")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mail@babelouest.org")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/babelouest/glewlwyd")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.3.4), libconfig9, libgnutls30 (>= 3.5.0), libjansson4 (>= 2.7), libldap-2.4-2 (>= 2.4.7), liborcania (>= ${ORCANIA_VERSION_REQUIRED}), libyder (>= ${YDER_VERSION_REQUIRED}), libulfius (>= ${ULFIUS_VERSION_REQUIRED}), libhoel (>= ${HOEL_VERSION_REQUIRED}), lsb-base (>= 3.0-6)")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libconfig9, libgnutls30 (>= 3.5.0), libjansson4 (>= 2.7), liborcania (>= ${ORCANIA_VERSION_REQUIRED}), libyder (>= ${YDER_VERSION_REQUIRED}), libulfius (>= ${ULFIUS_VERSION_REQUIRED}), libhoel (>= ${HOEL_VERSION_REQUIRED}), lsb-base (>= 3.0-6)")
 set(CPACK_PACKAGE_FILE_NAME ${PACKAGE_FILE_NAME})
 
 set(CPACK_SOURCE_GENERATOR "TGZ")
