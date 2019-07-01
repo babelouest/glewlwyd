@@ -389,7 +389,7 @@ if (WITH_SCHEME_WEBAUTHN)
   endif ()
   
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/webauthn.c)
-  if (NOT (${DISTRIB_CODENAME} MATCHES "Debian" AND ${RELEASE_CODENAME} MATCHES "Stretch"))
+  if (${RELEASE_CODENAME} NOT MATCHES "Stretch")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcbor0 (>= 0.5.0), libjwt0 (>= 1.10.1)")
   endif ()
 
@@ -426,7 +426,7 @@ if (WITH_PLUGIN_OAUTH2)
     endif ()
     
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oauth2.c)
-  if (NOT (${DISTRIB_CODENAME} MATCHES "Debian" AND ${RELEASE_CODENAME} MATCHES "Stretch"))
+  if (${RELEASE_CODENAME} NOT MATCHES "Stretch")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= 1.9.0)")
   endif ()
 
