@@ -478,6 +478,8 @@
     "hello": "Bienvenue {{name}}",
     "hello-delegate": "Délégation pour {{name}}",
     "save": "Sauvegarder",
+    "save-profile-success": "Profil sauvegardé",
+    "save-profile-error": "Erreur lors de la sauvegarde du profil",
     "password-modal-title": "Changer de mot de passe",
     "password-modal-old-password": "Mot de passe actuel",
     "password-modal-old-password-ph": "Ex: 12345678",
