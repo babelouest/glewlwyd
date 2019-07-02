@@ -83,7 +83,7 @@ START_TEST(test_oauth2_implicit_scope_grant_partial)
   struct _u_request auth_req, code_req;
   struct _u_response auth_resp, code_resp;
   json_t * j_body;
-  char * cookie, * code;
+  char * cookie;
 
   ulfius_init_request(&auth_req);
   ulfius_init_response(&auth_resp);
@@ -155,7 +155,6 @@ START_TEST(test_oauth2_implicit_scope_grant_partial)
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "token="), NULL);
   ck_assert_str_eq(o_strstr(u_map_get(code_resp.map_header, "Location"), "scope=") + o_strlen("scope="), SCOPE_LIST_PARTIAL);
-  ck_assert_ptr_ne(code, NULL);
   ulfius_clean_response(&code_resp);
 
   // Clean grant scopes
