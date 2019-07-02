@@ -163,6 +163,7 @@ int access_token_check_validity(struct _glewlwyd_resource_config * config, json_
   time_t now;
   json_int_t expiration;
   int res;
+  (void)(config); // Avoid coompiler warning
   
   if (j_access_token != NULL) {
     // Token is valid, check type and expiration date
