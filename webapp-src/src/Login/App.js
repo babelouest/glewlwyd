@@ -185,7 +185,6 @@ class App extends Component {
       var body = "";
       if (this.state.loaded) {
         if (this.state.newUser || this.state.passwordRequired) {
-          console.log(this.state.scheme);
           if (!this.state.scheme) {
             body = <PasswordForm config={this.state.config} currentUser={this.state.currentUser} callbackInitProfile={this.initProfile}/>;
           } else {
