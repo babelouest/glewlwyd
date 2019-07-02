@@ -41,11 +41,11 @@ script:
   - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on -DWITH_SCHEME_WEBAUTHN=off ..
   - make
   - sudo make install
-#  - sudo ldconfig
-#  - sqlite3 /tmp/glewlwyd.db < ../docs/database/init.sqlite3.sql
-#  - sqlite3 /tmp/glewlwyd.db < ../test/glewlwyd-test.sql
-#  - glewlwyd --config-file=../test/glewlwyd.conf &
-#  - export G_PID=$!
-#  - make test
-#  - kill $G_PID
+  - sudo ldconfig
+  - sqlite3 /tmp/glewlwyd.db < ../docs/database/init.sqlite3.sql
+  - sqlite3 /tmp/glewlwyd.db < ../test/glewlwyd-test.sql
+  - glewlwyd --config-file=../test/glewlwyd.conf &
+  - export G_PID=$!
+  - make test
+  - kill $G_PID
   - popd
