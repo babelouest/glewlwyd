@@ -87,10 +87,10 @@ class App extends Component {
         if (!res[0] || res[0].scope.indexOf(this.state.config.profile_scope) < 0) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
         } else {
-          this.setState({loggedIn: true, profileList: res}, () => {
+          this.setState({profileList: res}, () => {
             apiManager.glewlwydRequest("/profile/scheme")
             .then((res) => {
-              this.setState({schemeList: res});
+              this.setState({loggedIn: true, schemeList: res});
             })
             .fail((error) => {
               if (error.status === 401) {
