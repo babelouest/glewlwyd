@@ -429,7 +429,7 @@ if (WITH_PLUGIN_OAUTH2)
         include_directories(${LIBJWT_INCLUDE_DIRS})
     endif ()
     
-	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oauth2.c)
+	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oauth2.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oauth2.h)
   if (NOT ${RELEASE_CODENAME} STREQUAL "Stretch")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= 1.9.0)")
   endif ()
