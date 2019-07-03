@@ -234,7 +234,6 @@ int main(int argc, char *argv[])
     bearer_token = msprintf("Bearer %s", json_string_value(json_object_get(json_body, "access_token")));
     refresh_token = o_strdup(json_string_value(json_object_get(json_body, "refresh_token")));
     y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USERNAME);
-    y_log_message(Y_LOG_LEVEL_DEBUG, "Refresh token %s", refresh_token);
     json_decref(json_body);
   }
   ulfius_clean_request(&auth_req);
