@@ -1064,18 +1064,18 @@ static int refresh_token_disable(struct _oauth2_config * config, const char * us
           res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
           json_decref(j_query);
           if (res == H_OK) {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - token '[...%s]' disabled", token_hash + (o_strlen(token_hash) - 8));
+            y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - token '[...%s]' disabled", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))));
             ret = G_OK;
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (2)");
             ret = G_ERROR_DB;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token already disabled");
+          y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token '[...%s]' already disabled", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))));
           ret = G_ERROR_PARAM;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token not found");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token '[...%s]' not found", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))));
         ret = G_ERROR_NOT_FOUND;
       }
       json_decref(j_result);
