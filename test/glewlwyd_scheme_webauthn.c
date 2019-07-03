@@ -11293,7 +11293,12 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
   ck_assert_int_eq(jwt_add_grants_json(jwt_response, str_grant), 0);
   o_free(str_grant);
   json_decref(j_grant);
-  ck_assert_ptr_ne((str_response = jwt_encode_str(jwt_response)), NULL);
+  str_response = jwt_encode_str(jwt_response);
+  if (str_response == NULL) {
+    // TODO: Remove when the test will pass on Travis CI
+    y_log_message(Y_LOG_LEVEL_ERROR, "str_response is NULL: %s", strerror(errno));
+  }
+  ck_assert_ptr_ne(str_response, NULL);
   
   cose_pair.key = cbor_build_string("response");
   cose_pair.value = cbor_build_bytestring((unsigned char *)str_response, o_strlen(str_response));
