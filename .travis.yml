@@ -51,6 +51,6 @@ script:
   - sqlite3 /tmp/glewlwyd.db < ../test/glewlwyd-test.sql
   - glewlwyd --config-file=../test/glewlwyd.conf &
   - export G_PID=$!
-  - make test
+  - make test || (cat Testing/Temporary/LastTest.log && cat /tmp/glewlwyd.log && false)
   - kill $G_PID
   - popd
