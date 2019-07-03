@@ -16,7 +16,7 @@
 #define SERVER_URI "http://localhost:4593/api"
 #define USERNAME "user1"
 #define PASSWORD "password"
-#define SCOPE_LIST "g_profile"
+#define SCOPE_LIST "g_profile scope1"
 
 char * bearer_token;
 char * refresh_token;
