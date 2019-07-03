@@ -204,12 +204,11 @@ static Suite *glewlwyd_suite(void)
 
 int main(int argc, char *argv[])
 {
-  int number_failed = 0;
   Suite *s;
   SRunner *sr;
   struct _u_request auth_req;
   struct _u_response auth_resp;
-  int res, i, do_test = 0;
+  int res, i, do_test = 0, number_failed = 1;
   json_t * j_body;
   
   srand(time(NULL));
