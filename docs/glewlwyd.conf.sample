@@ -70,20 +70,27 @@ hash_algorithm = "SHA512"
 # MariaDB/Mysql database connection
 database =
 {
-  type = "mariadb"
-  host = "localhost"
-  user = "glewlwyd"
+  type     = "mariadb"
+  host     = "localhost"
+  user     = "glewlwyd"
   password = "glewlwyd"
-  dbname = "glewlwyd"
-  port = 0
+  dbname   = "glewlwyd"
+  port     = 0
 }
 
 # SQLite database connection
 #database =
 #{
-#   type               = "sqlite3"
-#   path               = "/tmp/glewlwyd.db"
+#  type = "sqlite3"
+#  path = "/tmp/glewlwyd.db"
 #};
+
+# PostgreSQL database connection
+#database =
+#{
+#  type = "postgre"
+#  conninfo = "dbname = glewlwyd"
+#}
 
 # mime types for webapp files
 static_files_mime_types =
@@ -99,6 +106,10 @@ static_files_mime_types =
   {
     extension = ".js"
     mime_type = "application/javascript"
+  },
+  {
+    extension = ".json"
+    mime_type = "application/json"
   },
   {
     extension = ".png"
