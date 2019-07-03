@@ -36,7 +36,7 @@ install:
 - wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor-0.5.0.tar.gz
 - tar xzf libcbor-0.5.0.tar.gz
 - mkdir libcbor-0.5.0/build
-- pushd libcbor-0.5.0/build && cmake .. make && sudo make install && popd
+- pushd libcbor-0.5.0/build && cmake .. && make && sudo make install && popd
 - rm -rf libcbor-0.5.0
 - sudo ldconfig
 
