@@ -248,10 +248,10 @@ int generate_digest(digest_algorithm digest, const char * data, int use_salt, ch
         alg = GNUTLS_DIG_SHA1;
         break;
       case digest_SHA224:
-        alg = GNUTLS_MAC_SHA224;
+        alg = GNUTLS_DIG_SHA224;
         break;
       case digest_SHA256:
-        alg = GNUTLS_MAC_SHA256;
+        alg = GNUTLS_DIG_SHA256;
         break;
       case digest_SHA384:
         alg = GNUTLS_DIG_SHA384;
@@ -260,10 +260,10 @@ int generate_digest(digest_algorithm digest, const char * data, int use_salt, ch
         alg = GNUTLS_DIG_SHA512;
         break;
       case digest_MD5:
-        alg = GNUTLS_MAC_MD5;
+        alg = GNUTLS_DIG_MD5;
         break;
       default:
-        alg = GNUTLS_MAC_UNKNOWN;
+        alg = GNUTLS_DIG_UNKNOWN;
         break;
     }
     

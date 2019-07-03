@@ -414,7 +414,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -494,7 +494,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -657,7 +657,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -737,7 +737,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -900,7 +900,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -980,7 +980,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -1143,7 +1143,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -1223,7 +1223,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -1386,7 +1386,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_rpid)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   auth_data[0]++;
   rp_id_len = auth_data_len;
   // Set flags
@@ -1467,7 +1467,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_rpid)
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -1630,7 +1630,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_a
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT;// | FLAG_AT;
@@ -1710,7 +1710,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_a
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -1873,7 +1873,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_u
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_AT;
@@ -1953,7 +1953,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_u
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -2116,7 +2116,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -2197,7 +2197,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -2360,7 +2360,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -2441,7 +2441,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -2604,7 +2604,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -2685,7 +2685,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -2848,7 +2848,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -2928,7 +2928,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -3091,7 +3091,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -3171,7 +3171,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -3334,7 +3334,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -3414,7 +3414,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -3577,7 +3577,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -3657,7 +3657,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -3820,7 +3820,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -3901,7 +3901,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -4064,7 +4064,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_map
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -4150,7 +4150,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_map
 
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -4313,7 +4313,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_cer
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -4393,7 +4393,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_cer
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -4556,7 +4556,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_x5c
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -4637,7 +4637,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_x5c
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -4800,7 +4800,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_pre
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -4880,7 +4880,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_pre
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 1;
   verification_data_offset = 1;
   
@@ -5043,7 +5043,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_rpi
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -5123,7 +5123,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_rpi
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -5287,7 +5287,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -5367,7 +5367,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -5531,7 +5531,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -5611,7 +5611,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -5775,7 +5775,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -5855,7 +5855,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -6018,7 +6018,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -6098,7 +6098,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -6263,7 +6263,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -6343,7 +6343,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -6508,7 +6508,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_siz
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -6588,7 +6588,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_siz
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -6752,7 +6752,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_con
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -6832,7 +6832,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_con
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -6997,7 +6997,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_key)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -7077,7 +7077,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_key)
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -7241,7 +7241,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_obj_size
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -7321,7 +7321,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_obj_size
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -7486,7 +7486,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_auth_data_ke
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -7566,7 +7566,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_auth_data_ke
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -7730,7 +7730,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_key
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -7810,7 +7810,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_key
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -7974,7 +7974,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -8054,7 +8054,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -8215,7 +8215,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success_already_registered
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -8295,7 +8295,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success_already_registered
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -8458,7 +8458,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_success)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -8538,7 +8538,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_success)
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -8699,7 +8699,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_collision_error)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -8779,7 +8779,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_collision_error)
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -8940,7 +8940,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_in_2_success)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   rp_id_len = auth_data_len;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -9020,7 +9020,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_in_2_success)
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, client_data_hash, &client_data_hash_len), GNUTLS_E_SUCCESS);
   verification_data[0] = 0;
   verification_data_offset = 1;
   
@@ -9197,7 +9197,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_error_session_invalid)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -9205,7 +9205,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_error_session_invalid)
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -9322,7 +9322,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_challenge)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -9330,7 +9330,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_challenge)
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -9448,7 +9448,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_origin)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -9456,7 +9456,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_origin)
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -9574,7 +9574,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_type
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -9582,7 +9582,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_type
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -9701,7 +9701,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_enco
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -9709,7 +9709,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_enco
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -9827,7 +9827,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_rp_id_hash)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   auth_data[0]++;
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
@@ -9836,7 +9836,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_rp_id_hash)
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -9954,7 +9954,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_flag_user_presen
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = 0;
   auth_data_len += 5;
@@ -9962,7 +9962,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_flag_user_presen
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -10080,7 +10080,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_hash
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -10088,7 +10088,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_hash
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data[auth_data_len]++;
   auth_data_len += client_data_json_hash_len;
   
@@ -10207,7 +10207,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_signature)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -10215,7 +10215,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_signature)
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -10334,7 +10334,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_success)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -10342,7 +10342,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_success)
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -10460,7 +10460,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_credential_id)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -10468,7 +10468,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_credential_id)
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -10612,7 +10612,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_success)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -10620,7 +10620,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_success)
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -10738,7 +10738,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_2_in_2_success)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -10746,7 +10746,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_2_in_2_success)
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -10864,7 +10864,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_2_in_1_error)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -10872,7 +10872,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_2_in_1_error)
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -10990,7 +10990,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_invalid_credential_id)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -10998,7 +10998,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_invalid_credential_id)
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
   client_data_json_hash_len = AUTHENTICATOR_DATA_SIZE - auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
   ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
@@ -11177,7 +11177,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -11273,11 +11273,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
   key_data.size = o_strlen(client_data_json);
   memcpy(nonce, auth_data, auth_data_len);
   nonce_len = NONCE_SIZE-auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
   nonce_len += auth_data_len;
   key_data.data = nonce;
   key_data.size = nonce_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
   ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
@@ -11437,7 +11437,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -11533,11 +11533,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
   key_data.size = o_strlen(client_data_json);
   memcpy(nonce, auth_data, auth_data_len);
   nonce_len = NONCE_SIZE-auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
   nonce_len += auth_data_len;
   key_data.data = nonce;
   key_data.size = nonce_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
   ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
@@ -11692,7 +11692,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -11789,11 +11789,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
   key_data.size = o_strlen(client_data_json);
   memcpy(nonce, auth_data, auth_data_len);
   nonce_len = NONCE_SIZE-auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
   nonce_len += auth_data_len;
   key_data.data = nonce;
   key_data.size = nonce_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
   ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
@@ -11948,7 +11948,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -12043,11 +12043,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
   key_data.size = o_strlen(client_data_json);
   memcpy(nonce, auth_data, auth_data_len);
   nonce_len = NONCE_SIZE-auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
   nonce_len += auth_data_len;
   key_data.data = nonce;
   key_data.size = nonce_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
   ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
@@ -12202,7 +12202,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -12298,11 +12298,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
   key_data.size = o_strlen(client_data_json);
   memcpy(nonce, auth_data, auth_data_len);
   nonce_len = NONCE_SIZE-auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
   nonce_len += auth_data_len;
   key_data.data = nonce;
   key_data.size = nonce_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
   ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   nonce_hash_enc[0]++;
@@ -12458,7 +12458,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -12554,11 +12554,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
   key_data.size = o_strlen(client_data_json);
   memcpy(nonce, auth_data, auth_data_len);
   nonce_len = NONCE_SIZE-auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
   nonce_len += auth_data_len;
   key_data.data = nonce;
   key_data.size = nonce_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
   ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
@@ -12714,7 +12714,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -12810,11 +12810,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
   key_data.size = o_strlen(client_data_json);
   memcpy(nonce, auth_data, auth_data_len);
   nonce_len = NONCE_SIZE-auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
   nonce_len += auth_data_len;
   key_data.data = nonce;
   key_data.size = nonce_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
   ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
@@ -12969,7 +12969,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -13065,11 +13065,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
   key_data.size = o_strlen(client_data_json);
   memcpy(nonce, auth_data, auth_data_len);
   nonce_len = NONCE_SIZE-auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
   nonce_len += auth_data_len;
   key_data.data = nonce;
   key_data.size = nonce_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
   ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
@@ -13225,7 +13225,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   // Set rpId hash
   key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
   key_data.size = o_strlen(WEBAUTHN_RP_ID);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
   // Set flags
   *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
   auth_data_len += 5;
@@ -13321,11 +13321,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   key_data.size = o_strlen(client_data_json);
   memcpy(nonce, auth_data, auth_data_len);
   nonce_len = NONCE_SIZE-auth_data_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce+auth_data_len, &nonce_len), GNUTLS_E_SUCCESS);
   nonce_len += auth_data_len;
   key_data.data = nonce;
   key_data.size = nonce_len;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
   ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
