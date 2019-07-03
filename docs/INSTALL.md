@@ -48,28 +48,25 @@ libcurl-gnutls
 libldap2
 libmariadbclient
 libsqlite3
+libpq
 libconfig
 libgnutls
 libssl
 libjwt
+liboath
+libcbor
 ```
 
-For example, to install Glewlwyd with the `glewlwyd-full_2.0.0_Debian_stretch_x86_64.tar.gz` package downloaded on the `releases` page, you must execute the following commands:
+For example, to install Glewlwyd with the `glewlwyd-full_2.0.0_ubuntu_bionic_x86_64.tar.gz` package downloaded on the `releases` page on an Ubuntu Bionic LTS, you must execute the following commands:
 
 ```shell
-$ sudo apt install -y autoconf automake make libtool sqlite3 libsqlite3-dev libmariadbclient-dev libpq-dev libgnutls-dev libconfig-dev libssl-dev libldap2-dev liboath-dev libsystemd-dev
-$ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz
-$ tar -zxvf v1.10.2.tar.gz
-$ cd libjwt-1.10.2
-$ autoreconf -i
-$ ./configure
-$ make && sudo make install
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v1.3.2/glewlwyd-full_2.0.0_Debian_stretch_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0_Debian_stretch_x86_64.tar.gz
+$ sudo apt install -y libconfig9 libjansson4 libssl1.1 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libmariadb3 libsqlite3-0 sqlite3 libpq5 libjwt0 liboath0 libcbor0
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0b1/glewlwyd-full_2.0.0b1_ubuntu_bionic_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0b1_ubuntu_bionic_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.0_Debian_stretch_x86_64.deb
 $ sudo dpkg -i libyder_1.4.5_Debian_stretch_x86_64.deb
 $ sudo dpkg -i libhoel_1.4.9_Debian_stretch_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.0_Debian_stretch_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.1_Debian_stretch_x86_64.deb
 $ sudo dpkg -i glewlwyd_2.0.0_Debian_stretch_x86_64.deb
 ```
 
