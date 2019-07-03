@@ -30,10 +30,10 @@
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/glewlwyd.svg)](https://repology.org/metapackage/glewlwyd)
 
-Glewlwyd is available in multiple distributions as official package. Check out your distribution documentation to install the package automatically.
+Glewlwyd 1.x is available in Debian based distributions as official package. Check out your distribution documentation to install the package automatically.
 
 ```shell
-$ # Example for Debian testing
+$ # Example for Ubuntu 19.04
 $ apt install glewlwyd
 ```
 
@@ -44,30 +44,109 @@ You can install Glewlwyd with a pre-compiled package available in the [release p
 ```
 libmicrohttpd
 libjansson
-libcurl-gnutls
+libcurl
 libldap2
 libmariadbclient
 libsqlite3
-libpq
 libconfig
 libgnutls
-libssl
 libjwt
 liboath
 libcbor
 ```
 
-For example, to install Glewlwyd with the `glewlwyd-full_2.0.0_ubuntu_bionic_x86_64.tar.gz` package downloaded on the `releases` page on an Ubuntu Bionic LTS, you must execute the following commands:
+#### Install Glewlwyd on Debian Stretch
 
 ```shell
-$ sudo apt install -y libconfig9 libjansson4 libssl1.1 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libmariadb3 libsqlite3-0 sqlite3 libpq5 libjwt0 liboath0 libcbor0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0b1/glewlwyd-full_2.0.0b1_ubuntu_bionic_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0b1_ubuntu_bionic_x86_64.tar.gz
+$ sudo apt install -y autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
+$ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz -O libjwt.tar.gz
+$ tar -zxvf libjwt.tar.gz
+$ cd libjwt-1.10.2
+$ autoreconf -i
+$ ./configure --without-openssl
+$ make && sudo make install
+$ cd ..
+
+$ wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor.tar.gz
+$ tar xf libcbor.tar.gz
+$ mkdir libcbor-0.5.0/build
+$ cd libcbor-0.5.0/build
+$ cmake ..
+$ make && sudo make install
+$ cd ../..
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_debian_stretch_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0_Debian_stretch_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.0_Debian_stretch_x86_64.deb
-$ sudo dpkg -i libyder_1.4.5_Debian_stretch_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.9_Debian_stretch_x86_64.deb
+$ sudo dpkg -i libyder_1.4.6_Debian_stretch_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.10_Debian_stretch_x86_64.deb
 $ sudo dpkg -i libulfius_2.6.1_Debian_stretch_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0_Debian_stretch_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0-b1_Debian_stretch_x86_64.deb
+```
+
+#### Install Glewlwyd on Raspbian Stretch for Raspberry Pi
+
+```shell
+$ sudo apt install -y autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
+$ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz -O libjwt.tar.gz
+$ tar -zxvf libjwt.tar.gz
+$ cd libjwt-1.10.2
+$ autoreconf -i
+$ ./configure --without-openssl
+$ make && sudo make install
+$ cd ..
+$ wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor.tar.gz
+$ tar xf libcbor.tar.gz
+$ mkdir libcbor-0.5.0/build
+$ cd libcbor-0.5.0/build
+$ cmake ..
+$ make && sudo make install
+$ cd ../..
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_raspbian_stretch_armv6l.tar.gz
+$ tar xf glewlwyd-full_2.0.0_Debian_stretch_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.0.0_Debian_stretch_x86_64.deb
+$ sudo dpkg -i libyder_1.4.6_Debian_stretch_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.10_Debian_stretch_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.1_Debian_stretch_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0-b1_Debian_stretch_x86_64.deb
+```
+
+#### Install Glewlwyd on Debian Buster
+
+```shell
+$ sudo apt install -y autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libjwt0 libcbor0
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_debian_buster_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0_Debian_buster_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.0.0_Debian_buster_x86_64.deb
+$ sudo dpkg -i libyder_1.4.6_Debian_buster_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.10_Debian_buster_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.1_Debian_buster_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0-b1_Debian_buster_x86_64.deb
+```
+
+#### Install Glewlwyd on Ubuntu 18.04 LTS Bionic
+
+```shell
+$ sudo apt install -y autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libjwt0 libcbor0
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_ubuntu_bionic_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0_Ubuntu_bionic_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.0.0_Ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libyder_1.4.6_Ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.10_Ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.1_Ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0-b1_Ubuntu_bionic_x86_64.deb
+```
+
+#### Install Glewlwyd on Ubuntu 19.04 Disco
+
+```shell
+$ sudo apt install -y autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libjwt0 libcbor0
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_ubuntu_disco_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0_Ubuntu_disco_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.0.0_Ubuntu_disco_x86_64.deb
+$ sudo dpkg -i libyder_1.4.6_Ubuntu_disco_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.10_Ubuntu_disco_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.1_Ubuntu_disco_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0-b1_Ubuntu_disco_x86_64.deb
 ```
 
 If there's no package available for your distribution, you can recompile it manually using `CMake` or `Makefile`.
@@ -78,26 +157,10 @@ TBD
 
 ## Manual install from Github
 
-You must install the following libraries including their header files:
-
-```
-libsystemd
-libmicrohttpd
-libjansson
-libcurl-gnutls
-libldap2
-libmariadbclient
-libsqlite3
-libconfig
-libgnutls
-libssl
-libsystemd
-```
-
 On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install those dependencies using the following command:
 
 ```shell
-$ sudo apt-get install autoconf automake libtool sqlite3 libsqlite3-dev libmysqlclient-dev libpq-dev libgnutls-dev libconfig-dev libssl-dev libldap2-dev liboath-dev
+$ sudo apt-get install autoconf automake libtool sqlite3 libsqlite3-dev default-libmysqlclient-dev libpq-dev libgnutls-dev libconfig-dev libssl-dev libldap2-dev liboath-dev
 ```
 
 #### Journald logs
@@ -119,13 +182,23 @@ With Libmicrohttpd 0.9.37 and older version, there is a bug when parsing `applic
 Download and install libjwt, then download Glewlwyd from GitHub, then use the CMake script to build the application:
 
 ```shell
-# Install libjwt
-# libtool and autoconf may be required, install them with 'sudo apt-get install libtool autoconf'
+# Install libjwt if not present in your package manager, libjwt 1.10 minimum is required
+# libtool and autoconf are required
 $ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz -O libjwt-1.10.2.tar.gz
 $ tar xzf libjwt-1.10.2.tar.gz
 $ cd libjwt-1.10.2 && autoreconf -i && ./configure && make && sudo make install # use ./configure --without-openssl to use gnutls instead, you must have gnutls 3.5.8 minimum
-- rm -rf libjwt-1.10.2
-- sudo ldconfig
+$ rm -rf libjwt-1.10.2
+$ sudo ldconfig
+$ cd ..
+
+# Install libcbor
+$ wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor.tar.gz
+$ tar xf libcbor.tar.gz
+$ mkdir libcbor-0.5.0/build
+$ cd libcbor-0.5.0/build
+$ cmake ..
+$ make && sudo make install
+$ cd ../..
 
 # Install Glewlwyd
 $ git clone https://github.com/babelouest/glewlwyd.git
@@ -138,21 +211,30 @@ $ sudo make install
 
 ### Good ol' Makefile
 
-Download Glewlwyd and its dependencies hosted on github, compile and install.
+Download Glewlwyd and its dependencies hosted on GitHub, compile and install.
 
 ```shell
-# Install libjwt
-# libtool and autoconf may be required, install them with 'sudo apt-get install libtool autoconf'
-$ git clone https://github.com/benmcollins/libjwt.git
-$ cd libjwt/
-$ autoreconf -i
-$ ./configure # use ./configure --without-openssl to use gnutls instead, you must have gnutls 3.5.8 minimum
-$ make
-$ sudo make install
+# Install libjwt if not present in your package manager, libjwt 1.10 minimum is required
+# libtool and autoconf are required
+$ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz -O libjwt-1.10.2.tar.gz
+$ tar xzf libjwt-1.10.2.tar.gz
+$ cd libjwt-1.10.2 && autoreconf -i && ./configure && make && sudo make install # use ./configure --without-openssl to use gnutls instead, you must have gnutls 3.5.8 minimum
+$ rm -rf libjwt-1.10.2
+$ sudo ldconfig
+$ cd ..
+
+# Install libcbor
+$ wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor.tar.gz
+$ tar xf libcbor.tar.gz
+$ mkdir libcbor-0.5.0/build
+$ cd libcbor-0.5.0/build
+$ cmake ..
+$ make && sudo make install
+$ cd ../..
 
 # Install Orcania
 $ git clone https://github.com/babelouest/orcania.git
-$ cd orcania/
+$ cd orcania/src/
 $ make
 $ sudo make install
 
@@ -181,7 +263,7 @@ $ make
 $ sudo make install
 ```
 
-## Configuration
+## Configure glewlwyd.conf
 
 Copy `glewlwyd.conf.sample` to `glewlwyd.conf`, edit the file `glewlwyd.conf` with your own settings.
 
@@ -193,11 +275,54 @@ OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avo
 
 Specify in the config file the parameter `hash_algorithm` to store passwords with sqlite3 back-end, and token digests.
 
-Algorithms available are SHA1, SHA256, SHA512, MD5.
+Algorithms available are SHA1, SHA256, SHA512, MD5. Algorithms recommended are SHA256 or SHA512.
 
 ### Database back-end initialisation
 
-Then, use the script that fit your database back-end and Digest algorithm in the [database](database) folder:
+Configure your database backend according to the database you will use.
+
+```
+# MariaDB/Mysql database connection
+database =
+{
+  type     = "mariadb"
+  host     = "localhost"
+  user     = "glewlwyd"
+  password = "glewlwyd"
+  dbname   = "glewlwyd"
+  port     = 0
+}
+
+# SQLite database connection
+database =
+{
+  type = "sqlite3"
+  path = "/tmp/glewlwyd.db"
+};
+
+# PostgreSQL database connection
+database =
+{
+  type = "postgre"
+  conninfo = "dbname = glewlwyd"
+}
+```
+
+### Mime types for webapp files
+
+This section in the config file is used by the static file service whuch will provide the `webapp/` content to the browser. You can add or remove values if you made changes to the front-end and requires to handle new types of files.
+
+## Configure webapp/config.json
+
+Copy `webapp/config.json.sample` to `webapp/config.json`, edit the file with your own settings.
+
+### GlewlwydApiUrl, ProfileUrl, AdminUrl and LoginUrl
+
+Update those parameters to fit your configuration.
+
+## Initialise database
+
+Use the script that fit your database back-end in the [database](database) folder:
 
 - `docs/database/init.mariadb.sql`
 - `docs/database/init.sqlite3.sql`
@@ -213,7 +338,7 @@ mysql> CREATE DATABASE `glewlwyd`;
 mysql> GRANT ALL PRIVILEGES ON glewlwyd.* TO 'glewlwyd'@'%' identified BY 'glewlwyd';
 mysql> FLUSH PRIVILEGES;
 mysql> USE glewlwyd
-mysql> SOURCE database/init.mariadb.sql
+mysql> SOURCE docs/database/init.mariadb.sql
 ```
 
 Initialise a SQLite3 database:
@@ -228,7 +353,7 @@ Those scripts create a valid database that allow to use glewlwyd but to avoid po
 
 #### Built-in scope values
 
-If you want to use a different name for admin scope (default is `g_admin`), or the profile scope (default is `g_profile`), you must update the init script with your own value before running it, change the lines below line 338 accordingly.
+If you want to use a different name for admin scope (default is `g_admin`), or the profile scope (default is `g_profile`), you must update the init script with your own value before running it, change the lines below accordingly.
 
 #### Administrator user
 
@@ -238,7 +363,7 @@ An administrator in the LDAP back-end is a user who has the `admin_scope` (defau
 
 ### Install as a service
 
-The files `glewlwyd-init` (SysV init) and `glewlwyd.service` (Systemd) can be used to have glewlwyd as a daemon. They are fitted for a Raspbian distribution, but can easily be changed for other systems.
+The files `glewlwyd-init` (SysV init) and `glewlwyd.service` (Systemd) can be used to have glewlwyd as a daemon. They are fitted for a Raspbian distribution, but can easily be changed for other systems. It's highky recommended to run glewlwyd as a user without root access. Glewlwyd requires to be able top open a TCP port connection, a full access to the glewlwyd database, read access to the config file `glewlwyd.conf` and the installed `webapp/` folder (typically /usr/share/glewlwyd/webapp`.
 
 #### Install as a SysV init daemon and run
 
@@ -253,7 +378,7 @@ $ sudo service glewlwyd start
 ```shell
 $ sudo cp glewlwyd.service /etc/systemd/system
 $ sudo systemctl enable glewlwyd
-$ sudo sudo systemctl start glewlwyd
+$ sudo systemctl start glewlwyd
 ```
 
 ## Run Glewlwyd
