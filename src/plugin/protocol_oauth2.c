@@ -1070,9 +1070,11 @@ static int refresh_token_disable(struct _oauth2_config * config, const char * us
             ret = G_ERROR_DB;
           }
         } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token already disabled");
           ret = G_ERROR_PARAM;
         }
       } else {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token not found");
         ret = G_ERROR_NOT_FOUND;
       }
       json_decref(j_result);
