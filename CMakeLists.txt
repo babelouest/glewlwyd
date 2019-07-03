@@ -68,13 +68,13 @@ if (_GNU_SOURCE)
 	add_definitions(-D_GNU_SOURCE)
 endif ()
 
-set(LIBS "-ldl")
+set(GLWD_LIBS "-ldl")
 
 include(FindJansson)
 set(JANSSON_MIN_VERSION 2.4)
 find_package(Jansson ${JANSSON_MIN_VERSION} REQUIRED)
 if (JANSSON_FOUND)
-	set(LIBS ${LIBS} ${JANSSON_LIBRARIES})
+	set(GLWD_LIBS ${GLWD_LIBS} ${JANSSON_LIBRARIES})
 	include_directories(${JANSSON_INCLUDE_DIRS})
 endif ()
 
@@ -82,28 +82,28 @@ include(FindMHD)
 set(MHD_MIN_VERSION 0.9.38)
 find_package(MHD ${MHD_MIN_VERSION} REQUIRED)
 if (MHD_FOUND)
-	set(LIBS ${LIBS} ${MHD_LIBRARIES})
+	set(GLWD_LIBS ${GLWD_LIBS} ${MHD_LIBRARIES})
 	include_directories(${MHD_INCLUDE_DIRS})
 endif ()
 
 include(FindGnuTLS)
 find_package(GnuTLS REQUIRED)
 if (GNUTLS_FOUND)
-	set(LIBS ${LIBS} ${GNUTLS_LIBRARIES})
+	set(GLWD_LIBS ${GLWD_LIBS} ${GNUTLS_LIBRARIES})
 	include_directories(${GNUTLS_INCLUDE_DIRS})
 endif ()
 
 include(FindNettle)
 find_package(Nettle REQUIRED)
 if (NETTLE_FOUND)
-	set(LIBS ${LIBS} ${NETTLE_LIBRARIES})
+	set(GLWD_LIBS ${GLWD_LIBS} ${NETTLE_LIBRARIES})
 	include_directories(${NETTLE_INCLUDE_DIRS})
 endif ()
 
 include(FindLibconfig)
 find_package(Libconfig REQUIRED)
 if (LIBCONFIG_FOUND)
-	set(LIBS ${LIBS} ${LIBCONFIG_LIBRARIES})
+	set(GLWD_LIBS ${GLWD_LIBS} ${LIBCONFIG_LIBRARIES})
 	include_directories(${LIBCONFIG_INCLUDE_DIRS})
 endif ()
 
@@ -143,7 +143,7 @@ if (NOT ORCANIA_FOUND)
 	set(ORCANIA_LIBRARIES orcania)
 	include_directories(${orcania_BINARY_DIR})
 endif ()
-set(LIBS ${LIBS} ${ORCANIA_LIBRARIES})
+set(GLWD_LIBS ${GLWD_LIBS} ${ORCANIA_LIBRARIES})
 
 set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
 include(FindYder)
@@ -162,7 +162,7 @@ if (NOT YDER_FOUND)
 	set(YDER_LIBRARIES yder)
 	include_directories(${yder_BINARY_DIR})
 endif ()
-set(LIBS ${LIBS} ${YDER_LIBRARIES})
+set(GLWD_LIBS ${GLWD_LIBS} ${YDER_LIBRARIES})
 
 set(Ulfius_FIND_QUIETLY ON)
 include(FindUlfius)
@@ -184,7 +184,7 @@ if (NOT ULFIUS_FOUND)
 	set(ULFIUS_LIBRARIES ulfius)
 	include_directories(${ulfius_BINARY_DIR})
 endif ()
-set(LIBS ${LIBS} ${ULFIUS_LIBRARIES})
+set(GLWD_LIBS ${GLWD_LIBS} ${ULFIUS_LIBRARIES})
 
 set(Hoel_FIND_QUIETLY ON)
 include(FindHoel)
@@ -203,9 +203,9 @@ if (NOT HOEL_FOUND)
 	set(HOEL_LIBRARIES hoel)
 	include_directories(${hoel_BINARY_DIR})
 endif ()
-set(LIBS ${LIBS} ${HOEL_LIBRARIES})
+set(GLWD_LIBS ${GLWD_LIBS} ${HOEL_LIBRARIES})
 
-target_link_libraries(glewlwyd ${LIBS})
+target_link_libraries(glewlwyd ${GLWD_LIBS})
 
 option(INSECURE_COOKIE "Use insecure cookies" off)
 
@@ -461,45 +461,71 @@ if (BUILD_GLEWLWYD_TESTING)
 		set(CMAKE_CTEST_COMMAND ctest -V)
 
 		set(TST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
-		set(LIBS ${LIBS} ${CHECK_LIBRARIES})
 		find_package(Threads REQUIRED)
-		set(LIBS ${LIBS} ${SUBUNIT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} m rt)
+    
+		set(TST_LIBS ${TST_LIBS} ${JANSSON_LIBRARIES})
+		set(TST_LIBS ${TST_LIBS} ${ORCANIA_LIBRARIES})
+		set(TST_LIBS ${TST_LIBS} ${YDER_LIBRARIES})
+		set(TST_LIBS ${TST_LIBS} ${ULFIUS_LIBRARIES})
+		set(TST_LIBS ${TST_LIBS} ${GNUTLS_LIBRARIES})
+		set(TST_LIBS ${TST_LIBS} ${CHECK_LIBRARIES} ${SUBUNIT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} m rt)
 
 		set(TESTS glewlwyd_admin_mod_type 
-					glewlwyd_admin_mod_user 
-					glewlwyd_admin_mod_user_auth_scheme 
-					glewlwyd_admin_mod_client 
-					glewlwyd_admin_mod_plugin 
-					glewlwyd_auth_password 
-					glewlwyd_auth_scheme 
-					glewlwyd_auth_grant 
-					glewlwyd_auth_check_scheme 
-					glewlwyd_auth_scheme_trigger 
-					glewlwyd_auth_scheme_register 
-					glewlwyd_auth_profile 
-					glewlwyd_auth_session_manage 
-					glewlwyd_auth_profile_get_scheme_available
-					glewlwyd_crud_user
-					glewlwyd_crud_client
-					glewlwyd_crud_scope 
-					glewlwyd_oauth2_auth_code 
-					glewlwyd_oauth2_code 
-					glewlwyd_oauth2_code_client_confidential 
-					glewlwyd_oauth2_implicit 
-					glewlwyd_oauth2_resource_owner_pwd_cred 
-					glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential 
-					glewlwyd_oauth2_client_cred 
-					glewlwyd_oauth2_refresh_token 
-					glewlwyd_oauth2_refresh_token_client_confidential 
-					glewlwyd_oauth2_delete_token 
-					glewlwyd_oauth2_delete_token_client_confidential 
-					glewlwyd_oauth2_profile 
-					glewlwyd_oauth2_refresh_manage 
-					glewlwyd_oauth2_refresh_manage_session
-					glewlwyd_mod_user_http
-					glewlwyd_mod_user_irl
-					glewlwyd_mod_client_irl
-					glewlwyd_oauth2_irl)
+							glewlwyd_admin_mod_user 
+							glewlwyd_admin_mod_user_auth_scheme 
+							glewlwyd_admin_mod_client 
+							glewlwyd_admin_mod_plugin 
+							glewlwyd_auth_password 
+							glewlwyd_auth_scheme 
+							glewlwyd_auth_grant 
+							glewlwyd_auth_check_scheme 
+							glewlwyd_auth_scheme_trigger 
+							glewlwyd_auth_scheme_register 
+							glewlwyd_auth_profile 
+							glewlwyd_auth_session_manage 
+							glewlwyd_auth_profile_get_scheme_available
+							glewlwyd_crud_user
+							glewlwyd_crud_client
+							glewlwyd_crud_scope 
+							glewlwyd_mod_user_http
+							glewlwyd_mod_user_irl
+							glewlwyd_mod_client_irl
+              )
+
+    if (WITH_PLUGIN_OAUTH2)
+      set (TST_LIBS ${TST_LIBS} ${LIBJWT_LIBRARIES})
+      set (TESTS ${TESTS}
+							glewlwyd_oauth2_auth_code 
+							glewlwyd_oauth2_code 
+							glewlwyd_oauth2_code_client_confidential 
+							glewlwyd_oauth2_implicit 
+							glewlwyd_oauth2_resource_owner_pwd_cred 
+							glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential 
+							glewlwyd_oauth2_client_cred 
+							glewlwyd_oauth2_refresh_token 
+							glewlwyd_oauth2_refresh_token_client_confidential 
+							glewlwyd_oauth2_delete_token 
+							glewlwyd_oauth2_delete_token_client_confidential 
+							glewlwyd_oauth2_profile 
+							glewlwyd_oauth2_refresh_manage 
+							glewlwyd_oauth2_refresh_manage_session
+							glewlwyd_oauth2_irl
+							)
+    endif ()
+    
+    if (WITH_SCHEME_OTP)
+      set (TST_LIBS ${TST_LIBS} ${LIBOATH_LIBRARIES})
+      set (TESTS ${TESTS} glewlwyd_scheme_otp)
+    endif ()
+    
+    if (WITH_SCHEME_WEBAUTHN)
+      set(TST_LIBS ${TST_LIBS} ${LIBCBOR_LIBRARIES})
+      set (TESTS ${TESTS} glewlwyd_scheme_webauthn)
+    endif ()
+    
+    if (WITH_SCHEME_EMAIL)
+      set (TESTS ${TESTS} glewlwyd_scheme_mail)
+    endif ()
 
 		configure_file(
 				"${CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
@@ -510,7 +536,7 @@ if (BUILD_GLEWLWYD_TESTING)
 		foreach (t ${TESTS})
 			add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
 			target_include_directories(${t} PUBLIC ${TST_DIR})
-			target_link_libraries(${t} PUBLIC ${LIBS})
+			target_link_libraries(${t} PUBLIC ${TST_LIBS})
       if (NOT ${t} MATCHES "_irl$")
         add_test(NAME ${t}
                 WORKING_DIRECTORY ${TST_DIR}
