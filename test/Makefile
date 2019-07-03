@@ -21,7 +21,7 @@
 
 CC=gcc
 CFLAGS=-Wall -D_REENTRANT -DDEBUG -g -O0
-LDFLAGS=-lc -lulfius -lorcania -ljansson -lyder -lpthread -ljwt -loath -lgnutls -lcbor -lm -lrt -lcheck -lsubunit
+LDFLAGS=-lc -lulfius -lorcania -ljansson -lyder -ljwt -loath -lgnutls -lcbor -lcheck -lpthread -lm -lrt -lsubunit
 TARGET_ADMIN=glewlwyd_admin_mod_type glewlwyd_admin_mod_user glewlwyd_admin_mod_user_auth_scheme glewlwyd_admin_mod_client glewlwyd_admin_mod_plugin glewlwyd_admin_check_scope
 TARGET_AUTH=glewlwyd_auth_password glewlwyd_auth_scheme glewlwyd_auth_grant glewlwyd_auth_check_scheme glewlwyd_auth_scheme_trigger glewlwyd_auth_scheme_register glewlwyd_auth_profile glewlwyd_auth_session_manage glewlwyd_auth_profile_get_scheme_available glewlwyd_auth_profile_impersonate
 TARGET_CRUD=glewlwyd_crud_user glewlwyd_crud_client glewlwyd_crud_scope
