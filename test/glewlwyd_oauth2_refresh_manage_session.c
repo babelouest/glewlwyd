@@ -16,7 +16,7 @@
 #define SERVER_URI "http://localhost:4593/api"
 #define USERNAME "user1"
 #define PASSWORD "password"
-#define SCOPE_LIST "g_profile scope1"
+#define SCOPE_LIST "g_profile"
 
 char * bearer_token;
 char * refresh_token;
@@ -204,12 +204,12 @@ static Suite *glewlwyd_suite(void)
 
 int main(int argc, char *argv[])
 {
-  int number_failed;
+  int number_failed = 0;
   Suite *s;
   SRunner *sr;
   struct _u_request auth_req;
   struct _u_response auth_resp;
-  int res, i, do_test;
+  int res, i, do_test = 0;
   json_t * j_body;
   
   srand(time(NULL));
