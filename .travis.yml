@@ -33,12 +33,17 @@ install:
 - tar xzf libjwt-1.10.1.tar.gz
 - pushd libjwt-1.10.1 && autoreconf -i && ./configure && make && sudo make install && popd
 - rm -rf libjwt-1.10.1
+- wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor-0.5.0.tar.gz
+- tar xzf libcbor-0.5.0.tar.gz
+- mkdir libcbor-0.5.0/build
+- pushd libcbor-0.5.0/build && cmake .. make && sudo make install && popd
+- rm -rf libcbor-0.5.0
 - sudo ldconfig
 
 script:
   - echo "fake test" || true
   - mkdir build && pushd build
-  - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on -DWITH_SCHEME_WEBAUTHN=off ..
+  - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on ..
   - make
   - sudo make install
   - sudo ldconfig
