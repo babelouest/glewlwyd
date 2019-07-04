@@ -598,7 +598,7 @@ static Suite *glewlwyd_suite(void)
 
 int main(int argc, char *argv[])
 {
-  int number_failed = 0, i;
+  int number_failed = 0, i, x[1];
   Suite *s;
   SRunner *sr;
   struct _u_request auth_req;

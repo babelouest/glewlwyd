@@ -256,7 +256,7 @@ int main(int argc, char *argv[])
   SRunner *sr;
   struct _u_request auth_req;
   struct _u_response auth_resp;
-  int res, do_test = 0, x[1];
+  int res, do_test = 0;
   json_t * j_body;
   char * cookie;
   
