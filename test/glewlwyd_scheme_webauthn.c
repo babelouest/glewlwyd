@@ -321,21 +321,27 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_bad_formed_response)
   ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
   ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
   
-  j_credential = json_pack("{ss ss ss s{ss ss ss s{ss ss ss s{ss ss}}}}",
-                           "username", USERNAME,
-                           "scheme_type", MODULE_MODULE,
-                           "scheme_name", MODULE_NAME,
-                           "value",
-                            "register", "register-credential",
-                            "session", session,
-                            "type", "public-key",
-                            "credential",
-                              "id", "error",
-                              "rawId", "error",
-                              "type", "public-key",
-                              "response",
-                                "attestationObject", "error",
-                                "clientDataJSON", "error");
+  //json_error_t jerr;
+  //y_log_message(Y_LOG_LEVEL_DEBUG, "session '%s'", session);
+  //y_log_message(Y_LOG_LEVEL_DEBUG, "j_result '%s'", json_dumps(j_result, JSON_ENCODE_ANY));
+  //j_credential = json_pack_ex(&jerr, 0, "{sssssss{sssssss{sssssss{ssss}}}}", 
+  j_credential = json_pack("{sssssss{sssssss{sssssss{ssss}}}}", 
+                              "username", USERNAME, 
+                              "scheme_type", MODULE_MODULE, 
+                              "scheme_name", MODULE_NAME, 
+                              "value", 
+                                "register", "register-credential", 
+                                "session", session, 
+                                "type", "public-key", 
+                                "credential", 
+                                  "id", "error", 
+                                  "rawId", "error", 
+                                  "type", "public-key", 
+                                  "response",
+                                    "attestationObject", "error", 
+                                    "clientDataJSON", "error");
+  //y_log_message(Y_LOG_LEVEL_DEBUG, "err %s", jerr.text);
+  ck_assert_ptr_ne(j_credential, NULL);
   
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_credential, NULL, 400, NULL, NULL, NULL), 1);
 
@@ -366,7 +372,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -487,7 +493,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -577,14 +584,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -608,7 +629,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -730,7 +751,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -820,14 +842,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -851,7 +887,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -973,7 +1009,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -1063,14 +1100,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -1094,7 +1145,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -1216,7 +1267,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -1306,14 +1358,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -1337,7 +1403,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_rpid)
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -1460,7 +1526,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_rpid)
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -1550,14 +1617,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_rpid)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -1581,7 +1662,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_a
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -1703,7 +1784,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_a
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -1793,14 +1875,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_a
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -1824,7 +1920,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_u
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -1946,7 +2042,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_u
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -2036,14 +2133,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_u
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -2067,7 +2178,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -2190,7 +2301,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -2280,14 +2392,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -2311,7 +2437,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -2434,7 +2560,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -2524,14 +2651,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -2555,7 +2696,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -2678,7 +2819,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -2768,14 +2910,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -2799,7 +2955,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -2921,7 +3077,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -3011,14 +3168,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -3042,7 +3213,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -3164,7 +3335,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -3254,14 +3426,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -3285,7 +3471,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -3407,7 +3593,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -3497,14 +3684,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -3528,7 +3729,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -3650,7 +3851,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -3740,14 +3942,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -3771,7 +3987,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -3894,7 +4110,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -3984,14 +4201,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -4015,7 +4246,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_map
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -4137,7 +4368,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_map
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -4233,14 +4465,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_map
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -4264,7 +4510,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_cer
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -4386,7 +4632,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_cer
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("error");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -4476,14 +4723,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_cer
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -4507,7 +4768,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_x5c
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -4629,7 +4890,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_x5c
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(2);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
@@ -4720,14 +4982,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_x5c
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -4751,7 +5027,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_pre
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -4873,7 +5149,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_pre
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -4963,14 +5240,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_pre
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -4994,7 +5285,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_rpi
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -5116,7 +5407,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_rpi
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -5207,14 +5499,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_rpi
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -5238,7 +5544,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -5360,7 +5666,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -5451,14 +5758,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -5482,7 +5803,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -5604,7 +5925,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -5695,14 +6017,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -5726,7 +6062,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -5848,7 +6184,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -5938,14 +6275,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -5969,7 +6320,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -6091,7 +6442,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -6183,14 +6535,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -6214,7 +6580,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -6336,7 +6702,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -6428,14 +6795,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -6459,7 +6840,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_siz
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -6581,7 +6962,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_siz
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -6672,14 +7054,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_siz
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -6703,7 +7099,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_con
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -6825,7 +7221,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_con
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -6917,14 +7314,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_con
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -6948,7 +7359,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_key)
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -7070,7 +7481,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_key)
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -7161,14 +7573,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_key)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -7192,7 +7618,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_obj_size
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -7314,7 +7740,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_obj_size
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -7406,14 +7833,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_obj_size
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -7437,7 +7878,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_auth_data_ke
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -7559,7 +8000,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_auth_data_ke
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -7650,14 +8092,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_auth_data_ke
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -7681,7 +8137,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_key
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -7803,7 +8259,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_key
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -7894,14 +8351,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_key
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -7925,7 +8396,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_obj;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -8047,7 +8518,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_obj);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -8136,13 +8608,27 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_obj);
 }
 END_TEST
 
@@ -8166,7 +8652,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success_already_registered
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_stmt;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -8288,7 +8774,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success_already_registered
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_stmt = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_stmt);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -8378,14 +8865,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success_already_registered
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_stmt);
 }
 END_TEST
 
@@ -8409,7 +8910,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_success)
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_cbor;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -8531,7 +9032,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_success)
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_cbor);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -8620,13 +9122,27 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_success)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_cbor);
 }
 END_TEST
 
@@ -8650,7 +9166,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_collision_error)
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_obj;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -8772,7 +9288,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_collision_error)
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_obj);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -8861,13 +9378,27 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_collision_error)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_x509_crt_deinit(cert);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_obj);
 }
 END_TEST
 
@@ -8891,7 +9422,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_in_2_success)
   gnutls_x509_privkey_t key = NULL;
   gnutls_privkey_t privkey = NULL;
   gnutls_ecc_curve_t curve;
-  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj, * bs_obj;
   struct cbor_pair cose_pair;
   
   ulfius_init_response(&resp);
@@ -9013,7 +9544,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_in_2_success)
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
-  cbor_array_set(cose_pair.value, 0, cbor_build_bytestring(cert_der, cert_der_len));
+  bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
+  cbor_array_set(cose_pair.value, 0, bs_obj);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -9102,13 +9634,27 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_in_2_success)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
+  cbor_decref(&bs_obj);
 }
 END_TEST
 
@@ -9243,13 +9789,18 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_error_session_invalid)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(signature_enc);
 }
 END_TEST
 
@@ -9368,13 +9919,18 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_challenge)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(signature_enc);
 }
 END_TEST
 
@@ -9494,13 +10050,18 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_origin)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(signature_enc);
 }
 END_TEST
 
@@ -9620,13 +10181,18 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_type
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(signature_enc);
 }
 END_TEST
 
@@ -9747,13 +10313,18 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_enco
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(signature_enc);
 }
 END_TEST
 
@@ -9874,13 +10445,18 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_rp_id_hash)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(signature_enc);
 }
 END_TEST
 
@@ -10000,13 +10576,18 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_flag_user_presen
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(signature_enc);
 }
 END_TEST
 
@@ -10127,13 +10708,18 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_hash
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(signature_enc);
 }
 END_TEST
 
@@ -10254,13 +10840,18 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_signature)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(signature_enc);
 }
 END_TEST
 
@@ -10380,13 +10971,18 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_success)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(signature_enc);
 }
 END_TEST
 
@@ -10506,12 +11102,18 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_credential_id)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
+  o_free(client_data_json_enc);
+  o_free(signature_enc);
   o_free(client_data_json_enc);
 }
 END_TEST
@@ -10658,13 +11260,19 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_success)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
+  ulfius_clean_request(&request);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(signature_enc);
 }
 END_TEST
 
@@ -10784,13 +11392,19 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_2_in_2_success)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
+  ulfius_clean_request(&request);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(signature_enc);
 }
 END_TEST
 
@@ -10909,14 +11523,20 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_2_in_1_error)
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp_register), U_OK);
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
-  
+
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
+  ulfius_clean_request(&request);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(signature_enc);
 }
 END_TEST
 
@@ -11036,12 +11656,19 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_invalid_credential_id)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_free(signature.data);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_attestation);
+  json_decref(j_client_data);
+  ulfius_clean_request(&request);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
+  o_free(client_data_json_enc);
+  o_free(signature_enc);
   o_free(client_data_json_enc);
 }
 END_TEST
@@ -11355,14 +11982,29 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  o_free(str_response);
+  o_free(cert_der_enc);
+  jwt_free(jwt_response);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
 }
 END_TEST
 
@@ -11610,14 +12252,29 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  o_free(str_response);
+  o_free(cert_der_enc);
+  jwt_free(jwt_response);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
 }
 END_TEST
 
@@ -11866,14 +12523,29 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  o_free(str_response);
+  o_free(cert_der_enc);
+  jwt_free(jwt_response);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
 }
 END_TEST
 
@@ -12120,14 +12792,29 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  o_free(str_response);
+  o_free(cert_der_enc);
+  jwt_free(jwt_response);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
 }
 END_TEST
 
@@ -12376,14 +13063,29 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  o_free(str_response);
+  o_free(cert_der_enc);
+  jwt_free(jwt_response);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
 }
 END_TEST
 
@@ -12632,14 +13334,29 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  o_free(str_response);
+  o_free(cert_der_enc);
+  jwt_free(jwt_response);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
 }
 END_TEST
 
@@ -12887,14 +13604,29 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  o_free(str_response);
+  o_free(cert_der_enc);
+  jwt_free(jwt_response);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
 }
 END_TEST
 
@@ -13143,14 +13875,29 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   json_decref(j_error);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  o_free(str_response);
+  o_free(cert_der_enc);
+  jwt_free(jwt_response);
+  cbor_decref(&att_obj);
+  cbor_decref(&cbor_cose);
+  cbor_decref(&att_stmt);
 }
 END_TEST
 
@@ -13398,13 +14145,28 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
   ck_assert_int_eq(resp_register.status, 200);*/
   
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
   json_decref(j_params);
   json_decref(j_result);
+  json_decref(j_client_data);
   json_decref(j_credential);
   ulfius_clean_response(&resp);
   ulfius_clean_response(&resp_register);
   o_free(client_data_json);
   o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(cert_der_enc);
+  o_free(att_obj_ser);
+  o_free(str_response);
+  jwt_free(jwt_response);
+  cbor_decref(&att_obj);
+  cbor_decref(&att_stmt);
+  cbor_decref(&cbor_cose);
 }
 END_TEST
 
