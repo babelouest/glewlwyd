@@ -2432,6 +2432,8 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       json_decref(j_result);
     } else if (check_result_value(j_credential, G_ERROR_NOT_FOUND)) {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    } else if (check_result_value(j_credential, G_ERROR_PARAM)) {
+      j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register webauthn - Error get_credential_from_session");
       j_return = json_pack("{si}", "result", G_ERROR);
