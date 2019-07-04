@@ -13,6 +13,8 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
 
 #include <check.h>
 #include <ulfius.h>
@@ -300,7 +302,6 @@ int main(int argc, char *argv[])
   
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
-  srand(time(NULL));
   j_params = json_load_file(argv[1], JSON_DECODE_ANY, NULL);
   ulfius_init_request(&admin_req);
   if (j_params != NULL) {
@@ -318,14 +319,17 @@ int main(int argc, char *argv[])
         cookie = msprintf("%s=%s", auth_resp.map_cookie[0].key, auth_resp.map_cookie[0].value);
         u_map_put(admin_req.map_header, "Cookie", cookie);
         o_free(cookie);
-        client_id = msprintf("client_irl%04d", (rand()%1000));
-        client_id_case = msprintf("client_irl_case%04d", (rand()%1000));
+        gnutls_rnd(GNUTLS_RND_NONCE, x, sizeof(int));
+        client_id = msprintf("client_irl%04d", (x[0]%1000));
+        gnutls_rnd(GNUTLS_RND_NONCE, x, sizeof(int));
+        client_id_case = msprintf("client_irl_case%04d", (x[0]%1000));
         client_id_upper = o_malloc(o_strlen(client_id_case) + sizeof(char));
         for (i=0; i<o_strlen(client_id_case); i++) {
           client_id_upper[i] = toupper(client_id_case[i]);
         }
         client_id_upper[o_strlen(client_id_case)] = '\0';
-        client_id_pattern = msprintf("client_irl_list_%04d_", (rand()%1000));
+        gnutls_rnd(GNUTLS_RND_NONCE, x, sizeof(int));
+        client_id_pattern = msprintf("client_irl_list_%04d_", (x[0]%1000));
         do_test = 1;
       }
     } else {

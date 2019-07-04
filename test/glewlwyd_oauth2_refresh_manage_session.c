@@ -5,6 +5,8 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
 
 #include <check.h>
 #include <ulfius.h>
@@ -145,8 +147,8 @@ START_TEST(test_oauth2_refresh_manage_delete_ok)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_gt(json_array_size(j_body), 0);
-  token_hash = o_strdup(json_string_value(json_object_get(json_array_get(j_body, 0), "token_hash")));
-  token_hash_encoded = url_encode(token_hash);
+  ck_assert_ptr_ne((token_hash = o_strdup(json_string_value(json_object_get(json_array_get(j_body, 0), "token_hash")))), NULL);
+  ck_assert_ptr_ne((token_hash_encoded = url_encode(token_hash)), NULL);
 
   u_map_init(&body);
   u_map_put(&body, "grant_type", "refresh_token");
@@ -155,6 +157,7 @@ START_TEST(test_oauth2_refresh_manage_delete_ok)
   res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 200, NULL, NULL, NULL);
   ck_assert_int_eq(res, 1);
   
+  y_log_message(Y_LOG_LEVEL_DEBUG, "token hash %s, token %s", token_hash, refresh_token);
   o_free(user_req.http_url);
   o_free(user_req.http_verb);
   user_req.http_url = msprintf(SERVER_URI "/glwd/profile/token/%s", token_hash_encoded);
@@ -208,10 +211,9 @@ int main(int argc, char *argv[])
   SRunner *sr;
   struct _u_request auth_req;
   struct _u_response auth_resp;
-  int res, i, do_test = 0, number_failed = 1;
+  int res, i, do_test = 0, number_failed = 1, x[1];
   json_t * j_body;
   
-  srand(time(NULL));
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
   // Getting a valid session id for authenticated http requests
@@ -220,8 +222,8 @@ int main(int argc, char *argv[])
   auth_req.http_verb = strdup("POST");
   auth_req.http_url = msprintf("%s/glwd/token/", SERVER_URI);
   
-  srand(time(NULL));
-  snprintf(user_agent, 32, "glwd-oauth2-test-%d", rand());
+  gnutls_rnd(GNUTLS_RND_NONCE, x, sizeof(int));
+  snprintf(user_agent, 32, "glwd-oauth2-test-%d", x[0]);
   u_map_put(auth_req.map_header, "User-Agent", user_agent);
   u_map_put(auth_req.map_post_body, "grant_type", "password");
   u_map_put(auth_req.map_post_body, "username", USERNAME);

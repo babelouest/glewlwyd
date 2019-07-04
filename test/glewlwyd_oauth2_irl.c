@@ -13,6 +13,8 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
 
 #include <check.h>
 #include <ulfius.h>
@@ -254,13 +256,12 @@ int main(int argc, char *argv[])
   SRunner *sr;
   struct _u_request auth_req;
   struct _u_response auth_resp;
-  int res, do_test = 0;
+  int res, do_test = 0, x[±];
   json_t * j_body;
   char * cookie;
   
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
-  srand(time(NULL));
   j_params = json_load_file(argv[1], JSON_DECODE_ANY, NULL);
   ulfius_init_request(&admin_req);
   if (j_params != NULL) {
