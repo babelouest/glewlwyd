@@ -2,29 +2,28 @@
 
 1. [Distribution packages](#distribution-packages)
 2. [Pre-compiled packages](#pre-compiled-packages)
+   * [Install Glewlwyd on Debian Stretch](#install-glewlwyd-on-debian-stretch)
+   * [Install Glewlwyd on Raspbian Stretch for Raspberry Pi](#install-glewlwyd-on-raspbian-stretch-for-raspberry-pi)
+   * [Install Glewlwyd on Debian Buster](#install-glewlwyd-on-debian-buster)
+   * [Install Glewlwyd on Ubuntu 18.04 LTS Bionic](#install-glewlwyd-on-ubuntu-1804-lts-bionic)
+   * [Install Glewlwyd on Ubuntu 19.04 Disco](#install-glewlwyd-on-ubuntu-1904-disco)
 3. [Docker](#docker)
-4. [Manual install from Github](#manual-install-from-github)
-   * [CMake](#cmake)
-   * [Good ol' Makefile](#good-ol-makefile)
-5. [Configuration](#configuration)
+4. [Manual install from source](#manual-install-from-source)
+   * [Dependencies](#dependencies)
+   * [Build Glewlwyd and its dependencies](#build-glewlwyd-and-its-dependencies)
+5. [Configure glewlwyd.conf](#configure-glewlwydconf)
+   * [external_url](#external_url)
    * [SSL/TLS](#ssltls)
-   * [login and grant URLs](#login-and-grant-urls)
-   * [Reset password](#reset-password)
-   * [Digest Algorithm](#digest-algorithm)
+   * [Digest algorithm](#digest-algorithm)
    * [Database back-end initialisation](#database-back-end-initialisation)
-   * [Authentication back-end configuration](#authentication-back-end-configuration)
-   * [JWT configuration](#jwt-configuration)
-   * [JWT Access Token Payload](#jwt-access-token-payload)
-     * [Additional propertyn the JWT Payload](#additional-property-in-the-jwt-payload)
+   * [Mime types for webapp files](#mime-types-for-webapp-files)
    * [Install as a service](#install-as-a-service)
-6. [Run Glewlwyd](#run-glewlwyd)
-7. [Front-end application](#front-end-application)
-   * [Login, Grant access and reset password pages](#login-grant-access-and-reset-password-pages)
-   * [Glewlwyd manager](#glewlwyd-manager)
-   * [Glewlwyd user profile](#glewlwyd-user-profile)
-8. [Client configuration](#client-configuration)
-   * [Client settings in Glewlwyd](#client-settings-in-glewlwyd)
-   * [Glewlwyd endpoints for the client](#glewlwyd-endpoints-for-the-client)
+5. [Configure webapp/config.json](#configure-webappconfigjson)
+   * [GlewlwydApiUrl, ProfileUrl, AdminUrl and LoginUrl](#glewlwydapiurl-profileurl-adminurl-and-loginurl)
+6. [Initialise database](#initialise-database)
+7. [Install as a service](#install-as-a-service)
+8. [Run Glewlwyd](#run-glewlwyd)
+9. [Front-end application](#front-end-application)
 
 ### Distribution packages
 
@@ -155,23 +154,27 @@ If there's no package available for your distribution, you can recompile it manu
 
 TBD
 
-## Manual install from Github
+## Manual install from source
+
+Download the [latest source tarball](https://github.com/babelouest/glewlwyd/releases/latest) or [git clone](https://github.com/babelouest/glewlwyd.git) from GitHub.
+
+### Dependencies
 
 On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install those dependencies using the following command:
 
 ```shell
-$ sudo apt-get install autoconf automake libtool sqlite3 libsqlite3-dev default-libmysqlclient-dev libpq-dev libgnutls-dev libconfig-dev libssl-dev libldap2-dev liboath-dev
+$ sudo apt-get install autoconf automake libtool libmicrohttpd-dev sqlite3 libsqlite3-dev default-libmysqlclient-dev libpq-dev libgnutls-dev libconfig-dev libssl-dev libldap2-dev liboath-dev
 ```
 
 #### Journald logs
 
 The library libsystemd-dev is required if you want to log messages in journald service. If you don't want or can't have journald, you can compile yder library without journald support. See [Yder documentation](https://github.com/babelouest/yder).
 
-### Libssl vs GnuTLS
+#### Libssl vs GnuTLS
 
-Both libraries are mentioned required, but you can get rid of libssl if you install `libjwt` with the option `--without-openssl`. `gnutls` 3.5.8 minimum is required. For this documentation to be compatible with most Linux distributions (at least the one I use), I don't remove libssl from the required libraries yet.
+Both libraries are mentioned required, but you can skip libssl if you run `./configure` when installing `libjwt` with the option `--without-openssl`. `gnutls` 3.5.8 minimum is required. For this documentation to be compatible with most Linux distributions, libssl isn't removed from the required libraries yet.
 
-### Libmicrohttpd bug on POST parameters
+#### Libmicrohttpd bug on POST parameters
 
 With Libmicrohttpd 0.9.37 and older version, there is a bug when parsing `application/x-www-form-urlencoded` parameters. This is fixed in later version, from the 0.9.38, so if your Libmicrohttpd version is older than that, I suggest getting a newer version of [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/).
 
@@ -179,27 +182,9 @@ With Libmicrohttpd 0.9.37 and older version, there is a bug when parsing `applic
 
 #### CMake
 
-Download and install libjwt, then download Glewlwyd from GitHub, then use the CMake script to build the application:
+Download and install libjwt, then download Glewlwyd from GitHub, then use the CMake script to build the application. CMake will automatically download and build Ulfius, Hoel, Yder and Orcania if they are not present on the system.
 
 ```shell
-# Install libjwt if not present in your package manager, libjwt 1.10 minimum is required
-# libtool and autoconf are required
-$ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz -O libjwt-1.10.2.tar.gz
-$ tar xzf libjwt-1.10.2.tar.gz
-$ cd libjwt-1.10.2 && autoreconf -i && ./configure && make && sudo make install # use ./configure --without-openssl to use gnutls instead, you must have gnutls 3.5.8 minimum
-$ rm -rf libjwt-1.10.2
-$ sudo ldconfig
-$ cd ..
-
-# Install libcbor
-$ wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor.tar.gz
-$ tar xf libcbor.tar.gz
-$ mkdir libcbor-0.5.0/build
-$ cd libcbor-0.5.0/build
-$ cmake ..
-$ make && sudo make install
-$ cd ../..
-
 # Install Glewlwyd
 $ git clone https://github.com/babelouest/glewlwyd.git
 $ mkdir glewlwyd/build
@@ -209,29 +194,11 @@ $ make
 $ sudo make install
 ```
 
-### Good ol' Makefile
+#### Good ol' Makefile
 
 Download Glewlwyd and its dependencies hosted on GitHub, compile and install.
 
 ```shell
-# Install libjwt if not present in your package manager, libjwt 1.10 minimum is required
-# libtool and autoconf are required
-$ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz -O libjwt-1.10.2.tar.gz
-$ tar xzf libjwt-1.10.2.tar.gz
-$ cd libjwt-1.10.2 && autoreconf -i && ./configure && make && sudo make install # use ./configure --without-openssl to use gnutls instead, you must have gnutls 3.5.8 minimum
-$ rm -rf libjwt-1.10.2
-$ sudo ldconfig
-$ cd ..
-
-# Install libcbor
-$ wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor.tar.gz
-$ tar xf libcbor.tar.gz
-$ mkdir libcbor-0.5.0/build
-$ cd libcbor-0.5.0/build
-$ cmake ..
-$ make && sudo make install
-$ cd ../..
-
 # Install Orcania
 $ git clone https://github.com/babelouest/orcania.git
 $ cd orcania/src/
@@ -267,13 +234,17 @@ $ sudo make install
 
 Copy `glewlwyd.conf.sample` to `glewlwyd.conf`, edit the file `glewlwyd.conf` with your own settings.
 
+### external_url
+
+Fill this parameter with the exact value of the external url where this instance will be accessible to users, ex `https://glewlwyd.tld`
+
 ### SSL/TLS
 
 OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avoid data and token to be stolen, or Man-In-The-Middle attacks. Glewlwyd supports starting a secure connection with a private/public key certificate, but it also can be with a classic non-secure HTTP connection, and be available to users behind a HTTPS proxy for example. Glewlwyd won't check that you use it in a secure connection.
 
 ### Digest algorithm
 
-Specify in the config file the parameter `hash_algorithm` to store passwords with sqlite3 back-end, and token digests.
+Specify in the config file the parameter `hash_algorithm` to store token and secret digests.
 
 Algorithms available are SHA1, SHA256, SHA512, MD5. Algorithms recommended are SHA256 or SHA512.
 
@@ -298,7 +269,7 @@ database =
 {
   type = "sqlite3"
   path = "/tmp/glewlwyd.db"
-};
+}
 
 # PostgreSQL database connection
 database =
