@@ -5,6 +5,8 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
 
 #include <check.h>
 #include <ulfius.h>
@@ -189,7 +191,6 @@ int main(int argc, char *argv[])
     y_log_message(Y_LOG_LEVEL_INFO, "Error starting framework");
   }
   
-  srand(time(NULL));
   ulfius_init_request(&admin_req);
   
   // Getting a valid session id for authenticated http requests

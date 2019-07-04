@@ -5,6 +5,8 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
 
 #include <check.h>
 #include <ulfius.h>
@@ -133,6 +135,7 @@ START_TEST(test_auth_session_manage_delete_ok)
   struct _u_response resp;
   char my_user_agent[33], * session_hash = NULL, * session_hash_encoded = NULL, * cookie = NULL;
   json_t * j_body;
+  int x[1];
   
   ulfius_init_request(&req);
   ulfius_init_request(&test_req);
@@ -140,7 +143,8 @@ START_TEST(test_auth_session_manage_delete_ok)
   test_req.http_url = o_strdup(SERVER_URI "/profile_list/");
   req.http_verb = strdup("POST");
   req.http_url = msprintf("%s/auth/", SERVER_URI);
-  snprintf(my_user_agent, 32, "glwd-auth-test-%04d", rand());
+  gnutls_rnd(GNUTLS_RND_NONCE, x, sizeof(int));
+  snprintf(my_user_agent, 32, "glwd-auth-test-%04d", x[0]);
   u_map_put(req.map_header, "User-Agent", my_user_agent);
   j_body = json_pack("{ssss}", "username", USERNAME, "password", PASSWORD);
   ulfius_set_json_body_request(&req, j_body);
@@ -216,9 +220,8 @@ int main(int argc, char *argv[])
   struct _u_request auth_req;
   struct _u_response auth_resp;
   json_t * j_body;
-  int res, do_test = 0, i;
+  int res, do_test = 0, i, x[1];
   
-  srand(time(NULL));
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
   // Getting a valid session id for authenticated http requests
@@ -227,7 +230,8 @@ int main(int argc, char *argv[])
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
   auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
-  snprintf(user_agent, 32, "glwd-auth-test-%d", rand());
+  gnutls_rnd(GNUTLS_RND_NONCE, x, sizeof(int));
+  snprintf(user_agent, 32, "glwd-auth-test-%d", x[0]);
   u_map_put(auth_req.map_header, "User-Agent", user_agent);
   j_body = json_pack("{ssss}", "username", USERNAME, "password", PASSWORD);
   ulfius_set_json_body_request(&auth_req, j_body);
