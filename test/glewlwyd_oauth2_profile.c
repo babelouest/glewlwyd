@@ -35,6 +35,7 @@ START_TEST(test_oauth2_profile_token_invalid)
   u_map_put(user_req.map_header, "Authorization", invalid_token);
   ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/glwd/profile", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
   o_free(invalid_token);
+  ulfius_clean_request(&user_req);
 }
 END_TEST
 
@@ -47,6 +48,7 @@ START_TEST(test_oauth2_profile_ok)
   u_map_put(user_req.map_header, "Authorization", bearer_token);
   ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/glwd/profile", NULL, NULL, NULL, NULL, 200, j_body, NULL, NULL), 1);
   json_decref(j_body);
+  ulfius_clean_request(&user_req);
 }
 END_TEST
 

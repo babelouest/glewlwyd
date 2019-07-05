@@ -190,6 +190,7 @@ START_TEST(test_glwd_oauth2_irl_run_workflow)
   
   ulfius_clean_request(&auth_req);
   o_free(cookie);
+  o_free(scope);
 }
 END_TEST
 
@@ -217,6 +218,7 @@ START_TEST(test_glwd_oauth2_irl_user_module_delete)
 {
   char * url = msprintf(SERVER_URI "/mod/user/%s", json_string_value(json_object_get(json_object_get(j_params, "user_mod"), "name")));
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+  o_free(url);
 }
 END_TEST
 
@@ -224,6 +226,7 @@ START_TEST(test_glwd_oauth2_irl_client_module_delete)
 {
   char * url = msprintf(SERVER_URI "/mod/client/%s", json_string_value(json_object_get(json_object_get(j_params, "client_mod"), "name")));
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+  o_free(url);
 }
 END_TEST
 
