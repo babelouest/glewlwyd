@@ -303,7 +303,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_bad_formed_response)
                                 "scheme_name", MODULE_NAME, 
                                 "value", 
                                   "register", "new-credential"),
-         * j_result, * j_credential;
+         * j_result = NULL, * j_credential = NULL;
   struct _u_response resp;
   const char * session;
   unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN];
@@ -362,8 +362,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -557,6 +557,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -619,8 +620,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -815,6 +816,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -877,8 +879,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -1073,6 +1075,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -1135,8 +1138,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -1331,6 +1334,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -1393,8 +1397,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_rpid)
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -1590,6 +1594,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_rpid)
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -1652,8 +1657,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_a
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -1848,6 +1853,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_a
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -1910,8 +1916,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_u
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -2106,6 +2112,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_u
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -2168,8 +2175,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -2365,6 +2372,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -2427,8 +2435,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -2624,6 +2632,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -2686,8 +2695,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -2883,6 +2892,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -2945,8 +2955,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -3141,6 +3151,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -3203,8 +3214,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -3399,6 +3410,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -3461,8 +3473,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -3657,6 +3669,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -3719,8 +3732,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -3915,6 +3928,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -3977,8 +3991,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -4174,6 +4188,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -4236,8 +4251,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_map
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -4438,6 +4453,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_map
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -4500,8 +4516,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_cer
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -4696,6 +4712,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_cer
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -4758,8 +4775,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_x5c
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -4955,6 +4972,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_x5c
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -5017,8 +5035,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_pre
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -5213,6 +5231,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_pre
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -5275,8 +5294,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_rpi
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -5472,6 +5491,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_rpi
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -5534,8 +5554,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -5731,6 +5751,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -5793,8 +5814,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -5990,6 +6011,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -6052,8 +6074,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -6248,6 +6270,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -6310,8 +6333,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -6508,6 +6531,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -6570,8 +6594,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -6768,6 +6792,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -6830,8 +6855,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_siz
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -7027,6 +7052,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_siz
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -7089,8 +7115,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_con
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -7287,6 +7313,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_con
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -7349,8 +7376,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_key)
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -7546,6 +7573,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_key)
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -7608,8 +7636,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_obj_size
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -7806,6 +7834,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_obj_size
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -7868,8 +7897,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_auth_data_ke
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -8065,6 +8094,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_auth_data_ke
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -8127,8 +8157,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_key
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -8324,6 +8354,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_key
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -8386,8 +8417,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -8582,6 +8613,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -8642,8 +8674,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success_already_registered
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -8838,6 +8870,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success_already_registered
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -8900,8 +8933,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_success)
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -9096,6 +9129,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_success)
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -9156,8 +9190,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_collision_error)
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -9352,6 +9386,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_collision_error)
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -9412,8 +9447,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_in_2_success)
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser, * att_obj_ser_enc;
-  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len, att_obj_ser_enc_len, rp_id_len;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], verification_data[256], client_data_hash[32], * att_obj_ser = NULL, * att_obj_ser_enc = NULL;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, verification_data_offset = 0, client_data_hash_len = 32, att_obj_ser_len = 0, att_obj_ser_enc_len = 0, rp_id_len = 0;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json;
   gnutls_datum_t key_data, key_x, key_y, signature;
@@ -9608,6 +9643,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_in_2_success)
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -11114,7 +11150,6 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_credential_id)
   o_free(client_data_json);
   o_free(client_data_json_enc);
   o_free(signature_enc);
-  o_free(client_data_json_enc);
 }
 END_TEST
 
@@ -11669,7 +11704,6 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_invalid_credential_id)
   o_free(client_data_json);
   o_free(client_data_json_enc);
   o_free(signature_enc);
-  o_free(client_data_json_enc);
 }
 END_TEST
 
@@ -11743,7 +11777,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json, * str_grant, * str_response;
@@ -11956,6 +11990,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -12018,7 +12053,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json, * str_grant, * str_response;
@@ -12226,6 +12261,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -12288,7 +12324,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json, * str_grant, * str_response;
@@ -12497,6 +12533,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -12559,7 +12596,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json, * str_grant, * str_response;
@@ -12766,6 +12803,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -12828,7 +12866,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json, * str_grant, * str_response;
@@ -13037,6 +13075,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -13099,7 +13138,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json, * str_grant, * str_response;
@@ -13308,6 +13347,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -13370,7 +13410,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json, * str_grant, * str_response;
@@ -13578,6 +13618,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -13640,7 +13681,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential, * j_error;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json, * str_grant, * str_response;
@@ -13849,6 +13890,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
@@ -13911,7 +13953,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
                                   "register", "new-credential"),
          * j_result, * j_client_data, * j_credential;
   struct _u_response resp, resp_register;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
   char * client_data_json, * str_grant, * str_response;
@@ -14119,6 +14161,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
   ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
