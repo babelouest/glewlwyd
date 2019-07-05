@@ -51,6 +51,7 @@ START_TEST(test_oauth2_refresh_manage_list)
   user_req.http_url = o_strdup(SERVER_URI "/glwd/profile/token/?limit=1");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  json_decref(j_body);
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_eq(json_array_size(j_body), 1);
@@ -59,6 +60,7 @@ START_TEST(test_oauth2_refresh_manage_list)
   user_req.http_url = o_strdup(SERVER_URI "/glwd/profile/token/?offset=1");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  json_decref(j_body);
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
 
@@ -66,6 +68,7 @@ START_TEST(test_oauth2_refresh_manage_list)
   user_req.http_url = o_strdup(SERVER_URI "/glwd/profile/token/?sort=authorization_type");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  json_decref(j_body);
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_gt(json_array_size(j_body), 0);
@@ -74,6 +77,7 @@ START_TEST(test_oauth2_refresh_manage_list)
   user_req.http_url = o_strdup(SERVER_URI "/glwd/profile/token/?sort=issued_at&desc");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  json_decref(j_body);
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_gt(json_array_size(j_body), 0);
@@ -82,6 +86,7 @@ START_TEST(test_oauth2_refresh_manage_list)
   user_req.http_url = o_strdup(SERVER_URI "/glwd/profile/token/?sort=client_id&desc&limit=1");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  json_decref(j_body);
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_eq(json_array_size(j_body), 1);
@@ -90,6 +95,7 @@ START_TEST(test_oauth2_refresh_manage_list)
   user_req.http_url = o_strdup(SERVER_URI "/glwd/profile/token/?pattern=127");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  json_decref(j_body);
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_gt(json_array_size(j_body), 0);
@@ -98,6 +104,7 @@ START_TEST(test_oauth2_refresh_manage_list)
   user_req.http_url = o_strdup(SERVER_URI "/glwd/profile/token/?pattern=glwd-oauth2-test-");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  json_decref(j_body);
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_gt(json_array_size(j_body), 0);
@@ -106,6 +113,7 @@ START_TEST(test_oauth2_refresh_manage_list)
   user_req.http_url = o_strdup(SERVER_URI "/glwd/profile/token/?pattern=error");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  json_decref(j_body);
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_eq(json_array_size(j_body), 0);
@@ -157,7 +165,6 @@ START_TEST(test_oauth2_refresh_manage_delete_ok)
   res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 200, NULL, NULL, NULL);
   ck_assert_int_eq(res, 1);
   
-  y_log_message(Y_LOG_LEVEL_DEBUG, "token hash %s, token %s", token_hash, refresh_token);
   o_free(user_req.http_url);
   o_free(user_req.http_verb);
   user_req.http_url = msprintf(SERVER_URI "/glwd/profile/token/%s", token_hash_encoded);
@@ -171,6 +178,7 @@ START_TEST(test_oauth2_refresh_manage_delete_ok)
   user_req.http_url = msprintf(SERVER_URI "/glwd/profile/token/?sort=issued_at&desc&limit=1&pattern=%s", user_agent);
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  json_decref(j_body);
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_gt(json_array_size(j_body), 0);
@@ -185,6 +193,7 @@ START_TEST(test_oauth2_refresh_manage_delete_ok)
   ulfius_clean_response(&resp);
   o_free(token_hash);
   o_free(token_hash_encoded);
+  json_decref(j_body);
 }
 END_TEST
 
