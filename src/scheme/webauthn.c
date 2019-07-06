@@ -1249,8 +1249,9 @@ static json_t * check_attestation_fido_u2f(unsigned char * credential_id, size_t
 static json_t * register_new_attestation(struct config_module * config, json_t * j_params, json_t * j_scheme_data, json_t * j_credential) {
   json_t * j_return, * j_client_data = NULL, * j_error, * j_result, * j_pubkey = NULL, * j_cert = NULL, * j_query, * j_element;
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL, * credential_id_b64 = NULL, * cbor_auth_data, * cred_pub_key, cert_x[256], cert_y[256], pubkey_export[1024];
-  char * challenge_hash = NULL, * message = NULL, * rpid = NULL;
-  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, cert_x_len, cert_y_len, pubkey_export_len = 1024, index, cbor_bs_handle_len;
+  char * challenge_hash = NULL, * message = NULL;
+  const char * rpid = NULL;
+  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, cert_x_len, cert_y_len, pubkey_export_len = 1024, index, cbor_bs_handle_len, rpid_len;
   uint32_t counter = 0;
   int ret = G_OK, res, status, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0;
   unsigned int i;
@@ -1340,7 +1341,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           break;
         }
         if (0 != o_strcmp(json_string_value(json_object_get(j_params, "rp-origin")), json_string_value(json_object_get(j_client_data, "origin")))) {
-          message = msprintf("clientDataJSON.origin invalid - Client send %s, required %s", json_string_value(json_object_get(j_params, "rp-origin")), json_string_value(json_object_get(j_client_data, "origin")));
+          message = msprintf("clientDataJSON.origin invalid - Client send %s, required %s", json_string_value(json_object_get(j_client_data, "origin")), json_string_value(json_object_get(j_params, "rp-origin")));
           json_array_append_new(j_error, json_string(message));
           o_free(message);
           ret = G_ERROR_PARAM;
@@ -1432,12 +1433,18 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           break;
         }
         
-        rpid = o_strstr(json_string_value(json_object_get(j_params, "rp-origin")), "://")+3;
+        if (o_strstr(json_string_value(json_object_get(j_params, "rp-origin")), "://") != NULL) {
+          rpid = o_strstr(json_string_value(json_object_get(j_params, "rp-origin")), "://")+3;
+        } else {
+          rpid = json_string_value(json_object_get(j_params, "rp-origin"));
+        }
         if (o_strchr(rpid, ':') != NULL) {
-          *o_strchr(rpid, ':') = '\0';
+          rpid_len = o_strchr(rpid, ':') - rpid;
+        } else {
+          rpid_len = o_strlen(rpid);
         }
         
-        if (!generate_digest_raw(digest_SHA256, (unsigned char *)rpid, o_strlen(rpid), rpid_hash, &rpid_hash_len)) {
+        if (!generate_digest_raw(digest_SHA256, (unsigned char *)rpid, rpid_len, rpid_hash, &rpid_hash_len)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error generate_digest_raw");
           json_array_append_new(j_error, json_string("Internal error"));
           ret = G_ERROR_PARAM;
@@ -1708,8 +1715,9 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
   int ret, res;
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * auth_data = NULL, rpid_hash[32] = {0}, * flags, cdata_hash[32] = {0}, 
                   data_signed[128] = {0}, sig[128] = {0}, * counter;
-  char * challenge_hash = NULL, * rpid = NULL;
-  size_t client_data_len, challenge_b64_len, auth_data_len, rpid_hash_len = 32, cdata_hash_len = 32, sig_len = 128, counter_value = 0;
+  char * challenge_hash = NULL;
+  const char * rpid = NULL;
+  size_t client_data_len, challenge_b64_len, auth_data_len, rpid_hash_len = 32, cdata_hash_len = 32, sig_len = 128, counter_value = 0, rpid_len = 0;
   json_t * j_client_data = NULL, * j_credential = NULL, * j_query;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_datum_t pubkey_dat, data, signature;
@@ -1791,7 +1799,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         break;
       }
       if (0 != o_strcmp(json_string_value(json_object_get(j_params, "rp-origin")), json_string_value(json_object_get(j_client_data, "origin")))) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - clientDataJSON.origin invalid - Client send %s, required %s", json_string_value(json_object_get(j_params, "rp-origin")), json_string_value(json_object_get(j_client_data, "origin")));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - clientDataJSON.origin invalid - Client send %s, required %s", json_string_value(json_object_get(j_client_data, "origin")), json_string_value(json_object_get(j_params, "rp-origin")));
         ret = G_ERROR_PARAM;
         break;
       }
@@ -1818,8 +1826,19 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         ret = G_ERROR_PARAM;
         break;
       }
-      rpid = o_strstr(json_string_value(json_object_get(j_params, "rp-origin")), "://")+3;
-      if (!generate_digest_raw(digest_SHA256, (unsigned char *)rpid, o_strlen(rpid), rpid_hash, &rpid_hash_len)) {
+      
+      if (o_strstr(json_string_value(json_object_get(j_params, "rp-origin")), "://") != NULL) {
+        rpid = o_strstr(json_string_value(json_object_get(j_params, "rp-origin")), "://")+3;
+      } else {
+        rpid = json_string_value(json_object_get(j_params, "rp-origin"));
+      }
+      if (o_strchr(rpid, ':') != NULL) {
+        rpid_len = o_strchr(rpid, ':') - rpid;
+      } else {
+        rpid_len = o_strlen(rpid);
+      }
+        
+      if (!generate_digest_raw(digest_SHA256, (unsigned char *)rpid, rpid_len, rpid_hash, &rpid_hash_len)) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error generate_digest_raw for rpid_hash");
         ret = G_ERROR_PARAM;
         break;
