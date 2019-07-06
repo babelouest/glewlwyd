@@ -28,7 +28,7 @@
 #ifndef __GLEWLWYD_H_
 #define __GLEWLWYD_H_
 
-#define _GLEWLWYD_VERSION_ "2.0.0-b1"
+#define _GLEWLWYD_VERSION_ "2.0.0-b2"
 
 #include <jansson.h>
 
