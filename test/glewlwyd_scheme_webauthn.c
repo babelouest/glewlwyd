@@ -1094,7 +1094,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
                                 "attestationObject", att_obj_ser_enc, att_obj_ser_enc_len,
                                 "clientDataJSON", client_data_json_enc, client_data_json_enc_len);
   
-  j_error = json_string("clientDataJSON.origin invalid - Client send https://www.glewlwyd.tld, required error");
+  j_error = json_string("clientDataJSON.origin invalid - Client send error, required https://www.glewlwyd.tld");
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_credential, NULL, 400, j_error, NULL, NULL), 1);
 
   /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
