@@ -1,5 +1,11 @@
 # Glewlwyd Changelog
 
+## 2.0.0-b2
+
+- Fix sample config with correct variable names, fix #57
+- Fix webauthn bugs
+- Improve documentation
+
 ## 2.0.0-b1
 
 - Massive rework for the better good
