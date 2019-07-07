@@ -197,6 +197,10 @@ int user_auth_scheme_module_close(struct config_module * config, void * cls) {
  * 
  */
 int user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls) {
+  UNUSED(config);
+  UNUSED(username);
+  UNUSED(username);
+  UNUSED(cls);
   return GLEWLWYD_IS_REGISTERED;
 }
 
@@ -285,6 +289,7 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls) {
   UNUSED(config);
   UNUSED(http_request);
+  UNUSED(username);
   UNUSED(j_scheme_trigger);
   UNUSED(cls);
 
