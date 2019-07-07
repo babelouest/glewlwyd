@@ -31,6 +31,8 @@ set(ORCANIA_VERSION_REQUIRED "2.0.0")
 set(YDER_VERSION_REQUIRED "1.4.6")
 set(ULFIUS_VERSION_REQUIRED "2.6.1")
 set(HOEL_VERSION_REQUIRED "1.4.10")
+set(LIBJWT_VERSION_REQUIRED "1.10.0")
+set(LIBCBOR_VERSION_REQUIRED "0.5.0")
 
 set(USER_MODULES_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/user/")
 set(USER_MODULES "")
@@ -227,6 +229,10 @@ execute_process(COMMAND lsb_release -cs
 
 option(WITH_MOCK "Build Mock modules" off)
 
+if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DG_INSECURE_COOKIE")
+endif ()
+
 # user modules
 
 if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
@@ -344,6 +350,19 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodmock)
 endif ()
 
+option(WITH_SCHEME_RETYPE_PASSWORD "Build retype password scheme module" on)
+if (WITH_SCHEME_RETYPE_PASSWORD)
+	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/password.c)
+
+	set(MOD_LIBS ${ULFIUS_LIBRARIES} "-ldl")
+
+	add_library(schememodpassword MODULE ${LIB_SRC})
+	set_target_properties(schememodpassword PROPERTIES
+			COMPILE_OPTIONS -Wextra)
+	target_link_libraries(schememodpassword ${MOD_LIBS})
+	set(SCHEME_MODULES ${SCHEME_MODULES} schememodpassword)
+endif ()
+
 option(WITH_SCHEME_EMAIL "Build e-mail scheme module" on)
 if (WITH_SCHEME_EMAIL)
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/email.c)
@@ -381,7 +400,7 @@ endif ()
 option(WITH_SCHEME_WEBAUTHN "Build Webauthn scheme module" on)
 if (WITH_SCHEME_WEBAUTHN)
   include(FindLibJWT)
-  find_package(LibJWT REQUIRED "1.10.1")
+  find_package(LibJWT REQUIRED)
   if (LIBJWT_FOUND)
       set(MOD_LIBS ${LIBJWT_LIBRARIES})
       include_directories(${LIBJWT_INCLUDE_DIRS})
@@ -396,7 +415,7 @@ if (WITH_SCHEME_WEBAUTHN)
   
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/webauthn.c)
   if (NOT ${RELEASE_CODENAME} STREQUAL "Stretch")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcbor0 (>= 0.5.0), libjwt0 (>= 1.10.1)")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcbor0, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
   endif ()
 
 	set(MOD_LIBS ${ULFIUS_LIBRARIES} ${MOD_LIBS} "-ldl")
@@ -425,7 +444,7 @@ endif ()
 option(WITH_PLUGIN_OAUTH2 "Build legacy oauth2 plugin module" on)
 if (WITH_PLUGIN_OAUTH2)
     include(FindLibJWT)
-    find_package(LibJWT REQUIRED "1.9.0")
+    find_package(LibJWT REQUIRED)
     if (LIBJWT_FOUND)
         set(MOD_LIBS ${LIBJWT_LIBRARIES})
         include_directories(${LIBJWT_INCLUDE_DIRS})
@@ -433,7 +452,7 @@ if (WITH_PLUGIN_OAUTH2)
     
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oauth2.c ${RESOURCES_SRC_PATH}/glewlwyd_resource.c ${RESOURCES_SRC_PATH}/glewlwyd_resource.h)
   if (NOT ${RELEASE_CODENAME} STREQUAL "Stretch")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= 1.9.0)")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
   endif ()
 
 	set(MOD_LIBS ${MOD_LIBS} "-ldl")
@@ -579,6 +598,8 @@ install(FILES docs/glewlwyd.conf.sample
 		DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/glewlwyd RENAME glewlwyd.conf COMPONENT config)
 install(DIRECTORY webapp/
 		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/glewlwyd/webapp/ COMPONENT runtime)
+install(FILES webapp/config.json.sample
+		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/glewlwyd/webapp/ RENAME config.json COMPONENT runtime)
 install(TARGETS ${USER_MODULES}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/user)
 install(TARGETS ${CLIENT_MODULES}
@@ -624,7 +645,7 @@ set(CPACK_PACKAGE_VERSION_MINOR ${PROGRAM_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${PROGRAM_VERSION_PATCH})
 
 set(PACKAGE_FILE_NAME
-		"${CMAKE_PROJECT_NAME}_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+    "${CMAKE_PROJECT_NAME}_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 set(PACKAGE_IGNORED_FILES
 		"${CMAKE_CURRENT_BINARY_DIR}/;/.git/;.gitignore;~$;${CPACK_SOURCE_IGNORE_FILES}")
@@ -634,7 +655,7 @@ set(CPACK_GENERATOR "TGZ;DEB")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mail@babelouest.org")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/babelouest/glewlwyd")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libconfig9, libgnutls30 (>= 3.5.0), libjansson4 (>= 2.7), liborcania (>= ${ORCANIA_VERSION_REQUIRED}), libyder (>= ${YDER_VERSION_REQUIRED}), libulfius (>= ${ULFIUS_VERSION_REQUIRED}), libhoel (>= ${HOEL_VERSION_REQUIRED}), lsb-base (>= 3.0-6)")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libconfig9, libgnutls30 (>= 3.5.0), libjansson4 (>= 2.7), liborcania|liborcania-dev (>= ${ORCANIA_VERSION_REQUIRED}), libyder|libyder-dev (>= ${YDER_VERSION_REQUIRED}), libulfius|libulfius-dev (>= ${ULFIUS_VERSION_REQUIRED}), libhoel|libhoel-dev (>= ${HOEL_VERSION_REQUIRED}), lsb-base (>= 3.0-6)")
 set(CPACK_PACKAGE_FILE_NAME ${PACKAGE_FILE_NAME})
 
 set(CPACK_SOURCE_GENERATOR "TGZ")
