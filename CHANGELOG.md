@@ -5,6 +5,7 @@
 - Fix sample config with correct variable names, fix #57
 - Fix webauthn bugs
 - Improve documentation
+- Fix build on supported platforms
 
 ## 2.0.0-b1
 
