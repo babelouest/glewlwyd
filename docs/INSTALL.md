@@ -65,7 +65,6 @@ $ autoreconf -i
 $ ./configure --without-openssl
 $ make && sudo make install
 $ cd ..
-
 $ wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor.tar.gz
 $ tar xf libcbor.tar.gz
 $ mkdir libcbor-0.5.0/build
@@ -112,7 +111,7 @@ $ sudo dpkg -i glewlwyd_2.0.0-b1_Debian_stretch_x86_64.deb
 #### Install Glewlwyd on Debian Buster
 
 ```shell
-$ sudo apt install -y autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libjwt0 libcbor0
+$ sudo apt install -y libjansson-dev make cmake libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libjwt0 libcbor0
 $ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_debian_buster_x86_64.tar.gz
 $ tar xf glewlwyd-full_2.0.0_Debian_buster_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.0_Debian_buster_x86_64.deb
@@ -126,6 +125,13 @@ $ sudo dpkg -i glewlwyd_2.0.0-b1_Debian_buster_x86_64.deb
 
 ```shell
 $ sudo apt install -y autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libjwt0 libcbor0
+$ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz -O libjwt.tar.gz
+$ tar -zxvf libjwt.tar.gz
+$ cd libjwt-1.10.2
+$ autoreconf -i
+$ ./configure --without-openssl
+$ make && sudo make install
+$ cd ..
 $ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_ubuntu_bionic_x86_64.tar.gz
 $ tar xf glewlwyd-full_2.0.0_Ubuntu_bionic_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.0_Ubuntu_bionic_x86_64.deb
@@ -138,7 +144,7 @@ $ sudo dpkg -i glewlwyd_2.0.0-b1_Ubuntu_bionic_x86_64.deb
 #### Install Glewlwyd on Ubuntu 19.04 Disco
 
 ```shell
-$ sudo apt install -y autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libjwt0 libcbor0
+$ sudo apt install -y libjansson-dev make cmake libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libjwt0 libcbor0
 $ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_ubuntu_disco_x86_64.tar.gz
 $ tar xf glewlwyd-full_2.0.0_Ubuntu_disco_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.0_Ubuntu_disco_x86_64.deb
@@ -193,6 +199,23 @@ $ cmake ..
 $ make 
 $ sudo make install
 ```
+
+The available options for cmake are:
+- `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support
+- `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
+- `-DBUILD_GLEWLWYD_TESTING=[on|off]` (default `off`): Build testing tree
+- `-DINSECURE_COOKIE=[on|off]` (default `off`): Build with cookies flag secure to `false`, for development use only!
+- `-DWITH_MOCK=[on|off]` (default `off`): Build mock modules, for development use only!
+- `-DWITH_USER_DATABASE=[on|off]` (default `on`): Build user database backend module
+- `-DWITH_USER_LDAP=[on|off]` (default `on`): Build user LDAP backend module
+- `-DWITH_USER_HTTP=[on|off]` (default `on`): Build user HTTP auth backend module
+- `-DWITH_CLIENT_DATABASE=[on|off]` (default `on`): Build client database backend module
+- `-DWITH_CLIENT_LDAP=[on|off]` (default `on`): Build client LDAP backend module
+- `-DWITH_SCHEME_RETYPE_PASSWORD=[on|off]` (default `on`): Build authentication scheme `retype password`
+- `-DWITH_SCHEME_EMAIL=[on|off]` (default `on`): Build authentication scheme `e-mail code`
+- `-DWITH_SCHEME_OTP=[on|off]` (default `on`): Build authentication scheme `OTP`
+- `-DWITH_SCHEME_WEBAUTHN=[on|off]` (default `on`): Build authentication scheme `Webauthn`
+- `-DWITH_PLUGIN_OAUTH2=[on|off]` (default `on`): Build Plugin `Glewlwyd OAuth2`
 
 #### Good ol' Makefile
 
