@@ -19,6 +19,7 @@
 #define SERVER_URI "http://localhost:4593/api"
 #define CLIENT "client1_id"
 
+#define HOST   "localhost"
 #define PORT   2884
 #define PREFIX "/auth"
 
@@ -29,6 +30,8 @@
 #define HTTP_PASSWORD "http_user_password"
 
 #define MOD_NAME "mod_irl"
+
+char * host = NULL;
 
 struct _u_request user_req, admin_req;
 char * code;
@@ -52,7 +55,12 @@ int auth_basic (const struct _u_request * request, struct _u_response * response
 
 START_TEST(test_glwd_mod_user_irl_module_add)
 {
-  char * param_url = msprintf("http://localhost:%d/auth/", PORT);
+  char * param_url;
+  if (host == NULL) {
+    param_url = msprintf("http://%s:%d/auth/", HOST, PORT);
+  } else {
+    param_url = msprintf("http://%s:%d/auth/", host, PORT);
+  }
   json_t * j_params = json_pack("{sssssssis{sssos[ss]}}", "module", "http", "name", "mod_irl", "display_name", "HTTP", "order_rank", 1, "parameters", "url", param_url, "check-server-certificate", json_true(), "default-scope", "g_profile", "scope1");
   char * url = SERVER_URI "/mod/user";
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
@@ -178,6 +186,9 @@ int main(int argc, char *argv[])
   json_t * j_body;
   char * cookie;
   
+  if (argc > 1) {
+    host = argv[1];
+  }
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
   if (ulfius_init_instance(&instance, PORT, NULL, "auth_basic_default") != U_OK) {

@@ -44,6 +44,7 @@
 
 struct _u_request user_req;
 struct _u_request admin_req;
+char * mail_host = NULL;
 
 #define BACKLOG_MAX  (10)
 #define BUF_SIZE  4096
@@ -244,7 +245,7 @@ START_TEST(test_glwd_scheme_mail_irl_module_add)
                                     "parameters", 
                                       "code-duration", MAIL_CODE_DURATION,
                                       "code-length", MAIL_CODE_LEGTH,
-                                      "host", MAIL_HOST,
+                                      "host", mail_host==NULL?MAIL_HOST:mail_host,
                                       "port", MAIL_PORT,
                                       "from", MAIL_FROM,
                                       "subject", MAIL_SUBJECT,
@@ -387,6 +388,10 @@ int main(int argc, char *argv[])
   struct _u_response auth_resp;
   json_t * j_body;
   int res, do_test = 0, i;
+  
+  if (argc > 1) {
+    mail_host = argv[1];
+  }
   
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   

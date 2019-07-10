@@ -79,7 +79,7 @@ test_%_irl: %_irl
 
 test_%: %
 	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
-		LD_LIBRARY_PATH=. ./run_test.sh ./$^; \
+		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(HOST); \
 	elif [ "$(MEMCHECK)" = "0" ]; then \
 	  LD_LIBRARY_PATH=. ./$^; \
 	else \
