@@ -774,6 +774,22 @@ int callback_glewlwyd_manage_user_module (const struct _u_request * request, str
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_module - Error manage_user_module disable");
         response->status = 500;
       }
+    } else if (0 == o_strcmp("reset", u_map_get(request->map_url, "action"))) {
+      res = manage_user_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_STOP);
+      if (res == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_module - Error manage_user_module reset (1)");
+        response->status = 500;
+      } else {
+        res = manage_user_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_START);
+        if (res == G_ERROR_PARAM) {
+          response->status = 400;
+        } else if (res != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_module - Error manage_user_module reset (2)");
+          response->status = 500;
+        }
+      }
     } else {
       response->status = 400;
     }
@@ -925,6 +941,22 @@ int callback_glewlwyd_manage_user_auth_scheme_module (const struct _u_request * 
       } else if (res != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_auth_scheme_module - Error manage_user_auth_scheme_module disable");
         response->status = 500;
+      }
+    } else if (0 == o_strcmp("reset", u_map_get(request->map_url, "action"))) {
+      res = manage_user_auth_scheme_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_STOP);
+      if (res == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_auth_scheme_module - Error manage_user_auth_scheme_module reset (1)");
+        response->status = 500;
+      } else {
+        res = manage_user_auth_scheme_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_START);
+        if (res == G_ERROR_PARAM) {
+          response->status = 400;
+        } else if (res != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_auth_scheme_module - Error manage_user_auth_scheme_module reset (2)");
+          response->status = 500;
+        }
       }
     } else {
       response->status = 400;
@@ -1078,6 +1110,22 @@ int callback_glewlwyd_manage_client_module (const struct _u_request * request, s
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_client_module - Error manage_client_module disable");
         response->status = 500;
       }
+    } else if (0 == o_strcmp("reset", u_map_get(request->map_url, "action"))) {
+      res = manage_client_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_STOP);
+      if (res == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_client_module - Error manage_client_module reset (1)");
+        response->status = 500;
+      } else {
+        res = manage_client_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_START);
+        if (res == G_ERROR_PARAM) {
+          response->status = 400;
+        } else if (res != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_client_module - Error manage_client_module reset (2)");
+          response->status = 500;
+        }
+      }
     } else {
       response->status = 400;
     }
@@ -1229,6 +1277,22 @@ int callback_glewlwyd_manage_plugin_module (const struct _u_request * request, s
       } else if (res != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_plugin_module - Error manage_plugin_module disable");
         response->status = 500;
+      }
+    } else if (0 == o_strcmp("reset", u_map_get(request->map_url, "action"))) {
+      res = manage_plugin_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_STOP);
+      if (res == G_ERROR_PARAM) {
+        response->status = 400;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_plugin_module - Error manage_plugin_module reset (1)");
+        response->status = 500;
+      } else {
+        res = manage_plugin_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_START);
+        if (res == G_ERROR_PARAM) {
+          response->status = 400;
+        } else if (res != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_plugin_module - Error manage_plugin_module reset (1)");
+          response->status = 500;
+        }
       }
     } else {
       response->status = 400;
