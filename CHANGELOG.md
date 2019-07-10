@@ -6,6 +6,8 @@
 - Fix webauthn bugs
 - Improve documentation
 - Fix build on supported platforms
+- Fix #59 and add action reset to modules
+- Make build and tests reproductible using huddersfield
 
 ## 2.0.0-b1
 
