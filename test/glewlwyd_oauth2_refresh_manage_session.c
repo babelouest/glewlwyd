@@ -92,7 +92,7 @@ START_TEST(test_oauth2_refresh_manage_list)
   ck_assert_int_eq(json_array_size(j_body), 1);
 
   o_free(user_req.http_url);
-  user_req.http_url = o_strdup(SERVER_URI "/glwd/profile/token/?pattern=127");
+  user_req.http_url = msprintf(SERVER_URI "/glwd/profile/token/?pattern=%s", user_agent);
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   json_decref(j_body);

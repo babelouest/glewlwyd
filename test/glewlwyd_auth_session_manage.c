@@ -84,7 +84,7 @@ START_TEST(test_auth_session_manage_list)
   ck_assert_int_eq(json_array_size(j_body), 1);
 
   o_free(user_req.http_url);
-  user_req.http_url = o_strdup(SERVER_URI "/profile/session/?pattern=127");
+  user_req.http_url = msprintf(SERVER_URI "/profile/session/?pattern=%s", user_agent);
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   j_body = ulfius_get_json_body_response(&resp, NULL);
@@ -133,7 +133,7 @@ START_TEST(test_auth_session_manage_delete_ok)
 {
   struct _u_request req, test_req;
   struct _u_response resp;
-  char my_user_agent[33], * session_hash = NULL, * session_hash_encoded = NULL, * cookie = NULL;
+  char user_agent[33], * session_hash = NULL, * session_hash_encoded = NULL, * cookie = NULL;
   json_t * j_body;
   int x[1];
   
@@ -144,8 +144,8 @@ START_TEST(test_auth_session_manage_delete_ok)
   req.http_verb = strdup("POST");
   req.http_url = msprintf("%s/auth/", SERVER_URI);
   gnutls_rnd(GNUTLS_RND_NONCE, x, sizeof(int));
-  snprintf(my_user_agent, 32, "glwd-auth-test-%04d", x[0]);
-  u_map_put(req.map_header, "User-Agent", my_user_agent);
+  snprintf(user_agent, 32, "glwd-auth-test-%04d", x[0]);
+  u_map_put(req.map_header, "User-Agent", user_agent);
   j_body = json_pack("{ssss}", "username", USERNAME, "password", PASSWORD);
   ulfius_set_json_body_request(&req, j_body);
   json_decref(j_body);
@@ -157,7 +157,7 @@ START_TEST(test_auth_session_manage_delete_ok)
   
   ulfius_init_response(&resp);
   user_req.http_verb = strdup("GET");
-  user_req.http_url = msprintf(SERVER_URI "/profile/session/?pattern=%s", my_user_agent);
+  user_req.http_url = msprintf(SERVER_URI "/profile/session/?pattern=%s", user_agent);
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   j_body = ulfius_get_json_body_response(&resp, NULL);
