@@ -882,27 +882,21 @@ class App extends Component {
     if (result) {
       apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name), "PUT", mod)
       .then(() => {
-        apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name) + "/disable/", "PUT")
+        apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name) + "/reset/", "PUT")
         .then(() => {
-          apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name) + "/enable/", "PUT")
-          .then(() => {
-            messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
-          })
-          .fail(() => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
-          })
-          .always(() => {
-            this.fetchUserMods()
-            .always(() => {
-              this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
-                $("#editModModal").modal("hide");
-                this.fetchUsers();
-              });
-            });
-          });
+          messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
         })
         .fail(() => {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+        })
+        .always(() => {
+          this.fetchUserMods()
+          .always(() => {
+            this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+              $("#editModModal").modal("hide");
+              this.fetchUsers();
+            });
+          });
         });
       })
       .fail(() => {
@@ -965,27 +959,21 @@ class App extends Component {
     if (result) {
       apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name), "PUT", mod)
       .then(() => {
-        apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name) + "/disable/", "PUT")
+        apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name) + "/reset/", "PUT")
         .then(() => {
-          apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name) + "/enable/", "PUT")
-          .then(() => {
-            messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
-          })
-          .fail(() => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
-          })
-          .always(() => {
-            this.fetchClientMods()
-            .always(() => {
-              this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
-                $("#editModModal").modal("hide");
-                this.fetchClients();
-              });
-            });
-          });
+          messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
         })
         .fail(() => {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+        })
+        .always(() => {
+          this.fetchClientMods()
+          .always(() => {
+            this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+              $("#editModModal").modal("hide");
+              this.fetchClients();
+            });
+          });
         });
       })
       .fail(() => {
@@ -1047,9 +1035,7 @@ class App extends Component {
     if (result) {
       apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(mod.name), "PUT", mod)
       .then(() => {
-        apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(mod.name) + "/disable/", "PUT")
-        .then(() => {
-          apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(mod.name) + "/enable/", "PUT")
+          apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(mod.name) + "/reset/", "PUT")
           .then(() => {
             messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
           })
@@ -1059,10 +1045,6 @@ class App extends Component {
           .always(() => {
             this.fetchSchemeMods()
           });
-        })
-        .fail(() => {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
-        });
       })
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
@@ -1125,24 +1107,22 @@ class App extends Component {
 
   confirmEditPluginMod(result, mod) {
     if (result) {
-      apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name) + "/disable/", "PUT")
+      apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name), "PUT", mod)
       .then(() => {
-        apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name), "PUT", mod)
+        apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name) + "/reset/", "PUT")
         .then(() => {
-          apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name) + "/enable/", "PUT")
-          .then(() => {
-            messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
-          })
-          .fail(() => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
-          })
+          messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+        })
+        .fail(() => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+        })
+        .always(() => {
+          this.fetchPlugins()
           .always(() => {
-            this.fetchPlugins()
-            .always(() => {
-              this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
-                $("#editPluginModal").modal("hide");
-              });
+            this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+              $("#editPluginModal").modal("hide");
             });
+          });
         })
         .fail(() => {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
@@ -1151,7 +1131,6 @@ class App extends Component {
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
       })
-      });
     } else {
       $("#editPluginModal").modal("hide");
     }
