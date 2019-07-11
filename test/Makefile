@@ -56,18 +56,18 @@ test-crud: $(TARGET_CRUD) test_glewlwyd_crud_user test_glewlwyd_crud_client test
 test-oauth2: $(TARGET_OAUTH2) test_glewlwyd_oauth2_auth_code test_glewlwyd_oauth2_code test_glewlwyd_oauth2_code_client_confidential test_glewlwyd_oauth2_implicit test_glewlwyd_oauth2_resource_owner_pwd_cred test_glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential test_glewlwyd_oauth2_client_cred test_glewlwyd_oauth2_refresh_token test_glewlwyd_oauth2_refresh_token_client_confidential test_glewlwyd_oauth2_delete_token test_glewlwyd_oauth2_delete_token_client_confidential test_glewlwyd_oauth2_profile test_glewlwyd_oauth2_refresh_manage test_glewlwyd_oauth2_refresh_manage test_glewlwyd_oauth2_refresh_manage_session test_glewlwyd_oauth2_profile_impersonate
 
 test-irl: $(TARGET_IRL) test_glewlwyd_mod_user_http test_glewlwyd_scheme_mail test_glewlwyd_scheme_otp test_glewlwyd_scheme_webauthn
-	@-for JSON_FILE in mod_user_*.json; \
+	@for JSON_FILE in mod_user_*.json; \
 		do $(MAKE) test_glewlwyd_mod_user_irl PARAM_FILE=$$JSON_FILE $*; \
 	done
-	@-for JSON_FILE in mod_client_*.json; \
+	@for JSON_FILE in mod_client_*.json; \
 		do $(MAKE) test_glewlwyd_mod_client_irl PARAM_FILE=$$JSON_FILE $*; \
 	done
-	@-for JSON_FILE in plugin_oauth2_*.json; \
+	@for JSON_FILE in plugin_oauth2_*.json; \
 		do $(MAKE) test_glewlwyd_oauth2_irl PARAM_FILE=$$JSON_FILE $*; \
 	done
 
 test_%_irl: %_irl
-	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
+	@if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
 		echo "Run $^ with file $(PARAM_FILE)"; \
 		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM_FILE); \
 		mv $^.log $^-$(PARAM_FILE).log; \
@@ -78,10 +78,10 @@ test_%_irl: %_irl
 	fi
 
 test_%: %
-	@-if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
+	@if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
 		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(HOST); \
 	elif [ "$(MEMCHECK)" = "0" ]; then \
-	  LD_LIBRARY_PATH=. ./$^; \
+	  LD_LIBRARY_PATH=. ./$^ $(HOST); \
 	else \
-	  LD_LIBRARY_PATH=. valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./$^ --config-file=$(CONFIG_FILE) 2>valgrind-$@.txt; \
+	  LD_LIBRARY_PATH=. valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./$^ $(HOST) 2>valgrind-$@.txt; \
 	fi
