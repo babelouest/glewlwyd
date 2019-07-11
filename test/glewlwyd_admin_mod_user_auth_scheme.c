@@ -109,6 +109,7 @@ START_TEST(test_glwd_admin_get_mod_user_auth_scheme_get)
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url_404, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL), 1);
   o_free(url);
+  o_free(url_404);
   json_decref(j_parameters);
 }
 END_TEST
@@ -143,6 +144,7 @@ START_TEST(test_glwd_admin_get_mod_user_auth_scheme_set_OK)
   json_t * j_parameters = json_pack("{sssisisos{ss}}", "display_name", MODULE_DISPLAY_NAME, "expiration", 600, "max_use", 0, "allow_user_register", json_true(), "parameters", "mock-value", MODULE_NAME);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  o_free(url);
   
   url = msprintf("%s/mod/scheme/%s", SERVER_URI, MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
@@ -207,7 +209,7 @@ START_TEST(test_glwd_admin_mod_user_auth_scheme_with_errors)
   url = msprintf(SERVER_URI "/mod/scheme/%s", name);
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   o_free(url);
-  
+  json_decref(j_parameters);
 }
 END_TEST
 

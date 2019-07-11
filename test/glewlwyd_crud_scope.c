@@ -187,6 +187,7 @@ START_TEST(test_glwd_crud_scope_list_pattern)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/scope/?limit=2&pattern=scope", SERVER_URI);
@@ -200,6 +201,7 @@ START_TEST(test_glwd_crud_scope_list_pattern)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/scope/?pattern=error", SERVER_URI);
@@ -211,6 +213,7 @@ START_TEST(test_glwd_crud_scope_list_pattern)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/scope/?pattern=scope&limit=2&offset=1", SERVER_URI);
@@ -224,6 +227,7 @@ START_TEST(test_glwd_crud_scope_list_pattern)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
 }
 END_TEST
@@ -251,6 +255,7 @@ START_TEST(test_glwd_crud_scope_list_limit)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/scope/?limit=2", SERVER_URI);
@@ -264,6 +269,7 @@ START_TEST(test_glwd_crud_scope_list_limit)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/scope/?offset=1&limit=1", SERVER_URI);
@@ -276,6 +282,7 @@ START_TEST(test_glwd_crud_scope_list_limit)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/scope/?offset=2&limit=3", SERVER_URI);
@@ -290,6 +297,7 @@ START_TEST(test_glwd_crud_scope_list_limit)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
 }
 END_TEST

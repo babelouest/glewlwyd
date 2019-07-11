@@ -77,7 +77,7 @@ START_TEST(test_glwd_oauth2_irl_run_workflow)
              * password = json_string_value(json_object_get(json_object_get(j_params, "user"), "password")),
              * client_id = json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")),
              * client_password = json_string_value(json_object_get(json_object_get(j_params, "client"), "password"));
-  char * url, * redirect_uri_encoded, * scope = NULL, * tmp, * code;
+  char * url, * redirect_uri_encoded, * scope = NULL, * code;
   
   ulfius_init_request(&auth_req);
   ulfius_init_response(&auth_resp);
@@ -118,11 +118,10 @@ START_TEST(test_glwd_oauth2_irl_run_workflow)
     if (scope == NULL) {
       scope = o_strdup(json_string_value(j_element));
     } else {
-      tmp = msprintf("%s %s", scope, o_strdup(json_string_value(j_element)));
-      o_free(scope);
-      scope = tmp;
+      scope = mstrcatf(scope, " %s", json_string_value(j_element));
     }
   }
+  y_log_message(Y_LOG_LEVEL_DEBUG, "scope %s", scope);
   
   url = msprintf("%s/auth/grant/%s", SERVER_URI, json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")));
   j_body = json_pack("{ss}", "scope", scope);

@@ -166,6 +166,7 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
   ck_assert_int_eq(ulfius_send_http_request(&check_req, &check_resp), U_OK);
   ck_assert_int_eq(check_resp.status, 200);
   j_body = ulfius_get_json_body_response(&check_resp, NULL);
+  ulfius_clean_response(&check_resp);
   ck_assert_int_eq(json_object_size(j_body), 3);
   json_object_foreach(j_body, key, j_element) {
     ck_assert_ptr_eq(json_object_get(j_element, "password_authenticated"), json_true());
@@ -214,8 +215,6 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
   json_decref(j_register);
 
   // Authenticate scheme mock 42
-  auth_req.http_verb = strdup("POST");
-  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
   j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "code", "42");
   ulfius_set_json_body_request(&auth_req, j_body);
   json_decref(j_body);
@@ -223,9 +222,11 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
   ck_assert_int_eq(auth_resp.status, 200);
   ck_assert_int_eq(auth_resp.nb_cookies, 1);
 
+  ulfius_init_response(&check_resp);
   ck_assert_int_eq(ulfius_send_http_request(&check_req, &check_resp), U_OK);
   ck_assert_int_eq(check_resp.status, 200);
   j_body = ulfius_get_json_body_response(&check_resp, NULL);
+  ulfius_clean_response(&check_resp);
   ck_assert_int_eq(json_object_size(j_body), 3);
   json_object_foreach(j_body, key, j_element) {
     ck_assert_ptr_eq(json_object_get(j_element, "password_authenticated"), json_true());
@@ -278,8 +279,6 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
   json_decref(j_register);
 
   // Authenticate scheme mock 88
-  auth_req.http_verb = strdup("POST");
-  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
   j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_88", "value", "code", "88");
   ulfius_set_json_body_request(&auth_req, j_body);
   json_decref(j_body);
@@ -287,9 +286,11 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
   ck_assert_int_eq(auth_resp.status, 200);
   ck_assert_int_eq(auth_resp.nb_cookies, 1);
 
+  ulfius_init_response(&check_resp);
   ck_assert_int_eq(ulfius_send_http_request(&check_req, &check_resp), U_OK);
   ck_assert_int_eq(check_resp.status, 200);
   j_body = ulfius_get_json_body_response(&check_resp, NULL);
+  ulfius_clean_response(&check_resp);
   ck_assert_int_eq(json_object_size(j_body), 3);
   json_object_foreach(j_body, key, j_element) {
     ck_assert_ptr_eq(json_object_get(j_element, "password_authenticated"), json_true());
@@ -342,8 +343,6 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
   json_decref(j_register);
 
   // Authenticate scheme mock 95
-  auth_req.http_verb = strdup("POST");
-  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
   j_body = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "code", "95");
   ulfius_set_json_body_request(&auth_req, j_body);
   json_decref(j_body);
@@ -351,6 +350,7 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
   ck_assert_int_eq(auth_resp.status, 200);
   ck_assert_int_eq(auth_resp.nb_cookies, 1);
 
+  ulfius_init_response(&check_resp);
   ck_assert_int_eq(ulfius_send_http_request(&check_req, &check_resp), U_OK);
   ck_assert_int_eq(check_resp.status, 200);
   j_body = ulfius_get_json_body_response(&check_resp, NULL);

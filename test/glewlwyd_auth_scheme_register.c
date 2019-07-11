@@ -206,7 +206,6 @@ int main(int argc, char *argv[])
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication");
   }
-  ulfius_clean_response(&auth_resp);
 
   if (do_test) {
     s = glewlwyd_suite();
@@ -223,6 +222,9 @@ int main(int argc, char *argv[])
   
   ulfius_clean_request(&auth_req);
   ulfius_clean_request(&user_req);
+  ulfius_clean_request(&scope_req);
+  ulfius_clean_response(&scope_resp);
+  ulfius_clean_response(&auth_resp);
   
   y_close_logs();
 

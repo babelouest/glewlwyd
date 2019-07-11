@@ -170,6 +170,7 @@ START_TEST(test_oauth2_implicit_scope_grant_partial)
   ck_assert_int_eq(auth_resp.status, 200);
 
   ulfius_clean_request(&auth_req);
+  ulfius_clean_request(&code_req);
   ulfius_clean_response(&auth_resp);
 }
 END_TEST
@@ -320,7 +321,9 @@ START_TEST(test_oauth2_implicit_scope_grant_all_authorize_partial)
   ck_assert_int_eq(auth_resp.status, 200);
 
   ulfius_clean_request(&auth_req);
+  ulfius_clean_request(&code_req);
   ulfius_clean_response(&auth_resp);
+  ulfius_clean_response(&code_resp);
 }
 END_TEST
 
@@ -426,6 +429,7 @@ START_TEST(test_oauth2_implicit_retry_with_max_use)
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "login.html"), NULL);
+  ulfius_clean_response(&code_resp);
 
   // Reauthenticate with scheme mock 88
   ulfius_init_response(&auth_resp);
@@ -466,6 +470,7 @@ START_TEST(test_oauth2_implicit_retry_with_max_use)
   ck_assert_int_eq(auth_resp.status, 200);
 
   ulfius_clean_request(&auth_req);
+  ulfius_clean_request(&code_req);
   ulfius_clean_response(&auth_resp);
 }
 END_TEST

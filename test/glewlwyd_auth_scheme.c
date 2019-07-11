@@ -36,20 +36,27 @@ START_TEST(test_glwd_auth_scheme_error_parameters)
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 400);
   ck_assert_int_eq(resp.nb_cookies, 0);
+  ulfius_clean_response(&resp);
 
+  ulfius_init_response(&resp);
   j_body = json_pack("{sssss{}}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "value");
   ulfius_set_json_body_request(&req, j_body);
   json_decref(j_body);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 400);
   ck_assert_int_eq(resp.nb_cookies, 0);
+  ulfius_clean_response(&resp);
 
+  ulfius_init_response(&resp);
   j_body = json_pack("{sssssss[]}", "username", USERNAME, "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value");
   ulfius_set_json_body_request(&req, j_body);
   json_decref(j_body);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 400);
   ck_assert_int_eq(resp.nb_cookies, 0);
+
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -71,6 +78,9 @@ START_TEST(test_glwd_auth_scheme_error_login)
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
   ck_assert_int_eq(resp.nb_cookies, 0);
+
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -92,6 +102,9 @@ START_TEST(test_glwd_auth_scheme_login_success)
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   ck_assert_int_eq(resp.nb_cookies, 1);
+
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
   
 }
 END_TEST
@@ -155,6 +168,8 @@ START_TEST(test_glwd_auth_scheme_login_multiple)
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_body, 0), "username")), USERNAME2);
   json_decref(j_body);
   ulfius_clean_response(&auth_resp);
+  ulfius_clean_request(&req);
+  ulfius_clean_request(&auth_req);
 }
 END_TEST
 
