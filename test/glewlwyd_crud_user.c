@@ -145,9 +145,6 @@ START_TEST(test_glwd_crud_user_list_limit)
   int res;
   struct _u_response resp;
   
-  o_free(admin_req.http_url);
-  o_free(admin_req.http_verb);
-  
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/user/?offset=2", SERVER_URI);
   admin_req.http_verb = o_strdup("GET");
@@ -159,6 +156,8 @@ START_TEST(test_glwd_crud_user_list_limit)
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "username")), "user3");
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
+  admin_req.http_url = NULL;
+  admin_req.http_verb = NULL;
   ulfius_clean_response(&resp);
   json_decref(j_result);
   
@@ -173,6 +172,8 @@ START_TEST(test_glwd_crud_user_list_limit)
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "username")), "user1");
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
+  admin_req.http_url = NULL;
+  admin_req.http_verb = NULL;
   ulfius_clean_response(&resp);
   json_decref(j_result);
   
@@ -187,6 +188,8 @@ START_TEST(test_glwd_crud_user_list_limit)
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "username")), "user2");
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
+  admin_req.http_url = NULL;
+  admin_req.http_verb = NULL;
   ulfius_clean_response(&resp);
   json_decref(j_result);
   
@@ -200,6 +203,8 @@ START_TEST(test_glwd_crud_user_list_limit)
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 0), "username")), "user3");
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
+  admin_req.http_url = NULL;
+  admin_req.http_verb = NULL;
   ulfius_clean_response(&resp);
   json_decref(j_result);
   
@@ -211,9 +216,6 @@ START_TEST(test_glwd_crud_user_list_pattern)
   json_t * j_result;
   int res;
   struct _u_response resp;
-  
-  o_free(admin_req.http_url);
-  o_free(admin_req.http_verb);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/user/?pattern=user", SERVER_URI);
@@ -227,6 +229,8 @@ START_TEST(test_glwd_crud_user_list_pattern)
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 2), "username")), "user3");
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
+  admin_req.http_url = NULL;
+  admin_req.http_verb = NULL;
   ulfius_clean_response(&resp);
   json_decref(j_result);
   
@@ -239,6 +243,8 @@ START_TEST(test_glwd_crud_user_list_pattern)
   ck_assert_int_eq(json_array_size(j_result), 0);
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
+  admin_req.http_url = NULL;
+  admin_req.http_verb = NULL;
   ulfius_clean_response(&resp);
   json_decref(j_result);
   
@@ -253,6 +259,8 @@ START_TEST(test_glwd_crud_user_list_pattern)
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "username")), "user2");
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
+  admin_req.http_url = NULL;
+  admin_req.http_verb = NULL;
   ulfius_clean_response(&resp);
   json_decref(j_result);
   
@@ -278,9 +286,6 @@ START_TEST(test_glwd_crud_user_list_pattern_multiple_source)
   int res;
   struct _u_response resp;
 
-  o_free(admin_req.http_url);
-  o_free(admin_req.http_verb);
-  
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/user/?offset=2&limit=4&pattern=user", SERVER_URI);
   admin_req.http_verb = o_strdup("GET");
@@ -294,6 +299,8 @@ START_TEST(test_glwd_crud_user_list_pattern_multiple_source)
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 3), "username")), "mock1-user3");
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
+  admin_req.http_url = NULL;
+  admin_req.http_verb = NULL;
   ulfius_clean_response(&resp);
   json_decref(j_result);
   
@@ -308,6 +315,8 @@ START_TEST(test_glwd_crud_user_list_pattern_multiple_source)
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "username")), "mock2-user1");
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
+  admin_req.http_url = NULL;
+  admin_req.http_verb = NULL;
   ulfius_clean_response(&resp);
   json_decref(j_result);
 }
@@ -319,9 +328,6 @@ START_TEST(test_glwd_crud_user_list_page_multiple_source)
   int res;
   struct _u_response resp;
 
-  o_free(admin_req.http_url);
-  o_free(admin_req.http_verb);
-  
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/user/?offset=3&limit=4", SERVER_URI);
   admin_req.http_verb = o_strdup("GET");
@@ -335,6 +341,8 @@ START_TEST(test_glwd_crud_user_list_page_multiple_source)
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 3), "username")), "mock1-user2");
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
+  admin_req.http_url = NULL;
+  admin_req.http_verb = NULL;
   ulfius_clean_response(&resp);
   json_decref(j_result);
   
@@ -355,6 +363,8 @@ START_TEST(test_glwd_crud_user_list_page_multiple_source)
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 7), "username")), "mock2-user1");
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
+  admin_req.http_url = NULL;
+  admin_req.http_verb = NULL;
   ulfius_clean_response(&resp);
   json_decref(j_result);
 }

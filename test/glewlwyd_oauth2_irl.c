@@ -189,7 +189,6 @@ START_TEST(test_glwd_oauth2_irl_run_workflow)
   
   ulfius_clean_request(&auth_req);
   o_free(cookie);
-  o_free(scope);
 }
 END_TEST
 
