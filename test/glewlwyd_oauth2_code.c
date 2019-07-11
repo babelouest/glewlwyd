@@ -197,6 +197,7 @@ START_TEST(test_oauth2_code_scope_grant_partial)
   ulfius_clean_request(&code_req);
   ulfius_clean_response(&code_resp);
   o_free(code);
+  json_decref(j_body);
 
   // Clean grant scopes
   ulfius_init_response(&auth_resp);
@@ -347,6 +348,7 @@ START_TEST(test_oauth2_code_scope_grant_all_authorize_partial)
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "login.html"), NULL);
+  ulfius_clean_response(&code_resp);
 
   // Clean grant scopes
   ulfius_init_response(&auth_resp);
@@ -362,6 +364,7 @@ START_TEST(test_oauth2_code_scope_grant_all_authorize_partial)
 
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
+  ulfius_clean_request(&code_req);
 }
 END_TEST
 
@@ -476,6 +479,7 @@ START_TEST(test_oauth2_code_retry_with_max_use)
   ck_assert_str_eq(json_string_value(json_object_get(j_body, "scope")), SCOPE_LIST_MAX_USE);
   ulfius_clean_response(&code_resp);
   o_free(code);
+  json_decref(j_body);
 
   // Try to get another code with the same session but redirected to login page
   ulfius_init_response(&code_resp);
@@ -486,6 +490,7 @@ START_TEST(test_oauth2_code_retry_with_max_use)
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "login.html"), NULL);
+  ulfius_clean_response(&code_resp);
 
   // Reauthenticate with scheme mock 88
   ulfius_init_response(&auth_resp);
@@ -532,6 +537,7 @@ START_TEST(test_oauth2_code_retry_with_max_use)
   ulfius_clean_request(&code_req);
   ulfius_clean_response(&code_resp);
   o_free(code);
+  json_decref(j_body);
 
   // Clean grant scopes
   ulfius_init_response(&auth_resp);

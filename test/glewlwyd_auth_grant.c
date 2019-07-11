@@ -37,23 +37,28 @@ START_TEST(test_glwd_auth_grant_error_parameters)
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 404);
   ck_assert_int_eq(resp.nb_cookies, 0);
+  ulfius_clean_response(&resp);
   
   o_free(user_req.http_url);
   user_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
 
+  ulfius_init_response(&resp);
   j_body = json_pack("{s[]}", "scope");
   ulfius_set_json_body_request(&user_req, j_body);
   json_decref(j_body);
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 400);
   ck_assert_int_eq(resp.nb_cookies, 0);
+  ulfius_clean_response(&resp);
 
+  ulfius_init_response(&resp);
   j_body = json_pack("{ss}", "scope", "error");
   ulfius_set_json_body_request(&user_req, j_body);
   json_decref(j_body);
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
   ck_assert_int_eq(resp.nb_cookies, 0);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -73,6 +78,7 @@ START_TEST(test_glwd_auth_grant_success)
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   ck_assert_int_eq(resp.nb_cookies, 0);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -92,6 +98,7 @@ START_TEST(test_glwd_auth_grant_remove_success)
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   ck_assert_int_eq(resp.nb_cookies, 0);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -145,7 +152,6 @@ int main(int argc, char *argv[])
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication");
   }
-  ulfius_clean_response(&auth_resp);
 
   if (do_test) {
     s = glewlwyd_suite();
@@ -158,6 +164,9 @@ int main(int argc, char *argv[])
   
   ulfius_clean_request(&auth_req);
   ulfius_clean_request(&user_req);
+  ulfius_clean_request(&scope_req);
+  ulfius_clean_response(&auth_resp);
+  ulfius_clean_response(&scope_resp);
   
   y_close_logs();
 

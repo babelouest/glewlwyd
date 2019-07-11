@@ -159,6 +159,7 @@ START_TEST(test_glwd_crud_client_list_pattern)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/client/?limit=2&pattern=client", SERVER_URI);
@@ -172,6 +173,7 @@ START_TEST(test_glwd_crud_client_list_pattern)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/client/?pattern=error", SERVER_URI);
@@ -183,6 +185,7 @@ START_TEST(test_glwd_crud_client_list_pattern)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/client/?pattern=client&limit=2&offset=1", SERVER_URI);
@@ -196,6 +199,7 @@ START_TEST(test_glwd_crud_client_list_pattern)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
 }
 END_TEST
@@ -221,6 +225,7 @@ START_TEST(test_glwd_crud_client_list_limit)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/client/?limit=2", SERVER_URI);
@@ -234,6 +239,7 @@ START_TEST(test_glwd_crud_client_list_limit)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/client/?offset=1&limit=1", SERVER_URI);
@@ -246,6 +252,7 @@ START_TEST(test_glwd_crud_client_list_limit)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/client/?offset=2&limit=3", SERVER_URI);
@@ -258,6 +265,7 @@ START_TEST(test_glwd_crud_client_list_limit)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
 }
 END_TEST
@@ -267,6 +275,7 @@ START_TEST(test_glwd_crud_client_list_add_user_module_instances)
   char * url = msprintf("%s/mod/client/", SERVER_URI);
   json_t * j_parameters = json_pack("{sssssssisos{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME_1, "display_name", MODULE_DISPLAY_NAME, "order_rank", 1, "readonly", json_true(), "parameters", "client-id-prefix", MODULE_PREFIX_1);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
   j_parameters = json_pack("{sssssssisos{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME_2, "display_name", MODULE_DISPLAY_NAME, "order_rank", 2, "readonly", json_true(), "parameters", "client-id-prefix", MODULE_PREFIX_2);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   o_free(url);
@@ -297,6 +306,7 @@ START_TEST(test_glwd_crud_client_list_page_multiple_source)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/client/?offset=2&limit=6", SERVER_URI);
@@ -314,6 +324,7 @@ START_TEST(test_glwd_crud_client_list_page_multiple_source)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
 }
 END_TEST
 
@@ -339,6 +350,7 @@ START_TEST(test_glwd_crud_client_list_pattern_multiple_source)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/client/?offset=1&pattern=client1", SERVER_URI);
@@ -352,6 +364,7 @@ START_TEST(test_glwd_crud_client_list_pattern_multiple_source)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/client/?offset=1&pattern=client1&limit=1", SERVER_URI);
@@ -364,6 +377,7 @@ START_TEST(test_glwd_crud_client_list_pattern_multiple_source)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
   
   ulfius_init_response(&resp);
   admin_req.http_url = msprintf("%s/client/?pattern=error", SERVER_URI);
@@ -375,6 +389,7 @@ START_TEST(test_glwd_crud_client_list_pattern_multiple_source)
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   ulfius_clean_response(&resp);
+  json_decref(j_result);
 }
 END_TEST
 

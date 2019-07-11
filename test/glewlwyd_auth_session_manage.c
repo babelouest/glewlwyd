@@ -43,7 +43,10 @@ START_TEST(test_auth_session_manage_list)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_gt(json_array_size(j_body), 0);
+  json_decref(j_body);
+  ulfius_clean_response(&resp);
   
+  ulfius_init_response(&resp);
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/profile/session/?limit=1");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -51,14 +54,20 @@ START_TEST(test_auth_session_manage_list)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_eq(json_array_size(j_body), 1);
-
+  json_decref(j_body);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/profile/session/?offset=1");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
-
+  json_decref(j_body);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/profile/session/?sort=authorization_type");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -66,7 +75,10 @@ START_TEST(test_auth_session_manage_list)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_gt(json_array_size(j_body), 0);
-
+  json_decref(j_body);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/profile/session/?sort=issued_at&desc");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -74,7 +86,10 @@ START_TEST(test_auth_session_manage_list)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_gt(json_array_size(j_body), 0);
-
+  json_decref(j_body);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/profile/session/?sort=issued_at&desc&limit=1");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -82,7 +97,10 @@ START_TEST(test_auth_session_manage_list)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_eq(json_array_size(j_body), 1);
-
+  json_decref(j_body);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
   o_free(user_req.http_url);
   user_req.http_url = msprintf(SERVER_URI "/profile/session/?pattern=%s", user_agent);
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -90,7 +108,10 @@ START_TEST(test_auth_session_manage_list)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_gt(json_array_size(j_body), 0);
-
+  json_decref(j_body);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/profile/session/?pattern=glwd-auth-test-");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -98,7 +119,10 @@ START_TEST(test_auth_session_manage_list)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_gt(json_array_size(j_body), 0);
-
+  json_decref(j_body);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/profile/session/?pattern=error");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -166,6 +190,7 @@ START_TEST(test_auth_session_manage_delete_ok)
   session_hash = o_strdup(json_string_value(json_object_get(json_array_get(j_body, 0), "session_hash")));
   session_hash_encoded = ulfius_url_encode(session_hash);
   ulfius_clean_response(&resp);
+  json_decref(j_body);
   
   ulfius_init_response(&resp);
   ck_assert_int_eq(ulfius_send_http_request(&test_req, &resp), U_OK);
