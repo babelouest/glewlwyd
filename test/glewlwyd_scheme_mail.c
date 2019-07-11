@@ -229,6 +229,9 @@ static void * simple_smtp(void * args) {
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "simple_smtp - Error socket");
   }
+  
+  shutdown(server_fd, SHUT_RDWR);
+  close(server_fd);
 
   pthread_exit(NULL);
 }

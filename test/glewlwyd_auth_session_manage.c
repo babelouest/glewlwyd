@@ -131,7 +131,6 @@ START_TEST(test_auth_session_manage_list)
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_eq(json_array_size(j_body), 0);
 
-  ulfius_clean_request(&user_req);
   ulfius_clean_response(&resp);
   json_decref(j_body);
 }
@@ -142,13 +141,14 @@ START_TEST(test_auth_session_manage_delete_not_found)
   struct _u_response resp;
   
   ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  o_free(user_req.http_verb);
   user_req.http_url = o_strdup(SERVER_URI "/profile/session/error");
   user_req.http_verb = o_strdup("DELETE");
   
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 404);
   
-  ulfius_clean_request(&user_req);
   ulfius_clean_response(&resp);
 }
 END_TEST
@@ -180,6 +180,8 @@ START_TEST(test_auth_session_manage_delete_ok)
   ulfius_clean_response(&resp);
   
   ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  o_free(user_req.http_verb);
   user_req.http_verb = strdup("GET");
   user_req.http_url = msprintf(SERVER_URI "/profile/session/?pattern=%s", user_agent);
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);

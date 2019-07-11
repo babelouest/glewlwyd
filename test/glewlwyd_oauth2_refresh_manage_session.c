@@ -39,6 +39,7 @@ START_TEST(test_oauth2_refresh_manage_list)
   
   ulfius_init_response(&resp);
   u_map_put(user_req.map_header, "Authorization", bearer_token);
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/glwd/profile/token/");
   
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -134,7 +135,6 @@ START_TEST(test_oauth2_refresh_manage_list)
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_eq(json_array_size(j_body), 0);
 
-  ulfius_clean_request(&user_req);
   ulfius_clean_response(&resp);
   json_decref(j_body);
 }
@@ -145,26 +145,30 @@ START_TEST(test_oauth2_refresh_manage_delete_not_found)
   struct _u_response resp;
   
   ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  o_free(user_req.http_verb);
   user_req.http_url = o_strdup(SERVER_URI "/glwd/profile/token/error");
   user_req.http_verb = o_strdup("DELETE");
   
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 404);
   
-  ulfius_clean_request(&user_req);
   ulfius_clean_response(&resp);
 }
 END_TEST
 
 START_TEST(test_oauth2_refresh_manage_delete_ok)
 {
-  char * url = msprintf("%s/glwd/token/", SERVER_URI), * token_hash, * token_hash_encoded;
+  char * url = SERVER_URI "/glwd/token/", * token_hash, * token_hash_encoded;
   struct _u_map body;
   struct _u_response resp;
   int res;
   json_t * j_body;
   ulfius_init_response(&resp);
   
+  o_free(user_req.http_url);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
   user_req.http_url = msprintf(SERVER_URI "/glwd/profile/token/?sort=issued_at&desc&limit=1&pattern=%s", user_agent);
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
@@ -173,7 +177,9 @@ START_TEST(test_oauth2_refresh_manage_delete_ok)
   ck_assert_int_gt(json_array_size(j_body), 0);
   ck_assert_ptr_ne((token_hash = o_strdup(json_string_value(json_object_get(json_array_get(j_body, 0), "token_hash")))), NULL);
   ck_assert_ptr_ne((token_hash_encoded = url_encode(token_hash)), NULL);
+  ulfius_clean_response(&resp);
 
+  ulfius_init_response(&resp);
   u_map_init(&body);
   u_map_put(&body, "grant_type", "refresh_token");
   u_map_put(&body, "refresh_token", refresh_token);
@@ -203,11 +209,9 @@ START_TEST(test_oauth2_refresh_manage_delete_ok)
   ck_assert_ptr_eq(json_object_get(json_array_get(j_body, 0), "enabled"), json_false());
 
   res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 400, NULL, NULL, NULL);
-  free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
   
-  ulfius_clean_request(&user_req);
   ulfius_clean_response(&resp);
   o_free(token_hash);
   o_free(token_hash_encoded);

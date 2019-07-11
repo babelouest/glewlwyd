@@ -250,7 +250,7 @@ END_TEST
 
 START_TEST(test_glwd_scheme_otp_irl_authenticate_success)
 {
-  char code[OTP_CODE_LEGTH], * secret_dec = NULL;
+  char code[OTP_CODE_LEGTH+1], * secret_dec = NULL;
   size_t secret_dec_len = 0;
   json_t * j_params = json_pack("{sssssss{sssssi}}", 
                                 "username", USERNAME, 
@@ -474,6 +474,7 @@ int main(int argc, char *argv[])
   json_t * j_body;
   int res, do_test = 0, i;
   
+  oath_init();
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
   // Getting a valid session id for authenticated http requests
@@ -535,6 +536,7 @@ int main(int argc, char *argv[])
   ulfius_clean_request(&admin_req);
   
   y_close_logs();
+  oath_done();
 
   return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
