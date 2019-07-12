@@ -49,6 +49,7 @@ script:
   - sudo ldconfig
   - sqlite3 /tmp/glewlwyd.db < ../docs/database/init.sqlite3.sql
   - sqlite3 /tmp/glewlwyd.db < ../test/glewlwyd-test.sql
+  - cat ../test/glewlwyd-ci.conf
   - glewlwyd --config-file=../test/glewlwyd-ci.conf &
   - export G_PID=$!
   - make test || (cat Testing/Temporary/LastTest.log && cat /tmp/glewlwyd.log && false)
