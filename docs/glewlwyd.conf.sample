@@ -26,7 +26,7 @@ static_files_path="/usr/share/glewlwyd/webapp/"
 allow_origin="*"
 
 # log mode (console, syslog, journald, file)
-log_mode="journald"
+log_mode="console"
 
 # log level: NONE, ERROR, WARNING, INFO, DEBUG
 log_level="INFO"
@@ -47,16 +47,16 @@ admin_scope="g_admin"
 profile_scope="g_profile"
 
 # user_module path
-user_module_path="user"
+user_module_path="/usr/lib/glewlwyd/user"
 
 # client_module path
-client_module_path="client"
+client_module_path="/usr/lib/glewlwyd/client"
 
 # user_auth_scheme_module path
-user_auth_scheme_module_path="scheme"
+user_auth_scheme_module_path="/usr/lib/glewlwyd/scheme"
 
 # plugin_module path
-plugin_module_path="plugin"
+plugin_module_path="/usr/lib/glewlwyd/plugin"
 
 # TLS/SSL configuration values
 use_secure_connection=false
@@ -68,22 +68,22 @@ secure_connection_ca_file="/etc/ssl/certs/ca.crt"
 hash_algorithm = "SHA512"
 
 # MariaDB/Mysql database connection
-database =
-{
-  type     = "mariadb"
-  host     = "localhost"
-  user     = "glewlwyd"
-  password = "glewlwyd"
-  dbname   = "glewlwyd"
-  port     = 0
-}
-
-# SQLite database connection
 #database =
 #{
-#  type = "sqlite3"
-#  path = "/tmp/glewlwyd.db"
-#};
+#  type     = "mariadb"
+#  host     = "localhost"
+#  user     = "glewlwyd"
+#  password = "glewlwyd"
+#  dbname   = "glewlwyd"
+#  port     = 0
+#}
+
+# SQLite database connection
+database =
+{
+  type = "sqlite3"
+  path = "/var/cache/glewlwyd/glewlwyd.db"
+};
 
 # PostgreSQL database connection
 #database =
