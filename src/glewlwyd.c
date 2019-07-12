@@ -98,6 +98,7 @@ int main (int argc, char ** argv) {
   config->api_prefix = NULL;
   config->external_url = NULL;
   config->cookie_domain = NULL;
+  config->cookie_secure = 1;
   config->log_mode = Y_LOG_MODE_NONE;
   config->log_level = Y_LOG_LEVEL_NONE;
   config->log_file = NULL;
@@ -833,6 +834,10 @@ int build_config_from_file(struct config_elements * config) {
     }
   }
 
+  if (config_lookup_int(&cfg, "cookie_secure", &int_value) == CONFIG_TRUE) {
+    config->cookie_secure = (uint)int_value;
+  }
+  
   if (config->log_mode == Y_LOG_MODE_NONE) {
     // Get log mode
     if (config_lookup_string(&cfg, "log_mode", &str_value) == CONFIG_TRUE) {

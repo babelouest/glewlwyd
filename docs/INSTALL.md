@@ -302,6 +302,26 @@ database =
 }
 ```
 
+### Cookies configuration
+
+The default cnfig file has the following configuration for cookies:
+
+```
+# cookie domain
+cookie_domain="localhost"
+
+# cookie_secure, this options SHOULD be set to 1, set this to 0 to test glewlwyd on insecure connection http instead of https
+cookie_secure=0
+```
+
+You must change the value `cookie_domain` accordingly to the domain name Glewlwyd will be available to. You can disable this option if you need to, but it's highly NOT recommended:
+
+```
+#cookie_domain="localhost"
+```
+
+The parameter `cookie_secure` is set to 0 by default, but since you should use Glewlwyd in a https connection, you should set this option to 1.
+
 ### Mime types for webapp files
 
 This section in the config file is used by the static file service whuch will provide the `webapp/` content to the browser. You can add or remove values if you made changes to the front-end and requires to handle new types of files.

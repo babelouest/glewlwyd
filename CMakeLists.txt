@@ -209,12 +209,6 @@ set(GLWD_LIBS ${GLWD_LIBS} ${HOEL_LIBRARIES})
 
 target_link_libraries(glewlwyd ${GLWD_LIBS})
 
-option(INSECURE_COOKIE "Use insecure cookies" off)
-
-if (INSECURE_COOKIE)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DG_INSECURE_COOKIE")
-endif ()
-
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.3.4)")
 
 execute_process(COMMAND lsb_release -is
@@ -230,10 +224,6 @@ execute_process(COMMAND lsb_release -cs
 string( TOLOWER "${RELEASE_CODENAME_T}" RELEASE_CODENAME )
 
 option(WITH_MOCK "Build Mock modules" off)
-
-if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DG_INSECURE_COOKIE")
-endif ()
 
 # user modules
 

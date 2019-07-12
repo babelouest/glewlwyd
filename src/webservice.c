@@ -28,12 +28,6 @@
 
 #include "glewlwyd.h"
 
-#ifdef G_INSECURE_COOKIE
-#define G_COOKIE_SECURE 0
-#else
-#define G_COOKIE_SECURE 1
-#endif
-
 int callback_glewlwyd_options (const struct _u_request * request, struct _u_response * response, void * user_data) {
   u_map_put(response->map_header, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   u_map_put(response->map_header, "Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Bearer, Authorization");
@@ -209,7 +203,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (1)");
               response->status = 500;
             } else {
-              ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", G_COOKIE_SECURE, 0);
+              ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", config->cookie_secure, 0);
             }
             o_free(session_uid);
           } else {
@@ -234,7 +228,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (3)");
               response->status = 500;
             } else {
-              ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", G_COOKIE_SECURE, 0);
+              ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", config->cookie_secure, 0);
             }
           } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
             response->status = 401;
@@ -263,7 +257,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (4)");
               response->status = 500;
             } else {
-              ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", G_COOKIE_SECURE, 0);
+              ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", config->cookie_secure, 0);
             }
             o_free(session_uid);
           } else {
@@ -1741,7 +1735,7 @@ int callback_glewlwyd_user_get_profile (const struct _u_request * request, struc
       j_session = get_users_for_session(config, session_uid);
       if (check_result_value(j_session, G_OK)) {
         ulfius_set_json_body_response(response, 200, json_object_get(j_session, "session"));
-        ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", G_COOKIE_SECURE, 0);
+        ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", config->cookie_secure, 0);
       } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
         response->status = 401;
       } else {
