@@ -7,8 +7,8 @@
 *.pem
 *.log
 *.err
-*.conf
 *.so
+/*.conf
 valgrind.txt
 glewlwyd
 webapp/test-*.html
