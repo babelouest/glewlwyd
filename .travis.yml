@@ -43,14 +43,14 @@ install:
 script:
   - echo "fake test" || true
   - mkdir build && pushd build
-  - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on ..
+  - cmake -DWITH_JOURNALD=off -DBUILD_GLEWLWYD_TESTING=on -DCMAKE_INSTALL_PREFIX=/usr ..
   - make
   - sudo make install
   - sudo ldconfig
   - sqlite3 /tmp/glewlwyd.db < ../docs/database/init.sqlite3.sql
   - sqlite3 /tmp/glewlwyd.db < ../test/glewlwyd-test.sql
-  - glewlwyd --config-file=../test/glewlwyd.conf &
+  - glewlwyd --config-file=../test/glewlwyd-ci.conf &
   - export G_PID=$!
-  - make test
+  - make test || (cat Testing/Temporary/LastTest.log && false)
   - kill $G_PID
   - popd
