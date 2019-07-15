@@ -72,6 +72,7 @@ int main (int argc, char ** argv) {
   config->config_p->glewlwyd_callback_check_client_valid = &glewlwyd_callback_check_client_valid;
   config->config_p->glewlwyd_callback_get_client_granted_scopes = &glewlwyd_callback_get_client_granted_scopes;
   config->config_p->glewlwyd_callback_trigger_session_used = &glewlwyd_callback_trigger_session_used;
+  config->config_p->glewlwyd_callback_get_session_age = &glewlwyd_callback_get_session_age;
   config->config_p->glewlwyd_callback_get_plugin_external_url = &glewlwyd_callback_get_plugin_external_url;
   config->config_p->glewlwyd_callback_get_login_url = &glewlwyd_callback_get_login_url;
   config->config_p->glewlwyd_callback_generate_hash = &glewlwyd_callback_generate_hash;
@@ -1312,11 +1313,12 @@ int init_user_module_list(struct config_elements * config) {
 }
 
 int load_user_module_instance_list(struct config_elements * config) {
-  json_t * j_query, * j_result, * j_instance, * j_parameters;
+  json_t * j_query, * j_result, * j_instance, * j_parameters, * j_init;
   int res, ret, i;
   size_t index;
   struct _user_module_instance * cur_instance;
   struct _user_module * module = NULL;
+  char * message;
   
   config->user_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_module_instance_list != NULL) {
@@ -1355,12 +1357,17 @@ int load_user_module_instance_list(struct config_elements * config) {
             if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
               j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
               if (j_parameters != NULL) {
-                if (module->user_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls) == G_OK) {
+                j_init = module->user_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls);
+                if (check_result_value(j_init, G_OK)) {
                   cur_instance->enabled = 1;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                  message = json_dumps(j_init, JSON_INDENT(2));
+                  y_log_message(Y_LOG_LEVEL_DEBUG, message);
+                  o_free(message);
                   cur_instance->enabled = 0;
                 }
+                json_decref(j_init);
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                 cur_instance->enabled = 0;

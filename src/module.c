@@ -269,11 +269,12 @@ json_t * is_user_module_valid(struct config_elements * config, json_t * j_module
   return j_return;
 }
 
-int add_user_module(struct config_elements * config, json_t * j_module) {
+json_t * add_user_module(struct config_elements * config, json_t * j_module) {
   struct _user_module * module;
   struct _user_module_instance * cur_instance;
   json_t * j_query;
-  int res, ret, i;
+  int res, i;
+  json_t * j_return, * j_result;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
   j_query = json_pack("{sss{sOsOsOsOss}}",
@@ -316,34 +317,36 @@ int add_user_module(struct config_elements * config, json_t * j_module) {
         cur_instance->enabled = 0;
         cur_instance->readonly = json_object_get(j_module, "readonly")==json_true()?1:0;
         if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
-          if ((res = module->user_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls)) == G_OK) {
+          j_result = module->user_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls);
+          if (check_result_value(j_result, G_OK)) {
             cur_instance->enabled = 1;
-            ret = G_OK;
-          } else if (res == G_ERROR_PARAM) {
-            ret = G_ERROR_PARAM;
+            j_return = json_pack("{si}", "result", G_OK);
+          } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+            j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
-            ret = G_ERROR;
+            j_return = json_pack("{sis[s]}", "result", G_ERROR, "error", "internal error");
           }
+          json_decref(j_result);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error reallocating resources for user_module_instance_list");
           o_free(cur_instance->name);
-          ret = G_ERROR_MEMORY;
+          j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error allocating resources for cur_instance");
-        ret = G_ERROR_MEMORY;
+        j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Module '%s' not found", json_string_value(json_object_get(j_module, "module")));
-      ret = G_ERROR;
+      j_return = json_pack("{si}", "result", G_ERROR);
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error executing j_query");
-    ret = G_ERROR_DB;
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   o_free(parameters);
-  return ret;
+  return j_return;
 }
 
 int set_user_module(struct config_elements * config, const char * name, json_t * j_module) {
@@ -391,13 +394,15 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
 
 int delete_user_module(struct config_elements * config, const char * name) {
   int ret, res, error = 0;
-  json_t * j_query;
+  json_t * j_query, * j_result;
   struct _user_module_instance * instance;
   
   instance = get_user_module_instance(config, name);
   if (instance != NULL) {
     if (instance->enabled) {
-      error = (manage_user_module(config, name, GLEWLWYD_MODULE_ACTION_STOP) != G_OK);
+      j_result = manage_user_module(config, name, GLEWLWYD_MODULE_ACTION_STOP);
+      error = (!check_result_value(j_result, G_OK));
+      json_decref(j_result);
     }
     if (!error) {
       if (pointer_list_remove_pointer(config->user_module_instance_list, instance)) {
@@ -432,48 +437,49 @@ int delete_user_module(struct config_elements * config, const char * name) {
   return ret;
 }
 
-int manage_user_module(struct config_elements * config, const char * name, int action) {
+json_t * manage_user_module(struct config_elements * config, const char * name, int action) {
   struct _user_module_instance * instance = get_user_module_instance(config, name);
-  json_t * j_module = get_user_module(config, name);
-  int ret, res;
+  json_t * j_module = get_user_module(config, name), * j_return, * j_result;
   
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if ((res = instance->module->user_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls)) == G_OK) {
+        j_result = instance->module->user_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
+        if (check_result_value(j_result, G_OK)) {
           instance->enabled = 1;
-          ret = G_OK;
-        } else if (res == G_ERROR_PARAM) {
-          ret = G_ERROR_PARAM;
+          j_return = json_pack("{si}", "result", G_OK);
+        } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+          j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
-          ret = G_OK;
+          j_return = json_pack("{si}", "result", G_ERROR);
         }
+        json_decref(j_result);
       } else {
-        ret = G_OK;
+        j_return = json_pack("{si}", "result", G_OK);
       }
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
       if (instance->enabled) {
         if (instance->module->user_module_close(config->config_m, instance->cls) == G_OK) {
           instance->enabled = 0;
-          ret = G_OK;
+          j_return = json_pack("{si}", "result", G_OK);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
-          ret = G_ERROR;
+          j_return = json_pack("{si}", "result", G_ERROR);
         }
       } else {
-        ret = G_OK;
+        j_return = json_pack("{si}", "result", G_OK);
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error action not found");
-      ret = G_ERROR_PARAM;
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "Error action not found");
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error module not found");
-    ret = G_ERROR_PARAM;
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "Error module not found");
   }
   json_decref(j_module);
-  return ret;
+  return j_return;
 }
 
 json_t * get_user_auth_scheme_module_list(struct config_elements * config) {

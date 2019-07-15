@@ -1067,28 +1067,27 @@ int user_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
+json_t * user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
   UNUSED(config);
-  json_t * j_properties;
-  int ret;
+  json_t * j_properties, * j_return;
   char * error_message;
   
   j_properties = is_user_ldap_parameters_valid(j_parameters, readonly);
   if (check_result_value(j_properties, G_OK)) {
     *cls = json_incref(j_parameters);
-    ret = G_OK;
+    j_return = json_pack("{si}", "result", G_OK);
   } else if (check_result_value(j_properties, G_ERROR_PARAM)) {
     error_message = json_dumps(json_object_get(j_properties, "error"), JSON_COMPACT);
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error parsing parameters");
     y_log_message(Y_LOG_LEVEL_ERROR, error_message);
     o_free(error_message);
-    ret = G_ERROR_PARAM;
+    j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_properties, "error"));
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error is_user_database_parameters_valid");
-    ret = G_ERROR;
+    j_return = json_pack("{sis[s]}", "result", G_ERROR, "error", "internal error");
   }
   json_decref(j_properties);
-  return ret;
+  return j_return;
 }
 
 int user_module_close(struct config_module * config, void * cls) {

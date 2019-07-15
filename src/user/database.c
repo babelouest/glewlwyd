@@ -729,10 +729,9 @@ int user_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
+json_t * user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
   UNUSED(readonly);
-  json_t * j_result;
-  int ret;
+  json_t * j_result, * j_return;
   char * error_message;
   
   j_result = is_user_database_parameters_valid(j_parameters);
@@ -755,27 +754,27 @@ int user_module_init(struct config_module * config, int readonly, json_t * j_par
         }
       }
       if (((struct mod_parameters *)*cls)->conn != NULL) {
-        ret = G_OK;
+        j_return = json_pack("{si}", "result", G_OK);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error connecting to database");
-        ret = G_ERROR_PARAM;
+        j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error connecting to database");
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error allocating resources for cls");
-      ret = G_ERROR_MEMORY;
+      j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
     }
   } else if (check_result_value(j_result, G_ERROR_PARAM)) {
     error_message = json_dumps(json_object_get(j_result, "error"), JSON_COMPACT);
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error parsing parameters");
     y_log_message(Y_LOG_LEVEL_ERROR, error_message);
     o_free(error_message);
-    ret = G_ERROR_PARAM;
+    j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error is_user_database_parameters_valid");
-    ret = G_ERROR;
+    j_return = json_pack("{sis[s]}", "result", G_ERROR, "error", "internal error");
   }
   json_decref(j_result);
-  return ret;
+  return j_return;
 }
 
 int user_module_close(struct config_module * config, void * cls) {

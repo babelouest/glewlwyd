@@ -70,42 +70,48 @@ int user_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int user_module_init(struct config_module * config, int readonly, json_t * j_params, void ** cls) {
+json_t * user_module_init(struct config_module * config, int readonly, json_t * j_params, void ** cls) {
   UNUSED(config);
   UNUSED(readonly);
-  int ret;
   size_t index = 0;
-  json_t * j_element = NULL;
+  json_t * j_element = NULL, * j_return = NULL;
+  int ret;
   
   if (json_is_object(j_params)) {
     ret = G_OK;
     if (!json_string_length(json_object_get(j_params, "url"))) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter url is mandatory must be a non empty string");
-      ret = G_ERROR;
-    }
-    if (json_object_get(j_params, "check-server-certificate") != NULL && !json_is_boolean(json_object_get(j_params, "check-server-certificate"))) {
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter url is mandatory must be a non empty string");
+      ret = G_ERROR_PARAM;
+    } else if (json_object_get(j_params, "check-server-certificate") != NULL && !json_is_boolean(json_object_get(j_params, "check-server-certificate"))) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter check-server-certificate is optional and must be a boolean");
-      ret = G_ERROR;
-    }
-    if (json_object_get(j_params, "default-scope") == NULL || !json_is_array(json_object_get(j_params, "default-scope"))) {
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter check-server-certificate is optional and must be a boolean");
+    } else if (json_object_get(j_params, "default-scope") == NULL || !json_is_array(json_object_get(j_params, "default-scope"))) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter default-scope is mandatory must be an array of non empty strings");
-      ret = G_ERROR;
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter default-scope is mandatory must be an array of non empty strings");
+      ret = G_ERROR_PARAM;
     } else {
       json_array_foreach(json_object_get(j_params, "default-scope"), index, j_element) {
         if (!json_string_length(j_element)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter default-scope is mandatory must be an array of non empty strings");
-          ret = G_ERROR;
+          if (ret == G_OK) {
+            j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter default-scope is mandatory must be an array of non empty strings");
+            ret = G_ERROR_PARAM;
+          }
         }
       }
     }
+    if (ret == G_OK) {
+      j_return = json_pack("{si}", "result", G_OK);
+    }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameters must be a JSON object");
-    ret = G_ERROR;
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameters must be a JSON object");
   }
   if (ret == G_OK) {
     *cls = json_incref(j_params);
   }
-  return ret;
+  return j_return;
 }
 
 int user_module_close(struct config_module * config, void * cls) {
