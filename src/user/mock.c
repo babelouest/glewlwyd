@@ -198,8 +198,9 @@ int user_module_unload(struct config_module * config) {
  *                 as void * in all module functions
  * 
  */
-int user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
+json_t * user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
   UNUSED(readonly);
+  json_t * j_return;
   if (json_object_get(j_parameters, "error") == NULL) {
     const char * prefix = "", * password = "";
     if (json_string_length(json_object_get(j_parameters, "username-prefix"))) {
@@ -268,10 +269,11 @@ int user_module_init(struct config_module * config, int readonly, json_t * j_par
                                 "scope2",
                                 "scope3");
     y_log_message(Y_LOG_LEVEL_DEBUG, "user_module_init - success prefix: '%s', profile_scope: '%s', admin_scope: '%s'", prefix, config->profile_scope, config->admin_scope);
-    return G_OK;
+    j_return = json_pack("{si}", "result", G_OK);
   } else {
-    return G_ERROR_PARAM;
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error input parameters");
   }
+  return j_return;
 }
 
 /**

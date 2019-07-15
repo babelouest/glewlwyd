@@ -174,10 +174,10 @@ json_t * get_module_type_list(struct config_elements * config);
 json_t * get_user_module_list(struct config_elements * config);
 json_t * get_user_module(struct config_elements * config, const char * name);
 json_t * is_user_module_valid(struct config_elements * config, json_t * j_module, int add);
-int add_user_module(struct config_elements * config, json_t * j_module);
+json_t * add_user_module(struct config_elements * config, json_t * j_module);
 int set_user_module(struct config_elements * config, const char * name, json_t * j_module);
 int delete_user_module(struct config_elements * config, const char * name);
-int manage_user_module(struct config_elements * config, const char * name, int action);
+json_t * manage_user_module(struct config_elements * config, const char * name, int action);
 
 // User auth scheme module functions
 json_t * get_user_auth_scheme_module_list(struct config_elements * config);
@@ -224,6 +224,7 @@ json_t * glewlwyd_plugin_callback_get_user_profile(struct config_plugin * config
 int glewlwyd_plugin_callback_add_user(struct config_plugin * config, json_t * j_user);
 int glewlwyd_plugin_callback_set_user(struct config_plugin * config, const char * username, json_t * j_user);
 int glewlwyd_plugin_callback_delete_user(struct config_plugin * config, const char * username);
+time_t glewlwyd_callback_get_session_age(struct config_plugin * config, const struct _u_request * request);
 
 // User CRUD functions
 json_t * get_user_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source);

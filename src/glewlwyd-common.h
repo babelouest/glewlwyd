@@ -126,7 +126,7 @@ struct _user_module {
   json_t    * parameters;
   json_t * (* user_module_load)(struct config_module * config);
   int      (* user_module_unload)(struct config_module * config);
-  int      (* user_module_init)(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
+  json_t * (* user_module_init)(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
   int      (* user_module_close)(struct config_module * config, void * cls);
   size_t   (* user_module_count_total)(struct config_module * config, const char * pattern, void * cls);
   json_t * (* user_module_get_list)(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
@@ -305,6 +305,7 @@ struct config_plugin {
   json_t * (* glewlwyd_callback_check_user_valid)(struct config_plugin * config, const char * username, const char * password, const char * scope_list);
   json_t * (* glewlwyd_callback_check_client_valid)(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list);
   int      (* glewlwyd_callback_trigger_session_used)(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
+  time_t   (* glewlwyd_callback_get_session_age)(struct config_plugin * config, const struct _u_request * request);
   
   // Client callback functions
   json_t * (* glewlwyd_callback_get_client_granted_scopes)(struct config_plugin * config, const char * client_id, const char * username, const char * scope_list);
@@ -371,7 +372,7 @@ int check_result_value(json_t * result, const int value);
  */
 json_t * user_module_load(struct config_module * config);
 int      user_module_unload(struct config_module * config);
-int      user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
+json_t * user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
 int      user_module_close(struct config_module * config, void * cls);
 size_t   user_module_count_total(struct config_module * config, const char * pattern, void * cls);
 json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
