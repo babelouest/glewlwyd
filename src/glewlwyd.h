@@ -192,10 +192,10 @@ int manage_user_auth_scheme_module(struct config_elements * config, const char *
 json_t * get_client_module_list(struct config_elements * config);
 json_t * get_client_module(struct config_elements * config, const char * name);
 json_t * is_client_module_valid(struct config_elements * config, json_t * j_module, int add);
-int add_client_module(struct config_elements * config, json_t * j_module);
+json_t * add_client_module(struct config_elements * config, json_t * j_module);
 int set_client_module(struct config_elements * config, const char * name, json_t * j_module);
 int delete_client_module(struct config_elements * config, const char * name);
-int manage_client_module(struct config_elements * config, const char * name, int action);
+json_t * manage_client_module(struct config_elements * config, const char * name, int action);
 
 // Plugin module functions
 json_t * get_plugin_module_list_for_user(struct config_elements * config);

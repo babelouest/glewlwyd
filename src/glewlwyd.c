@@ -1791,7 +1791,7 @@ int init_client_module_list(struct config_elements * config) {
 }
 
 int load_client_module_instance_list(struct config_elements * config) {
-  json_t * j_query, * j_result, * j_instance, * j_parameters;
+  json_t * j_query, * j_result, * j_instance, * j_parameters, * j_init;
   int res, ret, i;
   size_t index;
   struct _client_module_instance * cur_instance;
@@ -1834,12 +1834,14 @@ int load_client_module_instance_list(struct config_elements * config) {
             if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
               j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
               if (j_parameters != NULL) {
-                if (module->client_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls) == G_OK) {
+                j_init = module->client_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls);
+                if (check_result_value(j_init, G_OK)) {
                   cur_instance->enabled = 1;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
                   cur_instance->enabled = 0;
                 }
+                json_decref(j_init);
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error parsing module parameters %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                 cur_instance->enabled = 0;

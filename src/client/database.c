@@ -731,10 +731,9 @@ int client_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-int client_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
+json_t * client_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
   UNUSED(readonly);
-  json_t * j_result;
-  int ret;
+  json_t * j_result, * j_return;
   char * error_message;
   
   j_result = is_client_database_parameters_valid(j_parameters);
@@ -751,33 +750,33 @@ int client_module_init(struct config_module * config, int readonly, json_t * j_p
         if (0 == o_strcmp(json_string_value(json_object_get(j_parameters, "connection-type")), "sqlite")) {
           ((struct mod_parameters *)*cls)->conn = h_connect_sqlite(json_string_value(json_object_get(j_parameters, "sqlite-dbpath")));
         } else if (0 == o_strcmp(json_string_value(json_object_get(j_parameters, "connection-type")), "mariadb")) {
-          ((struct mod_parameters *)*cls)->conn = h_connect_mariadb(json_string_value(json_object_get(j_parameters, "mariadb-host")), json_string_value(json_object_get(j_parameters, "mariadb-client")), json_string_value(json_object_get(j_parameters, "mariadb-password")), json_string_value(json_object_get(j_parameters, "mariadb-dbname")), json_integer_value(json_object_get(j_parameters, "mariadb-port")), NULL);
+          ((struct mod_parameters *)*cls)->conn = h_connect_mariadb(json_string_value(json_object_get(j_parameters, "mariadb-host")), json_string_value(json_object_get(j_parameters, "mariadb-user")), json_string_value(json_object_get(j_parameters, "mariadb-password")), json_string_value(json_object_get(j_parameters, "mariadb-dbname")), json_integer_value(json_object_get(j_parameters, "mariadb-port")), NULL);
         } else if (0 == o_strcmp(json_string_value(json_object_get(j_parameters, "connection-type")), "postgre")) {
           ((struct mod_parameters *)*cls)->conn = h_connect_pgsql(json_string_value(json_object_get(j_parameters, "postgre-conninfo")));
         }
       }
       if (((struct mod_parameters *)*cls)->conn != NULL) {
-        ret = G_OK;
+        j_return = json_pack("{si}", "result", G_OK);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error connecting to database");
-        ret = G_ERROR_PARAM;
+        j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error connecting to database");
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error allocating resources for cls");
-      ret = G_ERROR_MEMORY;
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error allocating resources for cls");
+      j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
     }
   } else if (check_result_value(j_result, G_ERROR_PARAM)) {
     error_message = json_dumps(json_object_get(j_result, "error"), JSON_COMPACT);
-    y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error parsing parameters");
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error parsing parameters");
     y_log_message(Y_LOG_LEVEL_ERROR, error_message);
     o_free(error_message);
-    ret = G_ERROR_PARAM;
+    j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error is_client_database_parameters_valid");
-    ret = G_ERROR;
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error is_user_database_parameters_valid");
+    j_return = json_pack("{sis[s]}", "result", G_ERROR, "error", "internal error");
   }
   json_decref(j_result);
-  return ret;
+  return j_return;
 }
 
 int client_module_close(struct config_module * config, void * cls) {
