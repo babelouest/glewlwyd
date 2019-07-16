@@ -154,7 +154,11 @@ int plugin_module_unload(struct config_plugin * config) {
  * If required, you must dynamically allocate a pointer to the configuration
  * for this instance and pass it to *cls
  * 
- * @return value: G_OK on success, another value on error
+ * @return value: a json_t * value with the following pattern:
+ *                {
+ *                  result: number (G_OK on success, G_ERROR_PARAM on input parameters error, another value on error)
+ *                  error: array of strings containg the list of input errors, mandatory on result G_ERROR_PARAM, ignored otherwise
+ *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
@@ -164,16 +168,19 @@ int plugin_module_unload(struct config_plugin * config) {
  *                 as void * in all module functions
  * 
  */
-int plugin_module_init(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls) {
+json_t * plugin_module_init(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls) {
   UNUSED(config);
   UNUSED(name);
   UNUSED(cls);
+  json_t * j_return;
+  
   if (json_object_get(j_parameters, "error") == NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "plugin_module_init - success");
-    return G_OK;
+    j_return = json_pack("{si}", "result", G_OK);
   } else {
-    return G_ERROR_PARAM;
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error input parameters");
   }
+  return j_return;
 }
 
 /**

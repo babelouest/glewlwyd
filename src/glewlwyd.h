@@ -202,10 +202,10 @@ json_t * get_plugin_module_list_for_user(struct config_elements * config);
 json_t * get_plugin_module_list(struct config_elements * config);
 json_t * get_plugin_module(struct config_elements * config, const char * name);
 json_t * is_plugin_module_valid(struct config_elements * config, json_t * j_module, int add);
-int add_plugin_module(struct config_elements * config, json_t * j_module);
+json_t * add_plugin_module(struct config_elements * config, json_t * j_module);
 int set_plugin_module(struct config_elements * config, const char * name, json_t * j_module);
 int delete_plugin_module(struct config_elements * config, const char * name);
-int manage_plugin_module(struct config_elements * config, const char * name, int action);
+json_t * manage_plugin_module(struct config_elements * config, const char * name, int action);
 
 // Plugin functions
 int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const char * method, const char * name, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);

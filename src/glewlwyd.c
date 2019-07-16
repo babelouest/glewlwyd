@@ -2012,11 +2012,12 @@ int init_plugin_module_list(struct config_elements * config) {
 }
 
 int load_plugin_module_instance_list(struct config_elements * config) {
-  json_t * j_query, * j_result, * j_instance, * j_parameters;
+  json_t * j_query, * j_result, * j_instance, * j_parameters, * j_init;
   int res, ret, i;
   size_t index;
   struct _plugin_module_instance * cur_instance;
   struct _plugin_module * module = NULL;
+  char * message;
   
   config->plugin_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->plugin_module_instance_list != NULL) {
@@ -2050,12 +2051,19 @@ int load_plugin_module_instance_list(struct config_elements * config) {
             if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
               j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
               if (j_parameters != NULL) {
-                if (module->plugin_module_init(config->config_p, cur_instance->name, j_parameters, &cur_instance->cls) == G_OK) {
+                j_init = module->plugin_module_init(config->config_p, cur_instance->name, j_parameters, &cur_instance->cls);
+                if (check_result_value(j_init, G_OK)) {
                   cur_instance->enabled = 1;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                  if (check_result_value(j_init, G_ERROR_PARAM)) {
+                    message = json_dumps(json_object_get(j_init, "error"), JSON_INDENT(2));
+                    y_log_message(Y_LOG_LEVEL_DEBUG, message);
+                    o_free(message);
+                  }
                   cur_instance->enabled = 0;
                 }
+                json_decref(j_init);
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error parsing parameters for module %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                 cur_instance->enabled = 0;
