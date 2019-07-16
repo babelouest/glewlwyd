@@ -2269,7 +2269,11 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  * If required, you must dynamically allocate a pointer to the configuration
  * for this instance and pass it to *cls
  * 
- * @return value: G_OK on success, another value on error
+ * @return value: a json_t * value with the following pattern:
+ *                {
+ *                  result: number (G_OK on success, G_ERROR_PARAM on input parameters error, another value on error)
+ *                  error: array of strings containg the list of input errors, mandatory on result G_ERROR_PARAM, ignored otherwise
+ *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
@@ -2280,10 +2284,9 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  *                 as void * in all module functions
  * 
  */
-int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls) {
+json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls) {
   UNUSED(config);
-  json_t * j_result = is_scheme_parameters_valid(j_parameters), * j_element;
-  int ret;
+  json_t * j_result = is_scheme_parameters_valid(j_parameters), * j_element, * j_return;
   size_t index;
   char * message;
   
@@ -2303,17 +2306,17 @@ int user_auth_scheme_module_init(struct config_module * config, json_t * j_param
     json_array_foreach(json_object_get(j_parameters, "pubKey-cred-params"), index, j_element) {
       json_array_append_new(json_object_get((json_t *)*cls, "pubKey-cred-params"), json_pack("{sssO}", "type", "public-key", "alg", j_element));
     }
-    ret = G_OK;
+    j_return = json_pack("{si}", "result", G_OK);
   } else if (check_result_value(j_result, G_ERROR_PARAM)) {
     message = json_dumps(json_object_get(j_result, "error"), JSON_COMPACT);
     y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init webauthn - Error input parameters: %s", message);
     o_free(message);
-    ret = G_ERROR_PARAM;
+    j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
   } else {
-    ret = G_ERROR;
+    j_return = json_pack("{si}", "result", G_ERROR);
   }
   json_decref(j_result);
-  return ret;
+  return j_return;
 }
 
 /**

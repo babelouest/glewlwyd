@@ -365,7 +365,11 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  * If required, you must dynamically allocate a pointer to the configuration
  * for this instance and pass it to *cls
  * 
- * @return value: G_OK on success, another value on error
+ * @return value: a json_t * value with the following pattern:
+ *                {
+ *                  result: number (G_OK on success, G_ERROR_PARAM on input parameters error, another value on error)
+ *                  error: array of strings containg the list of input errors, mandatory on result G_ERROR_PARAM, ignored otherwise
+ *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
@@ -376,26 +380,25 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  *                 as void * in all module functions
  * 
  */
-int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls) {
+json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls) {
   UNUSED(config);
-  json_t * j_result;
-  int ret;
+  json_t * j_result, * j_return;
   char * str_error;
   
   j_result = is_scheme_parameters_valid(j_parameters);
   if (check_result_value(j_result, G_OK)) {
     json_object_set_new(j_parameters, "mod_name", json_string(mod_name));
     *cls = json_incref(j_parameters);
-    ret = G_OK;
+    j_return = json_pack("{si}", "result", G_OK);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init email - Error in parameters");
     str_error = json_dumps(json_object_get(j_result, "error"), JSON_ENCODE_ANY);
     y_log_message(Y_LOG_LEVEL_ERROR, str_error);
     o_free(str_error);
-    ret = G_ERROR_PARAM;
+    j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
   }
   json_decref(j_result);
-  return ret;
+  return j_return;
 }
 
 /**
