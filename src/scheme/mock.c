@@ -157,7 +157,11 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  * If required, you must dynamically allocate a pointer to the configuration
  * for this instance and pass it to *cls
  * 
- * @return value: G_OK on success, another value on error
+ * @return value: a json_t * value with the following pattern:
+ *                {
+ *                  result: number (G_OK on success, G_ERROR_PARAM on input parameters error, another value on error)
+ *                  error: array of strings containg the list of input errors, mandatory on result G_ERROR_PARAM, ignored otherwise
+ *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
@@ -168,17 +172,20 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  *                 as void * in all module functions
  * 
  */
-int user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls) {
+json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls) {
   UNUSED(config);
   UNUSED(mod_name);
+  json_t * j_return;
+  
   if (json_object_get(j_parameters, "error") == NULL) {
     *cls = o_malloc(sizeof(struct mock_config));
     ((struct mock_config *)*cls)->j_param = json_incref(j_parameters);
     ((struct mock_config *)*cls)->j_users = json_object();
-    return G_OK;
+    j_return = json_pack("{si}", "result", G_OK);
   } else {
-    return G_ERROR_PARAM;
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error in parameters");
   }
+  return j_return;
 }
 
 /**

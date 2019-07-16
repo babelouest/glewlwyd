@@ -197,7 +197,7 @@ struct _user_auth_scheme_module {
   json_t     * parameters;
   json_t  * (* user_auth_scheme_module_load)(struct config_module * config);
   int       (* user_auth_scheme_module_unload)(struct config_module * config);
-  int       (* user_auth_scheme_module_init)(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls);
+  json_t *  (* user_auth_scheme_module_init)(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls);
   int       (* user_auth_scheme_module_close)(struct config_module * config, void * cls);
   int       (* user_auth_scheme_module_can_use)(struct config_module * config, const char * username, void * cls);
   json_t  * (* user_auth_scheme_module_register)(struct config_module * config, const void * http_request, const char * username, json_t * j_scheme_data, void * cls);
@@ -407,7 +407,7 @@ int      client_module_check_password(struct config_module * config, const char 
  */
 json_t * user_auth_scheme_module_load(struct config_module * config);
 int      user_auth_scheme_module_unload(struct config_module * config);
-int      user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls);
+json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls);
 int      user_auth_scheme_module_close(struct config_module * config, void * cls);
 int      user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls);
 json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls);

@@ -183,10 +183,10 @@ json_t * manage_user_module(struct config_elements * config, const char * name, 
 json_t * get_user_auth_scheme_module_list(struct config_elements * config);
 json_t * get_user_auth_scheme_module(struct config_elements * config, const char * name);
 json_t * is_user_auth_scheme_module_valid(struct config_elements * config, json_t * j_module, int add);
-int add_user_auth_scheme_module(struct config_elements * config, json_t * j_module);
+json_t * add_user_auth_scheme_module(struct config_elements * config, json_t * j_module);
 int set_user_auth_scheme_module(struct config_elements * config, const char * name, json_t * j_module);
 int delete_user_auth_scheme_module(struct config_elements * config, const char * name);
-int manage_user_auth_scheme_module(struct config_elements * config, const char * name, int action);
+json_t * manage_user_auth_scheme_module(struct config_elements * config, const char * name, int action);
 
 // Client module functions
 json_t * get_client_module_list(struct config_elements * config);
