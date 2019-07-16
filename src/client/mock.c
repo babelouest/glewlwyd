@@ -200,9 +200,11 @@ int client_module_unload(struct config_module * config) {
  *                 as void * in all module functions
  * 
  */
-int client_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
+json_t * client_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
   UNUSED(readonly);
   const char * prefix = "";
+  json_t * j_return;
+
   if (json_object_get(j_parameters, "error") == NULL) {
     if (json_string_length(json_object_get(j_parameters, "client-id-prefix"))) {
       prefix = json_string_value(json_object_get(j_parameters, "client-id-prefix"));
@@ -268,10 +270,11 @@ int client_module_init(struct config_module * config, int readonly, json_t * j_p
                               "enabled",
                               json_true());
     y_log_message(Y_LOG_LEVEL_DEBUG, "client_module_init - success %s %s, prefix: '%s'", config->profile_scope, config->admin_scope, prefix);
-    return G_OK;
+    j_return = json_pack("{si}", "result", G_OK);
   } else {
-    return G_ERROR_PARAM;
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error input parameters");
   }
+  return j_return;
 }
 
 /**

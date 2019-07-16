@@ -1046,11 +1046,11 @@ json_t * is_client_module_valid(struct config_elements * config, json_t * j_modu
   return j_return;
 }
 
-int add_client_module(struct config_elements * config, json_t * j_module) {
+json_t * add_client_module(struct config_elements * config, json_t * j_module) {
   struct _client_module * module;
   struct _client_module_instance * cur_instance;
-  json_t * j_query;
-  int res, ret, i;
+  json_t * j_query, * j_result, * j_return;
+  int res, i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
   j_query = json_pack("{sss{sOsOsOsOss}}",
@@ -1093,34 +1093,36 @@ int add_client_module(struct config_elements * config, json_t * j_module) {
         cur_instance->enabled = 0;
         cur_instance->readonly = json_object_get(j_module, "readonly")==json_true()?1:0;
         if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
-          if ((res = module->client_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls)) == G_OK) {
+          j_result = module->client_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls);
+          if (check_result_value(j_result, G_OK)) {
             cur_instance->enabled = 1;
-            ret = G_OK;
-          } else if (res == G_ERROR_PARAM) {
-            ret = G_ERROR_PARAM;
+            j_return = json_pack("{si}", "result", G_OK);
+          } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+            j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
-            ret = G_ERROR;
+            j_return = json_pack("{si}", "result", G_ERROR);
           }
+          json_decref(j_result);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "add_client_module - Error reallocating resources for client_module_instance_list");
           o_free(cur_instance->name);
-          ret = G_ERROR_MEMORY;
+          j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "add_client_module - Error allocating resources for cur_instance");
-        ret = G_ERROR_MEMORY;
+        j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "add_client_module - Module '%s' not found", json_string_value(json_object_get(j_module, "module")));
-      ret = G_ERROR;
+      j_return = json_pack("{si}", "result", G_ERROR);
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_client_module - Error executing j_query");
-    ret = G_ERROR_DB;
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   o_free(parameters);
-  return ret;
+  return j_return;
 }
 
 int set_client_module(struct config_elements * config, const char * name, json_t * j_module) {
@@ -1168,13 +1170,15 @@ int set_client_module(struct config_elements * config, const char * name, json_t
 
 int delete_client_module(struct config_elements * config, const char * name) {
   int ret, res, error = 0;
-  json_t * j_query;
+  json_t * j_query, * j_result;
   struct _client_module_instance * instance;
   
   instance = get_client_module_instance(config, name);
   if (instance != NULL) {
     if (instance->enabled) {
-      error = (manage_client_module(config, name, GLEWLWYD_MODULE_ACTION_STOP) != G_OK);
+      j_result = manage_client_module(config, name, GLEWLWYD_MODULE_ACTION_STOP);
+      error = (!check_result_value(j_result, G_OK));
+      json_decref(j_result);
     }
     if (!error) {
       if (pointer_list_remove_pointer(config->client_module_instance_list, instance)) {
@@ -1209,48 +1213,49 @@ int delete_client_module(struct config_elements * config, const char * name) {
   return ret;
 }
 
-int manage_client_module(struct config_elements * config, const char * name, int action) {
+json_t * manage_client_module(struct config_elements * config, const char * name, int action) {
   struct _client_module_instance * instance = get_client_module_instance(config, name);
-  json_t * j_module = get_client_module(config, name);
-  int ret, res;
+  json_t * j_module = get_client_module(config, name), * j_return, * j_result;
   
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        if ((res = instance->module->client_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls)) == G_OK) {
+        j_result = instance->module->client_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
+        if (check_result_value(j_result, G_OK)) {
           instance->enabled = 1;
-          ret = G_OK;
-        } else if (res == G_ERROR_PARAM) {
-          ret = G_ERROR_PARAM;
+          j_return = json_pack("{si}", "result", G_OK);
+        } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+          j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
-          ret = G_ERROR;
+          j_return = json_pack("{si}", "result", G_ERROR);
         }
+        json_decref(j_result);
       } else {
-        ret = G_OK;
+        j_return = json_pack("{si}", "result", G_OK);
       }
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
       if (instance->enabled) {
         if (instance->module->client_module_close(config->config_m, instance->cls) == G_OK) {
           instance->enabled = 0;
-          ret = G_OK;
+          j_return = json_pack("{si}", "result", G_OK);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
-          ret = G_ERROR;
+          j_return = json_pack("{si}", "result", G_ERROR);
         }
       } else {
-        ret = G_OK;
+        j_return = json_pack("{si}", "result", G_OK);
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error action not found");
-      ret = G_ERROR_PARAM;
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error action not found");
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error module not found");
-    ret = G_ERROR_PARAM;
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error module not found");
   }
   json_decref(j_module);
-  return ret;
+  return j_return;
 }
 
 json_t * get_plugin_module_list(struct config_elements * config) {

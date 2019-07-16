@@ -348,6 +348,7 @@ int glewlwyd_callback_trigger_session_used(struct config_plugin * config, const 
 time_t glewlwyd_callback_get_session_age(struct config_plugin * config, const struct _u_request * request) {
   return 0;
 }
+
 char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url) {
   char * encoded_callback_url = NULL, * encoded_client_id = NULL, * encoded_scope_list = NULL, * login_url;
   if (callback_url != NULL) {
