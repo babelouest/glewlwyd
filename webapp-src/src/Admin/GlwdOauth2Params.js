@@ -302,7 +302,7 @@ class GlwdOauth2Params extends Component {
             </div>
             <div className="custom-file">
               <input type="file" className={this.state.errorList["key"]?"custom-file-input is-invalid":"custom-file-input"} onChange={(e) => this.uploadFile(e, "key")} />
-              <label className="custom-file-label" for="inputGroupFile01">{i18next.t("admin.choose-file")}</label>
+              <label className="custom-file-label" htmlFor="inputGroupFile01">{i18next.t("admin.choose-file")}</label>
             </div>
           </div>
           {this.state.mod.parameters["key"]?<div className="alert alert-primary">{this.state.mod.parameters["key"].substring(0, 40)}</div>:""}
@@ -316,7 +316,7 @@ class GlwdOauth2Params extends Component {
             </div>
             <div className="custom-file">
               <input type="file" className={this.state.errorList["key"]?"custom-file-input is-invalid":"custom-file-input"} onChange={(e) => this.uploadFile(e, "cert")} />
-              <label className="custom-file-label" for="inputGroupFile01">{i18next.t("admin.choose-file")}</label>
+              <label className="custom-file-label" htmlFor="inputGroupFile01">{i18next.t("admin.choose-file")}</label>
             </div>
           </div>
           {this.state.mod.parameters["cert"]?<div className="alert alert-primary">{this.state.mod.parameters["cert"].substring(0, 40)}</div>:""}
