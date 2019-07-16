@@ -861,7 +861,10 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-mod")});
       })
-      .fail(() => {
+      .fail((err) => {
+        if (err.status === 400) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+        }
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
       })
       .always(() => {
@@ -886,7 +889,10 @@ class App extends Component {
         .then(() => {
           messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
         })
-        .fail(() => {
+        .fail((err) => {
+          if (err.status === 400) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+          }
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
         })
         .always(() => {
@@ -938,7 +944,10 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-mod")});
       })
-      .fail(() => {
+      .fail((err) => {
+        if (err.status === 400) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+        }
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
       })
       .always(() => {
@@ -963,7 +972,10 @@ class App extends Component {
         .then(() => {
           messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
         })
-        .fail(() => {
+        .fail((err) => {
+          if (err.status === 400) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+          }
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
         })
         .always(() => {
@@ -1015,7 +1027,10 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-mod")});
       })
-      .fail(() => {
+      .fail((err) => {
+        if (err.status === 400) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+        }
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
       })
       .always(() => {
@@ -1039,7 +1054,10 @@ class App extends Component {
           .then(() => {
             messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
           })
-          .fail(() => {
+          .fail((err) => {
+            if (err.status === 400) {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+            }
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
           })
           .always(() => {
@@ -1089,8 +1107,11 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-mod")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
+        if (err.status === 400) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+        }
       })
       .always(() => {
         this.fetchPlugins()
@@ -1113,8 +1134,11 @@ class App extends Component {
         .then(() => {
           messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
         })
-        .fail(() => {
+        .fail((err) => {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+          if (err.status === 400) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+          }
         })
         .always(() => {
           this.fetchPlugins()
@@ -1124,9 +1148,6 @@ class App extends Component {
             });
           });
         })
-        .fail(() => {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
-        });
       })
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
