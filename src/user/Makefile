@@ -23,9 +23,8 @@ LOCAL=/usr/local
 MODULES_TARGET=$(LOCAL)/lib/glewlwyd/user
 CC=gcc
 CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
-LIBS=-lc -ldl -ljansson -lorcania -lyder
+LIBS=-ljansson -lorcania -lyder -ldl
 LDFLAGS += -Wl,-R '-Wl,-R$$ORIGIN'
-DBFLAGS=-lhoel
 TARGET=libmoddatabase.so libmodldap.so libmodhttp.so
 all: release
 
@@ -39,10 +38,10 @@ libmodmock.so: mock.o misc.o
 	$(CC) -shared -Wl,-soname,libmodmock.so mock.o misc.o -o libmodmock.so $(LIBS) $(LDFLAGS)
 
 libmoddatabase.so: ../glewlwyd-common.h database.o misc.o
-	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o misc.o $(LIBS)
+	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o misc.o $(LIBS) -lhoel
 
 libmodldap.so: ../glewlwyd-common.h ldap.o misc.o
-	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o misc.o $(LIBS)
+	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o misc.o $(LIBS) -lldap
 
 libmodhttp.so: ../glewlwyd-common.h http.o misc.o
 	$(CC) -shared -Wl,-soname,libmodhttp.so -o libmodhttp.so http.o misc.o $(LIBS)

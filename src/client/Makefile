@@ -23,7 +23,7 @@ DEST=/usr/local
 MODULES_TARGET=$(DEST)/lib/glewlwyd/client
 CC=gcc
 CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
-LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius
+LIBS=-lorcania -lyder -lulfius -ldl -ljansson
 TARGET=libmoddatabase.so libmodldap.so
 
 all: release
@@ -38,10 +38,10 @@ libmodmock.so: ../glewlwyd-common.h mock.o misc.o
 	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o misc.o $(LIBS)
 
 libmoddatabase.so: ../glewlwyd-common.h database.o misc.o
-	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o misc.o $(LIBS)
+	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o misc.o $(LIBS) -lhoel
 
 libmodldap.so: ../glewlwyd-common.h ldap.o misc.o
-	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o misc.o $(LIBS)
+	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o misc.o $(LIBS) -lldap
 
 clean:
 	rm -f *.o *.so

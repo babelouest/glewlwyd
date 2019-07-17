@@ -23,7 +23,7 @@ DEST=/usr/local
 MODULES_TARGET=$(DEST)/lib/glewlwyd/plugin
 CC=gcc
 CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
-LIBS=-lc -ldl -ljansson -lorcania -lyder -lulfius -ljwt
+LIBS=-ljansson -lorcania -lyder -lulfius -ldl
 
 all: release
 
@@ -37,7 +37,10 @@ glewlwyd_resource.o: ../../docs/resources/ulfius/glewlwyd_resource.c ../../docs/
 	$(CC) $(CFLAGS) $(CPPFLAGS) ../../docs/resources/ulfius/glewlwyd_resource.c
 
 libprotocol_oauth2.so: protocol_oauth2.o misc.o glewlwyd_resource.o ../glewlwyd-common.h ../../docs/resources/ulfius/glewlwyd_resource.h
-	$(CC) -shared -Wl,-soname,libprotocol_oauth2.so -o libprotocol_oauth2.so protocol_oauth2.o misc.o glewlwyd_resource.o $(LIBS)
+	$(CC) -shared -Wl,-soname,libprotocol_oauth2.so -o libprotocol_oauth2.so protocol_oauth2.o misc.o glewlwyd_resource.o $(LIBS) -ljwt
+
+libprotocol_oidc.so: protocol_oidc.o misc.o ../glewlwyd-common.h
+	$(CC) -shared -Wl,-soname,libprotocol_oidc.so -o libprotocol_oidc.so protocol_oidc.o misc.o $(LIBS) -ljwt
 
 libprotocol_mock.so: mock.o misc.o ../glewlwyd-common.h
 	$(CC) -shared -Wl,-soname,libprotocol_mock.so -o libprotocol_mock.so mock.o misc.o $(LIBS)
@@ -47,11 +50,11 @@ clean:
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: libprotocol_mock.so libprotocol_oauth2.so
+debug: libprotocol_mock.so libprotocol_oauth2.so libprotocol_oidc.so
 
 release: ADDITIONALFLAGS=-O3
 
-release: libprotocol_oauth2.so
+release: libprotocol_oauth2.so libprotocol_oidc.so
 
 install:
 	mkdir -p $(MODULES_TARGET)
