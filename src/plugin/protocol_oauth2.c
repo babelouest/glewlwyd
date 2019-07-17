@@ -1998,10 +1998,10 @@ static int jwt_autocheck(struct _oauth2_config * config) {
     if (o_strcmp("sha", json_string_value(json_object_get(config->j_params, "jwt-type"))) == 0) {
       if (jwt_decode(&jwt, token, (const unsigned char *)json_string_value(json_object_get(config->j_params, "key")), json_string_length(json_object_get(config->j_params, "key")))) {
         y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 jwt_autocheck - oauth2 - Error jwt_decode");
-        ret = G_ERROR;
+        ret = G_ERROR_PARAM;
       } else if (jwt_get_alg(jwt) != jwt_get_alg(config->jwt_key)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 jwt_autocheck - oauth2 - Error algorithm don't match");
-        ret = G_ERROR;
+        ret = G_ERROR_PARAM;
       } else {
         ret = G_OK;
       }
@@ -2009,10 +2009,10 @@ static int jwt_autocheck(struct _oauth2_config * config) {
     } else {
       if (jwt_decode(&jwt, token, (const unsigned char *)json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) {
         y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 jwt_autocheck - oauth2 - Error jwt_decode");
-        ret = G_ERROR;
+        ret = G_ERROR_PARAM;
       } else if (jwt_get_alg(jwt) != jwt_get_alg(config->jwt_key)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 jwt_autocheck - oauth2 - Error algorithm don't match");
-        ret = G_ERROR;
+        ret = G_ERROR_PARAM;
       } else {
         ret = G_OK;
       }
@@ -2374,7 +2374,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
               jwt_free(((struct _oauth2_config *)*cls)->jwt_key);
               o_free(*cls);
               *cls = NULL;
-              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error jwt_set_alg");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - Error jwt_set_alg");
               j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
             } else {
               if (jwt_autocheck(((struct _oauth2_config *)*cls)) != G_OK) {
@@ -2382,8 +2382,8 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                 jwt_free(((struct _oauth2_config *)*cls)->jwt_key);
                 o_free(*cls);
                 *cls = NULL;
-                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error jwt_autocheck");
-                j_return = json_pack("{si}", "result", G_ERROR);
+                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - Error jwt_autocheck");
+                j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error jwt_autocheck");
               } else {
                 if (0 == o_strcmp("sha", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-type")))) {
                   ((struct _oauth2_config *)*cls)->glewlwyd_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key")));
@@ -2408,7 +2408,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
               }
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for jwt_key");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - Error allocating resources for jwt_key");
             json_decref(((struct _oauth2_config *)*cls)->j_params);
             o_free(*cls);
             *cls = NULL;
@@ -2419,7 +2419,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           *cls = NULL;
           j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error check_parameters");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - Error check_parameters");
           o_free(*cls);
           *cls = NULL;
           j_return = json_pack("{si}", "result", G_ERROR);
@@ -2434,7 +2434,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
     }
     pthread_mutexattr_destroy(&mutexattr);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for cls");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - Error allocating resources for cls");
     o_free(*cls);
     *cls = NULL;
     j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
