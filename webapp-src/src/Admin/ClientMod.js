@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 
 import messageDispatcher from '../lib/MessageDispatcher';
+import apiManager from '../lib/APIManager';
 
 class ClientMod extends Component {
   constructor(props) {
@@ -17,6 +18,7 @@ class ClientMod extends Component {
     this.editMod = this.editMod.bind(this);
     this.deleteMod = this.deleteMod.bind(this);
     this.moveModUp = this.moveModUp.bind(this);
+    this.switchModStatus = this.switchModStatus.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -44,10 +46,27 @@ class ClientMod extends Component {
     messageDispatcher.sendMessage('App', {type: "swap", role: "clientMod", mod: mod, previousMod: previousMod});
   }
 
+  switchModStatus(mod) {
+    var action = (mod.enabled?"disable":"enable");
+    apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name) + "/" + action + "/", "PUT")
+    .then(() => {
+      messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+    })
+    .fail((err) => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+      if (err.status === 400) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+      }
+    })
+    .always(() => {
+      messageDispatcher.sendMessage('App', {type: "refresh", role: "clientMod", mod: mod});
+    });
+  }
+
 	render() {
     var mods = [];
     this.state.mods.forEach((mod, index) => {
-      var module = "", buttonUp = "";
+      var module = "", buttonUp = "", switchButton = "";
       this.state.types.forEach((type) => {
         if (mod.module === type.name) {
           module = type.display_name;
@@ -59,6 +78,15 @@ class ClientMod extends Component {
             <i className="fas fa-sort-up"></i>
           </button>
       }
+      if (mod.enabled) {
+        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-off")}>
+          <i className="fas fa-toggle-on"></i>
+        </button>;
+      } else {
+        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-om")}>
+          <i className="fas fa-toggle-off"></i>
+        </button>;
+      }
       mods.push(<tr key={index}>
         <td>{mod.order_rank}</td>
         <td>{module}</td>
@@ -68,6 +96,7 @@ class ClientMod extends Component {
         <td>{(mod.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
         <td>
           <div className="btn-group" role="group">
+            {switchButton}
             <button type="button" className="btn btn-secondary" onClick={(e) => this.editMod(e, mod)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
             </button>

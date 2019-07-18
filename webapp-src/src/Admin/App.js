@@ -391,6 +391,12 @@ class App extends Component {
       } else if (message.type === 'refresh') {
         if (message.role === 'schemeMod') {
           this.fetchSchemeMods();
+        } else if (message.role === 'userMod') {
+          this.fetchUserMods();
+        } else if (message.role === 'clientMod') {
+          this.fetchClientMods();
+        } else if (message.role === 'pluginMod') {
+          this.fetchPlugins();
         }
       }
     });
