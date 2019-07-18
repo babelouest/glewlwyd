@@ -163,10 +163,13 @@ int main (int argc, char ** argv) {
     y_log_message(Y_LOG_LEVEL_ERROR, "init - Error initializing global_handler_close_lock or global_handler_close_cond");
   }
   // Catch end signals to make a clean exit
-  if (signal (SIGQUIT, exit_handler) == SIG_ERR || 
-      signal (SIGINT, exit_handler) == SIG_ERR || 
-      signal (SIGTERM, exit_handler) == SIG_ERR || 
-      signal (SIGHUP, exit_handler) == SIG_ERR) {
+  if (signal (SIGQUIT, exit_handler) == SIG_ERR ||
+      signal (SIGINT, exit_handler) == SIG_ERR ||
+      signal (SIGTERM, exit_handler) == SIG_ERR ||
+      signal (SIGHUP, exit_handler) == SIG_ERR ||
+      signal (SIGBUS, exit_handler) == SIG_ERR ||
+      signal (SIGSEGV, exit_handler) == SIG_ERR ||
+      signal (SIGILL, exit_handler) == SIG_ERR) {
     fprintf(stderr, "init - Error initializing end signal\n");
     return 1;
   }
@@ -785,6 +788,15 @@ void print_help(FILE * output) {
  * I don't like global variables but it looks fine to people who designed this
  */
 void exit_handler(int signal) {
+  if (signal == SIGQUIT || signal == SIGINT || signal == SIGTERM || signal == SIGHUP) {
+    y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd - Received close signal");
+  } else if (signal == SIGBUS) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received bus error signal");
+  } else if (signal == SIGSEGV) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received segmentation fault signal");
+  } else if (signal == SIGILL) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received illegal instruction signal");
+  }
   pthread_mutex_lock(&global_handler_close_lock);
   pthread_cond_signal(&global_handler_close_cond);
   pthread_mutex_unlock(&global_handler_close_lock);
