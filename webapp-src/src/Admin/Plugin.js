@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 
 import messageDispatcher from '../lib/MessageDispatcher';
+import apiManager from '../lib/APIManager';
 
 class Plugin extends Component {
   constructor(props) {
@@ -16,6 +17,7 @@ class Plugin extends Component {
     this.addMod = this.addMod.bind(this);
     this.editMod = this.editMod.bind(this);
     this.deleteMod = this.deleteMod.bind(this);
+    this.switchModStatus = this.switchModStatus.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -37,15 +39,41 @@ class Plugin extends Component {
     messageDispatcher.sendMessage('App', {type: "delete", role: "plugin", mod: mod});
   }
 
+  switchModStatus(mod) {
+    var action = (mod.enabled?"disable":"enable");
+    apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name) + "/" + action + "/", "PUT")
+    .then(() => {
+      messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+    })
+    .fail((err) => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+      if (err.status === 400) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+      }
+    })
+    .always(() => {
+      messageDispatcher.sendMessage('App', {type: "refresh", role: "pluginMod", mod: mod});
+    });
+  }
+
 	render() {
     var mods = [];
     this.state.mods.forEach((mod, index) => {
-      var module = "";
+      var module = "", switchButton = "";
       this.state.types.forEach((type) => {
         if (mod.module === type.name) {
           module = type.display_name;
         }
       });
+      if (mod.enabled) {
+        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-off")}>
+          <i className="fas fa-toggle-on"></i>
+        </button>;
+      } else {
+        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-om")}>
+          <i className="fas fa-toggle-off"></i>
+        </button>;
+      }
       mods.push(<tr key={index}>
         <td>{module}</td>
         <td>{mod.name}</td>
@@ -53,6 +81,7 @@ class Plugin extends Component {
         <td>{(mod.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
         <td>
           <div className="btn-group" role="group">
+            {switchButton}
             <button type="button" className="btn btn-secondary" onClick={(e) => this.editMod(e, mod)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
             </button>
