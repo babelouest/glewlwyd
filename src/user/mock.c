@@ -213,7 +213,7 @@ json_t * user_module_init(struct config_module * config, int readonly, json_t * 
     if (json_string_length(json_object_get(j_parameters, "password"))) {
       password = json_string_value(json_object_get(j_parameters, "password"));
     }
-    *cls = (void*)json_pack("{sss[{ss+ ss ss so s[ss]}{ss+ ss ss so s[ssss]}{ss+ ss ss so s[ss]}{ss+ ss ss so s[ssss]}]}",
+    *cls = (void*)json_pack("{sss[{ss+ ss ss so s[sss]}{ss+ ss ss so s[sssss]}{ss+ ss ss so s[sss]}{ss+ ss ss so s[ssss]}]}",
                             "password",
                             password,
                             "list",
@@ -229,6 +229,7 @@ json_t * user_module_init(struct config_module * config, int readonly, json_t * 
                               "scope",
                                 config->admin_scope,
                                 config->profile_scope,
+                                "openid",
 
                               "username",
                               prefix,
@@ -241,6 +242,7 @@ json_t * user_module_init(struct config_module * config, int readonly, json_t * 
                               json_true(),
                               "scope",
                                 config->profile_scope,
+                                "openid",
                                 "scope1",
                                 "scope2",
                                 "scope3",
@@ -256,6 +258,7 @@ json_t * user_module_init(struct config_module * config, int readonly, json_t * 
                               json_true(),
                               "scope",
                                 config->profile_scope,
+                                "openid",
                                 "scope1",
 
                               "username",
