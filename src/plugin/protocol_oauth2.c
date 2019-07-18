@@ -1168,11 +1168,18 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
             issued_for = get_client_hostname(request);
             if (issued_for != NULL) {
               if (config->glewlwyd_config->glewlwyd_callback_trigger_session_used(config->glewlwyd_config, request, json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered"))) == G_OK) {
-                authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), u_map_get(request->map_url, "redirect_uri"), issued_for, u_map_get_case(request->map_header, "user-agent"));
-                redirect_url = msprintf("%s%scode=%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), authorization_code, state_param);
-                ulfius_add_header_to_response(response, "Location", redirect_url);
-                response->status = 302;
-                o_free(redirect_url);
+                if ((authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), u_map_get(request->map_url, "redirect_uri"), issued_for, u_map_get_case(request->map_header, "user-agent"))) != NULL) {
+                  redirect_url = msprintf("%s%scode=%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), authorization_code, state_param);
+                  ulfius_add_header_to_response(response, "Location", redirect_url);
+                  response->status = 302;
+                  o_free(redirect_url);
+                } else {
+                  redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
+                  ulfius_add_header_to_response(response, "Location", redirect_url);
+                  o_free(redirect_url);
+                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_auth_code_grant - Error generate_authorization_code");
+                  response->status = 302;
+                }
                 o_free(authorization_code);
               } else {
                 redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
@@ -2392,7 +2399,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                 }
                 ((struct _oauth2_config *)*cls)->glewlwyd_resource_config->jwt_alg = alg;
                 // Add endpoints
-                y_log_message(Y_LOG_LEVEL_DEBUG, "Add endpoints with plugin prefix %s", name);
+                y_log_message(Y_LOG_LEVEL_INFO, "Add endpoints with plugin prefix %s", name);
                 if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)*cls) != G_OK || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_token, (void*)*cls) || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) || 
