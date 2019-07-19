@@ -21,7 +21,7 @@
 
 CC=gcc
 CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
-LIBS=-lorcania -lyder -lulfius -lhoel -ldl -ljansson -lgnutls -lconfig -ljwt -lnettle
+LIBS=-lorcania -lyder -lulfius -lhoel -ldl -ljansson -lgnutls -lconfig -ljwt -lnettle -lhogweed
 OBJECTS=glewlwyd.o misc.o static_file_callback.o webservice.o session.o user.o scope.o plugin.o client.o module.o
 PREFIX=/usr/local
 CONFIG_FILE=../glewlwyd.conf
