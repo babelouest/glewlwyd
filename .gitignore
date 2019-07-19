@@ -4,6 +4,7 @@
 *.crt
 *.pfx
 *.csr
+*.crl
 *.pem
 *.log
 *.err
