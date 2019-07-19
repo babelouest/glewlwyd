@@ -213,7 +213,7 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
     if (json_string_length(json_object_get(j_parameters, "client-id-prefix"))) {
       prefix = json_string_value(json_object_get(j_parameters, "client-id-prefix"));
     }
-    *cls = (void*)json_pack("[{ss+ ss ss so s[sssss] s[sss] s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so s[sssssss] s[s] s[sss] so}]",
+    *cls = (void*)json_pack("[{ss+ ss ss so s[sssss] s[sss] s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so s[sssssss] s[ss] s[ss] so}]",
                               "client_id",
                               prefix,
                               "client1_id",
