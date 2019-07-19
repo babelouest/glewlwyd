@@ -106,6 +106,7 @@ json_t * user_module_init(struct config_module * config, int readonly, json_t * 
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameters must be a JSON object");
+    ret = G_ERROR_PARAM;
     j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameters must be a JSON object");
   }
   if (ret == G_OK) {
