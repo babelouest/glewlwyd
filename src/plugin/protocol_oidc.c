@@ -51,6 +51,7 @@
 #define GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN_SCOPE "gpo_refresh_token_scope"
 #define GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN        "gpo_access_token"
 #define GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN_SCOPE  "gpo_access_token_scope"
+#define GLEWLWYD_PLUGIN_OIDC_TABLE_ID_TOKEN            "gpo_id_token"
 
 // Authorization types available
 #define GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE 0
@@ -145,9 +146,58 @@ static int json_array_has_string(json_t * j_array, const char * value) {
   return 0;
 }
 
-// TODO
 static int serialize_id_token(struct _oidc_config * config, uint auth_type, const char * id_token, const char * username, const char * client_id, const char * token, time_t now, const char * issued_for, const char * user_agent) {
-  return G_OK;
+  json_t * j_query;
+  int res, ret;
+  char * issued_at_clause, * id_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, token);
+  
+  if (pthread_mutex_lock(&config->insert_lock)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_id_token - Error pthread_mutex_lock");
+    ret = G_ERROR;
+  } else {
+    if (issued_for != NULL && now > 0 && id_token_hash != NULL) {
+      if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
+        issued_at_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+      } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
+        issued_at_clause = msprintf("TO_TIMESTAMP(%u)", (now));
+      } else { // HOEL_DB_TYPE_SQLITE
+        issued_at_clause = msprintf("%u", (now));
+      }
+      j_query = json_pack("{sss{sisosos{ss}ssssss}}",
+                          "table",
+                          GLEWLWYD_PLUGIN_OIDC_TABLE_ID_TOKEN,
+                          "values",
+                            "gpoi_authorization_type",
+                            auth_type,
+                            "gpoi_username",
+                            username!=NULL?json_string(username):json_null(),
+                            "gpoi_client_id",
+                            client_id!=NULL?json_string(client_id):json_null(),
+                            "gpoi_issued_at",
+                              "raw",
+                              issued_at_clause,
+                            "gpoi_issued_for",
+                            issued_for,
+                            "gpoi_user_agent",
+                            user_agent!=NULL?user_agent:"",
+                            "gpoi_hash",
+                            id_token_hash);
+      o_free(issued_at_clause);
+      res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        ret = G_OK;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_id_token - Error executing j_query");
+        ret = G_ERROR_DB;
+      }
+    } else {
+      ret = G_ERROR_PARAM;
+    }
+    pthread_mutex_unlock(&config->insert_lock);
+    o_free(id_token_hash);
+  }
+  return ret;
 }
 
 static char * generate_id_token(struct _oidc_config * config, const char * username, json_t * j_user, json_t * j_client, time_t now, time_t auth_time, const char * nonce, json_t * j_amr) {
