@@ -344,9 +344,49 @@ int glewlwyd_callback_trigger_session_used(struct config_plugin * config, const 
   return ret;
 }
 
-// TODO
-time_t glewlwyd_callback_get_session_age(struct config_plugin * config, const struct _u_request * request) {
-  return 0;
+time_t glewlwyd_callback_get_session_age(struct config_plugin * config, const struct _u_request * request, const char * scope_list) {
+  time_t age = 0;
+  char * session_uid = get_session_id(config->glewlwyd_config, request), * session_uid_hash, * query, ** scope_array = NULL, * scope_escaped, * scope_list_clause = NULL;
+  json_t * j_result;
+  
+  if (session_uid != NULL) {
+    session_uid_hash = generate_hash(config->glewlwyd_config->hash_algorithm, session_uid);
+    if (session_uid_hash != NULL) {
+      if (split_string(scope_list, " ", &scope_array)) {
+        for (int i=0; scope_array[i] != NULL; i++) {
+          scope_escaped = h_escape_string(config->glewlwyd_config->conn, scope_array[i]);
+          if (scope_list_clause == NULL) {
+            scope_list_clause = msprintf("'%s'", scope_escaped);
+          } else {
+            scope_list_clause = mstrcatf(scope_list_clause, ",'%s'", scope_escaped);
+          }
+          o_free(scope_escaped);
+        }
+        if (scope_list_clause != NULL) {
+          // Quey to retreive the most recent, enabledd and succeeded authentication date for the current session
+          query = msprintf("SELECT %s FROM " GLEWLWYD_TABLE_USER_SESSION_SCHEME " WHERE guss_enabled=1 AND gus_id IN (SELECT gus_id FROM " GLEWLWYD_TABLE_USER_SESSION " WHERE gus_session_hash='%s' AND gus_current=1) AND (guasmi_id IS NULL OR guasmi_id IN (SELECT guasmi_id FROM " GLEWLWYD_TABLE_SCOPE_GROUP_AUTH_SCHEME_MODULE_INSTANCE " WHERE gsg_id IN (SELECT gsg_id FROM " GLEWLWYD_TABLE_SCOPE_GROUP " WHERE gs_id IN (SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name IN (%s))))) ORDER BY guss_last_login DESC LIMIT 1;", (SWITCH_DB_TYPE(config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(guss_last_login) AS guss_last_login", "guss_last_login", "EXTRACT(EPOCH FROM guss_last_login) AS guss_last_login")), session_uid_hash, scope_list_clause);
+          if (h_execute_query_json(config->glewlwyd_config->conn, query, &j_result) == H_OK) {
+            if (json_array_size(j_result)) {
+              age = (time_t)json_integer_value(json_object_get(json_array_get(j_result, 0), "guss_last_login"));
+            }
+            json_decref(j_result);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_get_session_age - Error executig query");
+          }
+          o_free(query);
+        }
+        o_free(scope_list_clause);
+        free_string_array(scope_array);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_get_session_age - Error split_string");
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_get_session_age - Error generate_hash for session_uid");
+    }
+    o_free(session_uid_hash);
+  }
+  o_free(session_uid);
+  return age;
 }
 
 char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url) {
