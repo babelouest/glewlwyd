@@ -26,6 +26,7 @@
  */
 
 #include <string.h>
+#include <pthread.h>
 #include <jansson.h>
 #include <jwt.h>
 #include <yder.h>
@@ -2307,8 +2308,8 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
   if (*cls != NULL) {
     pthread_mutexattr_init ( &mutexattr );
     pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
-    if (pthread_mutex_init(&((struct _oauth2_config *)*cls)->insert_lock, &mutexattr) != 0 || pthread_mutex_init(&((struct _oauth2_config *)*cls)->insert_lock, &mutexattr) != 0) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 plugin_module_init - Error initializing insert_lock or insert_cond");
+    if (pthread_mutex_init(&((struct _oauth2_config *)*cls)->insert_lock, &mutexattr) != 0) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 plugin_module_init - Error initializing insert_lock");
       o_free(*cls);
       *cls = NULL;
       j_return = json_pack("{si}", "result", G_ERROR);
