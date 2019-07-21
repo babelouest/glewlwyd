@@ -164,10 +164,39 @@
       </div>
       <div class="row">
         <div class="col-md-2">
+          <label for="prompt">prompt</label>
+        </div>
+        <div class="col-md-2">
+          <select id="prompt" class="form-control">
+            <option value="none">none</option>
+            <option value="login">login</option>
+            <option value="consent">consent</option>
+            <option value="select_account">select_account</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
           <label for="state">state</label>
         </div>
         <div class="col-md-2">
           <input type="text" id="state" name="state" value="xyz" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="nonce">nonce</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="nonce" name="nonce" value="abc1234" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="max_age">max_age</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="max_age" name="max_age" value="0" class="form-control">
         </div>
       </div>
       <div class="row">
@@ -281,7 +310,7 @@
     $("#result").empty();
     switch ($("#response_type").val()) {
       case "code":
-        var url = glewlwyd_api + "/auth?response_type=code&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&scope=" + $("#scope").val().join(" ");
+        var url = glewlwyd_api + "/auth?response_type=code&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&nonce=" + $("#nonce").val() + "&prompt=" + $("#prompt").val() + "&scope=" + $("#scope").val().join(" ");
         window.location = url;
         break;
       case "authorization_code":
