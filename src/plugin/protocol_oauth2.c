@@ -2322,7 +2322,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       ((struct _oauth2_config *)*cls)->glewlwyd_resource_config = o_malloc(sizeof(struct _glewlwyd_resource_config));
       if (((struct _oauth2_config *)*cls)->glewlwyd_resource_config != NULL) {
         ((struct _oauth2_config *)*cls)->glewlwyd_resource_config->method = G_METHOD_HEADER;
-        ((struct _oauth2_config *)*cls)->glewlwyd_resource_config->oauth_scope = config->glewlwyd_config->profile_scope;
+        ((struct _oauth2_config *)*cls)->glewlwyd_resource_config->oauth_scope = NULL;
         ((struct _oauth2_config *)*cls)->glewlwyd_resource_config->realm = NULL;
         j_result = check_parameters(((struct _oauth2_config *)*cls)->j_params);
         if (check_result_value(j_result, G_OK)) {
