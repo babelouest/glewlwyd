@@ -126,23 +126,27 @@ json_t * access_token_check_scope(struct _glewlwyd_resource_config * config, jso
   if (j_scope_final_list != NULL) {
     if (j_access_token != NULL) {
       scope_count_token = split_string(json_string_value(json_object_get(j_access_token, "scope")), " ", &scope_list_token);
-      scope_count_expected = split_string(config->oauth_scope, " ", &scope_list_expected);
-      if (scope_count_token > 0 && scope_count_expected > 0) {
-        for (i=0; scope_count_expected > 0 && scope_list_expected[i] != NULL; i++) {
-          if (string_array_has_value((const char **)scope_list_token, scope_list_expected[i])) {
-            json_array_append_new(j_scope_final_list, json_string(scope_list_expected[i]));
+      if (o_strlen(config->oauth_scope)) {
+        scope_count_expected = split_string(config->oauth_scope, " ", &scope_list_expected);
+        if (scope_count_token > 0 && scope_count_expected > 0) {
+          for (i=0; scope_count_expected > 0 && scope_list_expected[i] != NULL; i++) {
+            if (string_array_has_value((const char **)scope_list_token, scope_list_expected[i])) {
+              json_array_append_new(j_scope_final_list, json_string(scope_list_expected[i]));
+            }
           }
-        }
-        if (json_array_size(j_scope_final_list) > 0) {
-          j_res = json_pack("{sisO}", "result", G_OK, "scope", j_scope_final_list);
+          if (json_array_size(j_scope_final_list) > 0) {
+            j_res = json_pack("{sisO}", "result", G_OK, "scope", j_scope_final_list);
+          } else {
+            j_res = json_pack("{si}", "result", G_ERROR_INSUFFICIENT_SCOPE);
+          }
         } else {
-          j_res = json_pack("{si}", "result", G_ERROR_INSUFFICIENT_SCOPE);
+          j_res = json_pack("{si}", "result", G_ERROR_INTERNAL);
         }
+        free_string_array(scope_list_expected);
       } else {
-        j_res = json_pack("{si}", "result", G_ERROR_INTERNAL);
+        j_res = json_pack("{sis[]}", "result", G_OK, "scope");
       }
       free_string_array(scope_list_token);
-      free_string_array(scope_list_expected);
     } else {
       j_res = json_pack("{si}", "result", G_ERROR_INVALID_TOKEN);
     }
