@@ -305,7 +305,7 @@ struct config_plugin {
   json_t * (* glewlwyd_callback_check_user_valid)(struct config_plugin * config, const char * username, const char * password, const char * scope_list);
   json_t * (* glewlwyd_callback_check_client_valid)(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list);
   int      (* glewlwyd_callback_trigger_session_used)(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
-  time_t   (* glewlwyd_callback_get_session_age)(struct config_plugin * config, const struct _u_request * request);
+  time_t   (* glewlwyd_callback_get_session_age)(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
   
   // Client callback functions
   json_t * (* glewlwyd_callback_get_client_granted_scopes)(struct config_plugin * config, const char * client_id, const char * username, const char * scope_list);

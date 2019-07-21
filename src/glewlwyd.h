@@ -224,7 +224,7 @@ json_t * glewlwyd_plugin_callback_get_user_profile(struct config_plugin * config
 int glewlwyd_plugin_callback_add_user(struct config_plugin * config, json_t * j_user);
 int glewlwyd_plugin_callback_set_user(struct config_plugin * config, const char * username, json_t * j_user);
 int glewlwyd_plugin_callback_delete_user(struct config_plugin * config, const char * username);
-time_t glewlwyd_callback_get_session_age(struct config_plugin * config, const struct _u_request * request);
+time_t glewlwyd_callback_get_session_age(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
 
 // User CRUD functions
 json_t * get_user_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source);
