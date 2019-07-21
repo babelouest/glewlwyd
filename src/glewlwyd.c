@@ -792,10 +792,13 @@ void exit_handler(int signal) {
     y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd - Received close signal");
   } else if (signal == SIGBUS) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received bus error signal");
+    exit(1);
   } else if (signal == SIGSEGV) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received segmentation fault signal");
+    exit(1);
   } else if (signal == SIGILL) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received illegal instruction signal");
+    exit(1);
   }
   pthread_mutex_lock(&global_handler_close_lock);
   pthread_cond_signal(&global_handler_close_cond);
