@@ -11,6 +11,7 @@ import UserDelegate from './UserDelegate';
 import PasswordModal from './PasswordModal';
 import SchemePage from './SchemePage';
 import Confirm from '../Modal/Confirm';
+import Message from '../Modal/Message';
 
 class App extends Component {
   constructor(props) {
@@ -27,6 +28,10 @@ class App extends Component {
         title: "",
         message: "",
         callback: false
+      },
+      messageModal: {
+        title: "",
+        message: ""
       }
     };
     
@@ -63,6 +68,13 @@ class App extends Component {
         confirmModal.callback = message.callback;
         this.setState({confirmModal: confirmModal}, () => {
           $("#confirmModal").modal({keyboard: false, show: true});
+        });
+      } else if (message.type === 'message') {
+        var messageModal = this.state.messageModal;
+        messageModal.title = message.title;
+        messageModal.message = message.message;
+        this.setState({messageModal: messageModal}, () => {
+          $("#messageModal").modal({keyboard: false, show: true});
         });
       } else if (message.type === 'closeConfirm') {
         $("#confirmModal").modal("hide");
@@ -157,6 +169,7 @@ class App extends Component {
           <Notification/>
           <PasswordModal config={this.state.config} callback={this.closePasswordModal}/>
           <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
+          <Message title={this.state.messageModal.title} message={this.state.messageModal.message} />
         </div>
       );
     } else {

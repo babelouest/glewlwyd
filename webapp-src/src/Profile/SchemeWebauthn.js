@@ -171,6 +171,11 @@ class SchemeWebauthn extends Component {
         .fail((err, textStatus) => {
           if (err.status === 400) {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-register-credential-error")});
+            messageDispatcher.sendMessage('App', {
+              type: 'message',
+              title: i18next.t("profile.scheme-webauthn-register-credential-error"), 
+              message: err.responseJSON
+            });
           } else {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           }
@@ -178,6 +183,11 @@ class SchemeWebauthn extends Component {
       })
       .catch((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-error-registration")});
+        messageDispatcher.sendMessage('App', {
+          type: 'message',
+          title: i18next.t("profile.scheme-webauthn-register-credential-error"), 
+          message: err
+        });
       });
     })
     .fail((err) => {
@@ -260,6 +270,11 @@ class SchemeWebauthn extends Component {
       })
       .catch((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-error-assertion")});
+        messageDispatcher.sendMessage('App', {
+          type: 'message',
+          title: i18next.t("profile.scheme-webauthn-register-credential-error"), 
+          message: err
+        });
       });
     })
     .fail((err) => {
