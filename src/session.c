@@ -580,7 +580,17 @@ int user_session_delete(struct config_elements * config, const char * session_ui
 }
 
 char * get_session_id(struct config_elements * config, const struct _u_request * request) {
-  return o_strdup(u_map_get(request->map_cookie, config->session_key));
+  if (o_strlen(u_map_get(request->map_cookie, config->session_key)) == GLEWLWYD_SESSION_ID_LENGTH) {
+    return o_strdup(u_map_get(request->map_cookie, config->session_key));
+  } else {
+    return NULL;
+  }
+}
+
+char * generate_session_id() {
+  char session_id_str_array[GLEWLWYD_SESSION_ID_LENGTH + 1] = {};
+  
+  return o_strdup(rand_string(session_id_str_array, GLEWLWYD_SESSION_ID_LENGTH));
 }
 
 json_t * get_user_session_list(struct config_elements * config, const char * username, const char * pattern, size_t offset, size_t limit, const char * sort) {

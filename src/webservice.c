@@ -182,7 +182,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
   json_t * j_param = ulfius_get_json_body_request(request, NULL), * j_result = NULL;
   const char * ip_source = get_ip_source(request);
   char * issued_for = get_client_hostname(request);
-  char * session_uid, session_str_array[129], expires[129];
+  char * session_uid, expires[129];
   time_t now;
   struct tm ts;
   
@@ -197,7 +197,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
           j_result = auth_check_user_credentials(config, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "password")));
           if (check_result_value(j_result, G_OK)) {
             if ((session_uid = get_session_id(config, request)) == NULL) {
-              session_uid = o_strdup(rand_string(session_str_array, 128));
+              session_uid = generate_session_id();
             }
             if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (1)");
@@ -251,7 +251,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             response->status = 404;
           } else if (check_result_value(j_result, G_OK)) {
             if ((session_uid = get_session_id(config, request)) == NULL) {
-              session_uid = o_strdup(rand_string(session_str_array, 128));
+              session_uid = generate_session_id();
             }
             if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name"))) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (4)");

@@ -67,6 +67,7 @@
 #define GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE 5256000 // 10 years
 #define GLEWLWYD_DEFAULT_SESSION_EXPIRATION_PASSWORD 40320 // 4 weeks
 #define GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION 2592000
+#define GLEWLWYD_SESSION_ID_LENGTH 128
 
 #define GLEWLWYD_RUNNING  0
 #define GLEWLWYD_STOP     1
@@ -142,6 +143,7 @@ json_t * get_current_user_for_session(struct config_elements * config, const cha
 json_t * get_users_for_session(struct config_elements * config, const char * session_uid);
 int user_session_delete(struct config_elements * config, const char * session_uid, const char * username);
 char * get_session_id(struct config_elements * config, const struct _u_request * request);
+char * generate_session_id();
 json_t * get_user_session_list(struct config_elements * config, const char * username, const char * pattern, size_t offset, size_t limit, const char * sort);
 int delete_user_session_from_hash(struct config_elements * config, const char * username, const char * session_hash);
 
