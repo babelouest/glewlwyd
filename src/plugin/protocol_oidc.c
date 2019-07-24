@@ -143,10 +143,10 @@ static int json_array_has_string(json_t * j_array, const char * value) {
   return 0;
 }
 
-static int serialize_id_token(struct _oidc_config * config, uint auth_type, const char * id_token, const char * username, const char * client_id, const char * token, time_t now, const char * issued_for, const char * user_agent) {
+static int serialize_id_token(struct _oidc_config * config, uint auth_type, const char * id_token, const char * username, const char * client_id, time_t now, const char * issued_for, const char * user_agent) {
   json_t * j_query;
   int res, ret;
-  char * issued_at_clause, * id_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, token);
+  char * issued_at_clause, * id_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, id_token);
   
   if (pthread_mutex_lock(&config->insert_lock)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_id_token - Error pthread_mutex_lock");
@@ -519,7 +519,7 @@ static json_t * serialize_refresh_token(struct _oidc_config * config, uint auth_
   return j_return;
 }
 
-static char * generate_refresh_token(struct _oidc_config * config, const char * client_id, const char * username, const char * scope_list, time_t now) {
+static char * generate_refresh_token() {
   char * token = o_malloc((OIDC_REFRESH_TOKEN_LENGTH+1)*sizeof(char));
   
   if (token != NULL) {
@@ -1534,7 +1534,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
         j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")));
         if (check_result_value(j_user, G_OK)) {
           time(&now);
-          if ((refresh_token = generate_refresh_token(config, client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
+          if ((refresh_token = generate_refresh_token()) != NULL) {
             j_refresh_token = serialize_refresh_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpoc_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, json_integer_value(json_object_get(json_object_get(j_code, "code"), "refresh-token-duration")), json_object_get(json_object_get(j_code, "code"), "refresh-token-rolling")==json_true(), refresh_token, issued_for, u_map_get_case(request->map_header, "user-agent"));
             if (check_result_value(j_refresh_token, G_OK)) {
               if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_object_get(j_user, "user"), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
@@ -1542,7 +1542,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                   j_amr = get_amr_list_from_code(config, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpoc_id")));
                     if (check_result_value(j_amr, G_OK)) {
                       if ((id_token = generate_id_token(config, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_object_get(j_user, "user"), json_object_get(j_client, "client"), now, config->glewlwyd_config->glewlwyd_callback_get_session_age(config->glewlwyd_config, request, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list"))), json_string_value(json_object_get(json_object_get(j_code, "code"), "nonce")), json_object_get(j_amr, "amr"), access_token)) != NULL) {
-                        if (serialize_id_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, id_token, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, id_token, now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
+                        if (serialize_id_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, id_token, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
                           if (disable_authorization_code(config, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpoc_id"))) == G_OK) {
                             j_body = json_pack("{sssssssisIssss}",
                                                   "token_type",
@@ -1950,7 +1950,6 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                                      id_token, 
                                      json_string_value(json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "user"), "username")), 
                                      u_map_get(get_map(request), "client_id"), 
-                                     id_token, 
                                      now, 
                                      json_string_value(json_object_get(j_auth_result, "issued_for")), 
                                      u_map_get_case(request->map_header, "user-agent")) != G_OK) {
