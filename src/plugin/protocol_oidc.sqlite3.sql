@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS gpo_code;
 
 CREATE TABLE gpo_code (
   gpoc_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpoc_authorization_type INTEGER NOT NULL,
   gpoc_username TEXT NOT NULL,
   gpoc_client_id TEXT NOT NULL,
   gpoc_redirect_uri TEXT NOT NULL,
