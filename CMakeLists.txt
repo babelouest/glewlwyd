@@ -135,7 +135,7 @@ include(FindOrcania)
 find_package(Orcania ${ORCANIA_VERSION_REQUIRED} QUIET) # try to find orcania
 if (NOT ORCANIA_FOUND)
 	include(DownloadProject)
-  message(STATUS "Download Orcania ${ORCANIA_VERSION_REQUIRED}")
+	message(STATUS "Download Orcania ${ORCANIA_VERSION_REQUIRED}")
 	download_project(PROJ orcania # ... otherwise, download archive
 			URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_REQUIRED}.tar.gz"
 			QUIET)
@@ -152,7 +152,7 @@ include(FindYder)
 find_package(Yder ${YDER_VERSION_REQUIRED} QUIET) # try to find Yder
 if (NOT YDER_FOUND)
 	include(DownloadProject)
-  message(STATUS "Download Yder ${YDER_VERSION_REQUIRED}")
+	message(STATUS "Download Yder ${YDER_VERSION_REQUIRED}")
 	option(CHECK_ORCANIA "specific param" off)
 	download_project(PROJ yder # ... otherwise, download archive
 			URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_REQUIRED}.tar.gz"
@@ -174,7 +174,7 @@ if (NOT ULFIUS_FOUND)
 	option(WITH_WEBSOCKET "specific param" off)
 	option(INSTALL_HEADER "specific param" off)
 	option(CHECK_YDER "specific param" off)
-  message(STATUS "Download Ulfius ${ULFIUS_VERSION_REQUIRED}")
+	message(STATUS "Download Ulfius ${ULFIUS_VERSION_REQUIRED}")
 	download_project(PROJ ulfius
 			URL "https://github.com/babelouest/ulfius/archive/v${ULFIUS_VERSION_REQUIRED}.tar.gz"
 			QUIET)
@@ -195,7 +195,7 @@ if (NOT HOEL_FOUND)
 	include(DownloadProject)
 	option(INSTALL_HEADER "specific param" off)
 	option(CHECK_YDER "specific param" off)
-  message(STATUS "Download Hoel ${HOEL_VERSION_REQUIRED}")
+	message(STATUS "Download Hoel ${HOEL_VERSION_REQUIRED}")
 	download_project(PROJ hoel
 			URL "https://github.com/babelouest/hoel/archive/v${HOEL_VERSION_REQUIRED}.tar.gz"
 			QUIET)
@@ -212,14 +212,14 @@ target_link_libraries(glewlwyd ${GLWD_LIBS})
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.3.4)")
 
 execute_process(COMMAND lsb_release -is
-    OUTPUT_VARIABLE DISTRIB_CODENAME_T
-    OUTPUT_STRIP_TRAILING_WHITESPACE
+		OUTPUT_VARIABLE DISTRIB_CODENAME_T
+		OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 string( TOLOWER "${DISTRIB_CODENAME_T}" DISTRIB_CODENAME )
 
 execute_process(COMMAND lsb_release -cs
-    OUTPUT_VARIABLE RELEASE_CODENAME_T
-    OUTPUT_STRIP_TRAILING_WHITESPACE
+		OUTPUT_VARIABLE RELEASE_CODENAME_T
+		OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 string( TOLOWER "${RELEASE_CODENAME_T}" RELEASE_CODENAME )
 
@@ -261,7 +261,7 @@ if (WITH_USER_LDAP)
 		include_directories(${LDAP_INCLUDE_DIRS})
 	endif ()
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${USER_MODULES_SRC_PATH}/ldap.c)
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap-2.4-2 (>= 2.4.7)")
+	set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap-2.4-2 (>= 2.4.7)")
 
 	add_library(usermodldap MODULE ${LIB_SRC})
 	set_target_properties(usermodldap PROPERTIES
@@ -319,7 +319,7 @@ if (WITH_CLIENT_LDAP)
 		include_directories(${LDAP_INCLUDE_DIRS})
 	endif ()
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${CLIENT_MODULES_SRC_PATH}/ldap.c)
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap-2.4-2 (>= 2.4.7)")
+	set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap-2.4-2 (>= 2.4.7)")
 
 	add_library(clientmodldap MODULE ${LIB_SRC})
 	set_target_properties(clientmodldap PROPERTIES
@@ -370,15 +370,15 @@ endif ()
 
 option(WITH_SCHEME_OTP "Build OTP scheme module" on)
 if (WITH_SCHEME_OTP)
-  include(FindLibOath)
-  find_package(LibOath REQUIRED)
-  if (LIBOATH_FOUND)
-      set(MOD_LIBS ${LIBOATH_LIBRARIES})
-      include_directories(${LIBOATH_INCLUDE_DIRS})
-  endif ()
-  
+	include(FindLibOath)
+	find_package(LibOath REQUIRED)
+	if (LIBOATH_FOUND)
+			set(MOD_LIBS ${LIBOATH_LIBRARIES})
+			include_directories(${LIBOATH_INCLUDE_DIRS})
+	endif ()
+	
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/otp.c)
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, liboath0 (>= 2.6.0)")
+	set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, liboath0 (>= 2.6.0)")
 
 	set(MOD_LIBS ${ULFIUS_LIBRARIES} ${MOD_LIBS} "-ldl")
 
@@ -391,28 +391,28 @@ endif ()
 
 option(WITH_SCHEME_WEBAUTHN "Build Webauthn scheme module" on)
 if (WITH_SCHEME_WEBAUTHN)
-  include(FindLibJWT)
-  find_package(LibJWT REQUIRED)
-  if (LIBJWT_FOUND)
-      set(MOD_LIBS ${LIBJWT_LIBRARIES})
-      include_directories(${LIBJWT_INCLUDE_DIRS})
-  endif ()
-  
-  include(FindLibCBOR)
-  find_package(LibCBOR REQUIRED)
-  if (LIBCBOR_FOUND)
-      set(MOD_LIBS ${MOD_LIBS} ${LIBCBOR_LIBRARIES})
-      include_directories(${LIBCBOR_INCLUDE_DIRS})
-  endif ()
-  
+	include(FindLibJWT)
+	find_package(LibJWT REQUIRED)
+	if (LIBJWT_FOUND)
+			set(MOD_LIBS ${LIBJWT_LIBRARIES})
+			include_directories(${LIBJWT_INCLUDE_DIRS})
+	endif ()
+	
+	include(FindLibCBOR)
+	find_package(LibCBOR REQUIRED)
+	if (LIBCBOR_FOUND)
+			set(MOD_LIBS ${MOD_LIBS} ${LIBCBOR_LIBRARIES})
+			include_directories(${LIBCBOR_INCLUDE_DIRS})
+	endif ()
+	
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/webauthn.c)
 
-  if (NOT ${RELEASE_CODENAME} STREQUAL "stretch" AND NOT ${RELEASE_CODENAME} STREQUAL "bionic")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
-  endif ()
-  if (NOT ${RELEASE_CODENAME} STREQUAL "stretch")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcbor0")
-  endif ()
+	if (NOT ${RELEASE_CODENAME} STREQUAL "stretch" AND NOT ${RELEASE_CODENAME} STREQUAL "bionic")
+		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
+	endif ()
+	if (NOT ${RELEASE_CODENAME} STREQUAL "stretch")
+		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcbor0")
+	endif ()
 
 	set(MOD_LIBS ${ULFIUS_LIBRARIES} ${MOD_LIBS} "-ldl")
 
@@ -439,17 +439,17 @@ endif ()
 
 option(WITH_PLUGIN_OAUTH2 "Build legacy oauth2 plugin module" on)
 if (WITH_PLUGIN_OAUTH2)
-    include(FindLibJWT)
-    find_package(LibJWT REQUIRED)
-    if (LIBJWT_FOUND)
-        set(MOD_LIBS ${LIBJWT_LIBRARIES})
-        include_directories(${LIBJWT_INCLUDE_DIRS})
-    endif ()
-    
+		include(FindLibJWT)
+		find_package(LibJWT REQUIRED)
+		if (LIBJWT_FOUND)
+				set(MOD_LIBS ${LIBJWT_LIBRARIES})
+				include_directories(${LIBJWT_INCLUDE_DIRS})
+		endif ()
+		
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oauth2.c ${RESOURCES_SRC_PATH}/glewlwyd_resource.c ${RESOURCES_SRC_PATH}/glewlwyd_resource.h)
-  if (NOT ${RELEASE_CODENAME} STREQUAL "stretch" AND NOT ${RELEASE_CODENAME} STREQUAL "bionic")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
-  endif ()
+	if (NOT ${RELEASE_CODENAME} STREQUAL "stretch" AND NOT ${RELEASE_CODENAME} STREQUAL "bionic")
+		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
+	endif ()
 
 	set(MOD_LIBS ${MOD_LIBS} "-ldl")
 
@@ -460,9 +460,32 @@ if (WITH_PLUGIN_OAUTH2)
 	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oauth2)
 endif ()
 
+option(WITH_PLUGIN_OIDC "Build OpenID Connect plugin module" on)
+if (WITH_PLUGIN_OIDC)
+		include(FindLibJWT)
+		find_package(LibJWT REQUIRED)
+		if (LIBJWT_FOUND)
+				set(MOD_LIBS ${LIBJWT_LIBRARIES})
+				include_directories(${LIBJWT_INCLUDE_DIRS})
+		endif ()
+		
+	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oidc.c ${RESOURCES_SRC_PATH}/glewlwyd_resource.c ${RESOURCES_SRC_PATH}/glewlwyd_resource.h)
+	if (NOT ${RELEASE_CODENAME} STREQUAL "stretch" AND NOT ${RELEASE_CODENAME} STREQUAL "bionic")
+		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
+	endif ()
+
+	set(MOD_LIBS ${MOD_LIBS} "-ldl")
+
+	add_library(protocol_oidc MODULE ${LIB_SRC})
+	set_target_properties(protocol_oidc PROPERTIES
+			COMPILE_OPTIONS -Wextra)
+	target_link_libraries(protocol_oidc ${MOD_LIBS})
+	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oidc)
+endif ()
+
 # tests
 
-option(BUILD_GLEWLWYD_TESTING "Build the testing tree." OFF)
+option(BUILD_GLEWLWYD_TESTING "Build the testing tree" OFF)
 
 if (BUILD_GLEWLWYD_TESTING)
 	include(FindCheck)
@@ -477,7 +500,7 @@ if (BUILD_GLEWLWYD_TESTING)
 
 		set(TST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
 		find_package(Threads REQUIRED)
-    
+		
 		set(TST_LIBS ${TST_LIBS} ${JANSSON_LIBRARIES})
 		set(TST_LIBS ${TST_LIBS} ${ORCANIA_LIBRARIES})
 		set(TST_LIBS ${TST_LIBS} ${YDER_LIBRARIES})
@@ -505,11 +528,11 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_mod_user_http
 							glewlwyd_mod_user_irl
 							glewlwyd_mod_client_irl
-              )
+							)
 
-    if (WITH_PLUGIN_OAUTH2)
-      set (TST_LIBS ${TST_LIBS} ${LIBJWT_LIBRARIES})
-      set (TESTS ${TESTS}
+		if (WITH_PLUGIN_OAUTH2)
+			set (TST_LIBS ${TST_LIBS} ${LIBJWT_LIBRARIES})
+			set (TESTS ${TESTS}
 							glewlwyd_oauth2_auth_code 
 							glewlwyd_oauth2_code 
 							glewlwyd_oauth2_code_client_confidential 
@@ -526,63 +549,63 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oauth2_refresh_manage_session
 							glewlwyd_oauth2_irl
 							)
-    endif ()
-    
-    if (WITH_SCHEME_OTP)
-      set (TST_LIBS ${TST_LIBS} ${LIBOATH_LIBRARIES})
-      set (TESTS ${TESTS} glewlwyd_scheme_otp)
-    endif ()
-    
-    if (WITH_SCHEME_WEBAUTHN)
-      set(TST_LIBS ${TST_LIBS} ${LIBCBOR_LIBRARIES})
-      set (TESTS ${TESTS} glewlwyd_scheme_webauthn)
-    endif ()
-    
-    if (WITH_SCHEME_EMAIL)
-      set (TESTS ${TESTS} glewlwyd_scheme_mail)
-    endif ()
+		endif ()
+		
+		if (WITH_SCHEME_OTP)
+			set (TST_LIBS ${TST_LIBS} ${LIBOATH_LIBRARIES})
+			set (TESTS ${TESTS} glewlwyd_scheme_otp)
+		endif ()
+		
+		if (WITH_SCHEME_WEBAUTHN)
+			set(TST_LIBS ${TST_LIBS} ${LIBCBOR_LIBRARIES})
+			set (TESTS ${TESTS} glewlwyd_scheme_webauthn)
+		endif ()
+		
+		if (WITH_SCHEME_EMAIL)
+			set (TESTS ${TESTS} glewlwyd_scheme_mail)
+		endif ()
 
 		configure_file(
 				"${CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
 				"${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake"
 				@ONLY)
 
-        set(COUNTER 0)
+				set(COUNTER 0)
 		foreach (t ${TESTS})
 			add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
 			target_include_directories(${t} PUBLIC ${TST_DIR})
 			target_link_libraries(${t} PUBLIC ${TST_LIBS})
-      if (NOT ${t} MATCHES "_irl$")
-        add_test(NAME ${t}
-                WORKING_DIRECTORY ${TST_DIR}
-                COMMAND ${t})
-      elseif (${t} MATCHES "_user_irl$")
-        FILE(GLOB UserJsonIrl ${TST_DIR}/mod_user_*.json)
-        foreach (j ${UserJsonIrl})
-            add_test(NAME "${t}_${COUNTER}"
-                    WORKING_DIRECTORY ${TST_DIR}
-                    COMMAND ${t} ${j})
-            MATH(EXPR COUNTER "${COUNTER}+1")
-        endforeach ()
-      elseif (${t} MATCHES "_client_irl$")
-        FILE(GLOB UserJsonIrl ${TST_DIR}/mod_client_*.json)
-        foreach (j ${UserJsonIrl})
-            add_test(NAME "${t}_${COUNTER}"
-                    WORKING_DIRECTORY ${TST_DIR}
-                    COMMAND ${t} ${j})
-            MATH(EXPR COUNTER "${COUNTER}+1")
-        endforeach ()
-      elseif (${t} MATCHES "_oauth2_irl$")
-        FILE(GLOB UserJsonIrl ${TST_DIR}/plugin_oauth2_*.json)
-        foreach (j ${UserJsonIrl})
-            add_test(NAME "${t}_${COUNTER}"
-                    WORKING_DIRECTORY ${TST_DIR}
-                    COMMAND ${t} ${j})
-            MATH(EXPR COUNTER "${COUNTER}+1")
-        endforeach ()
-      endif ()
+			if (NOT ${t} MATCHES "_irl$")
+				add_test(NAME ${t}
+								WORKING_DIRECTORY ${TST_DIR}
+								COMMAND ${t})
+			elseif (${t} MATCHES "_user_irl$")
+				FILE(GLOB UserJsonIrl ${TST_DIR}/mod_user_*.json)
+				foreach (j ${UserJsonIrl})
+						add_test(NAME "${t}_${COUNTER}"
+										WORKING_DIRECTORY ${TST_DIR}
+										COMMAND ${t} ${j})
+						MATH(EXPR COUNTER "${COUNTER}+1")
+				endforeach ()
+			elseif (${t} MATCHES "_client_irl$")
+				FILE(GLOB UserJsonIrl ${TST_DIR}/mod_client_*.json)
+				foreach (j ${UserJsonIrl})
+						add_test(NAME "${t}_${COUNTER}"
+										WORKING_DIRECTORY ${TST_DIR}
+										COMMAND ${t} ${j})
+						MATH(EXPR COUNTER "${COUNTER}+1")
+				endforeach ()
+			elseif (${t} MATCHES "_oauth2_irl$")
+				FILE(GLOB UserJsonIrl ${TST_DIR}/plugin_oauth2_*.json)
+				foreach (j ${UserJsonIrl})
+						add_test(NAME "${t}_${COUNTER}"
+										WORKING_DIRECTORY ${TST_DIR}
+										COMMAND ${t} ${j})
+						MATH(EXPR COUNTER "${COUNTER}+1")
+				endforeach ()
+			endif ()
 		endforeach ()
-        
+				
 	endif ()
 endif ()
 
@@ -597,15 +620,15 @@ install(DIRECTORY webapp/
 install(FILES webapp/config.json.sample
 		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/glewlwyd/webapp/ RENAME config.json COMPONENT runtime)
 install(TARGETS ${USER_MODULES}
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/user)
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/user)
 install(TARGETS ${CLIENT_MODULES}
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/client)
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/client)
 install(TARGETS ${SCHEME_MODULES}
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/scheme)
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/scheme)
 install(TARGETS ${PLUGIN_MODULES}
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/plugin)
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/plugin)
 install(DIRECTORY docs/database/
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/database/ COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/database/ COMPONENT runtime)
 install(FILES README.md
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/ COMPONENT runtime)
 install(FILES docs/API.md
@@ -641,7 +664,7 @@ set(CPACK_PACKAGE_VERSION_MINOR ${PROGRAM_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${PROGRAM_VERSION_PATCH})
 
 set(PACKAGE_FILE_NAME
-    "${CMAKE_PROJECT_NAME}_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+		"${CMAKE_PROJECT_NAME}_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 set(PACKAGE_IGNORED_FILES
 		"${CMAKE_CURRENT_BINARY_DIR}/;/.git/;.gitignore;~$;${CPACK_SOURCE_IGNORE_FILES}")
@@ -662,3 +685,17 @@ include(CPack)
 
 add_custom_target(dist_g
 	COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+
+message(STATUS "Build Mock modules:                   ${WITH_MOCK}")
+message(STATUS "Build Database backend user:          ${WITH_USER_DATABASE}")
+message(STATUS "Build LDAP backend user module:       ${WITH_USER_LDAP}")
+message(STATUS "Build HTTP backend user module:       ${WITH_USER_HTTP}")
+message(STATUS "Build Database backend client module: ${WITH_CLIENT_DATABASE}")
+message(STATUS "Build LDAP backend client module:     ${WITH_CLIENT_LDAP}")
+message(STATUS "Build retype password scheme module:  ${WITH_SCHEME_RETYPE_PASSWORD}")
+message(STATUS "Build e-mail scheme module:           ${WITH_SCHEME_EMAIL}")
+message(STATUS "WITH_SCHEME_OTP:                      ${WITH_SCHEME_OTP}")
+message(STATUS "Build Webauthn scheme module:         ${WITH_SCHEME_WEBAUTHN}")
+message(STATUS "Build legacy oauth2 plugin module:    ${WITH_PLUGIN_OAUTH2}")
+message(STATUS "Build OpenID Connect plugin module:   ${WITH_PLUGIN_OIDC}")
+message(STATUS "Build the testing tree:               ${BUILD_GLEWLWYD_TESTING}")
