@@ -54,12 +54,18 @@
 #define GLEWLWYD_PLUGIN_OIDC_TABLE_ID_TOKEN            "gpo_id_token"
 
 // Authorization types available
-#define GLEWLWYD_AUTHORIZATION_TYPE_NONE               0
-#define GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE 1
-#define GLEWLWYD_AUTHORIZATION_TYPE_TOKEN              2
-#define GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN           4
-#define GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN      8
-#define GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN       16
+#define GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE 0
+#define GLEWLWYD_AUTHORIZATION_TYPE_TOKEN              1
+#define GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN           2
+#define GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN      3
+#define GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN       4
+
+#define GLEWLWYD_AUTHORIZATION_TYPE_NONE_STORE               0
+#define GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_STORE 1
+#define GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_STORE              2
+#define GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_STORE           4
+#define GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_STORE      8
+#define GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_STORE       16
 
 struct _oidc_config {
   struct config_plugin             * glewlwyd_config;
@@ -71,7 +77,7 @@ struct _oidc_config {
   json_int_t                         refresh_token_duration;
   json_int_t                         code_duration;
   unsigned short int                 refresh_token_rolling;
-  unsigned short int                 auth_type_enabled[5];
+  unsigned short int                 auth_type_enabled[4];
   pthread_mutex_t                    insert_lock;
   struct _glewlwyd_resource_config * glewlwyd_resource_config;
 };
@@ -1804,7 +1810,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   char * redirect_url, * state_param = NULL, ** resp_type_array = NULL, * authorization_code = NULL, * access_token = NULL, * id_token = NULL, * expires_in_str = NULL, * query_parameters = NULL;
   json_t * j_auth_result = validate_endpoint_auth(request, response, user_data, 0);
   time_t now;
-  int ret, implicit_flow = 1, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NONE;
+  int ret, implicit_flow = 1, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NONE_STORE;
   struct _u_map map_query;
 
   state_param = get_state_param(u_map_get(get_map(request), "state"));
@@ -1830,15 +1836,15 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         }
 
         if (string_array_has_value((const char **)resp_type_array, "code")) {
-          auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE;
+          auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_STORE;
         }
 
         if (string_array_has_value((const char **)resp_type_array, "token")) {
-          auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_TOKEN;
+          auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_STORE;
         }
 
         if (string_array_has_value((const char **)resp_type_array, "id_token")) {
-          auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN;
+          auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_STORE;
         }
 
         if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "code")) {
@@ -1879,16 +1885,16 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "token")) {
           if (is_authorization_type_enabled((struct _oidc_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_TOKEN) && u_map_get(get_map(request), "redirect_uri") != NULL) {
             if ((access_token = generate_access_token(config, 
-                                                      json_string_value(json_object_get(json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "session"), "user"), "username")), 
-                                                      json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "session"), "user"), 
-                                                      json_string_value(json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "session"), "scope_filtered")), 
+                                                      json_string_value(json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "user"), "username")), 
+                                                      json_object_get(json_object_get(j_auth_result, "session"), "user"), 
+                                                      json_string_value(json_object_get(json_object_get(j_auth_result, "session"), "scope_filtered")), 
                                                       now)) != NULL) {
               if (serialize_access_token(config, 
                                          auth_type, 
                                          0, 
-                                         json_string_value(json_object_get(json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "session"), "user"), "username")), 
+                                         json_string_value(json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "user"), "username")), 
                                          u_map_get(get_map(request), "client_id"), 
-                                         json_string_value(json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "session"), "scope_filtered")), 
+                                         json_string_value(json_object_get(json_object_get(j_auth_result, "session"), "scope_filtered")), 
                                          now, 
                                          json_string_value(json_object_get(j_auth_result, "issued_for")),
                                          u_map_get_case(request->map_header, "user-agent")) != G_OK) {
@@ -1903,7 +1909,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 u_map_put(&map_query, "access_token", access_token);
                 u_map_put(&map_query, "token_type", "bearer");
                 u_map_put(&map_query, "expires_in", expires_in_str);
-                u_map_put(&map_query, "scope", json_string_value(json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "session"), "scope_filtered")));
+                u_map_put(&map_query, "scope", json_string_value(json_object_get(json_object_get(j_auth_result, "session"), "scope_filtered")));
               }
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_implicit_grant - Error generate_access_token");
@@ -2009,7 +2015,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         response->status = 403;
       }
     }
-  } else if (!check_result_value(j_auth_result, G_ERROR_PARAM)) {
+  } else if (!check_result_value(j_auth_result, G_ERROR_PARAM) && !check_result_value(j_auth_result, G_ERROR_UNAUTHORIZED)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_authorization - Error validate_endpoint_auth");
   }
   json_decref(j_auth_result);
