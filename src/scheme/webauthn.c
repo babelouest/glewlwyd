@@ -1329,11 +1329,6 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           ret = G_ERROR_PARAM;
           break;
         }
-        if (0 != o_strcmp(json_string_value(json_object_get(j_client_data, "hashAlgorithm")), "SHA-256")) {
-          json_array_append_new(j_error, json_string("clientDataJSON.alg invalid"));
-          ret = G_ERROR_PARAM;
-          break;
-        }
         // Step 5
         if (!json_string_length(json_object_get(j_client_data, "origin"))) {
           json_array_append_new(j_error, json_string("clientDataJSON.origin mandatory"));
