@@ -508,7 +508,6 @@ int set_user(struct config_elements * config, const char * username, json_t * j_
         ret = user_module->module->user_module_update(config->config_m, username, j_user, user_module->cls);
         if (ret != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_update");
-          ret = G_OK;
         }
       } else if (check_result_value(j_cur_user, G_ERROR_NOT_FOUND)) {
         ret = G_ERROR_NOT_FOUND;
