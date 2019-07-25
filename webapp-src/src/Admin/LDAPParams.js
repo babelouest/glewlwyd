@@ -227,7 +227,7 @@ class LDAPParams extends Component {
           hasError = true;
           errorList["password-property"] = i18next.t("admin.mod-ldap-password-property-error")
         }
-        if (this.state.mod.parameters["confidential"] === "1" && !this.state.mod.parameters["password-algorithm"]) {
+        if ((this.state.mod.parameters["confidential"] === "1" || this.state.role === "user") && !this.state.mod.parameters["password-algorithm"]) {
           hasError = true;
           errorList["password-algorithm"] = i18next.t("admin.mod-ldap-password-algorithm-error")
         }
@@ -254,6 +254,7 @@ class LDAPParams extends Component {
     var dataFormat = [], scopeMatch = [];
     var i = 0;
     for (var property in this.state.mod.parameters["data-format"]) {
+      console.log(property);
       var rwAccess = "";
       if (this.state.role === "user") {
         rwAccess = 
@@ -281,7 +282,7 @@ class LDAPParams extends Component {
           <div className="form-group">
             <div className="input-group mb-3">
               <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-profile-read")}</label>
+                <label className="input-group-text" htmlFor={"mod-database-data-format-profile-read-"+property}>{i18next.t("admin.mod-database-data-format-profile-read")}</label>
               </div>
               <div className="input-group-text">
                 <input type="checkbox" className="form-control" id={"mod-database-data-format-profile-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-read")} checked={this.state.mod.parameters["data-format"][property]["profile-read"]} />
@@ -313,7 +314,7 @@ class LDAPParams extends Component {
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor={"mod-database-data-format-name-"+property}>{i18next.t("admin.mod-database-data-format-ldap-property")}</label>
+              <label className="input-group-text" htmlFor={"mod-database-data-format-ldap-name-"+property}>{i18next.t("admin.mod-database-data-format-ldap-property")}</label>
             </div>
             <input type="text" className="form-control" id={"mod-database-data-format-ldap-name-"+property} onChange={(e) => this.changeDataFormatLdapProperty(e, property)} value={this.state.mod.parameters["data-format"][property].property} placeholder={i18next.t("admin.mod-database-data-format-ldap-property-ph")} />
           </div>
@@ -505,6 +506,8 @@ class LDAPParams extends Component {
           </div>
           {this.state.errorList["filter"]?<span className="error-input">{i18next.t(this.state.errorList["filter"])}</span>:""}
         </div>
+        {usernameJsx}
+        {client_idJsx}
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
@@ -513,7 +516,6 @@ class LDAPParams extends Component {
             <input type="text" className="form-control" id="mod-ldap-name-property" onChange={(e) => this.changeParam(e, "name-property", true)} value={this.state.mod.parameters["name-property"]} placeholder={i18next.t("admin.mod-ldap-name-property-ph")} />
           </div>
         </div>
-        {client_idJsx}
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
@@ -531,7 +533,7 @@ class LDAPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-ldap-password-property">{i18next.t("admin.mod-ldap-password-property")}</label>
             </div>
-            <input disabled={this.state.mod.readonly || (this.state.mod.parameters["confidential"] !== "1")} type="text" className={this.state.errorList["password-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-password-property" onChange={(e) => this.changeParam(e, "password-property")} value={this.state.mod.parameters["password-property"]} placeholder={i18next.t("admin.mod-ldap-password-property-ph")} />
+            <input disabled={this.state.mod.readonly || (this.state.mod.parameters["confidential"] !== "1" && this.state.role === "client")} type="text" className={this.state.errorList["password-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-password-property" onChange={(e) => this.changeParam(e, "password-property")} value={this.state.mod.parameters["password-property"]} placeholder={i18next.t("admin.mod-ldap-password-property-ph")} />
           </div>
           {this.state.errorList["password-property"]?<span className="error-input">{i18next.t(this.state.errorList["password-property"])}</span>:""}
         </div>
