@@ -319,7 +319,6 @@ int set_client(struct config_elements * config, const char * client_id, json_t *
       if (check_result_value(j_cur_client, G_OK)) {
         result = client_module->module->client_module_update(config->config_m, client_id, j_client, client_module->cls);
         if (result == G_OK) {
-          ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "set_client - Error client_module_update");
           ret = result;
