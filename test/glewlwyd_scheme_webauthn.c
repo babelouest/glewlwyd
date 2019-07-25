@@ -306,8 +306,6 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_bad_formed_response)
          * j_result = NULL, * j_credential = NULL;
   struct _u_response resp;
   const char * session;
-  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN];
-  size_t challenge_dec_len;
   
   ulfius_init_response(&resp);
   
@@ -319,7 +317,6 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_bad_formed_response)
   ck_assert_int_eq(resp.status, 200);
   ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
   ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
-  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
   
   //json_error_t jerr;
   //y_log_message(Y_LOG_LEVEL_DEBUG, "session '%s'", session);
@@ -341,7 +338,6 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_bad_formed_response)
                                     "attestationObject", "error", 
                                     "clientDataJSON", "error");
   //y_log_message(Y_LOG_LEVEL_DEBUG, "err %s", jerr.text);
-  ck_assert_ptr_ne(j_credential, NULL);
   
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_credential, NULL, 400, NULL, NULL, NULL), 1);
 
