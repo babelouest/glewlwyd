@@ -1706,11 +1706,12 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
         if (check_result_value(j_user, G_OK)) {
           if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")), json_object_get(j_user, "user"), scope_joined, now)) != NULL) {
             if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN, 0, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")), json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), scope_joined, now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
-              json_body = json_pack("{sssssIss}",
+              json_body = json_pack("{sssssIsssi}",
                                     "access_token", access_token,
                                     "token_type", "bearer",
                                     "expires_in", config->access_token_duration,
-                                    "scope", scope_joined);
+                                    "scope", scope_joined,
+                                    "iat", now);
               ulfius_set_json_body_response(response, 200, json_body);
               json_decref(json_body);
             } else {
