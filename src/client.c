@@ -308,7 +308,7 @@ int add_client(struct config_elements * config, json_t * j_client, const char * 
 }
 
 int set_client(struct config_elements * config, const char * client_id, json_t * j_client, const char * source) {
-  int ret, result;
+  int ret;
   struct _client_module_instance * client_module;
   json_t * j_cur_client;
   
@@ -317,11 +317,9 @@ int set_client(struct config_elements * config, const char * client_id, json_t *
     if (client_module != NULL && client_module->enabled && !client_module->readonly) {
       j_cur_client = client_module->module->client_module_get(config->config_m, client_id, client_module->cls);
       if (check_result_value(j_cur_client, G_OK)) {
-        result = client_module->module->client_module_update(config->config_m, client_id, j_client, client_module->cls);
-        if (result == G_OK) {
-        } else {
+        ret = client_module->module->client_module_update(config->config_m, client_id, j_client, client_module->cls);
+        if (ret != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "set_client - Error client_module_update");
-          ret = result;
         }
       } else if (check_result_value(j_cur_client, G_ERROR_NOT_FOUND)) {
         ret = G_ERROR_NOT_FOUND;
