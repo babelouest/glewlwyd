@@ -132,17 +132,19 @@ class EditRecord extends Component {
               </div>
             </div>
           }
-          elt.forEach((val, index) => {
-            var displayVal = val;
-            if (pattern.type === "file") {
-              displayVal = val.substring(0, val.indexOf("/"));
-            }
-            if (pattern.edit === false && !this.state.add) {
-              listJsx.push(<span className="badge badge-primary btn-icon-right" key={index}>{displayVal}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span>);
-            } else {
-              listJsx.push(<a href="#" onClick={(e) => this.deleteListElt(e, pattern.name, index)} key={index}><span className="badge badge-primary btn-icon-right">{displayVal}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
-            }
-          });
+          if (pattern.type !== "textarea") {
+            elt.forEach((val, index) => {
+              var displayVal = val;
+              if (pattern.type === "file") {
+                displayVal = val.substring(0, val.indexOf("/"));
+              }
+              if (pattern.edit === false && !this.state.add) {
+                listJsx.push(<span className="badge badge-primary btn-icon-right" key={index}>{displayVal}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span>);
+              } else {
+                listJsx.push(<a href="#" onClick={(e) => this.deleteListElt(e, pattern.name, index)} key={index}><span className="badge badge-primary btn-icon-right">{displayVal}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
+              }
+            });
+          }
         } else if (pattern.type === "boolean") {
           if (pattern.edit === false && !this.state.add) {
             inputJsx = <div className="input-group-text">
@@ -284,6 +286,11 @@ class EditRecord extends Component {
     var data = this.state.data;
     if (list) {
       data[name] = e.target.value.split("\n");
+      for (var i=data[name].length; i>=0; i--) {
+        if (data[name][i] === "") {
+          data[name].splice(i, 1);
+        }
+      }
     } else {
       data[name] = e.target.value;
     }
