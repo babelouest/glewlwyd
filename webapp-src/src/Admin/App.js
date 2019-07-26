@@ -793,9 +793,6 @@ class App extends Component {
           result = false;
           data["password"] = i18next.t("admin.user-password-error-invalid");
         }
-      } else if (!user.password) {
-        result = false;
-        data["password"] = i18next.t("admin.user-password-mandatory");
       }
       if (!user.username) {
         result = false;

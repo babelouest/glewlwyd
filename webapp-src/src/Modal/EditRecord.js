@@ -62,6 +62,25 @@ class EditRecord extends Component {
     if (this.state.cb) {
       if (result) {
         if (this.state.validateCb) {
+          // Clean data of empty and unset values
+          for (var key in this.state.data) {
+            if (Array.isArray(this.state.data[key])) {
+              if (!this.state.data[key].length) {
+                delete(this.state.data[key]);
+              } else {
+                var arr = this.state.data[key];
+                for (var i=arr.length-1; i>=0; i--) {
+                  if (arr[i] === "") {
+                    arr.splice(i, 1);
+                  }
+                }
+              }
+            } else {
+              if (this.state.data[key] === undefined || this.state.data[key] === "") {
+                delete(this.state.data[key]);
+              }
+            }
+          }
           this.state.validateCb(this.state.data, this.state.listEltConfirm, this.state.add, (res, data) => {
             if (res) {
               this.state.cb(result, this.state.data);
@@ -286,11 +305,6 @@ class EditRecord extends Component {
     var data = this.state.data;
     if (list) {
       data[name] = e.target.value.split("\n");
-      for (var i=data[name].length; i>=0; i--) {
-        if (data[name][i] === "") {
-          data[name].splice(i, 1);
-        }
-      }
     } else {
       data[name] = e.target.value;
     }
