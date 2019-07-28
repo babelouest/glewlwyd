@@ -2610,6 +2610,18 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("Property 'auth-type-id-token-enabled' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
+    if (json_object_get(j_params, "auth-type-token-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-token-enabled"))) {
+      json_array_append_new(j_error, json_string("Property 'auth-type-token-enabled' is optional and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "auth-type-password-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-password-enabled"))) {
+      json_array_append_new(j_error, json_string("Property 'auth-type-password-enabled' is optional and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "auth-type-client-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-client-enabled"))) {
+      json_array_append_new(j_error, json_string("Property 'auth-type-client-enabled' is optional and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
     if (json_object_get(j_params, "auth-type-refresh-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-refresh-enabled"))) {
       json_array_append_new(j_error, json_string("Property 'auth-type-refresh-enabled' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
