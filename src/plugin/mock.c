@@ -66,7 +66,7 @@
  *   
  *   // Misc functions
  *   char   * (* glewlwyd_callback_get_plugin_external_url)(struct config_plugin * config, const char * name);
- *   char   * (* glewlwyd_callback_get_login_url)(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url);
+ *   char   * (* glewlwyd_callback_get_login_url)(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url, struct _u_map * additional_parameters);
  *   char   * (* glewlwyd_callback_generate_hash)(struct config_plugin * config, const char * data);
  * };
  *
