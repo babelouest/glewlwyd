@@ -29,7 +29,9 @@ var initApp = () => {
           client_id: getParameterByName("client_id")||false, 
           callback_url: getParameterByName("callback_url")||false,
           scheme: getParameterByName("scheme")||false,
-          refresh_login: !!getParameterByName("refresh_login")
+          prompt: getParameterByName("prompt")||false,
+          refresh_login: !!getParameterByName("refresh_login"),
+          login_hint: getParameterByName("login_hint")||false
         }
       }, frontEndConfig, serverConfig);
       ReactDOM.render(<App config={config}/>, document.getElementById('root'));

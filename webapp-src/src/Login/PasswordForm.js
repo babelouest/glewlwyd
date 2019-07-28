@@ -8,7 +8,7 @@ class PasswordForm extends Component {
     super(props);
     
     this.state = {
-      username: (props.currentUser?props.currentUser.username:""),
+      username: props.username,
       password: "",
       config: props.config,
       currentUser: props.currentUser
@@ -21,7 +21,7 @@ class PasswordForm extends Component {
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      username: (nextProps.currentUser?nextProps.currentUser.username:""),
+      username: nextProps.username,
       password: "",
       config: nextProps.config,
       currentUser: nextProps.currentUser

@@ -51,7 +51,7 @@ class GrantScope extends Component {
     });
     apiManager.glewlwydRequest("/auth/grant/" + encodeURI(this.state.client.client_id), "PUT", {scope: scopeList.join(" ")})
     .then(() => {
-      messageDispatcher.sendMessage('App', {type: 'InitProfile'});
+      messageDispatcher.sendMessage('App', {type: 'GrantComplete'});
     })
     .fail(() => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-set-grant")});
@@ -69,7 +69,7 @@ class GrantScope extends Component {
                 <input type="checkbox" className="form-control" onChange={() => this.handleToggleGrantScope(scope)} id={"grant-" + scope.name} checked={scope.granted}/>
               </div>
               <div className="input-group-text">
-                <label className="input-group-text" className="form-check-label" htmlFor={"grant-" + scope.name}>{scope.name}</label>
+                <label className="form-check-label" htmlFor={"grant-" + scope.name}>{scope.name}</label>
               </div>
             </div>
           </div>
