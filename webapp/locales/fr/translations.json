@@ -73,7 +73,11 @@
     "mail-title": "Code courriel",
     "webauthn-title": "Webauthn",
     "otp-title": "Code à usage unique",
-    "password-title": "Mot de passe"
+    "password-title": "Mot de passe",
+    "select": "Sélectionner",
+    "select-acount-title": "Sélectionner le compte à utiliser",
+    "manage-users": "Gérer les utilisateurs connectés",
+    "logout": "Déconnecter"
   },
   "admin": {
     "menu-users": "Utilisateurs",
