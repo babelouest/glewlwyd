@@ -754,11 +754,11 @@ static char * generate_authorization_code(struct _oidc_config * config, const ch
   return code;
 }
 
-static char * get_login_url(struct _oidc_config * config, const struct _u_request * request, const char * url, const char * client_id, const char * scope_list) {
+static char * get_login_url(struct _oidc_config * config, const struct _u_request * request, const char * url, const char * client_id, const char * scope_list, struct _u_map * additional_parameters) {
   char * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, json_string_value(json_object_get(config->j_params, "name"))),
-       * url_params = generate_query_parameters(request->map_url),
+       * url_params = generate_query_parameters(get_map(request)),
        * url_callback = msprintf("%s/%s?%s", plugin_url, url, url_params),
-       * login_url = config->glewlwyd_config->glewlwyd_callback_get_login_url(config->glewlwyd_config, client_id, scope_list, url_callback);
+       * login_url = config->glewlwyd_config->glewlwyd_callback_get_login_url(config->glewlwyd_config, client_id, scope_list, url_callback, additional_parameters);
   o_free(plugin_url);
   o_free(url_params);
   o_free(url_callback);
@@ -1351,31 +1351,67 @@ static char * get_state_param(const char * state_value) {
 
 static json_t * validate_endpoint_auth(const struct _u_request * request, struct _u_response * response, void * user_data, int auth_type) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  char * redirect_url = NULL, * issued_for = NULL, ** scope_list = NULL, * state_param;
+  char * redirect_url = NULL, * issued_for = NULL, ** scope_list = NULL, * state_param, * endptr = NULL;
   json_t * j_session = NULL, * j_client = NULL;
   json_t * j_return;
+  struct _u_map additional_parameters;
+  long int max_age;
+  time_t now;
   
   state_param = get_state_param(u_map_get(get_map(request), "state"));
   
   // Let's use again the loop do {} while (false); to avoid too much embeded if statements
   do {
+    if (u_map_init(&additional_parameters) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - Error u_map_init");
+      response->status = 302;
+      redirect_url = msprintf("%s%sserver_error%s", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
+      ulfius_add_header_to_response(response, "Location", redirect_url);
+      o_free(redirect_url);
+      j_return = json_pack("{si}", "result", G_ERROR);
+      break;
+    }
+    
     // Check if client is allowed to perform this request
     j_client = check_client_valid(config, u_map_get(get_map(request), "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(get_map(request), "redirect_uri"), u_map_get(get_map(request), "scope"), GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE);
     if (!check_result_value(j_client, G_OK)) {
       // client is not authorized
       response->status = 302;
-      redirect_url = msprintf("%s%serror=unauthorized_client%s%s", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(get_map(request), "state")!=NULL?"&state=":""), (u_map_get(get_map(request), "state")!=NULL?u_map_get(get_map(request), "state"):""));
+      redirect_url = msprintf("%s%serror=unauthorized_client%s", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
       ulfius_add_header_to_response(response, "Location", redirect_url);
       o_free(redirect_url);
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       break;
     }
 
+    if (u_map_get(get_map(request), "display") != NULL) {
+      u_map_put(&additional_parameters, "display", u_map_get(get_map(request), "display"));
+    }
+    
+    if (u_map_get(get_map(request), "ui_locales") != NULL) {
+      u_map_put(&additional_parameters, "ui_locales", u_map_get(get_map(request), "ui_locales"));
+    }
+    
+    if (u_map_get(get_map(request), "login_hint") != NULL) {
+      u_map_put(&additional_parameters, "login_hint", u_map_get(get_map(request), "login_hint"));
+    }
+    
+    if (!u_map_has_key(get_map(request), "g_continue") && (0 == o_strcmp("login", u_map_get(get_map(request), "prompt")) || 0 == o_strcmp("consent", u_map_get(get_map(request), "prompt")) || 0 == o_strcmp("select_account", u_map_get(get_map(request), "prompt")))) {
+      // Redirect to login page
+      u_map_put(&additional_parameters, "prompt", u_map_get(get_map(request), "prompt"));
+      redirect_url = get_login_url(config, request, "auth", u_map_get(get_map(request), "client_id"), u_map_get(get_map(request), "scope"), &additional_parameters);
+      ulfius_add_header_to_response(response, "Location", redirect_url);
+      o_free(redirect_url);
+      response->status = 302;
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      break;
+    }
+    
     // Check if the query parameter 'g_continue' exists, otherwise redirect to login page
-    if (!u_map_has_key(get_map(request), "g_continue")) {
+    if (!u_map_has_key(get_map(request), "g_continue") && 0 != o_strcmp("none", u_map_get(get_map(request), "prompt"))) {
       // Redirect to login page
       response->status = 302;
-      redirect_url = get_login_url(config, request, "auth", u_map_get(get_map(request), "client_id"), u_map_get(get_map(request), "scope"));
+      redirect_url = get_login_url(config, request, "auth", u_map_get(get_map(request), "client_id"), u_map_get(get_map(request), "scope"), &additional_parameters);
       ulfius_add_header_to_response(response, "Location", redirect_url);
       o_free(redirect_url);
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
@@ -1420,21 +1456,41 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     // Check that the session is valid for this user with this scope list
     j_session = validate_session_client_scope(config, request, u_map_get(get_map(request), "client_id"), u_map_get(get_map(request), "scope"));
     if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
-      // Redirect to login page
-      response->status = 302;
-      redirect_url = get_login_url(config, request, "auth", u_map_get(get_map(request), "client_id"), u_map_get(get_map(request), "scope"));
-      ulfius_add_header_to_response(response, "Location", redirect_url);
-      o_free(redirect_url);
-      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      if (0 == o_strcmp("none", u_map_get(get_map(request), "prompt"))) {
+        // Scope is not allowed for this user
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none', avoid login page");
+        response->status = 302;
+        redirect_url = msprintf("%s%serror=interaction_required%s", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      } else {
+        // Redirect to login page
+        response->status = 302;
+        redirect_url = get_login_url(config, request, "auth", u_map_get(get_map(request), "client_id"), u_map_get(get_map(request), "scope"), &additional_parameters);
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      }
       break;
     } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
-      // Scope is not allowed for this user
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - scope list '%s' is invalid for user '%s'", u_map_get(get_map(request), "scope"), json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
-      response->status = 302;
-      redirect_url = msprintf("%s%serror=invalid_scope%s", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
-      ulfius_add_header_to_response(response, "Location", redirect_url);
-      o_free(redirect_url);
-      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      if (0 == o_strcmp("none", u_map_get(get_map(request), "prompt"))) {
+        // Scope is not allowed for this user
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none', avoid login page");
+        response->status = 302;
+        redirect_url = msprintf("%s%serror=interaction_required%s", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      } else {
+        // Scope is not allowed for this user
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - scope list '%s' is invalid for user '%s'", u_map_get(get_map(request), "scope"), json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
+        response->status = 302;
+        redirect_url = msprintf("%s%serror=invalid_scope%s", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      }
       break;
     } else if (!check_result_value(j_session, G_OK)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - Error validate_session_client_scope");
@@ -1448,17 +1504,46 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
 
     // Session may be valid but another level of authentication may be requested
     if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_true()) {
-      // Redirect to login page
-      redirect_url = get_login_url(config, request, "auth", u_map_get(get_map(request), "client_id"), u_map_get(get_map(request), "scope"));
-      ulfius_add_header_to_response(response, "Location", redirect_url);
-      o_free(redirect_url);
-      response->status = 302;
-      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      if (0 == o_strcmp("none", u_map_get(get_map(request), "prompt"))) {
+        // Scope is not allowed for this user
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none', avoid login page");
+        response->status = 302;
+        redirect_url = msprintf("%s%serror=interaction_required%s", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      } else {
+        // Redirect to login page
+        redirect_url = get_login_url(config, request, "auth", u_map_get(get_map(request), "client_id"), u_map_get(get_map(request), "scope"), &additional_parameters);
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        response->status = 302;
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      }
       break;
     }
     
-    // User has granted access to the cleaned scope list for this client
-    // Generate code, generate the url and redirect to it
+    /**
+     * Let's deal with id_token_hint another time, I need a use case
+     * 
+    if (o_strlen(u_map_get(get_map(request), "id_token_hint"))) {
+      if (0 == o_strcmp("none", u_map_get(get_map(request), "prompt"))) {
+        json_t * j_result = access_token_check_signature(config->glewlwyd_resource_config, u_map_get(get_map(request), "id_token_hint"));
+        if (check_result_value(j_result, G_TOKEN_OK)) {
+        } else if (
+        json_decref(j_result);
+      } else {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none' required when id_token_hint set");
+        response->status = 302;
+        redirect_url = msprintf("%s%serror=invalid_request%s", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        break;
+      }
+    }
+    */
+    
     issued_for = get_client_hostname(request);
     if (issued_for == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - Error get_client_hostname");
@@ -1492,7 +1577,37 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
       break;
     }
     
+    if (o_strlen(u_map_get(get_map(request), "max_age"))) {
+      max_age = strtol(u_map_get(get_map(request), "max_age"), &endptr, 10);
+      if (!(*endptr) && max_age > 0) {
+        time(&now);
+        if (max_age < (now - config->glewlwyd_config->glewlwyd_callback_get_session_age(config->glewlwyd_config, request, json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered"))))) {
+          // Redirect to login page
+          u_map_put(&additional_parameters, "refresh_login", "true");
+          redirect_url = get_login_url(config, request, "auth", u_map_get(get_map(request), "client_id"), u_map_get(get_map(request), "scope"), &additional_parameters);
+          ulfius_add_header_to_response(response, "Location", redirect_url);
+          o_free(redirect_url);
+          response->status = 302;
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          break;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - nonce required");
+        redirect_url = msprintf("%s%sinvalid_request", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"));
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        response->status = 302;
+        j_return = json_pack("{si}", "result", G_ERROR);
+        break;
+      }
+    }
+    
+    if (u_map_get(get_map(request), "id_token_hint") != NULL) {
+      u_map_put(&additional_parameters, "id_token_hint", u_map_get(get_map(request), "id_token_hint"));
+    }
+    
     j_return = json_pack("{sisOsOss}", "result", G_OK, "session", json_object_get(j_session, "session"), "client", json_object_get(j_client, "client"), "issued_for", issued_for);
+    u_map_clean(&additional_parameters);
   } while (0);
 
   o_free(issued_for);
@@ -1545,7 +1660,17 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                 if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(j_refresh_token, "gpor_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
                   j_amr = get_amr_list_from_code(config, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpoc_id")));
                   if (check_result_value(j_amr, G_OK)) {
-                    if ((id_token = generate_id_token(config, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_object_get(j_user, "user"), json_object_get(j_client, "client"), now, config->glewlwyd_config->glewlwyd_callback_get_session_age(config->glewlwyd_config, request, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list"))), json_string_value(json_object_get(json_object_get(j_code, "code"), "nonce")), json_object_get(j_amr, "amr"), access_token)) != NULL) {
+                    if ((id_token = generate_id_token(config, 
+                                                      json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), 
+                                                      json_object_get(j_user, "user"), 
+                                                      json_object_get(j_client, "client"), 
+                                                      now, 
+                                                      config->glewlwyd_config->glewlwyd_callback_get_session_age(config->glewlwyd_config, 
+                                                                                                                request, 
+                                                                                                                json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list"))), 
+                                                      json_string_value(json_object_get(json_object_get(j_code, "code"), "nonce")), 
+                                                      json_object_get(j_amr, "amr"), 
+                                                      access_token)) != NULL) {
                       if (serialize_id_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, id_token, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
                         if (disable_authorization_code(config, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpoc_id"))) == G_OK) {
                           j_body = json_pack("{sssssssisIssss}",
@@ -1682,11 +1807,12 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
         if (check_result_value(j_user, G_OK)) {
           if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")), json_object_get(j_user, "user"), scope_joined, now)) != NULL) {
             if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN, 0, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")), json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), scope_joined, now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
-              json_body = json_pack("{sssssIss}",
+              json_body = json_pack("{sssssIsssi}",
                                     "access_token", access_token,
                                     "token_type", "bearer",
                                     "expires_in", config->access_token_duration,
-                                    "scope", scope_joined);
+                                    "scope", scope_joined,
+                                    "iat", now);
               ulfius_set_json_body_response(response, 200, json_body);
               json_decref(json_body);
             } else {
@@ -1811,7 +1937,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   const char * response_type = u_map_get(get_map(request), "response_type");
   int result = U_CALLBACK_CONTINUE;
-  char * redirect_url, * state_param = NULL, ** resp_type_array = NULL, * authorization_code = NULL, * access_token = NULL, * id_token = NULL, * expires_in_str = NULL, * query_parameters = NULL;
+  char * redirect_url, * state_param = NULL, ** resp_type_array = NULL, * authorization_code = NULL, * access_token = NULL, * id_token = NULL, * expires_in_str = NULL, * iat_str = NULL, * query_parameters = NULL;
   json_t * j_auth_result = validate_endpoint_auth(request, response, user_data, 0);
   time_t now;
   int ret, implicit_flow = 1, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NONE_STORE;
@@ -1911,11 +2037,14 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 ret = G_ERROR;
               } else {
                 expires_in_str = msprintf("%" JSON_INTEGER_FORMAT, config->access_token_duration);
+                iat_str = msprintf("%ld", now);
                 u_map_put(&map_query, "access_token", access_token);
                 u_map_put(&map_query, "token_type", "bearer");
                 u_map_put(&map_query, "expires_in", expires_in_str);
+                u_map_put(&map_query, "iat", iat_str);
                 u_map_put(&map_query, "scope", json_string_value(json_object_get(json_object_get(j_auth_result, "session"), "scope_filtered")));
                 o_free(expires_in_str);
+                o_free(iat_str);
               }
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_implicit_grant - Error generate_access_token");
