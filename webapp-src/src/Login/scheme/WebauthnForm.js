@@ -100,7 +100,7 @@ class WebauthnForm extends Component {
           }
         })
         .then(() => {
-          messageDispatcher.sendMessage('App', {type: 'InitProfile'});
+          messageDispatcher.sendMessage('App', {type: 'loginSuccess'});
           messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-assertion-success")});
         })
         .fail((err) => {
