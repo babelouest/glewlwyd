@@ -73,7 +73,11 @@
     "mail-title": "E-mail code",
     "webauthn-title": "Webauthn",
     "otp-title": "One time password",
-    "password-title": "Password"
+    "password-title": "Password",
+    "select": "Select",
+    "select-acount-title": "Select the account to use",
+    "manage-users": "Manage connected users",
+    "logout": "Logout"
   },
   "admin": {
     "menu-users": "Users",
