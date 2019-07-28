@@ -7,6 +7,7 @@ import Buttons from './Buttons';
 import Body from './Body';
 import PasswordForm from './PasswordForm';
 import NoPasswordForm from './NoPasswordForm';
+import SelectAccount from './SelectAccount';
 
 class App extends Component {
   constructor(props) {
@@ -26,7 +27,11 @@ class App extends Component {
       showGrant: true,
       showGrantAsterisk: false,
       canContinue: false,
-      refresh_login: props.config.params.refresh_login
+      prompt: props.config.params.prompt,
+      refresh_login: props.config.params.refresh_login,
+      forceShowGrant: false,
+      selectAccount: false,
+      login_hint: props.config.params.login_hint||""
     };
 
     this.initProfile = this.initProfile.bind(this);
@@ -43,11 +48,23 @@ class App extends Component {
       if (message.type === "InitProfile") {
         this.initProfile();
       } else if (message.type === "loginSuccess") {
-        this.setState({refresh_login: false}, () => {
+        this.setState({selectAccount: false, refresh_login: false, prompt: false}, () => {
           this.initProfile();
         });
       } else if (message.type === "NewUser") {
-        this.setState({newUser: true, currentUser: false, scheme: this.state.config.params.scheme}, () => {
+        this.setState({selectAccount: false, newUser: true, currentUser: false, scheme: this.state.config.params.scheme}, () => {
+        });
+      } else if (message.type === "GrantComplete") {
+        this.setState({selectAccount: false, showGrant: false, prompt: false, forceShowGrant: false}, () => {
+          this.initProfile();
+        });
+      } else if (message.type === "SelectAccount") {
+        this.setState({selectAccount: true}, () => {
+          this.initProfile();
+        });
+      } else if (message.type === "SelectAccountComplete") {
+        this.setState({selectAccount: false, prompt: false}, () => {
+          this.initProfile();
         });
       } else if (message.type === "ToggleGrant") {
         this.setState({showGrant: !this.state.showGrant});
@@ -63,17 +80,27 @@ class App extends Component {
       var newState = {};
       if (res.length) {
         newState.currentUser = res[0];
+        newState.login_hint = res[0].username;
       }
-      newState.newUser = false;
       newState.userList = res;
       newState.loaded = true;
+      if (this.state.prompt === "login") {
+        newState.currentUser = false;
+        newState.newUser = true;
+      } else if (this.state.prompt === "consent") {
+        newState.forceShowGrant = true;
+      } else if (this.state.prompt === "select_account") {
+        newState.selectAccount = true;
+      } else {
+        newState.newUser = false;
+      }
       this.setState(newState, () => {
         if (this.state.config.params.client_id && this.state.config.params.scope) {
           this.checkClientScope(this.state.config.params.client_id, this.state.config.params.scope);
         } else if (this.state.config.params.scope) {
           this.checkScopeScheme(this.state.config.params.scope);
         } else {
-          this.setState({showGrant: false, showGrantAsterisk: false});
+          this.setState({showGrantAsterisk: false});
         }
       });
     })
@@ -94,7 +121,7 @@ class App extends Component {
       var showGrantAsterisk = false;
       res.scope.forEach((scope) => {
         if (scope.granted) {
-          showGrant = false;
+          showGrant = false || this.state.forceShowGrant;
           scopeGranted.push(scope.name);
           scopeGrantedDetails[scope.name] = scope;
         } else {
@@ -194,10 +221,12 @@ class App extends Component {
       if (this.state.loaded) {
         if (this.state.newUser || this.state.passwordRequired) {
           if (!this.state.scheme) {
-            body = <PasswordForm config={this.state.config} currentUser={this.state.currentUser} callbackInitProfile={this.initProfile}/>;
+            body = <PasswordForm config={this.state.config} username={this.state.login_hint} currentUser={this.state.currentUser} callbackInitProfile={this.initProfile}/>;
           } else {
-            body = <NoPasswordForm config={this.state.config} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
+            body = <NoPasswordForm config={this.state.config} username={this.state.login_hint} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
           }
+        } else if (this.state.selectAccount) {
+          body = <SelectAccount config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
         } else {
           body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} showGrant={this.state.showGrant}/>;
         }

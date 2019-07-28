@@ -24,6 +24,7 @@ class Buttons extends Component {
     this.clickGrant = this.clickGrant.bind(this);
     this.clickContinue = this.clickContinue.bind(this);
     this.newUser = this.newUser.bind(this);
+    this.managerUsers = this.managerUsers.bind(this);
     this.changeSessionScheme = this.changeSessionScheme.bind(this);
     
   }
@@ -79,6 +80,11 @@ class Buttons extends Component {
     }
   }
   
+  managerUsers(e) {
+    e.preventDefault();
+    messageDispatcher.sendMessage('App', {type: 'SelectAccount'});
+  }
+  
   changeSessionScheme(e, scheme) {
     e.preventDefault();
     messageDispatcher.sendMessage('App', {type: 'newUserScheme', scheme: scheme});
@@ -112,6 +118,7 @@ class Buttons extends Component {
         </button>
         <div className="dropdown-menu" aria-labelledby="selectNewUser">
           <a className="dropdown-item" href="#" onClick={(e) => this.newUser(e, false)}>{i18next.t("login.login-another-new")}</a>
+          <a className="dropdown-item" href="#" onClick={(e) => this.managerUsers(e)}>{i18next.t("login.manage-users")}</a>
           <div className="dropdown-divider"></div>
           {userList}
         </div>

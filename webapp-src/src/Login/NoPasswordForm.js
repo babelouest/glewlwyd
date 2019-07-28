@@ -13,10 +13,10 @@ class NoPasswordForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      username: "",
+      config: props.config,
+      username: props.username,
       usernameValidated: false,
-      scheme: props.scheme,
-      config: props.config
+      scheme: props.scheme
     };
 
     this.handleChangeUsername = this.handleChangeUsername.bind(this);
@@ -26,8 +26,8 @@ class NoPasswordForm extends Component {
   componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
-      scheme: nextProps.scheme,
-      config: nextProps.config
+      username: nextProps.username,
+      scheme: nextProps.scheme
     });
   }
 
