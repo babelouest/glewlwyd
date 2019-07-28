@@ -228,14 +228,6 @@
       </div>
       <div class="row">
         <div class="col-md-2">
-          <label for="id_token_hint">id_token_hint</label>
-        </div>
-        <div class="col-md-2">
-          <input type="text" id="id_token_hint" name="id_token_hint" value="" class="form-control">
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-2">
           <label for="login_hint">login_hint</label>
         </div>
         <div class="col-md-2">
@@ -362,7 +354,7 @@
       case "code id_token":
       case "code token":
       case "code id_token token":
-        var url = glewlwyd_api + "/auth?response_type=" + $("#response_type").val() + "&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&nonce=" + $("#nonce").val() + "&prompt=" + $("#prompt").val() + "&display=" + $("#display").val() + "&scope=" + $("#scope").val().join(" ") + "&max_age=" + $("#max_age").val() + "&ui_locales=" + $("#ui_locales").val() + "&id_token_hint=" + $("#id_token_hint").val() + "&login_hint=" + $("#login_hint").val();
+        var url = glewlwyd_api + "/auth?response_type=" + $("#response_type").val() + "&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&nonce=" + $("#nonce").val() + "&prompt=" + $("#prompt").val() + "&display=" + $("#display").val() + "&scope=" + $("#scope").val().join(" ") + "&max_age=" + $("#max_age").val() + "&ui_locales=" + $("#ui_locales").val() + "&login_hint=" + $("#login_hint").val();
         window.location = url;
         break;
       case "authorization_code":
