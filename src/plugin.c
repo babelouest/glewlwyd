@@ -389,8 +389,11 @@ time_t glewlwyd_callback_get_session_age(struct config_plugin * config, const st
   return age;
 }
 
-char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url) {
-  char * encoded_callback_url = NULL, * encoded_client_id = NULL, * encoded_scope_list = NULL, * login_url;
+char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url, struct _u_map * additional_parameters) {
+  char * encoded_callback_url = NULL, * encoded_client_id = NULL, * encoded_scope_list = NULL, * login_url, * query_additional_parameters = NULL, * value_encoded;
+  const char ** keys;
+  int i;
+  
   if (callback_url != NULL) {
     encoded_callback_url = url_encode(callback_url);
   }
@@ -400,7 +403,19 @@ char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char
   if (scope_list != NULL) {
     encoded_scope_list = url_encode(scope_list);
   }
-  login_url = msprintf("%s/%s?%s%s%s%s%s%s",
+  if (additional_parameters != NULL) {
+    keys = u_map_enum_keys(additional_parameters);
+    for (i=0; keys[i]!=NULL; i++) {
+      if (u_map_get(additional_parameters, keys[i]) == NULL) {
+        query_additional_parameters = mstrcatf(query_additional_parameters, "&%s", keys[i]);
+      } else {
+        value_encoded = url_encode(u_map_get(additional_parameters, keys[i]));
+        query_additional_parameters = mstrcatf(query_additional_parameters, "&%s=%s", keys[i], value_encoded);
+        o_free(value_encoded);
+      }
+    }
+  }
+  login_url = msprintf("%s/%s?%s%s%s%s%s%s%s",
                        config->glewlwyd_config->external_url,
                        config->glewlwyd_config->login_url,
                        (encoded_client_id!=NULL?"client_id=":""),
@@ -408,7 +423,9 @@ char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char
                        (encoded_scope_list!=NULL?"&scope=":""),
                        (encoded_scope_list!=NULL?encoded_scope_list:""),
                        (encoded_callback_url!=NULL?"&callback_url=":""),
-                       (encoded_callback_url!=NULL?encoded_callback_url:""));
+                       (encoded_callback_url!=NULL?encoded_callback_url:""),
+                       (query_additional_parameters!=NULL?query_additional_parameters:""));
+  o_free(query_additional_parameters);
   o_free(encoded_callback_url);
   o_free(encoded_client_id);
   o_free(encoded_scope_list);
