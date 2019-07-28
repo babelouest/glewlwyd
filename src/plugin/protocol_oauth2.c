@@ -605,7 +605,7 @@ static char * get_login_url(struct _oauth2_config * config, const struct _u_requ
   char * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, json_string_value(json_object_get(config->j_params, "name"))),
        * url_params = generate_query_parameters(request->map_url, NULL),
        * url_callback = msprintf("%s/%s?%s", plugin_url, url, url_params),
-       * login_url = config->glewlwyd_config->glewlwyd_callback_get_login_url(config->glewlwyd_config, client_id, scope_list, url_callback);
+       * login_url = config->glewlwyd_config->glewlwyd_callback_get_login_url(config->glewlwyd_config, client_id, scope_list, url_callback, NULL);
   o_free(plugin_url);
   o_free(url_params);
   o_free(url_callback);
