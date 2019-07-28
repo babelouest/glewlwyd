@@ -68,7 +68,7 @@ class EmailSchemeForm extends Component {
     
     apiManager.glewlwydRequest("/auth/", "POST", scheme)
     .then(() => {
-      messageDispatcher.sendMessage('App', {type: 'InitProfile'});
+      messageDispatcher.sendMessage('App', {type: 'loginSuccess'});
     })
     .fail((err) => {
       if (err.status === 401) {

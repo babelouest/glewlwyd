@@ -28,7 +28,8 @@ var initApp = () => {
           scope: getParameterByName("scope")||false, 
           client_id: getParameterByName("client_id")||false, 
           callback_url: getParameterByName("callback_url")||false,
-          scheme: getParameterByName("scheme")||false
+          scheme: getParameterByName("scheme")||false,
+          refresh_login: !!getParameterByName("refresh_login")
         }
       }, frontEndConfig, serverConfig);
       ReactDOM.render(<App config={config}/>, document.getElementById('root'));

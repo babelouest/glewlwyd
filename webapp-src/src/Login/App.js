@@ -25,7 +25,8 @@ class App extends Component {
       client: false,
       showGrant: true,
       showGrantAsterisk: false,
-      canContinue: false
+      canContinue: false,
+      refresh_login: props.config.params.refresh_login
     };
 
     this.initProfile = this.initProfile.bind(this);
@@ -41,6 +42,10 @@ class App extends Component {
     messageDispatcher.subscribe('App', (message) => {
       if (message.type === "InitProfile") {
         this.initProfile();
+      } else if (message.type === "loginSuccess") {
+        this.setState({refresh_login: false}, () => {
+          this.initProfile();
+        });
       } else if (message.type === "NewUser") {
         this.setState({newUser: true, currentUser: false, scheme: this.state.config.params.scheme}, () => {
         });
@@ -169,6 +174,9 @@ class App extends Component {
           }
         }
       }
+    }
+    if (!passwordRequired && this.state.refresh_login) {
+      passwordRequired = true;
     }
     this.setState({canContinue: canContinue, passwordRequired: passwordRequired, schemeListRequired: schemeListRequired, scheme: scheme});
   }

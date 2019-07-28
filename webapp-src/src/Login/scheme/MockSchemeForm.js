@@ -76,7 +76,7 @@ class MockSchemeForm extends Component {
     
     apiManager.glewlwydRequest("/auth/", "POST", scheme)
     .then(() => {
-      messageDispatcher.sendMessage('App', {type: 'InitProfile'});
+      messageDispatcher.sendMessage('App', {type: 'loginSuccess', loginSuccess: true});
     })
     .fail(() => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-mock-value")});
