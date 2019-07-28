@@ -95,10 +95,13 @@
             <option value="code">code</option>
             <option value="authorization_code">authorization_code</option>
             <option value="id_token">id_token</option>
+            <option value="token">token</option>
             <option value="id_token token">id_token token</option>
             <option value="code id_token">code id_token</option>
             <option value="code token">code token</option>
             <option value="code id_token token">code id_token token</option>
+            <option value="password">password</option>
+            <option value="client_credentials">client_credentials</option>
             <option value="refresh_token">refresh_token</option>
             <option value="delete_token">delete_token</option>
             <option value="test_token">test_token</option>
@@ -349,6 +352,7 @@
     $("#result").empty();
     switch ($("#response_type").val()) {
       case "code":
+      case "token":
       case "id_token":
       case "id_token token":
       case "code id_token":
@@ -381,9 +385,49 @@
             }
         });
         break;
-      case "token":
-        var url = glewlwyd_api + "/auth?response_type=token&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&scope=" + $("#scope").val().join(" ");
-        window.location = url;
+      case "password":
+        $.ajax({
+          type: "POST",
+          url: glewlwyd_api + "/token", 
+          data: {grant_type: "password", username: $("#username").val(), password: $("#password").val(), state: $("#state").val(), scope: $("#scope").val().join(" ")},
+          beforeSend: function (xhr) {
+            if ($("#clientconfidential").is(':checked')) {
+              xhr.setRequestHeader ("Authorization", "Basic " + btoa($("#client_id").val() + ":" + $("#clientpassword").val()));
+            }
+          },
+          success: function (result, status, request) {
+            $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
+            for (var key in result) {
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+            }
+          },
+          error: function (error) {
+            $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+            $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+          }
+        });
+        break;
+      case "client_credentials":
+        $.ajax
+        ({
+          type: "POST",
+          url: glewlwyd_api + "/token",
+          async: false,
+          headers: {
+            "Authorization": "Basic " + btoa($("#client_id").val() + ":" + $("#clientpassword").val())
+          },
+          data: {grant_type: "client_credentials", scope: $("#scope").val().join(" ")},
+          success: function (result, status, request) {
+            $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
+            for (var key in result) {
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+            }
+          },
+          error: function (error) {
+            $("#result").append("<div class=\"alert alert-danger\">Error</div>");
+            $("#result").append("<p>" + JSON.stringify(error, null, 4) + "</p>");
+          }
+        });
         break;
       case "refresh_token":
         $.ajax({
