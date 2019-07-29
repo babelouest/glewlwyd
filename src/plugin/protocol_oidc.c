@@ -1883,7 +1883,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
     j_user = config->glewlwyd_config->glewlwyd_callback_check_user_valid(config->glewlwyd_config, username, password, scope);
     if (check_result_value(j_user, G_OK)) {
       time(&now);
-      if ((refresh_token = generate_refresh_token(config, client_id, username, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), now)) != NULL) {
+      if ((refresh_token = generate_refresh_token()) != NULL) {
         j_refresh_token = serialize_refresh_token(config, GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, 0, username, client_id, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), now, config->refresh_token_duration, config->refresh_token_rolling, refresh_token, issued_for, u_map_get_case(request->map_header, "user-agent"));
         if (check_result_value(j_refresh_token, G_OK)) {
           j_user_only = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
