@@ -2304,7 +2304,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
   pthread_mutexattr_t mutexattr;
   json_t * j_return, * j_result;
   
-  y_log_message(Y_LOG_LEVEL_INFO, "Init plugin Glewlwyd Oauth2");
+  y_log_message(Y_LOG_LEVEL_INFO, "Init plugin Glewlwyd Oauth2 '%s'", name);
   *cls = o_malloc(sizeof(struct _oauth2_config));
   if (*cls != NULL) {
     pthread_mutexattr_init ( &mutexattr );
@@ -2455,6 +2455,7 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
   UNUSED(config);
   UNUSED(name);
   if (cls != NULL) {
+    y_log_message(Y_LOG_LEVEL_INFO, "Close plugin Glewlwyd Oauth2 '%s'", name);
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "auth/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "token/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "profile/*");
