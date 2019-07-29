@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 
 import MockPluginParams from './MockPluginParams';
 import GlwdOauth2Params from './GlwdOauth2Params';
+import GlwdOIDCParams from './GlwdOIDCParams';
 
 class PluginEditParameters extends Component {
   constructor(props) {
@@ -29,6 +30,8 @@ class PluginEditParameters extends Component {
       return <MockPluginParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
     } else if (this.state.mod.module === "oauth2-glewlwyd") {
       return <GlwdOauth2Params mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
+    } else if (this.state.mod.module === "oidc") {
+      return <GlwdOIDCParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
     } else {
       return ("");
     }
