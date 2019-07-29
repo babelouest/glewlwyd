@@ -2745,6 +2745,18 @@ static json_t * check_parameters (json_t * j_params) {
             if (json_object_get(j_element, "name") != NULL || !json_string_length(json_object_get(j_element, "name"))) {
               json_array_append_new(j_error, json_string("'claims' element must have a property 'name' of type string and non empty"));
               ret = G_ERROR_PARAM;
+            } else if (0 == o_strcmp("iss", json_string_value(json_object_get(j_element, "name"))) ||
+                       0 == o_strcmp("sub", json_string_value(json_object_get(j_element, "name"))) ||
+                       0 == o_strcmp("aud", json_string_value(json_object_get(j_element, "name"))) ||
+                       0 == o_strcmp("exp", json_string_value(json_object_get(j_element, "name"))) ||
+                       0 == o_strcmp("iat", json_string_value(json_object_get(j_element, "name"))) ||
+                       0 == o_strcmp("auth_time", json_string_value(json_object_get(j_element, "name"))) ||
+                       0 == o_strcmp("nonce", json_string_value(json_object_get(j_element, "name"))) ||
+                       0 == o_strcmp("acr", json_string_value(json_object_get(j_element, "name"))) ||
+                       0 == o_strcmp("amr", json_string_value(json_object_get(j_element, "name"))) ||
+                       0 == o_strcmp("azp", json_string_value(json_object_get(j_element, "name")))) {
+              json_array_append_new(j_error, json_string("'claims' property 'name' forbidden values are: 'iss', 'sub', 'aud', 'exp', 'iat', 'auth_time', 'nonce', 'acr', 'amr', 'azp'"));
+              ret = G_ERROR_PARAM;
             }
             if (json_object_get(j_element, "user-propery") != NULL || !json_string_length(json_object_get(j_element, "user-propery"))) {
               json_array_append_new(j_error, json_string("'claims' element must have a property 'user-propery' of type string and non empty"));
