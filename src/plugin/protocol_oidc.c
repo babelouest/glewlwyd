@@ -195,6 +195,7 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * username
   char ** claims_array = NULL, * endptr;
   int i;
   long int lvalue;
+  size_t index;
   
   json_object_set_new(j_userinfo, "sub", json_string(username));
   if (json_object_get(j_user, "name") != NULL) {
@@ -204,6 +205,7 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * username
     json_object_set(j_userinfo, "email", json_object_get(j_user, "email"));
   }
   
+  // Add clained values
   if (split_string(claims, " ", &claims_array)) {
     for (i=0; claims_array[i] != NULL; i++) {
       if (json_object_get(j_userinfo, claims_array[i]) == NULL) {
@@ -227,6 +229,30 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * username
               json_object_set(j_userinfo, claims_array[i], j_user_property);
             }
           }
+        }
+      }
+    }
+  }
+  
+  // Add mandatory values
+  json_array_foreach(json_object_get(config->j_params, "claims"), index, j_claim) {
+    if (json_object_get(j_userinfo, json_string_value(json_object_get(j_claim, "name"))) == NULL && json_object_get(j_claim, "mandatory") == json_true()) {
+      j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_claim, "user-propery")));
+      if (j_user_property != NULL) {
+        if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_claim, "type")))) {
+          if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-true")))) {
+            json_object_set(j_userinfo, claims_array[i], json_true());
+          } else if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-false")))) {
+            json_object_set(j_userinfo, claims_array[i], json_false());
+          }
+        } else if (0 == o_strcmp("number", json_string_value(json_object_get(j_claim, "type")))) {
+          endptr = NULL;
+          lvalue = strtol(json_string_value(j_user_property), &endptr, 10);
+          if (!(*endptr)) {
+            json_object_set_new(j_userinfo, claims_array[i], json_integer(lvalue));
+          }
+        } else {
+          json_object_set(j_userinfo, claims_array[i], j_user_property);
         }
       }
     }
@@ -2742,7 +2768,7 @@ static json_t * check_parameters (json_t * j_params) {
             json_array_append_new(j_error, json_string("'claims' element must be a JSON object"));
             ret = G_ERROR_PARAM;
           } else {
-            if (json_object_get(j_element, "name") != NULL || !json_string_length(json_object_get(j_element, "name"))) {
+            if (json_object_get(j_element, "name") == NULL || !json_string_length(json_object_get(j_element, "name"))) {
               json_array_append_new(j_error, json_string("'claims' element must have a property 'name' of type string and non empty"));
               ret = G_ERROR_PARAM;
             } else if (0 == o_strcmp("iss", json_string_value(json_object_get(j_element, "name"))) ||
@@ -2758,19 +2784,23 @@ static json_t * check_parameters (json_t * j_params) {
               json_array_append_new(j_error, json_string("'claims' property 'name' forbidden values are: 'iss', 'sub', 'aud', 'exp', 'iat', 'auth_time', 'nonce', 'acr', 'amr', 'azp'"));
               ret = G_ERROR_PARAM;
             }
-            if (json_object_get(j_element, "user-propery") != NULL || !json_string_length(json_object_get(j_element, "user-propery"))) {
-              json_array_append_new(j_error, json_string("'claims' element must have a property 'user-propery' of type string and non empty"));
+            if (json_object_get(j_element, "user-property") == NULL || !json_string_length(json_object_get(j_element, "user-property"))) {
+              json_array_append_new(j_error, json_string("'claims' element must have a property 'user-property' of type string and non empty"));
               ret = G_ERROR_PARAM;
             }
             if (json_object_get(j_element, "type") != NULL && 0 != o_strcmp("string", json_string_value(json_object_get(j_element, "type"))) && 0 != o_strcmp("boolean", json_string_value(json_object_get(j_element, "type"))) && 0 != o_strcmp("number", json_string_value(json_object_get(j_element, "type")))) {
               json_array_append_new(j_error, json_string("'claims' element 'type' is optional and must be of type string and must have one of the following values: 'string', 'boolean', 'number'"));
               ret = G_ERROR_PARAM;
             } else if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_element, "type")))) {
-              if (json_object_get(j_element, "boolean-value-true") != NULL || !json_string_length(json_object_get(j_element, "boolean-value-true")) ||
-                  json_object_get(j_element, "boolean-value-false") != NULL || !json_string_length(json_object_get(j_element, "boolean-value-false"))) {
+              if (json_object_get(j_element, "boolean-value-true") == NULL || !json_string_length(json_object_get(j_element, "boolean-value-true")) ||
+                  json_object_get(j_element, "boolean-value-false") == NULL || !json_string_length(json_object_get(j_element, "boolean-value-false"))) {
                 json_array_append_new(j_error, json_string("'claims' elements 'boolean-value-true' and 'boolean-value-true' are mandatory when type is 'boolean' and they must be non empty strings"));
                 ret = G_ERROR_PARAM;
               }
+            }
+            if (json_object_get(j_element, "mandatory") != NULL && !json_is_boolean(json_object_get(j_element, "mandatory"))) {
+              json_array_append_new(j_error, json_string("'claims' element 'mandatory' is optional and must be a boolean"));
+              ret = G_ERROR_PARAM;
             }
           }
         }
@@ -2919,7 +2949,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
   pthread_mutexattr_t mutexattr;
   json_t * j_return, * j_result;
   
-  y_log_message(Y_LOG_LEVEL_INFO, "Init plugin Glewlwyd OpenID Connect");
+  y_log_message(Y_LOG_LEVEL_INFO, "Init plugin Glewlwyd OpenID Connect '%s'", name);
   *cls = o_malloc(sizeof(struct _oidc_config));
   if (*cls != NULL) {
     pthread_mutexattr_init ( &mutexattr );
@@ -3087,6 +3117,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
 
 int plugin_module_close(struct config_plugin * config, const char * name, void * cls) {
   if (cls != NULL) {
+    y_log_message(Y_LOG_LEVEL_INFO, "Close plugin Glewlwyd OpenID Connect '%s'", name);
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "auth/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "token/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "profile/*");
