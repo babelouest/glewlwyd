@@ -177,6 +177,19 @@ static char * generate_client_access_token(struct _oidc_config * config, const c
   return token;
 }
 
+static json_t * get_userinfo(struct _oidc_config * config, const char * username, json_t * j_user, const char * claims) {
+  json_t * j_userinfo = json_pack("{ss}", "sub", username);
+  
+  if (json_object_get(j_user, "name") != NULL) {
+    json_object_set(j_userinfo, "name", json_object_get(j_user, "name"));
+  }
+  if (json_object_get(j_user, "email") != NULL) {
+    json_object_set(j_userinfo, "email", json_object_get(j_user, "email"));
+  }
+  
+  return j_userinfo;
+}
+
 static int serialize_id_token(struct _oidc_config * config, uint auth_type, const char * id_token, const char * username, const char * client_id, time_t now, const char * issued_for, const char * user_agent) {
   json_t * j_query;
   int res, ret;
@@ -2649,7 +2662,8 @@ static json_t * check_parameters (json_t * j_params) {
           }
         }
       }
-    } else if (json_object_get(j_params, "additional-parameters") != NULL) {
+    }
+    if (json_object_get(j_params, "additional-parameters") != NULL) {
       if (!json_is_array(json_object_get(j_params, "additional-parameters"))) {
         json_array_append_new(j_error, json_string("Property 'additional-parameters' is optional and must be an array"));
         ret = G_ERROR_PARAM;
@@ -2673,6 +2687,38 @@ static json_t * check_parameters (json_t * j_params) {
                        0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "scope")) {
               json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'username', 'salt', 'type', 'iat', 'expires_in', 'scope'"));
               ret = G_ERROR_PARAM;
+            }
+          }
+        }
+      }
+    }
+    if (json_object_get(j_params, "claims") != NULL) {
+      if (!json_is_array(json_object_get(j_params, "claims"))) {
+        json_array_append_new(j_error, json_string("Property 'claims' is optional and must be an array"));
+        ret = G_ERROR_PARAM;
+      } else {
+        json_array_foreach(json_object_get(j_params, "claims"), index, j_element) {
+          if (!json_is_object(j_element)) {
+            json_array_append_new(j_error, json_string("'claims' element must be a JSON object"));
+            ret = G_ERROR_PARAM;
+          } else {
+            if (json_object_get(j_element, "name") != NULL || !json_string_length(json_object_get(j_element, "name"))) {
+              json_array_append_new(j_error, json_string("'claims' element must have a property 'name' of type string and non empty"));
+              ret = G_ERROR_PARAM;
+            }
+            if (json_object_get(j_element, "user-propery") != NULL || !json_string_length(json_object_get(j_element, "user-propery"))) {
+              json_array_append_new(j_error, json_string("'claims' element must have a property 'user-propery' of type string and non empty"));
+              ret = G_ERROR_PARAM;
+            }
+            if (json_object_get(j_element, "type") != NULL && 0 != o_strcmp("string", json_string_value(json_object_get(j_element, "type"))) && 0 != o_strcmp("boolean", json_string_value(json_object_get(j_element, "type"))) && 0 != o_strcmp("number", json_string_value(json_object_get(j_element, "type")))) {
+              json_array_append_new(j_error, json_string("'claims' element 'type' is optional and must be of type string and must have one of the following values: 'string', 'boolean', 'number'"));
+              ret = G_ERROR_PARAM;
+            } else if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_element, "type")))) {
+              if (json_object_get(j_element, "boolean-value-true") != NULL || !json_string_length(json_object_get(j_element, "boolean-value-true")) ||
+                  json_object_get(j_element, "boolean-value-false") != NULL || !json_string_length(json_object_get(j_element, "boolean-value-false"))) {
+                json_array_append_new(j_error, json_string("'claims' elements 'boolean-value-true' and 'boolean-value-true' are mandatory when type is 'boolean' and they must be non empty strings"));
+                ret = G_ERROR_PARAM;
+              }
             }
           }
         }
