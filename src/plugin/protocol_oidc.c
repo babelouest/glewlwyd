@@ -2236,6 +2236,9 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   int ret, implicit_flow = 1, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NONE_STORE;
   struct _u_map map_query;
 
+  u_map_put(response->map_header, "Cache-Control", "no-store");
+  u_map_put(response->map_header, "Pragma", "no-cache");
+
   // state_param kept for error results
   state_param = get_state_param(u_map_get(get_map(request), "state"));
 
@@ -2469,6 +2472,9 @@ static int callback_oidc_token(const struct _u_request * request, struct _u_resp
   const char * grant_type = u_map_get(request->map_post_body, "grant_type");
   int result = U_CALLBACK_CONTINUE;
 
+  u_map_put(response->map_header, "Cache-Control", "no-store");
+  u_map_put(response->map_header, "Pragma", "no-cache");
+
   if (0 == o_strcmp("authorization_code", grant_type)) {
     if (is_authorization_type_enabled(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE)) {
       result = check_auth_type_access_token_request(request, response, user_data);
@@ -2501,7 +2507,10 @@ static int callback_oidc_token(const struct _u_request * request, struct _u_resp
 static int callback_oidc_get_userinfo(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   json_t * j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user_profile(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username"))), * j_userinfo;
-  
+
+  u_map_put(response->map_header, "Cache-Control", "no-store");
+  u_map_put(response->map_header, "Pragma", "no-cache");
+
   if (check_result_value(j_user, G_OK)) {
     j_userinfo = get_userinfo(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_object_get(j_user, "user"), u_map_get(get_map(request), "claims"));
     if (j_userinfo != NULL) {
@@ -2527,7 +2536,10 @@ static int callback_oidc_refresh_token_list_get(const struct _u_request * reques
   long int l_converted = 0;
   char * endptr = NULL, * sort = NULL;
   json_t * j_refresh_list;
-  
+
+  u_map_put(response->map_header, "Cache-Control", "no-store");
+  u_map_put(response->map_header, "Pragma", "no-cache");
+
   if (u_map_get(request->map_url, "offset") != NULL) {
     l_converted = strtol(u_map_get(request->map_url, "offset"), &endptr, 10);
     if (!(*endptr) && l_converted > 0) {
@@ -2558,7 +2570,10 @@ static int callback_oidc_refresh_token_list_get(const struct _u_request * reques
 static int callback_oidc_disable_refresh_token(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   int res;
-  
+
+  u_map_put(response->map_header, "Cache-Control", "no-store");
+  u_map_put(response->map_header, "Pragma", "no-cache");
+
   if ((res = refresh_token_disable(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "token_hash"))) == G_ERROR_NOT_FOUND) {
     response->status = 404;
   } else if (res == G_ERROR_PARAM) {
