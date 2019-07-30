@@ -69,7 +69,7 @@ START_TEST(test_glwd_auth_scheme_register_success)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ulfius_clean_response(&resp);
   j_expected = json_pack("{sssssssoso}", "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "scheme_display_name", SCHEME_DISPLAY_NAME, "scheme_authenticated", json_false(), "scheme_registered", json_false());
-  ck_assert_int_eq(json_equal(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "mock_group_1"), 0), j_expected), 1);
+  ck_assert_int_eq(json_equal(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "0"), 0), j_expected), 1);
   json_decref(j_body);
   json_decref(j_expected);
   
@@ -94,7 +94,7 @@ START_TEST(test_glwd_auth_scheme_register_success)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ulfius_clean_response(&resp);
   j_expected = json_pack("{sssssssoso}", "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "scheme_display_name", SCHEME_DISPLAY_NAME, "scheme_authenticated", json_false(), "scheme_registered", json_true());
-  ck_assert_int_eq(json_equal(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "mock_group_1"), 0), j_expected), 1);
+  ck_assert_int_eq(json_equal(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "0"), 0), j_expected), 1);
   json_decref(j_body);
   json_decref(j_expected);
   
@@ -107,7 +107,7 @@ START_TEST(test_glwd_auth_scheme_register_success)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ulfius_clean_response(&resp);
   j_expected = json_pack("{sssssssoso}", "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "scheme_display_name", SCHEME_DISPLAY_NAME, "scheme_authenticated", json_true(), "scheme_registered", json_true());
-  ck_assert_int_eq(json_equal(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "mock_group_1"), 0), j_expected), 1);
+  ck_assert_int_eq(json_equal(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "0"), 0), j_expected), 1);
   json_decref(j_body);
   json_decref(j_expected);
   
@@ -128,7 +128,7 @@ START_TEST(test_glwd_auth_scheme_deregister_success)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ulfius_clean_response(&resp);
   j_expected = json_pack("{sssssssoso}", "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "scheme_display_name", SCHEME_DISPLAY_NAME, "scheme_authenticated", json_true(), "scheme_registered", json_true());
-  ck_assert_int_eq(json_equal(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "mock_group_1"), 0), j_expected), 1);
+  ck_assert_int_eq(json_equal(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "0"), 0), j_expected), 1);
   json_decref(j_body);
   json_decref(j_expected);
   
@@ -145,7 +145,7 @@ START_TEST(test_glwd_auth_scheme_deregister_success)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ulfius_clean_response(&resp);
   j_expected = json_pack("{sssssssoso}", "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "scheme_display_name", SCHEME_DISPLAY_NAME, "scheme_authenticated", json_false(), "scheme_registered", json_false());
-  ck_assert_int_eq(json_equal(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "mock_group_1"), 0), j_expected), 1);
+  ck_assert_int_eq(json_equal(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "0"), 0), j_expected), 1);
   json_decref(j_body);
   json_decref(j_expected);
   

@@ -94,28 +94,28 @@ START_TEST(test_glwd_auth_check_scheme_session_password)
     ck_assert_ptr_eq(json_object_get(j_element, "available"), json_true());
     if (0 == o_strcmp("scope1", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 2);
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_1");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "0");
       ck_assert_int_eq(json_array_size(j_group), 2);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_42");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 1), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 1), "scheme_authenticated"), json_false());
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_2");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "1");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
     } else if (0 == o_strcmp("scope2", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_3");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "2");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
     } else if (0 == o_strcmp("scope3", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_4");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "3");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
@@ -178,28 +178,28 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
     ck_assert_ptr_eq(json_object_get(j_element, "available"), json_true());
     if (0 == o_strcmp("scope1", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 2);
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_1");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "0");
       ck_assert_int_eq(json_array_size(j_group), 2);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_42");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 1), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 1), "scheme_authenticated"), json_false());
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_2");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "1");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
     } else if (0 == o_strcmp("scope2", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_3");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "2");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
     } else if (0 == o_strcmp("scope3", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_4");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "3");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
@@ -238,28 +238,28 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
     ck_assert_ptr_eq(json_object_get(j_element, "available"), json_true());
     if (0 == o_strcmp("scope1", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 2);
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_1");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "0");
       ck_assert_int_eq(json_array_size(j_group), 2);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_42");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_true());
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 1), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 1), "scheme_authenticated"), json_false());
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_2");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "1");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
     } else if (0 == o_strcmp("scope2", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_3");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "2");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
     } else if (0 == o_strcmp("scope3", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_4");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "3");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
@@ -302,28 +302,28 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
     ck_assert_ptr_eq(json_object_get(j_element, "available"), json_true());
     if (0 == o_strcmp("scope1", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 2);
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_1");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "0");
       ck_assert_int_eq(json_array_size(j_group), 2);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_42");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 1), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 1), "scheme_authenticated"), json_true());
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_2");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "1");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
     } else if (0 == o_strcmp("scope2", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_3");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "2");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
     } else if (0 == o_strcmp("scope3", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_4");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "3");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_true());
@@ -365,28 +365,28 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
     ck_assert_ptr_eq(json_object_get(j_element, "available"), json_true());
     if (0 == o_strcmp("scope1", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 2);
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_1");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "0");
       ck_assert_int_eq(json_array_size(j_group), 2);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_42");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 1), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 1), "scheme_authenticated"), json_false());
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_2");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "1");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_true());
     } else if (0 == o_strcmp("scope2", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_3");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "2");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_true());
     } else if (0 == o_strcmp("scope3", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_4");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "3");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
@@ -461,28 +461,28 @@ START_TEST(test_glwd_auth_check_scheme_forbidden)
     }
     if (0 == o_strcmp("scope1", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 2);
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_1");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "0");
       ck_assert_int_eq(json_array_size(j_group), 2);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_42");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 1), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 1), "scheme_authenticated"), json_false());
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_2");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "1");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
     } else if (0 == o_strcmp("scope2", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_3");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "2");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
     } else if (0 == o_strcmp("scope3", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_4");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "3");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
@@ -542,28 +542,28 @@ START_TEST(test_glwd_auth_check_scheme_missing)
     ck_assert_ptr_eq(json_object_get(j_element, "available"), json_true());
     if (0 == o_strcmp("scope1", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 2);
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_1");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "0");
       ck_assert_int_eq(json_array_size(j_group), 2);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_42");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 1), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 1), "scheme_authenticated"), json_false());
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_2");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "1");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
     } else if (0 == o_strcmp("scope2", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_3");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "2");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_95");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
     } else if (0 == o_strcmp("scope3", key)) {
       ck_assert_int_eq(json_object_size(json_object_get(j_element, "schemes")), 1);
 
-      j_group = json_object_get(json_object_get(j_element, "schemes"), "mock_group_4");
+      j_group = json_object_get(json_object_get(j_element, "schemes"), "3");
       ck_assert_int_eq(json_array_size(j_group), 1);
       ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_group, 0), "scheme_name")), "mock_scheme_88");
       ck_assert_ptr_eq(json_object_get(json_array_get(j_group, 0), "scheme_authenticated"), json_false());
