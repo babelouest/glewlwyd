@@ -148,19 +148,6 @@ static int json_array_has_string(json_t * j_array, const char * value) {
   return 0;
 }
 
-static json_t * get_claims_parameter(json_t * j_claims, const char * claim) {
-  json_t * j_element;
-  size_t index;
-  
-  json_array_foreach(j_claims, index, j_element) {
-    if (0 == o_strcmp(claim, json_string_value(json_object_get(j_element, "name")))) {
-      return j_element;
-    }
-  }
-  
-  return NULL;
-}
-
 /**
  * Generates a client_access_token from the specified parameters that are considered valid
  */
@@ -193,7 +180,6 @@ static char * generate_client_access_token(struct _oidc_config * config, const c
 static json_t * get_userinfo(struct _oidc_config * config, const char * username, json_t * j_user, const char * claims) {
   json_t * j_userinfo = json_pack("{ss}", "sub", username), * j_claim, * j_user_property;
   char ** claims_array = NULL, * endptr;
-  int i;
   long int lvalue;
   size_t index;
   
@@ -205,57 +191,33 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * username
     json_object_set(j_userinfo, "email", json_object_get(j_user, "email"));
   }
   
-  // Add clained values
-  if (split_string(claims, " ", &claims_array)) {
-    for (i=0; claims_array[i] != NULL; i++) {
-      if (json_object_get(j_userinfo, claims_array[i]) == NULL) {
-        j_claim = get_claims_parameter(json_object_get(config->j_params, "claims"), claims_array[i]);
-        if (j_claim != NULL) {
-          j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_claim, "user-propery")));
-          if (j_user_property != NULL) {
-            if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_claim, "type")))) {
-              if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-true")))) {
-                json_object_set(j_userinfo, claims_array[i], json_true());
-              } else if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-false")))) {
-                json_object_set(j_userinfo, claims_array[i], json_false());
-              }
-            } else if (0 == o_strcmp("number", json_string_value(json_object_get(j_claim, "type")))) {
-              endptr = NULL;
-              lvalue = strtol(json_string_value(j_user_property), &endptr, 10);
-              if (!(*endptr)) {
-                json_object_set_new(j_userinfo, claims_array[i], json_integer(lvalue));
-              }
-            } else {
-              json_object_set(j_userinfo, claims_array[i], j_user_property);
+  // Add mandatory and claimed values
+  if (claims == NULL || split_string(claims, " ", &claims_array)) {
+    json_array_foreach(json_object_get(config->j_params, "claims"), index, j_claim) {
+      if (json_object_get(j_userinfo, json_string_value(json_object_get(j_claim, "name"))) == NULL && 
+          (json_object_get(j_claim, "mandatory") == json_true() || string_array_has_value((const char **)claims_array, json_string_value(json_object_get(j_claim, "name"))))) {
+        j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_claim, "user-property")));
+        if (j_user_property != NULL && json_is_string(j_user_property)) {
+          if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_claim, "type")))) {
+            if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-true")))) {
+              json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_true());
+            } else if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-false")))) {
+              json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_false());
             }
+          } else if (0 == o_strcmp("number", json_string_value(json_object_get(j_claim, "type")))) {
+            endptr = NULL;
+            lvalue = strtol(json_string_value(j_user_property), &endptr, 10);
+            if (!(*endptr)) {
+              json_object_set_new(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_integer(lvalue));
+            }
+          } else {
+            json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), j_user_property);
           }
         }
       }
     }
-  }
-  
-  // Add mandatory values
-  json_array_foreach(json_object_get(config->j_params, "claims"), index, j_claim) {
-    if (json_object_get(j_userinfo, json_string_value(json_object_get(j_claim, "name"))) == NULL && json_object_get(j_claim, "mandatory") == json_true()) {
-      j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_claim, "user-propery")));
-      if (j_user_property != NULL) {
-        if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_claim, "type")))) {
-          if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-true")))) {
-            json_object_set(j_userinfo, claims_array[i], json_true());
-          } else if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-false")))) {
-            json_object_set(j_userinfo, claims_array[i], json_false());
-          }
-        } else if (0 == o_strcmp("number", json_string_value(json_object_get(j_claim, "type")))) {
-          endptr = NULL;
-          lvalue = strtol(json_string_value(j_user_property), &endptr, 10);
-          if (!(*endptr)) {
-            json_object_set_new(j_userinfo, claims_array[i], json_integer(lvalue));
-          }
-        } else {
-          json_object_set(j_userinfo, claims_array[i], j_user_property);
-        }
-      }
-    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_userinfo - Error split_string");
   }
   
   return j_userinfo;
@@ -2506,7 +2468,7 @@ static int callback_oidc_token(const struct _u_request * request, struct _u_resp
 
 static int callback_oidc_get_userinfo(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user_profile(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username"))), * j_userinfo;
+  json_t * j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username"))), * j_userinfo;
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
@@ -3080,7 +3042,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                 if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_authorization, (void*)*cls) != G_OK || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_authorization, (void*)*cls) || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_token, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_access_token, (void*)((struct _oidc_config *)*cls)->glewlwyd_resource_config) || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) ||
