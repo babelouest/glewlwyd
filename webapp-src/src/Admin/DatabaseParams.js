@@ -264,11 +264,11 @@ class DatabaseParams extends Component {
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
-            <div className="input-group-prepend input-group-text">
-              <input type="checkbox" className="form-control" id={"mod-database-data-format-multiple-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "multiple")} checked={this.state.mod.parameters["data-format"][property]["multiple"]} />
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor={"mod-database-data-format-multiple-"+property}>{i18next.t("admin.mod-database-data-format-multiple")}</label>
             </div>
             <div className="input-group-text">
-              <label className="input-group-text" htmlFor={"mod-database-data-format-multiple-"+property}>{i18next.t("admin.mod-database-data-format-multiple")}</label>
+              <input type="checkbox" className="form-control" id={"mod-database-data-format-multiple-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "multiple")} checked={this.state.mod.parameters["data-format"][property]["multiple"]} />
             </div>
           </div>
         </div>
@@ -278,41 +278,41 @@ class DatabaseParams extends Component {
           {nameMultipleJsx}
           <div className="form-group">
             <div className="input-group mb-3">
-              <div className="input-group-prepend input-group-text">
-                <input type="checkbox" className="form-control" id={"mod-database-data-format-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "read")} checked={this.state.mod.parameters["data-format"][property]["read"]} />
-              </div>
-              <div className="input-group-text">
+              <div className="input-group-prepend">
                 <label className="input-group-text" htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-read")}</label>
               </div>
+              <div className="input-group-text">
+                <input type="checkbox" className="form-control" id={"mod-database-data-format-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "read")} checked={this.state.mod.parameters["data-format"][property]["read"]} />
+              </div>
             </div>
           </div>
           <div className="form-group">
             <div className="input-group mb-3">
-              <div className="input-group-prepend input-group-text">
-                <input type="checkbox" className="form-control" id={"mod-database-data-format-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "write")} checked={this.state.mod.parameters["data-format"][property]["write"]} />
-              </div>
-              <div className="input-group-text">
+              <div className="input-group-prepend">
                 <label className="input-group-text" htmlFor={"mod-database-data-format-write-"+property}>{i18next.t("admin.mod-database-data-format-write")}</label>
               </div>
+              <div className="input-group-text">
+                <input type="checkbox" className="form-control" id={"mod-database-data-format-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "write")} checked={this.state.mod.parameters["data-format"][property]["write"]} />
+              </div>
             </div>
           </div>
           <div className="form-group">
             <div className="input-group mb-3">
-              <div className="input-group-prepend input-group-text">
-                <input type="checkbox" className="form-control" id={"mod-database-data-format-profile-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-read")} checked={this.state.mod.parameters["data-format"][property]["profile-read"]} />
-              </div>
-              <div className="input-group-text">
+              <div className="input-group-prepend">
                 <label className="input-group-text" htmlFor={"mod-database-data-format-profile-read-"+property}>{i18next.t("admin.mod-database-data-format-profile-read")}</label>
               </div>
+              <div className="input-group-text">
+                <input type="checkbox" className="form-control" id={"mod-database-data-format-profile-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-read")} checked={this.state.mod.parameters["data-format"][property]["profile-read"]} />
+              </div>
             </div>
           </div>
           <div className="form-group">
             <div className="input-group mb-3">
-              <div className="input-group-prepend input-group-text">
-                <input type="checkbox" className="form-control" id={"mod-database-data-format-profile-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-write")} checked={this.state.mod.parameters["data-format"][property]["profile-write"]} />
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor={"mod-database-data-format-profile-write-"+property}>{i18next.t("admin.mod-database-data-format-profile-write")}</label>
               </div>
               <div className="input-group-text">
-                <label className="input-group-text" htmlFor={"mod-database-data-format-profile-write-"+property}>{i18next.t("admin.mod-database-data-format-profile-write")}</label>
+                <input type="checkbox" className="form-control" id={"mod-database-data-format-profile-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-write")} checked={this.state.mod.parameters["data-format"][property]["profile-write"]} />
               </div>
             </div>
           </div>
@@ -322,21 +322,21 @@ class DatabaseParams extends Component {
           {nameMultipleJsx}
           <div className="form-group">
             <div className="input-group mb-3">
-              <div className="input-group-prepend input-group-text">
-                <input type="checkbox" className="form-control" id={"mod-database-data-format-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "read")} checked={this.state.mod.parameters["data-format"][property]["read"]} />
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-read")}</label>
               </div>
               <div className="input-group-text">
-                <label className="input-group-text" htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-read")}</label>
+                <input type="checkbox" className="form-control" id={"mod-database-data-format-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "read")} checked={this.state.mod.parameters["data-format"][property]["read"]} />
               </div>
             </div>
           </div>
           <div className="form-group">
             <div className="input-group mb-3">
-              <div className="input-group-prepend input-group-text">
-                <input type="checkbox" className="form-control" id={"mod-database-data-format-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "write")} checked={this.state.mod.parameters["data-format"][property]["write"]} />
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor={"mod-database-data-format-write-"+property}>{i18next.t("admin.mod-database-data-format-write")}</label>
               </div>
               <div className="input-group-text">
-                <label className="input-group-text" htmlFor={"mod-database-data-format-write-"+property}>{i18next.t("admin.mod-database-data-format-write")}</label>
+                <input type="checkbox" className="form-control" id={"mod-database-data-format-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "write")} checked={this.state.mod.parameters["data-format"][property]["write"]} />
               </div>
             </div>
           </div>
