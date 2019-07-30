@@ -293,7 +293,7 @@ static char * generate_id_token(struct _oidc_config * config, const char * usern
       json_object_set_new(j_user_info, "exp", json_integer(now + config->access_token_duration));
       json_object_set_new(j_user_info, "iat", json_integer(now));
       json_object_set_new(j_user_info, "auth_time", json_integer(auth_time));
-      json_object_set_new(j_user_info, "azp", json_object_get(j_client, "client_id"));
+      json_object_set(j_user_info, "azp", json_object_get(j_client, "client_id"));
       if (o_strlen(nonce)) {
         json_object_set_new(j_user_info, "nonce", json_string(nonce));
       }
@@ -333,9 +333,11 @@ static char * generate_id_token(struct _oidc_config * config, const char * usern
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_id_token - oidc - Error jwt_add_grants_json");
         }
+        o_free(user_info_str);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_id_token - oidc - Error json_dumps");
       }
+      json_decref(j_user_info);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_id_token - oidc - Error get_userinfo");
     }
@@ -1428,6 +1430,11 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
   long int max_age;
   time_t now;
   
+  additional_parameters.nb_values = 0;
+  additional_parameters.keys = NULL;
+  additional_parameters.values = NULL;
+  additional_parameters.lengths = NULL;
+  
   state_param = get_state_param(u_map_get(get_map(request), "state"));
   
   // Let's use again the loop do {} while (false); to avoid too much embeded if statements
@@ -1439,6 +1446,13 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
       ulfius_add_header_to_response(response, "Location", redirect_url);
       o_free(redirect_url);
       j_return = json_pack("{si}", "result", G_ERROR);
+      break;
+    }
+    
+    if (!o_strlen(u_map_get(get_map(request), "redirect_uri"))) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - redirect_uri missing");
+      response->status = 403;
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       break;
     }
     
@@ -1593,27 +1607,6 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
       break;
     }
     
-    /**
-     * Let's deal with id_token_hint another time, I need a use case
-     * 
-    if (o_strlen(u_map_get(get_map(request), "id_token_hint"))) {
-      if (0 == o_strcmp("none", u_map_get(get_map(request), "prompt"))) {
-        json_t * j_result = access_token_check_signature(config->glewlwyd_resource_config, u_map_get(get_map(request), "id_token_hint"));
-        if (check_result_value(j_result, G_TOKEN_OK)) {
-        } else if (
-        json_decref(j_result);
-      } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none' required when id_token_hint set");
-        response->status = 302;
-        redirect_url = msprintf("%s%serror=invalid_request%s", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
-        ulfius_add_header_to_response(response, "Location", redirect_url);
-        o_free(redirect_url);
-        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-        break;
-      }
-    }
-    */
-    
     issued_for = get_client_hostname(request);
     if (issued_for == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - Error get_client_hostname");
@@ -1639,7 +1632,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     // nonce parameter is required for some authorization types
     if ((auth_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_STORE) && !o_strlen(u_map_get(get_map(request), "nonce"))) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - nonce required");
-      redirect_url = msprintf("%s%sinvalid_request", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"));
+      redirect_url = msprintf("%s%serror=invalid_request", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"));
       ulfius_add_header_to_response(response, "Location", redirect_url);
       o_free(redirect_url);
       response->status = 302;
@@ -1663,7 +1656,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - nonce required");
-        redirect_url = msprintf("%s%sinvalid_request", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"));
+        redirect_url = msprintf("%s%serror=invalid_request", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"));
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
         response->status = 302;
@@ -1673,7 +1666,6 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     }
     
     j_return = json_pack("{sisOsOss}", "result", G_OK, "session", json_object_get(j_session, "session"), "client", json_object_get(j_client, "client"), "issued_for", issued_for);
-    u_map_clean(&additional_parameters);
   } while (0);
 
   o_free(issued_for);
@@ -1681,6 +1673,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
   json_decref(j_session);
   json_decref(j_client);
   free_string_array(scope_list);
+  u_map_clean(&additional_parameters);
   
   return j_return;
 }
@@ -2193,7 +2186,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   const char * response_type = u_map_get(get_map(request), "response_type");
   int result = U_CALLBACK_CONTINUE;
   char * redirect_url, * state_param = NULL, ** resp_type_array = NULL, * authorization_code = NULL, * access_token = NULL, * id_token = NULL, * expires_in_str = NULL, * iat_str = NULL, * query_parameters = NULL;
-  json_t * j_auth_result;
+  json_t * j_auth_result = NULL;
   time_t now;
   int ret, implicit_flow = 1, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NONE_STORE;
   struct _u_map map_query;
@@ -2212,39 +2205,47 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       if (u_map_get(get_map(request), "state") != NULL) {
         u_map_put(&map_query, "state", u_map_get(get_map(request), "state"));
       }
-
-      if (string_array_size(resp_type_array) == 1 && string_array_has_value((const char **)resp_type_array, "token") && !config->allow_non_oidc) {
+      
+      if (!string_array_has_value((const char **)resp_type_array, "code") && 
+          !string_array_has_value((const char **)resp_type_array, "token") &&
+          !string_array_has_value((const char **)resp_type_array, "id_token")) {
         response->status = 302;
         redirect_url = msprintf("%s#error=unsupported_response_type%s", u_map_get(get_map(request), "redirect_uri"), state_param);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
         ret = G_ERROR_PARAM;
-      } else if (string_array_size(resp_type_array) == 1 && string_array_has_value((const char **)resp_type_array, "code")) {
+      }
+
+      if (ret == G_OK && string_array_size(resp_type_array) == 1 && string_array_has_value((const char **)resp_type_array, "token") && !config->allow_non_oidc) {
+        response->status = 302;
+        redirect_url = msprintf("%s#error=unsupported_response_type%s", u_map_get(get_map(request), "redirect_uri"), state_param);
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        ret = G_ERROR_PARAM;
+      } else if (ret == G_OK && string_array_size(resp_type_array) == 1 && string_array_has_value((const char **)resp_type_array, "code")) {
         implicit_flow = 0;
       }
 
-      if (string_array_has_value((const char **)resp_type_array, "code")) {
+      if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "code")) {
         auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_STORE;
       }
 
-      if (string_array_has_value((const char **)resp_type_array, "token")) {
+      if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "token") && config->allow_non_oidc) {
         auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_STORE;
       }
 
-      if (string_array_has_value((const char **)resp_type_array, "id_token")) {
+      if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "id_token")) {
         auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_STORE;
       }
 
-      if (string_array_has_value((const char **)resp_type_array, "token") && config->allow_non_oidc) {
-        auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_TOKEN;
-      }
-
-      j_auth_result = validate_endpoint_auth(request, response, user_data, auth_type);
-      if (check_result_value(j_auth_result, G_ERROR_PARAM) || check_result_value(j_auth_result, G_ERROR_UNAUTHORIZED)) {
-        ret = G_ERROR;
-      } else if (!check_result_value(j_auth_result, G_OK)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_authorization - Error validate_endpoint_auth");
-        ret = G_ERROR;
+      if (ret == G_OK) {
+        j_auth_result = validate_endpoint_auth(request, response, user_data, auth_type);
+        if (check_result_value(j_auth_result, G_ERROR_PARAM) || check_result_value(j_auth_result, G_ERROR_UNAUTHORIZED)) {
+          ret = G_ERROR;
+        } else if (!check_result_value(j_auth_result, G_OK)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_authorization - Error validate_endpoint_auth");
+          ret = G_ERROR;
+        }
       }
 
       if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "code")) {
@@ -3046,10 +3047,12 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                    config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) ||
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_refresh_token_list_get, (void*)*cls) || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) ||
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_disable_refresh_token, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL)) {
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL)) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding endpoints");
                   j_return = json_pack("{si}", "result", G_ERROR);
                 } else {
