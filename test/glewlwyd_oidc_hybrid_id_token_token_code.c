@@ -39,6 +39,11 @@ END_TEST
 START_TEST(test_oauth2_implicit_id_token_token_valid)
 {
   struct _u_response resp;
+  char * id_token, * access_token, ** id_token_split = NULL, * str_payload, at_hash[33], at_hash_encoded[64];
+  size_t str_payload_len = 0, at_hash_len = 33, at_hash_encoded_len = 0;
+  gnutls_datum_t at_data;
+  json_t * j_payload;
+
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
   user_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
@@ -49,7 +54,34 @@ START_TEST(test_oauth2_implicit_id_token_token_valid)
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "access_token="), NULL);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
+  id_token = o_strstr(u_map_get(resp.map_header, "Location"), "id_token=") + o_strlen("id_token=");
+  if (o_strchr(id_token, '&') != NULL) {
+    *o_strchr(id_token, '&') = '\0';
+  }
+  access_token = o_strstr(u_map_get(resp.map_header, "Location"), "access_token=") + o_strlen("access_token=");
+  if (o_strchr(access_token, '&') != NULL) {
+    *o_strchr(access_token, '&') = '\0';
+  }
+  
+  ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
+  ck_assert_int_eq(o_base64url_decode((unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), NULL, &str_payload_len), 1);
+  ck_assert_ptr_ne((str_payload = o_malloc(str_payload_len + 1)), NULL);
+  ck_assert_int_eq(o_base64url_decode((unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
+  ck_assert_ptr_ne((j_payload = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
+  ck_assert_int_eq(json_object_size(j_payload), 12);
+  ck_assert_ptr_ne(json_object_get(j_payload, "at_hash"), NULL);
+  
+  at_data.data = (unsigned char*)access_token;
+  at_data.size = o_strlen(access_token);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &at_data, at_hash, &at_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(o_base64url_encode((unsigned char *)at_hash, at_hash_len/2, (unsigned char *)at_hash_encoded, &at_hash_encoded_len), 1);
+  ck_assert_str_eq(at_hash_encoded, json_string_value(json_object_get(j_payload, "at_hash")));
+
   ulfius_clean_response(&resp);
+  free_string_array(id_token_split);
+  o_free(str_payload);
+  json_decref(j_payload);
 }
 END_TEST
 
