@@ -219,6 +219,7 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * username
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_userinfo - Error split_string");
   }
+  free_string_array(claims_array);
   
   return j_userinfo;
 }
@@ -608,7 +609,7 @@ static char * generate_refresh_token() {
 }
 
 static int is_authorization_type_enabled(struct _oidc_config * config, uint authorization_type) {
-  return (authorization_type <= 4)?config->auth_type_enabled[authorization_type]:0;
+  return (authorization_type <= 7)?config->auth_type_enabled[authorization_type]:0;
 }
 
 static json_t * check_client_valid(struct _oidc_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * redirect_uri, const char * scope_list, unsigned short authorization_type) {
@@ -2349,7 +2350,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                                                                                                        json_string_value(json_object_get(json_object_get(j_auth_result, "session"), "scope_filtered"))), 
                                             u_map_get(get_map(request), "nonce"), 
                                             json_object_get(json_object_get(j_auth_result, "session"), "amr"),
-                                            NULL)) != NULL) {
+                                            access_token)) != NULL) {
             if (serialize_id_token(config, 
                                    GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, 
                                    id_token, 
@@ -2445,19 +2446,23 @@ static int callback_oidc_token(const struct _u_request * request, struct _u_resp
       response->status = 403;
     }
   } else if (0 == o_strcmp("password", grant_type)) {
-    if (is_authorization_type_enabled(config, GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS)) {
+    if (is_authorization_type_enabled(config, GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS) && config->allow_non_oidc) {
       result = check_auth_type_resource_owner_pwd_cred(request, response, user_data);
     } else {
       response->status = 403;
     }
   } else if (0 == o_strcmp("client_credentials", grant_type)) {
-    if (is_authorization_type_enabled(config, GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS)) {
+    if (is_authorization_type_enabled(config, GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS) && config->allow_non_oidc) {
       result = check_auth_type_client_credentials_grant(request, response, user_data);
     } else {
       response->status = 403;
     }
   } else if (0 == o_strcmp("refresh_token", grant_type)) {
-    result = get_access_token_from_refresh(request, response, user_data);
+    if (is_authorization_type_enabled(config, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN)) {
+      result = get_access_token_from_refresh(request, response, user_data);
+    } else {
+      response->status = 403;
+    }
   } else if (0 == o_strcmp("delete_token", grant_type)) {
     result = delete_refresh_token(request, response, user_data);
   } else {
@@ -2681,6 +2686,10 @@ static json_t * check_parameters (json_t * j_params) {
     }
     if (json_object_get(j_params, "auth-type-refresh-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-refresh-enabled"))) {
       json_array_append_new(j_error, json_string("Property 'auth-type-refresh-enabled' is optional and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "allow-non-oidc") == NULL || !json_is_boolean(json_object_get(j_params, "allow-non-oidc"))) {
+      json_array_append_new(j_error, json_string("Property 'allow-non-oidc' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "scope") != NULL) {
@@ -3099,12 +3108,18 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
   if (cls != NULL) {
     y_log_message(Y_LOG_LEVEL_INFO, "Close plugin Glewlwyd OpenID Connect '%s'", name);
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "auth/");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "auth/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "token/");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "profile/*");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "profile/");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "profile/token/");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "profile/token/:token_hash");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "profile/*");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "userinfo/");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "userinfo/");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "userinfo/");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "userinfo/");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "token/");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "token/");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "token/");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/*");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/:token_hash");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/*");
     pthread_mutex_destroy(&((struct _oidc_config *)cls)->insert_lock);
     jwt_free(((struct _oidc_config *)cls)->jwt_key);
     json_decref(((struct _oidc_config *)cls)->j_params);
