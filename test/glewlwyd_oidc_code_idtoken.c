@@ -21,7 +21,7 @@
 
 char * code;
 
-START_TEST(test_oidc_code_code_invalid)
+START_TEST(test_oidc_code_idtoken_code_invalid)
 {
   char * url = msprintf("%s/oidc/token/", SERVER_URI);
   struct _u_map body;
@@ -38,7 +38,7 @@ START_TEST(test_oidc_code_code_invalid)
 }
 END_TEST
 
-START_TEST(test_oidc_code_client_invalid)
+START_TEST(test_oidc_code_idtoken_client_invalid)
 {
   char * url = msprintf("%s/oidc/token/", SERVER_URI);
   struct _u_map body;
@@ -55,7 +55,7 @@ START_TEST(test_oidc_code_client_invalid)
 }
 END_TEST
 
-START_TEST(test_oidc_code_redirect_uri_invalid)
+START_TEST(test_oidc_code_idtoken_redirect_uri_invalid)
 {
   char * url = msprintf("%s/oidc/token/", SERVER_URI);
   struct _u_map body;
@@ -72,7 +72,7 @@ START_TEST(test_oidc_code_redirect_uri_invalid)
 }
 END_TEST
 
-START_TEST(test_oidc_code_ok)
+START_TEST(test_oidc_code_idtoken_ok)
 {
   char * url = msprintf("%s/oidc/token/", SERVER_URI);
   struct _u_map body;
@@ -95,10 +95,10 @@ static Suite *glewlwyd_suite(void)
 
   s = suite_create("Glewlwyd code");
   tc_core = tcase_create("test_oidc_code");
-  tcase_add_test(tc_core, test_oidc_code_code_invalid);
-  tcase_add_test(tc_core, test_oidc_code_client_invalid);
-  tcase_add_test(tc_core, test_oidc_code_redirect_uri_invalid);
-  tcase_add_test(tc_core, test_oidc_code_ok);
+  tcase_add_test(tc_core, test_oidc_code_idtoken_code_invalid);
+  tcase_add_test(tc_core, test_oidc_code_idtoken_client_invalid);
+  tcase_add_test(tc_core, test_oidc_code_idtoken_redirect_uri_invalid);
+  tcase_add_test(tc_core, test_oidc_code_idtoken_ok);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
