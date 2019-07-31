@@ -93,17 +93,50 @@ END_TEST
 
 START_TEST(test_oidc_code_ok)
 {
-  char * url = msprintf("%s/oidc/token/", SERVER_URI);
-  struct _u_map body;
-  u_map_init(&body);
-  u_map_put(&body, "grant_type", "authorization_code");
-  u_map_put(&body, "client_id", CLIENT);
-  u_map_put(&body, "redirect_uri", "../../test-oidc.html?param=client1_cb1");
-  u_map_put(&body, "code", code);
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_body, * j_payload;
+  char ** id_token_split = NULL, * str_payload = NULL, at_hash[33], at_hash_encoded[64];
+  size_t str_payload_len = 0, at_hash_len = 33, at_hash_encoded_len = 0;
+  gnutls_datum_t at_data;
   
-  ck_assert_int_eq(run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 200, NULL, "refresh_token", NULL), 1);
-  o_free(url);
-  u_map_clean(&body);
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  
+  u_map_put(req.map_post_body, "grant_type", "authorization_code");
+  u_map_put(req.map_post_body, "client_id", CLIENT);
+  u_map_put(req.map_post_body, "redirect_uri", "../../test-oidc.html?param=client1_cb1");
+  u_map_put(req.map_post_body, "code", code);
+  req.http_verb = o_strdup("POST");
+  req.http_url = msprintf("%s/oidc/token/", SERVER_URI);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_ptr_ne((j_body = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne(json_object_get(j_body, "refresh_token"), NULL);
+  ck_assert_ptr_ne(json_object_get(j_body, "access_token"), NULL);
+  ck_assert_ptr_ne(json_object_get(j_body, "id_token"), NULL);
+  
+  ck_assert_int_eq(split_string(json_string_value(json_object_get(j_body, "id_token")), ".", &id_token_split), 3);
+  ck_assert_int_eq(o_base64url_decode((unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), NULL, &str_payload_len), 1);
+  ck_assert_ptr_ne((str_payload = o_malloc(str_payload_len + 1)), NULL);
+  ck_assert_int_eq(o_base64url_decode((unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
+  ck_assert_ptr_ne((j_payload = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
+  ck_assert_int_eq(json_object_size(j_payload), 11);
+  ck_assert_ptr_ne(json_object_get(j_payload, "at_hash"), NULL);
+  
+  at_data.data = (unsigned char*)json_string_value(json_object_get(j_body, "access_token"));
+  at_data.size = o_strlen(json_string_value(json_object_get(j_body, "access_token")));
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &at_data, at_hash, &at_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(o_base64url_encode((unsigned char *)at_hash, at_hash_len/2, (unsigned char *)at_hash_encoded, &at_hash_encoded_len), 1);
+  ck_assert_str_eq(at_hash_encoded, json_string_value(json_object_get(j_payload, "at_hash")));
+
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  json_decref(j_body);
+  json_decref(j_payload);
+  free_string_array(id_token_split);
+  o_free(str_payload);
 }
 END_TEST
 
