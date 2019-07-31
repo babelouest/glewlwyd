@@ -24,7 +24,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 set(PROGRAM_VERSION_MAJOR "2")
 set(PROGRAM_VERSION_MINOR "0")
-set(PROGRAM_VERSION_PATCH "0-b2")
+set(PROGRAM_VERSION_PATCH "0-b3")
 set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, multiple factor authentication with, HOTP/TOTP, Webauthn, etc. extensible via plugins")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_REQUIRED "2.0.1")

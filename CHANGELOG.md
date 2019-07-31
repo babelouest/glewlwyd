@@ -1,5 +1,12 @@
 # Glewlwyd Changelog
 
+## 2.0.0-b3
+
+- Add OpenID Connect core plugin
+- Fix lots of bugs and memory leaks
+- Add more tests
+- Change return type of all modules function `*_init()` to `json_t *` so the front-end will know about the error
+
 ## 2.0.0-b2
 
 - Fix sample config with correct variable names, fix #57
