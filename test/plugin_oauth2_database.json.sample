@@ -7,7 +7,8 @@
     "parameters":{
       "use-glewlwyd-connection":true,
       "data-format":{
-        "redirect-uri":{"multiple":true,"read":true,"write":true}
+        "redirect_uri":{"multiple":true,"read":true,"write":true},
+        "authorization_type":{"multiple":true,"read":true,"write":true}
       }
     },
     "readonly":false,
@@ -35,7 +36,8 @@
     "client_id": "irl_client1",
     "confidential": true,
     "password": "password",
-    "redirect_uri":["https://glewlwyd.local/"]
+    "redirect_uri":["https://glewlwyd.local/"],
+    "authorization_type":["code","token","password","client_credentials","refresh_token","delete_token"]
   },
   "schemes":[
     {
