@@ -39,7 +39,7 @@ END_TEST
 START_TEST(test_oidc_hybrid_id_token_token_code_valid)
 {
   struct _u_response resp;
-  char * id_token, * access_token, ** id_token_split = NULL, * str_payload, at_hash[33], at_hash_encoded[64];
+  char * id_token, * access_token, * code, ** id_token_split = NULL, * str_payload, at_hash[33], at_hash_encoded[64];
   size_t str_payload_len = 0, at_hash_len = 33, at_hash_encoded_len = 0;
   gnutls_datum_t at_data;
   json_t * j_payload;
@@ -62,6 +62,10 @@ START_TEST(test_oidc_hybrid_id_token_token_code_valid)
   if (o_strchr(access_token, '&') != NULL) {
     *o_strchr(access_token, '&') = '\0';
   }
+  code = o_strstr(u_map_get(resp.map_header, "Location"), "code=") + o_strlen("code=");
+  if (o_strchr(code, '&') != NULL) {
+    *o_strchr(code, '&') = '\0';
+  }
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), NULL, &str_payload_len), 1);
@@ -69,14 +73,22 @@ START_TEST(test_oidc_hybrid_id_token_token_code_valid)
   ck_assert_int_eq(o_base64url_decode((unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
   str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_payload = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
-  ck_assert_int_eq(json_object_size(j_payload), 12);
+  ck_assert_int_eq(json_object_size(j_payload), 13);
   ck_assert_ptr_ne(json_object_get(j_payload, "at_hash"), NULL);
+  ck_assert_ptr_ne(json_object_get(j_payload, "c_hash"), NULL);
+  ck_assert_str_eq(json_string_value(json_object_get(j_payload, "nonce")), "nonce1234");
   
   at_data.data = (unsigned char*)access_token;
   at_data.size = o_strlen(access_token);
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &at_data, at_hash, &at_hash_len), GNUTLS_E_SUCCESS);
   ck_assert_int_eq(o_base64url_encode((unsigned char *)at_hash, at_hash_len/2, (unsigned char *)at_hash_encoded, &at_hash_encoded_len), 1);
   ck_assert_str_eq(at_hash_encoded, json_string_value(json_object_get(j_payload, "at_hash")));
+
+  at_data.data = (unsigned char*)code;
+  at_data.size = o_strlen(code);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &at_data, at_hash, &at_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(o_base64url_encode((unsigned char *)at_hash, at_hash_len/2, (unsigned char *)at_hash_encoded, &at_hash_encoded_len), 1);
+  ck_assert_str_eq(at_hash_encoded, json_string_value(json_object_get(j_payload, "c_hash")));
 
   ulfius_clean_response(&resp);
   free_string_array(id_token_split);
