@@ -29,7 +29,7 @@
 struct _u_request admin_req;
 struct _u_request user_req;
 
-START_TEST(test_oidc_only_add_plugin)
+START_TEST(test_oidc_only_no_refresh_add_plugin)
 {
   json_t * j_param = json_pack("{sssssss{sssssssssisisisosososososososo}}",
                                 "module",
@@ -74,7 +74,7 @@ START_TEST(test_oidc_only_add_plugin)
 }
 END_TEST
 
-START_TEST(test_oidc_only_id_token_token_ok)
+START_TEST(test_oidc_only_no_refresh_id_token_token_ok)
 {
   struct _u_response resp;
   struct _u_request req;
@@ -94,7 +94,7 @@ START_TEST(test_oidc_only_id_token_token_ok)
 }
 END_TEST
 
-START_TEST(test_oidc_only_token_error)
+START_TEST(test_oidc_only_no_refresh_token_error)
 {
   struct _u_response resp;
   struct _u_request req;
@@ -114,7 +114,7 @@ START_TEST(test_oidc_only_token_error)
 }
 END_TEST
 
-START_TEST(test_oidc_only_password_error)
+START_TEST(test_oidc_only_no_refresh_password_error)
 {
   char * url = msprintf("%s/%s/token/", SERVER_URI, PLUGIN_NAME);
   struct _u_map body;
@@ -131,7 +131,7 @@ START_TEST(test_oidc_only_password_error)
 }
 END_TEST
 
-START_TEST(test_oidc_only_client_error)
+START_TEST(test_oidc_only_no_refresh_client_error)
 {
   char * url = msprintf("%s/%s/token/", SERVER_URI, PLUGIN_NAME);
   struct _u_map body;
@@ -146,7 +146,7 @@ START_TEST(test_oidc_only_client_error)
 }
 END_TEST
 
-START_TEST(test_oidc_only_refresh_error)
+START_TEST(test_oidc_only_no_refresh_refresh_error)
 {
   struct _u_response resp;
   struct _u_request req;
@@ -201,7 +201,7 @@ START_TEST(test_oidc_only_refresh_error)
 }
 END_TEST
 
-START_TEST(test_oidc_only_delete_plugin)
+START_TEST(test_oidc_only_no_refresh_delete_plugin)
 {
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/plugin/" PLUGIN_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/user/" USER_USERNAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
@@ -233,13 +233,13 @@ static Suite *glewlwyd_suite(void)
 
   s = suite_create("Glewlwyd profile");
   tc_core = tcase_create("test_oidc_userinfo");
-  tcase_add_test(tc_core, test_oidc_only_add_plugin);
-  tcase_add_test(tc_core, test_oidc_only_id_token_token_ok);
-  tcase_add_test(tc_core, test_oidc_only_token_error);
-  tcase_add_test(tc_core, test_oidc_only_password_error);
-  tcase_add_test(tc_core, test_oidc_only_client_error);
-  tcase_add_test(tc_core, test_oidc_only_refresh_error);
-  tcase_add_test(tc_core, test_oidc_only_delete_plugin);
+  tcase_add_test(tc_core, test_oidc_only_no_refresh_add_plugin);
+  tcase_add_test(tc_core, test_oidc_only_no_refresh_id_token_token_ok);
+  tcase_add_test(tc_core, test_oidc_only_no_refresh_token_error);
+  tcase_add_test(tc_core, test_oidc_only_no_refresh_password_error);
+  tcase_add_test(tc_core, test_oidc_only_no_refresh_client_error);
+  tcase_add_test(tc_core, test_oidc_only_no_refresh_refresh_error);
+  tcase_add_test(tc_core, test_oidc_only_no_refresh_delete_plugin);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 

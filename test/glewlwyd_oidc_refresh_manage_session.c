@@ -25,14 +25,14 @@ char * refresh_token;
 char user_agent[33];
 struct _u_request user_req;
 
-START_TEST(test_oidc_refresh_manage_endpoints_noauth)
+START_TEST(test_oidc_refresh_manage_session_endpoints_noauth)
 {
   ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/oidc/token/", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(NULL, "DELETE", SERVER_URI "/oidc/token/test", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
 }
 END_TEST
 
-START_TEST(test_oidc_refresh_manage_list)
+START_TEST(test_oidc_refresh_manage_session_list)
 {
   struct _u_response resp;
   json_t * j_body = NULL;
@@ -140,7 +140,7 @@ START_TEST(test_oidc_refresh_manage_list)
 }
 END_TEST
 
-START_TEST(test_oidc_refresh_manage_delete_not_found)
+START_TEST(test_oidc_refresh_manage_session_delete_not_found)
 {
   struct _u_response resp;
   
@@ -157,7 +157,7 @@ START_TEST(test_oidc_refresh_manage_delete_not_found)
 }
 END_TEST
 
-START_TEST(test_oidc_refresh_manage_delete_ok)
+START_TEST(test_oidc_refresh_manage_session_delete_ok)
 {
   char * url = SERVER_URI "/oidc/token/", * token_hash, * token_hash_encoded;
   struct _u_map body;
@@ -226,10 +226,10 @@ static Suite *glewlwyd_suite(void)
 
   s = suite_create("Glewlwyd profile");
   tc_core = tcase_create("test_oidc_refresh_manage");
-  tcase_add_test(tc_core, test_oidc_refresh_manage_endpoints_noauth);
-  tcase_add_test(tc_core, test_oidc_refresh_manage_list);
-  tcase_add_test(tc_core, test_oidc_refresh_manage_delete_not_found);
-  tcase_add_test(tc_core, test_oidc_refresh_manage_delete_ok);
+  tcase_add_test(tc_core, test_oidc_refresh_manage_session_endpoints_noauth);
+  tcase_add_test(tc_core, test_oidc_refresh_manage_session_list);
+  tcase_add_test(tc_core, test_oidc_refresh_manage_session_delete_not_found);
+  tcase_add_test(tc_core, test_oidc_refresh_manage_session_delete_ok);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 

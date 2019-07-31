@@ -30,7 +30,7 @@ START_TEST(test_oidc_auth_invalid_response_type)
 }
 END_TEST
 
-START_TEST(test_oidc_auth_code_state_ok)
+START_TEST(test_oidc_auth_code_idtoken_state_ok)
 {
   char * url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "state=xyzabcd");
@@ -39,7 +39,7 @@ START_TEST(test_oidc_auth_code_state_ok)
 }
 END_TEST
 
-START_TEST(test_oidc_auth_code_ok_redirect_login)
+START_TEST(test_oidc_auth_code_idtoken_ok_redirect_login)
 {
   char * url = msprintf("%s/oidc/auth?response_type=code&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client1_cb1&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html");
@@ -48,7 +48,7 @@ START_TEST(test_oidc_auth_code_ok_redirect_login)
 }
 END_TEST
 
-START_TEST(test_oidc_auth_code_client_invalid)
+START_TEST(test_oidc_auth_code_idtoken_client_invalid)
 {
   char * url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=client_error&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client1_cb1&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unauthorized_client");
@@ -57,7 +57,7 @@ START_TEST(test_oidc_auth_code_client_invalid)
 }
 END_TEST
 
-START_TEST(test_oidc_auth_code_uri_invalid)
+START_TEST(test_oidc_auth_code_idtoken_uri_invalid)
 {
   char * url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=client_error&redirect_uri=..%%2f..%%2ftest-oidc.html?param=invalid&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unauthorized_client");
@@ -66,7 +66,7 @@ START_TEST(test_oidc_auth_code_uri_invalid)
 }
 END_TEST
 
-START_TEST(test_oidc_auth_code_scope_invalid)
+START_TEST(test_oidc_auth_code_idtoken_scope_invalid)
 {
   char * url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client1_cb1&state=xyzabcd&scope=scope4", SERVER_URI);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "invalid_scope");
@@ -75,7 +75,7 @@ START_TEST(test_oidc_auth_code_scope_invalid)
 }
 END_TEST
 
-START_TEST(test_oidc_auth_code_scope_empty)
+START_TEST(test_oidc_auth_code_idtoken_scope_empty)
 {
   char * url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client1_cb1&state=xyzabcd", SERVER_URI);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "invalid_scope");
@@ -84,7 +84,7 @@ START_TEST(test_oidc_auth_code_scope_empty)
 }
 END_TEST
 
-START_TEST(test_oidc_auth_code_ok_redirect_cb_with_code)
+START_TEST(test_oidc_auth_code_idtoken_ok_redirect_cb_with_code)
 {
   char * url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code=");
@@ -101,13 +101,13 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd auth_code");
   tc_core = tcase_create("test_oidc_auth_code");
   tcase_add_test(tc_core, test_oidc_auth_invalid_response_type);
-  tcase_add_test(tc_core, test_oidc_auth_code_ok_redirect_login);
-  tcase_add_test(tc_core, test_oidc_auth_code_state_ok);
-  tcase_add_test(tc_core, test_oidc_auth_code_client_invalid);
-  tcase_add_test(tc_core, test_oidc_auth_code_uri_invalid);
-  tcase_add_test(tc_core, test_oidc_auth_code_scope_invalid);
-  tcase_add_test(tc_core, test_oidc_auth_code_scope_empty);
-  tcase_add_test(tc_core, test_oidc_auth_code_ok_redirect_cb_with_code);
+  tcase_add_test(tc_core, test_oidc_auth_code_idtoken_ok_redirect_login);
+  tcase_add_test(tc_core, test_oidc_auth_code_idtoken_state_ok);
+  tcase_add_test(tc_core, test_oidc_auth_code_idtoken_client_invalid);
+  tcase_add_test(tc_core, test_oidc_auth_code_idtoken_uri_invalid);
+  tcase_add_test(tc_core, test_oidc_auth_code_idtoken_scope_invalid);
+  tcase_add_test(tc_core, test_oidc_auth_code_idtoken_scope_empty);
+  tcase_add_test(tc_core, test_oidc_auth_code_idtoken_ok_redirect_cb_with_code);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 

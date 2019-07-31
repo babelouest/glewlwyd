@@ -22,7 +22,7 @@
 
 char * code;
 
-START_TEST(test_oidc_resource_owner_pwd_cred_valid)
+START_TEST(test_oidc_resource_owner_pwd_cred_client_confidential_valid)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
@@ -39,7 +39,7 @@ START_TEST(test_oidc_resource_owner_pwd_cred_valid)
 }
 END_TEST
 
-START_TEST(test_oidc_resource_owner_pwd_cred_pwd_invalid)
+START_TEST(test_oidc_resource_owner_pwd_cred_client_confidential_pwd_invalid)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
@@ -56,7 +56,7 @@ START_TEST(test_oidc_resource_owner_pwd_cred_pwd_invalid)
 }
 END_TEST
 
-START_TEST(test_oidc_resource_owner_pwd_cred_user_invalid)
+START_TEST(test_oidc_resource_owner_pwd_cred_client_confidential_user_invalid)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
@@ -73,7 +73,7 @@ START_TEST(test_oidc_resource_owner_pwd_cred_user_invalid)
 }
 END_TEST
 
-START_TEST(test_oidc_resource_owner_pwd_cred_client_invalid)
+START_TEST(test_oidc_resource_owner_pwd_cred_client_confidential_client_invalid)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
@@ -90,7 +90,7 @@ START_TEST(test_oidc_resource_owner_pwd_cred_client_invalid)
 }
 END_TEST
 
-START_TEST(test_oidc_resource_owner_pwd_cred_scope_invalid)
+START_TEST(test_oidc_resource_owner_pwd_cred_client_confidential_scope_invalid)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
@@ -107,7 +107,7 @@ START_TEST(test_oidc_resource_owner_pwd_cred_scope_invalid)
 }
 END_TEST
 
-START_TEST(test_oidc_resource_owner_pwd_cred_empty)
+START_TEST(test_oidc_resource_owner_pwd_cred_client_confidential_empty)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
   struct _u_map body;
@@ -128,12 +128,12 @@ static Suite *glewlwyd_suite(void)
 
   s = suite_create("Glewlwyd resource owner password credential client confidential");
   tc_core = tcase_create("test_oidc_resource_owner_pwd_cred");
-  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_valid);
-  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_pwd_invalid);
-  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_user_invalid);
-  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_client_invalid);
-  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_scope_invalid);
-  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_empty);
+  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_client_confidential_valid);
+  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_client_confidential_pwd_invalid);
+  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_client_confidential_user_invalid);
+  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_client_confidential_client_invalid);
+  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_client_confidential_scope_invalid);
+  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_client_confidential_empty);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
