@@ -13,6 +13,7 @@ glewlwyd_oauth2_profile
 glewlwyd_oauth2_refresh_manage
 glewlwyd_oauth2_refresh_manage_session
 glewlwyd_oauth2_profile_impersonate
+glewlwyd_oauth2_additional_parameters
 
 glewlwyd_oidc_auth_code
 glewlwyd_oidc_code
@@ -35,6 +36,9 @@ glewlwyd_oidc_delete_token
 glewlwyd_oidc_delete_token_client_confidential
 glewlwyd_oidc_refresh_manage
 glewlwyd_oidc_refresh_manage_session
+glewlwyd_oidc_userinfo
+glewlwyd_oidc_additional_parameters
+glewlwyd_oidc_only_no_refresh
 
 glewlwyd_admin_mod_type
 glewlwyd_admin_mod_user
@@ -62,6 +66,7 @@ glewlwyd_mod_user_http
 glewlwyd_mod_user_irl
 glewlwyd_mod_client_irl
 glewlwyd_oauth2_irl
+glewlwyd_oidc_irl
 glewlwyd_scheme_mail
 glewlwyd_scheme_otp
 glewlwyd_scheme_webauthn
