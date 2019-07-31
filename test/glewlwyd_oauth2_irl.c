@@ -121,7 +121,6 @@ START_TEST(test_glwd_oauth2_irl_run_workflow)
       scope = mstrcatf(scope, " %s", json_string_value(j_element));
     }
   }
-  y_log_message(Y_LOG_LEVEL_DEBUG, "scope %s", scope);
   
   url = msprintf("%s/auth/grant/%s", SERVER_URI, json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")));
   j_body = json_pack("{ss}", "scope", scope);
