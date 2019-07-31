@@ -278,14 +278,14 @@ static int serialize_id_token(struct _oidc_config * config, uint auth_type, cons
   return ret;
 }
 
-static char * generate_id_token(struct _oidc_config * config, const char * username, json_t * j_user, json_t * j_client, time_t now, time_t auth_time, const char * nonce, json_t * j_amr, const char * access_token) {
+static char * generate_id_token(struct _oidc_config * config, const char * username, json_t * j_user, json_t * j_client, time_t now, time_t auth_time, const char * nonce, json_t * j_amr, const char * access_token, const char * code) {
   jwt_t * jwt = NULL;
-  char * token = NULL, at_hash_encoded[128] = {0}, * user_info_str = NULL;
-  unsigned char at_hash[128] = {0};
+  char * token = NULL, at_hash_encoded[128] = {0}, c_hash_encoded[128] = {0}, * user_info_str = NULL;
+  unsigned char at_hash[128] = {0}, c_hash[128] = {0};
   json_t * j_user_info;
-  size_t at_hash_len = 128, at_hash_encoded_len = 0;
+  size_t at_hash_len = 128, at_hash_encoded_len = 0, c_hash_len = 128, c_hash_encoded_len = 0;
   int alg = GNUTLS_DIG_UNKNOWN;
-  gnutls_datum_t at_data;
+  gnutls_datum_t hash_data;
   
   if ((jwt = jwt_dup(config->jwt_key)) != NULL) {
     if ((j_user_info = get_userinfo(config, username, j_user, NULL)) != NULL) {
@@ -308,19 +308,41 @@ static char * generate_id_token(struct _oidc_config * config, const char * usern
         else if (config->jwt_key_size == 384) alg = GNUTLS_DIG_SHA384;
         else if (config->jwt_key_size == 512) alg = GNUTLS_DIG_SHA512;
         if (alg != GNUTLS_DIG_UNKNOWN) {
-          at_data.data = (unsigned char*)access_token;
-          at_data.size = o_strlen(access_token);
-          if (gnutls_fingerprint(alg, &at_data, at_hash, &at_hash_len) == GNUTLS_E_SUCCESS) {
+          hash_data.data = (unsigned char*)access_token;
+          hash_data.size = o_strlen(access_token);
+          if (gnutls_fingerprint(alg, &hash_data, at_hash, &at_hash_len) == GNUTLS_E_SUCCESS) {
             if (o_base64url_encode(at_hash, at_hash_len/2, (unsigned char *)at_hash_encoded, &at_hash_encoded_len)) {
               json_object_set_new(j_user_info, "at_hash", json_stringn(at_hash_encoded, at_hash_encoded_len));
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - Error o_base64url_encode");
+              y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - Error o_base64url_encode at_hash");
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - Error gnutls_fingerprint");
+            y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - Error gnutls_fingerprint at_hash");
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - Error digest algorithm size '%d' not supported", config->jwt_key_size);
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - Error digest algorithm size '%d' not supported at_hash", config->jwt_key_size);
+        }
+      }
+      if (code != NULL) {
+        // Hash access_token using the key size for the hash size (SHA style of course!)
+        // take the half left of the has, then encode in base64-url it
+        if (config->jwt_key_size == 256) alg = GNUTLS_DIG_SHA256;
+        else if (config->jwt_key_size == 384) alg = GNUTLS_DIG_SHA384;
+        else if (config->jwt_key_size == 512) alg = GNUTLS_DIG_SHA512;
+        if (alg != GNUTLS_DIG_UNKNOWN) {
+          hash_data.data = (unsigned char*)code;
+          hash_data.size = o_strlen(code);
+          if (gnutls_fingerprint(alg, &hash_data, c_hash, &c_hash_len) == GNUTLS_E_SUCCESS) {
+            if (o_base64url_encode(c_hash, c_hash_len/2, (unsigned char *)c_hash_encoded, &c_hash_encoded_len)) {
+              json_object_set_new(j_user_info, "c_hash", json_stringn(c_hash_encoded, c_hash_encoded_len));
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - Error o_base64url_encode c_hash");
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - Error gnutls_fingerprint c_hash");
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - Error digest algorithm size '%d' not supported c_hash", config->jwt_key_size);
         }
       }
       //jwt_add_grant(jwt, "acr", "plop"); // TODO?
@@ -1730,7 +1752,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                                                                                                 json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list"))), 
                                                       json_string_value(json_object_get(json_object_get(j_code, "code"), "nonce")), 
                                                       json_object_get(j_amr, "amr"), 
-                                                      access_token)) != NULL) {
+                                                      access_token,
+                                                      code)) != NULL) {
                       if (serialize_id_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, id_token, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
                         if (disable_authorization_code(config, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpoc_id"))) == G_OK) {
                           j_body = json_pack("{sssssssisIssss}",
@@ -2350,7 +2373,8 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                                                                                                        json_string_value(json_object_get(json_object_get(j_auth_result, "session"), "scope_filtered"))), 
                                             u_map_get(get_map(request), "nonce"), 
                                             json_object_get(json_object_get(j_auth_result, "session"), "amr"),
-                                            access_token)) != NULL) {
+                                            access_token,
+                                            authorization_code)) != NULL) {
             if (serialize_id_token(config, 
                                    GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, 
                                    id_token, 
