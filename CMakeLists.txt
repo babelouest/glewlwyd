@@ -531,8 +531,9 @@ if (BUILD_GLEWLWYD_TESTING)
 							)
 
 		if (WITH_PLUGIN_OAUTH2)
-			set (TST_LIBS ${TST_LIBS} ${LIBJWT_LIBRARIES})
+			set (TST_LIBS ${TST_LIBS} ${LIBJWT_LIBRARIES} ${GNUTLS_LIBRARIES})
 			set (TESTS ${TESTS}
+							glewlwyd_oauth2_additional_parameters
 							glewlwyd_oauth2_auth_code 
 							glewlwyd_oauth2_code 
 							glewlwyd_oauth2_code_client_confidential 
@@ -545,12 +546,44 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oauth2_delete_token 
 							glewlwyd_oauth2_delete_token_client_confidential 
 							glewlwyd_oauth2_profile 
+							glewlwyd_oauth2_profile_impersonate
 							glewlwyd_oauth2_refresh_manage 
 							glewlwyd_oauth2_refresh_manage_session
 							glewlwyd_oauth2_irl
 							)
 		endif ()
 		
+		if (WITH_PLUGIN_OIDC)
+			set (TST_LIBS ${TST_LIBS} ${LIBJWT_LIBRARIES} ${GNUTLS_LIBRARIES})
+			set (TESTS ${TESTS}
+							glewlwyd_oidc_additional_parameters
+							glewlwyd_oidc_auth_code
+							glewlwyd_oidc_auth_code_idtoken
+							glewlwyd_oidc_client_cred
+							glewlwyd_oidc_code
+							glewlwyd_oidc_code_client_confidential
+							glewlwyd_oidc_code_idtoken
+							glewlwyd_oidc_delete_token
+							glewlwyd_oidc_delete_token_client_confidential
+							glewlwyd_oidc_hybrid_id_token_code
+							glewlwyd_oidc_hybrid_id_token_token_code
+							glewlwyd_oidc_hybrid_token_code
+							glewlwyd_oidc_implicit_id_token
+							glewlwyd_oidc_implicit_id_token_token
+							glewlwyd_oidc_irl
+							glewlwyd_oidc_only_no_refresh
+							glewlwyd_oidc_optional_request_parameters
+							glewlwyd_oidc_refresh_manage
+							glewlwyd_oidc_refresh_manage_session
+							glewlwyd_oidc_refresh_token
+							glewlwyd_oidc_refresh_token_client_confidential
+							glewlwyd_oidc_resource_owner_pwd_cred
+							glewlwyd_oidc_resource_owner_pwd_cred_client_confidential
+							glewlwyd_oidc_token
+							glewlwyd_oidc_userinfo
+							)
+		endif ()
+
 		if (WITH_SCHEME_OTP)
 			set (TST_LIBS ${TST_LIBS} ${LIBOATH_LIBRARIES})
 			set (TESTS ${TESTS} glewlwyd_scheme_otp)
@@ -597,6 +630,14 @@ if (BUILD_GLEWLWYD_TESTING)
 				endforeach ()
 			elseif (${t} MATCHES "_oauth2_irl$")
 				FILE(GLOB UserJsonIrl ${TST_DIR}/plugin_oauth2_*.json)
+				foreach (j ${UserJsonIrl})
+						add_test(NAME "${t}_${COUNTER}"
+										WORKING_DIRECTORY ${TST_DIR}
+										COMMAND ${t} ${j})
+						MATH(EXPR COUNTER "${COUNTER}+1")
+				endforeach ()
+			elseif (${t} MATCHES "_oidc_irl$")
+				FILE(GLOB UserJsonIrl ${TST_DIR}/plugin_iodc_*.json)
 				foreach (j ${UserJsonIrl})
 						add_test(NAME "${t}_${COUNTER}"
 										WORKING_DIRECTORY ${TST_DIR}
