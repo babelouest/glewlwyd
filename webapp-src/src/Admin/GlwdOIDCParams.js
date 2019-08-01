@@ -19,7 +19,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["allow-non-oidc"]!==undefined?"":(props.mod.parameters["allow-non-oidc"] = false);
     props.mod.parameters["auth-type-code-enabled"]!==undefined?"":(props.mod.parameters["auth-type-code-enabled"] = true);
     props.mod.parameters["auth-type-token-enabled"]!==undefined?"":(props.mod.parameters["auth-type-token-enabled"] = true);
-    props.mod.parameters["auth-type-id-token-enabled"]!==undefined?"":(props.mod.parameters["auth-type-id-token-enabled"] = true);
+    props.mod.parameters["auth-type-id-token-enabled"] = true;
     props.mod.parameters["auth-type-password-enabled"]!==undefined?"":(props.mod.parameters["auth-type-password-enabled"] = true);
     props.mod.parameters["auth-type-client-enabled"]!==undefined?"":(props.mod.parameters["auth-type-client-enabled"] = true);
     props.mod.parameters["auth-type-refresh-enabled"]!==undefined?"":(props.mod.parameters["auth-type-refresh-enabled"] = true);
@@ -78,7 +78,7 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["allow-non-oidc"]!==undefined?"":(nextProps.mod.parameters["allow-non-oidc"] = false);
     nextProps.mod.parameters["auth-type-code-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-code-enabled"] = true);
     nextProps.mod.parameters["auth-type-token-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-token-enabled"] = true);
-    nextProps.mod.parameters["auth-type-id-token-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-id-token-enabled"] = true);
+    nextProps.mod.parameters["auth-type-id-token-enabled"] = true;
     nextProps.mod.parameters["auth-type-password-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-password-enabled"] = true);
     nextProps.mod.parameters["auth-type-client-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-client-enabled"] = true);
     nextProps.mod.parameters["auth-type-refresh-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-refresh-enabled"] = true);
@@ -747,7 +747,7 @@ class GlwdOIDCParams extends Component {
               <label className="input-group-text" htmlFor="mod-glwd-auth-type-id-token-enabled">{i18next.t("admin.mod-glwd-auth-type-id-token-enabled")}</label>
             </div>
             <div className="input-group-text">
-              <input type="checkbox" className="form-control" id="mod-glwd-auth-type-id-token-enabled" onChange={(e) => this.toggleParam(e, "auth-type-id-token-enabled")} checked={this.state.mod.parameters["auth-type-id-token-enabled"]} />
+              <input disabled="true" type="checkbox" className="form-control" id="mod-glwd-auth-type-id-token-enabled" onChange={(e) => this.toggleParam(e, "auth-type-id-token-enabled")} checked={this.state.mod.parameters["auth-type-id-token-enabled"]} />
             </div>
           </div>
         </div>
@@ -781,6 +781,7 @@ class GlwdOIDCParams extends Component {
             </div>
           </div>
         </div>
+        <hr/>
         <div className="accordion" id="accordionScope">
           <div className="card">
             <div className="card-header" id="dataFormatCard">

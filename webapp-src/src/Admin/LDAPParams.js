@@ -354,8 +354,11 @@ class LDAPParams extends Component {
             <input type="text" className="form-control" id={"mod-ldap-scope-match-scope-"+index} onChange={(e) => this.changeScopeMatchProperty(e, index, "scope-value")} value={match["scope-value"]} placeholder={i18next.t("admin.mod-ldap-scope-match-scope-ph")} />
           </div>
         </div>
-        <div className="btn-group" role="group">
+        <div className="form-group">
           <div className="btn-group" role="group">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor={"dropdownMatchType-"+index}>{i18next.t("admin.mod-ldap-scope-match")}</label>
+            </div>
             <div className="dropdown">
               <button className="btn btn-secondary dropdown-toggle" type="button" id={"dropdownMatchType-"+index} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 {this.getMatchType(match["match"])}
@@ -368,9 +371,13 @@ class LDAPParams extends Component {
               </div>
             </div>
           </div>
-          <button type="button" className="btn btn-secondary" onClick={() => this.deleteScopeMatch(index)} title={i18next.t("admin.mod-ldap-scope-match-delete")}>
-            <i className="fas fa-trash"></i>
-          </button>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <button type="button" className="btn btn-secondary" onClick={() => this.deleteScopeMatch(index)} title={i18next.t("admin.mod-ldap-scope-match-delete")}>
+              <i className="fas fa-trash"></i>
+            </button>
+          </div>
         </div>
       </div>
       );
@@ -418,21 +425,21 @@ class LDAPParams extends Component {
         </div>;
       confidentialJsx = 
         <div className="form-group">
-            <div className="input-group mb-3">
-              <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor="mod-ldap-confidential">{i18next.t("admin.mod-ldap-confidential")}</label>
-              </div>
-              <div className="dropdown">
-                <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-ldap-confidential" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  {(this.state.mod.parameters["confidential"]==="1"?i18next.t("admin.mod-ldap-confidential-1"):i18next.t("admin.mod-ldap-confidential-0"))}
-                </button>
-                <div className="dropdown-menu" aria-labelledby="mod-ldap-search-scope">
-                  <a className={"dropdown-item"+(this.state.mod.parameters["confidential"]!=="1"?" active":"")} href="#" onClick={(e) => this.changeConfidential(e, '0')}>{i18next.t("admin.mod-ldap-confidential-0")}</a>
-                  <a className={"dropdown-item"+(this.state.mod.parameters["confidential"]==="1"?" active":"")} href="#" onClick={(e) => this.changeConfidential(e, '1')}>{i18next.t("admin.mod-ldap-confidential-1")}</a>
-                </div>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-ldap-confidential">{i18next.t("admin.mod-ldap-confidential")}</label>
+            </div>
+            <div className="dropdown">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-ldap-confidential" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {(this.state.mod.parameters["confidential"]==="1"?i18next.t("admin.mod-ldap-confidential-1"):i18next.t("admin.mod-ldap-confidential-0"))}
+              </button>
+              <div className="dropdown-menu" aria-labelledby="mod-ldap-search-scope">
+                <a className={"dropdown-item"+(this.state.mod.parameters["confidential"]!=="1"?" active":"")} href="#" onClick={(e) => this.changeConfidential(e, '0')}>{i18next.t("admin.mod-ldap-confidential-0")}</a>
+                <a className={"dropdown-item"+(this.state.mod.parameters["confidential"]==="1"?" active":"")} href="#" onClick={(e) => this.changeConfidential(e, '1')}>{i18next.t("admin.mod-ldap-confidential-1")}</a>
               </div>
             </div>
-          </div>;
+          </div>
+        </div>;
     }
     return (
       <div>
