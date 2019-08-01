@@ -27,7 +27,7 @@
 struct _u_request user_req;
 char * code;
 
-START_TEST(test_oauth2_implicit_id_token_token_redirect_login)
+START_TEST(test_oidc_implicit_id_token_token_redirect_login)
 {
   char * url = msprintf("%s/oidc/auth?response_type=%s&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html");
@@ -36,7 +36,25 @@ START_TEST(test_oauth2_implicit_id_token_token_redirect_login)
 }
 END_TEST
 
-START_TEST(test_oauth2_implicit_id_token_token_valid)
+START_TEST(test_oidc_implicit_id_token_token_redirect_login_post)
+{
+  char * url = o_strdup(SERVER_URI "/oidc/auth");
+  struct _u_map body;
+  
+  u_map_init(&body);
+  u_map_put(&body, "response_type", RESPONSE_TYPE);
+  u_map_put(&body, "redirect_uri", "../../test-oauth2.html?param=client1_cb1");
+  u_map_put(&body, "client_id", CLIENT);
+  u_map_put(&body, "state", "xyzabcd");
+  u_map_put(&body, "nonce", "nonce1234");
+  u_map_put(&body, "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 302, NULL, NULL, "login.html"), 1);
+  o_free(url);
+  u_map_clean(&body);
+}
+END_TEST
+
+START_TEST(test_oidc_implicit_id_token_token_valid)
 {
   struct _u_response resp;
   char * id_token, * access_token, ** id_token_split = NULL, * str_payload, at_hash[33], at_hash_encoded[64];
@@ -85,7 +103,64 @@ START_TEST(test_oauth2_implicit_id_token_token_valid)
 }
 END_TEST
 
-START_TEST(test_oauth2_implicit_id_token_token_client_invalid)
+START_TEST(test_oidc_implicit_id_token_token_valid_post)
+{
+  struct _u_response resp;
+  char * id_token, * access_token, ** id_token_split = NULL, * str_payload, at_hash[33], at_hash_encoded[64];
+  size_t str_payload_len = 0, at_hash_len = 33, at_hash_encoded_len = 0;
+  gnutls_datum_t at_data;
+  json_t * j_payload;
+  
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/oidc/auth", SERVER_URI);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("POST");
+  u_map_put(user_req.map_post_body, "response_type", RESPONSE_TYPE);
+  u_map_put(user_req.map_post_body, "client_id", CLIENT);
+  u_map_put(user_req.map_post_body, "redirect_uri", "../../test-oauth2.html?param=client1_cb1");
+  u_map_put(user_req.map_post_body, "state", "xyzabcd");
+  u_map_put(user_req.map_post_body, "state", "xyzabcd");
+  u_map_put(user_req.map_post_body, "nonce", "nonce1234");
+  u_map_put(user_req.map_post_body, "scope", SCOPE_LIST);
+  u_map_put(user_req.map_post_body, "g_continue", "true");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "access_token="), NULL);
+  ck_assert_ptr_eq(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
+  id_token = o_strstr(u_map_get(resp.map_header, "Location"), "id_token=") + o_strlen("id_token=");
+  if (o_strchr(id_token, '&') != NULL) {
+    *o_strchr(id_token, '&') = '\0';
+  }
+  access_token = o_strstr(u_map_get(resp.map_header, "Location"), "access_token=") + o_strlen("access_token=");
+  if (o_strchr(access_token, '&') != NULL) {
+    *o_strchr(access_token, '&') = '\0';
+  }
+  
+  ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
+  ck_assert_int_eq(o_base64url_decode((unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), NULL, &str_payload_len), 1);
+  ck_assert_ptr_ne((str_payload = o_malloc(str_payload_len + 1)), NULL);
+  ck_assert_int_eq(o_base64url_decode((unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
+  ck_assert_ptr_ne((j_payload = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
+  ck_assert_int_eq(json_object_size(j_payload), 12);
+  ck_assert_ptr_ne(json_object_get(j_payload, "at_hash"), NULL);
+  
+  at_data.data = (unsigned char*)access_token;
+  at_data.size = o_strlen(access_token);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &at_data, at_hash, &at_hash_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(o_base64url_encode((unsigned char *)at_hash, at_hash_len/2, (unsigned char *)at_hash_encoded, &at_hash_encoded_len), 1);
+  ck_assert_str_eq(at_hash_encoded, json_string_value(json_object_get(j_payload, "at_hash")));
+
+  ulfius_clean_response(&resp);
+  free_string_array(id_token_split);
+  o_free(str_payload);
+  json_decref(j_payload);
+}
+END_TEST
+
+START_TEST(test_oidc_implicit_id_token_token_client_invalid)
 {
   char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, "invalid", SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=unauthorized_client");
@@ -94,7 +169,7 @@ START_TEST(test_oauth2_implicit_id_token_token_client_invalid)
 }
 END_TEST
 
-START_TEST(test_oauth2_implicit_id_token_token_redirect_uri_invalid)
+START_TEST(test_oidc_implicit_id_token_token_redirect_uri_invalid)
 {
   char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=invalid&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=unauthorized_client");
@@ -103,7 +178,7 @@ START_TEST(test_oauth2_implicit_id_token_token_redirect_uri_invalid)
 }
 END_TEST
 
-START_TEST(test_oauth2_implicit_id_token_token_scope_invalid)
+START_TEST(test_oidc_implicit_id_token_token_scope_invalid)
 {
   char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, "scope4");
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_scope");
@@ -112,7 +187,7 @@ START_TEST(test_oauth2_implicit_id_token_token_scope_invalid)
 }
 END_TEST
 
-START_TEST(test_oauth2_implicit_id_token_token_nonce_invalid)
+START_TEST(test_oidc_implicit_id_token_token_nonce_invalid)
 {
   char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request");
@@ -125,7 +200,7 @@ START_TEST(test_oauth2_implicit_id_token_token_nonce_invalid)
 }
 END_TEST
 
-START_TEST(test_oauth2_implicit_id_token_token_empty)
+START_TEST(test_oidc_implicit_id_token_token_empty)
 {
   char * url = msprintf("%s/oidc/auth?response_type=%s&state=xyzabcd&nonce=nonce1234&g_continue", SERVER_URI, RESPONSE_TYPE);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL);
@@ -134,7 +209,7 @@ START_TEST(test_oauth2_implicit_id_token_token_empty)
 }
 END_TEST
 
-START_TEST(test_oauth2_implicit_id_token_token_scope_grant_partial)
+START_TEST(test_oidc_implicit_id_token_token_scope_grant_partial)
 {
   struct _u_request auth_req, code_req;
   struct _u_response auth_resp, code_resp;
@@ -231,7 +306,7 @@ START_TEST(test_oauth2_implicit_id_token_token_scope_grant_partial)
 }
 END_TEST
 
-START_TEST(test_oauth2_implicit_id_token_token_scope_grant_none)
+START_TEST(test_oidc_implicit_id_token_token_scope_grant_none)
 {
   struct _u_request auth_req, code_req;
   struct _u_response auth_resp, code_resp;
@@ -301,7 +376,7 @@ START_TEST(test_oauth2_implicit_id_token_token_scope_grant_none)
 }
 END_TEST
 
-START_TEST(test_oauth2_implicit_id_token_token_scope_grant_all_authorize_partial)
+START_TEST(test_oidc_implicit_id_token_token_scope_grant_all_authorize_partial)
 {
   struct _u_request auth_req, code_req;
   struct _u_response auth_resp, code_resp;
@@ -383,7 +458,7 @@ START_TEST(test_oauth2_implicit_id_token_token_scope_grant_all_authorize_partial
 }
 END_TEST
 
-START_TEST(test_oauth2_implicit_id_token_token_retry_with_max_use)
+START_TEST(test_oidc_implicit_id_token_token_retry_with_max_use)
 {
   struct _u_request auth_req, code_req;
   struct _u_response auth_resp, code_resp;
@@ -538,17 +613,19 @@ static Suite *glewlwyd_suite(void)
 
   s = suite_create("Glewlwyd implicit");
   tc_core = tcase_create("test_oauth2_implicit");
-  tcase_add_test(tc_core, test_oauth2_implicit_id_token_token_redirect_login);
-  tcase_add_test(tc_core, test_oauth2_implicit_id_token_token_valid);
-  tcase_add_test(tc_core, test_oauth2_implicit_id_token_token_client_invalid);
-  tcase_add_test(tc_core, test_oauth2_implicit_id_token_token_redirect_uri_invalid);
-  tcase_add_test(tc_core, test_oauth2_implicit_id_token_token_scope_invalid);
-  tcase_add_test(tc_core, test_oauth2_implicit_id_token_token_nonce_invalid);
-  tcase_add_test(tc_core, test_oauth2_implicit_id_token_token_empty);
-  tcase_add_test(tc_core, test_oauth2_implicit_id_token_token_scope_grant_partial);
-  tcase_add_test(tc_core, test_oauth2_implicit_id_token_token_scope_grant_none);
-  tcase_add_test(tc_core, test_oauth2_implicit_id_token_token_scope_grant_all_authorize_partial);
-  tcase_add_test(tc_core, test_oauth2_implicit_id_token_token_retry_with_max_use);
+  tcase_add_test(tc_core, test_oidc_implicit_id_token_token_redirect_login);
+  tcase_add_test(tc_core, test_oidc_implicit_id_token_token_redirect_login_post);
+  tcase_add_test(tc_core, test_oidc_implicit_id_token_token_valid);
+  tcase_add_test(tc_core, test_oidc_implicit_id_token_token_valid_post);
+  tcase_add_test(tc_core, test_oidc_implicit_id_token_token_client_invalid);
+  tcase_add_test(tc_core, test_oidc_implicit_id_token_token_redirect_uri_invalid);
+  tcase_add_test(tc_core, test_oidc_implicit_id_token_token_scope_invalid);
+  tcase_add_test(tc_core, test_oidc_implicit_id_token_token_nonce_invalid);
+  tcase_add_test(tc_core, test_oidc_implicit_id_token_token_empty);
+  tcase_add_test(tc_core, test_oidc_implicit_id_token_token_scope_grant_partial);
+  tcase_add_test(tc_core, test_oidc_implicit_id_token_token_scope_grant_none);
+  tcase_add_test(tc_core, test_oidc_implicit_id_token_token_scope_grant_all_authorize_partial);
+  tcase_add_test(tc_core, test_oidc_implicit_id_token_token_retry_with_max_use);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
