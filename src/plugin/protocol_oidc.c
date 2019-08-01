@@ -2692,10 +2692,6 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("Property 'auth-type-token-enabled' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "auth-type-id-token-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-id-token-enabled"))) {
-      json_array_append_new(j_error, json_string("Property 'auth-type-id-token-enabled' is optional and must be a boolean"));
-      ret = G_ERROR_PARAM;
-    }
     if (json_object_get(j_params, "auth-type-token-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-token-enabled"))) {
       json_array_append_new(j_error, json_string("Property 'auth-type-token-enabled' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
@@ -3007,7 +3003,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           }
           ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-code-enabled")==json_true()?1:0;
           ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_TOKEN] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-token-enabled")==json_true()?1:0;
-          ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-id-token-enabled")==json_true()?1:0;
+          ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN] = 1; // Force allow this auth type, otherwise use the other plugin
           ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-password-enabled")==json_true()?1:0;
           ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-client-enabled")==json_true()?1:0;
           ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-refresh-enabled")==json_true()?1:0;
