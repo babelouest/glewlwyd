@@ -36,6 +36,24 @@ START_TEST(test_oidc_hybrid_token_code_redirect_login)
 }
 END_TEST
 
+START_TEST(test_oidc_hybrid_token_code_redirect_login_post)
+{
+  char * url = o_strdup(SERVER_URI "/oidc/auth");
+  struct _u_map body;
+  
+  u_map_init(&body);
+  u_map_put(&body, "response_type", RESPONSE_TYPE);
+  u_map_put(&body, "redirect_uri", "../../test-oauth2.html?param=client1_cb1");
+  u_map_put(&body, "client_id", CLIENT);
+  u_map_put(&body, "state", "xyzabcd");
+  u_map_put(&body, "nonce", "nonce1234");
+  u_map_put(&body, "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 302, NULL, NULL, "login.html"), 1);
+  o_free(url);
+  u_map_clean(&body);
+}
+END_TEST
+
 START_TEST(test_oidc_hybrid_token_code_valid)
 {
   struct _u_response resp;
@@ -49,6 +67,33 @@ START_TEST(test_oidc_hybrid_token_code_valid)
   ck_assert_ptr_eq(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "access_token="), NULL);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
+START_TEST(test_oidc_hybrid_token_code_valid_post)
+{
+  struct _u_response resp;
+  
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/oidc/auth", SERVER_URI);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("POST");
+  u_map_put(user_req.map_post_body, "response_type", RESPONSE_TYPE);
+  u_map_put(user_req.map_post_body, "client_id", CLIENT);
+  u_map_put(user_req.map_post_body, "redirect_uri", "../../test-oauth2.html?param=client1_cb1");
+  u_map_put(user_req.map_post_body, "state", "xyzabcd");
+  u_map_put(user_req.map_post_body, "state", "xyzabcd");
+  u_map_put(user_req.map_post_body, "nonce", "nonce1234");
+  u_map_put(user_req.map_post_body, "scope", SCOPE_LIST);
+  u_map_put(user_req.map_post_body, "g_continue", "true");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_eq(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "access_token="), NULL);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
+
   ulfius_clean_response(&resp);
 }
 END_TEST
@@ -497,7 +542,9 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd implicit");
   tc_core = tcase_create("test_oauth2_implicit");
   tcase_add_test(tc_core, test_oidc_hybrid_token_code_redirect_login);
+  tcase_add_test(tc_core, test_oidc_hybrid_token_code_redirect_login_post);
   tcase_add_test(tc_core, test_oidc_hybrid_token_code_valid);
+  tcase_add_test(tc_core, test_oidc_hybrid_token_code_valid_post);
   tcase_add_test(tc_core, test_oidc_hybrid_token_code_client_invalid);
   tcase_add_test(tc_core, test_oidc_hybrid_token_code_redirect_uri_invalid);
   tcase_add_test(tc_core, test_oidc_hybrid_token_code_scope_invalid);
