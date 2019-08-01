@@ -107,6 +107,7 @@ END_TEST
 START_TEST(test_oidc_userinfo_noauth)
 {
   ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
 }
 END_TEST
 
@@ -169,13 +170,85 @@ START_TEST(test_oidc_userinfo_claims)
   u_map_put(req.map_header, "Authorization", bearer);
 
   j_result = json_pack("{sssssssssisoss}", "sub", "user1", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", "the-str", "claim-number", 42, "claim-bool", json_true(), "claim-mandatory", "I'M aliiiiiive!");
-  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/user/" USER_USERNAME, NULL, NULL, j_result, NULL, 200, NULL, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/?claims=claim-str claim-number claim-bool", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
   j_result = json_pack("{ssssssssss}", "sub", "user1", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", "the-str", "claim-mandatory", "I'M aliiiiiive!");
-  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/user/" USER_USERNAME, NULL, NULL, j_result, NULL, 200, NULL, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/?claims=claim-str claim-unknown", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
+  json_decref(j_result);
+  
+  ulfius_clean_request(&req);
+  o_free(access_token);
+  o_free(bearer);
+}
+END_TEST
+
+START_TEST(test_oidc_userinfo_post)
+{
+  struct _u_response resp;
+  struct _u_request req;
+  char * access_token, * bearer;
+  json_t * j_result;
+  
+  ulfius_init_response(&resp);
+  ulfius_init_request(&req);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "access_token="), NULL);
+  access_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "access_token=") + o_strlen("access_token="));
+  if (o_strchr(access_token, '&')) {
+    *(o_strchr(access_token, '&')) = '\0';
+  }
+  ulfius_clean_response(&resp);
+  bearer = msprintf("Bearer %s", access_token);
+  u_map_put(req.map_header, "Authorization", bearer);
+
+  j_result = json_pack("{ssssssss}", "sub", "user1", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-mandatory", "I'M aliiiiiive!");
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
+  json_decref(j_result);
+  
+  ulfius_clean_request(&req);
+  o_free(access_token);
+  o_free(bearer);
+}
+END_TEST
+
+START_TEST(test_oidc_userinfo_claims_post)
+{
+  struct _u_response resp;
+  struct _u_request req;
+  char * access_token, * bearer;
+  json_t * j_result;
+  
+  ulfius_init_response(&resp);
+  ulfius_init_request(&req);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "access_token="), NULL);
+  access_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "access_token=") + o_strlen("access_token="));
+  if (o_strchr(access_token, '&')) {
+    *(o_strchr(access_token, '&')) = '\0';
+  }
+  ulfius_clean_response(&resp);
+  bearer = msprintf("Bearer %s", access_token);
+  u_map_put(req.map_header, "Authorization", bearer);
+
+  j_result = json_pack("{sssssssssisoss}", "sub", "user1", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", "the-str", "claim-number", 42, "claim-bool", json_true(), "claim-mandatory", "I'M aliiiiiive!");
+  u_map_put(req.map_post_body, "claims", "claim-str claim-number claim-bool");
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
+  json_decref(j_result);
+  
+  j_result = json_pack("{ssssssssss}", "sub", "user1", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", "the-str", "claim-mandatory", "I'M aliiiiiive!");
+  u_map_put(req.map_post_body, "claims", "claim-str claim-number claim-bool");
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
   ulfius_clean_request(&req);
@@ -220,6 +293,8 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_userinfo_noauth);
   tcase_add_test(tc_core, test_oidc_userinfo);
   tcase_add_test(tc_core, test_oidc_userinfo_claims);
+  tcase_add_test(tc_core, test_oidc_userinfo_post);
+  tcase_add_test(tc_core, test_oidc_userinfo_claims_post);
   tcase_add_test(tc_core, test_oidc_userinfo_delete_plugin);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
