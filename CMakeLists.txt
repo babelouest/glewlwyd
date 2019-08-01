@@ -558,7 +558,6 @@ if (BUILD_GLEWLWYD_TESTING)
 			set (TESTS ${TESTS}
 							glewlwyd_oidc_additional_parameters
 							glewlwyd_oidc_auth_code
-							glewlwyd_oidc_auth_code_idtoken
 							glewlwyd_oidc_client_cred
 							glewlwyd_oidc_code
 							glewlwyd_oidc_code_client_confidential
