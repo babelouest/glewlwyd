@@ -89,7 +89,7 @@ Duration of validity of each refresh tokens. Default value is 1209600 (14 days).
 
 Duration of validity of each code sent to the client befire requesting a refresh token. Default value is 600 (10 minutes).
 
-### Refresh token rolling?
+### Refresh token rolling
 
 If this option is checked, every time an access token is requested using a refresh token, the refresh token issued at time will be reset to the current time. This option allows infinite validity for the refresh tokens if it's not manually disabled, but if a refresh token isn't used for more of the value `Refresh token duration`, it will be disabled.
 
