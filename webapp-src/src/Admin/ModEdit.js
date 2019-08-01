@@ -23,6 +23,18 @@ class ModEdit extends Component {
     if (props.mod.allow_user_register === undefined) {
       props.mod.allow_user_register = true;
     }
+    
+    if (props.role === "client") {
+      if (props.mod.parameters["data-format"] === undefined) {
+        props.mod.parameters["data-format"]  = [];
+      }
+      if (props.mod.parameters["data-format"]["redirect_uri"] === undefined) {
+        props.mod.parameters["data-format"]["redirect_uri"] = {multiple: true, read: true, write: true};
+      }
+      if (props.mod.parameters["data-format"]["authorization_type"] === undefined) {
+        props.mod.parameters["data-format"]["authorization_type"] = {multiple: true, read: true, write: true};
+      }
+    }
 
     this.state = {
       config: props.config,
@@ -91,6 +103,18 @@ class ModEdit extends Component {
       nextProps.mod.allow_user_register = true;
     }
 
+    if (nextProps.role === "client") {
+      if (nextProps.mod.parameters["data-format"] === undefined) {
+        nextProps.mod.parameters["data-format"]  = [];
+      }
+      if (nextProps.mod.parameters["data-format"]["redirect_uri"] === undefined) {
+        nextProps.mod.parameters["data-format"]["redirect_uri"] = {multiple: true, read: true, write: true};
+      }
+      if (nextProps.mod.parameters["data-format"]["authorization_type"] === undefined) {
+        nextProps.mod.parameters["data-format"]["authorization_type"] = {multiple: true, read: true, write: true};
+      }
+    }
+
     this.setState({
       config: nextProps.config,
       title: nextProps.title,
@@ -105,7 +129,7 @@ class ModEdit extends Component {
       typeInvalidMessage: false
     });
   }
-
+    
   closeModal(e, result) {
     if (this.state.callback) {
       if (result) {
@@ -245,6 +269,15 @@ class ModEdit extends Component {
               <div className="form-group">
                 <div className="input-group mb-3">
                   <div className="input-group-prepend">
+                    <label className="input-group-text" htmlFor="mod-type">{i18next.t("admin.mod-type")}</label>
+                  </div>
+                  {modType}
+                  <span className={"error-input" + (this.state.typeInvalidMessage?"":" hidden")}>{this.state.typeInvalidMessage}</span>
+                </div>
+              </div>
+              <div className="form-group">
+                <div className="input-group mb-3">
+                  <div className="input-group-prepend">
                     <label className="input-group-text" htmlFor="mod-name">{i18next.t("admin.mod-name")}</label>
                   </div>
                   <input type="text" className={"form-control" + (this.state.nameInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("admin.mod-name-ph")} maxLength="128" value={this.state.mod.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
@@ -259,17 +292,8 @@ class ModEdit extends Component {
                   <input type="text" className="form-control" id="mod-display-name" placeholder={i18next.t("admin.mod-display-name-ph")} maxLength="256" value={this.state.mod.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
                 </div>
               </div>
-              {schemeParams}
-              <div className="form-group">
-                <div className="input-group mb-3">
-                  <div className="input-group-prepend">
-                    <label className="input-group-text" htmlFor="mod-type">{i18next.t("admin.mod-type")}</label>
-                  </div>
-                  {modType}
-                  <span className={"error-input" + (this.state.typeInvalidMessage?"":" hidden")}>{this.state.typeInvalidMessage}</span>
-                </div>
-              </div>
               {readonly}
+              {schemeParams}
               <ModEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
             </form>
           </div>

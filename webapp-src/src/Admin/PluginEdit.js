@@ -161,6 +161,15 @@ class PluginEdit extends Component {
                 <div className="form-group">
                   <div className="input-group mb-3">
                     <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-type">{i18next.t("admin.mod-type")}</label>
+                    </div>
+                    {modType}
+                  </div>
+                  <span className={"error-input" + (this.state.typeInvalidMessage?"":" hidden")}>{this.state.typeInvalidMessage}</span>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-name">{i18next.t("admin.mod-name")}</label>
                     </div>
                     <input type="text" className={"form-control" + (this.state.nameInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("admin.mod-name-ph")} maxLength="128" value={this.state.mod.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
@@ -174,15 +183,6 @@ class PluginEdit extends Component {
                     </div>
                     <input type="text" className="form-control" id="mod-display-name" placeholder={i18next.t("admin.mod-display-name-ph")} maxLength="256" value={this.state.mod.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
                   </div>
-                </div>
-                <div className="form-group">
-                  <div className="input-group mb-3">
-                    <div className="input-group-prepend">
-                      <label className="input-group-text" htmlFor="mod-type">{i18next.t("admin.mod-type")}</label>
-                    </div>
-                    {modType}
-                  </div>
-                  <span className={"error-input" + (this.state.typeInvalidMessage?"":" hidden")}>{this.state.typeInvalidMessage}</span>
                 </div>
                 <PluginEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
               </form>

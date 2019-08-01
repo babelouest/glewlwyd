@@ -35,7 +35,7 @@ class OTPParams extends Component {
     }
 
     if (props.mod.parameters["totp-window"] === undefined) {
-      props.mod.parameters["totp-window"] = 0;
+      props.mod.parameters["totp-window"] = 30;
     }
 
     if (props.mod.parameters["totp-start-offset"] === undefined) {
@@ -91,7 +91,7 @@ class OTPParams extends Component {
     }
 
     if (nextProps.mod.parameters["totp-window"] === undefined) {
-      nextProps.mod.parameters["totp-window"] = 0;
+      nextProps.mod.parameters["totp-window"] = 30;
     }
 
     if (nextProps.mod.parameters["totp-start-offset"] === undefined) {
