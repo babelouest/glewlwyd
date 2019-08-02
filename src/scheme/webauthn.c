@@ -700,15 +700,14 @@ static json_t * get_assertion_from_session(struct config_module * config, json_t
   return j_return;
 }
 
-static int check_certificate(struct config_module * config, json_t * j_params, const char * cert, const char * credential_id, json_int_t gswu_id) {
+static int check_certificate(struct config_module * config, json_t * j_params, const char * credential_id, json_int_t gswu_id) {
   json_t * j_query, * j_result;
   int res, ret;
-  char * cert_escaped, * credential_id_escaped, * mod_name_escaped, * where_clause;
+  char * credential_id_escaped, * mod_name_escaped, * where_clause;
   
-  cert_escaped = h_escape_string(config->conn, cert);
   credential_id_escaped = h_escape_string(config->conn, credential_id);
   mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
-  where_clause = msprintf(" IN (SELECT gswu_id FROM " G_TABLE_WEBAUTHN_CREDENTIAL " WHERE (gswc_certificate='%s' OR gswc_credential_id='%s') AND gswc_status=1 AND gswu_id IN (SELECT gswu_id FROM " G_TABLE_WEBAUTHN_USER " WHERE gswu_mod_name='%s'))", cert_escaped, credential_id_escaped, mod_name_escaped);
+  where_clause = msprintf(" IN (SELECT gswu_id FROM " G_TABLE_WEBAUTHN_CREDENTIAL " WHERE gswc_credential_id='%s' AND gswc_status=1 AND gswu_id IN (SELECT gswu_id FROM " G_TABLE_WEBAUTHN_USER " WHERE gswu_mod_name='%s'))", credential_id_escaped, mod_name_escaped);
   j_query = json_pack("{sss[s]s{s{ssss}si}}",
                       "table",
                       G_TABLE_WEBAUTHN_CREDENTIAL,
@@ -725,7 +724,6 @@ static int check_certificate(struct config_module * config, json_t * j_params, c
   o_free(where_clause);
   o_free(mod_name_escaped);
   o_free(credential_id_escaped);
-  o_free(cert_escaped);
   res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -1265,12 +1263,12 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
     j_error = json_array();
     if (j_error != NULL) {
       do {
-        if (!json_is_string(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")) || !json_string_length(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId"))) {
+        if (!json_string_length(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId"))) {
           json_array_append_new(j_error, json_string("rawId mandatory"));
           ret = G_ERROR_PARAM;
           break;
         }
-        if (!json_is_string(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")) || !json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON"))) {
+        if (!json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON"))) {
           json_array_append_new(j_error, json_string("clientDataJSON mandatory"));
           ret = G_ERROR_PARAM;
           break;
@@ -1634,7 +1632,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           j_return = json_pack("{si}", "result", ret);
         }
       } else {
-        if ((res = check_certificate(config, j_params, json_string_value(j_cert), json_string_value(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")), json_integer_value(json_object_get(j_credential, "gswu_id")))) == G_OK) {
+        if ((res = check_certificate(config, j_params, json_string_value(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")), json_integer_value(json_object_get(j_credential, "gswu_id")))) == G_OK) {
           j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Credential already registered");
           status = 2;
         } else if (res == G_ERROR_UNAUTHORIZED) {
