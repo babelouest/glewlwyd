@@ -8,7 +8,8 @@ The HTTP request `GET /api/user/user1?backend=http` may return the following res
 ```JSON
 {
   "username": "user1",
-  "scope": ["g_profile","scope1"]
+  "scope": ["g_profile","scope1"],
+  "enabled": true
 }
 ```
 

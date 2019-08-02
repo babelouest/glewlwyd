@@ -32,9 +32,13 @@ You can add the same instance of the same user backend module as many times as y
 
 The database backend requires an access to a database. You can use the same backend as the Glewlwyd server or use a different database. If you use a different database, it must be initialized with the script available in `docs/database/user/database.[sqlite3|mariadb|postgresql].sql`.
 
+Read the full [documentation](USER_DATABASE.md).
+
 #### LDAP backend
 
-TODO
+The LDAP backend requires access to a LDAP service such as OpenLDAP or Active Directory.
+
+Read the full [documentation](USER_LDAP.md).
 
 #### HTTP authentication
 
@@ -51,6 +55,8 @@ This module is read-only, and no user data will be stored in Glewlwyd's storage 
 }
 ```
 
+Read the full [documentation](USER_HTTP.md).
+
 ### Client backend module
 
 Go to `parameters/client` menu in the navigation tab. Click on the `+` button to add a new client backend instance. The client backend modules available are:
@@ -64,11 +70,17 @@ You can add the same instance of the same client backend module as many times as
 
 The database backend requires an access to a database. You can use the same backend as the Glewlwyd server or use a different database. If you use a different database, it must be initialized with the script available in `docs/database/client/database.[sqlite3|mariadb|postgresql].sql`.
 
+Read the full [documentation](CLIENT_DATABASE.md).
+
 #### LDAP backend
 
-TODO
+The LDAP backend requires access to a LDAP service such as OpenLDAP or Active Directory.
+
+Read the full [documentation](CLIENT_LDAP.md).
 
 ### Authentication schemes
+
+When an authentication scheme needs to store specific data for a user, it will use the database rather than the user backend. So a user will be able to register a scheme even if the user backend is in read-only mode.
 
 Go to `parameters/schemes` menu in the navigation tab. Click on the `+` button to add a new scheme instance. The scheme modules available are:
 
@@ -83,34 +95,53 @@ You can add instances of the same scheme as many times as you want, if you need 
 
 The requirements to use this scheme is a smtp server available, able to relay codes sent via `SMTP`.
 
+Read the full [documentation](EMAIL.md).
+
 #### Webauthn scheme
 
-It's highly recommended to download the [google root r2 certificate](#path_2_certificate) to fully authenticate `android-safetynet` devices (Android phones or tablets version 7.0 Nougat or above).
+The Webauthn Schema implements authentification based on the [Webauthn API](https://w3c.github.io/webauthn/). This allows users to authenticate to Glewlwyd using physical devices: Android phones, Yubikeys, etc.
+
+Read the full [documentation](WEBAUTHN.md).
 
 #### HOTP/TOTP scheme
 
-Easy-peasy
+The OTP Schema implements authentification based on One-Time-Password using OATH standard defined in [HOTP](https://tools.ietf.org/html/rfc4226) and [TOTP](https://tools.ietf.org/html/rfc6238).
+
+Read the full [documentation](OTP.md).
 
 ### Plugins
 
 Go to `parameters/plugins` menu in the navigation tab. Click on the `+` button to add a new user backend instance. The plugins available are:
 
 - Glewlwyd Oauth2 plugin
+- OpenID Connect Core
 
 #### Glewlwyd Oauth2 plugin
 
-This module has the same behaviour as the legacy Glewlwyd 1.x Oauth2. The new features available are:
+This module has about the same behaviour as the legacy Glewlwyd 1.x Oauth2. The new features available are:
 
 - Allow to use a refresh token as a `"rolling refresh"`, so every time an access token is refreshed, the lifetime of the refresh token will be reset to the original duration. So if a token is refreshed periodically, users won't have to reconnect and request a new refresh token every 2 weeks or so.
 - Allow to overwrite default `rolling refresh` setting and refresh token duration for every scope individually. `rolling refresh` disabled and the lowest refresh token duration have precedence in case of conflicting scopes settings.
 
-When you create a Glewlwyd Oauth2 plugin instance, you must specify its name, its algorithm and signature size.
+Read the full [documentation](OAUTH2.md).
 
 When the plugin instance is enabled, its endpoints available are:
 
 - `/api/<instance_name>/auth`
 - `/api/<instance_name>/token`
 - `/api/<instance_name>/profile`
+
+#### OpenID Connect Core Plugin
+
+This plugin implements the OpenID Connect Core standard.
+
+Read the full [documentation](OIDC.md).
+
+When the plugin instance is enabled, its endpoints available are:
+
+- `/api/<instance_name>/auth`
+- `/api/<instance_name>/token`
+- `/api/<instance_name>/userinfo`
 
 ### Configure environment to use Glewlwyd Oauth2
 
