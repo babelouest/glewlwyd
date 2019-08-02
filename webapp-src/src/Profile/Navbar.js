@@ -71,13 +71,27 @@ class Navbar extends Component {
   }
   
   changeProfile(e, profile) {
-    apiManager.glewlwydRequest("/auth/", "POST", {username: profile.username})
-    .then(() => {
-      messageDispatcher.sendMessage('App', {type: "profile"});
-    })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
-    });
+    if (profile) {
+      apiManager.glewlwydRequest("/auth/", "POST", {username: profile.username})
+      .then(() => {
+        messageDispatcher.sendMessage('App', {type: "profile"});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
+      });
+    } else {
+      var schemeDefault = "";
+      this.state.config.sessionSchemes.forEach((scheme) => {
+        if (scheme.scheme_default) {
+          scheme.scheme_default.forEach((page) => {
+            if (page === "admin") {
+              schemeDefault = scheme.scheme_name;
+            }
+          });
+        }
+      });
+      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURI([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURI(this.state.config.profile_scope) + "&scheme=" + encodeURI(schemeDefault) + "&prompt=login";
+    }
   }
 
 	render() {
@@ -91,7 +105,7 @@ class Navbar extends Component {
       }
     });
     this.state.schemeList.forEach((scheme, index) => {
-      if (scheme.module !== "retype-password") { // Because scheme retype-password has no user configuration
+      if (scheme.module !== "retype-password" && scheme.module !== "email") { // Because schemes retype-password and e-mail code have no user configuration
         schemeList.push(
           <li className={"nav-item" + (this.state.curNav===scheme.name?" active":"")} key={index}>
             <a className="nav-link" href="#" onClick={(e) => this.navigate(e, scheme.name, scheme.module)}>{scheme.display_name||scheme.name}</a>
@@ -115,17 +129,17 @@ class Navbar extends Component {
         profileList.push(<a className={"dropdown-item"+(!index?" active":"")} href="#" onClick={(e) => this.changeProfile(e, profile)} key={index}>{profile.name||profile.username}</a>);
       });
     }
-    if (profileList.length) {
-      profileDropdown = 
-      <div className="btn-group" role="group">
-        <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <i className="fas fa-user"></i>
-        </button>
-        <div className="dropdown-menu" aria-labelledby="dropdownProfile">
-          {profileList}
-        </div>
+    profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
+    profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeProfile(e, null)} key={profileList.length}>{i18next.t("profile.menu-session-new")}</a>);
+    profileDropdown = 
+    <div className="btn-group" role="group">
+      <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <i className="fas fa-user"></i>
+      </button>
+      <div className="dropdown-menu" aria-labelledby="dropdownProfile">
+        {profileList}
       </div>
-    }
+    </div>
 		return (
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
         <a className="navbar-brand" href="#">Glewlwyd</a>
