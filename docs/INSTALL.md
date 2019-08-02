@@ -417,6 +417,23 @@ All front-end pages have a minimal design, feel free to modify them for your own
 
 The built front-end files are located in the webapp/ directory.
 
+### webapp/config.json
+
+The front-end configuration file must be available under `webapp/config.json` you can copy the file `webapp/config.json.sample`.
+
+You must modify the urls of the API and the html page to match your configuration:
+
+Example:
+
+```Javascript
+{
+  "GlewlwydUrl": "https://glewlwyd.tld/",
+  "ProfileUrl": "https://glewlwyd.tld/profile.html",
+  "AdminUrl": "https://glewlwyd.tld/index.html",
+  "LoginUrl": "https://glewlwyd.tld/login.html"
+}
+```
+
 ### Login, Admin and Profile pages
 
 These pages are used when a user requires some access to Glewlwyd. They are simple html pages with a small JavaScript/JQuery application in it to provide the expected behavior, and vanilla bootstrap 4 for the visual consistency. Glewlwyd front-end source code is under license MIT. Fell free to update them to fit your needs or to adapt the front-end to your identity.

@@ -22,6 +22,11 @@ The following OpenID Connect Core functionalities are not supported yet:
 - [id_token encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
 - [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) other than HTTP Basic auth
 
+The following OpenID Connect specifications are not supported yet:
+
+- [OpenID Connect Discovery](http://openid.net/specs/openid-connect-discovery-1_0.html)
+- [OpenID Connect Dynamic Registration](http://openid.net/specs/openid-connect-registration-1_0.html)
+
 ## Access token format
 
 As a heir of [Glewlwyd OAuth2 plugin](OAUTH2.md), Glewlwyd OpenID Connect plugin uses JWTs as access tokens. Therefore, the access token can be used by the client or the third party web service to identify the user and the scopes available with this access token.
