@@ -212,7 +212,7 @@ static json_t * get_credential_list(struct config_module * config, json_t * j_pa
                       "columns",
                         "gswc_credential_id AS credential_id",
                         "gswc_name AS name",
-                        SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gswc_created_at) AS created_at", "gswc_created_at AS created_at", "EXTRACT(EPOCH FROM gswc_created_at) AS created_at"),
+                        SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gswc_created_at) AS created_at", "strftime('%s', gswc_created_at) AS created_at", "EXTRACT(EPOCH FROM gswc_created_at) AS created_at"),
                         "gswc_status",
                       "where",
                         "gswu_id",
