@@ -186,7 +186,7 @@ class SchemeWebauthn extends Component {
         messageDispatcher.sendMessage('App', {
           type: 'message',
           title: i18next.t("profile.scheme-webauthn-register-credential-error"), 
-          message: err
+          message: [err.toString()]
         });
       });
     })
@@ -273,7 +273,7 @@ class SchemeWebauthn extends Component {
         messageDispatcher.sendMessage('App', {
           type: 'message',
           title: i18next.t("profile.scheme-webauthn-register-credential-error"), 
-          message: err
+          message: [err.toString()]
         });
       });
     })
