@@ -747,7 +747,7 @@ class GlwdOIDCParams extends Component {
               <label className="input-group-text" htmlFor="mod-glwd-auth-type-id-token-enabled">{i18next.t("admin.mod-glwd-auth-type-id-token-enabled")}</label>
             </div>
             <div className="input-group-text">
-              <input disabled="true" type="checkbox" className="form-control" id="mod-glwd-auth-type-id-token-enabled" onChange={(e) => this.toggleParam(e, "auth-type-id-token-enabled")} checked={this.state.mod.parameters["auth-type-id-token-enabled"]} />
+              <input disabled={true} type="checkbox" className="form-control" id="mod-glwd-auth-type-id-token-enabled" onChange={(e) => this.toggleParam(e, "auth-type-id-token-enabled")} checked={this.state.mod.parameters["auth-type-id-token-enabled"]} />
             </div>
           </div>
         </div>
