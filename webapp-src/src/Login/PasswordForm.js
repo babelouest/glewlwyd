@@ -57,7 +57,7 @@ class PasswordForm extends Component {
 	render() {
     var inputUsername;
     if (this.state.currentUser) {
-      inputUsername = <input type="text" className="form-control" name="username" id="username" disabled="true" value={this.state.currentUser.username} />
+      inputUsername = <input type="text" className="form-control" name="username" id="username" disabled={true} value={this.state.currentUser.username} />
     } else {
       inputUsername = <input type="text" className="form-control" name="username" id="username" autoFocus="" required="" placeholder={i18next.t("login.login-placeholder")} value={this.state.username} onChange={this.handleChangeUsername}/>;
     }

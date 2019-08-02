@@ -312,7 +312,7 @@
     "mod-ldap-filter-error": "Filtre requis",
     "mod-ldap-username-property-error": "Propriété nom d'utilisateur requise",
     "mod-ldap-client_id-property": "Propriété Client ID",
-    "mod-ldap-client_id-property-error": "Propriété Client ID requise"
+    "mod-ldap-client_id-property-error": "Propriété Client ID requise",
     "mod-ldap-scope-property-error": "Propriété scope requise",
     "mod-ldap-rdn-property-error": "Propriété RDN requise",
     "mod-ldap-password-property-error": "Propriété mot de passe requise",

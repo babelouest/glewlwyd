@@ -125,7 +125,7 @@ class EditRecord extends Component {
               if (pattern.edit || this.state.add) {
                 inputJsx = <input type="file" className={"form-control" + validInput} onChange={(e) => this.uploadFile(e, pattern.name, true)} />
               } else {
-                inputJsx = <input type="file" disabled="true" className="form-control" />
+                inputJsx = <input type="file" disabled={true} className="form-control" />
               }
             } else {
               inputJsx = <div className="input-group">
@@ -167,7 +167,7 @@ class EditRecord extends Component {
         } else if (pattern.type === "boolean") {
           if (pattern.edit === false && !this.state.add) {
             inputJsx = <div className="input-group-text">
-              <input disabled="true" type="checkbox" className="form-control" id={"modal-edit-" + pattern.name} checked={elt} />
+              <input disabled={true} type="checkbox" className="form-control" id={"modal-edit-" + pattern.name} checked={elt} />
             </div>
           } else {
             inputJsx = <div className="input-group-text">
@@ -176,7 +176,7 @@ class EditRecord extends Component {
           }
         } else if (pattern.type === "textarea") {
           if (pattern.edit === false && !this.state.add) {
-            inputJsx = <textarea className="form-control" disabled="true" value={elt||""}></textarea>
+            inputJsx = <textarea className="form-control" disabled={true} value={elt||""}></textarea>
           } else {
             inputJsx = <textarea className={"form-control" + validInput} onChange={(e) => this.changeTextArea(e, pattern.name, false)} value={elt||""} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""}></textarea>
           }
@@ -187,11 +187,11 @@ class EditRecord extends Component {
           if (pattern.edit || this.state.add) {
             inputJsx = <input type="file" className={"form-control" + validInput} onChange={(e) => this.uploadFile(e, pattern.name)} />
           } else {
-            inputJsx = <input type="file" disabled="true" className="form-control" />
+            inputJsx = <input type="file" disabled={true} className="form-control" />
           }
         } else {
           if (pattern.edit === false && !this.state.add) {
-            inputJsx = <input disabled="true" type={(pattern.type||"text")} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={elt}/>
+            inputJsx = <input disabled={true} type={(pattern.type||"text")} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={elt}/>
           } else {
             if (pattern.type === "password") {
               inputJsx = <div><input type="password" className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} onChange={(e) => this.changeElt(e, pattern.name)} value={elt||""}/><input type="password" className={"form-control" + validInput} id={"modal-edit-confirm" + pattern.name} placeholder={i18next.t(pattern.placeholderConfirm)} value={this.state.listEltConfirm[pattern.name]||""} onChange={(e) => this.changeEltConfirm(e, pattern.name)} /></div>

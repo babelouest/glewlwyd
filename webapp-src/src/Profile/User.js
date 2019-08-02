@@ -191,7 +191,7 @@ class User extends Component {
             if (pattern["profile-write"] || this.state.add) {
               inputJsx = <input type="file" className={"form-control" + validInput} onChange={(e) => this.uploadFile(e, pattern.name, true)} />
             } else {
-              inputJsx = <input type="file" disabled="true" className="form-control" />
+              inputJsx = <input type="file" disabled={true} className="form-control" />
             }
           } else {
             if (pattern["profile-write"]) {
@@ -250,13 +250,13 @@ class User extends Component {
         });
       } else if (pattern.type === "boolean") {
         if (pattern["profile-write"] !== true && !this.state.add) {
-          inputJsx = <input disabled="true" type="checkbox" className="form-control" id={"modal-edit-" + pattern.name} checked={elt} />
+          inputJsx = <input disabled={true} type="checkbox" className="form-control" id={"modal-edit-" + pattern.name} checked={elt} />
         } else {
           inputJsx = <input type="checkbox" className={"form-control" + validInput} id={"modal-edit-" + pattern.name} onChange={(e) => this.toggleBooleanElt(e, pattern.name)} checked={elt} />
         }
       } else if (pattern.type === "textarea") {
         if (pattern["profile-write"] !== true && !this.state.add) {
-          inputJsx = <textarea className="form-control" disabled="true" value={elt||""}></textarea>
+          inputJsx = <textarea className="form-control" disabled={true} value={elt||""}></textarea>
         } else {
           inputJsx = <textarea className={"form-control" + validInput} 
                                onChange={(e) => this.changeTextArea(e, pattern.name, false)} 
@@ -277,11 +277,11 @@ class User extends Component {
         if (pattern["profile-write"] || this.state.add) {
           inputJsx = <input type="file" className={"form-control" + validInput} onChange={(e) => this.uploadFile(e, pattern.name)} />
         } else {
-          inputJsx = <input type="file" disabled="true" className="form-control" />
+          inputJsx = <input type="file" disabled={true} className="form-control" />
         }
       } else {
         if (pattern["profile-write"] !== true && !this.state.add) {
-          inputJsx = <input disabled="true" 
+          inputJsx = <input disabled={true} 
                             type={(pattern.type||"text")} 
                             className={"form-control" + validInput} 
                             id={"modal-edit-" + pattern.name} 
