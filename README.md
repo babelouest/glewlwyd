@@ -6,7 +6,7 @@ Single Sign On authentication server. Provides OAuth2 authentication processus a
 - Password
 - One-time password (TOTP/HOTP)
 - Webauthn (Yubikey or Android safetynet)
-- Code sent via e-mail
+- Random Code sent via e-mail
 
 Glewlwyd authorizes no-password authentication.
 
@@ -27,6 +27,10 @@ The full installation documentation is available in the [install documentation](
 ## Getting started
 
 The [Getting started documentation](docs/GETTING_STARTED.md) will help you complete the installation of Glewlwyd.
+
+## User documentation
+
+The [documentation](docs/USER.md) to help Glewlwyd's users manage their profile and log in to Glewlwyd is available.
 
 ## Core API
 
