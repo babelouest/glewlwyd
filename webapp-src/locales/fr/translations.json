@@ -511,6 +511,7 @@
     "menu-user": "Données personnelles",
     "menu-password": "Mot de passe",
     "menu-session": "Sessions",
+    "menu-session-new": "Nouvel utilisateur",
     "hello": "Bienvenue {{name}}",
     "hello-delegate": "Délégation pour {{name}}",
     "save": "Sauvegarder",
