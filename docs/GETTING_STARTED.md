@@ -1,5 +1,25 @@
 # Getting started with Glewlwyd 2.0
 
+- [Installation](#installation)
+- [First connection to the administration page](#first-connection-to-the-administration-page)
+- [Configure backends, schemes and plugins](#configure-backends-schemes-and-plugins)
+  - [User backend modules](#user-backend-modules)
+    - [Database backend](#database-backend)
+    - [LDAP backend](#ldap-backend)
+    - [HTTP authentication backend](#http-authentication-backend)
+  - [Client backend module](#client-backend-module)
+    - [Database backend](#database-backend-1)
+    - [LDAP backend](#ldap-backend-1)
+  - [Authentication schemes](#authentication-schemes)
+    - [E-mail code scheme](#e-mail-code-scheme)
+    - [Webauthn scheme](#webauthn-scheme)
+    - [HOTP/TOTP scheme](#hotptotp-scheme)
+  - [Plugins](#plugins)
+    - [Glewlwyd Oauth2 plugin](#glewlwyd-oauth2-plugin)
+    - [OpenID Connect Core Plugin](#openid-connect-core-plugin)
+  - [Configure environment to use Glewlwyd Oauth2](#configure-environment-to-use-glewlwyd-oauth2)
+  - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
+
 The installation comes with a default configuration that can be updated or overwritten via the administration page.
 
 The default configuration uses Glewlwyd's database as backend for users and clients. The retype-password scheme is instanciated for a session duration of 10 minutes, it's used to authenticate `g_admin` and `g_profile` scopes (for admin page and profile page). The other authentication schemes are available but must be instanciated and configured.
@@ -7,6 +27,7 @@ The default configuration uses Glewlwyd's database as backend for users and clie
 The following plugins are available but must be instanciated and configured either:
 
 - Glewlwyd Oauth2 plugin
+- Glewlwyd OpenID Connect Core plugin
 
 ## Installation
 
@@ -17,6 +38,8 @@ Install Glewlwyd via the packages, CMake or Makefile. See the [installation docu
 Open the administration page in your browser. The default url is [http://localhost:4953/](http://localhost:4953/). Use the default login `admin` with the default password `password`.
 
 Make sure to change the default password for the `admin` user to a more secure password.
+
+## Configure backends, schemes and plugins
 
 ### User backend modules
 
