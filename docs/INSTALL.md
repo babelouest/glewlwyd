@@ -18,12 +18,10 @@
    * [Database back-end initialisation](#database-back-end-initialisation)
    * [Mime types for webapp files](#mime-types-for-webapp-files)
    * [Install as a service](#install-as-a-service)
-5. [Configure webapp/config.json](#configure-webappconfigjson)
-   * [GlewlwydApiUrl, ProfileUrl, AdminUrl and LoginUrl](#glewlwydapiurl-profileurl-adminurl-and-loginurl)
 6. [Initialise database](#initialise-database)
 7. [Install as a service](#install-as-a-service)
-8. [Run Glewlwyd](#run-glewlwyd)
-9. [Front-end application](#front-end-application)
+8. [Front-end application](#front-end-application)
+9. [Run Glewlwyd](#run-glewlwyd)
 
 ### Distribution packages
 
@@ -304,7 +302,7 @@ database =
 
 ### Cookies configuration
 
-The default cnfig file has the following configuration for cookies:
+The default cnfig file has the following cookies configuration:
 
 ```
 # cookie domain
@@ -325,14 +323,6 @@ The parameter `cookie_secure` is set to 0 by default, but since you should use G
 ### Mime types for webapp files
 
 This section in the config file is used by the static file service whuch will provide the `webapp/` content to the browser. You can add or remove values if you made changes to the front-end and requires to handle new types of files.
-
-## Configure webapp/config.json
-
-Copy `webapp/config.json.sample` to `webapp/config.json`, edit the file with your own settings.
-
-### GlewlwydApiUrl, ProfileUrl, AdminUrl and LoginUrl
-
-Update those parameters to fit your configuration.
 
 ## Initialise database
 
@@ -395,22 +385,6 @@ $ sudo systemctl enable glewlwyd
 $ sudo systemctl start glewlwyd
 ```
 
-## Run Glewlwyd
-
-Run the application using the service command if you installed the init file:
-
-```shell
-$ sudo service glewlwyd start
-```
-
-You can also manually start the application like this:
-
-```shell
-$ ./glewlwyd --config-file=glewlwyd.conf
-```
-
-By default, Glewlwyd is available on TCP port 4593.
-
 ## Front-end application
 
 All front-end pages have a minimal design, feel free to modify them for your own need, or create your own application. The source code is available in `/webapp-src` and requires nodejs and npm or yarn to build.
@@ -437,3 +411,19 @@ Example:
 ### Login, Admin and Profile pages
 
 These pages are used when a user requires some access to Glewlwyd. They are simple html pages with a small JavaScript/JQuery application in it to provide the expected behavior, and vanilla bootstrap 4 for the visual consistency. Glewlwyd front-end source code is under license MIT. Fell free to update them to fit your needs or to adapt the front-end to your identity.
+
+## Run Glewlwyd
+
+Run the application using the service command if you installed the init file:
+
+```shell
+$ sudo service glewlwyd start
+```
+
+You can also manually start the application like this:
+
+```shell
+$ ./glewlwyd --config-file=glewlwyd.conf
+```
+
+By default, Glewlwyd is available on TCP port 4593.
