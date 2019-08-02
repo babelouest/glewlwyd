@@ -2286,7 +2286,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
   char * message;
   
   if (check_result_value(j_result, G_OK)) {
-    *cls = json_pack("{sO sO sO sO sI sI sO ss so ss s[]}",
+    *cls = json_pack("{sO sO sO sO sI sI sO ss sO ss s[]}",
                      "challenge-length", json_object_get(j_parameters, "challenge-length"),
                      "rp-origin", json_object_get(j_parameters, "rp-origin"),
                      "credential-expiration", json_object_get(j_parameters, "credential-expiration"),
