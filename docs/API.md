@@ -6,6 +6,8 @@ This document is intended to describe Glewlwyd's core API endpoints. Glewlwyd's 
 - [Prefix](#prefix)
 - [Content-type](#content-type)
 - [Error response](#error-response)
+- [Configuratiom](#configuration)
+  - [Get server configuration](#get-server-configuration)
 - [Plugins and modules management](#plugins-and-modules-management)
   - [Get all modules available](#get-all-modules-available)
   - [Get all user module instances available](#get-all-user-module-instances-available)
@@ -53,16 +55,30 @@ This document is intended to describe Glewlwyd's core API endpoints. Glewlwyd's 
 - [User authentication](#user-authentication)
   - [Authenticate a user with password](#authenticate-a-user-with-password)
   - [Authenticate a user with an authentication scheme](#authenticate-a-user-with-an-authentication-scheme)
+  - [Get authorized scopes from a scope list for a user](#get-authorized-scopes-from-a-scope-list-for-a-user)
   - [Trigger a scheme](#trigger-a-scheme)
   - [Change current user with another user authenticated in this session](#change-current-user-with-another-user-authenticated-in-this-session)
+- [Grant scopes](#grant-scopes)
+  - [Get list of granted scopes for a client by the user](#get-list-of-granted-scopes-for-a-client-by-the-user)
+  - [Update granted scope for a client by a user](#update-granted-scope-for-a-client-by-a-user)
 - [User profile](#user-profile)
   - [Get list of connected profiles](#get-list-of-connected-profiles)
   - [Update current profile](#update-current-profile)
   - [Change user password for current profile](#change-user-password-for-current-profile)
+  - [Get list of plugins available(#get-list-of-plugins-available)
   - [Get sessions for current profile](#get-sessions-for-current-profile)
   - [Disable a session for current profile](#disable-a-session-for-current-profile)
+  - [Get list of schemes available](#get-list-of-schemes-available)
   - [Register an auth scheme for current profile](#register-an-auth-scheme-for-current-profile)
   - [Get registration on an auth scheme for current profile](#get-registration-on-an-auth-scheme-for-current-profile)
+- [Profile delegation](#profile-delegation)
+  - [Update profile by delegation](#update-profile-by-delegation)
+  - [Get sessions for profile by delegation](#get-sessions-for-profile-by-delegation)
+  - [Disable a session for a profile by delegation](#disable-a-session-for-a-profile-by-delegation)
+  - [Get list of plugins available by delegation](#get-list-of-plugins-available-by-delegation)
+  - [Get list of schemes available by delegation](#get-list-of-schemes-available-by-delegation)
+  - [Register an auth scheme for a profile by delegation](#register-an-auth-scheme-for-a-profile-by-delegation)
+  - [Get registration on an auth scheme for a profile by delegation](#get-registration-on-an-auth-scheme-for-a-profile-by-delegation)
 
 ## Endpoints authentication
 
@@ -662,7 +678,7 @@ User with scope `g_admin` authorized.
 #### URL Parameters
 
 `name`: name of the instance
-`action`: either `enable` or `disable`
+`action`: either `enable` or `disable` or `reset`
 
 #### Success response
 
@@ -923,7 +939,7 @@ User with scope `g_admin` authorized.
 #### URL Parameters
 
 `name`: name of the instance
-`action`: either `enable` or `disable`
+`action`: either `enable` or `disable` or `reset`
 
 #### Success response
 
@@ -1180,7 +1196,7 @@ user with scope `g_admin` authorized.
 #### URL Parameters
 
 `name`: name of the instance
-`action`: either `enable` or `disable`
+`action`: either `enable` or `disable` or `reset`
 
 #### Success response
 
@@ -1487,7 +1503,7 @@ User with scope `g_admin` authorized.
 #### URL Parameters
 
 `name`: name of the instance
-`action`: either `enable` or `disable`
+`action`: either `enable` or `disable` or `reset`
 
 #### Success response
 
@@ -2556,7 +2572,7 @@ Code 401
 
 No enabled authenticated user for this session
 
-### Update granetd scope for a client by a user
+### Update granted scope for a client by a user
 
 #### URL
 
