@@ -31,6 +31,8 @@ An access token payload has the following JSON format:
 
 ## Installation
 
+![plugin-oauth2](screenshots/plugin-oauth2.png)
+
 In the administration page, go to `Parameters/Plugins` and add a new plugin by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all user backend instances).
 Select the type `Glewlwyd OAuth2 Plugin` in the Type dropdown button.
 
@@ -146,7 +148,7 @@ Authentication has different faces, and differs with the authorization scheme.
 
 ### Prefix
 
-All URIs are based on the prefix you will setup. In this document, all API endpoints will assume they use the prefix `/api/glwd`, and all static file endpoints will assume they use the prefix `/app`.
+All URIs are based on the prefix you will setup. In this document, all API endpoints will assume they use the prefix `/api/glwd`, and all static file endpoints will assume they use the prefix `/`.
 
 ### Login and grant URIs
 
