@@ -1,5 +1,7 @@
 # Glewlwyd Webauthn Schema Documentation
 
+![scheme-webauthn](screenshots/scheme-webauthn.png)
+
 The Webauthn Schema implements authentification based on the [Webauthn API](https://w3c.github.io/webauthn/). This allows users to authenticate to Glewlwyd using physical devices: Android phones, Yubikeys, etc.
 
 The user needs to register its device to Glewlwyd first, then when a webauthn authentication is required, the user plugs its device, end the authentication process is validated without the users need to enter a password.
