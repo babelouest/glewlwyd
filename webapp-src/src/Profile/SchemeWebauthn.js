@@ -19,7 +19,8 @@ class SchemeWebauthn extends Component {
       credentialAvailable: false,
       editIndex: -1,
       editValue: "",
-      removeIndex: -1
+      removeIndex: -1,
+      credAssertion: false
     };
     
     this.getCredentials = this.getCredentials.bind(this);
@@ -69,11 +70,11 @@ class SchemeWebauthn extends Component {
             credentialAvailable = true;
           }
         });
-        this.setState({credentialList: res, credentialAvailable: credentialAvailable});
+        this.setState({credentialList: res, credentialAvailable: credentialAvailable, credAssertion: false});
       })
       .fail((err) => {
         if (err.status === 401) {
-          this.setState({registration: i18next.t("profile.scheme-webauthn-register-status-not-registered"), registered: false, credentialList: []});
+          this.setState({registration: i18next.t("profile.scheme-webauthn-register-status-not-registered"), registered: false, credentialList: [], credAssertion: false});
         } else {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }
@@ -221,7 +222,6 @@ class SchemeWebauthn extends Component {
       
       navigator.credentials.get({"publicKey": assertionRequest})
       .then((assertion) => {
-        
         const publicKeyCredential = {};
 
         if ('id' in assertion) {
@@ -233,6 +233,7 @@ class SchemeWebauthn extends Component {
         if ('rawId' in assertion) {
           publicKeyCredential.rawId = this.binToStr(assertion.rawId);
         }
+        this.setState({credAssertion: publicKeyCredential.rawId});
         
         publicKeyCredential.response = {
           clientDataJSON: this.binToStr(assertion.response.clientDataJSON),
@@ -283,11 +284,11 @@ class SchemeWebauthn extends Component {
   }
 
   editNameCred(index) {
-    this.setState({editIndex: index, editValue: this.state.credentialList[index].name});
+    this.setState({editIndex: index, editValue: this.state.credentialList[index].name, credAssertion: false});
   }
   
   changeName(e) {
-    this.setState({editValue: e.target.value});
+    this.setState({editValue: e.target.value, credAssertion: false});
   }
   
   saveName(e, index) {
@@ -406,6 +407,10 @@ class SchemeWebauthn extends Component {
           </tr>
         );
       } else if (cred.status === "registered") {
+        var checked = "";
+        if (cred.credential_id === this.state.credAssertion) {
+          checked = <i className="far fa-check-circle btn-icon-right text-success"></i>;
+        }
         credentialList.push(
           <tr key={index}>
             <td className="d-none d-md-block">
@@ -415,6 +420,7 @@ class SchemeWebauthn extends Component {
               <span className="badge badge-success">
                 {cred.name}
               </span>
+              {checked}
             </td>
             <td className="d-none d-md-block">
               {i18next.t("admin.yes")}

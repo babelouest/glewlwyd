@@ -272,7 +272,7 @@ class WebauthnParams extends Component {
         </div>
         <div className="form-group">
           <label htmlFor="mod-google-root-ca-r2">{i18next.t("admin.mod-webauthn-google-root-ca-r2")}</label>
-          <a href="https://pki.goog/" className="badge badge-primary" target="_blank">{i18next.t("admin.mod-webauthn-google-root-ca-r2-download-link")}</a>
+          <a href="https://pki.goog/" className="badge badge-primary" target="_blank">{i18next.t("admin.mod-webauthn-google-root-ca-r2-download-link")}<i className="fas fa-external-link-alt btn-icon-right"></i></a>
           <input type="text" className="form-control" id="mod-google-root-ca-r2" onChange={(e) => this.changeParam(e, "google-root-ca-r2")} value={this.state.mod.parameters["google-root-ca-r2"]} placeholder={i18next.t("admin.mod-webauthn-google-root-ca-r2-ph")} />
         </div>
       </div>

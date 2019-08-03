@@ -485,7 +485,7 @@
     "mod-webauthn-safetynet-integrity-1": "True",
     "mod-webauthn-google-root-ca-r2": "Server local path to the root certificate 'GlobalSign Root CA — R2'",
     "mod-webauthn-google-root-ca-r2-ph": "Leave empty if no chain validation is required",
-    "mod-webauthn-google-root-ca-r2-download-link": "Download “GlobalSign Root CA — R2” from Google PKI",
+    "mod-webauthn-google-root-ca-r2-download-link": "Download “GlobalSign Root CA — R2” (DER Format) from Google PKI",
     "mod-otp-issuer": "Issuer",
     "mod-otp-issuer-ph": "Ex: glewlwyd.tld",
     "mod-otp-issuer-error": "Issuer is mandatory",
