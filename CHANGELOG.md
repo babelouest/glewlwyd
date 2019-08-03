@@ -6,6 +6,7 @@
 - Fix lots of bugs and memory leaks
 - Add more tests
 - Change return type of all modules function `*_init()` to `json_t *` so the front-end will know about the error
+- Improve documentation
 
 ## 2.0.0-b2
 
