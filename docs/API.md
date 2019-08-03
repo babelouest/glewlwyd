@@ -65,7 +65,7 @@ This document is intended to describe Glewlwyd's core API endpoints. Glewlwyd's 
   - [Get list of connected profiles](#get-list-of-connected-profiles)
   - [Update current profile](#update-current-profile)
   - [Change user password for current profile](#change-user-password-for-current-profile)
-  - [Get list of plugins available(#get-list-of-plugins-available)
+  - [Get list of plugins available](#get-list-of-plugins-available)
   - [Get sessions for current profile](#get-sessions-for-current-profile)
   - [Disable a session for current profile](#disable-a-session-for-current-profile)
   - [Get list of schemes available](#get-list-of-schemes-available)
