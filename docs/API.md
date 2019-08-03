@@ -6,63 +6,63 @@ This document is intended to describe Glewlwyd's core API endpoints. Glewlwyd's 
 - [Prefix](#prefix)
 - [Content-type](#content-type)
 - [Error response](#error-response)
-- Plugins and modules management
-  - Get list of all plugin instances available
-  - Get all user module instances available
-  - Get a user module instance
-  - Add a new user module instance
-  - Update an existing user module instance
-  - Delete an existing user module instance
-  - Enable or disable an existing user module instance
-  - Get all client module instances available
-  - Get a client module instance
-  - Add a new client module instance
-  - Update an existing client module instance
-  - Delete an existing client module instance
-  - Enable or disable an existing client module instance
-  - Get all user auth scheme module instances available
-  - Get a user auth scheme module instance
-  - Add a new user auth scheme module instance
-  - Update an existing user auth scheme module instance
-  - Delete an existing user auth scheme module instance
-  - Enable or disable an existing user auth scheme module instance
-  - Get all plugin module instances available
-  - Get a plugin module instance
-  - Add a new plugin module instance
-  - Update an existing plugin module instance
-  - Delete an existing plugin module instance
-  - Enable or disable an existing plugin module instance
-- Users management
-  - Get a list of users available
-  - Get a user
-  - Add a new user
-  - Update an existing user
-  - Delete an existing user
-- Clients management
-  - Get a list of clients available
-  - Get a client
-  - Add a new client
-  - Update an existing client
-  - Delete an existing client
-- Scopes management
-  - Get a list of scopes available
-  - Get a scope
-  - Add a new scope
-  - Update an existing scope
-  - Delete an existing scope
-- User authentication
-  - Authenticate a user with password
-  - Authenticate a user with an authentication scheme
-  - Trigger a scheme
-  - Change current user with another user authenticated in this session
-- User profile
-  - Get list of connected profiles
-  - Update current profile
-  - Change user password for current profile
-  - Get sessions for current profile
-  - Disable a session for current profile
-  - Register an auth scheme for current profile
-  - Get registration on an auth scheme for current profile
+- [Plugins and modules management](#plugins-and-modules-management)
+  - [Get all modules available](#get-all-modules-available)
+  - [Get all user module instances available](#get-all-user-module-instances-available)
+  - [Get a user module instance](#get-a-user-module-instance)
+  - [Add a new user module instance](#add-a-new-user-module-instance)
+  - [Update an existing user module instance](#update-an-existing-user-module-instance)
+  - [Delete an existing user module instance](#delete-an-existing-user-module-instance)
+  - [Enable or disable an existing user module instance](#enable-or-disable-an-existing-user-module-instance)
+  - [Get all client module instances available](#get-all-client-module-instances-available)
+  - [Get a client module instance](#get-a-client-module-instance)
+  - [Add a new client module instance](#add-a-new-client-module-instance)
+  - [Update an existing client module instance](#update-an-existing-client-module-instance)
+  - [Delete an existing client module instance](#delete-an-existing-client-module-instance)
+  - [Enable or disable an existing client module instance](#enable-or-disable-an-existing-client-module-instance)
+  - [Get all user auth scheme module instances available](#get-all-user-auth-scheme-module-instances-available)
+  - [Get a user auth scheme module instance](#get-a-user-auth-scheme-module-instance)
+  - [Add a new user auth scheme module instance](#add-a-new-user-auth-scheme-module-instance)
+  - [Update an existing user auth scheme module instance](#update-an-existing-user-auth-scheme-module-instance)
+  - [Delete an existing user auth scheme module instance](#delete-an-existing-user-auth-scheme-module-instance)
+  - [Enable or disable an existing user auth scheme module instance](#enable-or-disable-an-existing-user-auth-scheme-module-instance)
+  - [Get all plugin module instances available](#get-all-plugin-module-instances-available)
+  - [Get a plugin module instance](#get-a-plugin-module-instance)
+  - [Add a new plugin module instance](#add-a-new-plugin-module-instance)
+  - [Update an existing plugin module instance](#update-an-existing-plugin-module-instance)
+  - [Delete an existing plugin module instance](#delete-an-existing-plugin-module-instance)
+  - [Enable or disable an existing plugin module instance](#enable-or-disable-an-existing-plugin-module-instance)
+- [Users management](#users-management)
+  - [Get a list of users available](#get-a-list-of-users-available)
+  - [Get a user](#get-a-user)
+  - [Add a new user](#add-a-new-user)
+  - [Update an existing user](#update-an-existing-user)
+  - [Delete an existing user](#delete-an-existing-user)
+- [Clients management](#clients-management)
+  - [Get a list of clients available](#get-a-list-of-clients-available)
+  - [Get a client](#get-a-client)
+  - [Add a new client](#add-a-new-client)
+  - [Update an existing client](#update-an-existing-client)
+  - [Delete an existing client](#delete-an-existing-client)
+- [Scopes management](#scopes-management)
+  - [Get a list of scopes available](#get-a-list-of-scopes-available)
+  - [Get a scope](#get-a-scope)
+  - [Add a new scope](#add-a-new-scope)
+  - [Update an existing scope](#update-an-existing-scope)
+  - [Delete an existing scope](#delete-an-existing-scope)
+- [User authentication](#user-authentication)
+  - [Authenticate a user with password](#authenticate-a-user-with-password)
+  - [Authenticate a user with an authentication scheme](#authenticate-a-user-with-an-authentication-scheme)
+  - [Trigger a scheme](#trigger-a-scheme)
+  - [Change current user with another user authenticated in this session](#change-current-user-with-another-user-authenticated-in-this-session)
+- [User profile](#user-profile)
+  - [Get list of connected profiles](#get-list-of-connected-profiles)
+  - [Update current profile](#update-current-profile)
+  - [Change user password for current profile](#change-user-password-for-current-profile)
+  - [Get sessions for current profile](#get-sessions-for-current-profile)
+  - [Disable a session for current profile](#disable-a-session-for-current-profile)
+  - [Register an auth scheme for current profile](#register-an-auth-scheme-for-current-profile)
+  - [Get registration on an auth scheme for current profile](#get-registration-on-an-auth-scheme-for-current-profile)
 
 ## Endpoints authentication
 
@@ -85,6 +85,44 @@ The HTTP status codes used are the following:
 - 403 Forbidden: The user isn't allowed
 - 404 Not found: The specified resource doesn't exist
 - 500 Server error: An error occurred on the server
+
+## Configuration
+
+### Get server configuration
+
+This endpoint is the only one accessible directly from the root of the server.
+
+#### URL
+
+`/config`
+
+#### Method
+
+`GET`
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+{
+  "api_prefix": string, prefix to access the APIs
+  "admin_scope": string, name of the admin scope
+  "profile_scope": string, name of the profile scope
+}
+```
+
+Example
+
+```javascript
+{
+  "api_prefix":"api",
+  "admin_scope":"g_admin",
+  "profile_scope":"g_profile"
+}
+```
 
 ## Plugins and modules management
 
@@ -144,7 +182,235 @@ Content
 Example
 
 ```javascript
-TODO
+{
+  "user":[
+    {
+      "name":"http",
+      "display_name":"HTTP auth backend user module",
+      "description":"Module to store users in the database",
+      "parameters":{
+        "url":{
+          "type":"string",
+          "mandatory":true
+        },
+        "check-server-certificate":{
+          "type":"boolean",
+          "mandatory":false,
+          "default":true
+        },
+        "default-scope":{
+          "type":"array",
+          "mandatory":true,
+          "values":["string"]
+        }
+      }
+    },
+    {
+      "name":"mock",
+      "display_name":"Mock user module",
+      "description":"Mock user module for glewlwyd tests",
+      "parameters":{
+        "username-prefix":{
+          "type":"string",
+          "mandatory":false
+        },
+        "password":{
+          "type":"string",
+          "mandatory":false
+        }
+      }
+    }
+  ],
+  "client":[
+    {
+      "name":"mock",
+      "display_name":"Mock scheme module",
+      "description":"Mock scheme module for glewlwyd tests",
+      "parameters":{
+        "username-prefix":{
+          "type":"string",
+          "mandatory":false
+        },
+        "password":{
+          "type":"string",
+          "mandatory":false
+        }
+      }
+    },
+    {
+      "name":"database",
+      "display_name":"Database backend client module",
+      "description":"Module to store clients in the database",
+      "parameters":{
+        "use-glewlwyd-connection":{
+          "type":"boolean",
+          "mandatory":true
+        },
+        "connection-type":{
+          "type":"list",
+          "values":[
+            "sqlite","mariadb","postgre"
+          ],
+          "mandatory":false
+        },
+        "sqlite-dbpath":{
+          "type":"string",
+          "mandatory":false
+        },
+        "mariadb-host":{
+          "type":"string",
+          "mandatory":false
+        },
+        "mariadb-client":{
+          "type":"string",
+          "mandatory":false
+        },
+        "mariadb-password":{
+          "type":"string",
+          "mandatory":false
+        },
+        "mariadb-dbname":{
+          "type":"string",
+          "mandatory":false
+        },
+        "mariadb-port":{
+          "type":"number",
+          "mandatory":false
+        },
+        "postgre-conninfo":{
+          "type":"string",
+          "mandatory":false
+        },
+        "data-format":{
+          "field-name":{
+            "multiple":{
+              "type":"boolean",
+              "default":false
+            },
+            "read":{
+              "type":"boolean",
+              "default":true
+            },
+            "write":{
+              "type":"boolean",
+              "default":true
+            },
+            "profile-read":{
+              "type":"boolean",
+              "default":false
+            },
+            "profile-write":{
+              "type":"boolean",
+              "default":false
+            }
+          }
+        }
+      }
+    }
+  ],
+  "scheme":[
+    {
+      "name":"mock",
+      "display_name":"Mock",
+      "description":"Mock scheme module for glewlwyd tests",
+      "parameters":{
+        "mock-value":{
+          "type":"string",
+          "mandatory":true
+        }
+      }
+    },
+    {
+      "name":"retype-password",
+      "display_name":"Short session password",
+      "description":"Glewlwyd authentification via user password with a short session duration",
+      "parameters":{
+      }
+    }
+  ],
+  "plugin":[
+    {
+      "name":"mock",
+      "display_name":"Mock plugin",
+      "description":"Mock plugin description",
+      "parameters":{
+      }
+    },
+    {
+      "name":"oauth2-glewlwyd",
+      "display_name":"Glewlwyd OAuth2 plugin",
+      "description":"Plugin for legacy Glewlwyd OAuth2 workflow",
+      "parameters":{
+        "jwt-type":{
+          "type":"list",
+          "mandatory":true,
+          "values":["rsa","ecdsa","sha"]
+        },
+        "jwt-key-size":{
+          "type":"string",
+          "mandatory":true,
+          "values":["256","384","512"]
+        },
+        "key":{
+          "type":"string",
+          "mandatory":true
+        },
+        "cert":{
+          "type":"string",
+          "mandatory":true
+        },
+        "access-token-duration":{
+          "type":"number",
+          "mandatory":true
+        },
+        "refresh-token-duration":{
+          "type":"number",
+          "mandatory":true
+        },
+        "code-token-duration":{
+          "type":"number",
+          "mandatory":true
+        },
+        "refresh-token-rolling":{
+          "type":"boolean",
+          "default":false
+        },
+        "auth-type-code-enabled":{
+          "type":"boolean",
+          "mandatory":true
+        },
+        "auth-type-implicit-enabled":{
+          "type":"boolean",
+          "mandatory":true
+        },
+        "auth-type-password-enabled":{
+          "type":"boolean",
+          "mandatory":true
+        },
+        "auth-type-client-enabled":{
+          "type":"boolean",
+          "mandatory":true
+        },
+        "auth-type-refresh-enabled":{
+          "type":"boolean",
+          "mandatory":true
+        },
+        "scope":{
+          "type":"array",
+          "mandatory":false,
+          "format":{
+            "type":"string",
+            "mandatory":true
+          },
+          "rolling-refresh":{
+            "type":"boolean",
+            "mandatory":false
+          }
+        }
+      }
+    }
+  ]
+}
 ```
 
 ### Get all user module instances available
@@ -186,7 +452,20 @@ Content
 Example
 
 ```javascript
-TODO
+[
+  {
+    "module":"mock",
+    "name":"mock",
+    "display_name":"Mock user module",
+    "order_rank":0,
+    "parameters":{
+      "username-prefix":"",
+      "password":"password"
+    },
+    "readonly":false,
+    "enabled":true
+  }
+]
 ```
 
 ### Get a user module instance
@@ -230,7 +509,18 @@ Content
 Example
 
 ```javascript
-TODO
+{
+  "module":"mock",
+  "name":"mock",
+  "display_name":"Mock user module",
+  "order_rank":0,
+  "parameters":{
+    "username-prefix":"",
+    "password":"password"
+  },
+  "readonly":false,
+  "enabled":true
+}
 ```
 
 Code 404
@@ -278,7 +568,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Update an existing user module instance
 
@@ -325,7 +615,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Delete an existing user module instance
 
@@ -423,7 +713,20 @@ Content
 Example
 
 ```javascript
-TODO
+[
+  {
+    "module":"mock",
+    "name":"mock",
+    "display_name":"Mock client module",
+    "order_rank":0,
+    "parameters":{
+      "username-prefix":"",
+      "password":"password"
+    },
+    "readonly":false,
+    "enabled":true
+  }
+]
 ```
 
 ### Get a client module instance
@@ -467,7 +770,18 @@ Content
 Example
 
 ```javascript
-TODO
+{
+  "module":"mock",
+  "name":"mock",
+  "display_name":"Mock client module",
+  "order_rank":0,
+  "parameters":{
+    "username-prefix":"",
+    "password":"password"
+  },
+  "readonly":false,
+  "enabled":true
+}
 ```
 
 Code 404
@@ -515,7 +829,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Update an existing client module instance
 
@@ -562,7 +876,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Delete an existing client module instance
 
@@ -658,7 +972,20 @@ Content
 Example
 
 ```javascript
-TODO
+[
+  {
+    "module":"mock",
+    "name":"mock_scheme_42",
+    "display_name":"Mock 42",
+    "expiration":600,
+    "max_use":0,
+    "parameters":{
+      "mock-value":"42"
+    },
+    "allow_user_register":true,
+    "enabled":true
+  }
+]
 ```
 
 ### Get a user auth scheme module instance
@@ -700,7 +1027,18 @@ Content
 Example
 
 ```javascript
-TODO
+{
+  "module":"mock",
+  "name":"mock_scheme_42",
+  "display_name":"Mock 42",
+  "expiration":600,
+  "max_use":0,
+  "parameters":{
+    "mock-value":"42"
+  },
+  "allow_user_register":true,
+  "enabled":true
+}
 ```
 
 Code 404
@@ -748,7 +1086,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Update an existing user auth scheme module instance
 
@@ -795,7 +1133,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Delete an existing user auth scheme module instance
 
@@ -893,7 +1231,43 @@ Content
 Example
 
 ```javascript
-TODO
+[
+  {
+    "module":"oauth2-glewlwyd",
+    "name":"glwd",
+    "display_name":"OAuth2 Glewlwyd plugin",
+    "parameters":{
+      "jwt-type":"sha",
+      "jwt-key-size":"256",
+      "key":"secret",
+      "access-token-duration":3600,
+      "refresh-token-duration":1209600,
+      "code-duration":600,
+      "refresh-token-rolling":true,
+      "auth-type-code-enabled":true,
+      "auth-type-implicit-enabled":true,
+      "auth-type-password-enabled":true,
+      "auth-type-client-enabled":true,
+      "auth-type-refresh-enabled":true,
+      "scope":[
+        {
+          "name":"g_profile",
+          "refresh-token-rolling":true
+        },
+        {
+          "name":"scope1",
+          "refresh-token-rolling":true
+        },
+        {
+          "name":"scope2",
+          "refresh-token-rolling":false,
+          "refresh-token-duration":7200
+        }
+      ]
+    },
+    "enabled":true
+  }
+]
 ```
 
 ### Get a plugin module instance
@@ -937,7 +1311,41 @@ Content
 Example
 
 ```javascript
-TODO
+{
+  "module":"oauth2-glewlwyd",
+  "name":"glwd",
+  "display_name":"OAuth2 Glewlwyd plugin",
+  "parameters":{
+    "jwt-type":"sha",
+    "jwt-key-size":"256",
+    "key":"secret",
+    "access-token-duration":3600,
+    "refresh-token-duration":1209600,
+    "code-duration":600,
+    "refresh-token-rolling":true,
+    "auth-type-code-enabled":true,
+    "auth-type-implicit-enabled":true,
+    "auth-type-password-enabled":true,
+    "auth-type-client-enabled":true,
+    "auth-type-refresh-enabled":true,
+    "scope":[
+      {
+        "name":"g_profile",
+        "refresh-token-rolling":true
+      },
+      {
+        "name":"scope1",
+        "refresh-token-rolling":true
+      },
+      {
+        "name":"scope2",
+        "refresh-token-rolling":false,
+        "refresh-token-duration":7200
+      }
+    ]
+  },
+  "enabled":true
+}
 ```
 
 Code 404
@@ -985,7 +1393,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Update an existing plugin module instance
 
@@ -1032,7 +1440,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Delete an existing plugin module instance
 
@@ -1276,7 +1684,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Update an existing user
 
@@ -1328,7 +1736,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Delete an existing user
 
@@ -1544,7 +1952,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Update an existing client
 
@@ -1597,7 +2005,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Delete an existing client
 
@@ -1824,7 +2232,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Update an existing scope
 
@@ -1877,7 +2285,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Delete an existing scope
 
@@ -1977,6 +2385,61 @@ Code 401
 
 Authentication failure
 
+### Get authorized scopes from a scope list for a user
+
+#### URL
+
+`/auth/scheme/`
+
+#### Method
+
+`GET`
+
+#### Security
+
+Valid user session.
+
+#### URL Parameters
+
+`scope`: list of scopes requested, separated by spaces
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+{
+  "scope_name": { // Name of the scope
+    "password_required": boolean, wether the password is required to access this scope
+    "schemes":{
+      "group_name": [
+        {
+          "scheme_type": string, module name of the scheme
+          "scheme_name": string, module instance name
+          "scheme_display_name": string, mudule instance display name
+          "scheme_authenticated": boolean, wether this scheme is authenticated for this user on this session
+          "scheme_registered": boolean wether this scheme is registered for this user
+        }
+      ]
+    },
+    "display_name": string, display name of the scope
+    "description":string, description of the scope
+    "password_authenticated": boolean, wether this scope is authenticated for this user on this session
+    "available": boolean, wether this scope is available for this user
+  }
+}
+```
+
+Code 400
+
+Error input parameters
+
+Code 401
+
+Authentication failure
+
 ### Trigger a scheme
 
 #### URL
@@ -2044,6 +2507,91 @@ Code 401
 
 Authentication failure
 
+## Grant scopes
+
+### Get list of granted scopes for a client by the user
+
+#### URL
+
+`/api/auth/grant/{client_id}/{scope_list}`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_profile` authorized.
+
+#### URL Parameters
+
+`client_id`: client_id of the client
+`scope_list`: list of scopes separated by a space
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+{
+  "client":{
+    "client_id": string, client_id
+    "name": string, client name
+  },
+  "scope":[
+    {
+      "name": string, scope name
+      "display_name": string, scope display name
+      "description": string, scope description
+      "password_required": boolean, wether this scope has password required to login
+      "granted": boolean, wether this scope is granted to this client by this user
+    }
+  ]
+}
+```
+
+Code 401
+
+No enabled authenticated user for this session
+
+### Update granetd scope for a client by a user
+
+#### URL
+
+`/auth/grant/{client_id}/`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_profile` authorized.
+
+#### Body Parameters
+
+```javascript
+{
+  "scope": string, scope list granted to this client separated by a comma, set the list empty to remove all grant
+}
+```
+
+#### Success response
+
+Code 200
+
+User updated
+
+Code 400
+
+Error input parameters
+
+Content
+
+A JSON array with the error messages
+
 ## User profile
 
 ### Get list of connected profiles
@@ -2052,7 +2600,7 @@ The first element in the returned array is the current user
 
 #### URL
 
-`/api/profile`
+`/api/profile_list`
 
 #### Method
 
@@ -2122,7 +2670,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 ### Change user password for current profile
 
@@ -2160,7 +2708,41 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
+
+### Get list of plugins available
+
+#### URL
+
+`/api/profile/plugin`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_profile` authorized.
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[
+  {
+    "module": string, plugin type
+    "name": string, plugin instance name
+    "display_name": string, plugin instance display name
+  }
+]
+```
+
+Code 401
+
+No enabled authenticated user for this session
 
 ### Get sessions for current profile
 
@@ -2223,6 +2805,44 @@ Code 401
 
 No enabled authenticated user for this session
 
+### Get list of schemes available
+
+#### URL
+
+`/api/profile/scheme`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_profile` authorized.
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[
+  {
+    "module": string, module name of the scheme
+    "name": string, module instance name
+    "display_name": string, module instance display name
+    "expiration": number, duration of an authentication with this scheme
+    "max_use": number, number of thime this scheme authenticated can be used in a plugin
+    "allow_user_register": boolean, wether the user can register this scheme
+    "enabled": boolean
+  }
+]
+```
+
+Code 401
+
+No enabled authenticated user for this session
+
 ### Register an auth scheme for current profile
 
 #### URL
@@ -2260,7 +2880,7 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
 
 Code 401
 
@@ -2304,7 +2924,269 @@ Error input parameters
 
 Content
 
-A javascript array with the error messages
+A JSON array with the error messages
+
+Code 401
+
+No enabled authenticated user for this session
+
+## Profile delegation
+
+All those endpoints are available for an administrator in order to access and update a user's profile and its schemes registration
+
+### Update profile by delegation
+
+#### URL
+
+`/api/delegate/profile?username=<username>`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+Admin with scope `g_admin` authorized.
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+  name: string, optional
+  other values: string or array of strings, optional, depends on what's exptected by the module instance for the profile
+}
+```
+
+#### Success response
+
+Code 200
+
+User updated
+
+Code 400
+
+Error input parameters
+
+Content
+
+A JSON array with the error messages
+
+### Get sessions for profile by delegation
+
+#### URL
+
+`/api/delegate/profile/session?username=<username>`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[
+  {
+    session_hash: string,
+    user_agent: string,
+    issued_for: string,
+    expiration: string,
+    last_login: string,
+    enabled: string
+  }
+]
+```
+
+Code 401
+
+No enabled authenticated admin for this session
+
+### Disable a session for a profile by delegation
+
+#### URL
+
+`/api/delegate/profile/session/{session_hash}?username=<username>`
+
+#### Method
+
+`DELETE`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### Success response
+
+Code 200
+
+Session disabled
+
+Code 401
+
+No enabled authenticated user for this session
+
+### Get list of plugins available by delegation
+
+#### URL
+
+`/api/delegate/profile/plugin?username=<username>`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[
+  {
+    "module": string, plugin type
+    "name": string, plugin instance name
+    "display_name": string, plugin instance display name
+  }
+]
+```
+
+Code 401
+
+No enabled authenticated user for this session
+
+### Get list of schemes available by delegation
+
+#### URL
+
+`/api/delegate/profile/scheme?username=<username>`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[
+  {
+    "module": string, module name of the scheme
+    "name": string, module instance name
+    "display_name": string, module instance display name
+    "expiration": number, duration of an authentication with this scheme
+    "max_use": number, number of thime this scheme authenticated can be used in a plugin
+    "allow_user_register": boolean, wether the user can register this scheme
+    "enabled": boolean
+  }
+]
+```
+
+Code 401
+
+No enabled authenticated user for this session
+
+### Register an auth scheme for a profile by delegation
+
+#### URL
+
+`/api/delegate/profile/scheme/register/?username=<username>`
+
+#### Method
+
+`POST`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: string, mandatory
+  scheme_name: string: mandatory
+  value: object, mandatory, content depends on the scheme
+}
+```
+
+#### Success response
+
+Code 200
+
+Scheme registered
+
+Code 400
+
+Error input parameters
+
+Content
+
+A JSON array with the error messages
+
+Code 401
+
+No enabled authenticated user for this session
+
+### Get registration on an auth scheme for a profile by delegation
+
+#### URL
+
+`/api/delegate/profile/scheme/register/?username=<username>`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: string, mandatory
+  scheme_name: string: mandatory
+}
+```
+
+#### Success response
+
+Code 200
+
+Content
+
+Depends on the scheme
+
+Code 400
+
+Error input parameters
+
+Content
+
+A JSON array with the error messages
 
 Code 401
 
