@@ -15,6 +15,8 @@ class Session extends Component {
       sessionList: [],
       plugins: {
         oauth2: {
+        },
+        oidc: {
         }
       },
       disableObject: false
@@ -61,6 +63,15 @@ class Session extends Component {
             .then((resPlugin) => {
               var plugins = this.state.plugins;
               plugins.oauth2[plugin.name] = resPlugin;
+              this.setState({plugins: plugins});
+            })
+            .fail((err) => {
+            });
+          } else if (plugin.module === "oidc") {
+            apiManager.glewlwydRequestSub("/" + plugin.name + "/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
+            .then((resPlugin) => {
+              var plugins = this.state.plugins;
+              plugins.oidc[plugin.name] = resPlugin;
               this.setState({plugins: plugins});
             })
             .fail((err) => {
@@ -130,6 +141,19 @@ class Session extends Component {
           this.setState({disableObject: false});
           messageDispatcher.sendMessage('App', {type: "closeConfirm"});
         });
+      } else if (this.state.disableObject.type === "oidc") {
+        apiManager.glewlwydRequestSub("/" + this.state.disableObject.key + "/token/" + this.state.disableObject.token.token_hash + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""), "DELETE")
+        .then((res) => {
+          messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.token-disabled")});
+        })
+        .fail(() => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        })
+        .always(() => {
+          this.fetchLists();
+          this.setState({disableObject: false});
+          messageDispatcher.sendMessage('App', {type: "closeConfirm"});
+        });
       }
     }
   }
@@ -185,6 +209,7 @@ class Session extends Component {
       );
     });
     var i = 0;
+    var tokenTables = []
     for (var key in this.state.plugins.oauth2) {
       var oauth2 = this.state.plugins.oauth2[key];
       var oauth2Header =
@@ -210,7 +235,7 @@ class Session extends Component {
         <th>
         </th>
       </tr>;
-      var tokenList = [], tokenTables = [];
+      var tokenList = [];
       oauth2.forEach((token, index) => {
         var lastSeen = new Date(token.last_seen * 1000), expiration = new Date(token.expires_at * 1000);
         tokenList.push(
@@ -253,6 +278,81 @@ class Session extends Component {
           <div id={"collapseOauth2-"+key} className="collapse" aria-labelledby="dataFormatCard" data-parent="#accordionParams">
             <div className="card-body">
               {this.getTable(oauth2Header, tokenList)}
+            </div>
+          </div>
+        </div>
+      );
+      i++;
+    }
+    i = 0;
+    for (var key in this.state.plugins.oidc) {
+      var oidc = this.state.plugins.oidc[key];
+      var oidcHeader =
+      <tr>
+        <th>
+          {i18next.t("profile.session-table-last-login")}
+        </th>
+        <th>
+          {i18next.t("profile.session-table-exiration")}
+        </th>
+        <th>
+          {i18next.t("profile.session-table-client")}
+        </th>
+        <th>
+          {i18next.t("profile.session-table-issued-for")}
+        </th>
+        <th>
+          {i18next.t("profile.session-table-user-agent")}
+        </th>
+        <th>
+          {i18next.t("admin.enabled")}
+        </th>
+        <th>
+        </th>
+      </tr>;
+      var tokenList = [];
+      oidc.forEach((token, index) => {
+        var lastSeen = new Date(token.last_seen * 1000), expiration = new Date(token.expires_at * 1000);
+        tokenList.push(
+        <tr key={index}>
+          <td>
+            {lastSeen.toLocaleString()}
+          </td>
+          <td>
+            {expiration.toLocaleString()}
+          </td>
+          <td>
+            {token.client_id}
+          </td>
+          <td>
+            {token.issued_for}
+          </td>
+          <td>
+            {token.user_agent}
+          </td>
+          <td>
+            {token.enabled?i18next.t("profile.session-enabled-true"):i18next.t("profile.session-enabled-false")}
+          </td>
+          <td>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.disableToken("oidc", key, token)} title={i18next.t("admin.delete")} disabled={!token.enabled}>
+              <i className="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+        );
+      });
+      tokenTables.push(
+        <div className="card" key={i}>
+          <div className="card-header" id="dataFormatCard">
+            <h2 className="mb-0">
+              <button className="btn btn-link" type="button" data-toggle="collapse" data-target={"#collapseOauth2-"+key} aria-expanded="true" aria-controls={"collapseOauth2-"+key}>
+                {i18next.t("profile.session-token-oidc-table", {name: key})}
+              </button>
+            </h2>
+          </div>
+          <div id={"collapseOauth2-"+key} className="collapse" aria-labelledby="dataFormatCard" data-parent="#accordionParams">
+            <div className="card-body">
+              {this.getTable(oidcHeader, tokenList)}
             </div>
           </div>
         </div>
