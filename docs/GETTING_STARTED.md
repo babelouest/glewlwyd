@@ -35,6 +35,8 @@ Install Glewlwyd via the packages, CMake or Makefile. See the [installation docu
 
 ## First connection to the administration page
 
+![admin](screenshots/user-list.png)
+
 Open the administration page in your browser. The default url is [http://localhost:4953/](http://localhost:4953/). Use the default login `admin` with the default password `password`.
 
 Make sure to change the default password for the `admin` user to a more secure password.
@@ -42,6 +44,8 @@ Make sure to change the default password for the `admin` user to a more secure p
 ## Configure backends, schemes and plugins
 
 ### User backend modules
+
+![mod-user-list](screenshots/mod-user-list.png)
 
 Go to `parameters/user` menu in the navigation tab. Click on the `+` button to add a new user backend instance. The user backend modules available are:
 
@@ -82,6 +86,8 @@ Read the full [documentation](USER_HTTP.md).
 
 ### Client backend module
 
+![mod-client-list](screenshots/mod-client-list.png)
+
 Go to `parameters/client` menu in the navigation tab. Click on the `+` button to add a new client backend instance. The client backend modules available are:
 
 - Database
@@ -102,6 +108,8 @@ The LDAP backend requires access to a LDAP service such as OpenLDAP or Active Di
 Read the full [documentation](CLIENT_LDAP.md).
 
 ### Authentication schemes
+
+![mod-scheme-list](screenshots/mod-scheme-list.png)
 
 When an authentication scheme needs to store specific data for a user, it will use the database rather than the user backend. So a user will be able to register a scheme even if the user backend is in read-only mode.
 
@@ -133,6 +141,8 @@ The OTP Schema implements authentification based on One-Time-Password using OATH
 Read the full [documentation](OTP.md).
 
 ### Plugins
+
+![plugin-list](screenshots/plugin-list.png)
 
 Go to `parameters/plugins` menu in the navigation tab. Click on the `+` button to add a new user backend instance. The plugins available are:
 

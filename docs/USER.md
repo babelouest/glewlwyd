@@ -4,6 +4,8 @@ This documentation is intended to help Glewlwyd Users to manage their profile an
 
 ## Profile page
 
+![profile-data](screenshots/profile-data.png)
+
 To access its profile page, the user must go to the profile url, typically `https://glewlwyd_server_url/profile.html`. The user may have to relogin, because for security reasons, the default session timeout is set to 10 minutes.
 
 ## Profile Personal data
@@ -12,9 +14,13 @@ In the first tab of the profile page, the user is allowed to view and update som
 
 ## Sessions and tokens
 
+![profile-session](screenshots/profile-session.png)
+
 This tab allows the user to manually disable active sessions or refresh tokens provided by Glewlwyd.
 
 ## Password
+
+![profile-password](screenshots/profile-password.png)
 
 If you click on the `Password` tab, you'll open a modal window that will allow to change your user password. The new password must be at least 8 characters long.
 
@@ -25,6 +31,8 @@ In the profile page, the user will be able to manage the schemes available for i
 By design, the schemes `Retype password` and `E-mail code` can't be registered or configured in the profile page.
 
 ### Webauthn
+
+![profile-webauthn](screenshots/profile-webauthn.png)
 
 Webauthn is an authentication scheme that permits the user to authenticate via a dedicated device without having to retain a password. Currently, the devices available for this scheme are the following:
 
@@ -42,6 +50,8 @@ You can verify it's working properly by clicking on the `Test` button, there, fo
 The component name can be changed in this page, you can also disable/enable, and delete a registered component.
 
 ### OTP
+
+![profile-otp](screenshots/profile-otp.png)
 
 OTP is an authentication scheme using the OATH standard, it allows the user to authenticate via one-time passwords. Glewlwyd OTP scheme allows HOTP (increment based one-time passwords) and TOTP (time-based one-time passwords).
 
@@ -63,18 +73,26 @@ Step size (seconds): This option is the time window specifying the duration of a
 
 ## Login to Glewlwyd
 
+![login-new-user](screenshots/login-new-user.png)
+
 When you're asked to login to an application that uses Glewlwyd as authenticator, you may need to enter credentials, depending on the access required and the server configuration.
 
 During a login process, you may have to use multiple authentication schemes, and choose between them. When this happens, you have a `Scheme` dropdown button available on the bottom-left of the login window. There, you can choose between the schemes available.
 
 ### Grant access
 
+![login-grant](screenshots/login-grant.png)
+
 When you first login to an application via Glewlwyd, you'll be asked to grant access to the client. The client needs your permission to have access to scopes you're allowed to use. You need to grant at least one scope to the client, otherwise the client won't have access. At any time, you can go back to the login page and change the access granted to this client by clicking on the `Grant` menu available in the `Manage` dropdown button of the login page.
 
-### Multiple sesisons
+### Multiple sessions
+
+![login-multiple-session](screenshots/login-multiple-session.png)
 
 If you have multiple logins available on the Glewlwyd server, you can switch from one to another without having to logout every time. The login available are specific to a browser and a session. Use the dropdown button `Change user` on the bottom-left of the login page.
 
 ### Authentication complete
+
+![logged-in](screenshots/logged-in.png)
 
 If the authentication process is complete, you'll have a `Continue` butotn available. By clicking on this button, you'll be redirected to the client with credentials available to the client.

@@ -1,6 +1,8 @@
 # Glewlwyd User Module HTTP Backend documentation
 
-The database backend uses a HTTP service to authenticate users.
+![mod-user-http](screenshots/mod-user-http.png)
+
+The http backend uses a HTTP service to authenticate users via Basic Auth.
 By design, this backend module instance is always read-only. Listing users will always return an empty list, getting a single user will always return a JSON object, even if the user doesn't exist in the backend.
 
 The HTTP request `GET /api/user/user1?backend=http` may return the following response:

@@ -1,5 +1,7 @@
 # Glewlwyd User Module Database Backend documentation
 
+![mod-user-database](screenshots/mod-user-database.png)
+
 The database backend uses a database to store information and passwords for users. The database can be the same one as the Glewlwyd database or another database of another supported type.
 
 ## Installation

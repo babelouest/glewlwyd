@@ -1,5 +1,7 @@
 # Glewlwyd Email code Schema Documentation
 
+![scheme-email](screenshots/scheme-email.png)
+
 The Email code Schema implements authentification based on random One-Time-Password generated on demand.
 
 ## Installation
