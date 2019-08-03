@@ -4,7 +4,7 @@
  *
  * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20180727
+ * Version 20190803
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -53,9 +53,9 @@ int callback_check_glewlwyd_access_token (const struct _u_request * request, str
   if (config != NULL) {
     switch (config->method) {
       case G_METHOD_HEADER:
-        if (u_map_get(request->map_header, HEADER_AUTHORIZATION) != NULL) {
-          if (o_strstr(u_map_get(request->map_header, HEADER_AUTHORIZATION), HEADER_PREFIX_BEARER) == u_map_get(request->map_header, HEADER_AUTHORIZATION)) {
-            token_value = u_map_get(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER);
+        if (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) != NULL) {
+          if (o_strstr(u_map_get_case(request->map_header, HEADER_AUTHORIZATION), HEADER_PREFIX_BEARER) == u_map_get_case(request->map_header, HEADER_AUTHORIZATION)) {
+            token_value = u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER);
           }
         }
         break;
