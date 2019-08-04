@@ -2,15 +2,15 @@
 
 [![Build Status](https://travis-ci.com/babelouest/glewlwyd.svg?branch=master)](https://travis-ci.com/babelouest/glewlwyd)
 
-Single Sign On authentication server. Provides OAuth2 authentication processus and allows users to authenticate via multiple factors:
+Single Sign On authentication server. Provides OpenID Connect and basic OAuth2 authentication processus and allows users to authenticate via multiple factors:
 - Password
 - One-time password (TOTP/HOTP)
 - Webauthn (Yubikey or Android safetynet)
 - Random Code sent via e-mail
 
-Glewlwyd authorizes no-password authentication.
+Allows no-password authentication.
 
-Users are stored in a database or a LDAP server.
+Users are stored in multiple backends such as database or LDAP server.
 
 adding new authentication schemes or backend storage for users and clients is possible via a plugin architecture.
 
