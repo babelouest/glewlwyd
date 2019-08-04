@@ -52,51 +52,23 @@ liboath
 libcbor
 ```
 
-#### Install Glewlwyd on Debian Stretch
+#### Install Glewlwyd on Debian Buster
 
 ```shell
-$ sudo apt install -y autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz -O libjwt.tar.gz
-$ tar -zxvf libjwt.tar.gz
-$ cd libjwt-1.10.2
-$ autoreconf -i
-$ ./configure --without-openssl
-$ make && sudo make install
-$ cd ..
-$ wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor.tar.gz
-$ tar xf libcbor.tar.gz
-$ mkdir libcbor-0.5.0/build
-$ cd libcbor-0.5.0/build
-$ cmake ..
-$ make && sudo make install
-$ cd ../..
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_debian_stretch_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0_Debian_stretch_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.0.0_Debian_stretch_x86_64.deb
-$ sudo dpkg -i libyder_1.4.6_Debian_stretch_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.10_Debian_stretch_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.1_Debian_stretch_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0-b1_Debian_stretch_x86_64.deb
+$ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b3/glewlwyd-full_2.0.0-b3_debian_buster_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0-b3_debian_buster_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.0.1_debian_buster_x86_64.deb
+$ sudo dpkg -i libyder_1.4.7_debian_buster_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.10_debian_buster_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.2_debian_buster_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0-b3_debian_buster_x86_64.deb
 ```
 
 #### Install Glewlwyd on Raspbian Stretch for Raspberry Pi
 
 ```shell
-$ sudo apt install -y autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz -O libjwt.tar.gz
-$ tar -zxvf libjwt.tar.gz
-$ cd libjwt-1.10.2
-$ autoreconf -i
-$ ./configure --without-openssl
-$ make && sudo make install
-$ cd ..
-$ wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor.tar.gz
-$ tar xf libcbor.tar.gz
-$ mkdir libcbor-0.5.0/build
-$ cd libcbor-0.5.0/build
-$ cmake ..
-$ make && sudo make install
-$ cd ../..
+$ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
 $ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_raspbian_stretch_armv6l.tar.gz
 $ tar xf glewlwyd-full_2.0.0_Debian_stretch_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.0_Debian_stretch_x86_64.deb
@@ -110,18 +82,19 @@ $ sudo dpkg -i glewlwyd_2.0.0-b1_Debian_stretch_x86_64.deb
 
 ```shell
 $ sudo apt install -y libjansson-dev make cmake libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libjwt0 libcbor0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_debian_buster_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0_Debian_buster_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.0.0_Debian_buster_x86_64.deb
-$ sudo dpkg -i libyder_1.4.6_Debian_buster_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.10_Debian_buster_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.1_Debian_buster_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0-b1_Debian_buster_x86_64.deb
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b3/glewlwyd-full_2.0.0-b3_raspbian_buster_armv6l.tar.gz
+$ tar xf glewlwyd-full_2.0.0-b3_raspbian_buster_armv6l.tar.gz
+$ sudo dpkg -i liborcania_2.0.1_raspbian_buster_armv6l.deb
+$ sudo dpkg -i libyder_1.4.7_raspbian_buster_armv6l.deb
+$ sudo dpkg -i libhoel_1.4.10_raspbian_buster_armv6l.deb
+$ sudo dpkg -i libulfius_2.6.2_raspbian_buster_armv6l.deb
+$ sudo dpkg -i glewlwyd_2.0.0-b3_raspbian_buster_armv6l.deb
 ```
 
 #### Install Glewlwyd on Ubuntu 18.04 LTS Bionic
 
 ```shell
+$ # Note: libjwt provided with Ubuntu 18.04 LTS Bionic is too old to work with Glewlwyd module Webauthn
 $ sudo apt install -y autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libjwt0 libcbor0
 $ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz -O libjwt.tar.gz
 $ tar -zxvf libjwt.tar.gz
@@ -130,33 +103,29 @@ $ autoreconf -i
 $ ./configure --without-openssl
 $ make && sudo make install
 $ cd ..
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_ubuntu_bionic_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0_Ubuntu_bionic_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.0.0_Ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libyder_1.4.6_Ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.10_Ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.1_Ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0-b1_Ubuntu_bionic_x86_64.deb
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b3/glewlwyd-full_2.0.0-b3_ubuntu_bionic_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0-b3_ubuntu_bionic_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.0.1_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libyder_1.4.7_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.10_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.2_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0-b3_ubuntu_bionic_x86_64.deb
 ```
 
 #### Install Glewlwyd on Ubuntu 19.04 Disco
 
 ```shell
-$ sudo apt install -y libjansson-dev make cmake libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libjwt0 libcbor0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_ubuntu_disco_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0_Ubuntu_disco_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.0.0_Ubuntu_disco_x86_64.deb
-$ sudo dpkg -i libyder_1.4.6_Ubuntu_disco_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.10_Ubuntu_disco_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.1_Ubuntu_disco_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0-b1_Ubuntu_disco_x86_64.deb
+$ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b3/glewlwyd-full_2.0.0-b3_ubuntu_disco_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0-b3_ubuntu_disco_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.0.1_ubuntu_disco_x86_64.deb
+$ sudo dpkg -i libyder_1.4.7_ubuntu_disco_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.10_ubuntu_disco_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.2_ubuntu_disco_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0-b3_ubuntu_disco_x86_64.deb
 ```
 
 If there's no package available for your distribution, you can recompile it manually using `CMake` or `Makefile`.
-
-## Docker
-
-TBD
 
 ## Manual install from source
 
@@ -302,7 +271,7 @@ database =
 
 ### Cookies configuration
 
-The default cnfig file has the following cookies configuration:
+The default config file has the following cookies configuration:
 
 ```
 # cookie domain
@@ -353,7 +322,7 @@ $ sqlite3 /var/cache/glewlwyd/glewlwyd.db < database/init.sqlite3.sql
 
 #### Security warning!
 
-Those scripts create a valid database that allow to use glewlwyd but to avoid potential security issues, you must change the admin password when you first connect to the application.
+Those scripts create a valid database that allow to use glewlwyd. But to avoid potential security issues, you must change the admin password when you first connect to the application.
 
 #### Built-in scope values
 
