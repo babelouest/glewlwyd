@@ -18,7 +18,11 @@
     - [Glewlwyd Oauth2 plugin](#glewlwyd-oauth2-plugin)
     - [OpenID Connect Core Plugin](#openid-connect-core-plugin)
   - [Configure environment to use Glewlwyd Oauth2](#configure-environment-to-use-glewlwyd-oauth2)
+- [How-tos](#how-tos)
   - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
+  - [User profile delegation](#user-profile-delegation)
+  - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
+  - [Non-password authentication](#non-password-authentication)
 
 The installation comes with a default configuration that can be updated or overwritten via the administration page.
 
@@ -122,6 +126,8 @@ Go to `parameters/schemes` menu in the navigation tab. Click on the `+` button t
 
 You can add instances of the same scheme as many times as you want, if you need different configurations or to access different scopes in different contexts. A scheme instance is distinguished by its module name and its instance name, example `webauthn/AdminWebauthn`, `webauthn/UserWebauthn`.
 
+Users will need to register some schemes such as HOTP/TOTP or Webauthn. If the option `Allow users to register` is unchecked for a scheme, the users won't be able to register it, only administrators via delegtion will be able to register for users.
+
 #### E-mail code scheme
 
 The requirements to use this scheme is a smtp server available, able to relay codes sent via `SMTP`.
@@ -203,6 +209,8 @@ Scope 2: (mail `OR` certificate `OR` webauthn)
 Go to `Users` menu in the navigation tab, Click on the `Edit` button for an existing user or click on the `+` button to add a new user. Then, set the previously created scope to this user.
 
 When the user will connect to the client with Glewlwyd, he will need to validate the authentication schemes for the scopes required with this client.
+
+## How-tos
 
 ### Use case: Configure Glewlwyd to authenticate with Taliesin
 
@@ -303,3 +311,96 @@ Open the url [http://localhost:8576/](http://localhost:8576/) in your browser.
 Click on the login button, you should be redirected to Glewlwyd's login page.
 
 There, log in with your admin password. After that, use the second factor authenticaiton of your choice. When completed, click on the `Continue` button which should be enabled. You will be redirected to Taliesin with a valid login and able to use the application as administrator, enjoy!
+
+### User profile delegation
+
+![plugin-list](screenshots/plugin-list.png)
+
+An connected administrator can update a user profile with the delegation functionality. A new window will open, allowing the administrator to update the user profile, register or de-register authentication schemes fot the user.
+
+![user-delegate](screenshots/user-delegate.png)
+
+### Add or update additional properties for users and clients
+
+Glewlwyd is designed to allow administrators to add or update additional properties for users and clients. The following paragraphs will explain how to add a new property for a user. The same process for the client is similar. All additional properties are strings, no other data format is possible.
+
+#### Step 1: Add a specific data format
+
+Edit the user module parameters. In the User Backend settings modal, deploy `Specific data format` and click on the `+` button. Enter the property name, ex `postal-code`.
+
+The checkbox `multiple values` defines wether the new property values will be a single value or an array of multiple values.
+
+The checkboxes `Read (admin)` and `Write (admin)` define wether this property is readable and/or writable on the user list in the administration page.
+
+The checkboxes `Read (profile)` and `Read (profile)` define wether this property is readable and/or writable on the profile page.
+
+#### Step 2: Update webapp/config.json to show the new property
+
+Open the file `webapp/config.json` with a text editor. There, you must add a new JSON object in the array `pattern.user`.
+
+The user pattern format is the following:
+
+```javascript
+{
+  "name": "postal-code", // name of the new property, mandatory
+  "type": "text", // values available are "text", "password" (hidden text) or "boolean" (checkbox), mandatory
+  "list": true, // set this to true if the new property has `multiple values` checked, optional, default false
+  "listElements": ["value1","value2"] // restrict the values available to this list if the new property has `multiple values` checked, optional
+  "profile": false, // visible on the profile page, optional, default false
+  "edit": true, // Can be updated, optional, default false
+  "label": "admin.user-password", // i18next label name, label files is available in the files `webapp/locales/*/translations.json`, mandatory
+  "placeholder": "admin.user-password-ph", // i18next placeholder value for text or password types, label files is available in the files `webapp/locales/*/translations.json`, optional, default empty
+  "forceShow": true, // show the property even if the user has no value yet, optional, default false
+  "required": true, // is the property mandatory?, optional, default false
+  "profile-read": false, // can the user read the property in profile page, optional, default false
+  "profile-write": false // can the user write the property in profile page, optional, default false
+}
+```
+
+The Postal Code pattern should look like this:
+
+```javascript
+{
+  "name": "postal-code",
+  "list": false,
+  "forceShow": true,
+  "edit": true,
+  "label": "admin.postal-code",
+  "placeholder": "admin.postal-code-ph"
+}
+```
+
+And the new entries in `webapp/locales/*/translations.json` should look like this:
+
+```javascript
+{
+  // [...]
+  "admin": {
+    // [...]
+    "postal-code": "Postal Code",
+    "postal-code-ph": "Ex: X1Y 2Z3"
+  }
+}
+```
+
+Then you should see the new property in the user edit modal:
+
+![user-new-property](screenshots/user-new-property.png)
+
+### Non-password authentication
+
+Glewlwyd allows non-password authentication. You can use any other scheme installed to authenticate a user.
+
+One or more schemes schemes must be already installed: E-mail code, Webauthn or HOTP/TOTP. Then the scheme must be defined in the file `webapp/config.json` in the `sessionSchemes` array. The pattern is the following:
+
+```javascript
+{
+  "scheme_type": "webauthn", // name of the module, mandatory
+  "scheme_name": "webauthn", // name of the module instance, mandatory
+  "scheme_display_name": "login.webauthn-title" // i18next label name, label files is available in the files `webapp/locales/*/translations.json`, mandatory
+}
+```
+
+Then, in the login page for a new user, the dropdown `Scheme` will be available, allowing to authentify with the schemes specified.
+
+![login-nopassword](screenshots/login-nopassword.png)
