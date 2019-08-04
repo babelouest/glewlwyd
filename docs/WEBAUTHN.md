@@ -76,6 +76,6 @@ More information is available in this [android developper](https://developer.and
 ### Server local path to the root certificate 'GlobalSign Root CA - R2'
 
 This is used during the registration of an android device using webauthn. The device certificate will be validated with the 'GlobalSign Root CA certificate - R2'.
-It is highly recommended to download this certificate to the server hosting Glewlwyd and fill this option.
+It is highly recommended to [download](https://pki.goog/) this certificate to the server hosting Glewlwyd in DER format and fill this option.
 
 The reason why this certificate isn't hardcoded in Glewlwyd source code or isn't shipped with Glewlwyd package is because Google won't allow to redistribute the certificate in terms compatible with Glewlwyd's license.
