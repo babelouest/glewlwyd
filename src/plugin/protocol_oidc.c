@@ -2586,6 +2586,112 @@ static int callback_oidc_clean(const struct _u_request * request, struct _u_resp
   return U_CALLBACK_COMPLETE;
 }
 
+static int callback_oidc_discovery(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  struct _oidc_config * config = (struct _oidc_config *)user_data;
+  json_t * j_discovery = json_object(), * j_element;
+  char * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, config->name);
+  size_t index;
+  
+  if (j_discovery != NULL && plugin_url != NULL) {
+    json_object_set(j_discovery, "issuer", json_object_get(config->j_params, "iss"));
+    json_object_set_new(j_discovery, "authorization_endpoint", json_pack("s+", plugin_url, "/auth"));
+    json_object_set_new(j_discovery, "token_endpoint", json_pack("s+", plugin_url, "/token"));
+    json_object_set_new(j_discovery, "userinfo_endpoint", json_pack("s+", plugin_url, "/userinfo"));
+    json_object_set_new(j_discovery, "jwks_uri", json_pack("s+", plugin_url, "/jwks"));
+    json_object_set_new(j_discovery, "token_endpoint_auth_methods_supported", json_pack("[s]", "client_secret_basic"));
+    json_object_set_new(j_discovery, "token_endpoint_auth_signing_alg_values_supported", json_pack("[s]", jwt_alg_str(jwt_get_alg(config->jwt_key))));
+    json_object_set_new(j_discovery, "scopes_supported", json_pack("[s]", "openid"));
+    json_object_set_new(j_discovery, "response_types_supported", json_array());
+    if (config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE]) {
+      json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("code"));
+    }
+    if (config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN]) {
+      json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("id_token"));
+    }
+    if (config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN] && config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_TOKEN]) {
+      json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("token id_token"));
+    }
+    if (config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN] && config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE]) {
+      json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("code id_token"));
+    }
+    if (config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN] && config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE] && config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_TOKEN]) {
+      json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("code token id_token"));
+    }
+    if (config->allow_non_oidc && config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS]) {
+      json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("password"));
+    }
+    if (config->allow_non_oidc && config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_TOKEN]) {
+      json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("token"));
+    }
+    if (config->allow_non_oidc && config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS]) {
+      json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("client_credentials"));
+    }
+    if (config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN]) {
+      json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("refresh_token"));
+    }
+    json_object_set_new(j_discovery, "response_modes_supported", json_pack("[ss]", "query", "fragment"));
+    json_object_set_new(j_discovery, "grant_types_supported", json_pack("[ss]", "authorization_code", "implicit"));
+    json_object_set_new(j_discovery, "token_endpoint_auth_methods_supported", json_pack("[s]", "client_secret_basic"));
+    json_object_set_new(j_discovery, "display_values_supported", json_pack("[sss]", "page", "touch", "wap"));
+    json_object_set_new(j_discovery, "claim_types_supported", json_pack("[s]", "normal"));
+    json_object_set_new(j_discovery, "claims_supported", json_array());
+    json_array_foreach(json_object_get(config->j_params, "claims"), index, j_element) {
+      json_array_append(json_object_get(j_discovery, "claims_supported"), json_object_get(j_element, "name"));
+    }
+    // TODO: in parameter
+    json_object_set_new(j_discovery, "service_documentation", json_string("https://github.com/babelouest/glewlwyd/tree/master/docs"));
+    json_object_set_new(j_discovery, "ui_locales_supported", json_pack("[ss]", "en", "fr"));
+    json_object_set_new(j_discovery, "claims_parameter_supported", json_true());
+    json_object_set_new(j_discovery, "request_parameter_supported", json_false());
+    json_object_set_new(j_discovery, "request_uri_parameter_supported", json_false());
+    json_object_set_new(j_discovery, "require_request_uri_registration", json_false());
+    // TODO: in parameter
+    json_object_set_new(j_discovery, "op_policy_uri", json_string("https://www.un.org/fr/universal-declaration-human-rights/"));
+    // TODO: in parameter
+    json_object_set_new(j_discovery, "op_tos_uri", json_string("https://www.un.org/fr/universal-declaration-human-rights/"));
+    ulfius_set_json_body_response(response, 200, j_discovery);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_discovery - Error allocating resources for j_discovery");
+    response->status = 500;
+  }
+  json_decref(j_discovery);
+  o_free(plugin_url);
+  return U_CALLBACK_CONTINUE;
+}
+
+static int callback_oidc_get_jwks(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  struct _oidc_config * config = (struct _oidc_config *)user_data;
+  json_t * j_jwks = json_object();
+  
+  if (j_jwks != NULL) {
+    if (0 != o_strcmp("sha", json_string_value(json_object_get(config->j_params, "jwt-type")))) {
+      // For the moment, only RSA and EC keys will be returned, HMAC signatures are 
+      if (0 == o_strcmp("ecdsa", json_string_value(json_object_get(config->j_params, "jwt-type")))) {
+        json_object_set_new(j_jwks, "kty", json_string("EC"));
+      } else {
+        json_object_set_new(j_jwks, "kty", json_string("RSA"));
+      }
+      json_object_set_new(j_jwks, "use", json_string("sig"));
+      json_object_set_new(j_jwks, "key_ops", json_string("sig"));
+      json_object_set_new(j_jwks, "alg", json_string(jwt_alg_str(jwt_get_alg(config->jwt_key))));
+      // TODO: parameter
+      json_object_set(j_jwks, "kid", json_object_get(config->j_params, "iss"));
+      // TODO: parameter chain cert
+      json_object_set_new(j_jwks, "x5c", json_pack("[s]", json_string_value(json_object_get(config->j_params, "cert"))));
+      ulfius_set_json_body_response(response, 200, j_jwks);
+    } else {
+      ulfius_set_string_body_response(response, 403, "JWKS unavailable");
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_jwks - Error allocating resources for j_jwks");
+    response->status = 500;
+  }
+  json_decref(j_jwks);
+  return U_CALLBACK_CONTINUE;
+}
+
 static int jwt_autocheck(struct _oidc_config * config) {
   time_t now;
   char * token;
@@ -2672,11 +2778,11 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("Property 'key' is mandatory and must be a string"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "access-token-duration") == NULL || !json_is_integer(json_object_get(j_params, "access-token-duration")) || json_integer_value(json_object_get(j_params, "access-token-duration")) <= 0) {
+    if (json_object_get(j_params, "access-token-duration") != NULL && (!json_is_integer(json_object_get(j_params, "access-token-duration")) || json_integer_value(json_object_get(j_params, "access-token-duration")) <= 0)) {
       json_array_append_new(j_error, json_string("Property 'access-token-duration' is optional and must be a non null positive integer"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "refresh-token-duration") == NULL || !json_is_integer(json_object_get(j_params, "refresh-token-duration")) || json_integer_value(json_object_get(j_params, "refresh-token-duration")) <= 0) {
+    if (json_object_get(j_params, "refresh-token-duration") != NULL && (!json_is_integer(json_object_get(j_params, "refresh-token-duration")) || json_integer_value(json_object_get(j_params, "refresh-token-duration")) <= 0)) {
       json_array_append_new(j_error, json_string("Property 'access-token-duration' is optional and must be a non null positive integer"));
       ret = G_ERROR_PARAM;
     }
@@ -2684,31 +2790,31 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("Property 'refresh-token-rolling' is optional and must be a non null positive integer"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "auth-type-code-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-code-enabled"))) {
+    if (json_object_get(j_params, "auth-type-code-enabled") != NULL && !json_is_boolean(json_object_get(j_params, "auth-type-code-enabled"))) {
       json_array_append_new(j_error, json_string("Property 'auth-type-code-enabled' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "auth-type-token-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-token-enabled"))) {
+    if (json_object_get(j_params, "auth-type-token-enabled") != NULL && !json_is_boolean(json_object_get(j_params, "auth-type-token-enabled"))) {
       json_array_append_new(j_error, json_string("Property 'auth-type-token-enabled' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "auth-type-token-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-token-enabled"))) {
+    if (json_object_get(j_params, "auth-type-token-enabled") != NULL && !json_is_boolean(json_object_get(j_params, "auth-type-token-enabled"))) {
       json_array_append_new(j_error, json_string("Property 'auth-type-token-enabled' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "auth-type-password-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-password-enabled"))) {
+    if (json_object_get(j_params, "auth-type-password-enabled") != NULL && !json_is_boolean(json_object_get(j_params, "auth-type-password-enabled"))) {
       json_array_append_new(j_error, json_string("Property 'auth-type-password-enabled' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "auth-type-client-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-client-enabled"))) {
+    if (json_object_get(j_params, "auth-type-client-enabled") != NULL && !json_is_boolean(json_object_get(j_params, "auth-type-client-enabled"))) {
       json_array_append_new(j_error, json_string("Property 'auth-type-client-enabled' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "auth-type-refresh-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-refresh-enabled"))) {
+    if (json_object_get(j_params, "auth-type-refresh-enabled") != NULL && !json_is_boolean(json_object_get(j_params, "auth-type-refresh-enabled"))) {
       json_array_append_new(j_error, json_string("Property 'auth-type-refresh-enabled' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "allow-non-oidc") == NULL || !json_is_boolean(json_object_get(j_params, "allow-non-oidc"))) {
+    if (json_object_get(j_params, "allow-non-oidc") != NULL && !json_is_boolean(json_object_get(j_params, "allow-non-oidc"))) {
       json_array_append_new(j_error, json_string("Property 'allow-non-oidc' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
@@ -3081,7 +3187,9 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                    config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) ||
                    config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) || 
                    config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_disable_refresh_token, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL)) {
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) || 
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_discovery, (void*)*cls) ||
+                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "jwks", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_jwks, (void*)*cls)) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding endpoints");
                   j_return = json_pack("{si}", "result", G_ERROR);
                 } else {
@@ -3140,6 +3248,8 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/*");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/:token_hash");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/*");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "jwks");
     pthread_mutex_destroy(&((struct _oidc_config *)cls)->insert_lock);
     jwt_free(((struct _oidc_config *)cls)->jwt_key);
     json_decref(((struct _oidc_config *)cls)->j_params);
