@@ -2,17 +2,29 @@
 
 [![Build Status](https://travis-ci.com/babelouest/glewlwyd.svg?branch=master)](https://travis-ci.com/babelouest/glewlwyd)
 
-Single Sign On authentication server. Provides OpenID Connect and basic OAuth2 authentication processus and allows users to authenticate via multiple factors:
+Single-Sign-On (SSO) server with multiple factor authentication.
+
+Provides OpenID Connect and basic OAuth2 authentication processus.
+
+Allows users to authenticate via multiple factors:
 - Password
 - One-time password (TOTP/HOTP)
 - Webauthn (Yubikey or Android safetynet)
 - Random Code sent via e-mail
 
-Allows no-password authentication.
+Users and clients can be stored and managed from various backends:
+- Database
+- LDAP service
 
-Users are stored in multiple backends such as database or LDAP server.
+Based on a plugin architecture to make it easier to add or update storing backends, authentication schemes or processus.
 
-adding new authentication schemes or backend storage for users and clients is possible via a plugin architecture.
+Allows passwordless authentication.
+
+Adding new authentication schemes or backend storage for users and clients is possible via the plugin architecture.
+
+The backend API server is fully written in C and uses a small amount of resources.
+
+Its plugin architecture makes it easy to add new modules or plugins, or modify existing ones with less risks to have unmaintainable code.
 
 ![logged in](docs/screenshots/login-nopassword.png)
 
@@ -35,6 +47,14 @@ The [documentation](docs/USER.md) to help Glewlwyd's users manage their profile 
 ## Core API
 
 The full core API documention is available in the [API documentation](docs/API.md)
+
+## Plugins architecture
+
+You can update the existing plugins or add new ones depending on your needs, check out the documentation available for each type of plugin:
+- [User backend modules](src/user/)
+- [Client backend modules](src/client/)
+- [Authentication schemes modules](src/scheme/)
+- [Plugins](src/plugin/) (OAuth2 or OIDC plugins)
 
 ## Screenshots
 
