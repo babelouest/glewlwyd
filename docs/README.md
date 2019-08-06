@@ -34,6 +34,13 @@ Tis folder contains full documentation for Glewlwyd and additional resources.
 
 - [Database folder](database/)
 
+### Development
+
+- [How to write user backend modules](../src/user/)
+- [How to write client backend modules](../src/client/)
+- [How to write authentication schemes modules](../src/scheme/)
+- [How to write plugins](../src/plugin/)
+
 ### Additional Resources
 
 - [Token validation for resource services](resources/)
