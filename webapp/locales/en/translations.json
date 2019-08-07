@@ -412,8 +412,6 @@
     "mod-glwd-op-tos-uri": "Terms of service URL (optional)",
     "mod-glwd-op-tos-uri-ph": "Ex: https://glewlwyd.tld/tos",
     "mod-glwd-jwks-show": "JWKS available",
-    "mod-glwd-jwks-kid": "JWKS kid (optional)",
-    "mod-glwd-jwks-kid-ph": "XXX111",
     "mod-glwd-jwks-x5c": "X5C certificate chain (optional)",
     "requires-admin-scope": "Administrator scope required",
     "success-api-delete-user": "User deleted",

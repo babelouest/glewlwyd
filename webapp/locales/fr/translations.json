@@ -412,8 +412,6 @@
     "mod-glwd-op-tos-uri": "URL vers les conditions de service (optionnel)",
     "mod-glwd-op-tos-uri-ph": "Ex: https://glewlwyd.tld/tos",
     "mod-glwd-jwks-show": "Clé JWKS accessible",
-    "mod-glwd-jwks-kid": "Identifiant de la clé JWKS (optionnel)",
-    "mod-glwd-jwks-kid-ph": "XXX111",
     "mod-glwd-jwks-x5c": "Chaine de certificats X5C (optionnel)",
     "requires-admin-scope": "Droits administrateur requis",
     "success-api-delete-user": "Utilisateur supprimé",
