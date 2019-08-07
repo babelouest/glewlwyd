@@ -29,7 +29,7 @@ set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, multiple factor authenti
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_REQUIRED "2.0.1")
 set(YDER_VERSION_REQUIRED "1.4.7")
-set(ULFIUS_VERSION_REQUIRED "2.6.2")
+set(ULFIUS_VERSION_REQUIRED "2.6.3")
 set(HOEL_VERSION_REQUIRED "1.4.10")
 set(LIBJWT_VERSION_REQUIRED "1.10.0")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
