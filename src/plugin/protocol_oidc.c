@@ -2639,17 +2639,20 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
     json_array_foreach(json_object_get(config->j_params, "claims"), index, j_element) {
       json_array_append(json_object_get(j_discovery, "claims_supported"), json_object_get(j_element, "name"));
     }
-    // TODO: in parameter
-    json_object_set_new(j_discovery, "service_documentation", json_string("https://github.com/babelouest/glewlwyd/tree/master/docs"));
+    if (json_string_length(json_object_get(config->j_params, "service-documentation"))) {
+      json_object_set(j_discovery, "service_documentation", json_object_get(config->j_params, "service-documentation"));
+    }
     json_object_set_new(j_discovery, "ui_locales_supported", json_pack("[ss]", "en", "fr"));
     json_object_set_new(j_discovery, "claims_parameter_supported", json_true());
     json_object_set_new(j_discovery, "request_parameter_supported", json_false());
     json_object_set_new(j_discovery, "request_uri_parameter_supported", json_false());
     json_object_set_new(j_discovery, "require_request_uri_registration", json_false());
-    // TODO: in parameter
-    json_object_set_new(j_discovery, "op_policy_uri", json_string("https://www.un.org/fr/universal-declaration-human-rights/"));
-    // TODO: in parameter
-    json_object_set_new(j_discovery, "op_tos_uri", json_string("https://www.un.org/fr/universal-declaration-human-rights/"));
+    if (json_string_length(json_object_get(config->j_params, "op-policy-uri"))) {
+      json_object_set(j_discovery, "op_policy_uri", json_object_get(config->j_params, "op-policy-uri"));
+    }
+    if (json_string_length(json_object_get(config->j_params, "op-tos-uri"))) {
+      json_object_set(j_discovery, "op_tos_uri", json_object_get(config->j_params, "op-tos-uri"));
+    }
     ulfius_set_json_body_response(response, 200, j_discovery);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_discovery - Error allocating resources for j_discovery");
@@ -2663,10 +2666,12 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
 static int callback_oidc_get_jwks(const struct _u_request * request, struct _u_response * response, void * user_data) {
   UNUSED(request);
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_jwks = json_object();
+  json_t * j_jwks = NULL, * j_element;
+  size_t index;
   
-  if (j_jwks != NULL) {
-    if (0 != o_strcmp("sha", json_string_value(json_object_get(config->j_params, "jwt-type")))) {
+  
+  if (0 != o_strcmp("sha", json_string_value(json_object_get(config->j_params, "jwt-type"))) && json_object_get(config->j_params, "jwks-show") != json_false()) {
+    if ((j_jwks = json_object()) != NULL) {
       // For the moment, only RSA and EC keys will be returned, HMAC signatures are 
       if (0 == o_strcmp("ecdsa", json_string_value(json_object_get(config->j_params, "jwt-type")))) {
         json_object_set_new(j_jwks, "kty", json_string("EC"));
@@ -2676,19 +2681,24 @@ static int callback_oidc_get_jwks(const struct _u_request * request, struct _u_r
       json_object_set_new(j_jwks, "use", json_string("sig"));
       json_object_set_new(j_jwks, "key_ops", json_string("sig"));
       json_object_set_new(j_jwks, "alg", json_string(jwt_alg_str(jwt_get_alg(config->jwt_key))));
-      // TODO: parameter
-      json_object_set(j_jwks, "kid", json_object_get(config->j_params, "iss"));
-      // TODO: parameter chain cert
+      if (json_string_length(json_object_get(config->j_params, "jwks-kid"))) {
+        json_object_set(j_jwks, "kid", json_object_get(config->j_params, "jwks-kid"));
+      } else {
+        json_object_set(j_jwks, "kid", json_object_get(config->j_params, "iss"));
+      }
       json_object_set_new(j_jwks, "x5c", json_pack("[s]", json_string_value(json_object_get(config->j_params, "cert"))));
+      json_array_foreach(json_object_get(config->j_params, "jwks-x5c"), index, j_element) {
+        json_array_append(json_object_get(j_jwks, "x5c"), j_element);
+      }
       ulfius_set_json_body_response(response, 200, j_jwks);
     } else {
-      ulfius_set_string_body_response(response, 403, "JWKS unavailable");
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_jwks - Error allocating resources for j_jwks");
+      response->status = 500;
     }
+    json_decref(j_jwks);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_jwks - Error allocating resources for j_jwks");
-    response->status = 500;
+    ulfius_set_string_body_response(response, 403, "JWKS unavailable");
   }
-  json_decref(j_jwks);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -2817,6 +2827,41 @@ static json_t * check_parameters (json_t * j_params) {
     if (json_object_get(j_params, "allow-non-oidc") != NULL && !json_is_boolean(json_object_get(j_params, "allow-non-oidc"))) {
       json_array_append_new(j_error, json_string("Property 'allow-non-oidc' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "issuer") != NULL && !json_is_string(json_object_get(j_params, "issuer"))) {
+      json_array_append_new(j_error, json_string("Property 'issuer' is optional and must be a string"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "service-documentation") != NULL && !json_is_string(json_object_get(j_params, "service-documentation"))) {
+      json_array_append_new(j_error, json_string("Property 'service-documentation' is optional and must be a string"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "op-policy-uri") != NULL && !json_is_string(json_object_get(j_params, "op-policy-uri"))) {
+      json_array_append_new(j_error, json_string("Property 'op-policy-uri' is optional and must be a string"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "op-tos-uri") != NULL && !json_is_string(json_object_get(j_params, "op-tos-uri"))) {
+      json_array_append_new(j_error, json_string("Property 'op-tos-uri' is optional and must be a string"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "jwks-show") != NULL && !json_is_boolean(json_object_get(j_params, "jwks-show"))) {
+      json_array_append_new(j_error, json_string("Property 'jwks-show' is optional and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "jwks-kid") != NULL && !json_is_string(json_object_get(j_params, "jwks-kid"))) {
+      json_array_append_new(j_error, json_string("Property 'jwks-kid' is optional and must be a string"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "jwks-x5c") != NULL && !json_is_array(json_object_get(j_params, "jwks-x5c"))) {
+      json_array_append_new(j_error, json_string("Property 'jwks-x5c' is optional and must be an array of strings"));
+      ret = G_ERROR_PARAM;
+    } else {
+      json_array_foreach(json_object_get(j_params, "jwks-x5c"), index, j_element) {
+        if (!json_string_length(j_element)) {
+          json_array_append_new(j_error, json_string("Property 'jwks-x5c' is optional and must be an array of strings"));
+          ret = G_ERROR_PARAM;
+        }
+      }
     }
     if (json_object_get(j_params, "scope") != NULL) {
       if (!json_is_array(json_object_get(j_params, "scope"))) {
