@@ -39,6 +39,14 @@ Maximum number of times a valid authentification with this scheme is possible. T
 
 If this option is unchecked, only administrator can register this scheme for every user via the administration page.
 
+### Allow attestations without validation certificate (less safe)
+
+Allow device to register to Glewlwyd without a certificate (fmt: 'none'). Check this option could make your webauthn authentication less safe but you can accept browser of FIDO2 devices less secured.
+
+### Force attestation without validation certificate (much lesser safe)
+
+Force all registration to Glewlwyd without a certificate (attestation: 'none', so fmt returned: 'none'). Check this option if you don't want to manage FISO2 devices chain of trust and want to accept all FIDO2 device a user wants to register.
+
 ### User must have a valid session to connect
 
 This options allows or forbid users to authenticate via webauthn if they already have a valid session.
