@@ -26,6 +26,9 @@
  */
 
 #include <string.h>
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
+#include <gnutls/abstract.h>
 #include <jansson.h>
 #include <jwt.h>
 #include <yder.h>
@@ -75,6 +78,7 @@ struct _oidc_config {
   struct config_plugin             * glewlwyd_config;
   int                                jwt_key_size;
   jwt_t                            * jwt_key;
+  json_t                           * cert_jwks;
   const char                       * name;
   json_t                           * j_params;
   json_int_t                         access_token_duration;
@@ -93,6 +97,86 @@ static struct _u_map * get_map(const struct _u_request * request) {
   } else {
     return request->map_url;
   }
+}
+
+static json_t * extract_jwks_from_cert(struct _oidc_config * config) {
+  json_t * j_jwks = NULL, * j_return, * j_element;
+  unsigned char m_enc[2048] = {0}, e_enc[32] = {0}, x_enc[256], y_enc[256], kid[64], kid_enc[128] = {0};
+  size_t index, m_enc_len = 0, e_enc_len = 0, x_enc_len = 0, y_enc_len = 0, kid_len = 64, kid_enc_len = 0;
+  gnutls_pubkey_t pubkey = NULL;
+  gnutls_datum_t cert_dat, m_dat, e_dat, x_dat, y_dat;
+  gnutls_ecc_curve_t curve = GNUTLS_ECC_CURVE_INVALID;
+  int ret;
+  
+  if (0 != o_strcmp("sha", json_string_value(json_object_get(config->j_params, "jwt-type")))) {
+    ret = G_OK;
+    if ((j_jwks = json_pack("{sss[O]}", "use", "sig", "x5c", json_object_get(config->j_params, "cert"))) != NULL) {
+      json_array_foreach(json_object_get(config->j_params, "jwks-x5c"), index, j_element) {
+        json_array_append(json_object_get(j_jwks, "x5c"), j_element);
+      }
+      if (!gnutls_pubkey_init(&pubkey)) {
+        cert_dat.data = (unsigned char *)json_string_value(json_object_get(config->j_params, "cert"));
+        cert_dat.size = json_string_length(json_object_get(config->j_params, "cert"));
+        if ((ret = gnutls_pubkey_import(pubkey, &cert_dat, GNUTLS_X509_FMT_PEM)) >= 0) {
+          if ((ret = gnutls_pubkey_get_key_id(pubkey, GNUTLS_KEYID_USE_BEST_KNOWN, kid, &kid_len)) == 0) {
+            o_base64url_encode(kid, kid_len, kid_enc, &kid_enc_len);
+            kid_enc[kid_enc_len] = '\0';
+            json_object_set_new(j_jwks, "kid", json_stringn((const char *)kid_enc, kid_enc_len));
+            jwt_add_header(config->jwt_key, "kid", (const char *)kid_enc);
+          } else {
+            ret = G_ERROR;
+            y_log_message(Y_LOG_LEVEL_ERROR, "extract_jwks_from_cert - Error gnutls_pubkey_get_key_id %d", ret);
+          }
+        } else {
+          ret = G_ERROR;
+          y_log_message(Y_LOG_LEVEL_ERROR, "extract_jwks_from_cert - Error gnutls_pubkey_import %d", ret);
+        }
+        if (0 == o_strcmp("ecdsa", json_string_value(json_object_get(config->j_params, "jwt-type")))) {
+          json_object_set_new(j_jwks, "kty", json_string("EC"));
+          if (!gnutls_pubkey_export_ecc_raw(pubkey, &curve, &x_dat, &y_dat)) {
+            o_base64url_encode(x_dat.data, x_dat.size, x_enc, &x_enc_len);
+            o_base64url_encode(y_dat.data, y_dat.size, y_enc, &y_enc_len);
+            json_object_set_new(j_jwks, "x", json_stringn((const char *)x_enc, x_enc_len));
+            json_object_set_new(j_jwks, "y", json_stringn((const char *)y_enc, y_enc_len));
+            gnutls_free(x_dat.data);
+            gnutls_free(y_dat.data);
+          } else {
+            ret = G_ERROR;
+            y_log_message(Y_LOG_LEVEL_ERROR, "extract_jwks_from_cert - Error gnutls_pubkey_export_ecc_raw");
+          }
+        } else {
+          json_object_set_new(j_jwks, "kty", json_string("RSA"));
+          if (!gnutls_pubkey_export_rsa_raw(pubkey, &m_dat, &e_dat)) {
+            o_base64url_encode(m_dat.data, m_dat.size, m_enc, &m_enc_len);
+            o_base64url_encode(e_dat.data, e_dat.size, e_enc, &e_enc_len);
+            json_object_set_new(j_jwks, "e", json_stringn((const char *)e_enc, e_enc_len));
+            json_object_set_new(j_jwks, "n", json_stringn((const char *)m_enc, m_enc_len));
+            gnutls_free(m_dat.data);
+            gnutls_free(e_dat.data);
+          } else {
+            ret = G_ERROR;
+            y_log_message(Y_LOG_LEVEL_ERROR, "extract_jwks_from_cert - Error gnutls_pubkey_export_rsa_raw");
+          }
+        }
+        gnutls_pubkey_deinit(pubkey);
+      } else {
+        ret = G_ERROR;
+        y_log_message(Y_LOG_LEVEL_ERROR, "extract_jwks_from_cert - Error gnutls_pubkey_init");
+      }
+    } else {
+      ret = G_ERROR;
+      y_log_message(Y_LOG_LEVEL_ERROR, "extract_jwks_from_cert - Error allocating resources for j_jwks");
+    }
+    if (ret == G_OK) {
+      j_return = json_pack("{sisO}", "result", G_OK, "jwks", j_jwks);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_jwks);
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  }
+  return j_return;
 }
 
 /**
@@ -2675,30 +2759,10 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
 static int callback_oidc_get_jwks(const struct _u_request * request, struct _u_response * response, void * user_data) {
   UNUSED(request);
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_jwks = NULL, * j_element;
-  size_t index;
-  
+  json_t * j_jwks;
   
   if (0 != o_strcmp("sha", json_string_value(json_object_get(config->j_params, "jwt-type"))) && json_object_get(config->j_params, "jwks-show") != json_false()) {
-    if ((j_jwks = json_object()) != NULL) {
-      // For the moment, only RSA and EC keys will be returned, HMAC signatures are 
-      if (0 == o_strcmp("ecdsa", json_string_value(json_object_get(config->j_params, "jwt-type")))) {
-        json_object_set_new(j_jwks, "kty", json_string("EC"));
-      } else {
-        json_object_set_new(j_jwks, "kty", json_string("RSA"));
-      }
-      json_object_set_new(j_jwks, "use", json_string("sig"));
-      json_object_set_new(j_jwks, "key_ops", json_string("sig"));
-      json_object_set_new(j_jwks, "alg", json_string(jwt_alg_str(jwt_get_alg(config->jwt_key))));
-      if (json_string_length(json_object_get(config->j_params, "jwks-kid"))) {
-        json_object_set(j_jwks, "kid", json_object_get(config->j_params, "jwks-kid"));
-      } else {
-        json_object_set(j_jwks, "kid", json_object_get(config->j_params, "iss"));
-      }
-      json_object_set_new(j_jwks, "x5c", json_pack("[s]", json_string_value(json_object_get(config->j_params, "cert"))));
-      json_array_foreach(json_object_get(config->j_params, "jwks-x5c"), index, j_element) {
-        json_array_append(json_object_get(j_jwks, "x5c"), j_element);
-      }
+    if ((j_jwks = json_pack("{s[O]}", "keys", config->cert_jwks)) != NULL) {
       ulfius_set_json_body_response(response, 200, j_jwks);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_jwks - Error allocating resources for j_jwks");
@@ -2855,10 +2919,6 @@ static json_t * check_parameters (json_t * j_params) {
     }
     if (json_object_get(j_params, "jwks-show") != NULL && !json_is_boolean(json_object_get(j_params, "jwks-show"))) {
       json_array_append_new(j_error, json_string("Property 'jwks-show' is optional and must be a boolean"));
-      ret = G_ERROR_PARAM;
-    }
-    if (json_object_get(j_params, "jwks-kid") != NULL && !json_is_string(json_object_get(j_params, "jwks-kid"))) {
-      json_array_append_new(j_error, json_string("Property 'jwks-kid' is optional and must be a string"));
       ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "jwks-x5c") != NULL && !json_is_array(json_object_get(j_params, "jwks-x5c"))) {
@@ -3114,7 +3174,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
   const unsigned char * key;
   jwt_alg_t alg = 0;
   pthread_mutexattr_t mutexattr;
-  json_t * j_return, * j_result;
+  json_t * j_return, * j_result, * cert_jwks;
   
   y_log_message(Y_LOG_LEVEL_INFO, "Init plugin Glewlwyd OpenID Connect '%s'", name);
   *cls = o_malloc(sizeof(struct _oidc_config));
@@ -3129,6 +3189,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
     } else {
       ((struct _oidc_config *)*cls)->name = name;
       ((struct _oidc_config *)*cls)->jwt_key = NULL;
+      ((struct _oidc_config *)*cls)->cert_jwks = NULL;
       ((struct _oidc_config *)*cls)->j_params = json_incref(j_parameters);
       json_object_set_new(((struct _oidc_config *)*cls)->j_params, "name", json_string(name));
       ((struct _oidc_config *)*cls)->glewlwyd_config = config;
@@ -3221,38 +3282,49 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                 y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error jwt_autocheck");
                 j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error jwt_autocheck");
               } else {
-                if (0 == o_strcmp("sha", json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "jwt-type")))) {
-                  ((struct _oidc_config *)*cls)->glewlwyd_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "key")));
+                cert_jwks = extract_jwks_from_cert((struct _oidc_config *)*cls);
+                if (check_result_value(cert_jwks, G_OK)) {
+                  ((struct _oidc_config *)*cls)->cert_jwks = json_incref(json_object_get(cert_jwks, "jwks"));
+                  if (0 == o_strcmp("sha", json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "jwt-type")))) {
+                    ((struct _oidc_config *)*cls)->glewlwyd_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "key")));
+                  } else {
+                    ((struct _oidc_config *)*cls)->glewlwyd_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "cert")));
+                  }
+                  ((struct _oidc_config *)*cls)->glewlwyd_resource_config->jwt_alg = alg;
+                  // Add endpoints
+                  y_log_message(Y_LOG_LEVEL_INFO, "Add endpoints with plugin prefix %s", name);
+                  if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_authorization, (void*)*cls) != G_OK || 
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_authorization, (void*)*cls) || 
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_token, (void*)*cls) || 
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_access_token, (void*)((struct _oidc_config *)*cls)->glewlwyd_resource_config) || 
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) || 
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) || 
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) ||
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) || 
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_refresh_token_list_get, (void*)*cls) || 
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) ||
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) || 
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_disable_refresh_token, (void*)*cls) || 
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) || 
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_discovery, (void*)*cls) ||
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "jwks", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_jwks, (void*)*cls)) {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding endpoints");
+                    j_return = json_pack("{si}", "result", G_ERROR);
+                  } else {
+                    j_return = json_pack("{si}", "result", G_OK);
+                  }
                 } else {
-                  ((struct _oidc_config *)*cls)->glewlwyd_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "cert")));
+                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error allocating resources for jwt_key");
+                  json_decref(((struct _oidc_config *)*cls)->j_params);
+                  o_free(*cls);
+                  *cls = NULL;
+                  j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
                 }
-                ((struct _oidc_config *)*cls)->glewlwyd_resource_config->jwt_alg = alg;
-                // Add endpoints
-                y_log_message(Y_LOG_LEVEL_INFO, "Add endpoints with plugin prefix %s", name);
-                if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_authorization, (void*)*cls) != G_OK || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_authorization, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_token, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_access_token, (void*)((struct _oidc_config *)*cls)->glewlwyd_resource_config) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) ||
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_refresh_token_list_get, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) ||
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_disable_refresh_token, (void*)*cls) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) || 
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_discovery, (void*)*cls) ||
-                   config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "jwks", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_jwks, (void*)*cls)) {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding endpoints");
-                  j_return = json_pack("{si}", "result", G_ERROR);
-                } else {
-                  j_return = json_pack("{si}", "result", G_OK);
-                }
+                json_decref(cert_jwks);
               }
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error allocating resources for jwt_key");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error extract_jwks_from_cert");
             json_decref(((struct _oidc_config *)*cls)->j_params);
             o_free(*cls);
             *cls = NULL;
@@ -3307,6 +3379,7 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     pthread_mutex_destroy(&((struct _oidc_config *)cls)->insert_lock);
     jwt_free(((struct _oidc_config *)cls)->jwt_key);
     json_decref(((struct _oidc_config *)cls)->j_params);
+    json_decref(((struct _oidc_config *)cls)->cert_jwks);
     o_free(((struct _oidc_config *)cls)->glewlwyd_resource_config->jwt_decode_key);
     o_free(((struct _oidc_config *)cls)->glewlwyd_resource_config);
     o_free(cls);
