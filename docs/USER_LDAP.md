@@ -1,6 +1,6 @@
 # Glewlwyd User Module LDAP Backend documentation
 
-![mod-user-database-1](screenshots/mod-user-ldap.png)
+![mod-user-ldap](screenshots/mod-user-ldap.png)
 
 The database backend uses a LDAP service to store information and passwords for users.
 
