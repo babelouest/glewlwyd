@@ -137,7 +137,7 @@ struct _u_request admin_req;
 
 START_TEST(test_glwd_scheme_webauthn_irl_module_add)
 {
-  json_t * j_parameters = json_pack("{sssssssisis{sosssisisisss[iii]sisiss}}", 
+  json_t * j_parameters = json_pack("{sssssssisis{sosssisisisss[iii]sisissso}}", 
                                     "module", MODULE_MODULE, 
                                     "name", MODULE_NAME, 
                                     "display_name", MODULE_DISPLAY_NAME, 
@@ -153,7 +153,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_module_add)
                                       "pubKey-cred-params", WEBAUTHN_PUBKEY_CRED_ECDSA_256, WEBAUTHN_PUBKEY_CRED_ECDSA_384, WEBAUTHN_PUBKEY_CRED_ECDSA_512, 
                                       "ctsProfileMatch", WEBAUTHN_CTS_PROFILE_MATCH, 
                                       "basicIntegrity", WEBAUTHN_BASIC_INTEGRITY, 
-                                      "google-root-ca-r2", WEBAUTHN_GOOGLE_ROOT_CA_R2);
+                                      "google-root-ca-r2", WEBAUTHN_GOOGLE_ROOT_CA_R2,
+                                      "allow-fmt-none", json_false());
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   
@@ -164,7 +165,7 @@ END_TEST
 
 START_TEST(test_glwd_scheme_webauthn_irl_module_add_2)
 {
-  json_t * j_parameters = json_pack("{sssssssisis{sosssisisisss[iii]sisiss}}", 
+  json_t * j_parameters = json_pack("{sssssssisis{sosssisisisss[iii]sisissso}}", 
                                     "module", MODULE_MODULE, 
                                     "name", MODULE_NAME_2, 
                                     "display_name", MODULE_DISPLAY_NAME, 
@@ -180,7 +181,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_module_add_2)
                                       "pubKey-cred-params", WEBAUTHN_PUBKEY_CRED_ECDSA_256, WEBAUTHN_PUBKEY_CRED_ECDSA_384, WEBAUTHN_PUBKEY_CRED_ECDSA_512, 
                                       "ctsProfileMatch", WEBAUTHN_CTS_PROFILE_MATCH, 
                                       "basicIntegrity", WEBAUTHN_BASIC_INTEGRITY, 
-                                      "google-root-ca-r2", WEBAUTHN_GOOGLE_ROOT_CA_R2);
+                                      "google-root-ca-r2", WEBAUTHN_GOOGLE_ROOT_CA_R2,
+                                      "allow-fmt-none", json_true());
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   
@@ -14034,6 +14036,638 @@ START_TEST(test_glwd_scheme_webauthn_irl_list_credential_success)
 }
 END_TEST
 
+START_TEST(test_glwd_scheme_webauthn_irl_register_none_error)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "register", "new-credential"),
+         * j_result, * j_client_data, * j_credential;
+  struct _u_response resp, resp_register;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], * att_obj_ser = NULL, * att_obj_ser_enc;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, att_obj_ser_len, att_obj_ser_enc_len;
+  const char * session, * challenge, * user_id, * username, * rpid;
+  char * client_data_json;
+  gnutls_datum_t key_data, key_x, key_y;
+  gnutls_pubkey_t pubkey = NULL;
+  gnutls_x509_crt_t cert = NULL;
+  gnutls_x509_privkey_t key = NULL;
+  gnutls_privkey_t privkey = NULL;
+  gnutls_ecc_curve_t curve;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  struct cbor_pair cose_pair;
+  
+  ulfius_init_response(&resp);
+  ulfius_init_response(&resp_register);
+  
+  user_req.http_verb = o_strdup("POST");
+  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
+  ck_assert_ptr_ne((challenge = json_string_value(json_object_get(j_result, "challenge"))), NULL);
+  ck_assert_ptr_ne((rpid = json_string_value(json_object_get(j_result, "rpId"))), NULL);
+  ck_assert_ptr_ne((user_id = json_string_value(json_object_get(json_object_get(j_result, "user"), "id"))), NULL);
+  ck_assert_ptr_ne((username = json_string_value(json_object_get(json_object_get(j_result, "user"), "name"))), NULL);
+  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
+  
+  // Generate clientDataJSON
+  ck_assert_int_eq(o_base64_2_base64url((unsigned char *)challenge, o_strlen(challenge), challenge_b64url, &challenge_b64url_len), 1);
+  j_client_data = json_pack("{ss%s{}ssss}",
+                            "challenge",
+                            challenge_b64url,
+                            challenge_b64url_len,
+                            "clientExtensions",
+                            "origin",
+                            WEBAUTHN_RP_ORIGIN,
+                            "type",
+                            "webauthn.create");
+  
+  client_data_json = json_dumps(j_client_data, JSON_COMPACT);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  client_data_json_enc = o_malloc(client_data_json_enc_len+1);
+  ck_assert_ptr_ne(client_data_json_enc, NULL);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  
+  // Generate credential_id
+  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  
+  // Let's build auth_data
+  memset(auth_data, 0, AUTH_DATA_SIZE);
+  // Set rpId hash
+  key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
+  key_data.size = o_strlen(WEBAUTHN_RP_ID);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  // Set flags
+  *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
+  auth_data_len += 5;
+  // Set aaguid
+  memcpy((auth_data+auth_data_len), aaguid, AAGUID_LEN);
+  auth_data_len += AAGUID_LEN;
+  // Set Credential ID and Credential public key
+  ck_assert_int_eq(gnutls_pubkey_init(&pubkey), 0);
+  ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
+  ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
+  key_data.data = (unsigned char *)CREDENTIAL_PUBLIC_KEY;
+  key_data.size = o_strlen(CREDENTIAL_PUBLIC_KEY);
+  ck_assert_int_eq(gnutls_pubkey_import(pubkey, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  key_data.data = (unsigned char *)FIDO_KEY_FAKE;
+  key_data.size = o_strlen(FIDO_KEY_FAKE);
+  ck_assert_int_eq(gnutls_x509_privkey_import(key, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
+  ck_assert_int_eq(gnutls_pubkey_get_key_id(pubkey, 0, pubkey_id, &pubkey_id_len), 0);
+  memset((auth_data+auth_data_len), WEBAUTHN_CREDENTIAL_ID_LEN>>8, 1);
+  memset((auth_data+auth_data_len+1), WEBAUTHN_CREDENTIAL_ID_LEN, 1);
+  auth_data_len += 2;
+  memcpy((auth_data+auth_data_len), credential_id, WEBAUTHN_CREDENTIAL_ID_LEN);
+  auth_data_len += WEBAUTHN_CREDENTIAL_ID_LEN;
+  
+  ck_assert_int_eq(gnutls_pubkey_export_ecc_raw(pubkey, &curve, &key_x, &key_y), 0);
+  cbor_cose = cbor_new_definite_map(4);
+  ck_assert_ptr_ne(cbor_cose, NULL);
+  
+  cose_pair.key = cbor_build_uint8(1);
+  cbor_mark_negint(cose_pair.key);
+  cose_pair.value = cbor_build_bytestring(key_x.data, key_x.size);
+  ck_assert_int_eq(cbor_map_add(cbor_cose, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_uint8(2);
+  cbor_mark_negint(cose_pair.key);
+  cose_pair.value = cbor_build_bytestring(key_y.data, key_y.size);
+  ck_assert_int_eq(cbor_map_add(cbor_cose, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_uint8(1);
+  cose_pair.value = cbor_build_uint8(2);
+  ck_assert_int_eq(cbor_map_add(cbor_cose, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_uint8(3);
+  cose_pair.value = cbor_build_uint8(6);
+  cbor_mark_negint(cose_pair.value);
+  ck_assert_int_eq(cbor_map_add(cbor_cose, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cbor_cose_dump_len = cbor_serialize(cbor_cose, cbor_cose_dump, cbor_cose_dump_max_len);
+  ck_assert_int_gt(cbor_cose_dump_len, 0);
+  memcpy((auth_data+auth_data_len), cbor_cose_dump, cbor_cose_dump_len);
+  auth_data_len += cbor_cose_dump_len;
+  // authData is properly built
+  
+  // Let's build attStmt
+  att_stmt = cbor_new_definite_map(0);
+  // attStmt is properly built
+  
+  // Let's built the attestation object
+  att_obj = cbor_new_definite_map(3);
+  cose_pair.key = cbor_build_string("fmt");
+  cose_pair.value = cbor_build_string("none");
+  ck_assert_int_eq(cbor_map_add(att_obj, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_string("authData");
+  cose_pair.value = cbor_build_bytestring(auth_data, auth_data_len);
+  ck_assert_int_eq(cbor_map_add(att_obj, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_string("attStmt");
+  cose_pair.value = att_stmt;
+  ck_assert_int_eq(cbor_map_add(att_obj, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  
+  ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
+  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
+  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  
+  j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                            "register", "register-credential",
+                            "session", session,
+                            "type", "public-key",
+                            "credential",
+                              "id", credential_id_enc_url, credential_id_enc_url_len,
+                              "rawId", credential_id_enc, credential_id_enc_len,
+                              "type", "public-key",
+                              "response",
+                                "attestationObject", att_obj_ser_enc, att_obj_ser_enc_len,
+                                "clientDataJSON", client_data_json_enc, client_data_json_enc_len);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_credential, NULL, 400, NULL, NULL, NULL), 1);
+
+  /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp_register), U_OK);
+  printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
+  ck_assert_int_eq(resp_register.status, 200);*/
+  
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
+  json_decref(j_params);
+  json_decref(j_result);
+  json_decref(j_client_data);
+  json_decref(j_credential);
+  ulfius_clean_response(&resp);
+  ulfius_clean_response(&resp_register);
+  o_free(client_data_json);
+  o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&att_stmt);
+  cbor_decref(&cbor_cose);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_register_none_error_format)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME_2, 
+                                "value", 
+                                  "register", "new-credential"),
+         * j_result, * j_client_data, * j_credential;
+  struct _u_response resp, resp_register;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], * att_obj_ser = NULL, * att_obj_ser_enc;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, att_obj_ser_len, att_obj_ser_enc_len;
+  const char * session, * challenge, * user_id, * username, * rpid;
+  char * client_data_json;
+  gnutls_datum_t key_data, key_x, key_y;
+  gnutls_pubkey_t pubkey = NULL;
+  gnutls_x509_crt_t cert = NULL;
+  gnutls_x509_privkey_t key = NULL;
+  gnutls_privkey_t privkey = NULL;
+  gnutls_ecc_curve_t curve;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  struct cbor_pair cose_pair;
+    
+  ulfius_init_response(&resp);
+  ulfius_init_response(&resp_register);
+  
+  user_req.http_verb = o_strdup("POST");
+  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
+  ck_assert_ptr_ne((challenge = json_string_value(json_object_get(j_result, "challenge"))), NULL);
+  ck_assert_ptr_ne((rpid = json_string_value(json_object_get(j_result, "rpId"))), NULL);
+  ck_assert_ptr_ne((user_id = json_string_value(json_object_get(json_object_get(j_result, "user"), "id"))), NULL);
+  ck_assert_ptr_ne((username = json_string_value(json_object_get(json_object_get(j_result, "user"), "name"))), NULL);
+  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
+  
+  // Generate clientDataJSON
+  ck_assert_int_eq(o_base64_2_base64url((unsigned char *)challenge, o_strlen(challenge), challenge_b64url, &challenge_b64url_len), 1);
+  j_client_data = json_pack("{ss%s{}ssss}",
+                            "challenge",
+                            challenge_b64url,
+                            challenge_b64url_len,
+                            "clientExtensions",
+                            "origin",
+                            WEBAUTHN_RP_ORIGIN,
+                            "type",
+                            "webauthn.create");
+  
+  client_data_json = json_dumps(j_client_data, JSON_COMPACT);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  client_data_json_enc = o_malloc(client_data_json_enc_len+1);
+  ck_assert_ptr_ne(client_data_json_enc, NULL);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  
+  // Generate credential_id
+  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  
+  // Let's build auth_data
+  memset(auth_data, 0, AUTH_DATA_SIZE);
+  // Set rpId hash
+  key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
+  key_data.size = o_strlen(WEBAUTHN_RP_ID);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  // Set flags
+  *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
+  auth_data_len += 5;
+  // Set aaguid
+  memcpy((auth_data+auth_data_len), aaguid, AAGUID_LEN);
+  auth_data_len += AAGUID_LEN;
+  // Set Credential ID and Credential public key
+  ck_assert_int_eq(gnutls_pubkey_init(&pubkey), 0);
+  ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
+  ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
+  key_data.data = (unsigned char *)CREDENTIAL_PUBLIC_KEY;
+  key_data.size = o_strlen(CREDENTIAL_PUBLIC_KEY);
+  ck_assert_int_eq(gnutls_pubkey_import(pubkey, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  key_data.data = (unsigned char *)FIDO_KEY_FAKE;
+  key_data.size = o_strlen(FIDO_KEY_FAKE);
+  ck_assert_int_eq(gnutls_x509_privkey_import(key, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
+  ck_assert_int_eq(gnutls_pubkey_get_key_id(pubkey, 0, pubkey_id, &pubkey_id_len), 0);
+  memset((auth_data+auth_data_len), WEBAUTHN_CREDENTIAL_ID_LEN>>8, 1);
+  memset((auth_data+auth_data_len+1), WEBAUTHN_CREDENTIAL_ID_LEN, 1);
+  auth_data_len += 2;
+  memcpy((auth_data+auth_data_len), credential_id, WEBAUTHN_CREDENTIAL_ID_LEN);
+  auth_data_len += WEBAUTHN_CREDENTIAL_ID_LEN;
+  
+  ck_assert_int_eq(gnutls_pubkey_export_ecc_raw(pubkey, &curve, &key_x, &key_y), 0);
+  cbor_cose = cbor_new_definite_map(4);
+  ck_assert_ptr_ne(cbor_cose, NULL);
+  
+  cose_pair.key = cbor_build_uint8(1);
+  cbor_mark_negint(cose_pair.key);
+  cose_pair.value = cbor_build_bytestring(key_x.data, key_x.size);
+  ck_assert_int_eq(cbor_map_add(cbor_cose, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_uint8(2);
+  cbor_mark_negint(cose_pair.key);
+  cose_pair.value = cbor_build_bytestring(key_y.data, key_y.size);
+  ck_assert_int_eq(cbor_map_add(cbor_cose, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_uint8(1);
+  cose_pair.value = cbor_build_uint8(2);
+  ck_assert_int_eq(cbor_map_add(cbor_cose, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_uint8(3);
+  cose_pair.value = cbor_build_uint8(6);
+  cbor_mark_negint(cose_pair.value);
+  ck_assert_int_eq(cbor_map_add(cbor_cose, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cbor_cose_dump_len = cbor_serialize(cbor_cose, cbor_cose_dump, cbor_cose_dump_max_len);
+  ck_assert_int_gt(cbor_cose_dump_len, 0);
+  memcpy((auth_data+auth_data_len), cbor_cose_dump, cbor_cose_dump_len);
+  auth_data_len += cbor_cose_dump_len;
+  // authData is properly built
+  
+  // Let's build attStmt
+  att_stmt = cbor_new_definite_array(0);
+  // attStmt is properly built
+  
+  // Let's built the attestation object
+  att_obj = cbor_new_definite_map(3);
+  cose_pair.key = cbor_build_string("fmt");
+  cose_pair.value = cbor_build_string("none");
+  ck_assert_int_eq(cbor_map_add(att_obj, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_string("authData");
+  cose_pair.value = cbor_build_bytestring(auth_data, auth_data_len);
+  ck_assert_int_eq(cbor_map_add(att_obj, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_string("attStmt");
+  cose_pair.value = att_stmt;
+  ck_assert_int_eq(cbor_map_add(att_obj, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  
+  ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
+  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
+  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  
+  j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME_2,
+                           "value",
+                            "register", "register-credential",
+                            "session", session,
+                            "type", "public-key",
+                            "credential",
+                              "id", credential_id_enc_url, credential_id_enc_url_len,
+                              "rawId", credential_id_enc, credential_id_enc_len,
+                              "type", "public-key",
+                              "response",
+                                "attestationObject", att_obj_ser_enc, att_obj_ser_enc_len,
+                                "clientDataJSON", client_data_json_enc, client_data_json_enc_len);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_credential, NULL, 400, NULL, NULL, NULL), 1);
+
+  /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp_register), U_OK);
+  printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
+  ck_assert_int_eq(resp_register.status, 200);*/
+  
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
+  json_decref(j_params);
+  json_decref(j_result);
+  json_decref(j_client_data);
+  json_decref(j_credential);
+  ulfius_clean_response(&resp);
+  ulfius_clean_response(&resp_register);
+  o_free(client_data_json);
+  o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&att_stmt);
+  cbor_decref(&cbor_cose);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_register_none_success)
+{
+  json_t * j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME_2, 
+                                "value", 
+                                  "register", "new-credential"),
+         * j_result, * j_client_data, * j_credential;
+  struct _u_response resp, resp_register;
+  unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], * att_obj_ser = NULL, * att_obj_ser_enc;
+  size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, att_obj_ser_len, att_obj_ser_enc_len;
+  const char * session, * challenge, * user_id, * username, * rpid;
+  char * client_data_json;
+  gnutls_datum_t key_data, key_x, key_y;
+  gnutls_pubkey_t pubkey = NULL;
+  gnutls_x509_crt_t cert = NULL;
+  gnutls_x509_privkey_t key = NULL;
+  gnutls_privkey_t privkey = NULL;
+  gnutls_ecc_curve_t curve;
+  cbor_item_t * cbor_cose, * att_stmt, * att_obj;
+  struct cbor_pair cose_pair;
+    
+  ulfius_init_response(&resp);
+  ulfius_init_response(&resp_register);
+  
+  user_req.http_verb = o_strdup("POST");
+  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
+  ck_assert_ptr_ne((session = json_string_value(json_object_get(j_result, "session"))), NULL);
+  ck_assert_ptr_ne((challenge = json_string_value(json_object_get(j_result, "challenge"))), NULL);
+  ck_assert_ptr_ne((rpid = json_string_value(json_object_get(j_result, "rpId"))), NULL);
+  ck_assert_ptr_ne((user_id = json_string_value(json_object_get(json_object_get(j_result, "user"), "id"))), NULL);
+  ck_assert_ptr_ne((username = json_string_value(json_object_get(json_object_get(j_result, "user"), "name"))), NULL);
+  ck_assert_int_eq(o_base64_decode((unsigned char *)json_string_value(json_object_get(j_result, "challenge")), json_string_length(json_object_get(j_result, "challenge")), challenge_dec, &challenge_dec_len), 1);
+  
+  // Generate clientDataJSON
+  ck_assert_int_eq(o_base64_2_base64url((unsigned char *)challenge, o_strlen(challenge), challenge_b64url, &challenge_b64url_len), 1);
+  j_client_data = json_pack("{ss%s{}ssss}",
+                            "challenge",
+                            challenge_b64url,
+                            challenge_b64url_len,
+                            "clientExtensions",
+                            "origin",
+                            WEBAUTHN_RP_ORIGIN,
+                            "type",
+                            "webauthn.create");
+  
+  client_data_json = json_dumps(j_client_data, JSON_COMPACT);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  client_data_json_enc = o_malloc(client_data_json_enc_len+1);
+  ck_assert_ptr_ne(client_data_json_enc, NULL);
+  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  
+  // Generate credential_id
+  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  
+  // Let's build auth_data
+  memset(auth_data, 0, AUTH_DATA_SIZE);
+  // Set rpId hash
+  key_data.data = (unsigned char *)WEBAUTHN_RP_ID;
+  key_data.size = o_strlen(WEBAUTHN_RP_ID);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, auth_data, &auth_data_len), GNUTLS_E_SUCCESS);
+  // Set flags
+  *(auth_data+auth_data_len) = FLAG_USER_PRESENT | FLAG_AT;
+  auth_data_len += 5;
+  // Set aaguid
+  memcpy((auth_data+auth_data_len), aaguid, AAGUID_LEN);
+  auth_data_len += AAGUID_LEN;
+  // Set Credential ID and Credential public key
+  ck_assert_int_eq(gnutls_pubkey_init(&pubkey), 0);
+  ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
+  ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
+  key_data.data = (unsigned char *)CREDENTIAL_PUBLIC_KEY;
+  key_data.size = o_strlen(CREDENTIAL_PUBLIC_KEY);
+  ck_assert_int_eq(gnutls_pubkey_import(pubkey, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  key_data.data = (unsigned char *)FIDO_KEY_FAKE;
+  key_data.size = o_strlen(FIDO_KEY_FAKE);
+  ck_assert_int_eq(gnutls_x509_privkey_import(key, &key_data, GNUTLS_X509_FMT_PEM), 0);
+  ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
+  ck_assert_int_eq(gnutls_pubkey_get_key_id(pubkey, 0, pubkey_id, &pubkey_id_len), 0);
+  memset((auth_data+auth_data_len), WEBAUTHN_CREDENTIAL_ID_LEN>>8, 1);
+  memset((auth_data+auth_data_len+1), WEBAUTHN_CREDENTIAL_ID_LEN, 1);
+  auth_data_len += 2;
+  memcpy((auth_data+auth_data_len), credential_id, WEBAUTHN_CREDENTIAL_ID_LEN);
+  auth_data_len += WEBAUTHN_CREDENTIAL_ID_LEN;
+  
+  ck_assert_int_eq(gnutls_pubkey_export_ecc_raw(pubkey, &curve, &key_x, &key_y), 0);
+  cbor_cose = cbor_new_definite_map(4);
+  ck_assert_ptr_ne(cbor_cose, NULL);
+  
+  cose_pair.key = cbor_build_uint8(1);
+  cbor_mark_negint(cose_pair.key);
+  cose_pair.value = cbor_build_bytestring(key_x.data, key_x.size);
+  ck_assert_int_eq(cbor_map_add(cbor_cose, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_uint8(2);
+  cbor_mark_negint(cose_pair.key);
+  cose_pair.value = cbor_build_bytestring(key_y.data, key_y.size);
+  ck_assert_int_eq(cbor_map_add(cbor_cose, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_uint8(1);
+  cose_pair.value = cbor_build_uint8(2);
+  ck_assert_int_eq(cbor_map_add(cbor_cose, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_uint8(3);
+  cose_pair.value = cbor_build_uint8(6);
+  cbor_mark_negint(cose_pair.value);
+  ck_assert_int_eq(cbor_map_add(cbor_cose, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cbor_cose_dump_len = cbor_serialize(cbor_cose, cbor_cose_dump, cbor_cose_dump_max_len);
+  ck_assert_int_gt(cbor_cose_dump_len, 0);
+  memcpy((auth_data+auth_data_len), cbor_cose_dump, cbor_cose_dump_len);
+  auth_data_len += cbor_cose_dump_len;
+  // authData is properly built
+  
+  // Let's build attStmt
+  att_stmt = cbor_new_definite_map(0);
+  // attStmt is properly built
+  
+  // Let's built the attestation object
+  att_obj = cbor_new_definite_map(3);
+  cose_pair.key = cbor_build_string("fmt");
+  cose_pair.value = cbor_build_string("none");
+  ck_assert_int_eq(cbor_map_add(att_obj, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_string("authData");
+  cose_pair.value = cbor_build_bytestring(auth_data, auth_data_len);
+  ck_assert_int_eq(cbor_map_add(att_obj, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  cbor_decref(&cose_pair.value);
+  
+  cose_pair.key = cbor_build_string("attStmt");
+  cose_pair.value = att_stmt;
+  ck_assert_int_eq(cbor_map_add(att_obj, cose_pair), true);
+  cbor_decref(&cose_pair.key);
+  
+  ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
+  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
+  att_obj_ser_enc_len = 0;
+  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  
+  j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME_2,
+                           "value",
+                            "register", "register-credential",
+                            "session", session,
+                            "type", "public-key",
+                            "credential",
+                              "id", credential_id_enc_url, credential_id_enc_url_len,
+                              "rawId", credential_id_enc, credential_id_enc_len,
+                              "type", "public-key",
+                              "response",
+                                "attestationObject", att_obj_ser_enc, att_obj_ser_enc_len,
+                                "clientDataJSON", client_data_json_enc, client_data_json_enc_len);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_credential, NULL, 200, NULL, NULL, NULL), 1);
+
+  /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp_register), U_OK);
+  printf("body %.*s\n", (int)resp_register.binary_body_length, (char *)resp_register.binary_body);
+  ck_assert_int_eq(resp_register.status, 200);*/
+  
+  gnutls_privkey_deinit(privkey);
+  gnutls_x509_crt_deinit(cert);
+  gnutls_x509_privkey_deinit(key);
+  gnutls_pubkey_deinit(pubkey);
+  gnutls_free(key_x.data);
+  gnutls_free(key_y.data);
+  json_decref(j_params);
+  json_decref(j_result);
+  json_decref(j_client_data);
+  json_decref(j_credential);
+  ulfius_clean_response(&resp);
+  ulfius_clean_response(&resp_register);
+  o_free(client_data_json);
+  o_free(client_data_json_enc);
+  o_free(att_obj_ser_enc);
+  o_free(att_obj_ser);
+  cbor_decref(&att_obj);
+  cbor_decref(&att_stmt);
+  cbor_decref(&cbor_cose);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_remove_credential_none_success)
+{
+  json_t * j_params;
+  unsigned char credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2];
+  size_t credential_id_enc_len;
+  
+  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  j_params = json_pack("{sssssss{ssss%}}",
+                      "username", USERNAME, 
+                      "scheme_type", MODULE_MODULE, 
+                      "scheme_name", MODULE_NAME_2, 
+                      "value", 
+                        "register", "remove-credential",
+                        "credential_id", credential_id_enc, credential_id_enc_len);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+}
+END_TEST
+
 START_TEST(test_glwd_scheme_webauthn_irl_module_remove)
 {
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/scheme/" MODULE_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
@@ -14141,6 +14775,10 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_auth_2_in_1_error);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_2_in_2_success);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_none_error);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_none_error_format);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_none_success);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_none_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove_2);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add_3);
