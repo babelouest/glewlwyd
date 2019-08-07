@@ -1,6 +1,6 @@
 # Glewlwyd Client Module LDAP Backend documentation
 
-![mod-user-database-1](screenshots/mod-user-ldap.png)
+![mod-client-ldap](screenshots/mod-client-ldap.png)
 
 The database backend uses a LDAP service to store information and passwords for clients.
 
