@@ -30,7 +30,6 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["op-policy-uri"]!==undefined?"":(props.mod.parameters["op-policy-uri"] = "");
     props.mod.parameters["op-tos-uri"]!==undefined?"":(props.mod.parameters["op-tos-uri"] = "");
     props.mod.parameters["jwks-show"]!==undefined?"":(props.mod.parameters["jwks-show"] = true);
-    props.mod.parameters["jwks-kid"]!==undefined?"":(props.mod.parameters["jwks-kid"] = "");
     props.mod.parameters["jwks-x5c"]!==undefined?"":(props.mod.parameters["jwks-x5c"] = []);
 
     this.state = {
@@ -98,7 +97,6 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["op-policy-uri"]!==undefined?"":(nextProps.mod.parameters["op-policy-uri"] = "");
     nextProps.mod.parameters["op-tos-uri"]!==undefined?"":(nextProps.mod.parameters["op-tos-uri"] = "");
     nextProps.mod.parameters["jwks-show"]!==undefined?"":(nextProps.mod.parameters["jwks-show"] = true);
-    nextProps.mod.parameters["jwks-kid"]!==undefined?"":(nextProps.mod.parameters["jwks-kid"] = "");
     nextProps.mod.parameters["jwks-x5c"]!==undefined?"":(nextProps.mod.parameters["jwks-x5c"] = []);
     
     this.setState({
@@ -899,14 +897,6 @@ class GlwdOIDCParams extends Component {
             <div className="input-group-text">
               <input type="checkbox" className="form-control" id="mod-glwd-jwks-show" onChange={(e) => this.toggleParam(e, "jwks-show")} checked={this.state.mod.parameters["jwks-show"]} />
             </div>
-          </div>
-        </div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-glwd-jwks-kid">{i18next.t("admin.mod-glwd-jwks-kid")}</label>
-            </div>
-            <input disabled={!this.state.mod.parameters["jwks-show"]} type="text" className="form-control" id="mod-glwd-jwks-kid" onChange={(e) => this.changeParam(e, "jwks-kid")} value={this.state.mod.parameters["jwks-kid"]} placeholder={i18next.t("admin.mod-glwd-jwks-kid-ph")} />
           </div>
         </div>
         <div className="form-group">
