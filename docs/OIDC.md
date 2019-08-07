@@ -128,6 +128,30 @@ Enable response type `client_credential`.
 
 Enable response type `refresh_token`.
 
+### Service documentation URL (optional)
+
+`openid-configuration` URL to the service documentation to help users or client to connect to Glewlwyd server, default is Glewlwyd GitHub documentation.
+
+### Service policy URL (optional)
+
+`openid-configuration` URL to the service policy.
+
+### Terms of service URL (optional)
+
+`openid-configuration` URL to the terms of service.
+
+### JWKS available
+
+Enable JWKS available at the address `<plugin_root>/jwks`. Note, JWKS is available for key types `RSA` and `ECDSA` only.
+
+### JWKS kid (optional)
+
+Your JWKS `kid` (key ID), if this value is empty, the parameter `kid` will be set to `iss`.
+
+### X5C certificate chain (optional)
+
+Add or remove the chain of X5C certificate to help clients and users validate the certificate chain of each `id_token` or `access_token`.
+
 ### Specific scope parameters
 
 This section allows to put specific settings for an scope that will override the plugin settings.
