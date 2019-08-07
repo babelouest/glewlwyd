@@ -1257,7 +1257,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
   const char * rpid = NULL;
   size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, cert_x_len, cert_y_len, pubkey_export_len = 1024, index, cbor_bs_handle_len, rpid_len;
   uint32_t counter = 0;
-  int ret = G_OK, res, status, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0, check_certificate_flag = 1;
+  int ret = G_OK, res, status, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0;
   unsigned int i;
   struct cbor_load_result cbor_result;
   cbor_item_t * item = NULL, * key = NULL, * auth_data = NULL, * att_stmt = NULL, * cbor_cose = NULL, * cbor_key, * cbor_value;
@@ -1627,7 +1627,6 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           if (json_object_get(j_params, "allow-fmt-none") == json_true() || json_object_get(j_params, "force-fmt-none") == json_true()) {
             if (att_stmt != NULL && cbor_isa_map(att_stmt) && cbor_map_is_definite(att_stmt) && !cbor_map_size(att_stmt)) {
               j_cert = json_string("");
-              check_certificate_flag = 0;
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - response type 'none' has invalid format");
               json_array_append_new(j_error, json_string("response invalid"));
@@ -1652,10 +1651,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           j_return = json_pack("{si}", "result", ret);
         }
       } else {
-        if (!check_certificate_flag) {
-          j_return = json_pack("{si}", "result", G_OK);
-          status = 1;
-        } else if ((res = check_certificate(config, j_params, json_string_value(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")), json_integer_value(json_object_get(j_credential, "gswu_id")))) == G_OK) {
+        if ((res = check_certificate(config, j_params, json_string_value(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")), json_integer_value(json_object_get(j_credential, "gswu_id")))) == G_OK) {
           j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Credential already registered");
           status = 2;
         } else if (res == G_ERROR_UNAUTHORIZED) {
