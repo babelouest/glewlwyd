@@ -3283,7 +3283,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                 j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error jwt_autocheck");
               } else {
                 cert_jwks = extract_jwks_from_cert((struct _oidc_config *)*cls);
-                if (check_result_value(cert_jwks, G_OK)) {
+                if (check_result_value(cert_jwks, G_OK) || 0 == o_strcmp("sha", json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "jwt-type")))) {
                   ((struct _oidc_config *)*cls)->cert_jwks = json_incref(json_object_get(cert_jwks, "jwks"));
                   if (0 == o_strcmp("sha", json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "jwt-type")))) {
                     ((struct _oidc_config *)*cls)->glewlwyd_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "key")));
@@ -3314,7 +3314,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                     j_return = json_pack("{si}", "result", G_OK);
                   }
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error allocating resources for jwt_key");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error extract_jwks_from_cert");
                   json_decref(((struct _oidc_config *)*cls)->j_params);
                   o_free(*cls);
                   *cls = NULL;
@@ -3324,7 +3324,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
               }
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error extract_jwks_from_cert");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error allocating resources for jwt_key");
             json_decref(((struct _oidc_config *)*cls)->j_params);
             o_free(*cls);
             *cls = NULL;
