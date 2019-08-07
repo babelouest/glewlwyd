@@ -144,10 +144,6 @@ Enable response type `refresh_token`.
 
 Enable JWKS available at the address `<plugin_root>/jwks`. Note, JWKS is available for key types `RSA` and `ECDSA` only.
 
-### JWKS kid (optional)
-
-Your JWKS `kid` (key ID), if this value is empty, the parameter `kid` will be set to `iss`.
-
 ### X5C certificate chain (optional)
 
 Add or remove the chain of X5C certificate to help clients and users validate the certificate chain of each `id_token` or `access_token`.
