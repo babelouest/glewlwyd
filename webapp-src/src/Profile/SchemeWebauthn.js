@@ -103,34 +103,36 @@ class SchemeWebauthn extends Component {
       });
       
       var createCredentialDefaultArgs = {
-        publicKey: {
-          authenticatorSelection: {
-            requireResidentKey: false
-          },
-          
-          rp: {
-            name: result.rpId.split("://")[1]
-          },
-          
-          user: {
-            id: Uint8Array.from(atob(result.user.id), c => c.charCodeAt(0)),
-            name: result.user.name,
-            displayName: this.state.profile.name||result.user.name
-          },
-          
-          pubKeyCredParams: result["pubKey-cred-params"],
-          
-          challenge: this.strToBin(result.challenge),
-          
-          excludeCredentials: excludeCredentials,
-          
-          attestation: "direct",
-          
-          timeout: 60000
-        }
+        authenticatorSelection: {
+          requireResidentKey: false
+        },
+        
+        rp: {
+          name: result.rpId.split("://")[1]
+        },
+        
+        user: {
+          id: Uint8Array.from(atob(result.user.id), c => c.charCodeAt(0)),
+          name: result.user.name,
+          displayName: this.state.profile.name||result.user.name
+        },
+        
+        pubKeyCredParams: result["pubKey-cred-params"],
+        
+        challenge: this.strToBin(result.challenge),
+        
+        excludeCredentials: excludeCredentials
       };
 
-      navigator.credentials.create(createCredentialDefaultArgs)
+      if (result["attestation-required"]) {
+        createCredentialDefaultArgs.attestation = result["attestation-required"];
+      }
+
+      if (result["timeout"]) {
+        createCredentialDefaultArgs.timeout = result["timeout"];
+      }
+
+      navigator.credentials.create({publicKey: createCredentialDefaultArgs})
       .then((cred) => {
         
         const credential = {};
