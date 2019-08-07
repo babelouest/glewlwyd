@@ -111,6 +111,12 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       if (json_object_get(j_params, "google-root-ca-r2") != NULL && !json_is_string(json_object_get(j_params, "google-root-ca-r2"))) {
         json_array_append_new(j_error, json_string("google-root-ca-r2 is optional and must be a non empty string"));
       }
+      if (json_object_get(j_params, "allow-fmt-none") != NULL && !json_is_boolean(json_object_get(j_params, "allow-fmt-none"))) {
+        json_array_append_new(j_error, json_string("allow-fmt-none is optional and must be a boolean"));
+      }
+      if (json_object_get(j_params, "force-fmt-none") != NULL && !json_is_boolean(json_object_get(j_params, "force-fmt-none"))) {
+        json_array_append_new(j_error, json_string("allow-fmt-none is optional and must be a boolean"));
+      }
       if (json_array_size(j_error)) {
         j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
       } else {
@@ -1251,7 +1257,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
   const char * rpid = NULL;
   size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, cert_x_len, cert_y_len, pubkey_export_len = 1024, index, cbor_bs_handle_len, rpid_len;
   uint32_t counter = 0;
-  int ret = G_OK, res, status, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0;
+  int ret = G_OK, res, status, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0, check_certificate_flag = 1;
   unsigned int i;
   struct cbor_load_result cbor_result;
   cbor_item_t * item = NULL, * key = NULL, * auth_data = NULL, * att_stmt = NULL, * cbor_cose = NULL, * cbor_key, * cbor_value;
@@ -1466,7 +1472,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_USER_VERIFY));
         
         // Step 12 ignored for now (no extension)
-        y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_ED));
+        //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_ED));
         
         credential_id_len = cbor_bs_handle[CRED_ID_L_OFFSET+1] | (cbor_bs_handle[CRED_ID_L_OFFSET] << 8);
         if (cbor_bs_handle_len < CRED_ID_L_OFFSET+2+credential_id_len) {
@@ -1617,6 +1623,20 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
             j_cert = json_incref(json_object_get(json_object_get(j_result, "data"), "certificate"));
           }
           json_decref(j_result);
+        } else if (0 == o_strncmp("none", (char *)fmt, MIN(fmt_len, o_strlen("none")))) {
+          if (json_object_get(j_params, "allow-fmt-none") == json_true() || json_object_get(j_params, "force-fmt-none") == json_true()) {
+            if (att_stmt != NULL && cbor_isa_map(att_stmt) && cbor_map_is_definite(att_stmt) && !cbor_map_size(att_stmt)) {
+              j_cert = json_string("");
+              check_certificate_flag = 0;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - response type 'none' has invalid format");
+              json_array_append_new(j_error, json_string("response invalid"));
+              ret = G_ERROR_PARAM;
+            }
+          } else {
+            json_array_append_new(j_error, json_string("Attestation without certification isn't allowed"));
+            ret = G_ERROR_PARAM;
+          }
         } else {
           message = msprintf("fmt '%.*s' not handled by Glewlwyd Webauthn scheme", fmt_len, fmt);
           json_array_append_new(j_error, json_string(message));
@@ -1632,7 +1652,10 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           j_return = json_pack("{si}", "result", ret);
         }
       } else {
-        if ((res = check_certificate(config, j_params, json_string_value(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")), json_integer_value(json_object_get(j_credential, "gswu_id")))) == G_OK) {
+        if (!check_certificate_flag) {
+          j_return = json_pack("{si}", "result", G_OK);
+          status = 1;
+        } else if ((res = check_certificate(config, j_params, json_string_value(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")), json_integer_value(json_object_get(j_credential, "gswu_id")))) == G_OK) {
           j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Credential already registered");
           status = 2;
         } else if (res == G_ERROR_UNAUTHORIZED) {
@@ -2119,6 +2142,9 @@ static json_t * generate_credential_fake_list(json_t * j_params, const char * us
   return j_return;
 }
 
+/**
+ * Generates a fake user_id based on the username provided and the seed
+ */
 static int generate_fake_user_id(json_t * j_params, const char * username, unsigned char * user_id) {
   char * seed;
   unsigned char seed_hash[32];
@@ -2284,7 +2310,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
   char * message;
   
   if (check_result_value(j_result, G_OK)) {
-    *cls = json_pack("{sO sO sO sO sI sI sO ss sO ss s[]}",
+    *cls = json_pack("{sO sO sO sO sI sI sO ss sO sO sO ss s[]}",
                      "challenge-length", json_object_get(j_parameters, "challenge-length"),
                      "rp-origin", json_object_get(j_parameters, "rp-origin"),
                      "credential-expiration", json_object_get(j_parameters, "credential-expiration"),
@@ -2293,6 +2319,8 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                      "basicIntegrity", json_object_get(j_parameters, "basicIntegrity")!=NULL?json_integer_value(json_object_get(j_parameters, "basicIntegrity")):-1,
                      "session-mandatory", json_object_get(j_parameters, "session-mandatory")!=NULL?json_object_get(j_parameters, "session-mandatory"):json_true(),
                      "seed", !json_string_length(json_object_get(j_parameters, "seed"))?"":json_string_value(json_object_get(j_parameters, "seed")),
+                     "allow-fmt-none", json_object_get(j_parameters, "allow-fmt-none")!=NULL?json_object_get(j_parameters, "allow-fmt-none"):json_false(),
+                     "force-fmt-none", json_object_get(j_parameters, "force-fmt-none")!=NULL?json_object_get(j_parameters, "force-fmt-none"):json_false(),
                      "google-root-ca-r2", json_string_length(json_object_get(j_parameters, "google-root-ca-r2"))?json_object_get(j_parameters, "google-root-ca-r2"):json_null(),
                      "mod_name", mod_name,
                      "pubKey-cred-params");
@@ -2680,7 +2708,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
         if (check_result_value(j_credential, G_OK)) {
           j_assertion = generate_new_assertion(config, (json_t *)cls, username, 0);
           if (check_result_value(j_assertion, G_OK)) {
-            j_return = json_pack("{sis{sOsOsOs{sOss}sO}}", 
+            j_return = json_pack("{sis{sOsOsOs{sOss}sOsssi}}", 
                                 "result", G_OK, 
                                 "response", 
                                   "allowCredentials", json_object_get(j_credential, "credential"), 
@@ -2689,7 +2717,9 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
                                   "user",
                                     "id", json_object_get(j_user_id, "user_id"),
                                     "name", username,
-                                  "rpId", json_object_get((json_t *)cls, "rp-origin")
+                                  "rpId", json_object_get((json_t *)cls, "rp-origin"),
+                                  "attestation-required", json_object_get((json_t *)cls, "force-fmt-none")==json_true()?"none":"direct",
+                                  "timeout", 60000
                                 );
             if (json_object_get((json_t *)cls, "session-mandatory") == json_false()) {
               json_array_extend(json_object_get(json_object_get(j_return, "response"), "allowCredentials"), json_object_get(j_credential_fake, "credential"));
