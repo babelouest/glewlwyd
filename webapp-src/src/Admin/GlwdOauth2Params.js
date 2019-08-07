@@ -416,6 +416,14 @@ class GlwdOauth2Params extends Component {
     });
     return (
       <div>
+        <hr/>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <h5>{i18next.t("admin.mod-glwd-sign-title")}</h5>
+            </div>
+          </div>
+        </div>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
@@ -454,6 +462,14 @@ class GlwdOauth2Params extends Component {
         </div>
         {keyJsx}
         {certJsx}
+        <hr/>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <h5>{i18next.t("admin.mod-glwd-token-title")}</h5>
+            </div>
+          </div>
+        </div>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
@@ -492,6 +508,13 @@ class GlwdOauth2Params extends Component {
           </div>
         </div>
         <hr/>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <h5>{i18next.t("admin.mod-glwd-auth-type-title")}</h5>
+            </div>
+          </div>
+        </div>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
@@ -542,6 +565,7 @@ class GlwdOauth2Params extends Component {
             </div>
           </div>
         </div>
+        <hr/>
         <div className="accordion" id="accordionScope">
           <div className="card">
             <div className="card-header" id="dataFormatCard">

@@ -26,6 +26,12 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["scope"]?"":(props.mod.parameters["scope"] = []);
     props.mod.parameters["additional-parameters"]?"":(props.mod.parameters["additional-parameters"] = []);
     props.mod.parameters["claims"]?"":(props.mod.parameters["claims"] = []);
+    props.mod.parameters["service-documentation"]!==undefined?"":(props.mod.parameters["service-documentation"] = "https://github.com/babelouest/glewlwyd/tree/master/docs");
+    props.mod.parameters["op-policy-uri"]!==undefined?"":(props.mod.parameters["op-policy-uri"] = "");
+    props.mod.parameters["op-tos-uri"]!==undefined?"":(props.mod.parameters["op-tos-uri"] = "");
+    props.mod.parameters["jwks-show"]!==undefined?"":(props.mod.parameters["jwks-show"] = true);
+    props.mod.parameters["jwks-kid"]!==undefined?"":(props.mod.parameters["jwks-kid"] = "");
+    props.mod.parameters["jwks-x5c"]!==undefined?"":(props.mod.parameters["jwks-x5c"] = []);
 
     this.state = {
       config: props.config,
@@ -61,6 +67,9 @@ class GlwdOIDCParams extends Component {
     this.setClaimBooleanTrue = this.setClaimBooleanTrue.bind(this);
     this.setClaimBooleanFalse = this.setClaimBooleanFalse.bind(this);
     this.toggleClaimMandatory = this.toggleClaimMandatory.bind(this);
+    this.uploadFile = this.uploadFile.bind(this);
+    this.uploadX5cFile = this.uploadX5cFile.bind(this);
+    this.handleRemoveX5c = this.handleRemoveX5c.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -85,6 +94,12 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["scope"]?"":(nextProps.mod.parameters["scope"] = []);
     nextProps.mod.parameters["additional-parameters"]?"":(nextProps.mod.parameters["additional-parameters"] = []);
     nextProps.mod.parameters["claims"]?"":(nextProps.mod.parameters["claims"] = []);
+    nextProps.mod.parameters["service-documentation"]!==undefined?"":(nextProps.mod.parameters["service-documentation"] = "https://github.com/babelouest/glewlwyd/tree/master/docs");
+    nextProps.mod.parameters["op-policy-uri"]!==undefined?"":(nextProps.mod.parameters["op-policy-uri"] = "");
+    nextProps.mod.parameters["op-tos-uri"]!==undefined?"":(nextProps.mod.parameters["op-tos-uri"] = "");
+    nextProps.mod.parameters["jwks-show"]!==undefined?"":(nextProps.mod.parameters["jwks-show"] = true);
+    nextProps.mod.parameters["jwks-kid"]!==undefined?"":(nextProps.mod.parameters["jwks-kid"] = "");
+    nextProps.mod.parameters["jwks-x5c"]!==undefined?"":(nextProps.mod.parameters["jwks-x5c"] = []);
     
     this.setState({
       config: nextProps.config,
@@ -137,6 +152,26 @@ class GlwdOIDCParams extends Component {
       this.setState({mod: mod});
     };
     fr.readAsText(file);
+  }
+  
+  uploadX5cFile(e) {
+    var mod = this.state.mod;
+    var file = e.target.files[0];
+    var fr = new FileReader();
+    fr.onload = (ev2) => {
+      mod.parameters["jwks-x5c"].push(ev2.target.result);
+      this.setState({mod: mod});
+    };
+    fr.readAsText(file);
+  }
+  
+  handleRemoveX5c(e, index) {
+    e.preventDefault();
+    if (this.state.mod.parameters["jwks-show"]) {
+      var mod = this.state.mod;
+      mod.parameters["jwks-x5c"].splice(index, 1);
+      this.setState({mod: mod});
+    }
   }
   
   setNewScopeOverride(e, scope) {
@@ -405,7 +440,7 @@ class GlwdOIDCParams extends Component {
   }
   
   render() {
-    var keyJsx, certJsx, scopeOverrideList = [], scopeList = [], additionalParametersList = [], claimsList = [];
+    var keyJsx, certJsx, scopeOverrideList = [], scopeList = [], additionalParametersList = [], claimsList = [], x5cList = [];
     if (this.state.mod.parameters["jwt-type"] === "sha") {
       keyJsx =
         <div className="form-group">
@@ -425,8 +460,8 @@ class GlwdOIDCParams extends Component {
               <label className="input-group-text" htmlFor="mod-glwd-key">{i18next.t("admin.mod-glwd-key")}</label>
             </div>
             <div className="custom-file">
-              <input type="file" className={this.state.errorList["key"]?"custom-file-input is-invalid":"custom-file-input"} onChange={(e) => this.uploadFile(e, "key")} />
-              <label className="custom-file-label" htmlFor="inputGroupFile01">{i18next.t("admin.choose-file")}</label>
+              <input type="file" id="mod-glwd-key" className={this.state.errorList["key"]?"custom-file-input is-invalid":"custom-file-input"} onChange={(e) => this.uploadFile(e, "key")} />
+              <label className="custom-file-label" htmlFor="mod-glwd-key">{i18next.t("admin.choose-file")}</label>
             </div>
           </div>
           {this.state.mod.parameters["key"]?<div className="alert alert-primary">{this.state.mod.parameters["key"].substring(0, 40)}</div>:""}
@@ -439,8 +474,8 @@ class GlwdOIDCParams extends Component {
               <label className="input-group-text" htmlFor="mod-glwd-cert">{i18next.t("admin.mod-glwd-cert")}</label>
             </div>
             <div className="custom-file">
-              <input type="file" className={this.state.errorList["key"]?"custom-file-input is-invalid":"custom-file-input"} onChange={(e) => this.uploadFile(e, "cert")} />
-              <label className="custom-file-label" htmlFor="inputGroupFile01">{i18next.t("admin.choose-file")}</label>
+              <input type="file" id="mod-glwd-cert" className={this.state.errorList["key"]?"custom-file-input is-invalid":"custom-file-input"} onChange={(e) => this.uploadFile(e, "cert")} />
+              <label className="custom-file-label" htmlFor="mod-glwd-cert">{i18next.t("admin.choose-file")}</label>
             </div>
           </div>
           {this.state.mod.parameters["cert"]?<div className="alert alert-primary">{this.state.mod.parameters["cert"].substring(0, 40)}</div>:""}
@@ -624,6 +659,18 @@ class GlwdOIDCParams extends Component {
       );
     });
 
+    this.state.mod.parameters["jwks-x5c"].forEach((x5c, index) => {
+      x5cList.push(
+        <a disabled={!this.state.mod.parameters["jwks-show"]} href="#" key={index} onClick={(e) => this.handleRemoveX5c(e, index)}>
+          <span className="badge badge-primary btn-icon-right">
+            {x5c.substring(0, 40)}
+            <span className="badge badge-light btn-icon-right">
+              <i className="fas fa-times"></i>
+            </span>
+          </span>
+        </a>
+      );
+    });
     return (
       <div>
         <div className="form-group">
@@ -634,6 +681,14 @@ class GlwdOIDCParams extends Component {
             <input type="text" className={this.state.errorList["iss"]?"form-control is-invalid":"form-control"} id="mod-glwd-iss" onChange={(e) => this.changeParam(e, "iss")} value={this.state.mod.parameters["iss"]} placeholder={i18next.t("admin.mod-glwd-iss-ph")} />
           </div>
           {this.state.errorList["iss"]?<span className="error-input">{i18next.t(this.state.errorList["iss"])}</span>:""}
+        </div>
+        <hr/>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <h5>{i18next.t("admin.mod-glwd-sign-title")}</h5>
+            </div>
+          </div>
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -673,6 +728,14 @@ class GlwdOIDCParams extends Component {
         </div>
         {keyJsx}
         {certJsx}
+        <hr/>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <h5>{i18next.t("admin.mod-glwd-token-title")}</h5>
+            </div>
+          </div>
+        </div>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
@@ -721,6 +784,13 @@ class GlwdOIDCParams extends Component {
           </div>
         </div>
         <hr/>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <h5>{i18next.t("admin.mod-glwd-auth-type-title")}</h5>
+            </div>
+          </div>
+        </div>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
@@ -780,6 +850,76 @@ class GlwdOIDCParams extends Component {
               <input type="checkbox" className="form-control" id="mod-glwd-auth-type-refresh-enabled" onChange={(e) => this.toggleParam(e, "auth-type-refresh-enabled")} checked={this.state.mod.parameters["auth-type-refresh-enabled"]} />
             </div>
           </div>
+        </div>
+        <hr/>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <h5>{i18next.t("admin.mod-glwd-openid-configuration-title")}</h5>
+            </div>
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-glwd-service-documentation">{i18next.t("admin.mod-glwd-service-documentation")}</label>
+            </div>
+            <input type="text" className="form-control" id="mod-glwd-service-documentation" onChange={(e) => this.changeParam(e, "service-documentation")} value={this.state.mod.parameters["service-documentation"]} placeholder={i18next.t("admin.mod-glwd-service-documentation-ph")} />
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-glwd-op-policy-uri">{i18next.t("admin.mod-glwd-op-policy-uri")}</label>
+            </div>
+            <input type="text" className="form-control" id="mod-glwd-op-policy-uri" onChange={(e) => this.changeParam(e, "op-policy-uri")} value={this.state.mod.parameters["op-policy-uri"]} placeholder={i18next.t("admin.mod-glwd-op-policy-uri-ph")} />
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-glwd-op-tos-uri">{i18next.t("admin.mod-glwd-op-tos-uri")}</label>
+            </div>
+            <input type="text" className="form-control" id="mod-glwd-op-tos-uri" onChange={(e) => this.changeParam(e, "op-tos-uri")} value={this.state.mod.parameters["op-tos-uri"]} placeholder={i18next.t("admin.mod-glwd-op-tos-uri-ph")} />
+          </div>
+        </div>
+        <hr/>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <h5>{i18next.t("admin.mod-glwd-jwks-title")}</h5>
+            </div>
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-glwd-jwks-show">{i18next.t("admin.mod-glwd-jwks-show")}</label>
+            </div>
+            <div className="input-group-text">
+              <input type="checkbox" className="form-control" id="mod-glwd-jwks-show" onChange={(e) => this.toggleParam(e, "jwks-show")} checked={this.state.mod.parameters["jwks-show"]} />
+            </div>
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-glwd-jwks-kid">{i18next.t("admin.mod-glwd-jwks-kid")}</label>
+            </div>
+            <input disabled={!this.state.mod.parameters["jwks-show"]} type="text" className="form-control" id="mod-glwd-jwks-kid" onChange={(e) => this.changeParam(e, "jwks-kid")} value={this.state.mod.parameters["jwks-kid"]} placeholder={i18next.t("admin.mod-glwd-jwks-kid-ph")} />
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-glwd-jwks-x5c">{i18next.t("admin.mod-glwd-jwks-x5c")}</label>
+            </div>
+            <div className="custom-file">
+              <input disabled={!this.state.mod.parameters["jwks-show"]} type="file" className="custom-file-input" id="mod-glwd-jwks-x5c" onChange={(e) => this.uploadX5cFile(e)} />
+              <label className="custom-file-label" htmlFor="mod-glwd-jwks-x5c">{i18next.t("admin.choose-file")}</label>
+            </div>
+          </div>
+          {x5cList}
         </div>
         <hr/>
         <div className="accordion" id="accordionScope">

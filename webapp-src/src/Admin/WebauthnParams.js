@@ -42,6 +42,14 @@ class WebauthnParams extends Component {
       props.mod.parameters["session-mandatory"] = false;
     }
     
+    if (props.mod.parameters["allow-fmt-none"] === undefined) {
+      props.mod.parameters["allow-fmt-none"] = false;
+    }
+    
+    if (props.mod.parameters["force-fmt-none"] === undefined) {
+      props.mod.parameters["force-fmt-none"] = false;
+    }
+    
     if (props.mod.parameters["seed"] === undefined) {
       props.mod.parameters["seed"] = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     }
@@ -65,6 +73,8 @@ class WebauthnParams extends Component {
     this.changeSIParam = this.changeSIParam.bind(this);
     this.toggleSessionMandatory = this.toggleSessionMandatory.bind(this);
     this.generateSeed = this.generateSeed.bind(this);
+    this.toggleAllowFmtNone = this.toggleAllowFmtNone.bind(this);
+    this.toggleForceFmtNone = this.toggleForceFmtNone.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -105,6 +115,18 @@ class WebauthnParams extends Component {
   toggleSessionMandatory(e) {
     var mod = this.state.mod;
     mod.parameters["session-mandatory"] = !mod.parameters["session-mandatory"];
+    this.setState({mod: mod});
+  }
+  
+  toggleAllowFmtNone(e) {
+    var mod = this.state.mod;
+    mod.parameters["allow-fmt-none"] = !mod.parameters["allow-fmt-none"];
+    this.setState({mod: mod});
+  }
+  
+  toggleForceFmtNone(e) {
+    var mod = this.state.mod;
+    mod.parameters["force-fmt-none"] = !mod.parameters["force-fmt-none"];
     this.setState({mod: mod});
   }
   
@@ -163,6 +185,30 @@ class WebauthnParams extends Component {
             </div>
             <div className="input-group-text">
               <input className="form-control" type="checkbox" value="" id="mod-webauthn-session-mandatory-check" checked={this.state.mod.parameters["session-mandatory"]} onChange={(e) => this.toggleSessionMandatory(e)}/>
+            </div>
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-webauthn-allow-fmt-none" disabled={!!this.state.mod.parameters["force-fmt-none"]}>
+                {i18next.t("admin.mod-webauthn-allow-fmt-none")}
+              </label>
+            </div>
+            <div className="input-group-text">
+              <input className="form-control" type="checkbox" value="" id="mod-webauthn-allow-fmt-none" checked={this.state.mod.parameters["allow-fmt-none"]} onChange={(e) => this.toggleAllowFmtNone(e)} disabled={!!this.state.mod.parameters["force-fmt-none"]}/>
+            </div>
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-webauthn-force-fmt-none">
+                {i18next.t("admin.mod-webauthn-force-fmt-none")}
+              </label>
+            </div>
+            <div className="input-group-text">
+              <input className="form-control" type="checkbox" value="" id="mod-webauthn-force-fmt-none" checked={this.state.mod.parameters["force-fmt-none"]} onChange={(e) => this.toggleForceFmtNone(e)}/>
             </div>
           </div>
         </div>
