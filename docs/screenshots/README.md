@@ -28,9 +28,11 @@ Screenshots available
 
 ![mod-user-http](mod-user-http.png)
 
-![mod-user-ldap-1](mod-user-ldap.png)
+![mod-user-ldap](mod-user-ldap.png)
 
 ![mod-user-list](mod-user-list.png)
+
+![mod-client-ldap](mod-client-ldap.png)
 
 ![plugin-list](plugin-list.png)
 
