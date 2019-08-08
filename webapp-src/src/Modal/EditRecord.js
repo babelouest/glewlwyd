@@ -15,7 +15,8 @@ class EditRecord extends Component {
       add: props.add,
       listAddValue: this.initListAdd(props.pattern),
       listEltConfirm: this.initListConfirm(props.pattern),
-      listError: {}
+      listError: {},
+      listPwd: this.initListPwd(props.pattern, props.add),
     }
 
     this.closeModal = this.closeModal.bind(this);
@@ -29,9 +30,11 @@ class EditRecord extends Component {
     this.AddListElt = this.AddListElt.bind(this);
     this.initListAdd = this.initListAdd.bind(this);
     this.initListConfirm = this.initListConfirm.bind(this);
+    this.initListPwd = this.initListPwd.bind(this);
     this.changeEltConfirm = this.changeEltConfirm.bind(this);
     this.changeTextArea = this.changeTextArea.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
+    this.setPwd = this.setPwd.bind(this);
 
     if (this.state.add) {
       this.createData();
@@ -50,7 +53,8 @@ class EditRecord extends Component {
       add: nextProps.add,
       listAddValue: this.initListAdd(nextProps.pattern),
       listEltConfirm: this.initListConfirm(nextProps.pattern),
-      listError: {}
+      listError: {},
+      listPwd: this.initListPwd(nextProps.pattern, nextProps.add),
     }, () => {
       if (nextProps.add) {
         this.createData();
@@ -75,10 +79,6 @@ class EditRecord extends Component {
                   }
                 }
               }
-            } else {
-              if (this.state.data[key] === undefined || this.state.data[key] === "") {
-                delete(this.state.data[key]);
-              }
             }
           }
           this.state.validateCb(this.state.data, this.state.listEltConfirm, this.state.add, (res, data) => {
@@ -102,7 +102,7 @@ class EditRecord extends Component {
     data.source = source;
     this.setState({data: data});
   }
-
+  
   editElt(pattern, elt, key) {
     var labelJsx, inputJsx, listJsx = [];
     if (elt !== undefined || pattern.type === "password" || pattern.forceShow) {
@@ -194,7 +194,26 @@ class EditRecord extends Component {
             inputJsx = <input disabled={true} type={(pattern.type||"text")} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={elt}/>
           } else {
             if (pattern.type === "password") {
-              inputJsx = <div><input type="password" className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} onChange={(e) => this.changeElt(e, pattern.name)} value={elt||""}/><input type="password" className={"form-control" + validInput} id={"modal-edit-confirm" + pattern.name} placeholder={i18next.t(pattern.placeholderConfirm)} value={this.state.listEltConfirm[pattern.name]||""} onChange={(e) => this.changeEltConfirm(e, pattern.name)} /></div>
+              var keepOption = "";
+              if (!this.state.add) {
+                keepOption = <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "keep")}>{i18next.t("modal.pwd-keep")}</a>;
+              }
+              var pwdDropdown = <div className="dropdown">
+                <button className="btn btn-secondary dropdown-toggle" type="button" id={"modal-pwd-" + pattern.name} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  {i18next.t("modal.pwd-" + (this.state.listPwd[pattern.name]||(this.state.add?"set":"keep")))}
+                </button>
+                <div className="dropdown-menu" aria-labelledby={"modal-pwd-" + pattern.name}>
+                  {keepOption}
+                  <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "set")}>{i18next.t("modal.pwd-set")}</a>
+                  <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "disabled")}>{i18next.t("modal.pwd-disabled")}</a>
+                </div>
+              </div>
+              inputJsx = 
+              <div>
+                {pwdDropdown}
+                <input type="password" disabled={this.state.listPwd[pattern.name]==="disabled"||this.state.listPwd[pattern.name]==="keep"} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} onChange={(e) => this.changeElt(e, pattern.name)} value={elt||""}/>
+                <input type="password" disabled={this.state.listPwd[pattern.name]==="disabled"||this.state.listPwd[pattern.name]==="keep"} className={"form-control" + validInput} id={"modal-edit-confirm" + pattern.name} placeholder={i18next.t(pattern.placeholderConfirm)} value={this.state.listEltConfirm[pattern.name]||""} onChange={(e) => this.changeEltConfirm(e, pattern.name)} />
+              </div>
             } else {
               inputJsx = <input type={(pattern.type||"text")} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={elt} onChange={(e) => this.changeElt(e, pattern.name)} />
             }
@@ -295,6 +314,20 @@ class EditRecord extends Component {
     return listEltConfirm;
   }
 
+  initListPwd(patternList, add) {
+    var listEltPwd = {};
+    patternList.forEach((pat) => {
+      if (pat.type === "password") {
+        if (add) {
+          listEltPwd[pat.name] = "set";
+        } else {
+          listEltPwd[pat.name] = "keep";
+        }
+      }
+    });
+    return listEltPwd;
+  }
+
   changeEltConfirm(e, name) {
     var listEltConfirm = this.state.listEltConfirm;
     listEltConfirm[name] = e.target.value;
@@ -329,6 +362,23 @@ class EditRecord extends Component {
     fr.readAsText(file);
   }
   
+  setPwd(e, name, act) {
+    e.preventDefault();
+    var listPwd = this.state.listPwd;
+    var data = this.state.data;
+    var listEltConfirm = this.state.listEltConfirm;
+    listPwd[name] = act;
+    this.setState({listPwd: listPwd});
+    if (act === "disabled") {
+      data[name] = "";
+      listEltConfirm[name] = "";
+    } else {
+      delete(data[name]);
+      delete(listEltConfirm[name]);
+    }
+    this.setState({listPwd: listPwd, listEltConfirm: listEltConfirm, data: data});
+  }
+
 	render() {
     var editLines = [], sourceLine = [], curSource = false;
     this.state.pattern.forEach((pat, index) => {

@@ -79,6 +79,12 @@
       "type": "boolean",
       "label": "admin.client-confidential"
     },{
+      "name": "client_secret",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-secret",
+      "placeholder": "admin.client-secret-ph"
+    },{
       "name": "password",
       "type": "password",
       "profile": false,
