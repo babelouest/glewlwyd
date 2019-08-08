@@ -10,21 +10,22 @@ The following OpenID Connect Core functionalities are currently supported:
 - [Implicit flow](https://openid.net/specs/openid-connect-core-1_0.html#ImplicitFlowAuth)
 - [Hybrid flow](https://openid.net/specs/openid-connect-core-1_0.html#HybridFlowAuth)
 - [UserInfo Endpoint](https://openid.net/specs/openid-connect-core-1_0.html#UserInfo)
+- [OpenID Connect Discovery](http://openid.net/specs/openid-connect-discovery-1_0.html)
+- [Requesting Claims using the "claims" Request Parameter](https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter)
+- [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) using HTTP Basic Auth or POST Parameter
 
 The following OpenID Connect Core functionalities are not supported yet:
 
 - [Address Claims](https://openid.net/specs/openid-connect-core-1_0.html#AddressClaim)
 - [Requesting Claims using Scope Values](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims)
-- [Requesting Claims using the "claims" Request Parameter](https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter)
 - [id_token_hint](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest) in the authentication request parameters
 - [Passing Request Parameters as JWTs](https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests)
 - [Self-Issued OpenID Provider](https://openid.net/specs/openid-connect-core-1_0.html#SelfIssued)
 - [id_token encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
-- [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) other than HTTP Basic auth
+- [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) using JWT
 
 The following OpenID Connect specifications are not supported yet:
 
-- [OpenID Connect Discovery](http://openid.net/specs/openid-connect-discovery-1_0.html)
 - [OpenID Connect Dynamic Registration](http://openid.net/specs/openid-connect-registration-1_0.html)
 
 ## Access token format
