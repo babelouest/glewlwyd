@@ -264,7 +264,7 @@ class App extends Component {
             title: i18next.t("admin.add-client-title"),
             pattern: this.state.config.pattern.client,
             source: this.state.modClients,
-            data: {client_id: "", confidential: false, enabled: true, name: "", password: "", redirect_uri: [], scope: []},
+            data: {client_id: "", confidential: false, client_secret: "", enabled: true, name: "", password: "", redirect_uri: [], scope: []},
             callback: this.confirmAddClient,
             validateCallback: this.validateClient,
             add: true
@@ -785,11 +785,11 @@ class App extends Component {
   validateUser(user, confirmData, add, cb) {
     var result = true, data = {};
     if (add) {
-      if (user.password || confirmData.password) {
+      if (user.password != undefined || confirmData.password != undefined) {
         if (user.password !== confirmData.password) {
           result = false;
           data["password"] = i18next.t("admin.user-password-error-match");
-        } else if (user.password.length < 8) {
+        } else if (user.password.length && user.password.length < 8) {
           result = false;
           data["password"] = i18next.t("admin.user-password-error-invalid");
         }
@@ -813,7 +813,7 @@ class App extends Component {
         if (user.password !== confirmData.password) {
           result = false;
           data["password"] = i18next.t("admin.user-password-error-match");
-        } else if (user.password.length < 8) {
+        } else if (user.password.length && user.password.length < 8) {
           result = false;
           data["password"] = i18next.t("admin.user-password-error-invalid");
         }
@@ -829,7 +829,7 @@ class App extends Component {
         if (client.password !== confirmData.password) {
           result = false;
           data["password"] = i18next.t("admin.user-password-error-match");
-        } else if (client.password.length < 8) {
+        } else if (client.password.length && client.password.length < 8) {
           result = false;
           data["password"] = i18next.t("admin.user-password-error-invalid");
         }
