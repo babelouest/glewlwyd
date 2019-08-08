@@ -350,7 +350,9 @@ static json_t * is_client_database_parameters_valid(json_t * j_params) {
 static char * get_password_clause_write(struct mod_parameters * param, const char * password) {
   char * clause = NULL, * password_encoded, digest[1024] = {0};
   
-  if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
+  if (!o_strlen(password)) {
+    clause = o_strdup("''");
+  } else if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
     if (generate_digest_pbkdf2(password, NULL, digest)) {
       clause = msprintf("'%s'", digest);
     } else {
@@ -401,7 +403,7 @@ static char * get_salt_from_password_hash(struct mod_parameters * param, const c
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    if (json_array_size(j_result)) {
+    if (json_array_size(j_result) && json_string_length(json_object_get(json_array_get(j_result, 0), "gc_password"))) {
       if (o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password")), json_string_length(json_object_get(json_array_get(j_result, 0), "gc_password")), password_b64_decoded, &password_b64_decoded_len)) {
         if ((salt = o_strdup((const char *)password_b64_decoded + password_b64_decoded_len - GLEWLWYD_DEFAULT_SALT_LENGTH)) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error extracting salt");
@@ -409,6 +411,8 @@ static char * get_salt_from_password_hash(struct mod_parameters * param, const c
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error o_base64_decode");
       }
+    } else {
+      salt = o_strdup("");
     }
     json_decref(j_result);
   } else {
@@ -425,10 +429,10 @@ static char * get_password_clause_check(struct mod_parameters * param, const cha
       if (generate_digest_pbkdf2(password, salt, digest)) {
         clause = msprintf(" = '%s'", digest);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error generate_digest_pbkdf2");
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_check database - Error generate_digest_pbkdf2");
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error get_salt_from_password_hash");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_check database - Error get_salt_from_password_hash");
     }
     o_free(salt);
   } else if (param->conn->type == HOEL_DB_TYPE_MARIADB) {

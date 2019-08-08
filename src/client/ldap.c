@@ -252,9 +252,9 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly)
            0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "MD5") && 
            //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "PKCS5S2") && 
            0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "PLAIN"))) {
-          //json_array_append_new(j_error, json_string("password-property is mandatory and must have one of the following values: 'SHA', 'SHA256', 'SHA284', 'SHA512', 'SSHA', "
+          //json_array_append_new(j_error, json_string("password-algorithm is mandatory and must have one of the following values: 'SHA', 'SHA256', 'SHA284', 'SHA512', 'SSHA', "
           //                                           "'SSHA256', 'SSHA384', 'SSHA512', 'SMD5', 'MD5', 'PKCS5S2', 'PLAIN'"));
-          json_array_append_new(j_error, json_string("password-property is mandatory and must have one of the following values: 'SHA', 'SSHA', 'SMD5', 'MD5', 'PLAIN'"));
+          json_array_append_new(j_error, json_string("password-algorithm is mandatory and must have one of the following values: 'SHA', 'SSHA', 'SMD5', 'MD5', 'PLAIN'"));
         }
         if (json_object_get(j_params, "object-class") == NULL || (!json_is_string(json_object_get(j_params, "object-class")) && !json_is_array(json_object_get(j_params, "object-class")))) {
           json_array_append_new(j_error, json_string("object-class is mandatory and must be a non empty string or an array of non empty strings"));
@@ -773,7 +773,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
           if (mods[i]->mod_values != NULL) {
             mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
             mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
-            mods[i]->mod_values[0] = generate_hash(get_digest_algorithm(j_params), json_string_value(json_object_get(j_client, "password")));
+            mods[i]->mod_values[0] = json_string_length(json_object_get(j_client, "password"))?generate_hash(get_digest_algorithm(j_params), json_string_value(json_object_get(j_client, "password"))):NULL;
             mods[i]->mod_values[1] = NULL;
             json_array_append_new(j_mod_value_free_array, json_integer(i));
           } else {

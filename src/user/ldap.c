@@ -718,7 +718,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
             if (mods[i]->mod_values != NULL) {
               mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
               mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
-              mods[i]->mod_values[0] = generate_hash(get_digest_algorithm(j_params), json_string_value(json_object_get(j_user, "password")));
+              mods[i]->mod_values[0] = json_string_length(json_object_get(j_user, "password"))?generate_hash(get_digest_algorithm(j_params), json_string_value(json_object_get(j_user, "password"))):NULL;
               mods[i]->mod_values[1] = NULL;
               json_array_append_new(j_mod_value_free_array, json_integer(i));
             } else {
@@ -1683,7 +1683,7 @@ int user_module_update_password(struct config_module * config, const char * user
       mods[0]->mod_values = o_malloc(2 * sizeof(char *));
       mods[0]->mod_op     = LDAP_MOD_REPLACE;
       mods[0]->mod_type   = (char *)json_string_value(json_object_get(j_params, "password-property"));
-      mods[0]->mod_values[0] = generate_hash(get_digest_algorithm(j_params), new_password);
+      mods[0]->mod_values[0] = o_strlen(new_password)?generate_hash(get_digest_algorithm(j_params), new_password):NULL;
       mods[0]->mod_values[1] = NULL;
       mods[1] = NULL;
       cur_dn = get_user_dn_from_username(j_params, ldap, username);

@@ -213,7 +213,7 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
     if (json_string_length(json_object_get(j_parameters, "client-id-prefix"))) {
       prefix = json_string_value(json_object_get(j_parameters, "client-id-prefix"));
     }
-    *cls = (void*)json_pack("[{ss+ ss ss so s[sssss] s[sss] s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so s[sssssss] s[ss] s[ss] so}]",
+    *cls = (void*)json_pack("[{ss+ ss ss so s[sssss] s[sss] s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so ss s[sssssss] s[ss] s[ss] so}]",
                               "client_id",
                               prefix,
                               "client1_id",
@@ -261,6 +261,8 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
                               "Client mock 3",
                               "confidential",
                               json_true(),
+                              "client_secret",
+                              "password",
                               "authorization_type",
                                 "code",
                                 "token",
@@ -537,7 +539,7 @@ int client_module_update(struct config_module * config, const char * client_id, 
   json_array_foreach((json_t *)cls, index, j_element) {
     if (0 == o_strcmp(client_id, json_string_value(json_object_get(j_element, "client_id")))) {
       json_object_set_new(j_client, "client_id", json_string(client_id));
-      json_array_set((json_t *)cls, index, j_client);
+      json_object_update(j_element, j_client);
       ret = G_OK;
       found = 1;
       break;
