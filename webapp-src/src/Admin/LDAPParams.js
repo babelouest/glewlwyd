@@ -254,7 +254,6 @@ class LDAPParams extends Component {
     var dataFormat = [], scopeMatch = [];
     var i = 0;
     for (var property in this.state.mod.parameters["data-format"]) {
-      console.log(property);
       var rwAccess = "";
       if (this.state.role === "user") {
         rwAccess = 
