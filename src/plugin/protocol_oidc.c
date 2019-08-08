@@ -60,10 +60,11 @@
 #define GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE                  0
 #define GLEWLWYD_AUTHORIZATION_TYPE_TOKEN                               1
 #define GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN                            2
-#define GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS 3
-#define GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS                  4
-#define GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN                       5
-#define GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN                        6
+#define GLEWLWYD_AUTHORIZATION_TYPE_NONE                                3
+#define GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS 4
+#define GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS                  5
+#define GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN                       6
+#define GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN                        7
 
 #define GLEWLWYD_AUTHORIZATION_TYPE_NONE_STORE                                0
 #define GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_STORE                  1
@@ -86,7 +87,7 @@ struct _oidc_config {
   json_int_t                         code_duration;
   unsigned short int                 allow_non_oidc;
   unsigned short int                 refresh_token_rolling;
-  unsigned short int                 auth_type_enabled[6];
+  unsigned short int                 auth_type_enabled[7];
   pthread_mutex_t                    insert_lock;
   struct _glewlwyd_resource_config * glewlwyd_resource_config;
 };
@@ -2500,10 +2501,23 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         } else {
           if (u_map_get(get_map(request), "redirect_uri") != NULL) {
             response->status = 302;
-            redirect_url = msprintf("%s%unsupported_response_type", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"));
+            redirect_url = msprintf("%s#error=unsupported_response_type%s", u_map_get(get_map(request), "redirect_uri"), state_param);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
-            ret = G_ERROR;
+          } else {
+            response->status = 403;
+          }
+          ret = G_ERROR_PARAM;
+        }
+      }
+
+      if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "none")) {
+        if (!is_authorization_type_enabled((struct _oidc_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_NONE)) {
+          if (u_map_get(get_map(request), "redirect_uri") != NULL) {
+            response->status = 302;
+            redirect_url = msprintf("%s#error=unsupported_response_type%s", u_map_get(get_map(request), "redirect_uri"), state_param);
+            ulfius_add_header_to_response(response, "Location", redirect_url);
+            o_free(redirect_url);
           } else {
             response->status = 403;
           }
@@ -2715,6 +2729,9 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
     if (config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN] && config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE] && config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_TOKEN]) {
       json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("code token id_token"));
     }
+    if (config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_NONE]) {
+      json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("none"));
+    }
     if (config->allow_non_oidc && config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS]) {
       json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("password"));
     }
@@ -2885,8 +2902,8 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("Property 'auth-type-token-enabled' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "auth-type-token-enabled") != NULL && !json_is_boolean(json_object_get(j_params, "auth-type-token-enabled"))) {
-      json_array_append_new(j_error, json_string("Property 'auth-type-token-enabled' is optional and must be a boolean"));
+    if (json_object_get(j_params, "auth-type-none-enabled") != NULL && !json_is_boolean(json_object_get(j_params, "auth-type-none-enabled"))) {
+      json_array_append_new(j_error, json_string("Property 'auth-type-none-enabled' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "auth-type-password-enabled") != NULL && !json_is_boolean(json_object_get(j_params, "auth-type-password-enabled"))) {
@@ -3229,6 +3246,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-code-enabled")==json_true()?1:0;
           ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_TOKEN] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-token-enabled")==json_true()?1:0;
           ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN] = 1; // Force allow this auth type, otherwise use the other plugin
+          ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_NONE] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-none-enabled")==json_true()?1:0;
           ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-password-enabled")==json_true()?1:0;
           ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-client-enabled")==json_true()?1:0;
           ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-refresh-enabled")==json_true()?1:0;
