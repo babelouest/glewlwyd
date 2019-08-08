@@ -380,6 +380,7 @@
     "mod-glwd-iss-ph": "Ex: https://glewlwyd.tld",
     "mod-glwd-auth-type-token-enabled": "Authentication type token enabled",
     "mod-glwd-auth-type-id-token-enabled": "Authentication type ID Token enabled",
+    "mod-glwd-auth-type-none-enabled": "Authentication type 'none' enabled",
     "mod-glwd-allow-non-oidc": "Allow non OIDC but valid OAuth2 requests",
     "mod-glwd-claim": "Additional parameters in the ID Token or the /userinfo endpoint",
     "mod-glwd-claim-message": "These values will be added in each Token ID or /userinfo endpoint call if the parameter is claimed or mandatory.",

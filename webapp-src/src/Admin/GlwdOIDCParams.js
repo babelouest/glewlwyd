@@ -8,7 +8,7 @@ class GlwdOIDCParams extends Component {
     
     props.mod.parameters?"":(props.mod.parameters = {});
     props.mod.parameters["jwt-type"]?"":(props.mod.parameters["jwt-type"] = "rsa");
-    props.mod.parameters["jwt-key-size"]?"":(props.mod.parameters["jwt-key-size"] = "512");
+    props.mod.parameters["jwt-key-size"]?"":(props.mod.parameters["jwt-key-size"] = "256");
     props.mod.parameters["key"]?"":(props.mod.parameters["key"] = "");
     props.mod.parameters["cert"]?"":(props.mod.parameters["cert"] = "");
     props.mod.parameters["cert"]?"":(props.mod.parameters["cert"] = "");
@@ -20,6 +20,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["auth-type-code-enabled"]!==undefined?"":(props.mod.parameters["auth-type-code-enabled"] = true);
     props.mod.parameters["auth-type-token-enabled"]!==undefined?"":(props.mod.parameters["auth-type-token-enabled"] = true);
     props.mod.parameters["auth-type-id-token-enabled"] = true;
+    props.mod.parameters["auth-type-none-enabled"]!==undefined?"":(props.mod.parameters["auth-type-none-enabled"] = true);
     props.mod.parameters["auth-type-password-enabled"]!==undefined?"":(props.mod.parameters["auth-type-password-enabled"] = true);
     props.mod.parameters["auth-type-client-enabled"]!==undefined?"":(props.mod.parameters["auth-type-client-enabled"] = true);
     props.mod.parameters["auth-type-refresh-enabled"]!==undefined?"":(props.mod.parameters["auth-type-refresh-enabled"] = true);
@@ -75,7 +76,7 @@ class GlwdOIDCParams extends Component {
     
     nextProps.mod.parameters?"":(nextProps.mod.parameters = {});
     nextProps.mod.parameters["jwt-type"]?"":(nextProps.mod.parameters["jwt-type"] = "rsa");
-    nextProps.mod.parameters["jwt-key-size"]?"":(nextProps.mod.parameters["jwt-key-size"] = "512");
+    nextProps.mod.parameters["jwt-key-size"]?"":(nextProps.mod.parameters["jwt-key-size"] = "256");
     nextProps.mod.parameters["key"]?"":(nextProps.mod.parameters["key"] = "");
     nextProps.mod.parameters["cert"]?"":(nextProps.mod.parameters["cert"] = "");
     nextProps.mod.parameters["cert"]?"":(nextProps.mod.parameters["cert"] = "");
@@ -87,6 +88,7 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["auth-type-code-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-code-enabled"] = true);
     nextProps.mod.parameters["auth-type-token-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-token-enabled"] = true);
     nextProps.mod.parameters["auth-type-id-token-enabled"] = true;
+    nextProps.mod.parameters["auth-type-none-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-none-enabled"] = true);
     nextProps.mod.parameters["auth-type-password-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-password-enabled"] = true);
     nextProps.mod.parameters["auth-type-client-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-client-enabled"] = true);
     nextProps.mod.parameters["auth-type-refresh-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-refresh-enabled"] = true);
@@ -822,10 +824,20 @@ class GlwdOIDCParams extends Component {
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-glwd-auth-type-none-enabled">{i18next.t("admin.mod-glwd-auth-type-none-enabled")}</label>
+            </div>
+            <div className="input-group-text">
+              <input type="checkbox" className="form-control" id="mod-glwd-auth-type-none-enabled" onChange={(e) => this.toggleParam(e, "auth-type-none-enabled")} checked={this.state.mod.parameters["auth-type-none-enabled"]} />
+            </div>
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-glwd-auth-type-password-enabled">{i18next.t("admin.mod-glwd-auth-type-password-enabled")}</label>
             </div>
             <div className="input-group-text">
-              <input type="checkbox" className="form-control" id="mod-glwd-auth-type-password-enabled" onChange={(e) => this.toggleParam(e, "auth-type-password-enabled")} checked={this.state.mod.parameters["auth-type-password-enabled"]} />
+              <input type="checkbox" disabled={!this.state.mod.parameters["allow-non-oidc"]} className="form-control" id="mod-glwd-auth-type-password-enabled" onChange={(e) => this.toggleParam(e, "auth-type-password-enabled")} checked={this.state.mod.parameters["auth-type-password-enabled"]} />
             </div>
           </div>
         </div>
@@ -835,7 +847,7 @@ class GlwdOIDCParams extends Component {
               <label className="input-group-text" htmlFor="mod-glwd-auth-type-client-enabled">{i18next.t("admin.mod-glwd-auth-type-client-enabled")}</label>
             </div>
             <div className="input-group-text">
-              <input type="checkbox" className="form-control" id="mod-glwd-auth-type-client-enabled" onChange={(e) => this.toggleParam(e, "auth-type-client-enabled")} checked={this.state.mod.parameters["auth-type-client-enabled"]} />
+              <input type="checkbox" disabled={!this.state.mod.parameters["allow-non-oidc"]} className="form-control" id="mod-glwd-auth-type-client-enabled" onChange={(e) => this.toggleParam(e, "auth-type-client-enabled")} checked={this.state.mod.parameters["auth-type-client-enabled"]} />
             </div>
           </div>
         </div>
