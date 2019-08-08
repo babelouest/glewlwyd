@@ -143,6 +143,8 @@
     "client-name": "Name",
     "client-name-ph": "ex: My client",
     "client-confidential": "Confidential",
+    "client-secret": "Secret",
+    "client-secret-ph": "Ex: xyz1234",
     "client-password": "Password",
     "client-password-ph": "Enter a password",
     "client-password-confirm-ph": "Confirm the password",
@@ -320,9 +322,9 @@
     "mod-ldap-object-class-error": "Object class required",
     "mod-http-url-error": "URL required",
     "mod-http-default-scope-error": "At least one default scope is required",
-    "mod-glwd-key": "Key",
+    "mod-glwd-key": "Secret key",
     "mod-glwd-key-ph": "Ex: my-secret-key",
-    "mod-glwd-cert": "Public certificate",
+    "mod-glwd-cert": "Public key",
     "mod-glwd-scope-override-scope": "Scope",
     "mod-glwd-scope-override-refresh-duration": "Refresh token duration (seconds) - 0: Keep default value",
     "mod-glwd-scope-override-refresh-duration-ph": "Ex: 1209600",
@@ -369,8 +371,8 @@
     "mod-glwd-scope-override-message": "In this section, you can set specify parameters for scopes that will override default settings",
     "mod-glwd-scope-add": "Add",
     "mod-glwd-url-error": "Prefix is required and must be unique",
-    "mod-glwd-key-error": "Key is required",
-    "mod-glwd-cert-error": "Certificate is required",
+    "mod-glwd-key-error": "Secret key is required",
+    "mod-glwd-cert-error": "Public key is required",
     "mod-glwd-access-token-duration-error": "Duration must be greater than 0",
     "mod-glwd-refresh-token-duration-error": "Duration must be greater than 0",
     "mod-glwd-code-duration-error": "Duration must be greater than 0",
@@ -613,6 +615,9 @@
     "close": "Close",
     "ok": "OK",
     "list-add-placeholder": "Element",
-    "list-add-title": "Add an element"
+    "list-add-title": "Add an element",
+    "pwd-set": "Change",
+    "pwd-keep": "Keep",
+    "pwd-disabled": "Disable"
   }
 }
