@@ -191,9 +191,9 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
   ts = *gmtime(&now);
   strftime(expires, 128, "%a, %d %b %Y %T %Z", &ts);
   if (j_param != NULL) {
-    if (json_object_get(j_param, "username") != NULL && json_is_string(json_object_get(j_param, "username")) && json_string_length(json_object_get(j_param, "username"))) {
+    if (json_string_length(json_object_get(j_param, "username"))) {
       if (json_object_get(j_param, "scheme_type") == NULL || 0 == o_strcmp(json_string_value(json_object_get(j_param, "scheme_type")), "password")) {
-        if (json_object_get(j_param, "password") != NULL && json_is_string(json_object_get(j_param, "password")) && json_string_length(json_object_get(j_param, "password"))) {
+        if (json_string_length(json_object_get(j_param, "password"))) {
           j_result = auth_check_user_credentials(config, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "password")));
           if (check_result_value(j_result, G_OK)) {
             if ((session_uid = get_session_id(config, request)) == NULL) {
@@ -240,7 +240,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
           json_decref(j_result);
         }
       } else {
-        if (json_object_get(j_param, "scheme_type") != NULL && json_is_string(json_object_get(j_param, "scheme_type")) && json_string_length(json_object_get(j_param, "scheme_name")) && json_object_get(j_param, "scheme_name") != NULL && json_is_string(json_object_get(j_param, "scheme_name")) && json_string_length(json_object_get(j_param, "scheme_name")) && json_object_get(j_param, "value") != NULL && json_is_object(json_object_get(j_param, "value"))) {
+        if (json_string_length(json_object_get(j_param, "scheme_type")) && json_string_length(json_object_get(j_param, "scheme_name")) && json_is_object(json_object_get(j_param, "value"))) {
           j_result = auth_check_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), json_object_get(j_param, "value"), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             ulfius_set_string_body_response(response, 400, "bad scheme parameters");
