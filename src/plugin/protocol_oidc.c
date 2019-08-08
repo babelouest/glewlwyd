@@ -2328,7 +2328,8 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       
       if (!string_array_has_value((const char **)resp_type_array, "code") && 
           !string_array_has_value((const char **)resp_type_array, "token") &&
-          !string_array_has_value((const char **)resp_type_array, "id_token")) {
+          !string_array_has_value((const char **)resp_type_array, "id_token") &&
+          !string_array_has_value((const char **)resp_type_array, "none")) {
         response->status = 302;
         redirect_url = msprintf("%s#error=unsupported_response_type%s", u_map_get(get_map(request), "redirect_uri"), state_param);
         ulfius_add_header_to_response(response, "Location", redirect_url);
