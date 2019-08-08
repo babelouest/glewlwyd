@@ -14,6 +14,7 @@ glewlwyd_oauth2_refresh_manage
 glewlwyd_oauth2_refresh_manage_session
 glewlwyd_oauth2_profile_impersonate
 glewlwyd_oauth2_additional_parameters
+glewlwyd_oauth2_client_secret
 
 glewlwyd_oidc_auth_code
 glewlwyd_oidc_code
@@ -39,6 +40,7 @@ glewlwyd_oidc_userinfo
 glewlwyd_oidc_additional_parameters
 glewlwyd_oidc_only_no_refresh
 glewlwyd_oidc_discovery
+glewlwyd_oidc_client_secret
 
 glewlwyd_admin_mod_type
 glewlwyd_admin_mod_user
