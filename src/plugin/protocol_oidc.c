@@ -110,7 +110,10 @@ static json_t * extract_jwks_from_cert(struct _oidc_config * config) {
   
   if (0 != o_strcmp("sha", json_string_value(json_object_get(config->j_params, "jwt-type")))) {
     ret = G_OK;
-    if ((j_jwks = json_pack("{sssss[O]}", "use", "sig", "alg", jwt_alg_str(jwt_get_alg(config->jwt_key)), "x5c", json_object_get(config->j_params, "cert"))) != NULL) {
+    if ((j_jwks = json_pack("{ssss}", "use", "sig", "alg", jwt_alg_str(jwt_get_alg(config->jwt_key)))) != NULL) {
+      if (json_array_size(json_object_get(config->j_params, "jwks-x5c"))) {
+        json_object_set_new(j_jwks, "x5c", json_array());
+      }
       json_array_foreach(json_object_get(config->j_params, "jwks-x5c"), index, j_element) {
         json_array_append(json_object_get(j_jwks, "x5c"), j_element);
       }
