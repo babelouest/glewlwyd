@@ -56,12 +56,12 @@ The algorithm supported are `RSA` and `ECDSA` using a private and a public key, 
 
 Size of the key to sign the tokens. The sizes supported are 256 bits, 384 bits or 512 bits.
 
-### Key
+### Secret key
 
 Private key file used to sign if the selected algorithm is `RSA` or `ECDSA`. Must be an X509 PEM file.
 Shared secret if the selected algorithm is `SHA`.
 
-### Public certificate
+### Public key
 
 Public certificate file used to validate access tokens if the selected algorithm is `RSA` or `ECDSA`. Must be an X509 PEM file.
 
@@ -117,11 +117,19 @@ This section allows to add specific values to the access_tokens that will be tak
 
 You can add as many additional values as you want. If the property isn't present in the user data, it will be ignored. If the value is mutiple, all values will be present, separated by a comma `,`.
 
+## Client secret vs password
+
+When you add or edit a client in Glewlwyd, you can set a `client secret` or a `password`. Both can be used to authenticate confidential clients.
+
+The primary difference is that a client secret is a string stored 'as is' in the backend (database or LDAP), without hashing, where a client password is stored in a hashed form in the backend, so makes it more difficult for attackers to retrieve it.
+
+A client secret has priority over a client password, which means that if a client has set both client secret and client password, the authentication will be executed with client secret only.
+
 ## Glewlwyd OAuth 2 endpoints specifications
 
 This document is intended to describe Glewlwyd OAuth 2 plugin implementation.
 
-OAuth endpoints are used to authenticate the user, and to send tokens or other authentication and identification data. The complete specification is available in the [OAuth 2 RFC document](https://tools.ietf.org/html/rfc6749). If you see an issue or have a question on Glewlwyd OAuth 2 plugin implementation, you can open an issue or send an email to the following address [mail@babelouest.org](mail@babelouest.org).
+OAuth endpoints are used to authenticate the user, and to send tokens or other authentication and identification data. The complete specification is available in the [OAuth 2 RFC document](https://tools.ietf.org/html/rfc6749). If you see an issue or have a question on Glewlwyd OAuth 2 plugin implementation, you can open an issue or send an email to the following address [mail@babelouest.org](mailto:mail@babelouest.org).
 
 - [Endpoints authentication](#endpoints-authentication)
 - [Prefix](#prefix)

@@ -10,6 +10,7 @@ The following OpenID Connect Core functionalities are currently supported:
 - [Implicit flow](https://openid.net/specs/openid-connect-core-1_0.html#ImplicitFlowAuth)
 - [Hybrid flow](https://openid.net/specs/openid-connect-core-1_0.html#HybridFlowAuth)
 - [UserInfo Endpoint](https://openid.net/specs/openid-connect-core-1_0.html#UserInfo)
+- [OAuth 2.0 Multiple Response Types](http://openid.net/specs/oauth-v2-multiple-response-types-1_0.html)
 - [OpenID Connect Discovery](http://openid.net/specs/openid-connect-discovery-1_0.html)
 - [Requesting Claims using the "claims" Request Parameter](https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter)
 - [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) using HTTP Basic Auth or POST Parameter
@@ -27,6 +28,7 @@ The following OpenID Connect Core functionalities are not supported yet:
 The following OpenID Connect specifications are not supported yet:
 
 - [OpenID Connect Dynamic Registration](http://openid.net/specs/openid-connect-registration-1_0.html)
+- [OAuth 2.0 Form Post Response Mode](http://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html)
 
 ## Access token format
 
@@ -76,12 +78,12 @@ The algorithm supported are `RSA` and `ECDSA` using a private and a public key, 
 
 Size of the key to sign the tokens. The sizes supported are 256 bits, 384 bits or 512 bits.
 
-### Key
+### Secret key
 
 Private key file used to sign if the selected algorithm is `RSA` or `ECDSA`. Must be an X509 PEM file.
 Shared secret if the selected algorithm is `SHA`.
 
-### Public certificate
+### Public key
 
 Public certificate file used to validate access tokens if the selected algorithm is `RSA` or `ECDSA`. Must be an X509 PEM file.
 
@@ -175,11 +177,21 @@ If the conversion fails, the value will be ignored. If you specify a type `boole
 
 If you check the option `Mandatory`, the claim will be added in all ID Tokens or userinfo calls, even if the claim isn't requested by the user.
 
+## Client secret vs password
+
+When you add or edit a client in Glewlwyd, you can set a `client secret` or a `password`. Both can be used to authenticate confidential clients.
+
+The primary difference is that a client secret is a string stored 'as is' in the backend (database or LDAP), without hashing, where a client password is stored in a hashed form in the backend, so makes it more difficult for attackers to retrieve it.
+
+A client secret has priority over a client password, which means that if a client has set both client secret and client password, the authentication will be executed with client secret only.
+
+The `client secret` can also be used to authenticate a client using the method `sclient_secret_jwt` when it will be available.
+
 ## Glewlwyd OpenID Connect endpoints specifications
 
 This document is intended to describe Glewlwyd OpenID Connect plugin implementation.
 
-OpenID Connect endpoints are used to authenticate the user, and to send tokens, id_tokens or other authentication and identification data. The complete specification is available in the [OpenID Connect Core](http://openid.net/specs/openid-connect-core-1_0.html). If you see an issue or have a question on Glewlwyd OpenID Connect plugin implementation, you can open an issue or send an email to the following address [mail@babelouest.org](mail@babelouest.org).
+OpenID Connect endpoints are used to authenticate the user, and to send tokens, id_tokens or other authentication and identification data. The complete specification is available in the [OpenID Connect Core](http://openid.net/specs/openid-connect-core-1_0.html). If you see an issue or have a question on Glewlwyd OpenID Connect plugin implementation, you can open an issue or send an email to the following address [mail@babelouest.org](mailto:mail@babelouest.org).
 
 - [Endpoints authentication](#endpoints-authentication)
 - [Prefix](#prefix)
