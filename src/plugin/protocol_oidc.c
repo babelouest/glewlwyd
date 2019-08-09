@@ -66,15 +66,15 @@
 #define GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN                       6
 #define GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN                        7
 
-#define GLEWLWYD_AUTHORIZATION_TYPE_NULL_STORE                                0
-#define GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_STORE                  1
-#define GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_STORE                               2
-#define GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_STORE                            4
-#define GLEWLWYD_AUTHORIZATION_TYPE_NONE_STORE                                8
-#define GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS_STORE 16
-#define GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS_STORE                  32
-#define GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_STORE                       64
-#define GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_STORE                        128
+#define GLEWLWYD_AUTHORIZATION_TYPE_NULL_FLAG                                0
+#define GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG                  1
+#define GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_FLAG                               2
+#define GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG                            4
+#define GLEWLWYD_AUTHORIZATION_TYPE_NONE_FLAG                                8
+#define GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS_FLAG 16
+#define GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS_FLAG                  32
+#define GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_FLAG                       64
+#define GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_FLAG                        128
 
 struct _oidc_config {
   struct config_plugin             * glewlwyd_config;
@@ -763,24 +763,24 @@ static json_t * check_client_valid(struct _oidc_config * config, const char * cl
       
       authorization_type_enabled = 0;
       json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
-        if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_STORE && 0 == o_strcmp(json_string_value(j_element), "code")) {
+        if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG && 0 == o_strcmp(json_string_value(j_element), "code")) {
           authorization_type_enabled = 1;
-        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_STORE && 0 == o_strcmp(json_string_value(j_element), "token")) {
+        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "token")) {
           authorization_type_enabled = 1;
-        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_STORE && 0 == o_strcmp(json_string_value(j_element), "id_token")) {
+        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "id_token")) {
           authorization_type_enabled = 1;
-        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_NONE_STORE && 0 == o_strcmp(json_string_value(j_element), "none")) {
+        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_NONE_FLAG && 0 == o_strcmp(json_string_value(j_element), "none")) {
           authorization_type_enabled = 1;
-        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_STORE && 0 == o_strcmp(json_string_value(j_element), "refresh_token")) {
-          authorization_type_enabled = 1;
-          uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
-        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS_STORE && 0 == o_strcmp(json_string_value(j_element), "client_credentials")) {
+        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "refresh_token")) {
           authorization_type_enabled = 1;
           uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
-        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS_STORE && 0 == o_strcmp(json_string_value(j_element), "password")) {
+        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS_FLAG && 0 == o_strcmp(json_string_value(j_element), "client_credentials")) {
           authorization_type_enabled = 1;
           uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
-        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_STORE && 0 == o_strcmp(json_string_value(j_element), "delete_token")) {
+        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS_FLAG && 0 == o_strcmp(json_string_value(j_element), "password")) {
+          authorization_type_enabled = 1;
+          uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
+        } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "delete_token")) {
           authorization_type_enabled = 1;
           uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
         }
@@ -1655,7 +1655,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     }
 
     // Check that the scope 'openid' is provided, otherwise return error
-    if ((!string_array_has_value((const char **)scope_list, "openid") && !config->allow_non_oidc) || (auth_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_STORE && !string_array_has_value((const char **)scope_list, "openid"))) {
+    if ((!string_array_has_value((const char **)scope_list, "openid") && !config->allow_non_oidc) || (auth_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG && !string_array_has_value((const char **)scope_list, "openid"))) {
       // Scope openid missing
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - scope 'openid' missing");
       response->status = 302;
@@ -1759,7 +1759,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     }
     
     // nonce parameter is required for some authorization types
-    if ((auth_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_STORE) && !o_strlen(u_map_get(get_map(request), "nonce"))) {
+    if ((auth_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG) && !o_strlen(u_map_get(get_map(request), "nonce"))) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - nonce required");
       redirect_url = msprintf("%s%serror=invalid_request", u_map_get(get_map(request), "redirect_uri"), (o_strchr(u_map_get(get_map(request), "redirect_uri"), '?')!=NULL?"&":"?"));
       ulfius_add_header_to_response(response, "Location", redirect_url);
@@ -1834,7 +1834,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
   if (code == NULL || client_id == NULL || redirect_uri == NULL) {
     response->status = 400;
   } else {
-    j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), redirect_uri, NULL, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_STORE);
+    j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), redirect_uri, NULL, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG);
     if (check_result_value(j_client, G_OK)) {
       j_code = validate_authorization_code(config, code, client_id, redirect_uri);
       if (check_result_value(j_code, G_OK)) {
@@ -2160,7 +2160,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
     j_refresh = validate_refresh_token(config, refresh_token);
     if (check_result_value(j_refresh, G_OK)) {
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
-        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), NULL, NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_STORE);
+        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), NULL, NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_FLAG);
         if (!check_result_value(j_client, G_OK)) {
           has_issues = 1;
         } else if (request->auth_basic_user == NULL && request->auth_basic_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
@@ -2244,7 +2244,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
     j_refresh = validate_refresh_token(config, refresh_token);
     if (check_result_value(j_refresh, G_OK)) {
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
-        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), NULL, NULL, GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_STORE);
+        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), NULL, NULL, GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_FLAG);
         if (!check_result_value(j_client, G_OK)) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "oidc delete_refresh_token - client '%s' is invalid", request->auth_basic_user);
           has_issues = 1;
@@ -2318,7 +2318,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   char * redirect_url, * state_param = NULL, ** resp_type_array = NULL, * authorization_code = NULL, * access_token = NULL, * id_token = NULL, * expires_in_str = NULL, * iat_str = NULL, * query_parameters = NULL;
   json_t * j_auth_result = NULL;
   time_t now;
-  int ret, implicit_flow = 1, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NULL_STORE;
+  int ret, implicit_flow = 1, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NULL_FLAG;
   struct _u_map map_query;
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
@@ -2358,19 +2358,19 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       }
 
       if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "code")) {
-        auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_STORE;
+        auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG;
       }
 
       if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "token") && config->allow_non_oidc) {
-        auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_STORE;
+        auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_FLAG;
       }
 
       if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "id_token")) {
-        auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_STORE;
+        auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG;
       }
 
       if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "none")) {
-        auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_NONE_STORE;
+        auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_NONE_FLAG;
       }
 
       if (ret == G_OK) {
