@@ -2,6 +2,8 @@
 
 These files contain an authentication callback for Ulfius framework to validate a Glewlwyd access token with the correct scope.
 
+[libjwt](https://github.com/benmcollins/libjwt) is required.
+
 To use this file, you must create a `struct _glewlwyd_resource_config` with your specific parameters:
 
 ```C
