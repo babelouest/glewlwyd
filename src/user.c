@@ -195,7 +195,9 @@ json_t * get_user(struct config_elements * config, const char * username, const 
   struct _user_module_instance * user_module;
   size_t index;
   
-  if (source != NULL) {
+  if (!o_strlen(username)) {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  } else if (source != NULL) {
     user_module = get_user_module_instance(config, source);
     if (user_module != NULL) {
       j_user = user_module->module->user_module_get(config->config_m, username, user_module->cls);
