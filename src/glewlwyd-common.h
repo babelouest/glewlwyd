@@ -314,9 +314,18 @@ struct config_plugin {
   json_t * (* glewlwyd_plugin_callback_get_user_list)(struct config_plugin * config, const char * pattern, size_t offset, size_t limit);
   json_t * (* glewlwyd_plugin_callback_get_user)(struct config_plugin * config, const char * username);
   json_t * (* glewlwyd_plugin_callback_get_user_profile)(struct config_plugin * config, const char * username);
+  json_t * (* glewlwyd_plugin_callback_is_user_valid)(struct config_plugin * config, const char * username, json_t * j_user, int add);
   int      (* glewlwyd_plugin_callback_add_user)(struct config_plugin * config, json_t * j_user);
   int      (* glewlwyd_plugin_callback_set_user)(struct config_plugin * config, const char * username, json_t * j_user);
   int      (* glewlwyd_plugin_callback_delete_user)(struct config_plugin * config, const char * username);
+  
+  // Client CRUD
+  json_t * (* glewlwyd_plugin_callback_get_client_list)(struct config_plugin * config, const char * pattern, size_t offset, size_t limit);
+  json_t * (* glewlwyd_plugin_callback_get_client)(struct config_plugin * config, const char * client_id);
+  json_t * (* glewlwyd_plugin_callback_is_client_valid)(struct config_plugin * config, const char * client_id, json_t * j_client, int add);
+  int      (* glewlwyd_plugin_callback_add_client)(struct config_plugin * config, json_t * j_client);
+  int      (* glewlwyd_plugin_callback_set_client)(struct config_plugin * config, const char * client_id, json_t * j_client);
+  int      (* glewlwyd_plugin_callback_delete_client)(struct config_plugin * config, const char * client_id);
   
   // Misc functions
   char   * (* glewlwyd_callback_get_plugin_external_url)(struct config_plugin * config, const char * name);

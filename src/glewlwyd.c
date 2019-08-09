@@ -79,9 +79,16 @@ int main (int argc, char ** argv) {
   config->config_p->glewlwyd_plugin_callback_get_user_list = &glewlwyd_plugin_callback_get_user_list;
   config->config_p->glewlwyd_plugin_callback_get_user = &glewlwyd_plugin_callback_get_user;
   config->config_p->glewlwyd_plugin_callback_get_user_profile = &glewlwyd_plugin_callback_get_user_profile;
+  config->config_p->glewlwyd_plugin_callback_is_user_valid = &glewlwyd_plugin_callback_is_user_valid;
   config->config_p->glewlwyd_plugin_callback_add_user = &glewlwyd_plugin_callback_add_user;
   config->config_p->glewlwyd_plugin_callback_set_user = &glewlwyd_plugin_callback_set_user;
   config->config_p->glewlwyd_plugin_callback_delete_user = &glewlwyd_plugin_callback_delete_user;
+  config->config_p->glewlwyd_plugin_callback_get_client_list = &glewlwyd_plugin_callback_get_client_list;
+  config->config_p->glewlwyd_plugin_callback_get_client = &glewlwyd_plugin_callback_get_client;
+  config->config_p->glewlwyd_plugin_callback_is_client_valid = &glewlwyd_plugin_callback_is_client_valid;
+  config->config_p->glewlwyd_plugin_callback_add_client = &glewlwyd_plugin_callback_add_client;
+  config->config_p->glewlwyd_plugin_callback_set_client = &glewlwyd_plugin_callback_set_client;
+  config->config_p->glewlwyd_plugin_callback_delete_client = &glewlwyd_plugin_callback_delete_client;
   
   // Init config structure with default values
   config->config_m->external_url = NULL;
