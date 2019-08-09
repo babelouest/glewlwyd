@@ -723,6 +723,67 @@ static int is_authorization_type_enabled(struct _oidc_config * config, uint auth
   return (authorization_type <= 7)?config->auth_type_enabled[authorization_type]:0;
 }
 
+static json_t * check_client_valid_without_secret(struct _oidc_config * config, const char * client_id, const char * redirect_uri, const char * scope_list, unsigned short authorization_type) {
+  json_t * j_client, * j_element = NULL, * j_return;
+  int uri_found, authorization_type_enabled;
+  size_t index = 0;
+
+  j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, client_id);
+  if (check_result_value(j_client, G_OK)) {
+    if (redirect_uri != NULL) {
+      uri_found = 0;
+      json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index, j_element) {
+        if (0 == o_strcmp(json_string_value(j_element), redirect_uri)) {
+          uri_found = 1;
+        }
+      }
+    } else {
+      uri_found = 1;
+    }
+    
+    authorization_type_enabled = 0;
+    json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
+      if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG && 0 == o_strcmp(json_string_value(j_element), "code")) {
+        authorization_type_enabled = 1;
+      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "token")) {
+        authorization_type_enabled = 1;
+      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "id_token")) {
+        authorization_type_enabled = 1;
+      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_NONE_FLAG && 0 == o_strcmp(json_string_value(j_element), "none")) {
+        authorization_type_enabled = 1;
+      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "refresh_token")) {
+        authorization_type_enabled = 1;
+        uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
+      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS_FLAG && 0 == o_strcmp(json_string_value(j_element), "client_credentials")) {
+        authorization_type_enabled = 1;
+        uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
+      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS_FLAG && 0 == o_strcmp(json_string_value(j_element), "password")) {
+        authorization_type_enabled = 1;
+        uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
+      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "delete_token")) {
+        authorization_type_enabled = 1;
+        uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
+      }
+    }
+    if (!uri_found) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, redirect_uri '%s' is invalid for the client '%s'", redirect_uri, client_id);
+    }
+    if (!authorization_type_enabled) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, authorization type %d is not enabled for the client '%s'", authorization_type, client_id);
+    }
+    if (uri_found && authorization_type_enabled) {
+      j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, client '%s' is invalid", client_id);
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  }
+  json_decref(j_client);
+  return j_return;
+}
+
 static json_t * check_client_valid(struct _oidc_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * client_post_login, const char * client_post_password, const char * redirect_uri, const char * scope_list, unsigned short authorization_type) {
   json_t * j_client, * j_element = NULL, * j_return;
   int uri_found, authorization_type_enabled;
@@ -1557,7 +1618,7 @@ static json_t * validate_jwt_request(struct _oidc_config * config, const char * 
             if (json_string_length(json_object_get(json_object_get(j_client, "client"), "client_secret"))) {
               if (jwt_get_alg(jwt_unverified) == JWT_ALG_HS256 || jwt_get_alg(jwt_unverified) == JWT_ALG_HS384 || jwt_get_alg(jwt_unverified) == JWT_ALG_HS512) {
                 if (!jwt_decode(&jwt_verified, jwt_request, (const unsigned char *)json_string_value(json_object_get(json_object_get(j_client, "client"), "client_secret")), json_string_length(json_object_get(json_object_get(j_client, "client"), "client_secret")))) {
-                  j_return = json_pack("{sisO}", "result", G_OK, "request", j_payload);
+                  j_return = json_pack("{sisOsO}", "result", G_OK, "request", j_payload, "client", j_client);
                 } else {
                   y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt has an invalid signature");
                   j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
@@ -1574,7 +1635,7 @@ static json_t * validate_jwt_request(struct _oidc_config * config, const char * 
           } else {
             // jwt_header must have alg set to "none"
             if (jwt_get_alg(jwt_unverified) == JWT_ALG_NONE) {
-              j_return = json_pack("{sisO}", "result", G_OK, "request", j_payload);
+              j_return = json_pack("{sisOsO}", "result", G_OK, "request", j_payload, "client", j_client);
             } else {
               y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt alg is not none although the client is not confidential");
               j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
@@ -1619,11 +1680,11 @@ static char * get_state_param(const char * state_value) {
   return state_param;
 }
 
-static json_t * validate_endpoint_auth(const struct _u_request * request, struct _u_response * response, void * user_data, int auth_type, json_t * j_request) {
+static json_t * validate_endpoint_auth(const struct _u_request * request, struct _u_response * response, void * user_data, int auth_type, json_t * j_request, json_t * j_client) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   char * redirect_url = NULL, * issued_for = NULL, ** scope_list = NULL, * state_param, * endptr = NULL;
   const char * client_id = NULL, * redirect_uri = NULL, * scope = NULL, * display = NULL, * ui_locales = NULL, * login_hint = NULL, * prompt = NULL, * nonce = NULL, * max_age = NULL;
-  json_t * j_session = NULL, * j_client = NULL;
+  json_t * j_session = NULL;
   json_t * j_return;
   struct _u_map additional_parameters;
   long int l_max_age;
@@ -1698,15 +1759,28 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     }
     
     // Check if client is allowed to perform this request
-    j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, client_id, u_map_get(get_map(request), "client_secret"), u_map_get(get_map(request), "redirect_uri"), scope, auth_type);
-    if (!check_result_value(j_client, G_OK)) {
-      // client is not authorized
-      response->status = 302;
-      redirect_url = msprintf("%s%serror=unauthorized_client%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
-      ulfius_add_header_to_response(response, "Location", redirect_url);
-      o_free(redirect_url);
-      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-      break;
+    if (j_client == NULL) {
+      j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, client_id, u_map_get(get_map(request), "client_secret"), u_map_get(get_map(request), "redirect_uri"), scope, auth_type);
+      if (!check_result_value(j_client, G_OK)) {
+        // client is not authorized
+        response->status = 302;
+        redirect_url = msprintf("%s%serror=unauthorized_client%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        break;
+      }
+    } else {
+      j_client = check_client_valid_without_secret(config, client_id, u_map_get(get_map(request), "redirect_uri"), scope, auth_type);
+      if (!check_result_value(j_client, G_OK)) {
+        // client is not authorized
+        response->status = 302;
+        redirect_url = msprintf("%s%serror=unauthorized_client%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        break;
+      }
     }
 
     if (display != NULL) {
@@ -2476,13 +2550,14 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           response->status = 403;
         }
         ret = G_ERROR_PARAM;
-      }
-      response_type = json_string_value(json_object_get(json_object_get(j_request, "request"), "response_type"));
-      redirect_uri = json_string_value(json_object_get(json_object_get(j_request, "request"), "redirect_uri"));
-      client_id = json_string_value(json_object_get(json_object_get(j_request, "request"), "client_id"));
-      nonce = json_string_value(json_object_get(json_object_get(j_request, "request"), "nonce"));
-      if (state == NULL) {
-        state = get_state_param(json_string_value(json_object_get(json_object_get(j_request, "request"), "state")));
+      } else {
+        response_type = json_string_value(json_object_get(json_object_get(j_request, "request"), "response_type"));
+        redirect_uri = json_string_value(json_object_get(json_object_get(j_request, "request"), "redirect_uri"));
+        client_id = json_string_value(json_object_get(json_object_get(j_request, "request"), "client_id"));
+        nonce = json_string_value(json_object_get(json_object_get(j_request, "request"), "nonce"));
+        if (state == NULL) {
+          state = get_state_param(json_string_value(json_object_get(json_object_get(j_request, "request"), "state")));
+        }
       }
     }
   }
@@ -2556,7 +2631,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         }
 
         if (ret == G_OK) {
-          j_auth_result = validate_endpoint_auth(request, response, user_data, auth_type, json_object_get(j_request, "request"));
+          j_auth_result = validate_endpoint_auth(request, response, user_data, auth_type, json_object_get(j_request, "request"), json_object_get(j_request, "client"));
           if (check_result_value(j_auth_result, G_ERROR_PARAM) || check_result_value(j_auth_result, G_ERROR_UNAUTHORIZED)) {
             ret = G_ERROR;
           } else if (!check_result_value(j_auth_result, G_OK)) {
