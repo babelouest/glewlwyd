@@ -213,7 +213,7 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
     if (json_string_length(json_object_get(j_parameters, "client-id-prefix"))) {
       prefix = json_string_value(json_object_get(j_parameters, "client-id-prefix"));
     }
-    *cls = (void*)json_pack("[{ss+ ss ss so s[sssss] s[sss] s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so ss s[sssssss] s[ss] s[ss] so}]",
+    *cls = (void*)json_pack("[{ss+ ss ss so s[ssssss] s[sss] s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so ss s[ssssssss] s[ss] s[ss] so}]",
                               "client_id",
                               prefix,
                               "client1_id",
@@ -227,6 +227,7 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
                                 "code",
                                 "token",
                                 "id_token",
+                                "none",
                                 "refresh_token",
                                 "delete_token",
                               "redirect_uri",
@@ -267,6 +268,7 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
                                 "code",
                                 "token",
                                 "id_token",
+                                "none",
                                 "password",
                                 "client_credentials",
                                 "refresh_token",
