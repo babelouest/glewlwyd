@@ -458,6 +458,10 @@ json_t * glewlwyd_plugin_callback_get_user_profile(struct config_plugin * config
   return get_user_profile(config->glewlwyd_config, username, NULL);
 }
 
+json_t * glewlwyd_plugin_callback_is_user_valid(struct config_plugin * config, const char * username, json_t * j_user, int add) {
+  return is_user_valid(config->glewlwyd_config, username, j_user, add, NULL);
+}
+
 int glewlwyd_plugin_callback_add_user(struct config_plugin * config, json_t * j_user) {
   return add_user(config->glewlwyd_config, j_user, NULL);
 }
@@ -468,5 +472,29 @@ int glewlwyd_plugin_callback_set_user(struct config_plugin * config, const char 
 
 int glewlwyd_plugin_callback_delete_user(struct config_plugin * config, const char * username) {
   return delete_user(config->glewlwyd_config, username, NULL);
+}
+
+json_t * glewlwyd_plugin_callback_get_client_list(struct config_plugin * config, const char * pattern, size_t offset, size_t limit) {
+  return get_client_list(config->glewlwyd_config, pattern, offset, limit, NULL);
+}
+
+json_t * glewlwyd_plugin_callback_get_client(struct config_plugin * config, const char * client_id) {
+  return get_client(config->glewlwyd_config, client_id, NULL);
+}
+
+json_t * glewlwyd_plugin_callback_is_client_valid(struct config_plugin * config, const char * client_id, json_t * j_client, int add) {
+  return is_client_valid(config->glewlwyd_config, client_id, j_client, add, NULL);
+}
+
+int glewlwyd_plugin_callback_add_client(struct config_plugin * config, json_t * j_client) {
+  return add_client(config->glewlwyd_config, j_client, NULL);
+}
+
+int glewlwyd_plugin_callback_set_client(struct config_plugin * config, const char * client_id, json_t * j_client) {
+  return set_client(config->glewlwyd_config, client_id, j_client, NULL);
+}
+
+int glewlwyd_plugin_callback_delete_client(struct config_plugin * config, const char * client_id) {
+  return delete_client(config->glewlwyd_config, client_id, NULL);
 }
 
