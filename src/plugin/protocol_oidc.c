@@ -2343,7 +2343,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
   char * access_token, * scope_joined = NULL, * issued_for;
   int has_error = 0, has_issues = 0;
 
-  if (refresh_token != NULL && o_strlen(refresh_token)) {
+  if (refresh_token != NULL && o_strlen(refresh_token) == OIDC_REFRESH_TOKEN_LENGTH) {
     j_refresh = validate_refresh_token(config, refresh_token);
     if (check_result_value(j_refresh, G_OK)) {
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
