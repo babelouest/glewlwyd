@@ -282,7 +282,7 @@ json_t * get_current_user_for_session(struct config_elements * config, const cha
   return j_return;
 }
 
-int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * issued_for, const char * username, const char * scheme_type, const char * scheme_name) {
+int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * issued_for, const char * username, const char * scheme_name) {
   json_t * j_query, * j_session = get_session_for_username(config, session_uid, username);
   struct _user_auth_scheme_module_instance * scheme_instance = NULL;
   int res, ret;

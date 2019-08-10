@@ -29,6 +29,8 @@
 #include "glewlwyd.h"
 
 int callback_glewlwyd_options (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   u_map_put(response->map_header, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   u_map_put(response->map_header, "Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Bearer, Authorization");
   u_map_put(response->map_header, "Access-Control-Max-Age", "1800");
@@ -36,6 +38,7 @@ int callback_glewlwyd_options (const struct _u_request * request, struct _u_resp
 }
 
 int callback_glewlwyd_server_configuration (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
   json_t * json_body = json_pack("{ssssss}", 
                         "api_prefix", 
                         ((struct config_elements *)user_data)->api_prefix,
@@ -49,6 +52,8 @@ int callback_glewlwyd_server_configuration (const struct _u_request * request, s
 }
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   json_t * json_body = json_pack("{ssss}", "error", "resource not found", "message", "no resource available at this address");
   ulfius_set_json_body_response(response, 404, json_body);
   json_decref(json_body);
@@ -168,6 +173,8 @@ int callback_glewlwyd_check_admin_session_delegate (const struct _u_request * re
 }
 
 int callback_glewlwyd_close_check_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   if (response->shared_data != NULL) {
     json_decref((json_t *)response->shared_data);
   }
@@ -199,7 +206,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             if ((session_uid = get_session_id(config, request)) == NULL) {
               session_uid = generate_session_id();
             }
-            if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
+            if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (1)");
               response->status = 500;
             } else {
@@ -210,7 +217,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", json_string_value(json_object_get(j_param, "username")), ip_source);
             }
-            if ((session_uid = get_session_id(config, request)) != NULL && user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
+            if ((session_uid = get_session_id(config, request)) != NULL && user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (2)");
             }
             o_free(session_uid);
@@ -224,7 +231,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
           j_result = get_users_for_session(config, session_uid);
           if (check_result_value(j_result, G_OK)) {
             // Refresh username to set as default
-            if (user_session_update(config, u_map_get(request->map_cookie, config->session_key), u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, NULL) != G_OK) {
+            if (user_session_update(config, u_map_get(request->map_cookie, config->session_key), u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (3)");
               response->status = 500;
             } else {
@@ -253,7 +260,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             if ((session_uid = get_session_id(config, request)) == NULL) {
               session_uid = generate_session_id();
             }
-            if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name"))) != G_OK) {
+            if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_name"))) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (4)");
               response->status = 500;
             } else {
@@ -615,6 +622,7 @@ int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * re
 }
 
 int callback_glewlwyd_get_module_type_list (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_module_type;
   
@@ -630,6 +638,7 @@ int callback_glewlwyd_get_module_type_list (const struct _u_request * request, s
 }
 
 int callback_glewlwyd_get_user_module_list (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_module;
   
@@ -802,6 +811,7 @@ int callback_glewlwyd_manage_user_module (const struct _u_request * request, str
 }
 
 int callback_glewlwyd_get_user_auth_scheme_module_list (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data) {
+  UNUSED(request);
   struct config_elements * config = (struct config_elements *)user_auth_scheme_data;
   json_t * j_module;
   
@@ -974,6 +984,7 @@ int callback_glewlwyd_manage_user_auth_scheme_module (const struct _u_request * 
 }
 
 int callback_glewlwyd_get_client_module_list (const struct _u_request * request, struct _u_response * response, void * client_data) {
+  UNUSED(request);
   struct config_elements * config = (struct config_elements *)client_data;
   json_t * j_module;
   
@@ -1146,6 +1157,7 @@ int callback_glewlwyd_manage_client_module (const struct _u_request * request, s
 }
 
 int callback_glewlwyd_get_plugin_module_list (const struct _u_request * request, struct _u_response * response, void * plugin_data) {
+  UNUSED(request);
   struct config_elements * config = (struct config_elements *)plugin_data;
   json_t * j_module;
   
@@ -1648,7 +1660,7 @@ int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_re
   
   j_scope = ulfius_get_json_body_request(request, NULL);
   if (j_scope != NULL) {
-    j_scope_valid = is_scope_valid(config, NULL, j_scope, 1);
+    j_scope_valid = is_scope_valid(config, j_scope, 1);
     if (check_result_value(j_scope_valid, G_OK)) {
       j_search_scope = get_scope(config, json_string_value(json_object_get(j_scope, "name")));
       if (check_result_value(j_search_scope, G_ERROR_NOT_FOUND)) {
@@ -1687,7 +1699,7 @@ int callback_glewlwyd_set_scope (const struct _u_request * request, struct _u_re
   if (check_result_value(j_search_scope, G_OK)) {
     j_scope = ulfius_get_json_body_request(request, NULL);
     if (j_scope != NULL) {
-      j_scope_valid = is_scope_valid(config, u_map_get(request->map_url, "scope"), j_scope, 0);
+      j_scope_valid = is_scope_valid(config, j_scope, 0);
       if (check_result_value(j_scope_valid, G_OK)) {
         if (set_scope(config, u_map_get(request->map_url, "scope"), j_scope) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_scope - Error set_scope");
@@ -1863,6 +1875,7 @@ int callback_glewlwyd_user_get_session_list (const struct _u_request * request, 
 }
 
 int callback_glewlwyd_user_get_plugin_list (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_plugin_list = get_plugin_module_list_for_user(config);
   
@@ -1889,6 +1902,7 @@ int callback_glewlwyd_delete_session (const struct _u_request * request, struct 
 }
 
 int callback_glewlwyd_user_get_scheme_list (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_scheme_list = get_scheme_list_for_user(config, json_string_value(json_object_get((json_t *)response->shared_data, "username"))), * j_element;
   size_t index;

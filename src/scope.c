@@ -733,7 +733,7 @@ json_t * get_scope_list_allowed_for_session(struct config_elements * config, con
   }
 }
 
-json_t * is_scope_valid(struct config_elements * config, const char * scope, json_t * j_scope, int add) {
+json_t * is_scope_valid(struct config_elements * config, json_t * j_scope, int add) {
   json_t * j_return, * j_array, * j_group, * j_scheme, * j_module;
   size_t index;
   const char * key;

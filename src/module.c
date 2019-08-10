@@ -32,7 +32,7 @@ json_t * get_module_type_list(struct config_elements * config) {
   struct _client_module * client_module;
   struct _user_auth_scheme_module * scheme_module;
   struct _plugin_module * plugin_module;
-  int i;
+  size_t i;
   json_t * j_return;
   
   if ((j_return = json_pack("{sis{s[]s[]s[]s[]}}", "result", G_OK, "module", "user", "client", "scheme", "plugin")) != NULL) {
@@ -199,7 +199,8 @@ json_t * get_user_module(struct config_elements * config, const char * name) {
 
 json_t * is_user_module_valid(struct config_elements * config, json_t * j_module, int add) {
   json_t * j_return, * j_cur_module, * j_error_list;
-  int i, found;
+  size_t i;
+  int found;
   struct _user_module * module;
   char * parameters;
   
@@ -273,7 +274,8 @@ json_t * add_user_module(struct config_elements * config, json_t * j_module) {
   struct _user_module * module;
   struct _user_module_instance * cur_instance;
   json_t * j_query;
-  int res, i;
+  int res;
+  size_t i;
   json_t * j_return, * j_result;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
@@ -588,7 +590,8 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
 
 json_t * is_user_auth_scheme_module_valid(struct config_elements * config, json_t * j_module, int add) {
   json_t * j_return, * j_cur_module, * j_error_list;
-  int i, found;
+  size_t i;
+  int found;
   struct _user_auth_scheme_module * module;
   char * parameters;
   
@@ -665,7 +668,8 @@ json_t * add_user_auth_scheme_module(struct config_elements * config, json_t * j
   struct _user_auth_scheme_module * module;
   struct _user_auth_scheme_module_instance * cur_instance;
   json_t * j_query, * j_last_id, * j_result, * j_return;
-  int res, i;
+  int res;
+  size_t i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
   j_query = json_pack("{sss{sOsOsOsssOsOsi}}",
@@ -980,7 +984,8 @@ json_t * get_client_module(struct config_elements * config, const char * name) {
 
 json_t * is_client_module_valid(struct config_elements * config, json_t * j_module, int add) {
   json_t * j_return, * j_cur_module, * j_error_list;
-  int i, found;
+  size_t i;;
+  int found;
   struct _client_module * module;
   char * parameters;
   
@@ -1054,7 +1059,8 @@ json_t * add_client_module(struct config_elements * config, json_t * j_module) {
   struct _client_module * module;
   struct _client_module_instance * cur_instance;
   json_t * j_query, * j_result, * j_return;
-  int res, i;
+  int res;
+  size_t i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
   j_query = json_pack("{sss{sOsOsOsOss}}",
@@ -1131,7 +1137,8 @@ json_t * add_client_module(struct config_elements * config, json_t * j_module) {
 
 int set_client_module(struct config_elements * config, const char * name, json_t * j_module) {
   json_t * j_query;
-  int res, ret;
+  size_t res;
+  int ret;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _client_module_instance * cur_instance;
   
@@ -1384,7 +1391,8 @@ json_t * get_plugin_module(struct config_elements * config, const char * name) {
 
 json_t * is_plugin_module_valid(struct config_elements * config, json_t * j_module, int add) {
   json_t * j_return, * j_cur_module, * j_error_list;
-  int i, found;
+  size_t i;
+  int found;
   struct _plugin_module * module;
   char * parameters;
   
@@ -1452,7 +1460,8 @@ json_t * add_plugin_module(struct config_elements * config, json_t * j_module) {
   struct _plugin_module * module;
   struct _plugin_module_instance * cur_instance;
   json_t * j_query, * j_return, * j_result;
-  int res, i;
+  int res;
+  size_t i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
   j_query = json_pack("{sss{sOsOsOss}}",

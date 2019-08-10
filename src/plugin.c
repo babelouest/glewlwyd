@@ -184,7 +184,7 @@ json_t * glewlwyd_callback_check_user_valid(struct config_plugin * config, const
   return j_return;
 }
 
-json_t * glewlwyd_callback_check_client_valid(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list) {
+json_t * glewlwyd_callback_check_client_valid(struct config_plugin * config, const char * client_id, const char * password) {
   json_t * j_return, * j_client, * j_client_credentials;
   int password_checked = 1;
 

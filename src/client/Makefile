@@ -22,7 +22,7 @@
 DEST=/usr/local
 MODULES_TARGET=$(DEST)/lib/glewlwyd/client
 CC=gcc
-CFLAGS=-c -fPIC -Wall -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
+CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
 LIBS=-lorcania -lyder -lulfius -ldl -ljansson
 TARGET=libmoddatabase.so libmodldap.so
 

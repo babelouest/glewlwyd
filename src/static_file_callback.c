@@ -44,6 +44,7 @@ const char * get_filename_ext(const char *path) {
  * Streaming callback function to ease sending large files
  */
 static ssize_t callback_static_file_stream(void * cls, uint64_t pos, char * buf, size_t max) {
+  (void)(pos);
   if (cls != NULL) {
     return fread (buf, 1, max, (FILE *)cls);
   } else {
