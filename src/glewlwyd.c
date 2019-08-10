@@ -414,7 +414,7 @@ int main (int argc, char ** argv) {
  * Exit properly the server by closing opened connections, databases and files
  */
 void exit_server(struct config_elements ** config, int exit_value) {
-  int i;
+  size_t i;
   
   if (config != NULL && *config != NULL) {
     for (i=0; i<pointer_list_size((*config)->user_module_instance_list); i++) {
@@ -1133,7 +1133,7 @@ int build_config_from_file(struct config_elements * config) {
  */
 int check_config(struct config_elements * config) {
 
-  if (config->instance->port == -1) {
+  if (config->instance->port == 0) {
     config->instance->port = GLEWLWYD_DEFAULT_PORT;
   }
   
@@ -1336,8 +1336,8 @@ int init_user_module_list(struct config_elements * config) {
 
 int load_user_module_instance_list(struct config_elements * config) {
   json_t * j_query, * j_result, * j_instance, * j_parameters, * j_init;
-  int res, ret, i;
-  size_t index;
+  int res, ret;
+  size_t index, i;
   struct _user_module_instance * cur_instance;
   struct _user_module * module = NULL;
   char * message;
@@ -1420,7 +1420,7 @@ int load_user_module_instance_list(struct config_elements * config) {
 }
 
 struct _user_module_instance * get_user_module_instance(struct config_elements * config, const char * name) {
-  int i;
+  size_t i;
   struct _user_module_instance * cur_instance;
 
   for (i=0; i<pointer_list_size(config->user_module_instance_list); i++) {
@@ -1433,7 +1433,7 @@ struct _user_module_instance * get_user_module_instance(struct config_elements *
 }
 
 struct _user_module * get_user_module_lib(struct config_elements * config, const char * name) {
-  int i;
+  size_t i;
   struct _user_module * module;
 
   for (i=0; i<pointer_list_size(config->user_module_list); i++) {
@@ -1572,8 +1572,8 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
 
 int load_user_auth_scheme_module_instance_list(struct config_elements * config) {
   json_t * j_query, * j_result, * j_instance, * j_parameters, * j_init;
-  int res, ret, i;
-  size_t index;
+  int res, ret;
+  size_t index, i;
   struct _user_auth_scheme_module_instance * cur_instance;
   struct _user_auth_scheme_module * module = NULL;
   char * message;
@@ -1661,7 +1661,7 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
 }
 
 struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * name) {
-  int i;
+  size_t i;
   struct _user_auth_scheme_module_instance * cur_instance;
 
   for (i=0; i<pointer_list_size(config->user_auth_scheme_module_instance_list); i++) {
@@ -1674,7 +1674,7 @@ struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(
 }
 
 struct _user_auth_scheme_module * get_user_auth_scheme_module_lib(struct config_elements * config, const char * name) {
-  int i;
+  size_t i;
   struct _user_auth_scheme_module * module;
 
   for (i=0; i<pointer_list_size(config->user_auth_scheme_module_list); i++) {
@@ -1822,8 +1822,8 @@ int init_client_module_list(struct config_elements * config) {
 
 int load_client_module_instance_list(struct config_elements * config) {
   json_t * j_query, * j_result, * j_instance, * j_parameters, * j_init;
-  int res, ret, i;
-  size_t index;
+  int res, ret;
+  size_t index, i;
   struct _client_module_instance * cur_instance;
   struct _client_module * module = NULL;
   
@@ -1902,7 +1902,7 @@ int load_client_module_instance_list(struct config_elements * config) {
 }
 
 struct _client_module_instance * get_client_module_instance(struct config_elements * config, const char * name) {
-  int i;
+  size_t i;
   struct _client_module_instance * cur_instance;
 
   for (i=0; i<pointer_list_size(config->client_module_instance_list); i++) {
@@ -1915,7 +1915,7 @@ struct _client_module_instance * get_client_module_instance(struct config_elemen
 }
 
 struct _client_module * get_client_module_lib(struct config_elements * config, const char * name) {
-  int i;
+  size_t i;
   struct _client_module * module;
 
   for (i=0; i<pointer_list_size(config->client_module_list); i++) {
@@ -2043,8 +2043,8 @@ int init_plugin_module_list(struct config_elements * config) {
 
 int load_plugin_module_instance_list(struct config_elements * config) {
   json_t * j_query, * j_result, * j_instance, * j_parameters, * j_init;
-  int res, ret, i;
-  size_t index;
+  int res, ret;
+  size_t index, i;
   struct _plugin_module_instance * cur_instance;
   struct _plugin_module * module = NULL;
   char * message;
@@ -2124,7 +2124,7 @@ int load_plugin_module_instance_list(struct config_elements * config) {
 }
 
 struct _plugin_module_instance * get_plugin_module_instance(struct config_elements * config, const char * name) {
-  int i;
+  size_t i;
   struct _plugin_module_instance * cur_instance;
 
   for (i=0; i<pointer_list_size(config->plugin_module_instance_list); i++) {
@@ -2137,7 +2137,7 @@ struct _plugin_module_instance * get_plugin_module_instance(struct config_elemen
 }
 
 struct _plugin_module * get_plugin_module_lib(struct config_elements * config, const char * name) {
-  int i;
+  size_t i;
   struct _plugin_module * module;
 
   for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {

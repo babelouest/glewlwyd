@@ -137,7 +137,7 @@ json_t * auth_register_get_user_scheme(struct config_elements * config, const ch
 json_t * auth_trigger_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * register_parameters, const struct _u_request * request);
 
 // Session
-int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * issued_for, const char * username, const char * scheme_type, const char * scheme_name);
+int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * issued_for, const char * username, const char * scheme_name);
 json_t * get_session_for_username(struct config_elements * config, const char * session_uid, const char * username);
 json_t * get_current_user_for_session(struct config_elements * config, const char * session_uid);
 json_t * get_users_for_session(struct config_elements * config, const char * session_uid);
@@ -214,7 +214,7 @@ int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const c
 int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, const char * method, const char * name, const char * url);
 json_t * glewlwyd_callback_check_session_valid(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
 json_t * glewlwyd_callback_check_user_valid(struct config_plugin * config, const char * username, const char * password, const char * scope_list);
-json_t * glewlwyd_callback_check_client_valid(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list);
+json_t * glewlwyd_callback_check_client_valid(struct config_plugin * config, const char * client_id, const char * password);
 json_t * glewlwyd_callback_get_client_granted_scopes(struct config_plugin * config, const char * client_id, const char * username, const char * scope_list);
 int glewlwyd_callback_trigger_session_used(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
 time_t glewlwyd_callback_get_session_age(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
@@ -259,7 +259,7 @@ int delete_client(struct config_elements * config, const char * client_id, const
 // Scope CRUD functions
 json_t * get_scope_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit);
 json_t * get_scope(struct config_elements * config, const char * scope);
-json_t * is_scope_valid(struct config_elements * config, const char * scope, json_t * j_scope, int add);
+json_t * is_scope_valid(struct config_elements * config, json_t * j_scope, int add);
 int add_scope(struct config_elements * config, json_t * j_scope);
 int set_scope(struct config_elements * config, const char * scope, json_t * j_scope);
 int delete_scope(struct config_elements * config, const char * scope);

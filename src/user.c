@@ -692,7 +692,11 @@ json_t * glewlwyd_module_callback_check_user_session(struct config_module * conf
   if (session_uid != NULL) {
     j_result = get_current_user_for_session(config->glewlwyd_config, session_uid);
     if (check_result_value(j_result, G_OK)) {
-      j_return = json_incref(j_result);
+      if (0 == o_strcmp(username, json_string_value(json_object_get(json_object_get(j_result, "user"), "username")))) {
+        j_return = json_incref(j_result);
+      } else {
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      }
     } else if (!check_result_value(j_result, G_ERROR_NOT_FOUND)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_module_callback_check_user_password - Error get_current_user_for_session");
       j_return = json_pack("{si}", "result", G_ERROR);
