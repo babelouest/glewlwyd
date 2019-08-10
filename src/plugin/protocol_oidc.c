@@ -3491,6 +3491,8 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         ((struct _oidc_config *)*cls)->glewlwyd_resource_config->method = G_METHOD_HEADER;
         ((struct _oidc_config *)*cls)->glewlwyd_resource_config->oauth_scope = NULL;
         ((struct _oidc_config *)*cls)->glewlwyd_resource_config->realm = NULL;
+        ((struct _oidc_config *)*cls)->glewlwyd_resource_config->accept_access_token = 1;
+        ((struct _oidc_config *)*cls)->glewlwyd_resource_config->accept_client_token = 0;
         j_result = check_parameters(((struct _oidc_config *)*cls)->j_params);
         if (check_result_value(j_result, G_OK)) {
           ((struct _oidc_config *)*cls)->access_token_duration = json_integer_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "access-token-duration"));
