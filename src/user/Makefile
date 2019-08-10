@@ -22,7 +22,7 @@
 LOCAL=/usr/local
 MODULES_TARGET=$(LOCAL)/lib/glewlwyd/user
 CC=gcc
-CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -shared -nostartfiles -Wno-pragmas $(ADDITIONALFLAGS)
+CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(ADDITIONALFLAGS)
 LIBS=-ljansson -lorcania -lyder -ldl
 LDFLAGS += -Wl,-R '-Wl,-R$$ORIGIN'
 TARGET=libmoddatabase.so libmodldap.so libmodhttp.so
