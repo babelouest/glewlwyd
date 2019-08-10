@@ -123,7 +123,7 @@ static json_t * extract_jwks_from_cert(struct _oidc_config * config) {
         cert_dat.data = (unsigned char *)json_string_value(json_object_get(config->j_params, "cert"));
         cert_dat.size = json_string_length(json_object_get(config->j_params, "cert"));
         if ((ret = gnutls_pubkey_import(pubkey, &cert_dat, GNUTLS_X509_FMT_PEM)) >= 0) {
-          if ((ret = gnutls_pubkey_get_key_id(pubkey, GNUTLS_KEYID_USE_BEST_KNOWN, kid, &kid_len)) == 0) {
+          if ((ret = gnutls_pubkey_get_key_id(pubkey, GNUTLS_KEYID_USE_SHA256, kid, &kid_len)) == 0) {
             o_base64url_encode(kid, kid_len, kid_enc, &kid_enc_len);
             kid_enc[kid_enc_len] = '\0';
             json_object_set_new(j_jwks, "kid", json_stringn((const char *)kid_enc, kid_enc_len));
@@ -723,7 +723,7 @@ static int is_authorization_type_enabled(struct _oidc_config * config, uint auth
   return (authorization_type <= 7)?config->auth_type_enabled[authorization_type]:0;
 }
 
-static json_t * check_client_valid_without_secret(struct _oidc_config * config, const char * client_id, const char * redirect_uri, const char * scope_list, unsigned short authorization_type) {
+static json_t * check_client_valid_without_secret(struct _oidc_config * config, const char * client_id, const char * redirect_uri, unsigned short authorization_type) {
   json_t * j_client, * j_element = NULL, * j_return;
   int uri_found, authorization_type_enabled;
   size_t index = 0;
@@ -766,10 +766,10 @@ static json_t * check_client_valid_without_secret(struct _oidc_config * config, 
       }
     }
     if (!uri_found) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, redirect_uri '%s' is invalid for the client '%s'", redirect_uri, client_id);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid_without_secret - Error, redirect_uri '%s' is invalid for the client '%s'", redirect_uri, client_id);
     }
     if (!authorization_type_enabled) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, authorization type %d is not enabled for the client '%s'", authorization_type, client_id);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid_without_secret - Error, authorization type %d is not enabled for the client '%s'", authorization_type, client_id);
     }
     if (uri_found && authorization_type_enabled) {
       j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
@@ -777,14 +777,14 @@ static json_t * check_client_valid_without_secret(struct _oidc_config * config, 
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, client '%s' is invalid", client_id);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid_without_secret - Error, client '%s' is invalid", client_id);
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   json_decref(j_client);
   return j_return;
 }
 
-static json_t * check_client_valid(struct _oidc_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * client_post_login, const char * client_post_password, const char * redirect_uri, const char * scope_list, unsigned short authorization_type) {
+static json_t * check_client_valid(struct _oidc_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * client_post_login, const char * client_post_password, const char * redirect_uri, unsigned short authorization_type) {
   json_t * j_client, * j_element = NULL, * j_return;
   int uri_found, authorization_type_enabled;
   size_t index = 0;
@@ -805,7 +805,7 @@ static json_t * check_client_valid(struct _oidc_config * config, const char * cl
   } else if (client_post_login != NULL) {
     client_password = client_post_password;
   }
-  j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, client_id, client_password, scope_list);
+  j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, client_id, client_password);
   if (check_result_value(j_client, G_OK)) {
     if (client_header_password != NULL && json_object_get(json_object_get(j_client, "client"), "confidential") != json_true()) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, confidential client must be authentified with its password");
@@ -1680,11 +1680,11 @@ static char * get_state_param(const char * state_value) {
   return state_param;
 }
 
-static json_t * validate_endpoint_auth(const struct _u_request * request, struct _u_response * response, void * user_data, int auth_type, json_t * j_request, json_t * j_client) {
+static json_t * validate_endpoint_auth(const struct _u_request * request, struct _u_response * response, void * user_data, int auth_type, json_t * j_request, json_t * j_client_validated) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   char * redirect_url = NULL, * issued_for = NULL, ** scope_list = NULL, * state_param, * endptr = NULL;
   const char * client_id = NULL, * redirect_uri = NULL, * scope = NULL, * display = NULL, * ui_locales = NULL, * login_hint = NULL, * prompt = NULL, * nonce = NULL, * max_age = NULL;
-  json_t * j_session = NULL;
+  json_t * j_session = NULL, * j_client = NULL;
   json_t * j_return;
   struct _u_map additional_parameters;
   long int l_max_age;
@@ -1759,8 +1759,8 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     }
     
     // Check if client is allowed to perform this request
-    if (j_client == NULL) {
-      j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, client_id, u_map_get(get_map(request), "client_secret"), u_map_get(get_map(request), "redirect_uri"), scope, auth_type);
+    if (j_client_validated == NULL) {
+      j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, client_id, u_map_get(get_map(request), "client_secret"), u_map_get(get_map(request), "redirect_uri"), auth_type);
       if (!check_result_value(j_client, G_OK)) {
         // client is not authorized
         response->status = 302;
@@ -1771,7 +1771,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
         break;
       }
     } else {
-      j_client = check_client_valid_without_secret(config, client_id, u_map_get(get_map(request), "redirect_uri"), scope, auth_type);
+      j_client = check_client_valid_without_secret(config, client_id, u_map_get(get_map(request), "redirect_uri"), auth_type);
       if (!check_result_value(j_client, G_OK)) {
         // client is not authorized
         response->status = 302;
@@ -2021,7 +2021,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
   if (code == NULL || client_id == NULL || redirect_uri == NULL) {
     response->status = 400;
   } else {
-    j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), redirect_uri, NULL, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG);
+    j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), redirect_uri, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG);
     if (check_result_value(j_client, G_OK)) {
       j_code = validate_authorization_code(config, code, client_id, redirect_uri);
       if (check_result_value(j_code, G_OK)) {
@@ -2164,7 +2164,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
   if (scope == NULL || username == NULL || password == NULL || issued_for == NULL) {
     ret = G_ERROR_PARAM;
   } else if (request->auth_basic_user != NULL && request->auth_basic_password != NULL) {
-    j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password, NULL);
+    j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password);
     if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "confidential") != json_true()) {
       ret = G_ERROR_PARAM;
     } else if (check_result_value(j_client, G_OK)) {
@@ -2269,7 +2269,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
     y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_client_credentials_grant  - Error get_client_hostname");
     response->status = 500;
   } else if (request->auth_basic_user != NULL && request->auth_basic_password != NULL && o_strlen(u_map_get(request->map_post_body, "scope")) > 0) {
-    j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "scope"));
+    j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password);
     if (check_result_value(j_client, G_OK)) {
       if (split_string(u_map_get(request->map_post_body, "scope"), " ", &scope_array) > 0) {
         for (i=0; scope_array[i]!=NULL; i++) {
@@ -2347,7 +2347,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
     j_refresh = validate_refresh_token(config, refresh_token);
     if (check_result_value(j_refresh, G_OK)) {
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
-        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), NULL, NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_FLAG);
+        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_FLAG);
         if (!check_result_value(j_client, G_OK)) {
           has_issues = 1;
         } else if (request->auth_basic_user == NULL && request->auth_basic_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
@@ -2431,7 +2431,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
     j_refresh = validate_refresh_token(config, refresh_token);
     if (check_result_value(j_refresh, G_OK)) {
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
-        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), NULL, NULL, GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_FLAG);
+        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), NULL, GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_FLAG);
         if (!check_result_value(j_client, G_OK)) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "oidc delete_refresh_token - client '%s' is invalid", request->auth_basic_user);
           has_issues = 1;
