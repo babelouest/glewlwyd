@@ -3228,8 +3228,8 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
     }
     json_object_set_new(j_discovery, "ui_locales_supported", json_pack("[ss]", "en", "fr"));
     json_object_set_new(j_discovery, "claims_parameter_supported", json_true());
-    json_object_set_new(j_discovery, "request_parameter_supported", json_false());
-    json_object_set_new(j_discovery, "request_uri_parameter_supported", json_false());
+    json_object_set(j_discovery, "request_parameter_supported", json_object_get(config->j_params, "request-parameter-allow")==json_false()?json_false():json_true());
+    json_object_set(j_discovery, "request_uri_parameter_supported", json_object_get(config->j_params, "request-parameter-allow")==json_false()?json_false():json_true());
     json_object_set_new(j_discovery, "require_request_uri_registration", json_false());
     if (json_string_length(json_object_get(config->j_params, "op-policy-uri"))) {
       json_object_set(j_discovery, "op_policy_uri", json_object_get(config->j_params, "op-policy-uri"));
