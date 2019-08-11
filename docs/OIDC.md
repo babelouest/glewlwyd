@@ -13,7 +13,7 @@ The following OpenID Connect Core functionalities are currently supported:
 - [OAuth 2.0 Multiple Response Types](http://openid.net/specs/oauth-v2-multiple-response-types-1_0.html)
 - [OpenID Connect Discovery](http://openid.net/specs/openid-connect-discovery-1_0.html)
 - [Requesting Claims using the "claims" Request Parameter](https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter)
-- [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) using HTTP Basic Auth or POST Parameter and JWT
+- [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) using HTTP Basic Auth, POST Parameter or signed JWT
 - [Passing Request Parameters as JWTs](https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests)
 
 The following OpenID Connect Core functionalities are not supported yet:
