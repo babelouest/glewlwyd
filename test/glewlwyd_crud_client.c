@@ -224,7 +224,7 @@ START_TEST(test_glwd_crud_client_list_limit)
   res = ulfius_send_http_request(&admin_req, &resp);
   ck_assert_int_eq(res, U_OK);
   j_result = ulfius_get_json_body_response(&resp, NULL);
-  ck_assert_int_eq(json_array_size(j_result), 2);
+  ck_assert_int_eq(json_array_size(j_result), 3);
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 0), "client_id")), "client2_id");
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "client_id")), "client3_id");
   o_free(admin_req.http_url);
@@ -271,7 +271,7 @@ START_TEST(test_glwd_crud_client_list_limit)
   res = ulfius_send_http_request(&admin_req, &resp);
   ck_assert_int_eq(res, U_OK);
   j_result = ulfius_get_json_body_response(&resp, NULL);
-  ck_assert_int_eq(json_array_size(j_result), 1);
+  ck_assert_int_eq(json_array_size(j_result), 2);
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 0), "client_id")), "client3_id");
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
@@ -313,9 +313,9 @@ START_TEST(test_glwd_crud_client_list_page_multiple_source)
   j_result = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_int_eq(json_array_size(j_result), 4);
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 0), "client_id")), "client3_id");
-  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "client_id")), "mock1-client1_id");
-  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 2), "client_id")), "mock1-client2_id");
-  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 3), "client_id")), "mock1-client3_id");
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "client_id")), "client4_id");
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 2), "client_id")), "mock1-client1_id");
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 3), "client_id")), "mock1-client2_id");
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   admin_req.http_url = NULL;
@@ -331,11 +331,11 @@ START_TEST(test_glwd_crud_client_list_page_multiple_source)
   j_result = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_int_eq(json_array_size(j_result), 6);
   ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 0), "client_id")), "client3_id");
-  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "client_id")), "mock1-client1_id");
-  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 2), "client_id")), "mock1-client2_id");
-  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 3), "client_id")), "mock1-client3_id");
-  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 4), "client_id")), "mock2-client1_id");
-  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 5), "client_id")), "mock2-client2_id");
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 1), "client_id")), "client4_id");
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 2), "client_id")), "mock1-client1_id");
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 3), "client_id")), "mock1-client2_id");
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 4), "client_id")), "mock1-client3_id");
+  ck_assert_str_eq(json_string_value(json_object_get(json_array_get(j_result, 5), "client_id")), "mock1-client4_id");
   o_free(admin_req.http_url);
   o_free(admin_req.http_verb);
   admin_req.http_url = NULL;
