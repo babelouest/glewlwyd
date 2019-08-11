@@ -580,6 +580,9 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oidc_resource_owner_pwd_cred_client_confidential
 							glewlwyd_oidc_token
 							glewlwyd_oidc_userinfo
+              glewlwyd_oidc_discovery
+              glewlwyd_oidc_client_secret
+              glewlwyd_oidc_request_jwt
 							)
 		endif ()
 
