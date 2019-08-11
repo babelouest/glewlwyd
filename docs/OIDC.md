@@ -13,17 +13,16 @@ The following OpenID Connect Core functionalities are currently supported:
 - [OAuth 2.0 Multiple Response Types](http://openid.net/specs/oauth-v2-multiple-response-types-1_0.html)
 - [OpenID Connect Discovery](http://openid.net/specs/openid-connect-discovery-1_0.html)
 - [Requesting Claims using the "claims" Request Parameter](https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter)
-- [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) using HTTP Basic Auth or POST Parameter
+- [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) using HTTP Basic Auth or POST Parameter and JWT
+- [Passing Request Parameters as JWTs](https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests)
 
 The following OpenID Connect Core functionalities are not supported yet:
 
 - [Address Claims](https://openid.net/specs/openid-connect-core-1_0.html#AddressClaim)
 - [Requesting Claims using Scope Values](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims)
 - [id_token_hint](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest) in the authentication request parameters
-- [Passing Request Parameters as JWTs](https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests)
 - [Self-Issued OpenID Provider](https://openid.net/specs/openid-connect-core-1_0.html#SelfIssued)
 - [id_token encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
-- [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) using JWT
 
 The following OpenID Connect specifications are not supported yet:
 
@@ -67,6 +66,16 @@ Name of the instance displayed to the user.
 ### Issuer
 
 Issuer that will be added in all ID Tokens, must correspond to your Glewlwyd instance URL.
+
+### Allow passing request parameter as JWT
+
+Allow using request parameters as JWT with `request` objects or `request_uri` links.
+
+### Allow request_uri to a unsecure https:// uri
+
+If the specified `request_uri` link points to an unsecure https:// page with invalid certificate or hostname, allow it anyway.
+
+Warning! This may lead to unsecure connections or MITM attacks.
 
 ### JWT Type
 
@@ -210,6 +219,8 @@ OpenID Connect endpoints are used to authenticate the user, and to send tokens, 
   - [Refresh token](#refresh-token)
   - [Invalidate refresh token](#invalidate-refresh-token)
 - [Userinfo endpoint](#userinfo-endpoint)
+- [openid-configuration endpoint](#openid-configuration-endpoint)
+- [Get JSON Web Key](#get-json-web-key)
 - [Manage refresh tokens endpoints](#manage-refresh-tokens-endpoints)
   - [List refresh tokens](#list-refresh-tokens)
   - [Disable a refresh token by its signature](#disable-a-refresh-token-by-its-signature)
@@ -746,6 +757,133 @@ Content
 Code 403
 
 Access denied
+
+### openid-configuration endpoint
+
+This endpoint implements the [OpenID Connect discovery](http://openid.net/specs/openid-connect-discovery-1_0.html) API.
+
+#### URL
+
+`/api/oidc/.well-known/openid-configuration`
+
+#### Method
+
+`GET`
+
+##### Result
+
+##### Success response
+
+Code 200
+
+Content
+
+`openid-configuration` content in JSON format.
+
+Example:
+
+```javascript
+{
+   "issuer":"https://glewlwyd.tld",
+   "authorization_endpoint":"http://localhost:4593/api/oidc/auth",
+   "token_endpoint":"http://localhost:4593/api/oidc/token",
+   "userinfo_endpoint":"http://localhost:4593/api/oidc/userinfo",
+   "jwks_uri":"http://localhost:4593/api/oidc/jwks",
+   "token_endpoint_auth_methods_supported":[
+      "client_secret_basic"
+   ],
+   "token_endpoint_auth_signing_alg_values_supported":[
+      "HS256"
+   ],
+   "scopes_supported":[
+      "openid"
+   ],
+   "response_types_supported":[
+      "code",
+      "id_token",
+      "token id_token",
+      "code id_token",
+      "code token id_token",
+      "none",
+      "password",
+      "token",
+      "client_credentials",
+      "refresh_token"
+   ],
+   "response_modes_supported":[
+      "query",
+      "fragment"
+   ],
+   "grant_types_supported":[
+      "authorization_code",
+      "implicit"
+   ],
+   "display_values_supported":[
+      "page",
+      "touch",
+      "wap"
+   ],
+   "claim_types_supported":[
+      "normal"
+   ],
+   "claims_supported":[
+
+   ],
+   "ui_locales_supported":[
+      "en",
+      "fr"
+   ],
+   "claims_parameter_supported":true,
+   "request_parameter_supported":true,
+   "request_uri_parameter_supported":true,
+   "require_request_uri_registration":false
+}
+```
+
+#### Get JSON Web Key
+
+##### URL
+
+`/api/oidc/jwks`
+
+##### Method
+
+`GET`
+
+##### Result
+
+##### Success response
+
+Code 200
+
+Content
+
+`jwks` content in JSON format.
+
+Example:
+
+```javascript
+{
+   "keys":[
+      {
+         "use":"sig",
+         "alg":"RS256",
+         "x5c":[
+            "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwtpMAM4l1H995oqlqdMh\nuqNuffp4+4aUCwuFE9B5s9MJr63gyf8jW0oDr7Mb1Xb8y9iGkWfhouZqNJbMFry+\niBs+z2TtJF06vbHQZzajDsdux3XVfXv9v6dDIImyU24MsGNkpNt0GISaaiqv51NM\nZQX0miOXXWdkQvWTZFXhmsFCmJLE67oQFSar4hzfAaCulaMD+b3Mcsjlh0yvSq7g\n6swiIasEU3qNLKaJAZEzfywroVYr3BwM1IiVbQeKgIkyPS/85M4Y6Ss/T+OWi1Oe\nK49NdYBvFP+hNVEoeZzJz5K/nd6C35IX0t2bN5CVXchUFmaUMYk2iPdhXdsC720t\nBwIDAQAB\n-----END PUBLIC KEY-----"
+         ],
+         "kid":"h7uJEqXw_h4UXW_wCm3oBuboSGyuxf7XucGDKohPwxo",
+         "kty":"RSA",
+         "e":"AQAB",
+         "n":"AMLaTADOJdR_feaKpanTIbqjbn36ePuGlAsLhRPQebPTCa-t4Mn_I1tKA6-zG9V2_MvYhpFn4aLmajSWzBa8vogbPs9k7SRdOr2x0Gc2ow7Hbsd11X17_b-nQyCJslNuDLBjZKTbdBiEmmoqr-dTTGUF9Jojl11nZEL1k2RV4ZrBQpiSxOu6EBUmq-Ic3wGgrpWjA_m9zHLI5YdMr0qu4OrMIiGrBFN6jSymiQGRM38sK6FWK9wcDNSIlW0HioCJMj0v_OTOGOkrP0_jlotTniuPTXWAbxT_oTVRKHmcyc-Sv53egt-SF9LdmzeQlV3IVBZmlDGJNoj3YV3bAu9tLQc"
+      }
+   ]
+}```
+
+##### Error Response
+
+Code 403
+
+JWK unavailable (if denied by parameter or if the algorithm isn't based on public/private key.
 
 ### Manage refresh tokens endpoints
 
