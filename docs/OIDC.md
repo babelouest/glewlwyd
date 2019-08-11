@@ -42,7 +42,7 @@ An access token payload has the following JSON format:
   "type": "access_token", // Hardcoded
   "iat": 1466556840, // Issued at time in Epoch Unix format
   "expires_in": 3600, // Number of seconds of validity for this token
-  "scope":["scope1","g_profile"] // scopes granted to this access token
+  "scope":"scope1 g_profile" // scopes granted to this access token in a string separated by spaces
 }
 ```
 
