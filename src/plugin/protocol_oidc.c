@@ -1693,6 +1693,42 @@ static int update_refresh_token(struct _oidc_config * config, json_int_t gpor_id
 }
 
 /**
+ * Download a request object from an URI
+ */
+static char * get_request_from_uri(struct _oidc_config * config, const char * request_uri) {
+  struct _u_request req;
+  struct _u_response resp;
+  char * str_request = NULL;
+
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+
+  req.http_verb = o_strdup("GET");
+  req.http_url = o_strdup(request_uri);
+  if (json_object_get(config->j_params, "request-uri-allow-https-non-secure") == json_true()) {
+    req.check_server_certificate = 0;
+  }
+  
+  if (ulfius_send_http_request(&req, &resp) != U_OK) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "get_request_from_uri - Error ulfius_send_http_request");
+  } else if (resp.status == 200) {
+    str_request = o_malloc(resp.binary_body_length +1);
+    if (str_request != NULL) {
+      memcpy(str_request, resp.binary_body, resp.binary_body_length);
+      str_request[resp.binary_body_length] = '\0';
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error allocating resources for str_request");
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "get_request_from_uri - Error ulfius_send_http_request response status is %d", resp.status);
+  }
+  
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  return str_request;
+}
+
+/**
  * validate a request object in jwt format
  */
 static json_t * validate_jwt_request(struct _oidc_config * config, const char * jwt_request) {
@@ -2619,10 +2655,10 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   const char * response_type = NULL, * redirect_uri = NULL, * client_id = NULL, * nonce = NULL;
   int result = U_CALLBACK_CONTINUE;
-  char * redirect_url, ** resp_type_array = NULL, * authorization_code = NULL, * access_token = NULL, * id_token = NULL, * expires_in_str = NULL, * iat_str = NULL, * query_parameters = NULL, * state = NULL;
+  char * redirect_url, ** resp_type_array = NULL, * authorization_code = NULL, * access_token = NULL, * id_token = NULL, * expires_in_str = NULL, * iat_str = NULL, * query_parameters = NULL, * state = NULL, * str_request = NULL;
   json_t * j_auth_result = NULL, * j_request = NULL;
   time_t now;
-  int ret, implicit_flow = 1, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NULL_FLAG;
+  int ret, implicit_flow = 1, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NULL_FLAG, check_request = 0;
   struct _u_map map_query;
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
@@ -2646,8 +2682,42 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
     nonce = u_map_get(get_map(request), "nonce");
   }
 
-  if (o_strlen(u_map_get(get_map(request), "request"))) {
-    j_request = validate_jwt_request(config, u_map_get(get_map(request), "request"));
+  if (json_object_get(config->j_params, "request-uri-allow") != json_false()) {
+    if (o_strlen(u_map_get(get_map(request), "request")) && o_strlen(u_map_get(get_map(request), "request_uri"))) {
+      // parameters request and request_uri at the same time is forbidden
+      if (u_map_get(get_map(request), "redirect_uri") != NULL) {
+        response->status = 302;
+        redirect_url = msprintf("%s#error=invalid_request%s", u_map_get(get_map(request), "redirect_uri"), state);
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+      } else {
+        response->status = 403;
+      }
+      ret = G_ERROR_PARAM;
+    } else if (ret == G_OK && o_strlen(u_map_get(get_map(request), "request_uri"))) {
+      if ((str_request = get_request_from_uri(config, u_map_get(get_map(request), "request_uri"))) == NULL) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - Error getting request from uri %s", u_map_get(get_map(request), "request_uri"));
+        if (u_map_get(get_map(request), "redirect_uri") != NULL) {
+          response->status = 302;
+          redirect_url = msprintf("%s#error=invalid_request%s", u_map_get(get_map(request), "redirect_uri"), state);
+          ulfius_add_header_to_response(response, "Location", redirect_url);
+          o_free(redirect_url);
+        } else {
+          response->status = 403;
+        }
+        ret = G_ERROR_PARAM;
+      } else {
+        j_request = validate_jwt_request(config, str_request);
+        check_request = 1;
+      }
+      o_free(str_request);
+    } else if (ret == G_OK && o_strlen(u_map_get(get_map(request), "request"))) {
+      j_request = validate_jwt_request(config, u_map_get(get_map(request), "request"));
+      check_request = 1;
+    }
+  }
+  
+  if (ret == G_OK && check_request) {
     if (check_result_value(j_request, G_ERROR_UNAUTHORIZED)) {
       if (u_map_get(get_map(request), "redirect_uri") != NULL) {
         response->status = 302;
@@ -3382,6 +3452,14 @@ static json_t * check_parameters (json_t * j_params) {
           ret = G_ERROR_PARAM;
         }
       }
+    }
+    if (json_object_get(j_params, "request-uri-allow") != NULL && !json_is_boolean(json_object_get(j_params, "request-uri-allow"))) {
+      json_array_append_new(j_error, json_string("Property 'request-uri-allow' is optional and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "request-uri-allow-https-non-secure") != NULL && !json_is_boolean(json_object_get(j_params, "request-uri-allow-https-non-secure"))) {
+      json_array_append_new(j_error, json_string("Property 'request-uri-allow-https-non-secure' is optional and must be a boolean"));
+      ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "scope") != NULL) {
       if (!json_is_array(json_object_get(j_params, "scope"))) {
