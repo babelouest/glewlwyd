@@ -33,7 +33,7 @@ struct _u_request admin_req;
 
 START_TEST(test_glwd_oidc_discovery_default_test)
 {
-  json_t * j_result = json_loads("{\"issuer\":\"https://glewlwyd.tld\",\"authorization_endpoint\":\"http://localhost:4593/api/oidc/auth\",\"token_endpoint\":\"http://localhost:4593/api/oidc/token\",\"userinfo_endpoint\":\"http://localhost:4593/api/oidc/userinfo\",\"jwks_uri\":\"http://localhost:4593/api/oidc/jwks\",\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\"],\"token_endpoint_auth_signing_alg_values_supported\":[\"HS256\"],\"scopes_supported\":[\"openid\"],\"response_types_supported\":[\"code\",\"id_token\",\"token id_token\",\"code id_token\",\"code token id_token\",\"none\",\"password\",\"token\",\"client_credentials\",\"refresh_token\"],\"response_modes_supported\":[\"query\",\"fragment\"],\"grant_types_supported\":[\"authorization_code\",\"implicit\"],\"display_values_supported\":[\"page\",\"touch\",\"wap\"],\"claim_types_supported\":[\"normal\"],\"claims_supported\":[],\"ui_locales_supported\":[\"en\",\"fr\"],\"claims_parameter_supported\":true,\"request_parameter_supported\":false,\"request_uri_parameter_supported\":false,\"require_request_uri_registration\":false}", JSON_DECODE_ANY, NULL);
+  json_t * j_result = json_loads("{\"issuer\":\"https://glewlwyd.tld\",\"authorization_endpoint\":\"http://localhost:4593/api/oidc/auth\",\"token_endpoint\":\"http://localhost:4593/api/oidc/token\",\"userinfo_endpoint\":\"http://localhost:4593/api/oidc/userinfo\",\"jwks_uri\":\"http://localhost:4593/api/oidc/jwks\",\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\"],\"token_endpoint_auth_signing_alg_values_supported\":[\"HS256\"],\"scopes_supported\":[\"openid\"],\"response_types_supported\":[\"code\",\"id_token\",\"token id_token\",\"code id_token\",\"code token id_token\",\"none\",\"password\",\"token\",\"client_credentials\",\"refresh_token\"],\"response_modes_supported\":[\"query\",\"fragment\"],\"grant_types_supported\":[\"authorization_code\",\"implicit\"],\"display_values_supported\":[\"page\",\"touch\",\"wap\"],\"claim_types_supported\":[\"normal\"],\"claims_supported\":[],\"ui_locales_supported\":[\"en\",\"fr\"],\"claims_parameter_supported\":true,\"request_parameter_supported\":true,\"request_uri_parameter_supported\":true,\"require_request_uri_registration\":false}", JSON_DECODE_ANY, NULL);
   
   ck_assert_ptr_ne(j_result, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/oidc/.well-known/openid-configuration", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
@@ -45,7 +45,7 @@ END_TEST
 
 START_TEST(test_glwd_oidc_discovery_add_plugin)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssssisisisososososososos[{ssss}{ssss}]s[s]}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssssisisisosososososososos[{ssss}{ssss}]s[s]}}",
                                 "module",
                                 "oidc",
                                 "name",
@@ -118,6 +118,8 @@ START_TEST(test_glwd_oidc_discovery_add_plugin)
                                   json_true(),
                                   "auth-type-refresh-enabled",
                                   json_true(),
+                                  "request-parameter-allow",
+                                  json_false(),
                                   "claims",
                                     "name",
                                     "claim1",
