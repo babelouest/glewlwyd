@@ -24,13 +24,29 @@
 #define CLIENT_PUBLIC "client1_id"
 #define CLIENT_ERROR "error"
 #define CLIENT_SECRET "secret"
-#define REDIRECT_URI "../../test-oauth2.html?param=client4"
+#define REDIRECT_URI "../../test-oidc.html?param=client4"
+#define REDIRECT_URI_PUBLIC "../../test-oidc.html?param=client1_cb1"
 #define RESPONSE_TYPE "id_token token"
 #define NONCE_TEST "nonce5678"
 #define STATE_TEST "abcxyz"
 
 struct _u_request user_req;
 char * code;
+
+static int callback_request_uri (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ulfius_set_string_body_response(response, 200, (const char *)user_data);
+  return U_CALLBACK_COMPLETE;
+}
+
+static int callback_request_uri_status_404 (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  response->status = 404;
+  return U_CALLBACK_COMPLETE;
+}
+
+static int callback_request_uri_incomplete_jwt (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ulfius_set_string_body_response(response, 200, (const char *)(user_data+1));
+  return U_CALLBACK_COMPLETE;
+}
 
 START_TEST(test_oidc_request_jwt_redirect_login)
 {
@@ -71,6 +87,33 @@ START_TEST(test_oidc_request_jwt_response_ok)
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
+  jwt_add_grant(jwt_request, "scope", SCOPE_LIST);
+  jwt_add_grant(jwt_request, "state", "xyzabcd");
+  jwt_add_grant(jwt_request, "nonce", "nonce1234");
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  url = msprintf("%s/oidc/auth?g_continue&request=%s", SERVER_URI, request);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "id_token="), 1);
+  
+  o_free(url);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_jwt_client_public_response_ok)
+{
+  jwt_t * jwt_request = NULL;
+  char * url, * request;
+  jwt_new(&jwt_request);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_NONE, NULL, 0), 0);
+  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
+  jwt_add_grant(jwt_request, "client_id", CLIENT_PUBLIC);
+  jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI_PUBLIC);
   jwt_add_grant(jwt_request, "scope", SCOPE_LIST);
   jwt_add_grant(jwt_request, "state", "xyzabcd");
   jwt_add_grant(jwt_request, "nonce", "nonce1234");
@@ -404,6 +447,138 @@ START_TEST(test_oidc_request_jwt_response_response_type_supersede)
 }
 END_TEST
 
+START_TEST(test_oidc_request_jwt_error_redirect_uri)
+{
+  jwt_t * jwt_request = NULL;
+  char * url, * request;
+  jwt_new(&jwt_request);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
+  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
+  jwt_add_grant(jwt_request, "client_id", CLIENT);
+  jwt_add_grant(jwt_request, "redirect_uri", "invalid");
+  jwt_add_grant(jwt_request, "scope", SCOPE_LIST);
+  jwt_add_grant(jwt_request, "state", "xyzabcd");
+  jwt_add_grant(jwt_request, "nonce", "nonce1234");
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  url = msprintf("%s/oidc/auth?g_continue&request=%s", SERVER_URI, request);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error="), 1);
+  
+  o_free(url);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_uri_jwt_response_ok)
+{
+  jwt_t * jwt_request = NULL;
+  char * url, * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  ulfius_init_instance(&instance, 7597, NULL, NULL);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
+  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
+  jwt_add_grant(jwt_request, "client_id", CLIENT);
+  jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
+  jwt_add_grant(jwt_request, "scope", SCOPE_LIST);
+  jwt_add_grant(jwt_request, "state", "xyzabcd");
+  jwt_add_grant(jwt_request, "nonce", "nonce1234");
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  ulfius_add_endpoint_by_val(&instance, "GET", NULL, "/", 0, &callback_request_uri, request);
+  ulfius_start_framework(&instance);
+  
+  url = msprintf("%s/oidc/auth?g_continue&request_uri=http://localhost:7597/", SERVER_URI);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "id_token="), 1);
+  
+  ulfius_clean_instance(&instance);
+  o_free(url);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_uri_jwt_no_connection)
+{  
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/oidc/auth?g_continue&request_uri=http://localhost:7597/", NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+}
+END_TEST
+
+START_TEST(test_oidc_request_uri_jwt_connection_error)
+{
+  jwt_t * jwt_request = NULL;
+  char * url, * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  ulfius_init_instance(&instance, 7597, NULL, NULL);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
+  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
+  jwt_add_grant(jwt_request, "client_id", CLIENT);
+  jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
+  jwt_add_grant(jwt_request, "scope", SCOPE_LIST);
+  jwt_add_grant(jwt_request, "state", "xyzabcd");
+  jwt_add_grant(jwt_request, "nonce", "nonce1234");
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  ulfius_add_endpoint_by_val(&instance, "GET", NULL, "/", 0, &callback_request_uri_status_404, request);
+  ulfius_start_framework(&instance);
+  
+  url = msprintf("%s/oidc/auth?g_continue&request_uri=http://localhost:7597/", SERVER_URI);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_clean_instance(&instance);
+  o_free(url);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_uri_jwt_response_incomplete)
+{
+  jwt_t * jwt_request = NULL;
+  char * url, * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  ulfius_init_instance(&instance, 7597, NULL, NULL);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
+  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
+  jwt_add_grant(jwt_request, "client_id", CLIENT);
+  jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
+  jwt_add_grant(jwt_request, "scope", SCOPE_LIST);
+  jwt_add_grant(jwt_request, "state", "xyzabcd");
+  jwt_add_grant(jwt_request, "nonce", "nonce1234");
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  ulfius_add_endpoint_by_val(&instance, "GET", NULL, "/", 0, &callback_request_uri_incomplete_jwt, request);
+  ulfius_start_framework(&instance);
+  
+  url = msprintf("%s/oidc/auth?g_continue&request_uri=http://localhost:7597/", SERVER_URI);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_clean_instance(&instance);
+  o_free(url);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -413,6 +588,7 @@ static Suite *glewlwyd_suite(void)
   tc_core = tcase_create("test_oidc_implicit");
   tcase_add_test(tc_core, test_oidc_request_jwt_redirect_login);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_ok);
+  tcase_add_test(tc_core, test_oidc_request_jwt_client_public_response_ok);
   tcase_add_test(tc_core, test_oidc_request_jwt_unsigned_error);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_invalid_signature);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_error_no_response_type_in_request);
@@ -424,6 +600,11 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_request_jwt_response_state_supersede);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_aud_differ_from_session);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_response_type_supersede);
+  tcase_add_test(tc_core, test_oidc_request_jwt_error_redirect_uri);
+  tcase_add_test(tc_core, test_oidc_request_uri_jwt_response_ok);
+  tcase_add_test(tc_core, test_oidc_request_uri_jwt_no_connection);
+  tcase_add_test(tc_core, test_oidc_request_uri_jwt_connection_error);
+  tcase_add_test(tc_core, test_oidc_request_uri_jwt_response_incomplete);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
@@ -490,8 +671,18 @@ int main(int argc, char *argv[])
     if (ulfius_send_http_request(&scope_req, &scope_resp) != U_OK) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "Grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
     } else {
-      do_test = 1;
+      o_free(scope_req.http_url);
+      scope_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT_PUBLIC);
+      j_body = json_pack("{ss}", "scope", SCOPE_LIST);
+      ulfius_set_json_body_request(&scope_req, j_body);
+      json_decref(j_body);
+      if (ulfius_send_http_request(&scope_req, &scope_resp) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "Grant scope '%s' for %s error", CLIENT_PUBLIC, SCOPE_LIST);
+      } else {
+        do_test = 1;
+      }
     }
+
     ulfius_clean_response(&scope_resp);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error auth password");
@@ -521,10 +712,15 @@ int main(int argc, char *argv[])
   
   j_body = json_pack("{ss}", "scope", "");
   ulfius_set_json_body_request(&scope_req, j_body);
-  json_decref(j_body);
   if (ulfius_send_http_request(&scope_req, NULL) != U_OK) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "Remove grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
   }
+  o_free(scope_req.http_url);
+  scope_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
+  if (ulfius_send_http_request(&scope_req, NULL) != U_OK) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Remove grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
+  }
+  json_decref(j_body);
   
   url = msprintf("%s/auth/", SERVER_URI);
   run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
