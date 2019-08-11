@@ -2682,7 +2682,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
     nonce = u_map_get(get_map(request), "nonce");
   }
 
-  if (json_object_get(config->j_params, "request-uri-allow") != json_false()) {
+  if (json_object_get(config->j_params, "request-parameter-allow") != json_false()) {
     if (o_strlen(u_map_get(get_map(request), "request")) && o_strlen(u_map_get(get_map(request), "request_uri"))) {
       // parameters request and request_uri at the same time is forbidden
       if (u_map_get(get_map(request), "redirect_uri") != NULL) {
@@ -3432,8 +3432,8 @@ static json_t * check_parameters (json_t * j_params) {
         }
       }
     }
-    if (json_object_get(j_params, "request-uri-allow") != NULL && !json_is_boolean(json_object_get(j_params, "request-uri-allow"))) {
-      json_array_append_new(j_error, json_string("Property 'request-uri-allow' is optional and must be a boolean"));
+    if (json_object_get(j_params, "request-parameter-allow") != NULL && !json_is_boolean(json_object_get(j_params, "request-parameter-allow"))) {
+      json_array_append_new(j_error, json_string("Property 'request-parameter-allow' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "request-uri-allow-https-non-secure") != NULL && !json_is_boolean(json_object_get(j_params, "request-uri-allow-https-non-secure"))) {
