@@ -778,7 +778,7 @@ static int is_authorization_type_enabled(struct _oidc_config * config, uint auth
  */
 static json_t * check_client_valid_without_secret(struct _oidc_config * config, const char * client_id, const char * redirect_uri, unsigned short authorization_type) {
   json_t * j_client, * j_element = NULL, * j_return;
-  int uri_found, authorization_type_enabled;
+  int uri_found = 0, authorization_type_enabled;
   size_t index = 0;
 
   j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, client_id);
@@ -842,7 +842,7 @@ static json_t * check_client_valid_without_secret(struct _oidc_config * config, 
  */
 static json_t * check_client_valid(struct _oidc_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * client_post_login, const char * client_post_password, const char * redirect_uri, unsigned short authorization_type) {
   json_t * j_client, * j_element = NULL, * j_return;
-  int uri_found, authorization_type_enabled;
+  int uri_found = 0, authorization_type_enabled;
   size_t index = 0;
   const char * client_password = NULL;
   
@@ -1917,7 +1917,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
         break;
       }
     } else {
-      j_client = check_client_valid_without_secret(config, client_id, u_map_get(get_map(request), "redirect_uri"), auth_type);
+      j_client = check_client_valid_without_secret(config, client_id, redirect_uri, auth_type);
       if (!check_result_value(j_client, G_OK)) {
         // client is not authorized
         response->status = 302;
@@ -2719,47 +2719,26 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   
   if (ret == G_OK && check_request) {
     if (check_result_value(j_request, G_ERROR_UNAUTHORIZED)) {
-      if (u_map_get(get_map(request), "redirect_uri") != NULL) {
-        response->status = 302;
-        redirect_url = msprintf("%s#error=unauthorized_client%s", u_map_get(get_map(request), "redirect_uri"), state);
-        ulfius_add_header_to_response(response, "Location", redirect_url);
-        o_free(redirect_url);
-      } else {
-        response->status = 403;
-      }
+      response->status = 403;
       ret = G_ERROR_PARAM;
     } else if (!check_result_value(j_request, G_OK)) {
-      if (u_map_get(get_map(request), "redirect_uri") != NULL) {
-        response->status = 302;
-        redirect_url = msprintf("%s#error=invalid_request%s", u_map_get(get_map(request), "redirect_uri"), state);
-        ulfius_add_header_to_response(response, "Location", redirect_url);
-        o_free(redirect_url);
-      } else {
-        response->status = 403;
-      }
+      response->status = 403;
       ret = G_ERROR_PARAM;
     } else {
       if (!json_string_length(json_object_get(json_object_get(j_request, "request"), "client_id")) || (u_map_has_key(get_map(request), "client_id") && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_request, "request"), "client_id")), u_map_get(get_map(request), "client_id")))) {
         // url parameter client_id can't differ from request parameter if set and must be present in request
-        if (u_map_get(get_map(request), "redirect_uri") != NULL) {
-          response->status = 302;
-          redirect_url = msprintf("%s#error=invalid_request%s", u_map_get(get_map(request), "redirect_uri"), state);
-          ulfius_add_header_to_response(response, "Location", redirect_url);
-          o_free(redirect_url);
-        } else {
-          response->status = 403;
-        }
+        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - client_id missing or invalid");
+        response->status = 403;
         ret = G_ERROR_PARAM;
       } else if (!json_string_length(json_object_get(json_object_get(j_request, "request"), "response_type")) || (u_map_has_key(get_map(request), "response_type") && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_request, "request"), "response_type")), u_map_get(get_map(request), "response_type")))) {
         // url parameter response_type can't differ from request parameter if set and must be present in request
-        if (u_map_get(get_map(request), "redirect_uri") != NULL) {
-          response->status = 302;
-          redirect_url = msprintf("%s#error=invalid_request%s", u_map_get(get_map(request), "redirect_uri"), state);
-          ulfius_add_header_to_response(response, "Location", redirect_url);
-          o_free(redirect_url);
-        } else {
-          response->status = 403;
-        }
+        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - response_type missing or invalid");
+        response->status = 403;
+        ret = G_ERROR_PARAM;
+      } else if (!json_string_length(json_object_get(json_object_get(j_request, "request"), "redirect_uri"))) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - redirect_uri missing");
+        // redirect_uri is mandatory
+        response->status = 403;
         ret = G_ERROR_PARAM;
       } else {
         response_type = json_string_value(json_object_get(json_object_get(j_request, "request"), "response_type"));
