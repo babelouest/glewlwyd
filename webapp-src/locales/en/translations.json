@@ -416,6 +416,8 @@
     "mod-glwd-op-tos-uri-ph": "Ex: https://glewlwyd.tld/tos",
     "mod-glwd-jwks-show": "JWKS available",
     "mod-glwd-jwks-x5c": "X5C certificate chain (optional)",
+    "mod-glwd-request-parameter-allow": "Allow passing request parameter as JWT",
+    "mod-glwd-request-uri-allow-https-non-secure": "Allow request_uri to a unsecure https:// uri",
     "requires-admin-scope": "Administrator scope required",
     "success-api-delete-user": "User deleted",
     "error-api-delete-user": "Error while removing user",
