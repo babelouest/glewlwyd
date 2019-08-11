@@ -213,7 +213,7 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
     if (json_string_length(json_object_get(j_parameters, "client-id-prefix"))) {
       prefix = json_string_value(json_object_get(j_parameters, "client-id-prefix"));
     }
-    *cls = (void*)json_pack("[{ss+ ss ss so s[ssssss] s[sss] s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so ss s[ssssssss] s[ss] s[ss] so}]",
+    *cls = (void*)json_pack("[{ss+ ss ss so s[ssssss] s[sss] s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so ss s[ssssssss] s[ss] s[ss] so}{ss+ ss ss so ss s[sss] s[s] so}]",
                               "client_id",
                               prefix,
                               "client1_id",
@@ -262,7 +262,7 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
                               "Client mock 3",
                               "confidential",
                               json_true(),
-                              "client_secret",
+                              "password",
                               "password",
                               "authorization_type",
                                 "code",
@@ -279,6 +279,25 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
                               "scope",
                                 "scope2",
                                 "scope3",
+                              "enabled",
+                              json_true(),
+                              "client_id",
+                              prefix,
+                              "client4_id",
+                              "name",
+                              "client4",
+                              "description",
+                              "Client mock 4",
+                              "confidential",
+                              json_true(),
+                              "client_secret",
+                              "secret",
+                              "authorization_type",
+                                "code",
+                                "token",
+                                "id_token",
+                              "redirect_uri",
+                                "../../test-oidc.html?param=client4",
                               "enabled",
                               json_true());
     y_log_message(Y_LOG_LEVEL_DEBUG, "client_module_init - success %s %s, prefix: '%s'", config->profile_scope, config->admin_scope, prefix);
