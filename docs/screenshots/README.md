@@ -22,6 +22,10 @@ Screenshots available
 
 ![mod-client-list](mod-client-list.png)
 
+![scope-list](scope-list.png)
+
+![scope-add](scope-add.png)
+
 ![mod-scheme-list](mod-scheme-list.png)
 
 ![mod-user-database](mod-user-database.png)
