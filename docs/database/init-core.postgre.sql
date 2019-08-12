@@ -89,6 +89,7 @@ CREATE TABLE g_scope (
   gs_display_name VARCHAR(256) DEFAULT '',
   gs_description VARCHAR(512),
   gs_password_required SMALLINT DEFAULT 1,
+  gs_password_max_age INTEGER DEFAULT 0,
   gs_enabled SMALLINT DEFAULT 1
 );
 
