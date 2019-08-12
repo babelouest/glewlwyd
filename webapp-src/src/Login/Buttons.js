@@ -91,10 +91,12 @@ class Buttons extends Component {
   }
 
 	render() {
-    var bAnother = "", asterisk = "";
-    var bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")} disabled={!this.state.canContinue}>
-      <i className="fas fa-play btn-icon"></i>{i18next.t("login.continue")}
-    </button>;
+    var bAnother = "", asterisk = "", bContinue = "";
+    if (this.state.canContinue) {
+      bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")} disabled={!this.state.canContinue}>
+        <i className="fas fa-play btn-icon"></i>{i18next.t("login.continue")}
+      </button>;
+    }
     var bGrant = <button type="button" className="btn btn-primary" onClick={this.clickGrant} title={this.state.bGrantTitle||""}>
       <i className="fas fa-user-cog btn-icon"></i>{this.state.bGrant}
     </button>;
