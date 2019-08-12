@@ -126,8 +126,7 @@
     {
       "scheme_name": "pwd",
       "scheme_display_name": "login.password-title",
-      "scheme_type": "retype-password",
-      "scheme_default": ["profile", "admin"]
+      "scheme_type": "retype-password"
     }
   ]
 }
