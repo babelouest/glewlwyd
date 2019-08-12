@@ -48,7 +48,7 @@ class Navbar extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
       });
     } else {
-      var schemeDefault = "";
+      var schemeDefault = false;
       this.state.config.sessionSchemes.forEach((scheme) => {
         if (scheme.scheme_default) {
           scheme.scheme_default.forEach((page) => {
@@ -58,7 +58,7 @@ class Navbar extends Component {
           });
         }
       });
-      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURI([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURI(this.state.config.profile_scope) + "&scheme=" + encodeURI(schemeDefault);
+      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURI([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURI(this.state.config.profile_scope) +  + (schemeDefault?("&scheme="+encodeURI(schemeDefault)):"");
     }
   }
 
@@ -80,7 +80,7 @@ class Navbar extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
       });
     } else {
-      var schemeDefault = "";
+      var schemeDefault = false;
       this.state.config.sessionSchemes.forEach((scheme) => {
         if (scheme.scheme_default) {
           scheme.scheme_default.forEach((page) => {
@@ -90,7 +90,7 @@ class Navbar extends Component {
           });
         }
       });
-      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURI([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURI(this.state.config.profile_scope) + "&scheme=" + encodeURI(schemeDefault) + "&prompt=login";
+      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURI([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURI(this.state.config.profile_scope) + (schemeDefault?("&scheme="+encodeURI(schemeDefault)):"");
     }
   }
 
