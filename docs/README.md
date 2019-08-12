@@ -8,6 +8,7 @@ Tis folder contains full documentation for Glewlwyd and additional resources.
 
 - [Install Glewlwyd](INSTALL.md)
 - [Getting started](GETTING_STARTED)
+- [Scopes](SCOPE.md)
 - [User documentation](USER.md)
 
 ### Modules

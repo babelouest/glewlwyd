@@ -2,7 +2,7 @@
 
 - [Installation](#installation)
 - [First connection to the administration page](#first-connection-to-the-administration-page)
-- [Configure backends, schemes and plugins](#configure-backends-schemes-and-plugins)
+- [Configure backends, schemes, scopes and plugins](#configure-backends-schemes-and-plugins)
   - [User backend modules](#user-backend-modules)
     - [Database backend](#database-backend)
     - [LDAP backend](#ldap-backend)
@@ -14,6 +14,7 @@
     - [E-mail code scheme](#e-mail-code-scheme)
     - [Webauthn scheme](#webauthn-scheme)
     - [HOTP/TOTP scheme](#hotptotp-scheme)
+  - [Scopes](#scopes)
   - [Plugins](#plugins)
     - [Glewlwyd Oauth2 plugin](#glewlwyd-oauth2-plugin)
     - [OpenID Connect Core Plugin](#openid-connect-core-plugin)
@@ -146,11 +147,21 @@ The OTP Schema implements authentification based on One-Time-Password using OATH
 
 Read the full [documentation](OTP.md).
 
+### Scopes
+
+![scope-list](screenshots/scope-list.png)
+
+Go to `parameters/Scopes` menu in the navigation tab. Click on the `+` button to add a new scope.
+
+![scope-add](screenshots/scope-add.png)
+
+Read the full [documentation for the scope management](SCOPE.md).
+
 ### Plugins
 
 ![plugin-list](screenshots/plugin-list.png)
 
-Go to `parameters/plugins` menu in the navigation tab. Click on the `+` button to add a new user backend instance. The plugins available are:
+Go to `parameters/plugins` menu in the navigation tab. Click on the `+` button to add a new plugin instance. The plugins available are:
 
 - Glewlwyd Oauth2 plugin
 - OpenID Connect Core
@@ -389,7 +400,7 @@ Then you should see the new property in the user edit modal:
 
 ### Non-password authentication
 
-Glewlwyd allows non-password authentication. You can use any other scheme installed to authenticate a user.
+Glewlwyd allows non-password authentication. You can use any other scheme installed to authenticate a user. If a required scope has the option `Password` checked, the password will be mandatory to grant access to this scope.
 
 One or more schemes schemes must be already installed: E-mail code, Webauthn or HOTP/TOTP. Then the scheme must be defined in the file `webapp/config.json` in the `sessionSchemes` array. The pattern is the following:
 
