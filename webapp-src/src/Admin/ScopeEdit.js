@@ -16,6 +16,7 @@ class ScopeEdit extends Component {
     this.changeName = this.changeName.bind(this);
     this.changeDisplayName = this.changeDisplayName.bind(this);
     this.changeDescription = this.changeDescription.bind(this);
+    this.changePwdMaxAge = this.changePwdMaxAge.bind(this);
     this.togglePasswordRequired = this.togglePasswordRequired.bind(this);
     this.addScheme = this.addScheme.bind(this);
     this.handleRemoveScheme = this.handleRemoveScheme.bind(this);
@@ -53,6 +54,12 @@ class ScopeEdit extends Component {
   changeName(e) {
     var scope = this.state.scope;
     scope.name = e.target.value;
+    this.setState({scope: scope});
+  }
+  
+  changePwdMaxAge(e) {
+    var scope = this.state.scope;
+    scope.password_max_age = parseInt(e.target.value);
     this.setState({scope: scope});
   }
   
@@ -210,7 +217,7 @@ class ScopeEdit extends Component {
                   <div className="input-group-prepend">
                     <label className="input-group-text" className="input-group-text" htmlFor="scope-name">{i18next.t("admin.scope-name")}</label>
                   </div>
-                  <input type="text" className="form-control" id="scope-name" placeholder={i18next.t("admin.scope-name-ph")} maxLength="128" value={this.state.scope.name} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
+                  <input type="text" className="form-control" id="scope-name" placeholder={i18next.t("admin.scope-name-ph")} maxLength="128" value={this.state.scope.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
                 </div>
               </div>
               <div className="form-group">
@@ -218,7 +225,7 @@ class ScopeEdit extends Component {
                   <div className="input-group-prepend">
                     <label className="input-group-text" htmlFor="scope-display-name">{i18next.t("admin.scope-display-name")}</label>
                   </div>
-                  <input type="text" className="form-control" id="scope-display-name" placeholder={i18next.t("admin.scope-display-name-ph")} maxLength="256" value={this.state.scope.display_name} onChange={(e) => this.changeDisplayName(e)}/>
+                  <input type="text" className="form-control" id="scope-display-name" placeholder={i18next.t("admin.scope-display-name-ph")} maxLength="256" value={this.state.scope.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
                 </div>
               </div>
               <div className="form-group">
@@ -226,12 +233,12 @@ class ScopeEdit extends Component {
                   <div className="input-group-prepend">
                     <label className="input-group-text" htmlFor="scope-description">{i18next.t("admin.scope-description")}</label>
                   </div>
-                  <input type="text" className="form-control" id="scope-description" placeholder={i18next.t("admin.scope-description-ph")} maxLength="512" value={this.state.scope.description} onChange={(e) => this.changeDescription(e)}/>
+                  <input type="text" className="form-control" id="scope-description" placeholder={i18next.t("admin.scope-description-ph")} maxLength="512" value={this.state.scope.description||""} onChange={(e) => this.changeDescription(e)}/>
                 </div>
               </div>
               <hr/>
               <div className="form-group">
-                <h4>{i18next.t("admin.scope-auth-schemes-title")}</h4>
+                <h4>{i18next.t("admin.scope-auth-title")}</h4>
               </div>
               <div className="form-group">
                 <div className="input-group mb-3">
@@ -242,6 +249,17 @@ class ScopeEdit extends Component {
                     <input type="checkbox" className="form-control" id="scope-scheme-password" onChange={(e) => this.togglePasswordRequired(e)} checked={this.state.scope.password_required} />
                   </div>
                 </div>
+              </div>
+              <div className="form-group">
+                <div className="input-group mb-3">
+                  <div className="input-group-prepend">
+                    <label className="input-group-text" className="input-group-text" htmlFor="scope-password-max-age">{i18next.t("admin.scope-password-max-age")}</label>
+                  </div>
+                  <input type="number" step="1" min="0" className="form-control" id="password-max-age" placeholder={i18next.t("admin.scope-password-max-age-ph")} value={this.state.scope.password_max_age||0} onChange={(e) => this.changePwdMaxAge(e)} />
+                </div>
+              </div>
+              <div className="form-group">
+                <h4>{i18next.t("admin.scope-auth-schemes-title")}</h4>
               </div>
               <div className="form-group">
                 {groupList}
