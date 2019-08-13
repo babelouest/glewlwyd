@@ -2094,7 +2094,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     // If parameter prompt=none is set, id_token_hint must be set and correspond to the last id_token provided by the client for the current user
     if (0 == o_strcmp("none", prompt)) {
       if (o_strlen(id_token_hint)) {
-        if (!jwt_decode(&jwt_id_token_hint, id_token_hint, config->glewlwyd_resource_config->jwt_decode_key, o_strlen(config->glewlwyd_resource_config->jwt_decode_key)) && (jwt_get_alg(jwt_id_token_hint) == config->glewlwyd_resource_config->jwt_alg)) {
+        if (!jwt_decode(&jwt_id_token_hint, id_token_hint, (const unsigned char *)config->glewlwyd_resource_config->jwt_decode_key, o_strlen(config->glewlwyd_resource_config->jwt_decode_key)) && (jwt_get_alg(jwt_id_token_hint) == config->glewlwyd_resource_config->jwt_alg)) {
           j_last_token = get_last_id_token(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), client_id);
           if (check_result_value(j_last_token, G_OK)) {
             id_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, id_token_hint);
