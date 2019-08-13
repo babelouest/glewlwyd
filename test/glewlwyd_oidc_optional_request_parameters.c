@@ -47,7 +47,7 @@ START_TEST(test_oidc_optional_request_parameters_display)
 }
 END_TEST
 
-START_TEST(test_oidc_optional_request_parameters_prompt_none)
+START_TEST(test_oidc_optional_request_parameters_prompt_none_no_id_token_hint)
 {
   struct _u_response resp;
   ulfius_init_response(&resp);
@@ -57,15 +57,85 @@ START_TEST(test_oidc_optional_request_parameters_prompt_none)
   user_req.http_verb = o_strdup("GET");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "error=invalid_request"), NULL);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
+START_TEST(test_oidc_optional_request_parameters_prompt_none_id_token_hint_invalid)
+{
+  struct _u_response resp;
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/oidc/auth?response_type=%s&prompt=none&id_token_hint=error&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "error=invalid_request"), NULL);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
+START_TEST(test_oidc_optional_request_parameters_prompt_none_id_token_not_last)
+{
+  struct _u_response resp;
+  char * id_token;
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&id_token_hint=error&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
-  ck_assert_ptr_eq(o_strstr(u_map_get(resp.map_header, "Location"), "access_token="), NULL);
-  ck_assert_ptr_eq(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
+  id_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "id_token=") + o_strlen("id_token="));
+  if (o_strchr(id_token, '&')) {
+    *(o_strchr(id_token, '&')) = '\0';
+  }
   ulfius_clean_response(&resp);
   
-  char * url = msprintf("%s/oidc/auth?response_type=%s&prompt=none&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
-  int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=interaction_required");
-  o_free(url);
-  ck_assert_int_eq(res, 1);
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/oidc/auth?response_type=%s&prompt=none&id_token_hint=error&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "error=invalid_request"), NULL);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
+START_TEST(test_oidc_optional_request_parameters_prompt_none_id_token_last)
+{
+  struct _u_response resp;
+  char * id_token;
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&id_token_hint=error&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
+  id_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "id_token=") + o_strlen("id_token="));
+  if (o_strchr(id_token, '&')) {
+    *(o_strchr(id_token, '&')) = '\0';
+  }
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/oidc/auth?response_type=%s&prompt=none&id_token_hint=%s&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, id_token, CLIENT, SCOPE_LIST);
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -149,7 +219,10 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd implicit");
   tc_core = tcase_create("test_oauth2_implicit");
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_display);
-  tcase_add_test(tc_core, test_oidc_optional_request_parameters_prompt_none);
+  tcase_add_test(tc_core, test_oidc_optional_request_parameters_prompt_none_no_id_token_hint);
+  tcase_add_test(tc_core, test_oidc_optional_request_parameters_prompt_none_id_token_hint_invalid);
+  tcase_add_test(tc_core, test_oidc_optional_request_parameters_prompt_none_id_token_not_last);
+  tcase_add_test(tc_core, test_oidc_optional_request_parameters_prompt_none_id_token_last);
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_prompt);
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_ui_locales);
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_login_hint);
