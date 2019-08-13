@@ -255,9 +255,10 @@ class ScopeEdit extends Component {
                   <div className="input-group-prepend">
                     <label className="input-group-text" className="input-group-text" htmlFor="scope-password-max-age">{i18next.t("admin.scope-password-max-age")}</label>
                   </div>
-                  <input type="number" step="1" min="0" className="form-control" id="password-max-age" placeholder={i18next.t("admin.scope-password-max-age-ph")} value={this.state.scope.password_max_age||0} onChange={(e) => this.changePwdMaxAge(e)} />
+                  <input type="number" step="1" min="0" disabled={!this.state.scope.password_required} className="form-control" id="password-max-age" placeholder={i18next.t("admin.scope-password-max-age-ph")} value={this.state.scope.password_max_age||0} onChange={(e) => this.changePwdMaxAge(e)} />
                 </div>
               </div>
+              <hr/>
               <div className="form-group">
                 <h4>{i18next.t("admin.scope-auth-schemes-title")}</h4>
               </div>
