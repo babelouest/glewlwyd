@@ -281,6 +281,14 @@
       </div>
       <div class="row">
         <div class="col-md-2">
+          <label for="access_token">id_token</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="id_token" name="id_token" value="" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
           <label for="url">url to test access_token</label>
         </div>
         <div class="col-md-2">
@@ -339,6 +347,7 @@
       $("#result").append("<div><strong>refresh_token</strong>: <code>" + params.refresh_token + "</code></div>");
     }
     if (params.id_token) {
+      $("#id_token").val(params.id_token);
       $("#result").append("<div><strong>id_token</strong>: <code>" + params.id_token + "</code></div>");
     }
 	};
@@ -361,7 +370,13 @@
       case "code token":
       case "code id_token token":
       case "none":
-        var url = glewlwyd_api + "/auth?response_type=" + $("#response_type").val() + "&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&nonce=" + $("#nonce").val() + "&prompt=" + $("#prompt").val() + "&display=" + $("#display").val() + "&scope=" + $("#scope").val().join(" ") + "&max_age=" + $("#max_age").val() + "&ui_locales=" + $("#ui_locales").val() + "&login_hint=" + $("#login_hint").val();
+        var promptParam = "";
+        if ($("#prompt").val() == "none" && $("#id_token").val()) {
+          promptParam = "&prompt=" + $("#prompt").val() + "&id_token_hint=" + $("#id_token").val();
+        } else {
+          promptParam = "&prompt=" + $("#prompt").val();
+        }
+        var url = glewlwyd_api + "/auth?response_type=" + $("#response_type").val() + "&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&nonce=" + $("#nonce").val() + promptParam + "&display=" + $("#display").val() + "&scope=" + $("#scope").val().join(" ") + "&max_age=" + $("#max_age").val() + "&ui_locales=" + $("#ui_locales").val() + "&login_hint=" + $("#login_hint").val();
         window.location = url;
         break;
       case "authorization_code":

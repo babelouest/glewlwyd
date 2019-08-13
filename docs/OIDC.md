@@ -20,7 +20,6 @@ The following OpenID Connect Core functionalities are not supported yet:
 
 - [Address Claims](https://openid.net/specs/openid-connect-core-1_0.html#AddressClaim)
 - [Requesting Claims using Scope Values](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims)
-- [id_token_hint](https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest) in the authentication request parameters
 - [Self-Issued OpenID Provider](https://openid.net/specs/openid-connect-core-1_0.html#SelfIssued)
 - [id_token encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
 

@@ -343,6 +343,45 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * username
 }
 
 /**
+ * Return the id_token_hash of the last id_token provided to the client for the user
+ */
+static json_t * get_last_id_token(struct _oidc_config * config, const char * username, const char * client_id) {
+  json_t * j_query, * j_result = NULL, * j_return;
+  int res;
+  
+  j_query = json_pack("{sss[sss]s{ssss}sssi}",
+                      "table",
+                      GLEWLWYD_PLUGIN_OIDC_TABLE_ID_TOKEN,
+                      "columns",
+                        "gpoi_authorization_type AS authorization_type",
+                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpoi_issued_at) AS issued_at", "gpoi_issued_at AS issued_at", "EXTRACT(EPOCH FROM gpoi_issued_at) AS issued_at"),
+                        "gpoi_hash AS token_hash",
+                      "where",
+                        "gpoi_username",
+                        username,
+                        "gpoi_client_id",
+                        client_id,
+                      "order_by",
+                      "gpoi_id DESC",
+                      "limit",
+                      1);
+  res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result)) {
+      j_return = json_pack("{sisO}", "result", G_OK, "id_token", json_array_get(j_result, 0));
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_last_id_token - Error executing j_query");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  return j_return;
+}
+
+/**
  * Store a signature of the id_token in the database
  */
 static int serialize_id_token(struct _oidc_config * config, uint auth_type, const char * id_token, const char * username, const char * client_id, time_t now, const char * issued_for, const char * user_agent) {
@@ -1827,13 +1866,14 @@ static char * get_state_param(const char * state_value) {
  */
 static json_t * validate_endpoint_auth(const struct _u_request * request, struct _u_response * response, void * user_data, int auth_type, json_t * j_request, json_t * j_client_validated) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  char * redirect_url = NULL, * issued_for = NULL, ** scope_list = NULL, * state_param, * endptr = NULL;
-  const char * client_id = NULL, * redirect_uri = NULL, * scope = NULL, * display = NULL, * ui_locales = NULL, * login_hint = NULL, * prompt = NULL, * nonce = NULL, * max_age = NULL, * aud = NULL;
-  json_t * j_session = NULL, * j_client = NULL;
+  char * redirect_url = NULL, * issued_for = NULL, ** scope_list = NULL, * state_param, * endptr = NULL, * id_token_hash = NULL;
+  const char * client_id = NULL, * redirect_uri = NULL, * scope = NULL, * display = NULL, * ui_locales = NULL, * login_hint = NULL, * prompt = NULL, * nonce = NULL, * max_age = NULL, * aud = NULL, * id_token_hint = NULL;
+  json_t * j_session = NULL, * j_client = NULL, * j_last_token = NULL;
   json_t * j_return;
   struct _u_map additional_parameters;
   long int l_max_age;
   time_t now;
+  jwt_t * jwt_id_token_hint = NULL;
   
   additional_parameters.nb_values = 0;
   additional_parameters.keys = NULL;
@@ -1878,6 +1918,9 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     if (u_map_has_key(get_map(request), "max_age")) {
       max_age = u_map_get(get_map(request), "max_age");
     }
+    if (u_map_has_key(get_map(request), "id_token_hint")) {
+      id_token_hint = u_map_get(get_map(request), "id_token_hint");
+    }
     if (j_request != NULL) {
       client_id = json_string_value(json_object_get(j_request, "client_id"));
       redirect_uri = json_string_value(json_object_get(j_request, "redirect_uri"));
@@ -1889,6 +1932,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
       nonce = json_string_value(json_object_get(j_request, "nonce"));
       max_age = json_string_value(json_object_get(j_request, "max_age"));
       aud = json_string_value(json_object_get(j_request, "aud"));
+      id_token_hint = json_string_value(json_object_get(j_request, "id_token_hint"));
       if (state_param == NULL) {
         state_param = get_state_param(json_string_value(json_object_get(j_request, "state")));
       }
@@ -2047,6 +2091,59 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
       break;
     }
     
+    // If parameter prompt=none is set, id_token_hint must be set and correspond to the last id_token provided by the client for the current user
+    if (0 == o_strcmp("none", prompt)) {
+      if (o_strlen(id_token_hint)) {
+        if (!jwt_decode(&jwt_id_token_hint, id_token_hint, config->glewlwyd_resource_config->jwt_decode_key, o_strlen(config->glewlwyd_resource_config->jwt_decode_key)) && (jwt_get_alg(jwt_id_token_hint) == config->glewlwyd_resource_config->jwt_alg)) {
+          j_last_token = get_last_id_token(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), client_id);
+          if (check_result_value(j_last_token, G_OK)) {
+            id_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, id_token_hint);
+            if (0 != o_strcmp(id_token_hash, json_string_value(json_object_get(json_object_get(j_last_token, "id_token"), "token_hash")))) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - id_token_hint was not the last one provided to client '%s' for user '%s'", client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
+              response->status = 302;
+              redirect_url = msprintf("%s%serror=invalid_request%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+              ulfius_add_header_to_response(response, "Location", redirect_url);
+              o_free(redirect_url);
+              j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+              break;
+            }
+          } else if (check_result_value(j_last_token, G_ERROR_NOT_FOUND)) {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - no id_token was provided to client '%s' for user '%s'", client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
+            response->status = 302;
+            redirect_url = msprintf("%s%serror=invalid_request%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+            ulfius_add_header_to_response(response, "Location", redirect_url);
+            o_free(redirect_url);
+            j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+            break;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - Error get_last_id_token");
+            response->status = 302;
+            redirect_url = msprintf("%s%sserver_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+            ulfius_add_header_to_response(response, "Location", redirect_url);
+            o_free(redirect_url);
+            j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+            break;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - id_token has invalid content or signature");
+          response->status = 302;
+          redirect_url = msprintf("%s%serror=invalid_request%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          ulfius_add_header_to_response(response, "Location", redirect_url);
+          o_free(redirect_url);
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          break;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - no id_token provided in the request");
+        response->status = 302;
+        redirect_url = msprintf("%s%serror=invalid_request%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        break;
+      }
+    }
+
     if (aud != NULL && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), aud)) {
       // Redirect to login page
       u_map_put(&additional_parameters, "login_hint", aud);
@@ -2143,10 +2240,13 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
 
   o_free(issued_for);
   o_free(state_param);
+  o_free(id_token_hash);
   json_decref(j_session);
   json_decref(j_client);
+  json_decref(j_last_token);
   free_string_array(scope_list);
   u_map_clean(&additional_parameters);
+  jwt_free(jwt_id_token_hint);
   
   return j_return;
 }
