@@ -332,7 +332,7 @@ static int is_scheme_valid_for_session(struct config_elements * config, json_int
                         GLEWLWYD_TABLE_USER_SESSION_SCHEME,
                         "columns",
                           "guss_id",
-                          "guss_last_login",
+                          SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(guss_last_login) AS guss_last_login", "guss_last_login AS guss_last_login", "EXTRACT(EPOCH FROM guss_last_login) AS guss_last_login"),
                         "where",
                           "gus_id",
                           json_object_get(json_object_get(j_session, "session"), "gus_id"),
@@ -418,7 +418,7 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
         if (check_result_value(j_user, G_OK)) {
           json_object_set(j_cur_scope, "display_name", json_object_get(json_object_get(j_scope, "scope"), "display_name"));
           json_object_set(j_cur_scope, "description", json_object_get(json_object_get(j_scope, "scope"), "description"));
-          json_object_set(j_cur_scope, "password_authenticated", is_scheme_valid_for_session(config, 0, 0, json_integer_value(json_object_get(j_cur_scope, "password_max_age")), session_hash)?json_true():json_false());
+          json_object_set(j_cur_scope, "password_authenticated", is_scheme_valid_for_session(config, 0, 0, json_object_get(j_cur_scope, "password_required")==json_true()?json_integer_value(json_object_get(j_cur_scope, "password_max_age")):0, session_hash)?json_true():json_false());
           if (user_has_scope(json_object_get(j_user, "user"), key_scope)) {
             json_object_set(j_cur_scope, "available", json_true());
             json_object_foreach(json_object_get(j_cur_scope, "schemes"), key_group, j_group) {
