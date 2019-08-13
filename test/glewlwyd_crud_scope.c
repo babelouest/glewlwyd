@@ -142,7 +142,7 @@ START_TEST(test_glwd_crud_scope_set_OK)
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   
   json_object_set_new(j_parameters, "name", json_string(SCOPE));
-  json_object_set_new(j_parameters, "scheme", json_pack("{s[{ssssss}]s[{ssssss}{ssssss}]}", GROUP1 "-new", "scheme_name", SCHEME1, "scheme_type", "mock", "scheme_display_name", "Mock 42", GROUP2, "scheme_name", SCHEME3, "scheme_type", "mock", "scheme_display_name", "Mock 95", "scheme_name", SCHEME2, "scheme_type", "mock", "scheme_display_name", "Mock 88"));
+  json_object_set_new(j_parameters, "scheme", json_pack("{s[{ssssss}]s[{ssssss}{ssssss}]}", GROUP1 "-new", "scheme_name", SCHEME1, "scheme_type", "mock", "scheme_display_name", "Mock 42", GROUP2, "scheme_name", SCHEME2, "scheme_type", "mock", "scheme_display_name", "Mock 88", "scheme_name", SCHEME3, "scheme_type", "mock", "scheme_display_name", "Mock 95"));
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
   o_free(url);
   json_decref(j_parameters);
