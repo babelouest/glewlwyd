@@ -17,7 +17,6 @@
 #define SERVER_URI "http://localhost:4593/api"
 #define USERNAME "user1"
 #define PASSWORD "password"
-#define USERNAME_2 "user2"
 #define SCOPE_LIST "openid"
 #define SCOPE_LIST_WITH_AUTH "scope1 openid"
 #define CLIENT "client4_id"
@@ -56,7 +55,7 @@ START_TEST(test_oidc_request_jwt_redirect_login)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
@@ -83,7 +82,7 @@ START_TEST(test_oidc_request_jwt_response_ok)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
@@ -110,7 +109,7 @@ START_TEST(test_oidc_request_jwt_client_public_response_ok)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_NONE, NULL, 0), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT_PUBLIC);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI_PUBLIC);
@@ -137,7 +136,7 @@ START_TEST(test_oidc_request_jwt_unsigned_error)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_NONE, NULL, 0), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
@@ -164,7 +163,7 @@ START_TEST(test_oidc_request_jwt_response_invalid_signature)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)(CLIENT_SECRET "error"), o_strlen((CLIENT_SECRET "error"))), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
@@ -191,7 +190,7 @@ START_TEST(test_oidc_request_jwt_response_error_no_response_type_in_request)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
   jwt_add_grant(jwt_request, "scope", SCOPE_LIST);
@@ -217,7 +216,7 @@ START_TEST(test_oidc_request_jwt_response_error_no_client_id_in_request)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
   jwt_add_grant(jwt_request, "scope", SCOPE_LIST);
@@ -243,7 +242,7 @@ START_TEST(test_oidc_request_jwt_response_error_client_id_missing)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
   jwt_add_grant(jwt_request, "scope", SCOPE_LIST);
@@ -269,7 +268,7 @@ START_TEST(test_oidc_request_jwt_response_error_client_id_invalid)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT_ERROR);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
@@ -296,7 +295,7 @@ START_TEST(test_oidc_request_jwt_response_error_request_in_request)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "request", "plop");
@@ -325,7 +324,7 @@ START_TEST(test_oidc_request_jwt_response_nonce_supersede)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
@@ -366,7 +365,7 @@ START_TEST(test_oidc_request_jwt_response_state_supersede)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
@@ -385,33 +384,6 @@ START_TEST(test_oidc_request_jwt_response_state_supersede)
 }
 END_TEST
 
-START_TEST(test_oidc_request_jwt_response_aud_differ_from_session)
-{
-  jwt_t * jwt_request = NULL;
-  char * url, * request;
-  jwt_new(&jwt_request);
-  
-  ck_assert_ptr_ne(jwt_request, NULL);
-  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME_2);
-  jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
-  jwt_add_grant(jwt_request, "client_id", CLIENT);
-  jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
-  jwt_add_grant(jwt_request, "scope", SCOPE_LIST);
-  jwt_add_grant(jwt_request, "state", "xyzabcd");
-  jwt_add_grant(jwt_request, "nonce", "nonce1234");
-  request = jwt_encode_str(jwt_request);
-  ck_assert_ptr_ne(request, NULL);
-  
-  url = msprintf("%s/oidc/auth?g_continue&request=%s", SERVER_URI, request);
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login_hint"), 1);
-  
-  o_free(url);
-  o_free(request);
-  jwt_free(jwt_request);
-}
-END_TEST
-
 START_TEST(test_oidc_request_jwt_response_response_type_supersede)
 {
   jwt_t * jwt_request = NULL;
@@ -421,7 +393,7 @@ START_TEST(test_oidc_request_jwt_response_response_type_supersede)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", "id_token");
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
@@ -455,7 +427,7 @@ START_TEST(test_oidc_request_jwt_error_redirect_uri)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "redirect_uri", "invalid");
@@ -484,7 +456,7 @@ START_TEST(test_oidc_request_uri_jwt_response_ok)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
@@ -523,7 +495,7 @@ START_TEST(test_oidc_request_uri_jwt_connection_error)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
@@ -556,7 +528,7 @@ START_TEST(test_oidc_request_uri_jwt_response_incomplete)
   
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_HS256, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), 0);
-  jwt_add_grant(jwt_request, "aud", USERNAME);
+  jwt_add_grant(jwt_request, "aud", REDIRECT_URI);
   jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
   jwt_add_grant(jwt_request, "client_id", CLIENT);
   jwt_add_grant(jwt_request, "redirect_uri", REDIRECT_URI);
@@ -598,7 +570,6 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_request_jwt_response_error_request_in_request);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_nonce_supersede);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_state_supersede);
-  tcase_add_test(tc_core, test_oidc_request_jwt_response_aud_differ_from_session);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_response_type_supersede);
   tcase_add_test(tc_core, test_oidc_request_jwt_error_redirect_uri);
   tcase_add_test(tc_core, test_oidc_request_uri_jwt_response_ok);
