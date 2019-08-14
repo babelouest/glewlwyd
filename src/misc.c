@@ -136,8 +136,7 @@ char * rand_string(char * str, size_t str_size) {
   
   if (str_size && str != NULL) {
     for (n = 0; n < str_size; n++) {
-      unsigned char key = random_at_most((sizeof(charset)) - 2, 0);
-      str[n] = charset[key];
+      str[n] = charset[random_at_most((sizeof(charset)) - 2, 0)];
     }
     str[str_size] = '\0';
     return str;
@@ -155,8 +154,7 @@ char * rand_string_nonce(char * str, size_t str_size) {
   
   if (str_size && str != NULL) {
     for (n = 0; n < str_size; n++) {
-      unsigned char key = random_at_most((sizeof(charset)) - 2, 1);
-      str[n] = charset[key];
+      str[n] = charset[random_at_most((sizeof(charset)) - 2, 1)];
     }
     str[str_size] = '\0';
     return str;
