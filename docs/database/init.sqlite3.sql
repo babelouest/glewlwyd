@@ -364,6 +364,16 @@ CREATE TABLE gpo_id_token (
   gpoi_hash TEXT
 );
 
+-- subject identifier table to store subs and their relations to usernames, client_id and sector_identifier
+CREATE TABLE gpo_subject_identifier (
+  gposi_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gposi_username TEXT NOT NULL,
+  gposi_client_id TEXT,
+  gposi_sector_identifier_uri TEXT,
+  gposi_sub TEXT NOT NULL
+);
+CREATE INDEX i_gposi_sub ON gpo_subject_identifier(gposi_sub);
+
 CREATE TABLE gs_code (
   gsc_id INTEGER PRIMARY KEY AUTOINCREMENT,
   gsc_mod_name TEXT NOT NULL,
