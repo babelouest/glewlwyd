@@ -36,11 +36,14 @@ misc.o: ../misc.c ../glewlwyd-common.h
 glewlwyd_resource.o: ../../docs/resources/ulfius/glewlwyd_resource.c ../../docs/resources/ulfius/glewlwyd_resource.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) ../../docs/resources/ulfius/glewlwyd_resource.c
 
+oidc_resource.o: ../../docs/resources/ulfius/oidc_resource.c ../../docs/resources/ulfius/oidc_resource.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) ../../docs/resources/ulfius/oidc_resource.c
+
 libprotocol_oauth2.so: protocol_oauth2.o misc.o glewlwyd_resource.o ../glewlwyd-common.h ../../docs/resources/ulfius/glewlwyd_resource.h
 	$(CC) -shared -Wl,-soname,libprotocol_oauth2.so -o libprotocol_oauth2.so protocol_oauth2.o misc.o glewlwyd_resource.o $(LIBS) -ljwt
 
-libprotocol_oidc.so: protocol_oidc.o misc.o glewlwyd_resource.o ../glewlwyd-common.h ../../docs/resources/ulfius/glewlwyd_resource.h
-	$(CC) -shared -Wl,-soname,libprotocol_oidc.so -o libprotocol_oidc.so protocol_oidc.o misc.o glewlwyd_resource.o $(LIBS) -ljwt -lgnutls
+libprotocol_oidc.so: protocol_oidc.o misc.o oidc_resource.o ../glewlwyd-common.h ../../docs/resources/ulfius/oidc_resource.h
+	$(CC) -shared -Wl,-soname,libprotocol_oidc.so -o libprotocol_oidc.so protocol_oidc.o misc.o oidc_resource.o $(LIBS) -ljwt -lgnutls
 
 libprotocol_mock.so: mock.o misc.o ../glewlwyd-common.h
 	$(CC) -shared -Wl,-soname,libprotocol_mock.so -o libprotocol_mock.so mock.o misc.o $(LIBS)
