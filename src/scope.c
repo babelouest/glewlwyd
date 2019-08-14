@@ -228,7 +228,8 @@ json_t * get_auth_scheme_list_from_scope(struct config_elements * config, const 
       (SELECT gsg_id FROM " GLEWLWYD_TABLE_SCOPE_GROUP " WHERE gs_id =  \
         (SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name='%s')) \
     ORDER BY \
-    " GLEWLWYD_TABLE_SCOPE_GROUP ".gsg_id;";
+    " GLEWLWYD_TABLE_SCOPE_GROUP ".gsg_id, \
+    " GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE ".guasmi_name;";
   char * scope_escape = h_escape_string(config->conn, scope), * str_query = NULL;
   json_t * j_return, * j_result = NULL, * j_element;
   int res;
