@@ -36,11 +36,12 @@ An access token payload has the following JSON format:
 
 ```Javascript
 {
-  "username": "user1", // Username that was provided this access_token
-  "salt": "abcdxyz1234", // Random string to avoid collisions
-  "type": "access_token", // Hardcoded
-  "iat": 1466556840, // Issued at time in Epoch Unix format
-  "expires_in": 3600, // Number of seconds of validity for this token
+  "sub": "user1",            // subject that was provided this access_token
+  "aud": "client1",          // client_id the access_token was provided to
+  "salt": "abcdxyz1234",     // Random string to avoid collisions
+  "type": "access_token",    // Hardcoded
+  "iat": 1466556840,         // Issued at time in Epoch Unix format
+  "exp": 1466558840,         // Expiration of the token in Epoch Unix format
   "scope":"scope1 g_profile" // scopes granted to this access token in a string separated by spaces
 }
 ```
