@@ -135,7 +135,7 @@ START_TEST(test_oidc_userinfo)
   bearer = msprintf("Bearer %s", access_token);
   u_map_put(req.map_header, "Authorization", bearer);
 
-  j_result = json_pack("{ssssssss}", "sub", "user1", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-mandatory", "I'M aliiiiiive!");
+  j_result = json_pack("{ssssss}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-mandatory", "I'M aliiiiiive!");
   ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
@@ -169,11 +169,11 @@ START_TEST(test_oidc_userinfo_claims)
   bearer = msprintf("Bearer %s", access_token);
   u_map_put(req.map_header, "Authorization", bearer);
 
-  j_result = json_pack("{sssssssssisoss}", "sub", "user1", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", "the-str", "claim-number", 42, "claim-bool", json_true(), "claim-mandatory", "I'M aliiiiiive!");
+  j_result = json_pack("{sssssssisoss}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", "the-str", "claim-number", 42, "claim-bool", json_true(), "claim-mandatory", "I'M aliiiiiive!");
   ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/?claims=claim-str claim-number claim-bool", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
-  j_result = json_pack("{ssssssssss}", "sub", "user1", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", "the-str", "claim-mandatory", "I'M aliiiiiive!");
+  j_result = json_pack("{ssssssss}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", "the-str", "claim-mandatory", "I'M aliiiiiive!");
   ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/?claims=claim-str claim-unknown", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
@@ -207,7 +207,7 @@ START_TEST(test_oidc_userinfo_post)
   bearer = msprintf("Bearer %s", access_token);
   u_map_put(req.map_header, "Authorization", bearer);
 
-  j_result = json_pack("{ssssssss}", "sub", "user1", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-mandatory", "I'M aliiiiiive!");
+  j_result = json_pack("{ssssss}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-mandatory", "I'M aliiiiiive!");
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
@@ -241,12 +241,12 @@ START_TEST(test_oidc_userinfo_claims_post)
   bearer = msprintf("Bearer %s", access_token);
   u_map_put(req.map_header, "Authorization", bearer);
 
-  j_result = json_pack("{sssssssssisoss}", "sub", "user1", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", "the-str", "claim-number", 42, "claim-bool", json_true(), "claim-mandatory", "I'M aliiiiiive!");
+  j_result = json_pack("{sssssssisoss}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", "the-str", "claim-number", 42, "claim-bool", json_true(), "claim-mandatory", "I'M aliiiiiive!");
   u_map_put(req.map_post_body, "claims", "claim-str claim-number claim-bool");
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
-  j_result = json_pack("{ssssssssss}", "sub", "user1", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", "the-str", "claim-mandatory", "I'M aliiiiiive!");
+  j_result = json_pack("{ssssssss}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", "the-str", "claim-mandatory", "I'M aliiiiiive!");
   u_map_put(req.map_post_body, "claims", "claim-str claim-number claim-bool");
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
