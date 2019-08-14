@@ -15,10 +15,10 @@ INSERT INTO g_user_auth_scheme_module_instance (guasmi_module, guasmi_name, guas
 INSERT INTO g_client_module_instance (gcmi_module, gcmi_name, gcmi_display_name, gcmi_order, gcmi_parameters) VALUES ('mock', 'mock', 'Mock client module', 0, '{"username-prefix":"","password":"password"}');
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 1, 600);
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1, 600);
-INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required) VALUES ('openid', 'id_token scope', 'OpenID Connect used for getting id_token in code response type', 0);
-INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required) VALUES ('scope1', 'Glewlwyd mock scope with password', 'Glewlwyd scope 1 scope description', 1);
-INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required) VALUES ('scope2', 'Glewlwyd mock scope without password', 'Glewlwyd scope 2 scope description', 0);
-INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required) VALUES ('scope3', 'Glewlwyd mock scope with password', 'Glewlwyd scope 3 scope description', 1);
+INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('openid', 'id_token scope', 'OpenID Connect used for getting id_token in code response type', 0, 0);
+INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('scope1', 'Glewlwyd mock scope with password', 'Glewlwyd scope 1 scope description', 1, 0);
+INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('scope2', 'Glewlwyd mock scope without password', 'Glewlwyd scope 2 scope description', 0, 0);
+INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('scope3', 'Glewlwyd mock scope with password', 'Glewlwyd scope 3 scope description', 1, 0);
 INSERT INTO g_scope_group (gs_id, gsg_name) VALUES ((SELECT gs_id FROM g_scope WHERE gs_name = 'scope1'), '0');
 INSERT INTO g_scope_group (gs_id, gsg_name) VALUES ((SELECT gs_id FROM g_scope WHERE gs_name = 'scope1'), '1');
 INSERT INTO g_scope_group (gs_id, gsg_name) VALUES ((SELECT gs_id FROM g_scope WHERE gs_name = 'scope2'), '2');
