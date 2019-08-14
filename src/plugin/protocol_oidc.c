@@ -35,7 +35,7 @@
 #include <orcania.h>
 #include <ulfius.h>
 #include "../glewlwyd-common.h"
-#include "../../docs/resources/ulfius/glewlwyd_resource.h"
+#include "../../docs/resources/ulfius/oidc_resource.h"
 
 #define OIDC_SALT_LENGTH 16
 #define OIDC_REFRESH_TOKEN_LENGTH 128
@@ -93,7 +93,7 @@ struct _oidc_config {
   unsigned short int                 refresh_token_rolling;
   unsigned short int                 auth_type_enabled[7];
   pthread_mutex_t                    insert_lock;
-  struct _glewlwyd_resource_config * glewlwyd_resource_config;
+  struct _oidc_resource_config * oidc_resource_config;
 };
 
 /**
@@ -106,6 +106,12 @@ static struct _u_map * get_map(const struct _u_request * request) {
   } else {
     return request->map_url;
   }
+}
+
+static char * get_username_from_sub(struct _oidc_config * config, const char * sub, const char * client_id) {
+  UNUSED(config);
+  UNUSED(client_id);
+  return o_strdup(sub);
 }
 
 /**
@@ -274,13 +280,15 @@ static char * generate_client_access_token(struct _oidc_config * config, const c
   jwt = jwt_dup(config->jwt_key);
   if (jwt != NULL) {
     // Build jwt payload
+    jwt_add_grant(jwt, "iss", json_string_value(json_object_get(config->j_params, "iss")));
+    jwt_add_grant(jwt, "aud", client_id);
+    jwt_add_grant_int(jwt, "exp", (now + config->access_token_duration));
+    jwt_add_grant(jwt, "salt", salt);
+    jwt_add_grant_int(jwt, "iat", now);
     rand_string_nonce(salt, OIDC_SALT_LENGTH);
     jwt_add_grant(jwt, "salt", salt);
-    jwt_add_grant(jwt, "client_id", client_id);
     jwt_add_grant(jwt, "type", "client_token");
     jwt_add_grant(jwt, "scope", scope_list);
-    jwt_add_grant_int(jwt, "iat", now);
-    jwt_add_grant_int(jwt, "expires_in", config->access_token_duration);
     token = jwt_encode_str(jwt);
     if (token == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_client_access_token - Error generating token");
@@ -295,13 +303,12 @@ static char * generate_client_access_token(struct _oidc_config * config, const c
 /**
  * build a userinfo in JSON format
  */
-static json_t * get_userinfo(struct _oidc_config * config, const char * username, json_t * j_user, const char * claims) {
-  json_t * j_userinfo = json_pack("{ss}", "sub", username), * j_claim, * j_user_property;
+static json_t * get_userinfo(struct _oidc_config * config, const char * sub, json_t * j_user, const char * claims) {
+  json_t * j_userinfo = json_pack("{ss}", "sub", sub), * j_claim, * j_user_property;
   char ** claims_array = NULL, * endptr;
   long int lvalue;
   size_t index;
   
-  json_object_set_new(j_userinfo, "sub", json_string(username));
   if (json_object_get(j_user, "name") != NULL) {
     json_object_set(j_userinfo, "name", json_object_get(j_user, "name"));
   }
@@ -625,7 +632,7 @@ static int serialize_access_token(struct _oidc_config * config, uint auth_type, 
 /**
  * Builds an acces token from the given parameters
  */
-static char * generate_access_token(struct _oidc_config * config, const char * username, json_t * j_user, const char * scope_list, time_t now) {
+static char * generate_access_token(struct _oidc_config * config, const char * username, const char * client_id, json_t * j_user, const char * scope_list, time_t now) {
   char salt[OIDC_SALT_LENGTH + 1] = {0};
   jwt_t * jwt = NULL;
   char * token = NULL, * property = NULL;
@@ -634,11 +641,15 @@ static char * generate_access_token(struct _oidc_config * config, const char * u
   
   if ((jwt = jwt_dup(config->jwt_key)) != NULL) {
     rand_string_nonce(salt, OIDC_SALT_LENGTH);
-    jwt_add_grant(jwt, "username", username);
+    jwt_add_grant(jwt, "iss", json_string_value(json_object_get(config->j_params, "iss")));
+    if (client_id != NULL) {
+      jwt_add_grant(jwt, "aud", client_id);
+    }
+    jwt_add_grant_int(jwt, "exp", (now + config->access_token_duration));
+    jwt_add_grant(jwt, "sub", username);
     jwt_add_grant(jwt, "salt", salt);
     jwt_add_grant(jwt, "type", "access_token");
     jwt_add_grant_int(jwt, "iat", now);
-    jwt_add_grant_int(jwt, "expires_in", config->access_token_duration);
     if (scope_list != NULL) {
       jwt_add_grant(jwt, "scope", scope_list);
     }
@@ -2094,7 +2105,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     // If parameter prompt=none is set, id_token_hint must be set and correspond to the last id_token provided by the client for the current user
     if (0 == o_strcmp("none", prompt)) {
       if (o_strlen(id_token_hint)) {
-        if (!jwt_decode(&jwt_id_token_hint, id_token_hint, (const unsigned char *)config->glewlwyd_resource_config->jwt_decode_key, o_strlen(config->glewlwyd_resource_config->jwt_decode_key)) && (jwt_get_alg(jwt_id_token_hint) == config->glewlwyd_resource_config->jwt_alg)) {
+        if (!jwt_decode(&jwt_id_token_hint, id_token_hint, (const unsigned char *)config->oidc_resource_config->jwt_decode_key, o_strlen(config->oidc_resource_config->jwt_decode_key)) && (jwt_get_alg(jwt_id_token_hint) == config->oidc_resource_config->jwt_alg)) {
           j_last_token = get_last_id_token(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), client_id);
           if (check_result_value(j_last_token, G_OK)) {
             id_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, id_token_hint);
@@ -2278,7 +2289,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
           if ((refresh_token = generate_refresh_token()) != NULL) {
             j_refresh_token = serialize_refresh_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpoc_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, json_integer_value(json_object_get(json_object_get(j_code, "code"), "refresh-token-duration")), json_object_get(json_object_get(j_code, "code"), "refresh-token-rolling")==json_true(), refresh_token, issued_for, u_map_get_case(request->map_header, "user-agent"));
             if (check_result_value(j_refresh_token, G_OK)) {
-              if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_object_get(j_user, "user"), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
+              if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_object_get(j_user, "user"), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now)) != NULL) {
                 if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, json_integer_value(json_object_get(j_refresh_token, "gpor_id")), json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
                   j_amr = get_amr_list_from_code(config, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpoc_id")));
                   if (check_result_value(j_amr, G_OK)) {
@@ -2433,7 +2444,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
         if (check_result_value(j_refresh_token, G_OK)) {
           j_user_only = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
           if (check_result_value(j_user_only, G_OK)) {
-            if ((access_token = generate_access_token(config, username, json_object_get(j_user_only, "user"), json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), now)) != NULL) {
+            if ((access_token = generate_access_token(config, username, client_id, json_object_get(j_user_only, "user"), json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), now)) != NULL) {
               if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, json_integer_value(json_object_get(j_refresh_token, "gpgr_id")), username, client_id, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
                 j_body = json_pack("{sssssssisIss}",
                                    "token_type",
@@ -2617,7 +2628,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
       if (!has_error && !has_issues) {
         j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")));
         if (check_result_value(j_user, G_OK)) {
-          if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")), json_object_get(j_user, "user"), scope_joined, now)) != NULL) {
+          if ((access_token = generate_access_token(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")), json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), json_object_get(j_user, "user"), scope_joined, now)) != NULL) {
             if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN, 0, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")), json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), scope_joined, now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
               json_body = json_pack("{sssssIsssi}",
                                     "access_token", access_token,
@@ -2721,9 +2732,21 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   json_t * j_session, * j_user;
   int ret = U_CALLBACK_UNAUTHORIZED;
+  char * username;
   
   if (u_map_get(request->map_header, "Authorization") != NULL) {
-    return callback_check_glewlwyd_access_token(request, response, (void*)config->glewlwyd_resource_config);
+    ret = callback_check_glewlwyd_oidc_access_token(request, response, (void*)config->oidc_resource_config);
+    if (ret == U_CALLBACK_CONTINUE) {
+      username = get_username_from_sub(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")), json_string_value(json_object_get((json_t *)response->shared_data, "aud")));
+      if (username != NULL) {
+        json_object_set_new((json_t *)response->shared_data, "username", json_string(username));
+        o_free(username);
+      } else {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_check_glewlwyd_session_or_token - Error get_username_from_sub");
+        ret = U_CALLBACK_UNAUTHORIZED;
+      }
+    }
+    return ret;
   } else {
     if (o_strlen(u_map_get(request->map_url, "impersonate"))) {
       j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, config->glewlwyd_config->glewlwyd_config->admin_scope);
@@ -2959,6 +2982,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           if (is_authorization_type_enabled((struct _oidc_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_TOKEN) && redirect_uri != NULL) {
             if ((access_token = generate_access_token(config, 
                                                       json_string_value(json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "user"), "username")), 
+                                                      client_id,
                                                       json_object_get(json_object_get(j_auth_result, "session"), "user"), 
                                                       json_string_value(json_object_get(json_object_get(j_auth_result, "session"), "scope_filtered")), 
                                                       now)) != NULL) {
@@ -3167,13 +3191,14 @@ static int callback_oidc_token(const struct _u_request * request, struct _u_resp
  */
 static int callback_oidc_get_userinfo(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username"))), * j_userinfo;
+  char * username = get_username_from_sub(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")), json_string_value(json_object_get((json_t *)response->shared_data, "aud")));
+  json_t * j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username), * j_userinfo;
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
 
   if (check_result_value(j_user, G_OK)) {
-    j_userinfo = get_userinfo(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_object_get(j_user, "user"), u_map_get(get_map(request), "claims"));
+    j_userinfo = get_userinfo(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")), json_object_get(j_user, "user"), u_map_get(get_map(request), "claims"));
     if (j_userinfo != NULL) {
       ulfius_set_json_body_response(response, 200, j_userinfo);
     } else {
@@ -3188,6 +3213,7 @@ static int callback_oidc_get_userinfo(const struct _u_request * request, struct 
     response->status = 500;
   }
   json_decref(j_user);
+  o_free(username);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -3379,7 +3405,7 @@ static int jwt_autocheck(struct _oidc_config * config) {
   int ret;
   
   time(&now);
-  token = generate_access_token(config, GLEWLWYD_CHECK_JWT_USERNAME, NULL, GLEWLWYD_CHECK_JWT_SCOPE, now);
+  token = generate_access_token(config, GLEWLWYD_CHECK_JWT_USERNAME, NULL, NULL, GLEWLWYD_CHECK_JWT_SCOPE, now);
   if (token != NULL) {
     if (o_strcmp("sha", json_string_value(json_object_get(config->j_params, "jwt-type"))) == 0) {
       if (jwt_decode(&jwt, token, (const unsigned char *)json_string_value(json_object_get(config->j_params, "key")), json_string_length(json_object_get(config->j_params, "key")))) {
@@ -3801,13 +3827,13 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       ((struct _oidc_config *)*cls)->j_params = json_incref(j_parameters);
       json_object_set_new(((struct _oidc_config *)*cls)->j_params, "name", json_string(name));
       ((struct _oidc_config *)*cls)->glewlwyd_config = config;
-      ((struct _oidc_config *)*cls)->glewlwyd_resource_config = o_malloc(sizeof(struct _glewlwyd_resource_config));
-      if (((struct _oidc_config *)*cls)->glewlwyd_resource_config != NULL) {
-        ((struct _oidc_config *)*cls)->glewlwyd_resource_config->method = G_METHOD_HEADER;
-        ((struct _oidc_config *)*cls)->glewlwyd_resource_config->oauth_scope = NULL;
-        ((struct _oidc_config *)*cls)->glewlwyd_resource_config->realm = NULL;
-        ((struct _oidc_config *)*cls)->glewlwyd_resource_config->accept_access_token = 1;
-        ((struct _oidc_config *)*cls)->glewlwyd_resource_config->accept_client_token = 0;
+      ((struct _oidc_config *)*cls)->oidc_resource_config = o_malloc(sizeof(struct _oidc_resource_config));
+      if (((struct _oidc_config *)*cls)->oidc_resource_config != NULL) {
+        ((struct _oidc_config *)*cls)->oidc_resource_config->method = G_METHOD_HEADER;
+        ((struct _oidc_config *)*cls)->oidc_resource_config->oauth_scope = NULL;
+        ((struct _oidc_config *)*cls)->oidc_resource_config->realm = NULL;
+        ((struct _oidc_config *)*cls)->oidc_resource_config->accept_access_token = 1;
+        ((struct _oidc_config *)*cls)->oidc_resource_config->accept_client_token = 0;
         j_result = check_parameters(((struct _oidc_config *)*cls)->j_params);
         if (check_result_value(j_result, G_OK)) {
           ((struct _oidc_config *)*cls)->access_token_duration = json_integer_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "access-token-duration"));
@@ -3897,17 +3923,17 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                 if (check_result_value(cert_jwks, G_OK) || 0 == o_strcmp("sha", json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "jwt-type")))) {
                   ((struct _oidc_config *)*cls)->cert_jwks = json_incref(json_object_get(cert_jwks, "jwks"));
                   if (0 == o_strcmp("sha", json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "jwt-type")))) {
-                    ((struct _oidc_config *)*cls)->glewlwyd_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "key")));
+                    ((struct _oidc_config *)*cls)->oidc_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "key")));
                   } else {
-                    ((struct _oidc_config *)*cls)->glewlwyd_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "cert")));
+                    ((struct _oidc_config *)*cls)->oidc_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "cert")));
                   }
-                  ((struct _oidc_config *)*cls)->glewlwyd_resource_config->jwt_alg = alg;
+                  ((struct _oidc_config *)*cls)->oidc_resource_config->jwt_alg = alg;
                   // Add endpoints
                   y_log_message(Y_LOG_LEVEL_INFO, "Add endpoints with plugin prefix %s", name);
                   if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_authorization, (void*)*cls) != G_OK || 
                      config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_authorization, (void*)*cls) || 
                      config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_token, (void*)*cls) || 
-                     config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_access_token, (void*)((struct _oidc_config *)*cls)->glewlwyd_resource_config) || 
+                     config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_oidc_access_token, (void*)((struct _oidc_config *)*cls)->oidc_resource_config) || 
                      config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) || 
                      config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) || 
                      config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) ||
@@ -3953,7 +3979,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         }
         json_decref(j_result);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc plugin_module_init - Error initializing glewlwyd_resource_config");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oidc plugin_module_init - Error initializing oidc_resource_config");
         o_free(*cls);
         *cls = NULL;
         j_return = json_pack("{si}", "result", G_ERROR);
@@ -3991,8 +4017,8 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     jwt_free(((struct _oidc_config *)cls)->jwt_key);
     json_decref(((struct _oidc_config *)cls)->j_params);
     json_decref(((struct _oidc_config *)cls)->cert_jwks);
-    o_free(((struct _oidc_config *)cls)->glewlwyd_resource_config->jwt_decode_key);
-    o_free(((struct _oidc_config *)cls)->glewlwyd_resource_config);
+    o_free(((struct _oidc_config *)cls)->oidc_resource_config->jwt_decode_key);
+    o_free(((struct _oidc_config *)cls)->oidc_resource_config);
     o_free(cls);
   }
   return G_OK;
