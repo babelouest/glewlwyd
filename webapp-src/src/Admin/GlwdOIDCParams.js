@@ -34,6 +34,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["jwks-x5c"]!==undefined?"":(props.mod.parameters["jwks-x5c"] = []);
     props.mod.parameters["request-parameter-allow"]!==undefined?"":(props.mod.parameters["request-parameter-allow"] = true);
     props.mod.parameters["request-uri-allow-https-non-secure"]!==undefined?"":(props.mod.parameters["request-uri-allow-https-non-secure"] = false);
+    props.mod.parameters["secret-type"]?"":(props.mod.parameters["secret-type"] = "pairwise");
 
     this.state = {
       config: props.config,
@@ -53,6 +54,7 @@ class GlwdOIDCParams extends Component {
     this.changeNumberParam = this.changeNumberParam.bind(this);
     this.toggleParam = this.toggleParam.bind(this);
     this.changeJwtType = this.changeJwtType.bind(this);
+    this.changeSecretType = this.changeSecretType.bind(this);
     this.setNewScopeOverride = this.setNewScopeOverride.bind(this);
     this.addScopeOverride = this.addScopeOverride.bind(this);
     this.changeScopeOverrideRefreshDuration = this.changeScopeOverrideRefreshDuration.bind(this);
@@ -104,6 +106,7 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["jwks-x5c"]!==undefined?"":(nextProps.mod.parameters["jwks-x5c"] = []);
     nextProps.mod.parameters["request-parameter-allow"]!==undefined?"":(nextProps.mod.parameters["request-parameter-allow"] = true);
     nextProps.mod.parameters["request-uri-allow-https-non-secure"]!==undefined?"":(nextProps.mod.parameters["request-uri-allow-https-non-secure"] = false);
+    nextProps.mod.parameters["secret-type"]?"":(nextProps.mod.parameters["secret-type"] = "pairwise");
     
     this.setState({
       config: nextProps.config,
@@ -138,6 +141,12 @@ class GlwdOIDCParams extends Component {
   changeJwtType(e, type) {
     var mod = this.state.mod;
     mod.parameters["jwt-type"] = type;
+    this.setState({mod: mod});
+  }
+  
+  changeSecretType(e, type) {
+    var mod = this.state.mod;
+    mod.parameters["secret-type"] = type;
     this.setState({mod: mod});
   }
   
@@ -703,6 +712,22 @@ class GlwdOIDCParams extends Component {
             </div>
             <div className="input-group-text">
               <input type="checkbox" className="form-control" id="mod-glwd-request-uri-allow-https-non-secure" onChange={(e) => this.toggleParam(e, "request-uri-allow-https-non-secure")} checked={this.state.mod.parameters["request-uri-allow-https-non-secure"]} />
+            </div>
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-glwd-jwt-type">{i18next.t("admin.mod-glwd-secret-type")}</label>
+            </div>
+            <div className="dropdown">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-glwd-secret-type" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {i18next.t("admin.mod-glwd-secret-type-" + this.state.mod.parameters["secret-type"])}
+              </button>
+              <div className="dropdown-menu" aria-labelledby="mod-glwd-secret-type">
+                <a className={"dropdown-item"+(this.state.mod.parameters["secret-type"]==="public"?" active":"")} href="#" onClick={(e) => this.changeSecretType(e, 'public')}>{i18next.t("admin.mod-glwd-secret-type-public")}</a>
+                <a className={"dropdown-item"+(this.state.mod.parameters["secret-type"]==="pairwise"?" active":"")} href="#" onClick={(e) => this.changeSecretType(e, 'pairwise')}>{i18next.t("admin.mod-glwd-secret-type-pairwise")}</a>
+              </div>
             </div>
           </div>
         </div>
