@@ -15,6 +15,7 @@ The following OpenID Connect Core functionalities are currently supported:
 - [Requesting Claims using the "claims" Request Parameter](https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter)
 - [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) using HTTP Basic Auth, POST Parameter or signed JWT
 - [Passing Request Parameters as JWTs](https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests)
+- [Subject Types public or pairwise](https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes)
 
 The following OpenID Connect Core functionalities are not supported yet:
 
@@ -78,6 +79,14 @@ Allow using request parameters as JWT with `request` objects or `request_uri` li
 If the specified `request_uri` link points to an unsecure https:// page with invalid certificate or hostname, allow it anyway.
 
 Warning! This may lead to unsecure connections or MITM attacks.
+
+### Subject type identifier
+
+Specify the way to identify subjects.
+
+If the selected value is `public`, the `sub` value in access tokens and id tokens will always have the same value.
+
+If the selected value is `pairwise`, the `sub` value in access tokens and id tokens will have a different values for clients of differents `sector_identifier_uri` or if the `sector_identifier_uri` is empty, for different clients.
 
 ### JWT Type
 
