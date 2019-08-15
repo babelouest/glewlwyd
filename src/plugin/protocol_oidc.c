@@ -408,47 +408,6 @@ static json_t * extract_jwks_from_pubkey(struct _oidc_config * config) {
 }
 
 /**
- *
- * Generates a query string based on url and post parameters of a request
- * Returned value must be o_free'd after use
- *
- */
-static char * generate_query_parameters(struct _u_map * map) {
-  char * query = NULL, * param, * value;
-  const char ** keys;
-  int i;
-  
-  if (map == NULL) {
-    return NULL;
-  } else {
-    if (map != NULL) {
-      keys = u_map_enum_keys(map);
-      for (i=0; keys[i] != NULL; i++) {
-        if (u_map_get(map, keys[i]) != NULL) {
-          value = url_encode((char *)u_map_get(map, keys[i]));
-          param = msprintf("%s=%s", keys[i], value);
-          o_free(value);
-          if (query == NULL) {
-            query = o_strdup(param);
-          } else {
-            query = mstrcatf(query, "&%s", param);
-          }
-          o_free(param);
-        } else {
-          if (query == NULL) {
-            query = o_strdup(keys[i]);
-          } else {
-            query = mstrcatf(query, "&%s", keys[i]);
-          }
-        }
-      }
-    }
-  }
-  
-  return query;
-}
-
-/**
  * Generates a client_access_token from the specified parameters that are considered valid
  */
 static char * generate_client_access_token(struct _oidc_config * config, const char * client_id, const char * scope_list, time_t now) {
@@ -1326,6 +1285,47 @@ static char * generate_authorization_code(struct _oidc_config * config, const ch
   }
 
   return code;
+}
+
+/**
+ *
+ * Generates a query string based on url and post parameters of a request
+ * Returned value must be o_free'd after use
+ *
+ */
+static char * generate_query_parameters(struct _u_map * map) {
+  char * query = NULL, * param, * value;
+  const char ** keys;
+  int i;
+  
+  if (map == NULL) {
+    return NULL;
+  } else {
+    if (map != NULL) {
+      keys = u_map_enum_keys(map);
+      for (i=0; keys[i] != NULL; i++) {
+        if (u_map_get(map, keys[i]) != NULL) {
+          value = url_encode((char *)u_map_get(map, keys[i]));
+          param = msprintf("%s=%s", keys[i], value);
+          o_free(value);
+          if (query == NULL) {
+            query = o_strdup(param);
+          } else {
+            query = mstrcatf(query, "&%s", param);
+          }
+          o_free(param);
+        } else {
+          if (query == NULL) {
+            query = o_strdup(keys[i]);
+          } else {
+            query = mstrcatf(query, "&%s", keys[i]);
+          }
+        }
+      }
+    }
+  }
+  
+  return query;
 }
 
 /**
