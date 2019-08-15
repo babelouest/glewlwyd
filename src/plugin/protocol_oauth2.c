@@ -142,10 +142,12 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
       } else { // HOEL_DB_TYPE_SQLITE
         issued_at_clause = msprintf("%u", (now));
       }
-      j_query = json_pack("{sss{sisososos{ss}ssss}}",
+      j_query = json_pack("{sss{sssisososos{ss}ssss}}",
                           "table",
                           GLEWLWYD_PLUGIN_OAUTH2_TABLE_ACCESS_TOKEN,
                           "values",
+                            "gpga_plugin_name",
+                            config->name,
                             "gpga_authorization_type",
                             auth_type,
                             "gpgr_id",
@@ -318,10 +320,12 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
       } else { // HOEL_DB_TYPE_SQLITE
         expires_at_clause = msprintf("%u", (now + (unsigned int)duration));
       }
-      j_query = json_pack_ex(&error, 0, "{sss{si so ss so s{ss} s{ss} s{ss} sI si ss ss ss}}",
+      j_query = json_pack_ex(&error, 0, "{sss{ss si so ss so s{ss} s{ss} s{ss} sI si ss ss ss}}",
                           "table",
                           GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
                           "values",
+                            "gpgr_plugin_name",
+                            config->name,
                             "gpgr_authorization_type",
                             auth_type,
                             "gpgc_id",
@@ -522,10 +526,12 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
           } else { // HOEL_DB_TYPE_SQLITE
             expiration_clause = msprintf("%u", (now + (unsigned int)config->code_duration ));
           }
-          j_query = json_pack("{sss{sssssssssssss{ss}}}",
+          j_query = json_pack("{sss{sssssssssssssss{ss}}}",
                               "table",
                               GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE,
                               "values",
+                                "gpgc_plugin_name",
+                                config->name,
                                 "gpgc_username",
                                 username,
                                 "gpgc_client_id",
@@ -628,13 +634,15 @@ static int disable_authorization_code(struct _oauth2_config * config, json_int_t
   json_t * j_query;
   int res;
   
-  j_query = json_pack("{sss{si}s{sI}}",
+  j_query = json_pack("{sss{si}s{sssI}}",
                       "table",
                       GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE,
                       "set",
                         "gpgc_enabled",
                         0,
                       "where",
+                        "gpgc_plugin_name",
+                        config->name,
                         "gpgc_id",
                         gpgc_id);
   res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
@@ -663,13 +671,15 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
     } else { // HOEL_DB_TYPE_SQLITE
       expiration_clause = o_strdup("> (strftime('%s','now'))");
     }
-    j_query = json_pack("{sss[ss]s{sssssssis{ssss}}}",
+    j_query = json_pack("{sss[ss]s{sssssssssis{ssss}}}",
                         "table",
                         GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE,
                         "columns",
                           "gpgc_username AS username",
                           "gpgc_id",
                         "where",
+                          "gpgc_plugin_name",
+                          config->name,
                           "gpgc_client_id",
                           client_id,
                           "gpgc_redirect_uri",
@@ -875,7 +885,7 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
       } else { // HOEL_DB_TYPE_SQLITE
         expires_at_clause = msprintf("> %u", (now));
       }
-      j_query = json_pack("{sss[sssssssss]s{sssis{ssss}}}",
+      j_query = json_pack("{sss[sssssssss]s{sssssis{ssss}}}",
                           "table",
                           GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
                           "columns",
@@ -889,6 +899,8 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
                             "gpgr_duration AS duration",
                             "gpgr_rolling_expiration",
                           "where",
+                            "gpgr_plugin_name",
+                            config->name,
                             "gpgr_token_hash",
                             token_hash,
                             "gpgr_enabled",
@@ -953,10 +965,10 @@ static json_t * refresh_token_list_get(struct _oauth2_config * config, const cha
   json_t * j_query, * j_result, * j_return, * j_element = NULL;
   int res;
   size_t index = 0, token_hash_dec_len = 0;
-  char * pattern_escaped, * pattern_clause;
+  char * pattern_escaped, * pattern_clause, * name_escaped;
   unsigned char token_hash_dec[128];
   
-  j_query = json_pack("{sss[ssssssssss]s{ss}sisiss}",
+  j_query = json_pack("{sss[ssssssssss]s{ssss}sisiss}",
                       "table",
                       GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
                       "columns",
@@ -971,6 +983,8 @@ static json_t * refresh_token_list_get(struct _oauth2_config * config, const cha
                         "gpgr_user_agent AS user_agent",
                         "gpgr_enabled",
                       "where",
+                        "gpgr_plugin_name",
+                        config->name,
                         "gpgr_username",
                         username,
                       "offset",
@@ -984,10 +998,12 @@ static json_t * refresh_token_list_get(struct _oauth2_config * config, const cha
   }
   if (pattern != NULL) {
     pattern_escaped = h_escape_string(config->glewlwyd_config->glewlwyd_config->conn, pattern);
-    pattern_clause = msprintf("IN (SELECT gpgr_id FROM "GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN" WHERE gpgr_user_agent LIKE '%%%s%%' OR gpgr_issued_for LIKE '%%%s%%')", pattern_escaped, pattern_escaped);
+    name_escaped = h_escape_string(config->glewlwyd_config->glewlwyd_config->conn, config->name);
+    pattern_clause = msprintf("IN (SELECT gpgr_id FROM "GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN" WHERE (gpgr_user_agent LIKE '%%%s%%' OR gpgr_issued_for LIKE '%%%s%%') AND gpgr_plugin_name='%s')", pattern_escaped, pattern_escaped, name_escaped);
     json_object_set_new(json_object_get(j_query, "where"), "gpgr_id", json_pack("{ssss}", "operator", "raw", "value", pattern_clause));
     o_free(pattern_clause);
     o_free(pattern_escaped);
+    o_free(name_escaped);
   }
   res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
@@ -1033,13 +1049,15 @@ static int refresh_token_disable(struct _oauth2_config * config, const char * us
   size_t token_hash_dec_len = 0;
   
   if (o_base64url_2_base64((unsigned char *)token_hash, o_strlen(token_hash), token_hash_dec, &token_hash_dec_len)) {
-    j_query = json_pack("{sss[ss]s{ssss%}}",
+    j_query = json_pack("{sss[ss]s{ssssss%}}",
                         "table",
                         GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
                         "columns",
                           "gpgr_id",
                           "gpgr_enabled",
                         "where",
+                          "gpgr_plugin_name",
+                          config->name,
                           "gpgr_username",
                           username,
                           "gpgr_token_hash",
@@ -1050,13 +1068,15 @@ static int refresh_token_disable(struct _oauth2_config * config, const char * us
     if (res == H_OK) {
       if (json_array_size(j_result)) {
         if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpgr_enabled"))) {
-          j_query = json_pack("{sss{si}s{ssss%}}",
+          j_query = json_pack("{sss{si}s{ssssss%}}",
                               "table",
                               GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
                               "set",
                                 "gpgr_enabled",
                                 0,
                               "where",
+                                "gpgr_plugin_name",
+                                config->name,
                                 "gpgr_username",
                                 username,
                                 "gpgr_token_hash",
@@ -1103,7 +1123,7 @@ static int update_refresh_token(struct _oauth2_config * config, json_int_t gpgr_
   } else { // HOEL_DB_TYPE_SQLITE
     last_seen_clause = msprintf("%u", (now));
   }
-  j_query = json_pack("{sss{s{ss}}s{sI}}",
+  j_query = json_pack("{sss{s{ss}}s{sssI}}",
                       "table",
                       GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
                       "set",
@@ -1111,6 +1131,8 @@ static int update_refresh_token(struct _oauth2_config * config, json_int_t gpgr_
                           "raw",
                           last_seen_clause,
                       "where",
+                        "gpgr_plugin_name",
+                        config->name,
                         "gpgr_id",
                         gpgr_id);
   o_free(last_seen_clause);
