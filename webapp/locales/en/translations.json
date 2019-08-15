@@ -156,6 +156,8 @@
     "client-client-id-mandatory": "Client ID is mandatory",
     "client-client-id-exists": "Client ID already exist",
     "client-list-title": "Clients list",
+    "client-sector-identifier-uri": "sector_identifier_uri",
+    "client-sector-identifier-uri-ph": "Ex: https://client.tld",
     "nav-search-placeholder": "Search pattern",
     "nav-search-title": "Search users",
     "nav-search": "Search",
