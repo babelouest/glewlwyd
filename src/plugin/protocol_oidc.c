@@ -177,6 +177,7 @@ static char * get_sub_public(struct _oidc_config * config, const char * username
           o_free(sub);
           sub = NULL;
         }
+        json_decref(j_query);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_sub_public - Error allocating resources for sub");
       }
@@ -243,6 +244,7 @@ static char * get_sub_pairwise(struct _oidc_config * config, const char * userna
           o_free(sub);
           sub = NULL;
         }
+        json_decref(j_query);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_sub_pairwise - Error allocating resources for sub");
       }
@@ -3631,6 +3633,11 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
     }
     if (json_string_length(json_object_get(config->j_params, "op-tos-uri"))) {
       json_object_set(j_discovery, "op_tos_uri", json_object_get(config->j_params, "op-tos-uri"));
+    }
+    if (config->subject_type == GLEWLWYD_OIDC_SUBJECT_TYPE_PAIRWISE) {
+      json_object_set_new(j_discovery, "subject_types_supported", json_pack("[s]", "pairwise"));
+    } else {
+      json_object_set_new(j_discovery, "subject_types_supported", json_pack("[s]", "public"));
     }
     ulfius_set_json_body_response(response, 200, j_discovery);
   } else {
