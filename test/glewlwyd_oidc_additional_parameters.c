@@ -120,7 +120,7 @@ START_TEST(test_oidc_additional_parameters)
   
   ck_assert_int_eq(split_string(access_token, ".", &access_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((unsigned char *)access_token_split[1], o_strlen(access_token_split[1]), NULL, &str_payload_len), 1);
-  ck_assert_ptr_ne((str_payload = o_malloc(str_payload_len + 1)), NULL);
+  ck_assert_ptr_ne((str_payload = o_malloc(str_payload_len + 2)), NULL);
   ck_assert_int_eq(o_base64url_decode((unsigned char *)access_token_split[1], o_strlen(access_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
   str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_payload = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
@@ -144,7 +144,7 @@ START_TEST(test_oidc_no_additional_parameters)
 {
   struct _u_response resp;
   struct _u_request req;
-  char * access_token, ** access_token_split = NULL, * str_payload = NULL;
+  char * access_token = NULL, ** access_token_split = NULL, * str_payload = NULL;
   json_t * j_payload;
   size_t str_payload_len = 0;
   
@@ -164,8 +164,9 @@ START_TEST(test_oidc_no_additional_parameters)
   ulfius_clean_response(&resp);
   
   ck_assert_int_eq(split_string(access_token, ".", &access_token_split), 3);
+  ck_assert_int_gt(o_strlen(access_token), 0);
   ck_assert_int_eq(o_base64url_decode((unsigned char *)access_token_split[1], o_strlen(access_token_split[1]), NULL, &str_payload_len), 1);
-  ck_assert_ptr_ne((str_payload = o_malloc(str_payload_len + 1)), NULL);
+  ck_assert_ptr_ne((str_payload = o_malloc(str_payload_len + 2)), NULL);
   ck_assert_int_eq(o_base64url_decode((unsigned char *)access_token_split[1], o_strlen(access_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
   str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_payload = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
