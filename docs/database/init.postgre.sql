@@ -28,6 +28,7 @@ DROP TABLE IF EXISTS gpg_refresh_token_scope;
 DROP TABLE IF EXISTS gpg_refresh_token;
 DROP TABLE IF EXISTS gpg_code_scope;
 DROP TABLE IF EXISTS gpg_code;
+DROP TABLE IF EXISTS gpo_subject_identifier;
 DROP TABLE IF EXISTS gpo_id_token_scope;
 DROP TABLE IF EXISTS gpo_id_token;
 DROP TABLE IF EXISTS gpo_access_token_scope;
@@ -279,6 +280,7 @@ CREATE TABLE gpg_access_token_scope (
 
 CREATE TABLE gpo_code (
   gpoc_id SERIAL PRIMARY KEY,
+  gpoc_plugin_name VARCHAR(256) NOT NULL,
   gpoc_authorization_type SMALLINT NOT NULL,
   gpoc_username VARCHAR(256) NOT NULL,
   gpoc_client_id VARCHAR(256) NOT NULL,
@@ -308,6 +310,7 @@ CREATE TABLE gpo_code_scheme (
 
 CREATE TABLE gpo_refresh_token (
   gpor_id SERIAL PRIMARY KEY,
+  gpor_plugin_name VARCHAR(256) NOT NULL,
   gpor_authorization_type SMALLINT NOT NULL,
   gpoc_id INTEGER DEFAULT NULL,
   gpor_username VARCHAR(256) NOT NULL,
@@ -335,6 +338,7 @@ CREATE TABLE gpo_refresh_token_scope (
 -- Access token table, to store meta information on access token sent
 CREATE TABLE gpo_access_token (
   gpoa_id SERIAL PRIMARY KEY,
+  gpoa_plugin_name VARCHAR(256) NOT NULL,
   gpoa_authorization_type SMALLINT NOT NULL,
   gpor_id INTEGER DEFAULT NULL,
   gpoa_username VARCHAR(256),
@@ -355,6 +359,7 @@ CREATE TABLE gpo_access_token_scope (
 -- Id token table, to store meta information on id token sent
 CREATE TABLE gpo_id_token (
   gpoi_id SERIAL PRIMARY KEY,
+  gpoi_plugin_name VARCHAR(256) NOT NULL,
   gpoi_authorization_type SMALLINT NOT NULL,
   gpoi_username VARCHAR(256),
   gpoi_client_id VARCHAR(256),
@@ -367,6 +372,7 @@ CREATE TABLE gpo_id_token (
 -- subject identifier table to store subs and their relations to usernames, client_id and sector_identifier
 CREATE TABLE gpo_subject_identifier (
   gposi_id SERIAL PRIMARY KEY,
+  gposi_plugin_name VARCHAR(256) NOT NULL,
   gposi_username VARCHAR(256) NOT NULL,
   gposi_client_id VARCHAR(256),
   gposi_sector_identifier_uri VARCHAR(256),

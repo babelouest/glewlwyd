@@ -138,12 +138,14 @@ static char * get_sub_public(struct _oidc_config * config, const char * username
   int res;
   char * sub = NULL;
   
-  j_query = json_pack("{sss[s]s{sssoso}}",
+  j_query = json_pack("{sss[s]s{sssssoso}}",
                       "table",
                       GLEWLWYD_PLUGIN_OIDC_TABLE_SUBJECT_IDENTIFIER,
                       "columns",
                         "gposi_sub",
                       "where",
+                        "gposi_plugin_name",
+                        config->name,
                         "gposi_username",
                         username,
                         "gposi_client_id",
@@ -160,10 +162,12 @@ static char * get_sub_public(struct _oidc_config * config, const char * username
       if (sub != NULL) {
         *sub = '\0';
         rand_string(sub, GLEWLWYD_SUB_LENGTH);
-        j_query = json_pack("{sss{sssssoso}}",
+        j_query = json_pack("{sss{sssssssoso}}",
                             "table",
                             GLEWLWYD_PLUGIN_OIDC_TABLE_SUBJECT_IDENTIFIER,
                             "values",
+                              "gposi_plugin_name",
+                              config->name,
                               "gposi_sub",
                               sub,
                               "gposi_username",
@@ -198,12 +202,14 @@ static char * get_sub_pairwise(struct _oidc_config * config, const char * userna
   int res;
   char * sub = NULL;
   
-  j_query = json_pack("{sss[s]s{sssO}}",
+  j_query = json_pack("{sss[s]s{sssssO}}",
                       "table",
                       GLEWLWYD_PLUGIN_OIDC_TABLE_SUBJECT_IDENTIFIER,
                       "columns",
                         "gposi_sub",
                       "where",
+                        "gposi_plugin_name",
+                        config->name,
                         "gposi_username",
                         username,
                         "gposi_client_id",
@@ -224,10 +230,12 @@ static char * get_sub_pairwise(struct _oidc_config * config, const char * userna
       if (sub != NULL) {
         *sub = '\0';
         rand_string(sub, GLEWLWYD_SUB_LENGTH);
-        j_query = json_pack("{sss{sssssO}}",
+        j_query = json_pack("{sss{sssssssO}}",
                             "table",
                             GLEWLWYD_PLUGIN_OIDC_TABLE_SUBJECT_IDENTIFIER,
                             "values",
+                              "gposi_plugin_name",
+                              config->name,
                               "gposi_sub",
                               sub,
                               "gposi_username",
@@ -277,12 +285,14 @@ static char * get_username_from_sub(struct _oidc_config * config, const char * s
   int res;
   char * username = NULL;
   
-  j_query = json_pack("{sss[s]s{ss}}",
+  j_query = json_pack("{sss[s]s{ssss}}",
                       "table",
                       GLEWLWYD_PLUGIN_OIDC_TABLE_SUBJECT_IDENTIFIER,
                       "columns",
                         "gposi_username",
                       "where",
+                        "gposi_plugin_name",
+                        config->name,
                         "gposi_sub",
                         sub);
   res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
@@ -525,7 +535,7 @@ static json_t * get_last_id_token(struct _oidc_config * config, const char * use
   json_t * j_query, * j_result = NULL, * j_return;
   int res;
   
-  j_query = json_pack("{sss[sss]s{ssss}sssi}",
+  j_query = json_pack("{sss[sss]s{ssssss}sssi}",
                       "table",
                       GLEWLWYD_PLUGIN_OIDC_TABLE_ID_TOKEN,
                       "columns",
@@ -533,6 +543,8 @@ static json_t * get_last_id_token(struct _oidc_config * config, const char * use
                         SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpoi_issued_at) AS issued_at", "gpoi_issued_at AS issued_at", "EXTRACT(EPOCH FROM gpoi_issued_at) AS issued_at"),
                         "gpoi_hash AS token_hash",
                       "where",
+                        "gpoi_plugin_name",
+                        config->name,
                         "gpoi_username",
                         username,
                         "gpoi_client_id",
@@ -577,10 +589,12 @@ static int serialize_id_token(struct _oidc_config * config, uint auth_type, cons
       } else { // HOEL_DB_TYPE_SQLITE
         issued_at_clause = msprintf("%u", (now));
       }
-      j_query = json_pack("{sss{sisosos{ss}ssssss}}",
+      j_query = json_pack("{sss{sssisosos{ss}ssssss}}",
                           "table",
                           GLEWLWYD_PLUGIN_OIDC_TABLE_ID_TOKEN,
                           "values",
+                            "gpoi_plugin_name",
+                            config->name,
                             "gpoi_authorization_type",
                             auth_type,
                             "gpoi_username",
@@ -735,10 +749,12 @@ static int serialize_access_token(struct _oidc_config * config, uint auth_type, 
       } else { // HOEL_DB_TYPE_SQLITE
         issued_at_clause = msprintf("%u", (now));
       }
-      j_query = json_pack("{sss{sisososos{ss}ssss}}",
+      j_query = json_pack("{sss{sssisososos{ss}ssss}}",
                           "table",
                           GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN,
                           "values",
+                            "gpoa_plugin_name",
+                            config->name,
                             "gpoa_authorization_type",
                             auth_type,
                             "gpor_id",
@@ -897,10 +913,12 @@ static json_t * serialize_refresh_token(struct _oidc_config * config, uint auth_
       } else { // HOEL_DB_TYPE_SQLITE
         expires_at_clause = msprintf("%u", (now + (unsigned int)duration));
       }
-      j_query = json_pack_ex(&error, 0, "{sss{si so ss so s{ss} s{ss} s{ss} sI si ss ss ss}}",
+      j_query = json_pack_ex(&error, 0, "{sss{ss si so ss so s{ss} s{ss} s{ss} sI si ss ss ss}}",
                           "table",
                           GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN,
                           "values",
+                            "gpor_plugin_name",
+                            config->name,
                             "gpor_authorization_type",
                             auth_type,
                             "gpoc_id",
@@ -1220,10 +1238,12 @@ static char * generate_authorization_code(struct _oidc_config * config, const ch
           } else { // HOEL_DB_TYPE_SQLITE
             expiration_clause = msprintf("%u", (now + (unsigned int)config->code_duration ));
           }
-          j_query = json_pack("{sss{sssssssssssssssis{ss}}}",
+          j_query = json_pack("{sss{sssssssssssssssssis{ss}}}",
                               "table",
                               GLEWLWYD_PLUGIN_OIDC_TABLE_CODE,
                               "values",
+                                "gpoc_plugin_name",
+                                config->name,
                                 "gpoc_username",
                                 username,
                                 "gpoc_client_id",
@@ -1344,13 +1364,15 @@ static int disable_authorization_code(struct _oidc_config * config, json_int_t g
   json_t * j_query;
   int res;
   
-  j_query = json_pack("{sss{si}s{sI}}",
+  j_query = json_pack("{sss{si}s{sssI}}",
                       "table",
                       GLEWLWYD_PLUGIN_OIDC_TABLE_CODE,
                       "set",
                         "gpoc_enabled",
                         0,
                       "where",
+                        "gpoc_plugin_name",
+                        config->name,
                         "gpoc_id",
                         gpoc_id);
   res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
@@ -1422,7 +1444,7 @@ static json_t * validate_authorization_code(struct _oidc_config * config, const 
     } else { // HOEL_DB_TYPE_SQLITE
       expiration_clause = o_strdup("> (strftime('%s','now'))");
     }
-    j_query = json_pack("{sss[sss]s{sssssssis{ssss}}}",
+    j_query = json_pack("{sss[sss]s{sssssssssis{ssss}}}",
                         "table",
                         GLEWLWYD_PLUGIN_OIDC_TABLE_CODE,
                         "columns",
@@ -1430,6 +1452,8 @@ static json_t * validate_authorization_code(struct _oidc_config * config, const 
                           "gpoc_nonce AS nonce",
                           "gpoc_id",
                         "where",
+                          "gpoc_plugin_name",
+                          config->name,
                           "gpoc_client_id",
                           client_id,
                           "gpoc_redirect_uri",
@@ -1651,7 +1675,7 @@ static json_t * validate_refresh_token(struct _oidc_config * config, const char 
       } else { // HOEL_DB_TYPE_SQLITE
         expires_at_clause = msprintf("> %u", (now));
       }
-      j_query = json_pack("{sss[sssssssss]s{sssis{ssss}}}",
+      j_query = json_pack("{sss[sssssssss]s{sssssis{ssss}}}",
                           "table",
                           GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN,
                           "columns",
@@ -1665,6 +1689,8 @@ static json_t * validate_refresh_token(struct _oidc_config * config, const char 
                             "gpor_duration AS duration",
                             "gpor_rolling_expiration",
                           "where",
+                            "gpor_plugin_name",
+                            config->name,
                             "gpor_token_hash",
                             token_hash,
                             "gpor_enabled",
@@ -1732,10 +1758,10 @@ static json_t * refresh_token_list_get(struct _oidc_config * config, const char 
   json_t * j_query, * j_result, * j_return, * j_element = NULL;
   int res;
   size_t index = 0, token_hash_dec_len = 0;
-  char * pattern_escaped, * pattern_clause;
+  char * pattern_escaped, * pattern_clause, * name_escaped = NULL;
   unsigned char token_hash_dec[128];
   
-  j_query = json_pack("{sss[ssssssssss]s{ss}sisiss}",
+  j_query = json_pack("{sss[ssssssssss]s{ssss}sisiss}",
                       "table",
                       GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN,
                       "columns",
@@ -1750,6 +1776,8 @@ static json_t * refresh_token_list_get(struct _oidc_config * config, const char 
                         "gpor_user_agent AS user_agent",
                         "gpor_enabled",
                       "where",
+                        "gpor_plugin_name",
+                        config->name,
                         "gpor_username",
                         username,
                       "offset",
@@ -1762,11 +1790,13 @@ static json_t * refresh_token_list_get(struct _oidc_config * config, const char 
     json_object_set_new(j_query, "order_by", json_string(sort));
   }
   if (pattern != NULL) {
+    name_escaped = h_escape_string(config->glewlwyd_config->glewlwyd_config->conn, config->name);
     pattern_escaped = h_escape_string(config->glewlwyd_config->glewlwyd_config->conn, pattern);
-    pattern_clause = msprintf("IN (SELECT gpor_id FROM "GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN" WHERE gpor_user_agent LIKE '%%%s%%' OR gpor_issued_for LIKE '%%%s%%')", pattern_escaped, pattern_escaped);
+    pattern_clause = msprintf("IN (SELECT gpor_id FROM "GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN" WHERE (gpor_user_agent LIKE '%%%s%%' OR gpor_issued_for LIKE '%%%s%%') AND gpor_plugin_name='%s')", pattern_escaped, pattern_escaped, name_escaped);
     json_object_set_new(json_object_get(j_query, "where"), "gpor_id", json_pack("{ssss}", "operator", "raw", "value", pattern_clause));
     o_free(pattern_clause);
     o_free(pattern_escaped);
+    o_free(name_escaped);
   }
   res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
@@ -1812,13 +1842,15 @@ static int refresh_token_disable(struct _oidc_config * config, const char * user
   size_t token_hash_dec_len = 0;
   
   if (o_base64url_2_base64((unsigned char *)token_hash, o_strlen(token_hash), token_hash_dec, &token_hash_dec_len)) {
-    j_query = json_pack("{sss[ss]s{ssss%}}",
+    j_query = json_pack("{sss[ss]s{ssssss%}}",
                         "table",
                         GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN,
                         "columns",
                           "gpor_id",
                           "gpor_enabled",
                         "where",
+                          "gpor_plugin_name",
+                          config->name,
                           "gpor_username",
                           username,
                           "gpor_token_hash",
@@ -1829,13 +1861,15 @@ static int refresh_token_disable(struct _oidc_config * config, const char * user
     if (res == H_OK) {
       if (json_array_size(j_result)) {
         if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpor_enabled"))) {
-          j_query = json_pack("{sss{si}s{ssss%}}",
+          j_query = json_pack("{sss{si}s{ssssss%}}",
                               "table",
                               GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN,
                               "set",
                                 "gpor_enabled",
                                 0,
                               "where",
+                                "gpor_plugin_name",
+                                config->name,
                                 "gpor_username",
                                 username,
                                 "gpor_token_hash",
@@ -1885,7 +1919,7 @@ static int update_refresh_token(struct _oidc_config * config, json_int_t gpor_id
   } else { // HOEL_DB_TYPE_SQLITE
     last_seen_clause = msprintf("%u", (now));
   }
-  j_query = json_pack("{sss{s{ss}}s{sI}}",
+  j_query = json_pack("{sss{s{ss}}s{sssI}}",
                       "table",
                       GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN,
                       "set",
@@ -1893,6 +1927,8 @@ static int update_refresh_token(struct _oidc_config * config, json_int_t gpor_id
                           "raw",
                           last_seen_clause,
                       "where",
+                        "gpor_plugin_name",
+                        config->name,
                         "gpor_id",
                         gpor_id);
   o_free(last_seen_clause);
