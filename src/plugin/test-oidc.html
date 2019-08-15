@@ -88,6 +88,26 @@
 		<div class="container">
       <div class="row">
         <div class="col-md-2">
+          <label for="send_method">Send parameter method</label>
+        </div>
+        <div class="col-md-2">
+          <select id="send_method" class="form-control">
+            <option value="GET">GET</option>
+            <option value="POST">POST</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+          <label for="request">Request JWT</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="request" name="request" value="" class="form-control">
+          <button type="button" name="run_request" id="run_request" class="btn btn-sm btn-primary btn-block">Run JWT Request</button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
           <label for="response_type">response_type</label>
         </div>
         <div class="col-md-2">
@@ -297,6 +317,7 @@
       </div>
       <div class="row">
         <div class="col-md-4">
+          <button type="button" name="generate_jwt" id="generate_jwt" class="btn btn-lg btn-primary btn-block">Generate unencoded JWT</button>
           <button type="button" name="run" id="run" class="btn btn-lg btn-primary btn-block">Run test</button>
         </div>
       </div>
@@ -358,6 +379,55 @@
     var hashStr = "Basic "+basicScheme;
     xhr.setRequestHeader('Authorization', hashStr);
   }
+  
+  $("#generate_jwt").click(function () {
+    var payload = {
+      response_type: $("#response_type").val(),
+      client_id: $("#client_id").val(),
+      redirect_uri: $("#redirect_uri").val(),
+      scope: $("#scope").val().join(" "),
+    }
+    if ($("#state").val()) {
+      payload.state = $("#state").val();
+    }
+    if ($("#nonce").val()) {
+      payload.nonce = $("#nonce").val();
+    }
+    if ($("#display").val()) {
+      payload.display = $("#display").val();
+    }
+    if ($("#max_age").val()) {
+      payload.max_age = $("#max_age").val();
+    }
+    if ($("#ui_locales").val()) {
+      payload.ui_locales = $("#ui_locales").val();
+    }
+    if ($("#login_hint").val()) {
+      payload.login_hint = $("#login_hint").val();
+    }
+    if ($("#prompt").val() == "none" && $("#id_token").val()) {
+      payload.prompt = $("#prompt").val();
+      payload.id_token = $("#id_token").val();
+    } else if ($("#prompt").val()) {
+      payload.prompt = $("#prompt").val();
+    }
+    $("#result").empty();
+    $("#result").append("<div><strong>payload</strong>: <code>" + JSON.stringify(payload) + "</code></div>");
+  });
+  
+  $("#run_request").click(function () {
+    if ($("#send_method").val() == "GET") {
+      var url = glewlwyd_api + "/auth?request=" + $("#request").val();
+      window.location = url;
+    } else if ($("#send_method").val() == "POST") {
+      var url = glewlwyd_api + "/auth";
+      var form = $('<form action="' + url + '" method="post" style="display: none">' + 
+      '<input type="text" name="request" value="' + $("#request").val() + '" />' +
+      '</form>');
+      $('body').append(form);
+      form.submit();
+    }
+  });
 
   $("#run").click(function () {
     $("#result").empty();
@@ -370,14 +440,42 @@
       case "code token":
       case "code id_token token":
       case "none":
-        var promptParam = "";
-        if ($("#prompt").val() == "none" && $("#id_token").val()) {
-          promptParam = "&prompt=" + $("#prompt").val() + "&id_token_hint=" + $("#id_token").val();
-        } else {
-          promptParam = "&prompt=" + $("#prompt").val();
+        if ($("#send_method").val() == "GET") {
+          var promptParam = "";
+          if ($("#prompt").val() == "none" && $("#id_token").val()) {
+            promptParam = "&prompt=" + $("#prompt").val() + "&id_token_hint=" + $("#id_token").val();
+          } else {
+            promptParam = "&prompt=" + $("#prompt").val();
+          }
+          var url = glewlwyd_api + "/auth?response_type=" + $("#response_type").val() + "&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&nonce=" + $("#nonce").val() + promptParam + "&display=" + $("#display").val() + "&scope=" + $("#scope").val().join(" ") + "&max_age=" + $("#max_age").val() + "&ui_locales=" + $("#ui_locales").val() + "&login_hint=" + $("#login_hint").val() + "&request=" + $("#request").val();
+          window.location = url;
+        } else if ($("#send_method").val() == "POST") {
+          var url = glewlwyd_api + "/auth";
+          var promptParam = "";
+          if ($("#prompt").val() == "none" && $("#id_token").val()) {
+            promptParam = '<input type="text" name="prompt" value="' + $("#prompt").val() + '" />' +
+                          '<input type="text" name="id_token_hint" value="' + $("#id_token").val() + '" />';
+          } else {
+            promptParam = '<input type="text" name="prompt" value="' + $("#prompt").val() + '" />';
+          }
+          var form = $('<form action="' + url + '" method="post" style="display: none">' + 
+          '<input type="text" name="response_type" value="' + $("#response_type").val() + '" />' +
+          '<input type="text" name="client_id" value="' + $("#client_id").val() + '" />' +
+          '<input type="text" name="redirect_uri" value="' + $("#redirect_uri").val() + '" />' +
+          '<input type="text" name="scope" value="' + $("#scope").val().join(" ") + '" />' +
+          '<input type="text" name="state" value="' + $("#state").val() + '" />' +
+          '<input type="text" name="nonce" value="' + $("#nonce").val() + '" />' +
+          '<input type="text" name="display" value="' + $("#display").val() + '" />' +
+          '<input type="text" name="scope" value="' + $("#scope").val() + '" />' +
+          '<input type="text" name="max_age" value="' + $("#max_age").val() + '" />' +
+          '<input type="text" name="ui_locales" value="' + $("#ui_locales").val() + '" />' +
+          '<input type="text" name="login_hint" value="' + $("#login_hint").val() + '" />' +
+          '<input type="text" name="request" value="' + $("#request").val() + '" />' +
+          promptParam +
+          '</form>');
+          $('body').append(form);
+          form.submit();
         }
-        var url = glewlwyd_api + "/auth?response_type=" + $("#response_type").val() + "&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&nonce=" + $("#nonce").val() + promptParam + "&display=" + $("#display").val() + "&scope=" + $("#scope").val().join(" ") + "&max_age=" + $("#max_age").val() + "&ui_locales=" + $("#ui_locales").val() + "&login_hint=" + $("#login_hint").val();
-        window.location = url;
         break;
       case "authorization_code":
         $.ajax({
