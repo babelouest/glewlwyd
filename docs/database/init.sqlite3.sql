@@ -214,6 +214,7 @@ CREATE INDEX i_g_user_property_name ON g_user_property(gup_name);
 
 CREATE TABLE gpg_code (
   gpgc_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpgc_plugin_name TEXT NOT NULL,
   gpgc_username TEXT NOT NULL,
   gpgc_client_id TEXT NOT NULL,
   gpgc_redirect_uri TEXT NOT NULL,
@@ -234,6 +235,7 @@ CREATE TABLE gpg_code_scope (
 
 CREATE TABLE gpg_refresh_token (
   gpgr_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpgr_plugin_name TEXT NOT NULL,
   gpgr_authorization_type INTEGER NOT NULL, -- 0: Authorization Code Grant, 1: Implicit Grant, 2: Resource Owner Password Credentials Grant, 3: Client Credentials Grant
   gpgc_id INTEGER DEFAULT NULL,
   gpgr_username TEXT NOT NULL,
@@ -261,6 +263,7 @@ CREATE TABLE gpg_refresh_token_scope (
 -- Access token table, to store meta information on access token sent
 CREATE TABLE gpg_access_token (
   gpga_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpga_plugin_name TEXT NOT NULL,
   gpga_authorization_type INTEGER NOT NULL, -- 0: Authorization Code Grant, 1: Implicit Grant, 2: Resource Owner Password Credentials Grant, 3: Client Credentials Grant
   gpgr_id INTEGER DEFAULT NULL,
   gpga_username TEXT,
