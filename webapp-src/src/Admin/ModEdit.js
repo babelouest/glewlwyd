@@ -26,13 +26,16 @@ class ModEdit extends Component {
     
     if (props.role === "client") {
       if (props.mod.parameters["data-format"] === undefined) {
-        props.mod.parameters["data-format"]  = [];
+        props.mod.parameters["data-format"]  = {};
       }
       if (props.mod.parameters["data-format"]["redirect_uri"] === undefined) {
         props.mod.parameters["data-format"]["redirect_uri"] = {multiple: true, read: true, write: true};
       }
       if (props.mod.parameters["data-format"]["authorization_type"] === undefined) {
         props.mod.parameters["data-format"]["authorization_type"] = {multiple: true, read: true, write: true};
+      }
+      if (props.mod.parameters["data-format"]["sector_identifier_uri"] === undefined) {
+        props.mod.parameters["data-format"]["sector_identifier_uri"] = {multiple: false, read: true, write: true};
       }
     }
 
@@ -105,13 +108,16 @@ class ModEdit extends Component {
 
     if (nextProps.role === "client") {
       if (nextProps.mod.parameters["data-format"] === undefined) {
-        nextProps.mod.parameters["data-format"]  = [];
+        nextProps.mod.parameters["data-format"]  = {};
       }
       if (nextProps.mod.parameters["data-format"]["redirect_uri"] === undefined) {
         nextProps.mod.parameters["data-format"]["redirect_uri"] = {multiple: true, read: true, write: true};
       }
       if (nextProps.mod.parameters["data-format"]["authorization_type"] === undefined) {
         nextProps.mod.parameters["data-format"]["authorization_type"] = {multiple: true, read: true, write: true};
+      }
+      if (nextProps.mod.parameters["data-format"]["sector_identifier_uri"] === undefined) {
+        nextProps.mod.parameters["data-format"]["sector_identifier_uri"] = {multiple: false, read: true, write: true};
       }
     }
 
