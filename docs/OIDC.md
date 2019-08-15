@@ -19,7 +19,6 @@ The following OpenID Connect Core functionalities are currently supported:
 
 The following OpenID Connect Core functionalities are not supported yet:
 
-- [Subject Identifier Pairwise](https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes)
 - [Client authentification with JWT](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication)
 - [Address Claims](https://openid.net/specs/openid-connect-core-1_0.html#AddressClaim)
 - [Requesting Claims using Scope Values](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims)
