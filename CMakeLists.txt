@@ -583,6 +583,7 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_oidc_discovery
               glewlwyd_oidc_client_secret
               glewlwyd_oidc_request_jwt
+              glewlwyd_oidc_subject_type
 							)
 		endif ()
 
