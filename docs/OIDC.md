@@ -189,13 +189,30 @@ You can add as many additional values as you want. If the property isn't present
 
 ### Additional parameters in the ID Token or the /userinfo endpoint
 
-This section allows to add specific claims in ID Tokens or userinfo results.
+This section allows to add specific claims in ID Tokens or userinfo results and to specify name and e-mail claim handling.
+
+`Name claim` and `E-mail claim` properties can have one of the following values:
+- No: The value will never be available on ID Tokens or userinfo results
+- On demand: The value will be available if specificly asked in the `claims` parameter
+- Mandatory: The value will always be available on ID Tokens or userinfo results
+
+If you add additional claims, the options available are the following.
 
 If you specify a type `number`, the value will be converted from a string to an integer.
 
 If the conversion fails, the value will be ignored. If you specify a type `boolean`, you must specify the values for `true` and `false`. If the value doesn't match, it will be ignored.
 
 If you check the option `Mandatory`, the claim will be added in all ID Tokens or userinfo calls, even if the claim isn't requested by the user.
+
+### Address claim properties
+
+This section allows to specify how to handle address claim.
+
+If the dropdown button `Use claim address` is set to `No`, the claim address isn't available for any user.
+
+If the dropdown button `Use claim address` is set to `Yes`, you must specify which properties available in the user profile will match the address claim properties.
+
+If an address claim property is empty or its corresponding property value in the user profile is empty or unavailable, the value will not be present in the address claim.
 
 ## Client secret vs password
 
