@@ -422,7 +422,7 @@
     "mod-glwd-address-claim-message": "You can specify if a claim address is available anf what properties correspond to address fields",
     "mod-glwd-address-claim-use": "Use claim address",
     "mod-glwd-address-claim-none": "No",
-    "mod-glwd-address-claim-object": "Specify",
+    "mod-glwd-address-claim-object": "Yes",
     "mod-glwd-addr-claim-formatted": "Formatted address property",
     "mod-glwd-addr-claim-formatted-ph": "Ex: address-formatted",
     "mod-glwd-addr-claim-street-address": "Address property",
