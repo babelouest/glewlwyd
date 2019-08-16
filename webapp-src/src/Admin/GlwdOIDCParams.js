@@ -35,6 +35,9 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["request-parameter-allow"]!==undefined?"":(props.mod.parameters["request-parameter-allow"] = true);
     props.mod.parameters["request-uri-allow-https-non-secure"]!==undefined?"":(props.mod.parameters["request-uri-allow-https-non-secure"] = false);
     props.mod.parameters["secret-type"]?"":(props.mod.parameters["secret-type"] = "pairwise");
+    props.mod.parameters["address-claim"]?"":(props.mod.parameters["address-claim"] = {type: "none", formatted: "", street_address: "", locality: "", region: "", postal_code: "", country: "", mandatory: false});
+    props.mod.parameters["name-claim"]?"":(props.mod.parameters["name-claim"] = "on-demand");
+    props.mod.parameters["email-claim"]?"":(props.mod.parameters["email-claim"] = "no");
 
     this.state = {
       config: props.config,
@@ -51,6 +54,7 @@ class GlwdOIDCParams extends Component {
     
     this.checkParameters = this.checkParameters.bind(this);
     this.changeParam = this.changeParam.bind(this);
+    this.changeParamWithValue = this.changeParamWithValue.bind(this);
     this.changeNumberParam = this.changeNumberParam.bind(this);
     this.toggleParam = this.toggleParam.bind(this);
     this.changeJwtType = this.changeJwtType.bind(this);
@@ -74,6 +78,9 @@ class GlwdOIDCParams extends Component {
     this.uploadFile = this.uploadFile.bind(this);
     this.uploadX5cFile = this.uploadX5cFile.bind(this);
     this.handleRemoveX5c = this.handleRemoveX5c.bind(this);
+    this.changeAddressClaimParam = this.changeAddressClaimParam.bind(this);
+    this.changeAddressClaim = this.changeAddressClaim.bind(this);
+    this.toggleAddrClaimMandatory = this.toggleAddrClaimMandatory.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -107,6 +114,9 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["request-parameter-allow"]!==undefined?"":(nextProps.mod.parameters["request-parameter-allow"] = true);
     nextProps.mod.parameters["request-uri-allow-https-non-secure"]!==undefined?"":(nextProps.mod.parameters["request-uri-allow-https-non-secure"] = false);
     nextProps.mod.parameters["secret-type"]?"":(nextProps.mod.parameters["secret-type"] = "pairwise");
+    nextProps.mod.parameters["address-claim"]?"":(nextProps.mod.parameters["address-claim"] = {type: "none", formatted: "", street_address: "", locality: "", region: "", postal_code: "", country: "", mandatory: false});
+    nextProps.mod.parameters["name-claim"]?"":(nextProps.mod.parameters["name-claim"] = "on-demand");
+    nextProps.mod.parameters["email-claim"]?"":(nextProps.mod.parameters["email-claim"] = "no");
     
     this.setState({
       config: nextProps.config,
@@ -123,6 +133,12 @@ class GlwdOIDCParams extends Component {
   changeParam(e, param) {
     var mod = this.state.mod;
     mod.parameters[param] = e.target.value;
+    this.setState({mod: mod});
+  }
+  
+  changeParamWithValue(param, value) {
+    var mod = this.state.mod;
+    mod.parameters[param] = value;
     this.setState({mod: mod});
   }
   
@@ -330,6 +346,24 @@ class GlwdOIDCParams extends Component {
     this.setState({mod: mod});
   }
   
+  changeAddressClaimParam(e, param) {
+    var mod = this.state.mod;
+    mod.parameters["address-claim"][param] = e.target.value;
+    this.setState({mod: mod});
+  }
+  
+  changeAddressClaim(e, type) {
+    var mod = this.state.mod;
+    mod.parameters["address-claim"].type = type;
+    this.setState({mod: mod});
+  }
+  
+  toggleAddrClaimMandatory(e, index) {
+    var mod = this.state.mod;
+    mod.parameters["address-claim"].mandatory = !mod.parameters["address-claim"].mandatory;
+    this.setState({mod: mod});
+  }
+  
   checkParameters() {
     var errorList = {}, hasError = false;
     if (!this.state.mod.parameters["iss"]) {
@@ -402,7 +436,7 @@ class GlwdOIDCParams extends Component {
           errorList["claims"][index] = {};
         }
         errorList["claims"][index]["name"] = "admin.mod-glwd-claims-name-error";
-      } else if (["iss","sub","aud","exp","iat","auth_time","nonce","acr","amr","azp"].indexOf(claimParam["name"]) > -1) {
+      } else if (["iss","sub","aud","exp","iat","auth_time","nonce","acr","amr","azp","name","email","address"].indexOf(claimParam["name"]) > -1) {
         hasError = true;
         if (!errorList["claims"]) {
           errorList["claims"] = [];
@@ -453,7 +487,7 @@ class GlwdOIDCParams extends Component {
   }
   
   render() {
-    var keyJsx, certJsx, scopeOverrideList = [], scopeList = [], additionalParametersList = [], claimsList = [], x5cList = [];
+    var keyJsx, certJsx, scopeOverrideList = [], scopeList = [], additionalParametersList = [], claimsList = [], x5cList = [], addressClaim;
     if (this.state.mod.parameters["jwt-type"] === "sha") {
       keyJsx =
         <div className="form-group">
@@ -684,6 +718,69 @@ class GlwdOIDCParams extends Component {
         </a>
       );
     });
+    if (this.state.mod.parameters["address-claim"].type==="object") {
+      addressClaim = 
+        <div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor="mod-glwd-addr-claim-formatted">{i18next.t("admin.mod-glwd-addr-claim-formatted")}</label>
+              </div>
+              <input type="text" className="form-control" id="mod-glwd-addr-claim-formatted" onChange={(e) => this.changeAddressClaimParam(e, "formatted")} value={this.state.mod.parameters["address-claim"]["formatted"]} placeholder={i18next.t("admin.mod-glwd-addr-claim-formatted-ph")} />
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor="mod-glwd-addr-claim-street-address">{i18next.t("admin.mod-glwd-addr-claim-street-address")}</label>
+              </div>
+              <input type="text" className="form-control" id="mod-glwd-addr-claim-street-address" onChange={(e) => this.changeAddressClaimParam(e, "street_address")} value={this.state.mod.parameters["address-claim"]["street_address"]} placeholder={i18next.t("admin.mod-glwd-addr-claim-street-address-ph")} />
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor="mod-glwd-addr-claim-locality">{i18next.t("admin.mod-glwd-addr-claim-locality")}</label>
+              </div>
+              <input type="text" className="form-control" id="mod-glwd-addr-claim-locality" onChange={(e) => this.changeAddressClaimParam(e, "locality")} value={this.state.mod.parameters["address-claim"]["locality"]} placeholder={i18next.t("admin.mod-glwd-addr-claim-locality-ph")} />
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor="mod-glwd-addr-claim-region">{i18next.t("admin.mod-glwd-addr-claim-region")}</label>
+              </div>
+              <input type="text" className="form-control" id="mod-glwd-addr-claim-region" onChange={(e) => this.changeAddressClaimParam(e, "region")} value={this.state.mod.parameters["address-claim"]["region"]} placeholder={i18next.t("admin.mod-glwd-addr-claim-region-ph")} />
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor="mod-glwd-addr-claim-postal-code">{i18next.t("admin.mod-glwd-addr-claim-postal-code")}</label>
+              </div>
+              <input type="text" className="form-control" id="mod-glwd-addr-claim-postal-code" onChange={(e) => this.changeAddressClaimParam(e, "postal_code")} value={this.state.mod.parameters["address-claim"]["postal_code"]} placeholder={i18next.t("admin.mod-glwd-addr-claim-postal-code-ph")} />
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor="mod-glwd-addr-claim-country">{i18next.t("admin.mod-glwd-addr-claim-country")}</label>
+              </div>
+              <input type="text" className="form-control" id="mod-glwd-addr-claim-country" onChange={(e) => this.changeAddressClaimParam(e, "country")} value={this.state.mod.parameters["address-claim"]["country"]} placeholder={i18next.t("admin.mod-glwd-addr-claim-country-ph")} />
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor="mod-glwd-addr-claim-mandatory">{i18next.t("admin.mod-glwd-addr-claim-mandatory")}</label>
+              </div>
+              <div className="input-group-text">
+                <input type="checkbox" className="form-control" id="mod-glwd-addr-claim-mandatory" onChange={(e) => this.toggleAddrClaimMandatory(e)} checked={this.state.mod.parameters["address-claim"].mandatory} />
+              </div>
+            </div>
+          </div>
+        </div>
+    }
     return (
       <div>
         <div className="accordion" id="accordionAuthType">
@@ -1081,19 +1178,86 @@ class GlwdOIDCParams extends Component {
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseAddClaim" aria-expanded="true" aria-controls="collapseAddParam">
-                  {i18next.t("admin.mod-glwd-claim")}
+                  {i18next.t("admin.mod-glwd-claims")}
                 </button>
               </h2>
             </div>
             <div id="collapseAddClaim" className="collapse" aria-labelledby="addClaimCard" data-parent="#accordionAddClaim">
               <div className="card-body">
-                <p>{i18next.t("admin.mod-glwd-claim-message")}</p>
+                <p>{i18next.t("admin.mod-glwd-claims-message")}</p>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-name-claim">{i18next.t("admin.mod-glwd-name-claim")}</label>
+                    </div>
+                    <div className="dropdown">
+                      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-mod-glwd-name-claim" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {i18next.t("admin.mod-glwd-name-email-claim-" + this.state.mod.parameters["name-claim"])}
+                      </button>
+                      <div className="dropdown-menu" aria-labelledby="mod-glwd-name-email-claim">
+                        <a className={"dropdown-item"+(this.state.mod.parameters["name-claim"]==="no"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('name-claim', 'no')}>{i18next.t("admin.mod-glwd-name-email-claim-no")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["name-claim"]==="on-demand"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('name-claim', 'on-demand')}>{i18next.t("admin.mod-glwd-name-email-claim-on-demand")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["name-claim"]==="mandatory"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('name-claim', 'always')}>{i18next.t("admin.mod-glwd-name-email-claim-mandatory")}</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-email-claim">{i18next.t("admin.mod-glwd-email-claim")}</label>
+                    </div>
+                    <div className="dropdown">
+                      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-mod-glwd-email-claim" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {i18next.t("admin.mod-glwd-name-email-claim-" + this.state.mod.parameters["email-claim"])}
+                      </button>
+                      <div className="dropdown-menu" aria-labelledby="mod-glwd-name-email-claim">
+                        <a className={"dropdown-item"+(this.state.mod.parameters["email-claim"]==="no"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('email-claim', 'no')}>{i18next.t("admin.mod-glwd-name-email-claim-no")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["email-claim"]==="on-demand"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('email-claim', 'on-demand')}>{i18next.t("admin.mod-glwd-name-email-claim-on-demand")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["email-claim"]==="mandatory"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('email-claim', 'always')}>{i18next.t("admin.mod-glwd-name-email-claim-mandatory")}</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div className="btn-group" role="group">
                   <button type="button" className="btn btn-secondary" onClick={this.addClaim} title={i18next.t("admin.mod-glwd-claim-add")}>
                     <i className="fas fa-plus"></i>
                   </button>
                 </div>
                 {claimsList}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionAddressClaim">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseAddressClaim" aria-expanded="true" aria-controls="collapseAddressClaim">
+                  {i18next.t("admin.mod-glwd-address-claim")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapseAddressClaim" className="collapse" aria-labelledby="addressClaimCard" data-parent="#accordionAddressClaim">
+              <div className="card-body">
+                <p>{i18next.t("admin.mod-glwd-address-claim-message")}</p>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-mod-glwd-address-claim">{i18next.t("admin.mod-glwd-address-claim-use")}</label>
+                    </div>
+                    <div className="dropdown">
+                      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-mod-glwd-address-claim" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {i18next.t("admin.mod-glwd-address-claim-" + this.state.mod.parameters["address-claim"].type)}
+                      </button>
+                      <div className="dropdown-menu" aria-labelledby="mod-glwd-address-claim">
+                        <a className={"dropdown-item"+(this.state.mod.parameters["address-claim"].type==="none"?" active":"")} href="#" onClick={(e) => this.changeAddressClaim(e, 'none')}>{i18next.t("admin.mod-glwd-address-claim-none")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["address-claim"].type==="object"?" active":"")} href="#" onClick={(e) => this.changeAddressClaim(e, 'object')}>{i18next.t("admin.mod-glwd-address-claim-object")}</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {addressClaim}
               </div>
             </div>
           </div>
