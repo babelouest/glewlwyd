@@ -30,7 +30,7 @@ struct _u_request user_req;
 
 START_TEST(test_oidc_userinfo_add_plugin)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssisisisosososososososos[{ssss}{ssssss}{ssssssssss}{ssssso}]}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssisisisososososososososssss[{ssss}{ssssss}{ssssssssss}{ssssso}]}}",
                                 "module",
                                 "oidc",
                                 "name",
@@ -68,6 +68,10 @@ START_TEST(test_oidc_userinfo_add_plugin)
                                   json_true(),
                                   "auth-type-refresh-enabled",
                                   json_true(),
+                                  "name-claim",
+                                  "mandatory",
+                                  "email-claim",
+                                  "mandatory",
                                   "claims",
                                     "name",
                                     "claim-str",
