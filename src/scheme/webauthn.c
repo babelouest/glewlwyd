@@ -1628,7 +1628,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
             if (att_stmt != NULL && cbor_isa_map(att_stmt) && cbor_map_is_definite(att_stmt) && !cbor_map_size(att_stmt)) {
               j_cert = json_string("");
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - response type 'none' has invalid format");
+              y_log_message(Y_LOG_LEVEL_DEBUG, "register_new_attestation - response type 'none' has invalid format");
               json_array_append_new(j_error, json_string("response invalid"));
               ret = G_ERROR_PARAM;
             }
