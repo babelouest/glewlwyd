@@ -561,12 +561,19 @@ int client_module_update(struct config_module * config, const char * client_id, 
   UNUSED(config);
   size_t index = 0;
   int ret, found = 0;
-  json_t * j_element = NULL;
+  json_t * j_element = NULL, * j_property;
+  const char * key;
   
   json_array_foreach((json_t *)cls, index, j_element) {
     if (0 == o_strcmp(client_id, json_string_value(json_object_get(j_element, "client_id")))) {
       json_object_set_new(j_client, "client_id", json_string(client_id));
-      json_object_update(j_element, j_client);
+      json_object_foreach(j_client, key, j_property) {
+        if (j_property != json_null()) {
+          json_object_set(j_element, key, j_property);
+        } else {
+          json_object_del(j_element, key);
+        }
+      }
       ret = G_OK;
       found = 1;
       break;
