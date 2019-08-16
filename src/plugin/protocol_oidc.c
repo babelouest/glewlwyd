@@ -439,23 +439,88 @@ static char * generate_client_access_token(struct _oidc_config * config, const c
 }
 
 /**
+ * Extract address claim values from user properties
+ */
+static json_t * get_address_claim(struct _oidc_config * config, json_t * j_user) {
+  json_t * j_return, * j_address, * j_value;
+  
+  if ((j_address = json_object()) != NULL) {
+    if (json_string_length(json_object_get(json_object_get(config->j_params, "address-claim"), "formatted")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "formatted")))) != NULL) {
+      json_object_set(j_address, "formatted", j_value);
+    }
+    if (json_string_length(json_object_get(json_object_get(config->j_params, "address-claim"), "street_address")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "street_address")))) != NULL) {
+      json_object_set(j_address, "street_address", j_value);
+    }
+    if (json_string_length(json_object_get(json_object_get(config->j_params, "address-claim"), "locality")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "locality")))) != NULL) {
+      json_object_set(j_address, "locality", j_value);
+    }
+    if (json_string_length(json_object_get(json_object_get(config->j_params, "address-claim"), "region")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "region")))) != NULL) {
+      json_object_set(j_address, "region", j_value);
+    }
+    if (json_string_length(json_object_get(json_object_get(config->j_params, "address-claim"), "postal_code")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "postal_code")))) != NULL) {
+      json_object_set(j_address, "postal_code", j_value);
+    }
+    if (json_string_length(json_object_get(json_object_get(config->j_params, "address-claim"), "country")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "country")))) != NULL) {
+      json_object_set(j_address, "country", j_value);
+    }
+    j_return = json_pack("{siso}", "result", G_OK, "address", j_address);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_address_claim - Error allocating resources for j_address");
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  }
+  return j_return;
+}
+
+/**
  * build a userinfo in JSON format
  */
 static json_t * get_userinfo(struct _oidc_config * config, const char * sub, json_t * j_user, const char * claims) {
-  json_t * j_userinfo = json_pack("{ss}", "sub", sub), * j_claim, * j_user_property;
+  json_t * j_userinfo = json_pack("{ss}", "sub", sub), * j_claim, * j_user_property, * j_address;
   char ** claims_array = NULL, * endptr;
   long int lvalue;
   size_t index;
   
-  if (json_object_get(j_user, "name") != NULL) {
-    json_object_set(j_userinfo, "name", json_object_get(j_user, "name"));
+  if (0 == o_strcmp("mandatory", json_string_value(json_object_get(config->j_params, "name-claim")))) {
+    if (json_object_get(j_user, "name") != NULL) {
+      json_object_set(j_userinfo, "name", json_object_get(j_user, "name"));
+    }
   }
-  if (json_object_get(j_user, "email") != NULL) {
-    json_object_set(j_userinfo, "email", json_object_get(j_user, "email"));
+  if (0 == o_strcmp("mandatory", json_string_value(json_object_get(config->j_params, "email-claim")))) {
+    if (json_object_get(j_user, "email") != NULL) {
+      json_object_set(j_userinfo, "email", json_object_get(j_user, "email"));
+    }
+  }
+  if (json_object_get(json_object_get(config->j_params, "address-claim"), "mandatory") == json_true()) {
+    j_address = get_address_claim(config, j_user);
+    if (check_result_value(j_address, G_OK)) {
+      json_object_set(j_userinfo, "address", json_object_get(j_address, "address"));
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_userinfo - Error get_address_claim");
+    }
+    json_decref(j_address);
   }
   
-  // Add mandatory and claimed values
   if (claims == NULL || split_string(claims, " ", &claims_array)) {
+    if (string_array_has_value((const char **)claims_array, "name") && 0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "name-claim")))) {
+      if (json_object_get(j_user, "name") != NULL) {
+        json_object_set(j_userinfo, "name", json_object_get(j_user, "name"));
+      }
+    }
+    if (string_array_has_value((const char **)claims_array, "email") && 0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "email-claim")))) {
+      if (json_object_get(j_user, "email") != NULL) {
+        json_object_set(j_userinfo, "email", json_object_get(j_user, "email"));
+      }
+    }
+    if (string_array_has_value((const char **)claims_array, "address")) {
+      j_address = get_address_claim(config, j_user);
+      if (check_result_value(j_address, G_OK)) {
+        json_object_set(j_userinfo, "address", json_object_get(j_address, "address"));
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_userinfo - Error get_address_claim");
+      }
+      json_decref(j_address);
+    }
+    // Add mandatory and claimed values
     json_array_foreach(json_object_get(config->j_params, "claims"), index, j_claim) {
       if (json_object_get(j_userinfo, json_string_value(json_object_get(j_claim, "name"))) == NULL && 
           (json_object_get(j_claim, "mandatory") == json_true() || string_array_has_value((const char **)claims_array, json_string_value(json_object_get(j_claim, "name"))))) {
@@ -2438,12 +2503,12 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
           break;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - nonce required");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - nonce required");
         redirect_url = msprintf("%s%serror=invalid_request", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
         response->status = 302;
-        j_return = json_pack("{si}", "result", G_ERROR);
+        j_return = json_pack("{si}", "result", G_ERROR_PARAM);
         break;
       }
     }
@@ -3957,8 +4022,11 @@ static json_t * check_parameters (json_t * j_params) {
                        0 == o_strcmp("nonce", json_string_value(json_object_get(j_element, "name"))) ||
                        0 == o_strcmp("acr", json_string_value(json_object_get(j_element, "name"))) ||
                        0 == o_strcmp("amr", json_string_value(json_object_get(j_element, "name"))) ||
-                       0 == o_strcmp("azp", json_string_value(json_object_get(j_element, "name")))) {
-              json_array_append_new(j_error, json_string("'claims' property 'name' forbidden values are: 'iss', 'sub', 'aud', 'exp', 'iat', 'auth_time', 'nonce', 'acr', 'amr', 'azp'"));
+                       0 == o_strcmp("azp", json_string_value(json_object_get(j_element, "name"))) ||
+                       0 == o_strcmp("name", json_string_value(json_object_get(j_element, "name"))) ||
+                       0 == o_strcmp("email", json_string_value(json_object_get(j_element, "name"))) ||
+                       0 == o_strcmp("address", json_string_value(json_object_get(j_element, "name")))) {
+              json_array_append_new(j_error, json_string("'claims' property 'name' forbidden values are: 'iss', 'sub', 'aud', 'exp', 'iat', 'auth_time', 'nonce', 'acr', 'amr', 'azp', 'name', 'email', 'address'"));
               ret = G_ERROR_PARAM;
             }
             if (json_object_get(j_element, "user-property") == NULL || !json_string_length(json_object_get(j_element, "user-property"))) {
@@ -3980,6 +4048,52 @@ static json_t * check_parameters (json_t * j_params) {
               ret = G_ERROR_PARAM;
             }
           }
+        }
+      }
+    }
+    if (json_object_get(j_params, "name-claim") != NULL && 0 != o_strcmp("no", json_string_value(json_object_get(j_params, "name-claim"))) && 0 != o_strcmp("on-demand", json_string_value(json_object_get(j_params, "name-claim"))) && 0 != o_strcmp("mandatory", json_string_value(json_object_get(j_params, "name-claim")))) {
+      json_array_append_new(j_error, json_string("Property 'name-claim' is optional and must have one of the following values: 'no', 'on-demand' or 'mandatory'"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "email-claim") != NULL && 0 != o_strcmp("no", json_string_value(json_object_get(j_params, "email-claim"))) && 0 != o_strcmp("on-demand", json_string_value(json_object_get(j_params, "email-claim"))) && 0 != o_strcmp("mandatory", json_string_value(json_object_get(j_params, "email-claim")))) {
+      json_array_append_new(j_error, json_string("Property 'email-claim' is optional and must have one of the following values: 'no', 'on-demand' or 'mandatory'"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "address-claim") != NULL) {
+      if (!json_is_object(json_object_get(j_params, "address-claim"))) {
+        json_array_append_new(j_error, json_string("Property 'address-claim' is optional and must be a JSON object"));
+        ret = G_ERROR_PARAM;
+      } else if (0 != o_strcmp("none", json_string_value(json_object_get(json_object_get(j_params, "address-claim"), "type"))) && 0 != o_strcmp("object", json_string_value(json_object_get(json_object_get(j_params, "address-claim"), "type")))) {
+        json_array_append_new(j_error, json_string("Property 'address-claim' type is mandatory and must have one of the following values: 'none' or 'obejct'"));
+        ret = G_ERROR_PARAM;
+      } else {
+        if (json_object_get(json_object_get(j_params, "address-claim"), "formatted") != NULL && !json_is_string(json_object_get(json_object_get(j_params, "address-claim"), "formatted"))) {
+          json_array_append_new(j_error, json_string("Property 'address-claim'.'formatted' is optional and must a string"));
+          ret = G_ERROR_PARAM;
+        }
+        if (json_object_get(json_object_get(j_params, "address-claim"), "street_address") != NULL && !json_is_string(json_object_get(json_object_get(j_params, "address-claim"), "street_address"))) {
+          json_array_append_new(j_error, json_string("Property 'address-claim'.'street_address' is optional and must a string"));
+          ret = G_ERROR_PARAM;
+        }
+        if (json_object_get(json_object_get(j_params, "address-claim"), "locality") != NULL && !json_is_string(json_object_get(json_object_get(j_params, "address-claim"), "locality"))) {
+          json_array_append_new(j_error, json_string("Property 'address-claim'.'locality' is optional and must a string"));
+          ret = G_ERROR_PARAM;
+        }
+        if (json_object_get(json_object_get(j_params, "address-claim"), "region") != NULL && !json_is_string(json_object_get(json_object_get(j_params, "address-claim"), "region"))) {
+          json_array_append_new(j_error, json_string("Property 'address-claim'.'region' is optional and must a string"));
+          ret = G_ERROR_PARAM;
+        }
+        if (json_object_get(json_object_get(j_params, "address-claim"), "postal_code") != NULL && !json_is_string(json_object_get(json_object_get(j_params, "address-claim"), "postal_code"))) {
+          json_array_append_new(j_error, json_string("Property 'address-claim'.'postal_code' is optional and must a string"));
+          ret = G_ERROR_PARAM;
+        }
+        if (json_object_get(json_object_get(j_params, "address-claim"), "country") != NULL && !json_is_string(json_object_get(json_object_get(j_params, "address-claim"), "country"))) {
+          json_array_append_new(j_error, json_string("Property 'address-claim'.'country' is optional and must a string"));
+          ret = G_ERROR_PARAM;
+        }
+        if (json_object_get(json_object_get(j_params, "address-claim"), "mandatory") != NULL && !json_is_boolean(json_object_get(json_object_get(j_params, "address-claim"), "mandatory"))) {
+          json_array_append_new(j_error, json_string("Property 'address-claim'.'mandatory' is optional and must a boolean"));
+          ret = G_ERROR_PARAM;
         }
       }
     }
