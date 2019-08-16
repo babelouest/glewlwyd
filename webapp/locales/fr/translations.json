@@ -413,6 +413,7 @@
     "mod-glwd-claims-boolean-value-false-ph": "Ex: 0",
     "mod-glwd-claims-boolean-value-false-error": "La valeur faux est obligatoire",
     "mod-glwd-claims-mandatory": "Obligatoire",
+    "mod-glwd-oidc-general-title": "Paramètres généraux",
     "mod-glwd-sign-title": "Signature des tokens",
     "mod-glwd-token-title": "Paramètres des tokens",
     "mod-glwd-auth-type-title": "Méthodes d'authentification",
