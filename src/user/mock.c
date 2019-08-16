@@ -556,7 +556,11 @@ int user_module_update(struct config_module * config, const char * username, jso
     if (0 == o_strcmp(username, json_string_value(json_object_get(j_element, "username")))) {
       json_object_set_new(j_user, "username", json_string(username));
       json_object_foreach(j_user, key, j_property) {
-        json_object_set(j_element, key, j_property);
+        if (j_property != json_null()) {
+          json_object_set(j_element, key, j_property);
+        } else {
+          json_object_del(j_element, key);
+        }
       }
       ret = G_OK;
       found = 1;
