@@ -44,6 +44,7 @@ glewlwyd_oidc_discovery
 glewlwyd_oidc_client_secret
 glewlwyd_oidc_request_jwt
 glewlwyd_oidc_subject_type
+glewlwyd_oidc_address_claim
 
 glewlwyd_admin_mod_type
 glewlwyd_admin_mod_user
