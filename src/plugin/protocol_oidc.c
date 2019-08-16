@@ -202,7 +202,7 @@ static char * get_sub_pairwise(struct _oidc_config * config, const char * userna
   int res;
   char * sub = NULL;
   
-  j_query = json_pack("{sss[s]s{sssssO}}",
+  j_query = json_pack("{sss[s]s{ssss}}",
                       "table",
                       GLEWLWYD_PLUGIN_OIDC_TABLE_SUBJECT_IDENTIFIER,
                       "columns",
@@ -211,14 +211,14 @@ static char * get_sub_pairwise(struct _oidc_config * config, const char * userna
                         "gposi_plugin_name",
                         config->name,
                         "gposi_username",
-                        username,
-                        "gposi_client_id",
-                        json_object_get(j_client, "client_id"));
+                        username);
 
   if (json_string_length(json_object_get(j_client, "sector_identifier_uri"))) {
     json_object_set(json_object_get(j_query, "where"), "gposi_sector_identifier_uri", json_object_get(j_client, "sector_identifier_uri"));
+    json_object_set(json_object_get(j_query, "where"), "gposi_client_id", json_null());
   } else {
     json_object_set(json_object_get(j_query, "where"), "gposi_sector_identifier_uri", json_null());
+    json_object_set(json_object_get(j_query, "where"), "gposi_client_id", json_object_get(j_client, "client_id"));
   }
   res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
@@ -230,7 +230,7 @@ static char * get_sub_pairwise(struct _oidc_config * config, const char * userna
       if (sub != NULL) {
         *sub = '\0';
         rand_string(sub, GLEWLWYD_SUB_LENGTH);
-        j_query = json_pack("{sss{sssssssO}}",
+        j_query = json_pack("{sss{ssssss}}",
                             "table",
                             GLEWLWYD_PLUGIN_OIDC_TABLE_SUBJECT_IDENTIFIER,
                             "values",
@@ -239,13 +239,13 @@ static char * get_sub_pairwise(struct _oidc_config * config, const char * userna
                               "gposi_sub",
                               sub,
                               "gposi_username",
-                              username,
-                              "gposi_client_id",
-                              json_object_get(j_client, "client_id"));
+                              username);
         if (json_string_length(json_object_get(j_client, "sector_identifier_uri"))) {
           json_object_set(json_object_get(j_query, "values"), "gposi_sector_identifier_uri", json_object_get(j_client, "sector_identifier_uri"));
+          json_object_set(json_object_get(j_query, "where"), "gposi_client_id", json_null());
         } else {
           json_object_set(json_object_get(j_query, "values"), "gposi_sector_identifier_uri", json_null());
+          json_object_set(json_object_get(j_query, "where"), "gposi_client_id", json_object_get(j_client, "client_id"));
         }
         if (h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL) != H_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_sub_pairwise - Error executing h_insert");
