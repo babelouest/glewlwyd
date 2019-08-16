@@ -122,7 +122,7 @@ START_TEST(test_oidc_code_ok)
   ck_assert_int_eq(o_base64url_decode((unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
   str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_payload = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
-  ck_assert_int_eq(json_object_size(j_payload), 11);
+  ck_assert_int_eq(json_object_size(j_payload), 10);
   ck_assert_ptr_ne(json_object_get(j_payload, "at_hash"), NULL);
   ck_assert_ptr_ne(json_object_get(j_payload, "c_hash"), NULL);
   

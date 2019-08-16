@@ -108,6 +108,7 @@ START_TEST(test_oidc_optional_request_parameters_prompt_none_id_token_not_last)
   ck_assert_int_eq(resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "error=invalid_request"), NULL);
   ulfius_clean_response(&resp);
+  o_free(id_token);
 }
 END_TEST
 
@@ -136,6 +137,7 @@ START_TEST(test_oidc_optional_request_parameters_prompt_none_id_token_last)
   ck_assert_int_eq(resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
   ulfius_clean_response(&resp);
+  o_free(id_token);
 }
 END_TEST
 
