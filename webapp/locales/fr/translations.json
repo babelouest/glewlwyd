@@ -422,7 +422,7 @@
     "mod-glwd-address-claim-message": "Dans cette section, vous pouvez spécifier si un claim address est disponible et quels champs de profil y correspondent",
     "mod-glwd-address-claim-use": "Utiliser le claim address",
     "mod-glwd-address-claim-none": "Non",
-    "mod-glwd-address-claim-object": "Spécifier",
+    "mod-glwd-address-claim-object": "Oui",
     "mod-glwd-addr-claim-formatted": "Champ addresse formattée",
     "mod-glwd-addr-claim-formatted-ph": "Ex: address-formatted",
     "mod-glwd-addr-claim-street-address": "Champ addresse",
