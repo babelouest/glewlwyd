@@ -1,6 +1,7 @@
 var path = require('path');
 
 module.exports = {
+    mode: 'development',
 		entry: {
       admin: './src/admin.js',
       login: './src/login.js',
@@ -22,7 +23,7 @@ module.exports = {
 		},
 
 		module: {
-				loaders: [
+				rules: [
 						{
 								test: /\.js$/,
 								exclude: /(node_modules|bower_components|build)/,
