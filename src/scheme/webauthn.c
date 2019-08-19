@@ -2433,12 +2433,13 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     if (check_result_value(j_user_id, G_OK)) {
       j_credential = generate_new_credential(config, (json_t *)cls, username);
       if (check_result_value(j_credential, G_OK)) {
-        j_return = json_pack("{sis{sOsOsOs{sOss}sO}}", 
+        j_return = json_pack("{sis{sOsOsOsss{sOss}sO}}",
                               "result", G_OK, 
                               "response", 
                                 "session", json_object_get(json_object_get(j_credential, "credential"), "session"), 
                                 "challenge", json_object_get(json_object_get(j_credential, "credential"), "challenge"), 
                                 "pubKey-cred-params", json_object_get((json_t *)cls, "pubKey-cred-params"),
+                                "attestation-required", json_object_get((json_t *)cls, "force-fmt-none")==json_true()?"none":"direct",
                                 "user",
                                   "id", json_object_get(j_user_id, "user_id"),
                                   "name", username,
