@@ -37,7 +37,9 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["secret-type"]?"":(props.mod.parameters["secret-type"] = "pairwise");
     props.mod.parameters["address-claim"]?"":(props.mod.parameters["address-claim"] = {type: "none", formatted: "", street_address: "", locality: "", region: "", postal_code: "", country: "", mandatory: false});
     props.mod.parameters["name-claim"]?"":(props.mod.parameters["name-claim"] = "on-demand");
+    props.mod.parameters["name-claim-scope"]?"":(props.mod.parameters["name-claim-scope"] = []);
     props.mod.parameters["email-claim"]?"":(props.mod.parameters["email-claim"] = "no");
+    props.mod.parameters["email-claim-scope"]?"":(props.mod.parameters["email-claim-scope"] = []);
 
     this.state = {
       config: props.config,
@@ -75,12 +77,19 @@ class GlwdOIDCParams extends Component {
     this.setClaimBooleanTrue = this.setClaimBooleanTrue.bind(this);
     this.setClaimBooleanFalse = this.setClaimBooleanFalse.bind(this);
     this.toggleClaimMandatory = this.toggleClaimMandatory.bind(this);
+    this.toggleClaimOnDemand = this.toggleClaimOnDemand.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
     this.uploadX5cFile = this.uploadX5cFile.bind(this);
     this.handleRemoveX5c = this.handleRemoveX5c.bind(this);
     this.changeAddressClaimParam = this.changeAddressClaimParam.bind(this);
     this.changeAddressClaim = this.changeAddressClaim.bind(this);
     this.toggleAddrClaimMandatory = this.toggleAddrClaimMandatory.bind(this);
+    this.addScopeClaim = this.addScopeClaim.bind(this);
+    this.deleteScopeClaim = this.deleteScopeClaim.bind(this);
+    this.addNameScope = this.addNameScope.bind(this);
+    this.deleteNameScope = this.deleteNameScope.bind(this);
+    this.addEmailScope = this.addEmailScope.bind(this);
+    this.deleteEmailScope = this.deleteEmailScope.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -116,7 +125,9 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["secret-type"]?"":(nextProps.mod.parameters["secret-type"] = "pairwise");
     nextProps.mod.parameters["address-claim"]?"":(nextProps.mod.parameters["address-claim"] = {type: "none", formatted: "", street_address: "", locality: "", region: "", postal_code: "", country: "", mandatory: false});
     nextProps.mod.parameters["name-claim"]?"":(nextProps.mod.parameters["name-claim"] = "on-demand");
+    nextProps.mod.parameters["name-claim-scope"]?"":(nextProps.mod.parameters["name-claim-scope"] = []);
     nextProps.mod.parameters["email-claim"]?"":(nextProps.mod.parameters["email-claim"] = "no");
+    nextProps.mod.parameters["email-claim-scope"]?"":(nextProps.mod.parameters["email-claim-scope"] = []);
     
     this.setState({
       config: nextProps.config,
@@ -299,7 +310,9 @@ class GlwdOIDCParams extends Component {
       "type": "string",
       "boolean-value-true": "",
       "boolean-value-false": "",
-      "mandatory": false
+      "mandatory": false,
+      "on-demand": false,
+      scope: []
     });
     this.setState({mod: mod});
   }
@@ -346,6 +359,12 @@ class GlwdOIDCParams extends Component {
     this.setState({mod: mod});
   }
   
+  toggleClaimOnDemand(e, index) {
+    var mod = this.state.mod;
+    mod.parameters["claims"][index]["on-demand"] = !mod.parameters["claims"][index]["on-demand"];
+    this.setState({mod: mod});
+  }
+  
   changeAddressClaimParam(e, param) {
     var mod = this.state.mod;
     mod.parameters["address-claim"][param] = e.target.value;
@@ -361,6 +380,50 @@ class GlwdOIDCParams extends Component {
   toggleAddrClaimMandatory(e, index) {
     var mod = this.state.mod;
     mod.parameters["address-claim"].mandatory = !mod.parameters["address-claim"].mandatory;
+    this.setState({mod: mod});
+  }
+  
+  addScopeClaim(e, index, scope) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["claims"][index].scope.push(scope);
+    this.setState({mod: mod});
+  }
+  
+  deleteScopeClaim(e, index, indexScope) {
+    e.preventDefault();
+    if (!this.state.mod.parameters["claims"][index].mandatory) {
+      var mod = this.state.mod;
+      mod.parameters["claims"][index].scope.splice(indexScope, 1);
+      this.setState({mod: mod});
+    }
+  }
+  
+  addNameScope(e, scope) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["name-claim-scope"].push(scope);
+    this.setState({mod: mod});
+  }
+  
+  deleteNameScope(e, index) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["name-claim-scope"].splice(index, 1);
+    this.setState({mod: mod});
+  }
+  
+  addEmailScope(e, scope) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["email-claim-scope"].push(scope);
+    this.setState({mod: mod});
+  }
+  
+  deleteEmailScope(e, index) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["email-claim-scope"].splice(index, 1);
     this.setState({mod: mod});
   }
   
@@ -589,6 +652,7 @@ class GlwdOIDCParams extends Component {
       </div>
       );
     });
+    
     this.state.mod.parameters["additional-parameters"].forEach((parameter, index) => {
       var hasUserError = this.state.errorList["additional-parameters"] && this.state.errorList["additional-parameters"][index] && this.state.errorList["additional-parameters"][index]["user"];
       var hasTokenError = this.state.errorList["additional-parameters"] && this.state.errorList["additional-parameters"][index] && this.state.errorList["additional-parameters"][index]["token"];
@@ -620,6 +684,50 @@ class GlwdOIDCParams extends Component {
       </div>
       );
     });
+    
+    var nameScopeListToAdd = [];
+    this.state.config.scopes.forEach((scope, indexScope) => {
+      if (this.state.mod.parameters["name-claim-scope"].indexOf(scope.name) === -1) {
+        nameScopeListToAdd.push(
+          <a className="dropdown-item" key={indexScope} href="#" onClick={(e) => this.addNameScope(e, scope.name)}>{scope.name}</a>
+        );
+      }
+    });
+    var nameScopeList = [];
+    this.state.mod.parameters["name-claim-scope"].forEach((scope, indexScope) => {
+      nameScopeList.push(
+        <a href="#" onClick={(e) => this.deleteNameScope(e, indexScope)} key={indexScope}><span className="badge badge-primary btn-icon-right">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>
+      );
+    });
+    
+    var emailScopeListToAdd = [];
+    this.state.config.scopes.forEach((scope, indexScope) => {
+      if (this.state.mod.parameters["email-claim-scope"].indexOf(scope.name) === -1) {
+        emailScopeListToAdd.push(
+          <a className="dropdown-item" key={indexScope} href="#" onClick={(e) => this.addEmailScope(e, scope.name)}>{scope.name}</a>
+        );
+      }
+    });
+    var emailScopeList = [];
+    this.state.mod.parameters["email-claim-scope"].forEach((scope, indexScope) => {
+      emailScopeList.push(
+        <a href="#" onClick={(e) => this.deleteEmailScope(e, indexScope)} key={indexScope}><span className="badge badge-primary btn-icon-right">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>
+      );
+    });
+    
+    this.state.mod.parameters["jwks-x5c"].forEach((x5c, index) => {
+      x5cList.push(
+        <a disabled={!this.state.mod.parameters["jwks-show"]} href="#" key={index} onClick={(e) => this.handleRemoveX5c(e, index)}>
+          <span className="badge badge-primary btn-icon-right">
+            {x5c.substring(0, 40)}
+            <span className="badge badge-light btn-icon-right">
+              <i className="fas fa-times"></i>
+            </span>
+          </span>
+        </a>
+      );
+    });
+
     this.state.mod.parameters["claims"].forEach((parameter, index) => {
       var hasNameError = this.state.errorList["claims"] && this.state.errorList["claims"][index] && this.state.errorList["claims"][index]["name"];
       var hasUserPropertyError = this.state.errorList["claims"] && this.state.errorList["claims"][index] && this.state.errorList["claims"][index]["user-property"];
@@ -648,6 +756,20 @@ class GlwdOIDCParams extends Component {
           </div>
         </div>
       }
+      var scopeList = [];
+      this.state.config.scopes.forEach((scope, indexScope) => {
+        if (parameter["scope"].indexOf(scope.name) === -1) {
+          scopeList.push(
+            <a className="dropdown-item" key={indexScope} href="#" onClick={(e) => this.addScopeClaim(e, index, scope.name)}>{scope.name}</a>
+          );
+        }
+      });
+      var selectedScopeList = [];
+      parameter["scope"].forEach((scope, indexScope) => {
+        selectedScopeList.push(
+          <a href="#" onClick={(e) => this.deleteScopeClaim(e, index, indexScope)} key={indexScope}><span className="badge badge-primary btn-icon-right">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>
+        );
+      });
       claimsList.push(
       <div key={index}>
         <hr/>
@@ -697,7 +819,32 @@ class GlwdOIDCParams extends Component {
               </div>
             </div>
           </div>
-          {this.state.errorList["jwt-type"]?<span className="error-input">{i18next.t(this.state.errorList["jwt-type"])}</span>:""}
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <label disabled={true} className="input-group-text" htmlFor={"mod-glwd-claims-on-demand-"+parameter["name"]}>{i18next.t("admin.mod-glwd-claims-on-demand")}</label>
+              </div>
+              <div className="input-group-text">
+                <input type="checkbox" className="form-control" id={"mod-glwd-claims-on-demand-"+parameter["name"]} onChange={(e) => this.toggleClaimOnDemand(e, index)} checked={parameter["on-demand"]} disabled={parameter["mandatory"]}/>
+              </div>
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor="mod-glwd-scope-claim">{i18next.t("admin.mod-glwd-scope-claim")}</label>
+              </div>
+              <div className="dropdown">
+                <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-mod-glwd-scope-claim" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={parameter["mandatory"]}>
+                  {i18next.t("admin.mod-glwd-scope-claim-select")}
+                </button>
+                <div className="dropdown-menu" aria-labelledby="mod-glwd-name-email-claim">
+                  {scopeList}
+                </div>
+              </div>
+              {selectedScopeList}
+            </div>
+          </div>
         </div>
         <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteClaim(e, index)} title={i18next.t("admin.mod-claims-delete")}>
           <i className="fas fa-trash"></i>
@@ -706,18 +853,6 @@ class GlwdOIDCParams extends Component {
       );
     });
 
-    this.state.mod.parameters["jwks-x5c"].forEach((x5c, index) => {
-      x5cList.push(
-        <a disabled={!this.state.mod.parameters["jwks-show"]} href="#" key={index} onClick={(e) => this.handleRemoveX5c(e, index)}>
-          <span className="badge badge-primary btn-icon-right">
-            {x5c.substring(0, 40)}
-            <span className="badge badge-light btn-icon-right">
-              <i className="fas fa-times"></i>
-            </span>
-          </span>
-        </a>
-      );
-    });
     if (this.state.mod.parameters["address-claim"].type==="object") {
       addressClaim = 
         <div>
@@ -781,6 +916,7 @@ class GlwdOIDCParams extends Component {
           </div>
         </div>
     }
+
     return (
       <div>
         <div className="accordion" id="accordionAuthType">
@@ -1205,6 +1341,22 @@ class GlwdOIDCParams extends Component {
                 <div className="form-group">
                   <div className="input-group mb-3">
                     <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-name-scope">{i18next.t("admin.mod-glwd-name-scope")}</label>
+                    </div>
+                    <div className="dropdown">
+                      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-mod-glwd-name-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {i18next.t("admin.mod-glwd-name-email-scope-select")}
+                      </button>
+                      <div className="dropdown-menu" aria-labelledby="mod-glwd-name-scope-claim">
+                        {nameScopeListToAdd}
+                      </div>
+                    </div>
+                    {nameScopeList}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-glwd-email-claim">{i18next.t("admin.mod-glwd-email-claim")}</label>
                     </div>
                     <div className="dropdown">
@@ -1217,6 +1369,22 @@ class GlwdOIDCParams extends Component {
                         <a className={"dropdown-item"+(this.state.mod.parameters["email-claim"]==="mandatory"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('email-claim', 'always')}>{i18next.t("admin.mod-glwd-name-email-claim-mandatory")}</a>
                       </div>
                     </div>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-name-scope">{i18next.t("admin.mod-glwd-email-scope")}</label>
+                    </div>
+                    <div className="dropdown">
+                      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-mod-glwd-name-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {i18next.t("admin.mod-glwd-name-email-scope-select")}
+                      </button>
+                      <div className="dropdown-menu" aria-labelledby="mod-glwd-name-scope-claim">
+                        {emailScopeListToAdd}
+                      </div>
+                    </div>
+                    {emailScopeList}
                   </div>
                 </div>
                 <div className="btn-group" role="group">
