@@ -14,6 +14,7 @@ The following OpenID Connect Core functionalities are currently supported:
 - [OpenID Connect Discovery](http://openid.net/specs/openid-connect-discovery-1_0.html)
 - [Address Claims](https://openid.net/specs/openid-connect-core-1_0.html#AddressClaim)
 - [Requesting Claims using the "claims" Request Parameter](https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter)
+- [Requesting Claims using Scope Values](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims)
 - [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) using HTTP Basic Auth, POST Parameter or signed JWT
 - [Passing Request Parameters as JWTs](https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests)
 - [Subject Types public or pairwise](https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes)
@@ -21,7 +22,6 @@ The following OpenID Connect Core functionalities are currently supported:
 The following OpenID Connect Core functionalities are not supported yet:
 
 - [Client authentification with JWT](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication)
-- [Requesting Claims using Scope Values](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims)
 - [Claims Languages and Scripts](https://openid.net/specs/openid-connect-core-1_0.html#ClaimsLanguagesAndScripts)
 - [Self-Issued OpenID Provider](https://openid.net/specs/openid-connect-core-1_0.html#SelfIssued)
 - [id_token encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
@@ -187,7 +187,7 @@ This section allows to add specific values to the access_tokens that will be tak
 
 You can add as many additional values as you want. If the property isn't present in the user data, it will be ignored. If the value is mutiple, all values will be present, separated by a comma `,`.
 
-### Additional parameters in the ID Token or the /userinfo endpoint
+### Additional claims in the ID Token or the /userinfo endpoint
 
 This section allows to add specific claims in ID Tokens or userinfo results and to specify name and e-mail claim handling.
 
@@ -196,6 +196,8 @@ This section allows to add specific claims in ID Tokens or userinfo results and 
 - On demand: The value will be available if specificly asked in the `claims` parameter
 - Mandatory: The value will always be available on ID Tokens or userinfo results
 
+In addition, you can add these claims as scope claims.
+
 If you add additional claims, the options available are the following.
 
 If you specify a type `number`, the value will be converted from a string to an integer.
@@ -203,6 +205,8 @@ If you specify a type `number`, the value will be converted from a string to an 
 If the conversion fails, the value will be ignored. If you specify a type `boolean`, you must specify the values for `true` and `false`. If the value doesn't match, it will be ignored.
 
 If you check the option `Mandatory`, the claim will be added in all ID Tokens or userinfo calls, even if the claim isn't requested by the user.
+
+Finally, you add scopes to additional claims.
 
 ### Address claim properties
 
