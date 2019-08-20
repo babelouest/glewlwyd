@@ -119,7 +119,7 @@ json_t * get_scope_list(struct config_elements * config, const char * pattern, s
   size_t index;
   char * pattern_escaped, * pattern_clause;
 
-  j_query = json_pack("{sss[sssss]sisiss}",
+  j_query = json_pack("{sss[sssss]siss}",
                       "table",
                       GLEWLWYD_TABLE_SCOPE,
                       "columns",
@@ -128,12 +128,13 @@ json_t * get_scope_list(struct config_elements * config, const char * pattern, s
                         "gs_description AS description",
                         "gs_password_required",
                         "gs_password_max_age AS password_max_age",
-                      "limit",
-                      limit,
                       "offset",
                       offset,
                       "order_by",
                       "gs_name");
+  if (limit) {
+    json_object_set_new(j_query, "limit", json_integer(limit));
+  }
   if (o_strlen(pattern)) {
     pattern_escaped = h_escape_string(config->conn, pattern);
     pattern_clause = msprintf("IN (SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name LIKE '%%%s%%' OR gs_display_name LIKE '%%%s%%' OR gs_description LIKE '%%%s%%')", pattern_escaped, pattern_escaped, pattern_escaped);
