@@ -2072,7 +2072,7 @@ User with scope `g_admin` authorized.
 #### URL Parameters
 
 `offset`: number, the offset to start the list, default 0
-`limit`: number, the maximal number of elements in the list, default 100
+`limit`: number, the maximal number of elements in the list, default 100, if limit is explicitly set to 0, no limit
 `source`: string, the instance name to limit the result, if not set, all instances will be used
 `pattern`: string, the pattern to filter the result
 
