@@ -63,6 +63,7 @@ class App extends Component {
     this.validateClient = this.validateClient.bind(this);
 
     this.fetchScopes = this.fetchScopes.bind(this);
+    this.fetchAllScopes = this.fetchAllScopes.bind(this);
     this.confirmDeleteScope = this.confirmDeleteScope.bind(this);
     this.confirmEditScope = this.confirmEditScope.bind(this);
     this.confirmAddScope = this.confirmAddScope.bind(this);
@@ -424,6 +425,7 @@ class App extends Component {
             this.fetchClientMods();
             this.fetchSchemeMods();
             this.fetchPlugins();
+            this.fetchAllScopes();
           });
         }
       });
@@ -474,10 +476,25 @@ class App extends Component {
     return apiManager.glewlwydRequest("/scope?offset=" + this.state.scopes.offset + "&limit=" + this.state.scopes.limit + (this.state.scopes.searchPattern?"&pattern="+this.state.scopes.searchPattern:""))
     .then((scopes) => {
       var curScopes = this.state.scopes;
+      curScopes.list = scopes;
+      this.setState({scopes: curScopes});
+    })
+    .fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      } else {
+        this.setState({loggedIn: false});
+      }
+    });
+  }
+  
+  fetchAllScopes() {
+    return apiManager.glewlwydRequest("/scope?limit=0")
+    .then((scopes) => {
       var scopeList = [];
       var users = this.state.users;
       var clients = this.state.clients;
-      curScopes.list = scopes;
+      var config = this.state.config;
       scopes.forEach((scope) => {
         scopeList.push(scope.name);
       });
@@ -491,13 +508,8 @@ class App extends Component {
           pat.listElements = scopeList;
         }
       });
-      this.setState({scopes: curScopes, users: users, clients: clients});
-    }).fail((err) => {
-      if (err.status !== 401) {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
-      } else {
-        this.setState({loggedIn: false});
-      }
+      config.scopes = scopes;
+      this.setState({users: users, clients: clients, config: config});
     });
   }
 
