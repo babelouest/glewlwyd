@@ -1622,7 +1622,7 @@ int callback_glewlwyd_get_scope_list (const struct _u_request * request, struct 
   }
   if (u_map_get(request->map_url, "limit") != NULL) {
     l_converted = strtol(u_map_get(request->map_url, "limit"), &endptr, 10);
-    if (!(*endptr) && l_converted > 0) {
+    if (!(*endptr) && l_converted >= 0) {
       limit = (size_t)l_converted;
     }
   }
