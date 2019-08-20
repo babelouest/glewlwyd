@@ -13,3 +13,4 @@
 valgrind.txt
 glewlwyd
 webapp/test-*.html
+webapp-src/test-*.html
