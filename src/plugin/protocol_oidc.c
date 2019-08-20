@@ -463,7 +463,11 @@ static json_t * get_address_claim(struct _oidc_config * config, json_t * j_user)
     if (json_string_length(json_object_get(json_object_get(config->j_params, "address-claim"), "country")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "country")))) != NULL) {
       json_object_set(j_address, "country", j_value);
     }
-    j_return = json_pack("{siso}", "result", G_OK, "address", j_address);
+    if (json_object_size(j_address)) {
+      j_return = json_pack("{siso}", "result", G_OK, "address", j_address);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_address_claim - Error allocating resources for j_address");
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -474,32 +478,37 @@ static json_t * get_address_claim(struct _oidc_config * config, json_t * j_user)
 /**
  * build a userinfo in JSON format
  */
-static json_t * get_userinfo(struct _oidc_config * config, const char * sub, json_t * j_user, const char * claims) {
-  json_t * j_userinfo = json_pack("{ss}", "sub", sub), * j_claim, * j_user_property, * j_address;
-  char ** claims_array = NULL, * endptr;
+static json_t * get_userinfo(struct _oidc_config * config, const char * sub, json_t * j_user, const char * claims, const char * scopes) {
+  json_t * j_userinfo = json_pack("{ss}", "sub", sub), * j_claim, * j_user_property, * j_address, * j_scope;
+  char ** claims_array = NULL, ** scopes_array = NULL, * endptr;
   long int lvalue;
-  size_t index;
+  size_t index, index_scope;
   
+  // Append name if mandatory
   if (0 == o_strcmp("mandatory", json_string_value(json_object_get(config->j_params, "name-claim")))) {
     if (json_object_get(j_user, "name") != NULL) {
       json_object_set(j_userinfo, "name", json_object_get(j_user, "name"));
     }
   }
+  // Append e-mail if mandatory
   if (0 == o_strcmp("mandatory", json_string_value(json_object_get(config->j_params, "email-claim")))) {
     if (json_object_get(j_user, "email") != NULL) {
       json_object_set(j_userinfo, "email", json_object_get(j_user, "email"));
     }
   }
+  
+  // Append address if mandatory
   if (json_object_get(json_object_get(config->j_params, "address-claim"), "mandatory") == json_true()) {
     j_address = get_address_claim(config, j_user);
     if (check_result_value(j_address, G_OK)) {
       json_object_set(j_userinfo, "address", json_object_get(j_address, "address"));
-    } else {
+    } else if (!check_result_value(j_address, G_ERROR_NOT_FOUND)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_userinfo - Error get_address_claim");
     }
     json_decref(j_address);
   }
   
+  // On-demand claims
   if (claims == NULL || split_string(claims, " ", &claims_array)) {
     if (string_array_has_value((const char **)claims_array, "name") && 0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "name-claim")))) {
       if (json_object_get(j_user, "name") != NULL) {
@@ -515,15 +524,16 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
       j_address = get_address_claim(config, j_user);
       if (check_result_value(j_address, G_OK)) {
         json_object_set(j_userinfo, "address", json_object_get(j_address, "address"));
-      } else {
+      } else if (!check_result_value(j_address, G_ERROR_NOT_FOUND)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_userinfo - Error get_address_claim");
       }
       json_decref(j_address);
     }
-    // Add mandatory and claimed values
+    // Add claimed values
     json_array_foreach(json_object_get(config->j_params, "claims"), index, j_claim) {
       if (json_object_get(j_userinfo, json_string_value(json_object_get(j_claim, "name"))) == NULL && 
-          (json_object_get(j_claim, "mandatory") == json_true() || string_array_has_value((const char **)claims_array, json_string_value(json_object_get(j_claim, "name"))))) {
+          (json_object_get(j_claim, "mandatory") == json_true() || 
+           (string_array_has_value((const char **)claims_array, json_string_value(json_object_get(j_claim, "name"))) && json_object_get(j_claim, "on-demand") == json_true()))) {
         j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_claim, "user-property")));
         if (j_user_property != NULL && json_is_string(j_user_property)) {
           if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_claim, "type")))) {
@@ -545,9 +555,56 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
       }
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_userinfo - Error split_string");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_userinfo - Error split_string claims");
   }
   free_string_array(claims_array);
+  
+  // Append scopes claims
+  if (scopes == NULL || split_string(scopes, " ", &scopes_array)) {
+    json_array_foreach(json_object_get(config->j_params, "name-claim-scope"), index, j_scope) {
+      if (string_array_has_value((const char **)scopes_array, json_string_value(j_scope))) {
+        if (json_object_get(j_user, "name") != NULL) {
+          json_object_set(j_userinfo, "name", json_object_get(j_user, "name"));
+        }
+      }
+    }
+    json_array_foreach(json_object_get(config->j_params, "email-claim-scope"), index, j_scope) {
+      if (string_array_has_value((const char **)scopes_array, json_string_value(j_scope))) {
+        if (json_object_get(j_user, "email") != NULL) {
+          json_object_set(j_userinfo, "email", json_object_get(j_user, "email"));
+        }
+      }
+    }
+    json_array_foreach(json_object_get(config->j_params, "claims"), index, j_claim) {
+      if (json_object_get(j_userinfo, json_string_value(json_object_get(j_claim, "name"))) == NULL) {
+        json_array_foreach(json_object_get(j_claim, "scope"), index_scope, j_scope) {
+          if (string_array_has_value((const char **)scopes_array, json_string_value(j_scope))) {
+            j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_claim, "user-property")));
+            if (j_user_property != NULL && json_is_string(j_user_property)) {
+              if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_claim, "type")))) {
+                if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-true")))) {
+                  json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_true());
+                } else if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-false")))) {
+                  json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_false());
+                }
+              } else if (0 == o_strcmp("number", json_string_value(json_object_get(j_claim, "type")))) {
+                endptr = NULL;
+                lvalue = strtol(json_string_value(j_user_property), &endptr, 10);
+                if (!(*endptr)) {
+                  json_object_set_new(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_integer(lvalue));
+                }
+              } else {
+                json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), j_user_property);
+              }
+            }
+          }
+        }
+      }
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_userinfo - Error split_string scopes");
+  }
+  free_string_array(scopes_array);
   
   return j_userinfo;
 }
@@ -655,7 +712,7 @@ static int serialize_id_token(struct _oidc_config * config, uint auth_type, cons
 /**
  * Builds an id_token from the given parameters
  */
-static char * generate_id_token(struct _oidc_config * config, const char * username, json_t * j_user, json_t * j_client, time_t now, time_t auth_time, const char * nonce, json_t * j_amr, const char * access_token, const char * code) {
+static char * generate_id_token(struct _oidc_config * config, const char * username, json_t * j_user, json_t * j_client, time_t now, time_t auth_time, const char * nonce, json_t * j_amr, const char * access_token, const char * code, const char * scopes) {
   jwt_t * jwt = NULL;
   char * token = NULL, at_hash_encoded[128] = {0}, c_hash_encoded[128] = {0}, * user_info_str = NULL, * sub = get_sub(config, username, j_client);
   unsigned char at_hash[128] = {0}, c_hash[128] = {0};
@@ -666,7 +723,7 @@ static char * generate_id_token(struct _oidc_config * config, const char * usern
   
   if (sub != NULL) {
     if ((jwt = jwt_dup(config->jwt_key)) != NULL) {
-      if ((j_user_info = get_userinfo(config, sub, j_user, NULL)) != NULL) {
+      if ((j_user_info = get_userinfo(config, sub, j_user, NULL, scopes)) != NULL) {
         json_object_set(j_user_info, "iss", json_object_get(config->j_params, "iss"));
         json_object_set(j_user_info, "aud", json_object_get(j_client, "client_id"));
         json_object_set_new(j_user_info, "exp", json_integer(now + config->access_token_duration));
@@ -2595,7 +2652,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                                       json_string_value(json_object_get(json_object_get(j_code, "code"), "nonce")), 
                                                       json_object_get(j_amr, "amr"), 
                                                       access_token,
-                                                      code)) != NULL) {
+                                                      code,
+                                                      json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")))) != NULL) {
                       if (serialize_id_token(config, 
                                              GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, 
                                              id_token, 
@@ -3412,7 +3470,8 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                                               nonce, 
                                               json_object_get(json_object_get(j_auth_result, "session"), "amr"),
                                               access_token,
-                                              authorization_code)) != NULL) {
+                                              authorization_code,
+                                              json_string_value(json_object_get(json_object_get(j_auth_result, "session"), "scope_filtered")))) != NULL) {
               if (serialize_id_token(config, 
                                      GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, 
                                      id_token, 
@@ -3567,7 +3626,7 @@ static int callback_oidc_get_userinfo(const struct _u_request * request, struct 
   if (username != NULL) {
     j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
     if (check_result_value(j_user, G_OK)) {
-      j_userinfo = get_userinfo(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")), json_object_get(j_user, "user"), u_map_get(get_map(request), "claims"));
+      j_userinfo = get_userinfo(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")), json_object_get(j_user, "user"), u_map_get(get_map(request), "claims"), json_string_value(json_object_get((json_t *)response->shared_data, "scope")));
       if (j_userinfo != NULL) {
         ulfius_set_json_body_response(response, 200, j_userinfo);
       } else {
@@ -3819,8 +3878,8 @@ static int jwt_autocheck(struct _oidc_config * config) {
  * verify input parameters for the plugin instance
  */
 static json_t * check_parameters (json_t * j_params) {
-  json_t * j_element = NULL, * j_return, * j_error = json_array();
-  size_t index = 0;
+  json_t * j_element = NULL, * j_return, * j_error = json_array(), * j_scope;
+  size_t index = 0, indexScope = 0;
   int ret = G_OK;
   
   if (j_error != NULL) {
@@ -4047,6 +4106,21 @@ static json_t * check_parameters (json_t * j_params) {
               json_array_append_new(j_error, json_string("'claims' element 'mandatory' is optional and must be a boolean"));
               ret = G_ERROR_PARAM;
             }
+            if (json_object_get(j_element, "on-demand") != NULL && !json_is_boolean(json_object_get(j_element, "on-demand"))) {
+              json_array_append_new(j_error, json_string("'claims' element 'on-demand' is optional and must be a boolean"));
+              ret = G_ERROR_PARAM;
+            }
+            if (json_object_get(j_element, "scope") != NULL && !json_is_array(json_object_get(j_element, "scope"))) {
+              json_array_append_new(j_error, json_string("'claims' element 'scope' is optional and must be a JSON array of strings"));
+              ret = G_ERROR_PARAM;
+            } else if (json_object_get(j_element, "scope")) {
+              json_array_foreach(json_object_get(j_element, "scope"), indexScope, j_scope) {
+                if (!json_string_length(j_scope)) {
+                  json_array_append_new(j_error, json_string("'claims' element 'scope' is optional and must be a JSON array of strings"));
+                  ret = G_ERROR_PARAM;
+                }
+              }
+            }
           }
         }
       }
@@ -4055,9 +4129,31 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("Property 'name-claim' is optional and must have one of the following values: 'no', 'on-demand' or 'mandatory'"));
       ret = G_ERROR_PARAM;
     }
+    if (json_object_get(j_params, "name-claim-scope") != NULL && !json_is_array(json_object_get(j_params, "name-claim-scope"))) {
+      json_array_append_new(j_error, json_string("Property 'name-claim-scope' is optional and must an array of strings"));
+      ret = G_ERROR_PARAM;
+    } else if (json_object_get(j_params, "name-claim-scope") != NULL) {
+      json_array_foreach(json_object_get(j_params, "name-claim-scope"), indexScope, j_scope) {
+        if (!json_string_length(j_scope)) {
+          json_array_append_new(j_error, json_string("Property 'name-claim-scope' is optional and must an array of strings"));
+          ret = G_ERROR_PARAM;
+        }
+      }
+    }
     if (json_object_get(j_params, "email-claim") != NULL && 0 != o_strcmp("no", json_string_value(json_object_get(j_params, "email-claim"))) && 0 != o_strcmp("on-demand", json_string_value(json_object_get(j_params, "email-claim"))) && 0 != o_strcmp("mandatory", json_string_value(json_object_get(j_params, "email-claim")))) {
       json_array_append_new(j_error, json_string("Property 'email-claim' is optional and must have one of the following values: 'no', 'on-demand' or 'mandatory'"));
       ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "email-claim-scope") != NULL && !json_is_array(json_object_get(j_params, "email-claim-scope"))) {
+      json_array_append_new(j_error, json_string("Property 'email-claim-scope' is optional and must an array of strings"));
+      ret = G_ERROR_PARAM;
+    } else if (json_object_get(j_params, "email-claim-scope") != NULL) {
+      json_array_foreach(json_object_get(j_params, "email-claim-scope"), indexScope, j_scope) {
+        if (!json_string_length(j_scope)) {
+          json_array_append_new(j_error, json_string("Property 'email-claim-scope' is optional and must an array of strings"));
+          ret = G_ERROR_PARAM;
+        }
+      }
     }
     if (json_object_get(j_params, "address-claim") != NULL) {
       if (!json_is_object(json_object_get(j_params, "address-claim"))) {
