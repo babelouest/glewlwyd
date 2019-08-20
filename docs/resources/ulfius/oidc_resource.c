@@ -77,7 +77,7 @@ static json_t * access_token_check_scope(struct _oidc_resource_config * config, 
         }
         free_string_array(scope_list_expected);
       } else {
-        j_res = json_pack("{sis[]}", "result", G_TOKEN_OK, "scope");
+        j_res = json_pack("{sisO}", "result", G_TOKEN_OK, "scope", json_object_get(j_access_token, "scope"));
       }
       free_string_array(scope_list_token);
     } else {
