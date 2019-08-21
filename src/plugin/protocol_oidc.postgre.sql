@@ -18,6 +18,7 @@ CREATE TABLE gpo_code (
   gpoc_redirect_uri VARCHAR(512) NOT NULL,
   gpoc_code_hash VARCHAR(512) NOT NULL,
   gpoc_nonce VARCHAR(512),
+  gpoc_claims_request TEXT DEFAULT NULL,
   gpoc_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpoc_issued_for VARCHAR(256), -- IP address or hostname
   gpoc_user_agent VARCHAR(256),
@@ -46,6 +47,7 @@ CREATE TABLE gpo_refresh_token (
   gpoc_id INTEGER DEFAULT NULL,
   gpor_username VARCHAR(256) NOT NULL,
   gpor_client_id VARCHAR(256),
+  gpor_claims_request TEXT DEFAULT NULL,
   gpor_issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpor_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpor_last_seen TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
