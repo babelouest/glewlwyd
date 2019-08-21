@@ -35,7 +35,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["request-parameter-allow"]!==undefined?"":(props.mod.parameters["request-parameter-allow"] = true);
     props.mod.parameters["request-uri-allow-https-non-secure"]!==undefined?"":(props.mod.parameters["request-uri-allow-https-non-secure"] = false);
     props.mod.parameters["secret-type"]?"":(props.mod.parameters["secret-type"] = "pairwise");
-    props.mod.parameters["address-claim"]?"":(props.mod.parameters["address-claim"] = {type: "none", formatted: "", street_address: "", locality: "", region: "", postal_code: "", country: "", mandatory: false});
+    props.mod.parameters["address-claim"]?"":(props.mod.parameters["address-claim"] = {type: "no", formatted: "", street_address: "", locality: "", region: "", postal_code: "", country: "", mandatory: false});
     props.mod.parameters["name-claim"]?"":(props.mod.parameters["name-claim"] = "on-demand");
     props.mod.parameters["name-claim-scope"]?"":(props.mod.parameters["name-claim-scope"] = []);
     props.mod.parameters["email-claim"]?"":(props.mod.parameters["email-claim"] = "no");
@@ -123,7 +123,7 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["request-parameter-allow"]!==undefined?"":(nextProps.mod.parameters["request-parameter-allow"] = true);
     nextProps.mod.parameters["request-uri-allow-https-non-secure"]!==undefined?"":(nextProps.mod.parameters["request-uri-allow-https-non-secure"] = false);
     nextProps.mod.parameters["secret-type"]?"":(nextProps.mod.parameters["secret-type"] = "pairwise");
-    nextProps.mod.parameters["address-claim"]?"":(nextProps.mod.parameters["address-claim"] = {type: "none", formatted: "", street_address: "", locality: "", region: "", postal_code: "", country: "", mandatory: false});
+    nextProps.mod.parameters["address-claim"]?"":(nextProps.mod.parameters["address-claim"] = {type: "no", formatted: "", street_address: "", locality: "", region: "", postal_code: "", country: "", mandatory: false});
     nextProps.mod.parameters["name-claim"]?"":(nextProps.mod.parameters["name-claim"] = "on-demand");
     nextProps.mod.parameters["name-claim-scope"]?"":(nextProps.mod.parameters["name-claim-scope"] = []);
     nextProps.mod.parameters["email-claim"]?"":(nextProps.mod.parameters["email-claim"] = "no");
@@ -853,7 +853,7 @@ class GlwdOIDCParams extends Component {
       );
     });
 
-    if (this.state.mod.parameters["address-claim"].type==="object") {
+    if (this.state.mod.parameters["address-claim"].type!=="no") {
       addressClaim = 
         <div>
           <div className="form-group">
@@ -1333,7 +1333,7 @@ class GlwdOIDCParams extends Component {
                       <div className="dropdown-menu" aria-labelledby="mod-glwd-name-email-claim">
                         <a className={"dropdown-item"+(this.state.mod.parameters["name-claim"]==="no"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('name-claim', 'no')}>{i18next.t("admin.mod-glwd-name-email-claim-no")}</a>
                         <a className={"dropdown-item"+(this.state.mod.parameters["name-claim"]==="on-demand"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('name-claim', 'on-demand')}>{i18next.t("admin.mod-glwd-name-email-claim-on-demand")}</a>
-                        <a className={"dropdown-item"+(this.state.mod.parameters["name-claim"]==="mandatory"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('name-claim', 'always')}>{i18next.t("admin.mod-glwd-name-email-claim-mandatory")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["name-claim"]==="mandatory"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('name-claim', 'mandatory')}>{i18next.t("admin.mod-glwd-name-email-claim-mandatory")}</a>
                       </div>
                     </div>
                   </div>
@@ -1366,7 +1366,7 @@ class GlwdOIDCParams extends Component {
                       <div className="dropdown-menu" aria-labelledby="mod-glwd-name-email-claim">
                         <a className={"dropdown-item"+(this.state.mod.parameters["email-claim"]==="no"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('email-claim', 'no')}>{i18next.t("admin.mod-glwd-name-email-claim-no")}</a>
                         <a className={"dropdown-item"+(this.state.mod.parameters["email-claim"]==="on-demand"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('email-claim', 'on-demand')}>{i18next.t("admin.mod-glwd-name-email-claim-on-demand")}</a>
-                        <a className={"dropdown-item"+(this.state.mod.parameters["email-claim"]==="mandatory"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('email-claim', 'always')}>{i18next.t("admin.mod-glwd-name-email-claim-mandatory")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["email-claim"]==="mandatory"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('email-claim', 'mandatory')}>{i18next.t("admin.mod-glwd-name-email-claim-mandatory")}</a>
                       </div>
                     </div>
                   </div>
@@ -1416,11 +1416,12 @@ class GlwdOIDCParams extends Component {
                     </div>
                     <div className="dropdown">
                       <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-mod-glwd-address-claim" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        {i18next.t("admin.mod-glwd-address-claim-" + this.state.mod.parameters["address-claim"].type)}
+                        {i18next.t("admin.mod-glwd-name-email-claim-" + this.state.mod.parameters["address-claim"].type)}
                       </button>
                       <div className="dropdown-menu" aria-labelledby="mod-glwd-address-claim">
-                        <a className={"dropdown-item"+(this.state.mod.parameters["address-claim"].type==="none"?" active":"")} href="#" onClick={(e) => this.changeAddressClaim(e, 'none')}>{i18next.t("admin.mod-glwd-address-claim-none")}</a>
-                        <a className={"dropdown-item"+(this.state.mod.parameters["address-claim"].type==="object"?" active":"")} href="#" onClick={(e) => this.changeAddressClaim(e, 'object')}>{i18next.t("admin.mod-glwd-address-claim-object")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["address-claim"]==="no"?" active":"")} href="#" onClick={(e) => this.changeAddressClaim(e, 'no')}>{i18next.t("admin.mod-glwd-name-email-claim-no")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["address-claim"]==="on-demand"?" active":"")} href="#" onClick={(e) => this.changeAddressClaim(e, 'on-demand')}>{i18next.t("admin.mod-glwd-name-email-claim-on-demand")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["address-claim"]==="mandatory"?" active":"")} href="#" onClick={(e) => this.changeAddressClaim(e, 'mandatory')}>{i18next.t("admin.mod-glwd-name-email-claim-mandatory")}</a>
                       </div>
                     </div>
                   </div>
