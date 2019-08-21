@@ -1504,6 +1504,7 @@ static char * generate_authorization_code(struct _oidc_config * config, const ch
                                   "raw",
                                   expiration_clause);
           o_free(expiration_clause);
+          o_free(str_claims);
           res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
           json_decref(j_query);
           if (res != H_OK) {
