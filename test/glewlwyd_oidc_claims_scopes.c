@@ -169,60 +169,6 @@ START_TEST(test_oidc_claims_scopes_scope1)
 }
 END_TEST
 
-START_TEST(test_oidc_claims_scopes_claims_claim2)
-{
-  struct _u_response resp;
-  struct _u_request req;
-  char * access_token, * bearer, * id_token, **id_token_split = NULL;
-  unsigned char payload_dec[1024] = {0};
-  size_t payload_dec_len = 0;
-  json_t * j_result, * j_payload;
-  
-  ulfius_init_response(&resp);
-  ulfius_init_request(&req);
-  o_free(user_req.http_url);
-  user_req.http_url = msprintf("%s/%s/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=%s&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, RESPONSE_TYPE, CLIENT, CLIENT_REDIRECT_URI, SCOPE1);
-  o_free(user_req.http_verb);
-  user_req.http_verb = o_strdup("GET");
-  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 302);
-  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "access_token="), NULL);
-  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
-  access_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "access_token=") + o_strlen("access_token="));
-  if (o_strchr(access_token, '&')) {
-    *(o_strchr(access_token, '&')) = '\0';
-  }
-  bearer = msprintf("Bearer %s", access_token);
-  u_map_put(req.map_header, "Authorization", bearer);
-
-  id_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "id_token=") + o_strlen("id_token="));
-  if (o_strchr(id_token, '&')) {
-    *(o_strchr(id_token, '&')) = '\0';
-  }
-  ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
-  ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), payload_dec, &payload_dec_len), 1);
-  ck_assert_ptr_ne((j_payload = json_loads((const char *)payload_dec, JSON_DECODE_ANY, NULL)), NULL);
-  ck_assert_ptr_ne(json_object_get(j_payload, "claim-1"), NULL);
-  ck_assert_ptr_eq(json_object_get(j_payload, "claim-2"), NULL);
-  ck_assert_ptr_ne(json_object_get(j_payload, "claim-3"), NULL);
-  ck_assert_ptr_eq(json_object_get(j_payload, "claim-4"), NULL);
-  ck_assert_ptr_ne(json_object_get(j_payload, "name"), NULL);
-  ck_assert_ptr_eq(json_object_get(j_payload, "email"), NULL);
-  json_decref(j_payload);
-  free_string_array(id_token_split);
-
-  j_result = json_pack("{ssssssss}", "claim-1", "claim1", "claim-2", "claim2", "claim-3", "claim3", "name", "Dave Lopper 1");
-  ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/?claims=claim-2", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
-  json_decref(j_result);
-  
-  ulfius_clean_response(&resp);
-  ulfius_clean_request(&req);
-  o_free(access_token);
-  o_free(id_token);
-  o_free(bearer);
-}
-END_TEST
-
 START_TEST(test_oidc_claims_scopes_claims_all)
 {
   struct _u_response resp;
@@ -264,8 +210,8 @@ START_TEST(test_oidc_claims_scopes_claims_all)
   json_decref(j_payload);
   free_string_array(id_token_split);
 
-  j_result = json_pack("{ssssssss}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-1", "claim1", "claim-2", "claim2", "claim-3", "claim3", "claim-4", "claim4");
-  ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/?claims=claim-2", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
+  j_result = json_pack("{ssssss}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-1", "claim1", "claim-3", "claim3", "claim-4", "claim4");
+  ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
   ulfius_clean_response(&resp);
@@ -295,7 +241,6 @@ static Suite *glewlwyd_suite(void)
   tc_core = tcase_create("test_oidc_claims_scopes");
   tcase_add_test(tc_core, test_oidc_claims_scopes_add_plugin);
   tcase_add_test(tc_core, test_oidc_claims_scopes_scope1);
-  tcase_add_test(tc_core, test_oidc_claims_scopes_claims_claim2);
   tcase_add_test(tc_core, test_oidc_claims_scopes_claims_all);
   tcase_add_test(tc_core, test_oidc_claims_scopes_delete_plugin);
   tcase_set_timeout(tc_core, 30);

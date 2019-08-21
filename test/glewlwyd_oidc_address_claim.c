@@ -37,7 +37,7 @@ struct _u_request user_req;
 
 START_TEST(test_oidc_address_claim_add_plugin_public)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssisisisosososososososos{ssssssssssssssso}}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssisisisosososososososos{ssssssssssssss}}}",
                                 "module",
                                 "oidc",
                                 "name",
@@ -77,7 +77,7 @@ START_TEST(test_oidc_address_claim_add_plugin_public)
                                   json_true(),
                                   "address-claim",
                                     "type",
-                                    "object",
+                                    "mandatory",
                                     "formatted",
                                     "add-formatted",
                                     "street_address",
@@ -89,9 +89,7 @@ START_TEST(test_oidc_address_claim_add_plugin_public)
                                     "postal_code",
                                     "add-postal_code",
                                     "country",
-                                    "add-country",
-                                    "mandatory",
-                                    json_false());
+                                    "add-country");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
   
