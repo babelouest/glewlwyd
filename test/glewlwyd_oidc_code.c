@@ -16,9 +16,9 @@
 #define SERVER_URI "http://localhost:4593/api/"
 #define USERNAME "user1"
 #define PASSWORD "password"
-#define SCOPE_LIST "scope1 scope2"
-#define SCOPE_LIST_PARTIAL "scope1"
-#define SCOPE_LIST_MAX_USE "scope1 scope2 scope3"
+#define SCOPE_LIST "openid scope1 scope2"
+#define SCOPE_LIST_PARTIAL "openid scope1"
+#define SCOPE_LIST_MAX_USE "openid scope1 scope2 scope3"
 #define CLIENT "client1_id"
 
 char * code;
