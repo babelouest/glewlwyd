@@ -893,6 +893,8 @@ START_TEST(test_oidc_claim_request_user1_token_userinfo_claim_str_null)
   ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
+  o_free(claims_str_enc);
+  o_free(claims_str);
   o_free(access_token);
   o_free(bearer);
   json_decref(j_claims);
@@ -934,6 +936,8 @@ START_TEST(test_oidc_claim_request_user1_token_userinfo_claim_full)
 
   o_free(access_token);
   o_free(bearer);
+  o_free(claims_str_enc);
+  o_free(claims_str);
   json_decref(j_claims);
   ulfius_clean_request(&req);
 }
@@ -996,14 +1000,20 @@ START_TEST(test_oidc_claim_request_user1_code_id_token_userinfo_claim_str_null)
   bearer = msprintf("Bearer %s", access_token);
   u_map_put(req.map_header, "Authorization", bearer);
 
+  json_decref(j_result);
   j_result = json_pack("{sssis{ssssssssssss}}", "claim-mandatory", CLAIM_MANDATORY, "claim-number", 42, "address", "formatted", ADDR_FORMATTED, "street_address", ADDR_STREET_ADDRESS, "locality", ADDR_LOCALITY, "country", ADDR_COUNTRY, "postal_code", ADDR_POSTAL_CODE, "region", ADDR_REGION);
   ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
   o_free(bearer);
+  o_free(claims_str_enc);
+  o_free(claims_str);
+  o_free(code);
   json_decref(j_claims);
   json_decref(j_body);
   ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  free_string_array(id_token_split);
 }
 END_TEST
 
@@ -1066,14 +1076,20 @@ START_TEST(test_oidc_claim_request_user1_code_id_token_userinfo_claim_full)
   bearer = msprintf("Bearer %s", access_token);
   u_map_put(req.map_header, "Authorization", bearer);
 
+  json_decref(j_result);
   j_result = json_pack("{sssss{ssssssssssss}sisossss}", "claim-mandatory", CLAIM_MANDATORY, "claim-str", CLAIM_STR, "address", "formatted", ADDR_FORMATTED, "street_address", ADDR_STREET_ADDRESS, "locality", ADDR_LOCALITY, "country", ADDR_COUNTRY, "postal_code", ADDR_POSTAL_CODE, "region", ADDR_REGION, "claim-number", 42, "claim-bool", json_true(), "name", "Dave Lopper 1", "email", "dev1@glewlwyd");
   ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
   o_free(bearer);
+  o_free(claims_str_enc);
+  o_free(claims_str);
+  o_free(code);
   json_decref(j_claims);
   json_decref(j_body);
   ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  free_string_array(id_token_split);
 }
 END_TEST
 
@@ -1121,6 +1137,7 @@ START_TEST(test_oidc_claim_request_user1_refresh_token_userinfo_claim_str_null)
   u_map_remove_from_key(req.map_post_body, "client_id");
   u_map_remove_from_key(req.map_post_body, "redirect_uri");
   
+  json_decref(j_body);
   ulfius_init_response(&resp);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_ptr_ne((j_body = ulfius_get_json_body_response(&resp, NULL)), NULL);
@@ -1135,6 +1152,9 @@ START_TEST(test_oidc_claim_request_user1_refresh_token_userinfo_claim_str_null)
   json_decref(j_result);
   
   o_free(bearer);
+  o_free(code);
+  o_free(claims_str_enc);
+  o_free(claims_str);
   json_decref(j_claims);
   json_decref(j_body);
   ulfius_clean_request(&req);
@@ -1185,6 +1205,7 @@ START_TEST(test_oidc_claim_request_user1_refresh_token_userinfo_claim_full)
   u_map_remove_from_key(req.map_post_body, "client_id");
   u_map_remove_from_key(req.map_post_body, "redirect_uri");
   
+  json_decref(j_body);
   ulfius_init_response(&resp);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_ptr_ne((j_body = ulfius_get_json_body_response(&resp, NULL)), NULL);
@@ -1199,6 +1220,9 @@ START_TEST(test_oidc_claim_request_user1_refresh_token_userinfo_claim_full)
   json_decref(j_result);
   
   o_free(bearer);
+  o_free(claims_str_enc);
+  o_free(code);
+  o_free(claims_str);
   json_decref(j_claims);
   json_decref(j_body);
   ulfius_clean_request(&req);
