@@ -317,34 +317,23 @@ json_t * get_auth_scheme_list_from_scope_list(struct config_elements * config, c
 }
 
 static json_t * is_scheme_valid_for_session(struct config_elements * config, json_int_t guasmi_id, json_int_t max_use, json_int_t password_max_age, const char * session_hash) {
-  char * expire_clause;
   json_t * j_query, * j_result = NULL, * j_session = get_current_session(config, session_hash), * j_return;
   int res;
+  time_t now;
 
-  if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-    expire_clause = o_strdup("> NOW()");
-  } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-    expire_clause = o_strdup("> NOW()");
-  } else { // HOEL_DB_TYPE_SQLITE
-    expire_clause = o_strdup("> (strftime('%s','now'))");
-  }
   if (check_result_value(j_session, G_OK)) {
-    j_query = json_pack("{sss[ss]s{sOsos{ssss}si}}",
+    j_query = json_pack("{sss[sss]s{sOsosi}}",
                         "table",
                         GLEWLWYD_TABLE_USER_SESSION_SCHEME,
                         "columns",
                           "guss_id",
                           SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(guss_last_login) AS guss_last_login", "guss_last_login AS guss_last_login", "EXTRACT(EPOCH FROM guss_last_login) AS guss_last_login"),
+                          SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(guss_expiration) AS guss_expiration", "guss_expiration AS guss_expiration", "EXTRACT(EPOCH FROM guss_expiration) AS guss_expiration"),
                         "where",
                           "gus_id",
                           json_object_get(json_object_get(j_session, "session"), "gus_id"),
                           "guasmi_id",
                           guasmi_id?json_integer(guasmi_id):json_null(),
-                          "guss_expiration",
-                            "operator",
-                            "raw",
-                            "value",
-                            expire_clause,
                           "guss_enabled",
                           1,
                           "order_by",
@@ -355,17 +344,18 @@ static json_t * is_scheme_valid_for_session(struct config_elements * config, jso
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
+      time(&now);
       if (guasmi_id || !password_max_age) {
         if (json_array_size(j_result)) {
-          j_return = json_pack("{sisbsO}", "result", G_OK, "valid", (json_array_size(j_result)>0), "last_login", json_object_get(json_array_get(j_result, 0), "guss_last_login"));
+          j_return = json_pack("{sisbsO}", "result", G_OK, "valid", (json_integer_value(json_object_get(json_array_get(j_result, 0), "guss_expiration")) > (json_int_t)now), "last_login", json_object_get(json_array_get(j_result, 0), "guss_last_login"));
         } else {
           j_return = json_pack("{sisOsi}", "result", G_OK, "valid", json_false(), "last_login", 0);
         }
       } else {
         if (json_array_size(j_result)) {
-          j_return = json_pack("{sisbsO}", "result", G_OK, "valid", (json_integer_value(json_object_get(json_array_get(j_result, 0), "guss_last_login")) + password_max_age > (json_int_t)time(NULL)), "last_login", json_object_get(json_array_get(j_result, 0), "guss_last_login"));
+          j_return = json_pack("{sisbsO}", "result", G_OK, "valid", (json_integer_value(json_object_get(json_array_get(j_result, 0), "guss_last_login")) + password_max_age > (json_int_t)now), "last_login", json_object_get(json_array_get(j_result, 0), "guss_last_login"));
         } else {
-          j_return = json_pack("{sisOsO}", "result", G_OK, "valid", json_false(), "last_login", json_integer(0));
+          j_return = json_pack("{sisOsi}", "result", G_OK, "valid", json_false(), "last_login", 0);
         }
       }
     } else {
@@ -378,7 +368,6 @@ static json_t * is_scheme_valid_for_session(struct config_elements * config, jso
     j_return = json_pack("{si}", "result", G_ERROR);
   }
   json_decref(j_session);
-  o_free(expire_clause);
   return j_return;
 }
 
