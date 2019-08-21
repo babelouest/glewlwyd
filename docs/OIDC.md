@@ -212,9 +212,35 @@ This section allows to specify how to handle address claim.
 
 If the dropdown button `Use claim address` is set to `No`, the claim address isn't available for any user.
 
-If the dropdown button `Use claim address` is set to `Yes`, you must specify which properties available in the user profile will match the address claim properties.
+If the dropdown button `Use claim address` is set to `On demand` or 'Mandatory', you must specify which properties available in the user profile will match the address claim properties.
 
-If an address claim property is empty or its corresponding property value in the user profile is empty or unavailable, the value will not be present in the address claim.
+If an address claim property is empty or its corresponding property value in the user profile is empty or unavailable, the value will not be present in the address claim. If the address claim is empty, it will not be present in the result.
+
+## Claims request
+
+You can specify claims in your request according to the ["claims" request parameter](https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims). The claims request parameter can be present in the url in JSON format url-encoded if the HTTP method is `GET`, in the post body parameter in JSON format url-encoded if the HTTP method is `POST`, or in the JWT payload if you use JWT request parameter.
+
+The supported options for a claim are `null`, `value` and `values`. Option `essential` isn't supported.
+
+For example:
+
+```Javascript
+{
+ "userinfo":
+  {
+   "given_name": null,
+   "nickname": null,
+   "email": {"value": "dev@glewlwyd.tld"},
+   "picture": null,
+  },
+ "id_token":
+  {
+   "acr": {"values": ["urn:mace:incommon:iap:silver"] }
+  }
+}
+```
+
+To have a claim available in the claim request, it must be set to `on-demand` in the plugin configuration.
 
 ## Client secret vs password
 
