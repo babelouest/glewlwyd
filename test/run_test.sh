@@ -19,9 +19,13 @@ printf_new " " $NBSP
 
 $1 $2 $3 $4 $5 $6 $7 $8 $9 1>$1.log 2>&1
 
-if [ $? -ne 0 ]
+RET=$?
+
+if [ $RET -ne 0 ]
 then
 	printf "${RED}FAIL${NC}\n"
 else
 	printf "${GREEN}SUCCESS${NC}\n"
 fi
+
+exit $RET
