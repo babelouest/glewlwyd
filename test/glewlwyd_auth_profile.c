@@ -59,7 +59,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd update profile");
+  s = suite_create("Glewlwyd auth profile");
   tc_core = tcase_create("test_glwd_auth_profile");
   tcase_add_test(tc_core, test_glwd_auth_profile_get_error);
   tcase_add_test(tc_core, test_glwd_auth_profile_get);

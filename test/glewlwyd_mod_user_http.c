@@ -53,7 +53,7 @@ int auth_basic (const struct _u_request * request, struct _u_response * response
   }
 }
 
-START_TEST(test_glwd_mod_user_irl_module_add)
+START_TEST(test_glwd_http_auth_module_add)
 {
   char * param_url;
   if (host == NULL) {
@@ -69,7 +69,7 @@ START_TEST(test_glwd_mod_user_irl_module_add)
 }
 END_TEST
 
-START_TEST(test_glwd_mod_user_irl_http_auth_success)
+START_TEST(test_glwd_http_auth_http_auth_success)
 {
   struct _u_request auth_req;
   struct _u_response auth_resp;
@@ -130,7 +130,7 @@ START_TEST(test_glwd_mod_user_irl_http_auth_success)
 }
 END_TEST
 
-START_TEST(test_glwd_mod_user_irl_http_auth_fail)
+START_TEST(test_glwd_http_auth_http_auth_fail)
 {
   struct _u_request auth_req;
   struct _u_response auth_resp;
@@ -150,7 +150,7 @@ START_TEST(test_glwd_mod_user_irl_http_auth_fail)
 }
 END_TEST
 
-START_TEST(test_glwd_mod_user_irl_module_delete)
+START_TEST(test_glwd_http_auth_module_delete)
 {
   char * url = SERVER_URI "/mod/user/" MOD_NAME;
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
@@ -162,12 +162,12 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd HTTP Auth");
+  s = suite_create("Glewlwyd mod HTTP Auth");
   tc_core = tcase_create("test_glwd_http_auth");
-  tcase_add_test(tc_core, test_glwd_mod_user_irl_module_add);
-  tcase_add_test(tc_core, test_glwd_mod_user_irl_http_auth_success);
-  tcase_add_test(tc_core, test_glwd_mod_user_irl_http_auth_fail);
-  tcase_add_test(tc_core, test_glwd_mod_user_irl_module_delete);
+  tcase_add_test(tc_core, test_glwd_http_auth_module_add);
+  tcase_add_test(tc_core, test_glwd_http_auth_http_auth_success);
+  tcase_add_test(tc_core, test_glwd_http_auth_http_auth_fail);
+  tcase_add_test(tc_core, test_glwd_http_auth_module_delete);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 

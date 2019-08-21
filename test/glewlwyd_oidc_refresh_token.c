@@ -55,7 +55,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd refresh token");
+  s = suite_create("Glewlwyd oidc refresh token");
   tc_core = tcase_create("test_oidc_refresh_token");
   tcase_add_test(tc_core, test_oidc_refresh_token_token_invalid);
   tcase_add_test(tc_core, test_oidc_refresh_token_ok);

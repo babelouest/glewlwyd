@@ -237,7 +237,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd profile");
+  s = suite_create("Glewlwyd oidc claims scopes");
   tc_core = tcase_create("test_oidc_claims_scopes");
   tcase_add_test(tc_core, test_oidc_claims_scopes_add_plugin);
   tcase_add_test(tc_core, test_oidc_claims_scopes_scope1);

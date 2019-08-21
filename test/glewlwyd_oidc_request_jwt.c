@@ -556,7 +556,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd implicit");
+  s = suite_create("Glewlwyd oidc request_jwt");
   tc_core = tcase_create("test_oidc_implicit");
   tcase_add_test(tc_core, test_oidc_request_jwt_redirect_login);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_ok);

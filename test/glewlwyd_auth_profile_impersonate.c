@@ -25,7 +25,7 @@
 
 struct _u_request admin_req;
 
-START_TEST(test_glwd_auth_update_ok)
+START_TEST(test_glwd_auth_profile_impersonate_update_ok)
 {
   json_t * j_profile = json_pack("{ssss}", "name", NAME "-new", "email", EMAIL "-new");
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/delegate/" USERNAME_IMPERSONATE "/profile", NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
@@ -36,7 +36,7 @@ START_TEST(test_glwd_auth_update_ok)
 }
 END_TEST
 
-START_TEST(test_glwd_auth_profile_get_scheme_available_success)
+START_TEST(test_glwd_auth_profile_impersonate_profile_get_scheme_available_success)
 {
   json_t * j_expected = json_pack("{ssssssso}", "module", "mock", "name", "mock_scheme_42", "display_name", "Mock 42", "enabled", json_true());
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME_IMPERSONATE "/profile/scheme", NULL, NULL, NULL, NULL, 200, j_expected, NULL, NULL), 1);
@@ -44,7 +44,7 @@ START_TEST(test_glwd_auth_profile_get_scheme_available_success)
 }
 END_TEST
 
-START_TEST(test_glwd_auth_session_manage_list)
+START_TEST(test_glwd_auth_profile_impersonate_session_manage_list)
 {
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME_IMPERSONATE "/profile/session", NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
 }
@@ -55,11 +55,11 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd profile");
-  tc_core = tcase_create("test_profile_impersonate");
-  tcase_add_test(tc_core, test_glwd_auth_update_ok);
-  tcase_add_test(tc_core, test_glwd_auth_profile_get_scheme_available_success);
-  tcase_add_test(tc_core, test_glwd_auth_session_manage_list);
+  s = suite_create("Glewlwyd auth profile impersonate");
+  tc_core = tcase_create("test_glwd_auth_profile_impersonate");
+  tcase_add_test(tc_core, test_glwd_auth_profile_impersonate_update_ok);
+  tcase_add_test(tc_core, test_glwd_auth_profile_impersonate_profile_get_scheme_available_success);
+  tcase_add_test(tc_core, test_glwd_auth_profile_impersonate_session_manage_list);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 

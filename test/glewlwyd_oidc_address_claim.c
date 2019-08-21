@@ -149,8 +149,8 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd subject type");
-  tc_core = tcase_create("test_oidc_subject_type");
+  s = suite_create("Glewlwyd oidc address claim");
+  tc_core = tcase_create("test_oidc_address_claim");
   tcase_add_test(tc_core, test_oidc_address_claim_add_plugin_public);
   tcase_add_test(tc_core, test_oidc_address_claim_userinfo);
   tcase_add_test(tc_core, test_oidc_address_claim_delete_plugin_public);

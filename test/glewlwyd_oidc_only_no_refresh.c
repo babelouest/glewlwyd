@@ -231,8 +231,8 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd profile");
-  tc_core = tcase_create("test_oidc_userinfo");
+  s = suite_create("Glewlwyd oidc only no refresh");
+  tc_core = tcase_create("test_oidc_only_no_refresh");
   tcase_add_test(tc_core, test_oidc_only_no_refresh_add_plugin);
   tcase_add_test(tc_core, test_oidc_only_no_refresh_id_token_token_ok);
   tcase_add_test(tc_core, test_oidc_only_no_refresh_token_error);

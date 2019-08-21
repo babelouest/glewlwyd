@@ -107,7 +107,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd resource owner password credential");
+  s = suite_create("Glewlwyd oauth2 resource owner password credential");
   tc_core = tcase_create("test_oauth2_resource_owner_pwd_cred");
   tcase_add_test(tc_core, test_oauth2_resource_owner_pwd_cred_valid);
   tcase_add_test(tc_core, test_oauth2_resource_owner_pwd_cred_pwd_invalid);

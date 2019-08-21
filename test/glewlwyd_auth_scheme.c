@@ -178,7 +178,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd delete token");
+  s = suite_create("Glewlwyd auth scheme");
   tc_core = tcase_create("test_glwd_auth_scheme");
   tcase_add_test(tc_core, test_glwd_auth_scheme_error_parameters);
   tcase_add_test(tc_core, test_glwd_auth_scheme_error_login);

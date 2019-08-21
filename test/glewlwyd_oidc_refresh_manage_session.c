@@ -224,8 +224,8 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd profile");
-  tc_core = tcase_create("test_oidc_refresh_manage");
+  s = suite_create("Glewlwyd oidc refresh manage session");
+  tc_core = tcase_create("test_oidc_refresh_manage_session");
   tcase_add_test(tc_core, test_oidc_refresh_manage_session_endpoints_noauth);
   tcase_add_test(tc_core, test_oidc_refresh_manage_session_list);
   tcase_add_test(tc_core, test_oidc_refresh_manage_session_delete_not_found);

@@ -637,8 +637,8 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd implicit");
-  tc_core = tcase_create("test_oauth2_implicit");
+  s = suite_create("Glewlwyd oidc hybrid id_token token code");
+  tc_core = tcase_create("test_oidc_hybrid_id_token_token_code");
   tcase_add_test(tc_core, test_oidc_hybrid_id_token_token_code_redirect_login);
   tcase_add_test(tc_core, test_oidc_hybrid_id_token_token_code_redirect_login_post);
   tcase_add_test(tc_core, test_oidc_hybrid_id_token_token_code_valid);

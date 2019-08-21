@@ -115,7 +115,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd scheme trigger");
+  s = suite_create("Glewlwyd auth scheme trigger");
   tc_core = tcase_create("test_glwd_auth_scheme_trigger");
   tcase_add_test(tc_core, test_glwd_auth_scheme_trigger_error_parameters);
   tcase_add_test(tc_core, test_glwd_auth_scheme_trigger_error_login);

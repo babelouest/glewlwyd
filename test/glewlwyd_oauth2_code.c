@@ -561,7 +561,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd code");
+  s = suite_create("Glewlwyd oauth2 code");
   tc_core = tcase_create("test_oauth2_code");
   tcase_add_test(tc_core, test_oauth2_code_code_invalid);
   tcase_add_test(tc_core, test_oauth2_code_client_invalid);

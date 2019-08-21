@@ -43,8 +43,8 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd scheme register");
-  tc_core = tcase_create("test_glwd_auth_scheme_register");
+  s = suite_create("Glewlwyd auth profile get scheme available");
+  tc_core = tcase_create("test_glwd_auth_profile_get_scheme_available");
   tcase_add_test(tc_core, test_glwd_auth_profile_get_scheme_available_error_auth);
   tcase_add_test(tc_core, test_glwd_auth_profile_get_scheme_available_success);
   tcase_set_timeout(tc_core, 30);

@@ -261,7 +261,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd client irl");
+  s = suite_create("Glewlwyd mod client irl");
   tc_core = tcase_create("test_glwd_mod_client_irl");
   tcase_add_test(tc_core, test_glwd_mod_client_irl_module_add);
   tcase_add_test(tc_core, test_glwd_mod_client_irl_client_add);

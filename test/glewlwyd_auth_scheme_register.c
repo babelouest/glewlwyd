@@ -93,7 +93,7 @@ START_TEST(test_glwd_auth_scheme_register_success)
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ulfius_clean_response(&resp);
-  j_expected = json_pack("{sssssssoso}", "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "scheme_display_name", SCHEME_DISPLAY_NAME, "scheme_authenticated", json_false(), "scheme_registered", json_true());
+  j_expected = json_pack("{sssssssososi}", "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "scheme_display_name", SCHEME_DISPLAY_NAME, "scheme_authenticated", json_false(), "scheme_registered", json_true(), "scheme_last_login", 0);
   ck_assert_int_eq(json_equal(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "0"), 0), j_expected), 1);
   json_decref(j_body);
   json_decref(j_expected);
@@ -107,7 +107,7 @@ START_TEST(test_glwd_auth_scheme_register_success)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ulfius_clean_response(&resp);
   j_expected = json_pack("{sssssssoso}", "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "scheme_display_name", SCHEME_DISPLAY_NAME, "scheme_authenticated", json_true(), "scheme_registered", json_true());
-  ck_assert_int_eq(json_equal(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "0"), 0), j_expected), 1);
+  ck_assert_ptr_ne(json_search(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "0"), 0), j_expected), NULL);
   json_decref(j_body);
   json_decref(j_expected);
   
@@ -128,7 +128,7 @@ START_TEST(test_glwd_auth_scheme_deregister_success)
   j_body = ulfius_get_json_body_response(&resp, NULL);
   ulfius_clean_response(&resp);
   j_expected = json_pack("{sssssssoso}", "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "scheme_display_name", SCHEME_DISPLAY_NAME, "scheme_authenticated", json_true(), "scheme_registered", json_true());
-  ck_assert_int_eq(json_equal(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "0"), 0), j_expected), 1);
+  ck_assert_ptr_ne(json_search(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "0"), 0), j_expected), NULL);
   json_decref(j_body);
   json_decref(j_expected);
   
@@ -161,7 +161,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd scheme register");
+  s = suite_create("Glewlwyd auth scheme register");
   tc_core = tcase_create("test_glwd_auth_scheme_register");
   tcase_add_test(tc_core, test_glwd_auth_scheme_register_error_parameters);
   tcase_add_test(tc_core, test_glwd_auth_scheme_register_success);

@@ -533,8 +533,8 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd implicit");
-  tc_core = tcase_create("test_oidc_implicit");
+  s = suite_create("Glewlwyd oidc implicit none");
+  tc_core = tcase_create("test_oidc_implicit_none");
   tcase_add_test(tc_core, test_oidc_implicit_none_redirect_login);
   tcase_add_test(tc_core, test_oidc_implicit_none_redirect_login_post);
   tcase_add_test(tc_core, test_oidc_implicit_none_valid);
