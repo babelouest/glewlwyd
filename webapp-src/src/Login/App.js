@@ -43,7 +43,7 @@ class App extends Component {
     if (this.state.config) {
       this.initProfile();
     }
-    
+
     messageDispatcher.subscribe('App', (message) => {
       if (message.type === "InitProfile") {
         this.initProfile();
@@ -150,7 +150,7 @@ class App extends Component {
       }
     });
   }
-  
+
   checkScopeScheme(scopeList) {
     apiManager.glewlwydRequest("/auth/scheme/?scope=" + scopeList)
     .then((schemeRes) => {
@@ -186,12 +186,13 @@ class App extends Component {
             var group = scope.schemes[groupName];
             var groupAuthenticated = false;
             schemeListRequired = group;
-            scheme = group[0];
             group.forEach((curScheme) => {
               if (curScheme.scheme_authenticated) {
                 groupAuthenticated = true;
                 schemeListRequired = false;
                 scheme = false;
+              } else if (!scheme || scheme.scheme_last_login < curScheme.scheme_last_login) {
+                scheme = curScheme;
               }
             });
             if (!groupAuthenticated) {
@@ -207,7 +208,7 @@ class App extends Component {
     }
     this.setState({canContinue: canContinue, passwordRequired: passwordRequired, schemeListRequired: schemeListRequired, scheme: scheme});
   }
-  
+
   changeLang(e, lang) {
     i18next.changeLanguage(lang)
     .then(() => {
