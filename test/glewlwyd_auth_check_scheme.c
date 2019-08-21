@@ -589,7 +589,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd delete token");
+  s = suite_create("Glewlwyd auth check cheme");
   tc_core = tcase_create("test_glwd_auth_check_scheme");
   tcase_add_test(tc_core, test_glwd_auth_check_scheme_no_session);
   tcase_add_test(tc_core, test_glwd_auth_check_scheme_session_password);

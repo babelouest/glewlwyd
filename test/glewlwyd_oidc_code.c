@@ -609,7 +609,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd code");
+  s = suite_create("Glewlwyd oidc code");
   tc_core = tcase_create("test_oidc_code");
   tcase_add_test(tc_core, test_oidc_code_code_invalid);
   tcase_add_test(tc_core, test_oidc_code_client_invalid);

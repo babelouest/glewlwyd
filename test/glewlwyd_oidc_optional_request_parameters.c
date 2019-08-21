@@ -218,8 +218,8 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd implicit");
-  tc_core = tcase_create("test_oauth2_implicit");
+  s = suite_create("Glewlwyd oidc optional request parameters");
+  tc_core = tcase_create("test_oidc_optional_request_parameters");
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_display);
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_prompt_none_no_id_token_hint);
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_prompt_none_id_token_hint_invalid);

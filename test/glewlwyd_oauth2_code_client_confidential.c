@@ -25,7 +25,7 @@
 struct _u_request user_req;
 char * code;
 
-START_TEST(test_oauth2_code_code_invalid)
+START_TEST(test_oauth2_code_client_confidential_code_invalid)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
@@ -44,7 +44,7 @@ START_TEST(test_oauth2_code_code_invalid)
 }
 END_TEST
 
-START_TEST(test_oauth2_code_client_invalid)
+START_TEST(test_oauth2_code_client_confidential_client_invalid)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
@@ -63,7 +63,7 @@ START_TEST(test_oauth2_code_client_invalid)
 }
 END_TEST
 
-START_TEST(test_oauth2_code_redirect_uri_invalid)
+START_TEST(test_oauth2_code_client_confidential_redirect_uri_invalid)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
@@ -82,7 +82,7 @@ START_TEST(test_oauth2_code_redirect_uri_invalid)
 }
 END_TEST
 
-START_TEST(test_oauth2_code_ok)
+START_TEST(test_oauth2_code_client_confidential_ok)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
@@ -106,12 +106,12 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd code client confidential");
-  tc_core = tcase_create("test_oauth2_code");
-  tcase_add_test(tc_core, test_oauth2_code_code_invalid);
-  tcase_add_test(tc_core, test_oauth2_code_client_invalid);
-  tcase_add_test(tc_core, test_oauth2_code_redirect_uri_invalid);
-  tcase_add_test(tc_core, test_oauth2_code_ok);
+  s = suite_create("Glewlwyd oauth2 code client confidential");
+  tc_core = tcase_create("test_oauth2_code_client_confidential");
+  tcase_add_test(tc_core, test_oauth2_code_client_confidential_code_invalid);
+  tcase_add_test(tc_core, test_oauth2_code_client_confidential_client_invalid);
+  tcase_add_test(tc_core, test_oauth2_code_client_confidential_redirect_uri_invalid);
+  tcase_add_test(tc_core, test_oauth2_code_client_confidential_ok);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 

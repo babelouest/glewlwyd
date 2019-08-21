@@ -211,8 +211,8 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd profile");
-  tc_core = tcase_create("test_oauth2_userinfo");
+  s = suite_create("Glewlwyd oauth2 additional parameters");
+  tc_core = tcase_create("test_oauth2_additional_parameters");
   tcase_add_test(tc_core, test_oauth2_additional_parameters_add_plugin);
   tcase_add_test(tc_core, test_oauth2_additional_parameters);
   tcase_add_test(tc_core, test_oauth2_no_additional_parameters);

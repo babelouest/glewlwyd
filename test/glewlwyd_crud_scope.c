@@ -318,7 +318,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd CRUD user");
+  s = suite_create("Glewlwyd CRUD scope");
   tc_core = tcase_create("test_glwd_crud_scope");
   tcase_add_test(tc_core, test_glwd_crud_scope_get_list);
   tcase_add_test(tc_core, test_glwd_crud_scope_add_error_json);

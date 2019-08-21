@@ -31,21 +31,21 @@
 struct _u_request admin_req;
 json_t * j_params;
 
-START_TEST(test_glwd_oauth2_irl_user_module_add)
+START_TEST(test_oauth2_irl_user_module_add)
 {
   char * url = SERVER_URI "/mod/user";
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, json_object_get(j_params, "user_mod"), NULL, 200, NULL, NULL, NULL), 1);
 }
 END_TEST
 
-START_TEST(test_glwd_oauth2_irl_client_module_add)
+START_TEST(test_oauth2_irl_client_module_add)
 {
   char * url = SERVER_URI "/mod/client";
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, json_object_get(j_params, "client_mod"), NULL, 200, NULL, NULL, NULL), 1);
 }
 END_TEST
 
-START_TEST(test_glwd_oauth2_irl_user_add)
+START_TEST(test_oauth2_irl_user_add)
 {
   if (json_object_get(j_params, "user_add") == json_true()) {
     char * url = msprintf(SERVER_URI "/user?source=%s", json_string_value(json_object_get(json_object_get(j_params, "user_mod"), "name")));
@@ -55,7 +55,7 @@ START_TEST(test_glwd_oauth2_irl_user_add)
 }
 END_TEST
 
-START_TEST(test_glwd_oauth2_irl_client_add)
+START_TEST(test_oauth2_irl_client_add)
 {
   if (json_object_get(j_params, "client_add") == json_true()) {
     char * url = msprintf(SERVER_URI "/client?source=%s", json_string_value(json_object_get(json_object_get(j_params, "client_mod"), "name")));
@@ -65,7 +65,7 @@ START_TEST(test_glwd_oauth2_irl_client_add)
 }
 END_TEST
 
-START_TEST(test_glwd_oauth2_irl_run_workflow)
+START_TEST(test_oauth2_irl_run_workflow)
 {
   struct _u_request auth_req;
   struct _u_response auth_resp, resp;
@@ -191,7 +191,7 @@ START_TEST(test_glwd_oauth2_irl_run_workflow)
 }
 END_TEST
 
-START_TEST(test_glwd_oauth2_irl_user_delete)
+START_TEST(test_oauth2_irl_user_delete)
 {
   if (json_object_get(j_params, "user_add") == json_true()) {
     char * url = msprintf(SERVER_URI "/user/%s?source=%s", json_string_value(json_object_get(json_object_get(j_params, "user"), "username")), json_string_value(json_object_get(json_object_get(j_params, "user_mod"), "name")));
@@ -201,7 +201,7 @@ START_TEST(test_glwd_oauth2_irl_user_delete)
 }
 END_TEST
 
-START_TEST(test_glwd_oauth2_irl_client_delete)
+START_TEST(test_oauth2_irl_client_delete)
 {
   if (json_object_get(j_params, "user_add") == json_true()) {
     char * url = msprintf(SERVER_URI "/client/%s?source=%s", json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")), json_string_value(json_object_get(json_object_get(j_params, "client_mod"), "name")));
@@ -211,7 +211,7 @@ START_TEST(test_glwd_oauth2_irl_client_delete)
 }
 END_TEST
 
-START_TEST(test_glwd_oauth2_irl_user_module_delete)
+START_TEST(test_oauth2_irl_user_module_delete)
 {
   char * url = msprintf(SERVER_URI "/mod/user/%s", json_string_value(json_object_get(json_object_get(j_params, "user_mod"), "name")));
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
@@ -219,7 +219,7 @@ START_TEST(test_glwd_oauth2_irl_user_module_delete)
 }
 END_TEST
 
-START_TEST(test_glwd_oauth2_irl_client_module_delete)
+START_TEST(test_oauth2_irl_client_module_delete)
 {
   char * url = msprintf(SERVER_URI "/mod/client/%s", json_string_value(json_object_get(json_object_get(j_params, "client_mod"), "name")));
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
@@ -233,16 +233,16 @@ static Suite *glewlwyd_suite(void)
   TCase *tc_core;
 
   s = suite_create("Glewlwyd oauth2 irl");
-  tc_core = tcase_create("test_glwd_oauth2_irl");
-  tcase_add_test(tc_core, test_glwd_oauth2_irl_user_module_add);
-  tcase_add_test(tc_core, test_glwd_oauth2_irl_client_module_add);
-  tcase_add_test(tc_core, test_glwd_oauth2_irl_user_add);
-  tcase_add_test(tc_core, test_glwd_oauth2_irl_client_add);
-  tcase_add_test(tc_core, test_glwd_oauth2_irl_run_workflow);
-  tcase_add_test(tc_core, test_glwd_oauth2_irl_user_delete);
-  tcase_add_test(tc_core, test_glwd_oauth2_irl_client_delete);
-  tcase_add_test(tc_core, test_glwd_oauth2_irl_user_module_delete);
-  tcase_add_test(tc_core, test_glwd_oauth2_irl_client_module_delete);
+  tc_core = tcase_create("test_oauth2_irl");
+  tcase_add_test(tc_core, test_oauth2_irl_user_module_add);
+  tcase_add_test(tc_core, test_oauth2_irl_client_module_add);
+  tcase_add_test(tc_core, test_oauth2_irl_user_add);
+  tcase_add_test(tc_core, test_oauth2_irl_client_add);
+  tcase_add_test(tc_core, test_oauth2_irl_run_workflow);
+  tcase_add_test(tc_core, test_oauth2_irl_user_delete);
+  tcase_add_test(tc_core, test_oauth2_irl_client_delete);
+  tcase_add_test(tc_core, test_oauth2_irl_user_module_delete);
+  tcase_add_test(tc_core, test_oauth2_irl_client_module_delete);
   tcase_set_timeout(tc_core, 90);
   suite_add_tcase(s, tc_core);
 

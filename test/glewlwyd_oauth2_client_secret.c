@@ -25,7 +25,7 @@
 
 struct _u_request admin_req;
 
-START_TEST(test_oidc_client_secret_client_set_ok)
+START_TEST(test_oauth2_client_secret_client_secret_client_set_ok)
 {
   json_t * j_parameters = json_pack("{ss}", "client_secret", CLIENT_SECRET);
   
@@ -35,7 +35,7 @@ START_TEST(test_oidc_client_secret_client_set_ok)
 }
 END_TEST
 
-START_TEST(test_oidc_resource_owner_pwd_cred_valid_secret)
+START_TEST(test_oauth2_client_secret_resource_owner_pwd_cred_valid_secret)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
@@ -52,7 +52,7 @@ START_TEST(test_oidc_resource_owner_pwd_cred_valid_secret)
 }
 END_TEST
 
-START_TEST(test_oidc_resource_owner_pwd_cred_valid_password)
+START_TEST(test_oauth2_client_secret_resource_owner_pwd_cred_valid_password)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
   struct _u_map body;
@@ -69,7 +69,7 @@ START_TEST(test_oidc_resource_owner_pwd_cred_valid_password)
 }
 END_TEST
 
-START_TEST(test_oidc_client_secret_client_disable_ok)
+START_TEST(test_oauth2_client_secret_client_secret_client_disable_ok)
 {
   json_t * j_parameters = json_pack("{ss}", "client_secret", "");
   
@@ -84,13 +84,13 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd code client confidential");
-  tc_core = tcase_create("test_oauth2_code");
-  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_valid_password);
-  tcase_add_test(tc_core, test_oidc_client_secret_client_set_ok);
-  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_valid_secret);
-  tcase_add_test(tc_core, test_oidc_client_secret_client_disable_ok);
-  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_valid_password);
+  s = suite_create("Glewlwyd oauth2 code client confidential");
+  tc_core = tcase_create("test_oauth2_client_secret");
+  tcase_add_test(tc_core, test_oauth2_client_secret_resource_owner_pwd_cred_valid_password);
+  tcase_add_test(tc_core, test_oauth2_client_secret_client_secret_client_set_ok);
+  tcase_add_test(tc_core, test_oauth2_client_secret_resource_owner_pwd_cred_valid_secret);
+  tcase_add_test(tc_core, test_oauth2_client_secret_client_secret_client_disable_ok);
+  tcase_add_test(tc_core, test_oauth2_client_secret_resource_owner_pwd_cred_valid_password);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 

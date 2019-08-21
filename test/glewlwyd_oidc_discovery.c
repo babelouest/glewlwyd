@@ -31,7 +31,7 @@
 
 struct _u_request admin_req;
 
-START_TEST(test_glwd_oidc_discovery_default_test)
+START_TEST(test_oidc_discovery_default_test)
 {
   json_t * j_result = json_loads("{\"issuer\":\"https://glewlwyd.tld\",\"authorization_endpoint\":\"http://localhost:4593/api/oidc/auth\",\"token_endpoint\":\"http://localhost:4593/api/oidc/token\",\"userinfo_endpoint\":\"http://localhost:4593/api/oidc/userinfo\",\"jwks_uri\":\"http://localhost:4593/api/oidc/jwks\",\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\"],\"token_endpoint_auth_signing_alg_values_supported\":[\"HS256\"],\"scopes_supported\":[\"openid\"],\"response_types_supported\":[\"code\",\"id_token\",\"token id_token\",\"code id_token\",\"code token id_token\",\"none\",\"password\",\"token\",\"client_credentials\",\"refresh_token\"],\"response_modes_supported\":[\"query\",\"fragment\"],\"grant_types_supported\":[\"authorization_code\",\"implicit\"],\"display_values_supported\":[\"page\",\"touch\",\"wap\"],\"claim_types_supported\":[\"normal\"],\"claims_supported\":[],\"ui_locales_supported\":[\"en\",\"fr\"],\"claims_parameter_supported\":true,\"request_parameter_supported\":true,\"request_uri_parameter_supported\":true,\"require_request_uri_registration\":false,\"subject_types_supported\":[\"public\"]}", JSON_DECODE_ANY, NULL);
   
@@ -43,7 +43,7 @@ START_TEST(test_glwd_oidc_discovery_default_test)
 }
 END_TEST
 
-START_TEST(test_glwd_oidc_discovery_add_plugin)
+START_TEST(test_oidc_discovery_add_plugin)
 {
   json_t * j_param = json_pack("{sssssss{sssssssssssisisisososososososososss[{ssss}{ssss}]s[s]}}",
                                 "module",
@@ -146,7 +146,7 @@ START_TEST(test_glwd_oidc_discovery_add_plugin)
 }
 END_TEST
 
-START_TEST(test_glwd_oidc_discovery_new_plugin_test)
+START_TEST(test_oidc_discovery_new_plugin_test)
 {
   json_t * j_result = json_loads("{\"issuer\":\"https://glewlwyd.tld\",\"authorization_endpoint\":\"http://localhost:4593/api/oidc_claims/auth\",\"token_endpoint\":\"http://localhost:4593/api/oidc_claims/token\",\"userinfo_endpoint\":\"http://localhost:4593/api/oidc_claims/userinfo\",\"jwks_uri\":\"http://localhost:4593/api/oidc_claims/jwks\",\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\"],\"token_endpoint_auth_signing_alg_values_supported\":[\"RS256\"],\"scopes_supported\":[\"openid\"],\"response_types_supported\":[\"code\",\"id_token\",\"token id_token\",\"code id_token\",\"code token id_token\",\"none\",\"refresh_token\"],\"response_modes_supported\":[\"query\",\"fragment\"],\"grant_types_supported\":[\"authorization_code\",\"implicit\"],\"display_values_supported\":[\"page\",\"touch\",\"wap\"],\"claim_types_supported\":[\"normal\"],\"claims_supported\":[\"claim1\",\"claim2\"],\"ui_locales_supported\":[\"en\",\"fr\"],\"claims_parameter_supported\":true,\"request_parameter_supported\":false,\"request_uri_parameter_supported\":false,\"require_request_uri_registration\":false,\"subject_types_supported\":[\"pairwise\"]}", JSON_DECODE_ANY, NULL),
   * j_key = json_loads("{\"keys\":[{\"use\":\"sig\",\"alg\":\"RS256\",\"x5c\":[\"-----BEGIN PUBLIC KEY-----\\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwtpMAM4l1H995oqlqdMh\\nuqNuffp4+4aUCwuFE9B5s9MJr63gyf8jW0oDr7Mb1Xb8y9iGkWfhouZqNJbMFry+\\niBs+z2TtJF06vbHQZzajDsdux3XVfXv9v6dDIImyU24MsGNkpNt0GISaaiqv51NM\\nZQX0miOXXWdkQvWTZFXhmsFCmJLE67oQFSar4hzfAaCulaMD+b3Mcsjlh0yvSq7g\\n6swiIasEU3qNLKaJAZEzfywroVYr3BwM1IiVbQeKgIkyPS/85M4Y6Ss/T+OWi1Oe\\nK49NdYBvFP+hNVEoeZzJz5K/nd6C35IX0t2bN5CVXchUFmaUMYk2iPdhXdsC720t\\nBwIDAQAB\\n-----END PUBLIC KEY-----\"],\"kid\":\"h7uJEqXw_h4UXW_wCm3oBuboSGyuxf7XucGDKohPwxo\",\"kty\":\"RSA\",\"e\":\"AQAB\",\"n\":\"AMLaTADOJdR_feaKpanTIbqjbn36ePuGlAsLhRPQebPTCa-t4Mn_I1tKA6-zG9V2_MvYhpFn4aLmajSWzBa8vogbPs9k7SRdOr2x0Gc2ow7Hbsd11X17_b-nQyCJslNuDLBjZKTbdBiEmmoqr-dTTGUF9Jojl11nZEL1k2RV4ZrBQpiSxOu6EBUmq-Ic3wGgrpWjA_m9zHLI5YdMr0qu4OrMIiGrBFN6jSymiQGRM38sK6FWK9wcDNSIlW0HioCJMj0v_OTOGOkrP0_jlotTniuPTXWAbxT_oTVRKHmcyc-Sv53egt-SF9LdmzeQlV3IVBZmlDGJNoj3YV3bAu9tLQc\"}]}", JSON_DECODE_ANY, NULL);
@@ -161,7 +161,7 @@ START_TEST(test_glwd_oidc_discovery_new_plugin_test)
 }
 END_TEST
 
-START_TEST(test_glwd_oidc_discovery_delete_plugin)
+START_TEST(test_oidc_discovery_delete_plugin)
 {
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/plugin/" PLUGIN_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
 }
@@ -172,12 +172,12 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd oauth2 irl");
-  tc_core = tcase_create("test_glwd_oidc_irl");
-  tcase_add_test(tc_core, test_glwd_oidc_discovery_default_test);
-  tcase_add_test(tc_core, test_glwd_oidc_discovery_add_plugin);
-  tcase_add_test(tc_core, test_glwd_oidc_discovery_new_plugin_test);
-  tcase_add_test(tc_core, test_glwd_oidc_discovery_delete_plugin);
+  s = suite_create("Glewlwyd oidc discovery");
+  tc_core = tcase_create("test_oidc_discovery");
+  tcase_add_test(tc_core, test_oidc_discovery_default_test);
+  tcase_add_test(tc_core, test_oidc_discovery_add_plugin);
+  tcase_add_test(tc_core, test_oidc_discovery_new_plugin_test);
+  tcase_add_test(tc_core, test_oidc_discovery_delete_plugin);
   tcase_set_timeout(tc_core, 90);
   suite_add_tcase(s, tc_core);
 

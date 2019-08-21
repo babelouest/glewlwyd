@@ -480,7 +480,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd implicit");
+  s = suite_create("Glewlwyd oauth2 implicit");
   tc_core = tcase_create("test_oauth2_implicit");
   tcase_add_test(tc_core, test_oauth2_implicit_redirect_login);
   tcase_add_test(tc_core, test_oauth2_implicit_valid);

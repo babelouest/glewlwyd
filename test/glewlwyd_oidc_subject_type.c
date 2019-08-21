@@ -359,7 +359,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd subject type");
+  s = suite_create("Glewlwyd oidc subject_type");
   tc_core = tcase_create("test_oidc_subject_type");
   tcase_add_test(tc_core, test_oidc_subject_type_add_plugin_public);
   tcase_add_test(tc_core, test_oidc_subject_type_public_sub_equal);

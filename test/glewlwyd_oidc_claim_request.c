@@ -1371,7 +1371,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd profile");
+  s = suite_create("Glewlwyd oidc claims request");
   tc_core = tcase_create("test_oidc_claim_request");
   tcase_add_test(tc_core, test_oidc_claim_request_add_plugin);
   tcase_add_test(tc_core, test_oidc_claim_request_user1_id_token_no_claim);

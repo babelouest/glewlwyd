@@ -23,14 +23,14 @@
 struct _u_request user_req;
 char user_agent[33];
 
-START_TEST(test_auth_session_manage_endpoints_noauth)
+START_TEST(test_glwd_auth_session_manage_endpoints_noauth)
 {
   ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/profile/session/", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(NULL, "DELETE", SERVER_URI "/profile/session/test", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
 }
 END_TEST
 
-START_TEST(test_auth_session_manage_list)
+START_TEST(test_glwd_auth_session_manage_list)
 {
   struct _u_response resp;
   json_t * j_body = NULL;
@@ -136,7 +136,7 @@ START_TEST(test_auth_session_manage_list)
 }
 END_TEST
 
-START_TEST(test_auth_session_manage_delete_not_found)
+START_TEST(test_glwd_auth_session_manage_delete_not_found)
 {
   struct _u_response resp;
   
@@ -153,7 +153,7 @@ START_TEST(test_auth_session_manage_delete_not_found)
 }
 END_TEST
 
-START_TEST(test_auth_session_manage_delete_ok)
+START_TEST(test_glwd_auth_session_manage_delete_ok)
 {
   struct _u_request req, test_req;
   struct _u_response resp;
@@ -227,12 +227,12 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd profile");
-  tc_core = tcase_create("test_auth_session_manage");
-  tcase_add_test(tc_core, test_auth_session_manage_endpoints_noauth);
-  tcase_add_test(tc_core, test_auth_session_manage_list);
-  tcase_add_test(tc_core, test_auth_session_manage_delete_not_found);
-  tcase_add_test(tc_core, test_auth_session_manage_delete_ok);
+  s = suite_create("Glewlwyd auth session manage");
+  tc_core = tcase_create("test_glwd_auth_session_manage");
+  tcase_add_test(tc_core, test_glwd_auth_session_manage_endpoints_noauth);
+  tcase_add_test(tc_core, test_glwd_auth_session_manage_list);
+  tcase_add_test(tc_core, test_glwd_auth_session_manage_delete_not_found);
+  tcase_add_test(tc_core, test_glwd_auth_session_manage_delete_ok);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 

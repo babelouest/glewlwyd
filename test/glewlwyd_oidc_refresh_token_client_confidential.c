@@ -87,7 +87,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd refresh token client confidential");
+  s = suite_create("Glewlwyd oidc refresh token client confidential");
   tc_core = tcase_create("test_oidc_refresh_token");
   tcase_add_test(tc_core, test_oidc_refresh_token_client_confidential_token_invalid);
   tcase_add_test(tc_core, test_oidc_refresh_token_client_confidential_client_invalid);

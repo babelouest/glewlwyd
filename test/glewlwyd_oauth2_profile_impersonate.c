@@ -53,7 +53,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd profile");
+  s = suite_create("Glewlwyd oauth2 profile impersonate");
   tc_core = tcase_create("test_oauth2_profile_impersonate");
   tcase_add_test(tc_core, test_oauth2_get_profile_ok);
   tcase_add_test(tc_core, test_oauth2_get_profile_error);

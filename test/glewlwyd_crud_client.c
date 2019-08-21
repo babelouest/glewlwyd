@@ -431,7 +431,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd CRUD user");
+  s = suite_create("Glewlwyd CRUD client");
   tc_core = tcase_create("test_glwd_crud_client");
   tcase_add_test(tc_core, test_glwd_crud_client_get_list);
   tcase_add_test(tc_core, test_glwd_crud_client_add_error_json);

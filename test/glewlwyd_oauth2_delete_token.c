@@ -71,7 +71,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd delete token");
+  s = suite_create("Glewlwyd oauth2 delete token");
   tc_core = tcase_create("test_oauth2_delete_token");
   tcase_add_test(tc_core, test_oauth2_delete_token_token_invalid);
   tcase_add_test(tc_core, test_oauth2_delete_token_ok);

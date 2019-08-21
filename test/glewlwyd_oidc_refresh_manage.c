@@ -231,7 +231,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd profile");
+  s = suite_create("Glewlwyd oidc refresh manage");
   tc_core = tcase_create("test_oidc_refresh_manage");
   tcase_add_test(tc_core, test_oidc_refresh_manage_endpoints_noauth);
   tcase_add_test(tc_core, test_oidc_refresh_manage_list);
