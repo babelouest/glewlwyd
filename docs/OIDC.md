@@ -15,14 +15,12 @@ The following OpenID Connect Core functionalities are currently supported:
 - [Address Claims](https://openid.net/specs/openid-connect-core-1_0.html#AddressClaim)
 - [Requesting Claims using the "claims" Request Parameter](https://openid.net/specs/openid-connect-core-1_0.html#ClaimsParameter)
 - [Requesting Claims using Scope Values](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims)
-- [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) using HTTP Basic Auth, POST Parameter or signed JWT
+- [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) using HTTP Basic Auth, POST Parameter or JWT
 - [Passing Request Parameters as JWTs](https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests)
 - [Subject Types public or pairwise](https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes)
 
 The following OpenID Connect Core functionalities are not supported yet:
 
-- [Client authentification with JWT](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication)
-- [Claims Languages and Scripts](https://openid.net/specs/openid-connect-core-1_0.html#ClaimsLanguagesAndScripts)
 - [Self-Issued OpenID Provider](https://openid.net/specs/openid-connect-core-1_0.html#SelfIssued)
 - [id_token encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
 
