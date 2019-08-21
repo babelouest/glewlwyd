@@ -537,6 +537,9 @@ static json_t * get_address_claim(struct _oidc_config * config, json_t * j_user)
   return j_return;
 }
 
+/**
+ * Return the claim value if possible
+ */
 static json_t * get_claim_value_from_request(struct _oidc_config * config, const char * claim, json_t * j_claim_request, json_t * j_user) {
   json_t * j_element, * j_user_property, * j_claim_value = NULL, * j_return = NULL, * j_values_element;
   size_t index, index_values;
@@ -4014,17 +4017,26 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
     json_object_set_new(j_discovery, "response_modes_supported", json_pack("[ss]", "query", "fragment"));
     json_object_set_new(j_discovery, "grant_types_supported", json_pack("[ss]", "authorization_code", "implicit"));
     json_object_set_new(j_discovery, "token_endpoint_auth_methods_supported", json_pack("[s]", "client_secret_basic"));
-    json_object_set_new(j_discovery, "display_values_supported", json_pack("[sss]", "page", "touch", "wap"));
+    json_object_set_new(j_discovery, "display_values_supported", json_pack("[ssss]", "page", "popup", "touch", "wap"));
     json_object_set_new(j_discovery, "claim_types_supported", json_pack("[s]", "normal"));
+    json_object_set_new(j_discovery, "claims_parameter_supported", json_true());
     json_object_set_new(j_discovery, "claims_supported", json_array());
     json_array_foreach(json_object_get(config->j_params, "claims"), index, j_element) {
       json_array_append(json_object_get(j_discovery, "claims_supported"), json_object_get(j_element, "name"));
+    }
+    if (0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "name-claim"))) || 0 == o_strcmp("mandatory", json_string_value(json_object_get(config->j_params, "name-claim")))) {
+      json_array_append_new(json_object_get(j_discovery, "claims_supported"), json_string("name"));
+    }
+    if (0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "email-claim"))) || 0 == o_strcmp("mandatory", json_string_value(json_object_get(config->j_params, "email-claim")))) {
+      json_array_append_new(json_object_get(j_discovery, "claims_supported"), json_string("email"));
+    }
+    if (0 == o_strcmp("on-demand", json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "type"))) || 0 == o_strcmp("mandatory", json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "type")))) {
+      json_array_append_new(json_object_get(j_discovery, "claims_supported"), json_string("address"));
     }
     if (json_string_length(json_object_get(config->j_params, "service-documentation"))) {
       json_object_set(j_discovery, "service_documentation", json_object_get(config->j_params, "service-documentation"));
     }
     json_object_set_new(j_discovery, "ui_locales_supported", json_pack("[ss]", "en", "fr"));
-    json_object_set_new(j_discovery, "claims_parameter_supported", json_true());
     json_object_set(j_discovery, "request_parameter_supported", json_object_get(config->j_params, "request-parameter-allow")==json_false()?json_false():json_true());
     json_object_set(j_discovery, "request_uri_parameter_supported", json_object_get(config->j_params, "request-parameter-allow")==json_false()?json_false():json_true());
     json_object_set_new(j_discovery, "require_request_uri_registration", json_false());
