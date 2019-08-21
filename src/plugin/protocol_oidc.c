@@ -538,7 +538,7 @@ static json_t * get_address_claim(struct _oidc_config * config, json_t * j_user)
 }
 
 static json_t * get_claim_value_from_request(struct _oidc_config * config, const char * claim, json_t * j_claim_request, json_t * j_user) {
-  json_t * j_element, * j_user_property, * j_claim_value, * j_return = NULL, * j_values_element;
+  json_t * j_element, * j_user_property, * j_claim_value = NULL, * j_return = NULL, * j_values_element;
   size_t index, index_values;
   char * endptr = NULL;
   int return_claim = 1, tmp_claim;
@@ -584,8 +584,12 @@ static json_t * get_claim_value_from_request(struct _oidc_config * config, const
         } else {
           j_claim_value = json_incref(j_user_property);
         }
-        j_return = json_pack("{sisO}", "result", G_OK, "claim", j_claim_value);
-        json_decref(j_claim_value);
+        if (j_claim_value != NULL) {
+          j_return = json_pack("{sisO}", "result", G_OK, "claim", j_claim_value);
+          json_decref(j_claim_value);
+        } else {
+          j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+        }
         break;
       }
     }
