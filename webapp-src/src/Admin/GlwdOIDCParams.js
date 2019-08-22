@@ -40,6 +40,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["name-claim-scope"]?"":(props.mod.parameters["name-claim-scope"] = []);
     props.mod.parameters["email-claim"]?"":(props.mod.parameters["email-claim"] = "no");
     props.mod.parameters["email-claim-scope"]?"":(props.mod.parameters["email-claim-scope"] = []);
+    props.mod.parameters["allowed-scope"]?"":(props.mod.parameters["allowed-scope"] = ["openid"]);
 
     this.state = {
       config: props.config,
@@ -90,6 +91,8 @@ class GlwdOIDCParams extends Component {
     this.deleteNameScope = this.deleteNameScope.bind(this);
     this.addEmailScope = this.addEmailScope.bind(this);
     this.deleteEmailScope = this.deleteEmailScope.bind(this);
+    this.addAllowedScope = this.addAllowedScope.bind(this);
+    this.deleteAllowedScope = this.deleteAllowedScope.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -128,6 +131,7 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["name-claim-scope"]?"":(nextProps.mod.parameters["name-claim-scope"] = []);
     nextProps.mod.parameters["email-claim"]?"":(nextProps.mod.parameters["email-claim"] = "no");
     nextProps.mod.parameters["email-claim-scope"]?"":(nextProps.mod.parameters["email-claim-scope"] = []);
+    nextProps.mod.parameters["allowed-scope"]?"":(nextProps.mod.parameters["allowed-scope"] = ["openid"]);
     
     this.setState({
       config: nextProps.config,
@@ -427,6 +431,31 @@ class GlwdOIDCParams extends Component {
     this.setState({mod: mod});
   }
   
+  addAllowedScope(e, scope) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    if (scope) {
+      mod.parameters["allowed-scope"].push(scope);
+    } else {
+      mod.parameters["allowed-scope"] = ["openid"];
+      this.state.config.scopes.forEach((scope) => {
+        if (scope.name !== "openid") {
+          mod.parameters["allowed-scope"].push(scope.name);
+        }
+      });
+    }
+    this.setState({mod: mod});
+  }
+  
+  deleteAllowedScope(e, index) {
+    e.preventDefault();
+    if (this.state.mod.parameters["allowed-scope"][index] !== "openid") {
+      var mod = this.state.mod;
+      mod.parameters["allowed-scope"].splice(index, 1);
+      this.setState({mod: mod});
+    }
+  }
+  
   checkParameters() {
     var errorList = {}, hasError = false;
     if (!this.state.mod.parameters["iss"]) {
@@ -682,6 +711,21 @@ class GlwdOIDCParams extends Component {
           <i className="fas fa-trash"></i>
         </button>
       </div>
+      );
+    });
+    
+    var allowedScopeListToAdd = [<a className="dropdown-item" key={-1} href="#" onClick={(e) => this.addAllowedScope(e, false)}>{i18next.t("admin.mod-glwd-allowed-scope-all")}</a>];
+    this.state.config.scopes.forEach((scope, indexScope) => {
+      if (this.state.mod.parameters["allowed-scope"].indexOf(scope.name) === -1 && scope.name !== "openid") {
+        allowedScopeListToAdd.push(
+          <a className="dropdown-item" key={indexScope} href="#" onClick={(e) => this.addAllowedScope(e, scope.name)}>{scope.name}</a>
+        );
+      }
+    });
+    var allowedScopeList = [];
+    this.state.mod.parameters["allowed-scope"].forEach((scope, indexScope) => {
+      allowedScopeList.push(
+        <a href="#" onClick={(e) => this.deleteAllowedScope(e, indexScope)} key={indexScope}><span className="badge badge-primary btn-icon-right">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>
       );
     });
     
@@ -973,6 +1017,22 @@ class GlwdOIDCParams extends Component {
                         <a className={"dropdown-item"+(this.state.mod.parameters["secret-type"]==="pairwise"?" active":"")} href="#" onClick={(e) => this.changeSecretType(e, 'pairwise')}>{i18next.t("admin.mod-glwd-secret-type-pairwise")}</a>
                       </div>
                     </div>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-allowed-scope">{i18next.t("admin.mod-glwd-allowed-scope")}</label>
+                    </div>
+                    <div className="dropdown">
+                      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-mod-glwd-allowed-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {i18next.t("admin.mod-glwd-name-email-scope-select")}
+                      </button>
+                      <div className="dropdown-menu" aria-labelledby="mod-glwd-name-scope-claim">
+                        {allowedScopeListToAdd}
+                      </div>
+                    </div>
+                    {allowedScopeList}
                   </div>
                 </div>
               </div>
