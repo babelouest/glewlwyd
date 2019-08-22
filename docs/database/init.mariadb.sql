@@ -29,7 +29,6 @@ DROP TABLE IF EXISTS gpg_refresh_token;
 DROP TABLE IF EXISTS gpg_code_scope;
 DROP TABLE IF EXISTS gpg_code;
 DROP TABLE IF EXISTS gpo_subject_identifier;
-DROP TABLE IF EXISTS gpo_id_token_scope;
 DROP TABLE IF EXISTS gpo_id_token;
 DROP TABLE IF EXISTS gpo_access_token_scope;
 DROP TABLE IF EXISTS gpo_access_token;
