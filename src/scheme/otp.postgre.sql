@@ -3,8 +3,8 @@ DROP TABLE IF EXISTS gs_otp;
 CREATE TABLE gs_otp (
   gso_id SERIAL PRIMARY KEY,
   gso_mod_name VARCHAR(128) NOT NULL,
-  gso_issued_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  gso_last_used TIMESTAMP NOT NULL DEFAULT NOW(),
+  gso_issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  gso_last_used TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gso_username VARCHAR(128) NOT NULL,
   gso_otp_type SMALLINT DEFAULT 0, -- 0 HOTP, 1 TOTP
   gso_secret VARCHAR(128) NOT NULL,
