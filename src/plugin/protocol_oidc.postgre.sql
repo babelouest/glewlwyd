@@ -1,5 +1,4 @@
 DROP TABLE IF EXISTS gpo_subject_identifier;
-DROP TABLE IF EXISTS gpo_id_token_scope;
 DROP TABLE IF EXISTS gpo_id_token;
 DROP TABLE IF EXISTS gpo_access_token_scope;
 DROP TABLE IF EXISTS gpo_access_token;
@@ -19,7 +18,7 @@ CREATE TABLE gpo_code (
   gpoc_code_hash VARCHAR(512) NOT NULL,
   gpoc_nonce VARCHAR(512),
   gpoc_claims_request TEXT DEFAULT NULL,
-  gpoc_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpoc_expires_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpoc_issued_for VARCHAR(256), -- IP address or hostname
   gpoc_user_agent VARCHAR(256),
   gpoc_enabled SMALLINT DEFAULT 1
@@ -35,7 +34,7 @@ CREATE TABLE gpo_code_scope (
 
 CREATE TABLE gpo_code_scheme (
   gpoch_id SERIAL PRIMARY KEY,
-  gpoc_id INT(11),
+  gpoc_id INTEGER,
   gpoch_scheme_module VARCHAR(128) NOT NULL,
   FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE
 );
@@ -48,9 +47,9 @@ CREATE TABLE gpo_refresh_token (
   gpor_username VARCHAR(256) NOT NULL,
   gpor_client_id VARCHAR(256),
   gpor_claims_request TEXT DEFAULT NULL,
-  gpor_issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  gpor_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  gpor_last_seen TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpor_issued_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpor_expires_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpor_last_seen TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpor_duration INTEGER,
   gpor_rolling_expiration SMALLINT DEFAULT 0,
   gpor_issued_for VARCHAR(256), -- IP address or hostname
@@ -76,7 +75,7 @@ CREATE TABLE gpo_access_token (
   gpor_id INTEGER DEFAULT NULL,
   gpoa_username VARCHAR(256),
   gpoa_client_id VARCHAR(256),
-  gpoa_issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpoa_issued_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   gpoa_issued_for VARCHAR(256), -- IP address or hostname
   gpoa_user_agent VARCHAR(256),
   FOREIGN KEY(gpor_id) REFERENCES gpo_refresh_token(gpor_id) ON DELETE CASCADE
@@ -96,7 +95,7 @@ CREATE TABLE gpo_id_token (
   gpoi_authorization_type SMALLINT NOT NULL,
   gpoi_username VARCHAR(256),
   gpoi_client_id VARCHAR(256),
-  gpoi_issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpoi_issued_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   gpoi_issued_for VARCHAR(256), -- IP address or hostname
   gpoi_user_agent VARCHAR(256),
   gpoi_hash VARCHAR(512)
