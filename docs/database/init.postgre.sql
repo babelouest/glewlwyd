@@ -29,7 +29,6 @@ DROP TABLE IF EXISTS gpg_refresh_token;
 DROP TABLE IF EXISTS gpg_code_scope;
 DROP TABLE IF EXISTS gpg_code;
 DROP TABLE IF EXISTS gpo_subject_identifier;
-DROP TABLE IF EXISTS gpo_id_token_scope;
 DROP TABLE IF EXISTS gpo_id_token;
 DROP TABLE IF EXISTS gpo_access_token_scope;
 DROP TABLE IF EXISTS gpo_access_token;
@@ -89,8 +88,8 @@ CREATE TABLE g_user_session (
   gus_user_agent VARCHAR(256),
   gus_issued_for VARCHAR(256), -- IP address or hostname
   gus_username VARCHAR(256) NOT NULL,
-  gus_expiration TIMESTAMP NOT NULL DEFAULT NOW(),
-  gus_last_login TIMESTAMP NOT NULL DEFAULT NOW(),
+  gus_expiration TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  gus_last_login TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gus_current SMALLINT,
   gus_enabled SMALLINT DEFAULT 1
 );
@@ -102,8 +101,8 @@ CREATE TABLE g_user_session_scheme (
   guss_id SERIAL PRIMARY KEY,
   gus_id INTEGER NOT NULL,
   guasmi_id INTEGER DEFAULT NULL, -- NULL means scheme 'password'
-  guss_expiration TIMESTAMP NOT NULL DEFAULT NOW(),
-  guss_last_login TIMESTAMP NOT NULL DEFAULT NOW(),
+  guss_expiration TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  guss_last_login TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   guss_use_counter INTEGER DEFAULT 0,
   guss_enabled SMALLINT DEFAULT 1,
   FOREIGN KEY(gus_id) REFERENCES g_user_session(gus_id) ON DELETE CASCADE,
@@ -142,7 +141,7 @@ CREATE TABLE g_client_user_scope (
   gs_id INTEGER NOT NULL,
   gcus_username VARCHAR(256) NOT NULL,
   gcus_client_id VARCHAR(256) NOT NULL,
-  gcus_granted TIMESTAMP NOT NULL DEFAULT NOW(),
+  gcus_granted TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gcus_enabled SMALLINT DEFAULT 1,
   FOREIGN KEY(gs_id) REFERENCES g_scope(gs_id) ON DELETE CASCADE
 );
@@ -219,7 +218,7 @@ CREATE TABLE gpg_code (
   gpgc_client_id VARCHAR(256) NOT NULL,
   gpgc_redirect_uri VARCHAR(512) NOT NULL,
   gpgc_code_hash VARCHAR(512) NOT NULL,
-  gpgc_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpgc_expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gpgc_issued_for VARCHAR(256), -- IP address or hostname
   gpgc_user_agent VARCHAR(256),
   gpgc_enabled SMALLINT DEFAULT 1
@@ -240,9 +239,9 @@ CREATE TABLE gpg_refresh_token (
   gpgc_id INTEGER DEFAULT NULL,
   gpgr_username VARCHAR(256) NOT NULL,
   gpgr_client_id VARCHAR(256),
-  gpgr_issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  gpgr_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  gpgr_last_seen TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpgr_issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  gpgr_expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  gpgr_last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gpgr_duration INTEGER,
   gpgr_rolling_expiration SMALLINT DEFAULT 0,
   gpgr_issued_for VARCHAR(256), -- IP address or hostname
@@ -268,7 +267,7 @@ CREATE TABLE gpg_access_token (
   gpgr_id INTEGER DEFAULT NULL,
   gpga_username VARCHAR(256),
   gpga_client_id VARCHAR(256),
-  gpga_issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpga_issued_at TIMESTAMPTZ DEFAULT NOW(),
   gpga_issued_for VARCHAR(256), -- IP address or hostname
   gpga_user_agent VARCHAR(256),
   FOREIGN KEY(gpgr_id) REFERENCES gpg_refresh_token(gpgr_id) ON DELETE CASCADE
@@ -291,7 +290,7 @@ CREATE TABLE gpo_code (
   gpoc_code_hash VARCHAR(512) NOT NULL,
   gpoc_nonce VARCHAR(512),
   gpoc_claims_request TEXT DEFAULT NULL,
-  gpoc_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpoc_expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gpoc_issued_for VARCHAR(256), -- IP address or hostname
   gpoc_user_agent VARCHAR(256),
   gpoc_enabled SMALLINT DEFAULT 1
@@ -307,7 +306,7 @@ CREATE TABLE gpo_code_scope (
 
 CREATE TABLE gpo_code_scheme (
   gpoch_id SERIAL PRIMARY KEY,
-  gpoc_id INT(11),
+  gpoc_id INTEGER,
   gpoch_scheme_module VARCHAR(128) NOT NULL,
   FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE
 );
@@ -320,9 +319,9 @@ CREATE TABLE gpo_refresh_token (
   gpor_username VARCHAR(256) NOT NULL,
   gpor_client_id VARCHAR(256),
   gpor_claims_request TEXT DEFAULT NULL,
-  gpor_issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  gpor_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  gpor_last_seen TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpor_issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  gpor_expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  gpor_last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gpor_duration INTEGER,
   gpor_rolling_expiration SMALLINT DEFAULT 0,
   gpor_issued_for VARCHAR(256), -- IP address or hostname
@@ -348,7 +347,7 @@ CREATE TABLE gpo_access_token (
   gpor_id INTEGER DEFAULT NULL,
   gpoa_username VARCHAR(256),
   gpoa_client_id VARCHAR(256),
-  gpoa_issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpoa_issued_at TIMESTAMPTZ DEFAULT NOW(),
   gpoa_issued_for VARCHAR(256), -- IP address or hostname
   gpoa_user_agent VARCHAR(256),
   FOREIGN KEY(gpor_id) REFERENCES gpo_refresh_token(gpor_id) ON DELETE CASCADE
@@ -368,7 +367,7 @@ CREATE TABLE gpo_id_token (
   gpoi_authorization_type SMALLINT NOT NULL,
   gpoi_username VARCHAR(256),
   gpoi_client_id VARCHAR(256),
-  gpoi_issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpoi_issued_at TIMESTAMPTZ DEFAULT NOW(),
   gpoi_issued_for VARCHAR(256), -- IP address or hostname
   gpoi_user_agent VARCHAR(256),
   gpoi_hash VARCHAR(512)
@@ -388,7 +387,7 @@ CREATE INDEX i_gposi_sub ON gpo_subject_identifier(gposi_sub);
 CREATE TABLE gs_code (
   gsc_id SERIAL PRIMARY KEY,
   gsc_mod_name VARCHAR(128) NOT NULL,
-  gsc_issued_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  gsc_issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gsc_username VARCHAR(128) NOT NULL,
   gsc_enabled SMALLINT DEFAULT 1,
   gsc_code_hash VARCHAR(128),
@@ -414,7 +413,7 @@ CREATE TABLE gs_webauthn_credential (
   gswc_certificate VARCHAR(128),
   gswc_public_key TEXT DEFAULT NULL,
   gswc_counter INTEGER DEFAULT 0,
-  gswc_created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  gswc_created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gswc_status SMALLINT DEFAULT 0, -- 0 new, 1 registered, 2 error, 3 disabled, 4 removed
   FOREIGN KEY(gswu_id) REFERENCES gs_webauthn_user(gswu_id) ON DELETE CASCADE
 );
@@ -428,7 +427,7 @@ CREATE TABLE gs_webauthn_assertion (
   gswa_session_hash VARCHAR(128) NOT NULL,
   gswa_challenge_hash VARCHAR(128),
   gswa_counter INTEGER DEFAULT 0,
-  gswa_issued_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  gswa_issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gswa_status SMALLINT DEFAULT 0, -- 0 new, 1 verified, 2 not verified, 3 error
   gswa_mock SMALLINT DEFAULT 0,
   FOREIGN KEY(gswu_id) REFERENCES gs_webauthn_user(gswu_id) ON DELETE CASCADE,
@@ -439,8 +438,8 @@ CREATE INDEX i_gswa_session_hash ON gs_webauthn_assertion(gswa_session_hash);
 CREATE TABLE gs_otp (
   gso_id SERIAL PRIMARY KEY,
   gso_mod_name VARCHAR(128) NOT NULL,
-  gso_issued_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  gso_last_used TIMESTAMP NOT NULL DEFAULT NOW(),
+  gso_issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  gso_last_used TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gso_username VARCHAR(128) NOT NULL,
   gso_otp_type SMALLINT DEFAULT 0, -- 0 HOTP, 1 TOTP
   gso_secret VARCHAR(128) NOT NULL,
