@@ -3982,7 +3982,11 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
     json_object_set_new(j_discovery, "jwks_uri", json_pack("s+", plugin_url, "/jwks"));
     json_object_set_new(j_discovery, "token_endpoint_auth_methods_supported", json_pack("[s]", "client_secret_basic"));
     json_object_set_new(j_discovery, "token_endpoint_auth_signing_alg_values_supported", json_pack("[s]", jwt_alg_str(jwt_get_alg(config->jwt_key))));
-    json_object_set_new(j_discovery, "scopes_supported", json_pack("[s]", "openid"));
+    if (json_object_get(config->j_params, "allowed-scope") != NULL && json_array_size(json_object_get(config->j_params, "allowed-scope"))) {
+      json_object_set(j_discovery, "scopes_supported", json_object_get(config->j_params, "allowed-scope"));
+    } else {
+      json_object_set_new(j_discovery, "scopes_supported", json_pack("[s]", "openid"));
+    }
     json_object_set_new(j_discovery, "response_types_supported", json_array());
     if (config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE]) {
       json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("code"));
@@ -4132,7 +4136,7 @@ static int jwt_autocheck(struct _oidc_config * config) {
 static json_t * check_parameters (json_t * j_params) {
   json_t * j_element = NULL, * j_return, * j_error = json_array(), * j_scope;
   size_t index = 0, indexScope = 0;
-  int ret = G_OK;
+  int ret = G_OK, has_openid = 0;
   
   if (j_error != NULL) {
     if (j_params == NULL) {
@@ -4382,12 +4386,12 @@ static json_t * check_parameters (json_t * j_params) {
       ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "name-claim-scope") != NULL && !json_is_array(json_object_get(j_params, "name-claim-scope"))) {
-      json_array_append_new(j_error, json_string("Property 'name-claim-scope' is optional and must an array of strings"));
+      json_array_append_new(j_error, json_string("Property 'name-claim-scope' is optional and must be an array of strings"));
       ret = G_ERROR_PARAM;
     } else if (json_object_get(j_params, "name-claim-scope") != NULL) {
       json_array_foreach(json_object_get(j_params, "name-claim-scope"), indexScope, j_scope) {
         if (!json_string_length(j_scope)) {
-          json_array_append_new(j_error, json_string("Property 'name-claim-scope' is optional and must an array of strings"));
+          json_array_append_new(j_error, json_string("Property 'name-claim-scope' is optional and must be an array of strings"));
           ret = G_ERROR_PARAM;
         }
       }
@@ -4397,12 +4401,12 @@ static json_t * check_parameters (json_t * j_params) {
       ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "email-claim-scope") != NULL && !json_is_array(json_object_get(j_params, "email-claim-scope"))) {
-      json_array_append_new(j_error, json_string("Property 'email-claim-scope' is optional and must an array of strings"));
+      json_array_append_new(j_error, json_string("Property 'email-claim-scope' is optional and must be an array of strings"));
       ret = G_ERROR_PARAM;
     } else if (json_object_get(j_params, "email-claim-scope") != NULL) {
       json_array_foreach(json_object_get(j_params, "email-claim-scope"), indexScope, j_scope) {
         if (!json_string_length(j_scope)) {
-          json_array_append_new(j_error, json_string("Property 'email-claim-scope' is optional and must an array of strings"));
+          json_array_append_new(j_error, json_string("Property 'email-claim-scope' is optional and must be an array of strings"));
           ret = G_ERROR_PARAM;
         }
       }
@@ -4416,27 +4420,46 @@ static json_t * check_parameters (json_t * j_params) {
         ret = G_ERROR_PARAM;
       } else {
         if (json_object_get(json_object_get(j_params, "address-claim"), "formatted") != NULL && !json_is_string(json_object_get(json_object_get(j_params, "address-claim"), "formatted"))) {
-          json_array_append_new(j_error, json_string("Property 'address-claim'.'formatted' is optional and must a string"));
+          json_array_append_new(j_error, json_string("Property 'address-claim'.'formatted' is optional and must be a string"));
           ret = G_ERROR_PARAM;
         }
         if (json_object_get(json_object_get(j_params, "address-claim"), "street_address") != NULL && !json_is_string(json_object_get(json_object_get(j_params, "address-claim"), "street_address"))) {
-          json_array_append_new(j_error, json_string("Property 'address-claim'.'street_address' is optional and must a string"));
+          json_array_append_new(j_error, json_string("Property 'address-claim'.'street_address' is optional and must be a string"));
           ret = G_ERROR_PARAM;
         }
         if (json_object_get(json_object_get(j_params, "address-claim"), "locality") != NULL && !json_is_string(json_object_get(json_object_get(j_params, "address-claim"), "locality"))) {
-          json_array_append_new(j_error, json_string("Property 'address-claim'.'locality' is optional and must a string"));
+          json_array_append_new(j_error, json_string("Property 'address-claim'.'locality' is optional and must be a string"));
           ret = G_ERROR_PARAM;
         }
         if (json_object_get(json_object_get(j_params, "address-claim"), "region") != NULL && !json_is_string(json_object_get(json_object_get(j_params, "address-claim"), "region"))) {
-          json_array_append_new(j_error, json_string("Property 'address-claim'.'region' is optional and must a string"));
+          json_array_append_new(j_error, json_string("Property 'address-claim'.'region' is optional and must be a string"));
           ret = G_ERROR_PARAM;
         }
         if (json_object_get(json_object_get(j_params, "address-claim"), "postal_code") != NULL && !json_is_string(json_object_get(json_object_get(j_params, "address-claim"), "postal_code"))) {
-          json_array_append_new(j_error, json_string("Property 'address-claim'.'postal_code' is optional and must a string"));
+          json_array_append_new(j_error, json_string("Property 'address-claim'.'postal_code' is optional and must be a string"));
           ret = G_ERROR_PARAM;
         }
         if (json_object_get(json_object_get(j_params, "address-claim"), "country") != NULL && !json_is_string(json_object_get(json_object_get(j_params, "address-claim"), "country"))) {
-          json_array_append_new(j_error, json_string("Property 'address-claim'.'country' is optional and must a string"));
+          json_array_append_new(j_error, json_string("Property 'address-claim'.'country' is optional and must be a string"));
+          ret = G_ERROR_PARAM;
+        }
+      }
+    }
+    if (json_object_get(j_params, "allowed-scope") != NULL) {
+      if (!json_is_array(json_object_get(j_params, "allowed-scope"))) {
+        json_array_append_new(j_error, json_string("Property 'allowed-scope' is optional and must be an array of strings that includes the value 'openid'"));
+        ret = G_ERROR_PARAM;
+      } else {
+        json_array_foreach(json_object_get(j_params, "allowed-scope"), index, j_element) {
+          if (!json_string_length(j_element)) {
+            json_array_append_new(j_error, json_string("Property 'allowed-scope' is optional and must be an array of strings that includes the value 'openid'"));
+            ret = G_ERROR_PARAM;
+          } else if (0 == o_strcmp("openid", json_string_value(j_element))) {
+            has_openid = 1;
+          }
+        }
+        if (!has_openid) {
+          json_array_append_new(j_error, json_string("Property 'allowed-scope' is optional and must be an array of strings that includes the value 'openid'"));
           ret = G_ERROR_PARAM;
         }
       }
