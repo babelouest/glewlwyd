@@ -260,7 +260,7 @@ The primary difference is that a client secret is a string stored 'as is' in the
 
 A client secret has priority over a client password, which means that if a client has set both client secret and client password, the authentication will be executed with client secret only.
 
-The `client secret` can also be used to authenticate a client using the method `sclient_secret_jwt` when it will be available.
+The `client secret` can also be used to authenticate a client using the method `client_secret_jwt`.
 
 ## Glewlwyd OpenID Connect endpoints specifications
 
