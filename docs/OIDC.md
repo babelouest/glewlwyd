@@ -86,6 +86,16 @@ If the selected value is `public`, the `sub` value in access tokens and id token
 
 If the selected value is `pairwise`, the `sub` value in access tokens and id tokens will have a different values for clients of differents `sector_identifier_uri` or if the `sector_identifier_uri` is empty, for different clients.
 
+### Supported scopes
+
+Specify the list of scopes available in the property `scopes_supported` in the discovery endpoint.
+
+Important note: This list has no effect on what scopes are actually allowed by users for clients in the plugin instance, because by design, all scopes are available fo use. The availability of a scope for a user to a client depends on the configuration of those 3 items, and you can't restrict the use of some socpes in the OpenID Connect plugin.
+
+The meaning of existence of this list is to allow the administrator to choose which scopes will be shown on the discovery endpoint.
+
+Therefore, the administrator can chose to show in the discovery endpoint all scopes, only `openid` (which is mandatory in the specification) or a subset of all scopes available, including `openid`.
+
 ### JWT Type
 
 Algorithm used to sign access tokens and ID Tokens.
