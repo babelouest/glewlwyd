@@ -175,7 +175,7 @@ static json_t * database_user_scope_get(struct mod_parameters * param, json_int_
   size_t index = 0;
   char * scope_clause = msprintf("IN (SELECT gus_id from " G_TABLE_USER_SCOPE_USER " WHERE gu_id = %"JSON_INTEGER_FORMAT")", gu_id);
   
-  j_query = json_pack("{sss[s]s{s{ssss}}}",
+  j_query = json_pack("{sss[s]s{s{ssss}}ss}",
                       "table",
                       G_TABLE_USER_SCOPE,
                       "columns",
@@ -185,7 +185,9 @@ static json_t * database_user_scope_get(struct mod_parameters * param, json_int_
                           "operator",
                           "raw",
                           "value",
-                          scope_clause);
+                          scope_clause,
+                      "order_by",
+                      "gus_id");
   o_free(scope_clause);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);

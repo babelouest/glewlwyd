@@ -327,8 +327,8 @@ static json_t * is_scheme_valid_for_session(struct config_elements * config, jso
                         GLEWLWYD_TABLE_USER_SESSION_SCHEME,
                         "columns",
                           "guss_id",
-                          SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(guss_last_login) AS guss_last_login", "guss_last_login AS guss_last_login", "EXTRACT(EPOCH FROM guss_last_login) AS guss_last_login"),
-                          SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(guss_expiration) AS guss_expiration", "guss_expiration AS guss_expiration", "EXTRACT(EPOCH FROM guss_expiration) AS guss_expiration"),
+                          SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(guss_last_login) AS guss_last_login", "guss_last_login AS guss_last_login", "EXTRACT(EPOCH FROM guss_last_login)::integer AS guss_last_login"),
+                          SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(guss_expiration) AS guss_expiration", "guss_expiration AS guss_expiration", "EXTRACT(EPOCH FROM guss_expiration)::integer AS guss_expiration"),
                         "where",
                           "gus_id",
                           json_object_get(json_object_get(j_session, "session"), "gus_id"),
@@ -353,7 +353,7 @@ static json_t * is_scheme_valid_for_session(struct config_elements * config, jso
         }
       } else {
         if (json_array_size(j_result)) {
-          j_return = json_pack("{sisbsO}", "result", G_OK, "valid", (json_integer_value(json_object_get(json_array_get(j_result, 0), "guss_last_login")) + password_max_age > (json_int_t)now), "last_login", json_object_get(json_array_get(j_result, 0), "guss_last_login"));
+          j_return = json_pack("{sisbsO}", "result", G_OK, "valid", (json_integer_value(json_object_get(json_array_get(j_result, 0), "guss_last_login")) + (json_int_t)password_max_age > (json_int_t)now), "last_login", json_object_get(json_array_get(j_result, 0), "guss_last_login"));
         } else {
           j_return = json_pack("{sisOsi}", "result", G_OK, "valid", json_false(), "last_login", 0);
         }
