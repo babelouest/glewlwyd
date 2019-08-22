@@ -332,6 +332,8 @@
     "mod-glwd-key": "Clé secrète",
     "mod-glwd-key-ph": "Ex: my-secret-key",
     "mod-glwd-cert": "Clé publique",
+    "mod-glwd-allowed-scope": "Scopes supportés",
+    "mod-glwd-allowed-scope-all": "Tous",
     "mod-glwd-scope-override-scope": "Scope",
     "mod-glwd-scope-override-refresh-duration": "Durée de vie du refresh token (secondes) - 0: Garder la valeur par défaut",
     "mod-glwd-scope-override-refresh-duration-ph": "Ex: 1209600",
