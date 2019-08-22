@@ -174,7 +174,7 @@ static json_t * database_client_scope_get(struct mod_parameters * param, json_in
   size_t index = 0;
   char * scope_clause = msprintf("IN (SELECT gcs_id from " G_TABLE_CLIENT_SCOPE_CLIENT " WHERE gc_id = %"JSON_INTEGER_FORMAT")", gc_id);
   
-  j_query = json_pack("{sss[s]s{s{ssss}}}",
+  j_query = json_pack("{sss[s]s{s{ssss}}ss}",
                       "table",
                       G_TABLE_CLIENT_SCOPE,
                       "columns",
@@ -184,7 +184,9 @@ static json_t * database_client_scope_get(struct mod_parameters * param, json_in
                           "operator",
                           "raw",
                           "value",
-                          scope_clause);
+                          scope_clause,
+                      "order_by",
+                      "gcs_id");
   o_free(scope_clause);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
@@ -446,7 +448,7 @@ static char * get_password_clause_check(struct mod_parameters * param, const cha
   } else if (param->conn->type == HOEL_DB_TYPE_PGSQL) {
     password_encoded = h_escape_string(param->conn, password);
     if (password_encoded != NULL) {
-      clause = msprintf(" = crypt('%s', gu_password)", password_encoded);
+      clause = msprintf(" = crypt('%s', gc_password)", password_encoded);
       o_free(password_encoded);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error h_escape_string (postgre)");

@@ -96,7 +96,7 @@ static json_t * get_otp(struct config_module * config, json_t * j_params, const 
                       "table",
                       GLEWLWYD_TABLE_OTP,
                       "columns",
-                        SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gso_issued_at) AS issued_at", "gso_issued_at AS issued_at", "EXTRACT(EPOCH FROM gso_issued_at) AS issued_at"),
+                        SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gso_issued_at) AS issued_at", "gso_issued_at AS issued_at", "EXTRACT(EPOCH FROM gso_issued_at)::integer AS issued_at"),
                         "gso_otp_type",
                         "gso_secret AS secret",
                         "gso_hotp_moving_factor AS moving_factor",

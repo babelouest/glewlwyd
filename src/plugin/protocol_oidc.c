@@ -665,7 +665,7 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
       } else {
         j_claim_value = get_claim_value_from_request(config, claim, j_claim_request, j_user);
         if (check_result_value(j_claim_value, G_OK)) {
-          json_object_set(j_userinfo,claim, json_object_get(j_claim_value, "claim"));
+          json_object_set(j_userinfo, claim, json_object_get(j_claim_value, "claim"));
         }
         json_decref(j_claim_value);
       }
@@ -758,7 +758,7 @@ static json_t * get_last_id_token(struct _oidc_config * config, const char * use
                       GLEWLWYD_PLUGIN_OIDC_TABLE_ID_TOKEN,
                       "columns",
                         "gpoi_authorization_type AS authorization_type",
-                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpoi_issued_at) AS issued_at", "gpoi_issued_at AS issued_at", "EXTRACT(EPOCH FROM gpoi_issued_at) AS issued_at"),
+                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpoi_issued_at) AS issued_at", "gpoi_issued_at AS issued_at", "EXTRACT(EPOCH FROM gpoi_issued_at)::integer AS issued_at"),
                         "gpoi_hash AS token_hash",
                       "where",
                         "gpoi_plugin_name",
@@ -1973,9 +1973,9 @@ static json_t * validate_refresh_token(struct _oidc_config * config, const char 
                             "gpoc_id",
                             "gpor_username AS username",
                             "gpor_client_id AS client_id",
-                            SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpor_issued_at) AS issued_at", "gpor_issued_at AS issued_at", "EXTRACT(EPOCH FROM gpor_issued_at) AS issued_at"),
-                            SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpor_expires_at) AS expired_at", "gpor_expires_at AS expired_at", "EXTRACT(EPOCH FROM gpor_expires_at) AS expired_at"),
-                            SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpor_last_seen) AS last_seen", "gpor_last_seen AS last_seen", "EXTRACT(EPOCH FROM gpor_last_seen) AS last_seen"),
+                            SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpor_issued_at) AS issued_at", "gpor_issued_at AS issued_at", "EXTRACT(EPOCH FROM gpor_issued_at)::integer AS issued_at"),
+                            SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpor_expires_at) AS expired_at", "gpor_expires_at AS expired_at", "EXTRACT(EPOCH FROM gpor_expires_at)::integer AS expired_at"),
+                            SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpor_last_seen) AS last_seen", "gpor_last_seen AS last_seen", "EXTRACT(EPOCH FROM gpor_last_seen)::integer AS last_seen"),
                             "gpor_duration AS duration",
                             "gpor_rolling_expiration",
                             "gpor_claims_request AS claims_request",
@@ -2059,9 +2059,9 @@ static json_t * refresh_token_list_get(struct _oidc_config * config, const char 
                         "gpor_token_hash",
                         "gpor_authorization_type",
                         "gpor_client_id AS client_id",
-                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpor_issued_at) AS issued_at", "gpor_issued_at AS issued_at", "EXTRACT(EPOCH FROM gpor_issued_at) AS issued_at"),
-                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpor_expires_at) AS expires_at", "gpor_expires_at AS expires_at", "EXTRACT(EPOCH FROM gpor_expires_at) AS expires_at"),
-                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpor_last_seen) AS last_seen", "gpor_last_seen AS last_seen", "EXTRACT(EPOCH FROM gpor_last_seen) AS last_seen"),
+                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpor_issued_at) AS issued_at", "gpor_issued_at AS issued_at", "EXTRACT(EPOCH FROM gpor_issued_at)::integer AS issued_at"),
+                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpor_expires_at) AS expires_at", "gpor_expires_at AS expires_at", "EXTRACT(EPOCH FROM gpor_expires_at)::integer AS expires_at"),
+                        SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpor_last_seen) AS last_seen", "gpor_last_seen AS last_seen", "EXTRACT(EPOCH FROM gpor_last_seen)::integer AS last_seen"),
                         "gpor_rolling_expiration",
                         "gpor_issued_for AS issued_for",
                         "gpor_user_agent AS user_agent",
