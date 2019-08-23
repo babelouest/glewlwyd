@@ -1058,6 +1058,12 @@ int build_config_from_file(struct config_elements * config) {
           fprintf(stderr, "Error opening mariadb database %s\n", str_value_5);
           config_destroy(&cfg);
           return 0;
+        } else {
+          if (h_execute_query_mariadb(config->conn, "SET sql_mode='PIPES_AS_CONCAT';", NULL) != H_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error executing mariadb query 'SET sql_mode='PIPES_AS_CONCAT';'");
+            config_destroy(&cfg);
+            return 0;
+          }
         }
       } else if (0 == strncmp(str_value, "postgre", strlen("postgre"))) {
         config_setting_lookup_string(database, "conninfo", &str_value_2);

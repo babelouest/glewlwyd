@@ -136,8 +136,8 @@ json_t * get_scope_list(struct config_elements * config, const char * pattern, s
     json_object_set_new(j_query, "limit", json_integer(limit));
   }
   if (o_strlen(pattern)) {
-    pattern_escaped = h_escape_string(config->conn, pattern);
-    pattern_clause = msprintf("IN (SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name LIKE '%%%s%%' OR gs_display_name LIKE '%%%s%%' OR gs_description LIKE '%%%s%%')", pattern_escaped, pattern_escaped, pattern_escaped);
+    pattern_escaped = h_escape_string_with_quotes(config->conn, pattern);
+    pattern_clause = msprintf("IN (SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name LIKE '%%'||%s||'%%' OR gs_display_name LIKE '%%'||%s||'%%' OR gs_description LIKE '%%'||%s||'%%')", pattern_escaped, pattern_escaped, pattern_escaped);
     json_object_set_new(j_query, "where", json_pack("{s{ssss}}", "gs_id", "operator", "raw", "value", pattern_clause));
     o_free(pattern_escaped);
     o_free(pattern_clause);
@@ -227,11 +227,11 @@ json_t * get_auth_scheme_list_from_scope(struct config_elements * config, const 
     " GLEWLWYD_TABLE_SCOPE_GROUP ".gsg_id = " GLEWLWYD_TABLE_SCOPE_GROUP_AUTH_SCHEME_MODULE_INSTANCE ".gsg_id AND \
     " GLEWLWYD_TABLE_SCOPE_GROUP_AUTH_SCHEME_MODULE_INSTANCE ".gsg_id IN  \
       (SELECT gsg_id FROM " GLEWLWYD_TABLE_SCOPE_GROUP " WHERE gs_id =  \
-        (SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name='%s')) \
+        (SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name=%s)) \
     ORDER BY \
     " GLEWLWYD_TABLE_SCOPE_GROUP ".gsg_id, \
     " GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE ".guasmi_name;";
-  char * scope_escape = h_escape_string(config->conn, scope), * str_query = NULL;
+  char * scope_escape = h_escape_string_with_quotes(config->conn, scope), * str_query = NULL;
   json_t * j_return, * j_result = NULL, * j_element;
   int res;
   size_t index;
@@ -510,20 +510,20 @@ json_t * get_client_user_scope_grant(struct config_elements * config, const char
   
   if (split_string(scope_list, " ", &scope_array) > 0) {
     for (i=0; scope_array[i] != NULL; i++) {
-      scope_escaped = h_escape_string(config->conn, scope_array[i]);
+      scope_escaped = h_escape_string_with_quotes(config->conn, scope_array[i]);
       if (scope_name_list == NULL) {
-        scope_name_list = msprintf("'%s'", scope_escaped);
+        scope_name_list = msprintf("%s", scope_escaped);
       } else {
-        tmp = msprintf("%s,'%s'", scope_name_list, scope_escaped);
+        tmp = msprintf("%s,%s", scope_name_list, scope_escaped);
         o_free(scope_name_list);
         scope_name_list = tmp;
       }
       o_free(scope_escaped);
     }
     if (scope_name_list != NULL) {
-      username_escaped = h_escape_string(config->conn, username);
-      client_id_escaped = h_escape_string(config->conn, client_id);
-      scope_clause = msprintf("IN (SELECT gs_id FROM " GLEWLWYD_TABLE_CLIENT_USER_SCOPE " WHERE gs_id IN (SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name IN (%s)) AND gcus_username='%s' AND gcus_client_id='%s' AND gcus_enabled=1)", scope_name_list, username_escaped, client_id_escaped);
+      username_escaped = h_escape_string_with_quotes(config->conn, username);
+      client_id_escaped = h_escape_string_with_quotes(config->conn, client_id);
+      scope_clause = msprintf("IN (SELECT gs_id FROM " GLEWLWYD_TABLE_CLIENT_USER_SCOPE " WHERE gs_id IN (SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name IN (%s)) AND gcus_username=%s AND gcus_client_id=%s AND gcus_enabled=1)", scope_name_list, username_escaped, client_id_escaped);
       j_query = json_pack("{sss[ssss]s{s{ssss}}}",
                           "table",
                           GLEWLWYD_TABLE_SCOPE,
@@ -661,8 +661,8 @@ int set_granted_scopes_for_client(struct config_elements * config, json_t * j_us
           json_array_foreach(json_object_get(j_user, "scope"), index, j_element) {
             if (0 == o_strcmp(scope_array[i], json_string_value(j_element)) && ret != G_ERROR_DB) {
               has_granted = 1;
-              scope_escaped = h_escape_string(config->conn, scope_array[i]);
-              scope_clause = msprintf("(SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name='%s')", scope_escaped);
+              scope_escaped = h_escape_string_with_quotes(config->conn, scope_array[i]);
+              scope_clause = msprintf("(SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name=%s)", scope_escaped);
               j_query = json_pack("{sss{s{ss}ssss}}",
                                   "table",
                                   GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
@@ -837,8 +837,8 @@ static int add_scope_scheme_groups(struct config_elements * config, const char *
   const char * group_name;
   size_t index;
 
-  scope_escaped = h_escape_string(config->conn, scope);
-  scope_clause = msprintf("(SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name='%s')", scope_escaped);
+  scope_escaped = h_escape_string_with_quotes(config->conn, scope);
+  scope_clause = msprintf("(SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name=%s)", scope_escaped);
 
   json_object_foreach(j_scheme, group_name, j_scope_group) {
     j_query = json_pack("{sss{s{ss}ss}}",
@@ -856,8 +856,8 @@ static int add_scope_scheme_groups(struct config_elements * config, const char *
       j_scope_group_id = h_last_insert_id(config->conn);
       if (j_scope_group_id != NULL && json_integer_value(j_scope_group_id) > 0) {
         json_array_foreach(j_scope_group, index, j_scheme_module) {
-          scheme_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_scheme_module, "scheme_name")));
-          scheme_module_clause = msprintf("(SELECT guasmi_id FROM " GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE " WHERE guasmi_name='%s')", scheme_escaped);
+          scheme_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_scheme_module, "scheme_name")));
+          scheme_module_clause = msprintf("(SELECT guasmi_id FROM " GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE " WHERE guasmi_name=%s)", scheme_escaped);
           j_query = json_pack("{sss{sOs{ss}}}",
                               "table",
                               GLEWLWYD_TABLE_SCOPE_GROUP_AUTH_SCHEME_MODULE_INSTANCE,
@@ -934,8 +934,8 @@ int set_scope(struct config_elements * config, const char * scope, json_t * j_sc
   char * scope_escaped, * scope_clause;
   int res, ret;
 
-  scope_escaped = h_escape_string(config->conn, scope);
-  scope_clause = msprintf("IN (SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name='%s')", scope_escaped);
+  scope_escaped = h_escape_string_with_quotes(config->conn, scope);
+  scope_clause = msprintf("IN (SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name=%s)", scope_escaped);
   j_query = json_pack("{sss{s{ssss}}}",
                       "table",
                       GLEWLWYD_TABLE_SCOPE_GROUP,

@@ -90,8 +90,8 @@ static json_t * get_otp(struct config_module * config, json_t * j_params, const 
   int res;
   char * username_escaped, * username_clause;
   
-  username_escaped = h_escape_string(config->conn, username);
-  username_clause = msprintf(" = UPPER('%s')", username_escaped);
+  username_escaped = h_escape_string_with_quotes(config->conn, username);
+  username_clause = msprintf(" = UPPER(%s)", username_escaped);
   j_query = json_pack("{sss[sssss]s{s{ssss}sO}}",
                       "table",
                       GLEWLWYD_TABLE_OTP,
@@ -141,8 +141,8 @@ static int update_otp(struct config_module * config, json_t * j_params, const ch
   json_t * j_query;
   int ret;
   
-  username_escaped = h_escape_string(config->conn, username);
-  username_clause = msprintf(" = UPPER('%s')", username_escaped);
+  username_escaped = h_escape_string_with_quotes(config->conn, username);
+  username_clause = msprintf(" = UPPER(%s)", username_escaped);
   if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
     last_login_clause = msprintf("FROM_UNIXTIME(%u)", (time(NULL)));
   } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
@@ -189,8 +189,8 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
   if (0 != o_strcmp(json_string_value(json_object_get(j_scheme_data, "type")), "NONE")) {
     j_otp = get_otp(config, j_params, username);
     if (check_result_value(j_otp, G_OK)) {
-      username_escaped = h_escape_string(config->conn, username);
-      username_clause = msprintf(" = UPPER('%s')", username_escaped);
+      username_escaped = h_escape_string_with_quotes(config->conn, username);
+      username_clause = msprintf(" = UPPER(%s)", username_escaped);
       j_query = json_pack("{sss{sisOsOso}s{s{ssss}sO}}",
                           "table",
                           GLEWLWYD_TABLE_OTP,
@@ -252,8 +252,8 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
     }
     json_decref(j_otp);
   } else {
-    username_escaped = h_escape_string(config->conn, username);
-    username_clause = msprintf(" = UPPER('%s')", username_escaped);
+    username_escaped = h_escape_string_with_quotes(config->conn, username);
+    username_clause = msprintf(" = UPPER(%s)", username_escaped);
     j_query = json_pack("{sss{s{ssss}sO}}",
                         "table",
                         GLEWLWYD_TABLE_OTP,
