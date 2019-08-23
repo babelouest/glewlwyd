@@ -39,6 +39,59 @@
 #define G_TOTP_DEFAULT_TIME_STEP_SIZE 30
 #define G_TOTP_DEFAULT_START_OFFSET 0
 
+static int is_current_otp_available(struct config_module * config, json_t * j_params, const char * username) {
+  time_t now;
+  json_t * j_query, * j_result;
+  int res, ret;
+  char * username_escaped, * username_clause, * last_used_clause;
+  
+  time(&now);
+  username_escaped = h_escape_string_with_quotes(config->conn, username);
+  username_clause = msprintf(" = UPPER(%s)", username_escaped);
+  if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+    last_used_clause = msprintf("< (FROM_UNIXTIME(%u-gso_totp_time_step_size))", now);
+  } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+    last_used_clause = msprintf("< (TO_TIMESTAMP(%u-gso_totp_time_step_size))", now);
+  } else { // HOEL_DB_TYPE_SQLITE
+    last_used_clause = msprintf("< (%u-gso_totp_time_step_size)", now);
+  }
+  j_query = json_pack("{sss[s]s{sOs{ssss}s{ssss}}}",
+                      "table",
+                      GLEWLWYD_TABLE_OTP,
+                      "columns",
+                        "gso_id",
+                      "where",
+                        "gso_mod_name",
+                        json_object_get(j_params, "mod_name"),
+                        "UPPER(gso_username)",
+                          "operator",
+                          "raw",
+                          "value",
+                          username_clause,
+                        "gso_last_used",
+                          "operator",
+                          "raw",
+                          "value",
+                          last_used_clause);
+  o_free(last_used_clause);
+  o_free(username_clause);
+  o_free(username_escaped);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result)) {
+      ret = G_OK;
+    } else {
+      ret = G_ERROR_UNAUTHORIZED;
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "is_current_otp_possible - Error executing j_query");
+    ret = G_ERROR_PARAM;
+  }
+  return ret;
+}
+
 static json_t * is_scheme_parameters_valid(json_t * j_params) {
   json_t * j_return, * j_error;
   
@@ -222,7 +275,7 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
         ret = G_ERROR_NOT_FOUND;
       }
     } else if (check_result_value(j_otp, G_ERROR_NOT_FOUND)) {
-      j_query = json_pack("{sss{sisOsOsosssO}}",
+      j_query = json_pack("{sss{sisOsOsosssOs{ss}}}",
                           "table",
                           GLEWLWYD_TABLE_OTP,
                           "values",
@@ -237,7 +290,10 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
                             "gso_username",
                             username,
                             "gso_mod_name",
-                            json_object_get(j_params, "mod_name"));
+                            json_object_get(j_params, "mod_name"),
+                            "gso_last_used",
+                              "raw",
+                              SWITCH_DB_TYPE(config->conn->type, "FROM_UNIXTIME(0)", "0", "TO_TIMESTAMP(0)::integer"));
       res = h_insert(config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
@@ -662,7 +718,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
 int user_auth_scheme_module_validate(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
   UNUSED(config);
   UNUSED(http_request);
-  int ret;
+  int ret, res;
   json_t * j_otp;
   char * secret_decoded = NULL;
   size_t secret_decoded_len;
@@ -692,23 +748,30 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
             ret = G_ERROR;
           }
         } else {
-          if ((ret = oath_totp_validate(secret_decoded,
-                                        secret_decoded_len,
-                                        time(NULL),
-                                        json_integer_value(json_object_get(json_object_get(j_otp, "otp"), "time_step_size")),
-                                        json_integer_value(json_object_get((json_t *)cls, "totp-start-offset")),
-                                        json_integer_value(json_object_get((json_t *)cls, "window")),
-                                        json_string_value(json_object_get(j_scheme_data, "value")))) >= 0) {
-            if (update_otp(config, (json_t *)cls, username, 0) == G_OK) {
-              ret = G_OK;
+          if ((res = is_current_otp_available(config, (json_t *)cls, username)) == G_OK) {
+            if ((ret = oath_totp_validate(secret_decoded,
+                                          secret_decoded_len,
+                                          time(NULL),
+                                          json_integer_value(json_object_get(json_object_get(j_otp, "otp"), "time_step_size")),
+                                          json_integer_value(json_object_get((json_t *)cls, "totp-start-offset")),
+                                          json_integer_value(json_object_get((json_t *)cls, "window")),
+                                          json_string_value(json_object_get(j_scheme_data, "value")))) >= 0) {
+              if (update_otp(config, (json_t *)cls, username, 0) == G_OK) {
+                ret = G_OK;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate otp - Error update_otp (1)");
+                ret = G_ERROR;
+              }
+            } else if (ret == OATH_INVALID_OTP) {
+              ret = G_ERROR_UNAUTHORIZED;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate otp - Error update_otp (1)");
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate otp - Error oath_hotp_validate: '%s'", oath_strerror(ret));
               ret = G_ERROR;
             }
-          } else if (ret == OATH_INVALID_OTP) {
+          } else if (res == G_ERROR_UNAUTHORIZED) {
             ret = G_ERROR_UNAUTHORIZED;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate otp - Error oath_hotp_validate: '%s'", oath_strerror(ret));
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate otp - Error is_current_otp_available");
             ret = G_ERROR;
           }
         }
