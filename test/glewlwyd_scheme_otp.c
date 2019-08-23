@@ -272,6 +272,7 @@ START_TEST(test_glwd_scheme_otp_irl_authenticate_success)
                        "value",
                          "value", code);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
   j_params = json_pack("{sssssss{ss}}", 
@@ -302,6 +303,75 @@ START_TEST(test_glwd_scheme_otp_irl_authenticate_success)
                        "value",
                          "value", code);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  
+  j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "type", "NONE");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  free(secret_dec);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_otp_irl_authenticate_error_too_soon)
+{
+  char code[OTP_CODE_LEGTH+1], * secret_dec = NULL;
+  size_t secret_dec_len = 0;
+  json_t * j_params = json_pack("{sssssss{sssssi}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                 "secret", OTP_USER_SECRET, 
+                                 "type", OTP_USER_TYPE_HOTP, 
+                                 "moving_factor", OTP_USER_MOVING_FACTOR);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  
+  ck_assert_int_eq(oath_base32_decode(OTP_USER_SECRET, strlen(OTP_USER_SECRET), &secret_dec, &secret_dec_len), OATH_OK);
+  ck_assert_int_eq(oath_hotp_generate(secret_dec, secret_dec_len, OTP_USER_MOVING_FACTOR, OTP_CODE_LEGTH, 0, OTP_USER_MOVING_FACTOR, code), OATH_OK);
+  j_params = json_pack("{sssssss{ss}}", 
+                       "username", USERNAME, 
+                       "scheme_type", MODULE_MODULE, 
+                       "scheme_name", MODULE_NAME,
+                       "value",
+                         "value", code);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  
+  j_params = json_pack("{sssssss{ss}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                  "type", "NONE");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  
+  j_params = json_pack("{sssssss{sssssi}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME, 
+                                "value", 
+                                 "secret", OTP_USER_SECRET, 
+                                 "type", OTP_USER_TYPE_TOTP, 
+                                 "time_step_size", OTP_USER_STEP_SIZE);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  
+  ck_assert_int_eq(oath_totp_generate(secret_dec, secret_dec_len, time(NULL), OTP_USER_STEP_SIZE, 0, OTP_CODE_LEGTH, code), OATH_OK);
+  j_params = json_pack("{sssssss{ss}}", 
+                       "username", USERNAME, 
+                       "scheme_type", MODULE_MODULE, 
+                       "scheme_name", MODULE_NAME,
+                       "value",
+                         "value", code);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
   j_params = json_pack("{sssssss{ss}}", 
@@ -454,6 +524,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_otp_irl_get_register);
   tcase_add_test(tc_core, test_glwd_scheme_otp_irl_authenticate_error);
   tcase_add_test(tc_core, test_glwd_scheme_otp_irl_authenticate_success);
+  tcase_add_test(tc_core, test_glwd_scheme_otp_irl_authenticate_error_too_soon);
   tcase_add_test(tc_core, test_glwd_scheme_otp_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_otp_irl_collision_begin);
   tcase_add_test(tc_core, test_glwd_scheme_otp_irl_collision);
