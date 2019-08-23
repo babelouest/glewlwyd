@@ -623,8 +623,8 @@ json_t * get_user_session_list(struct config_elements * config, const char * use
     json_object_set_new(j_query, "order_by", json_string(sort));
   }
   if (pattern != NULL) {
-    pattern_escaped = h_escape_string(config->conn, pattern);
-    pattern_clause = msprintf("IN (SELECT gus_id FROM "GLEWLWYD_TABLE_USER_SESSION" WHERE gus_user_agent LIKE '%%%s%%' OR gus_issued_for LIKE '%%%s%%')", pattern_escaped, pattern_escaped);
+    pattern_escaped = h_escape_string_with_quotes(config->conn, pattern);
+    pattern_clause = msprintf("IN (SELECT gus_id FROM "GLEWLWYD_TABLE_USER_SESSION" WHERE gus_user_agent LIKE '%%'||%s||'%%' OR gus_issued_for LIKE '%%'||%s||'%%')", pattern_escaped, pattern_escaped);
     json_object_set_new(json_object_get(j_query, "where"), "gus_id", json_pack("{ssss}", "operator", "raw", "value", pattern_clause));
     o_free(pattern_clause);
     o_free(pattern_escaped);

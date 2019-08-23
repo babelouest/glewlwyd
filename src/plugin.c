@@ -248,8 +248,8 @@ int glewlwyd_callback_trigger_session_used(struct config_plugin * config, const 
       j_scheme_processed = json_object();
       if (j_scheme_processed != NULL) {
         ret = G_OK;
-        username_escaped = h_escape_string(config->glewlwyd_config->conn, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
-        clause_session = msprintf("IN (SELECT gus_id FROM " GLEWLWYD_TABLE_USER_SESSION " WHERE gus_session_hash='%s' AND gus_username='%s' AND gus_expiration %s AND gus_enabled=1 AND gus_current=1)", session_hash, username_escaped, SWITCH_DB_TYPE(config->glewlwyd_config->conn->type, "> NOW()", "> (strftime('%s','now'))", "> NOW()"));
+        username_escaped = h_escape_string_with_quotes(config->glewlwyd_config->conn, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
+        clause_session = msprintf("IN (SELECT gus_id FROM " GLEWLWYD_TABLE_USER_SESSION " WHERE gus_session_hash='%s' AND gus_username=%s AND gus_expiration %s AND gus_enabled=1 AND gus_current=1)", session_hash, username_escaped, SWITCH_DB_TYPE(config->glewlwyd_config->conn->type, "> NOW()", "> (strftime('%s','now'))", "> NOW()"));
         json_object_foreach(json_object_get(json_object_get(j_session, "session"), "scope"), key_scope, j_scope) {
           if (!password_processed && json_object_get(j_scope, "password_authenticated") == json_true()) {
             password_processed = 1;
@@ -288,9 +288,9 @@ int glewlwyd_callback_trigger_session_used(struct config_plugin * config, const 
               if (json_object_get(j_scheme, "scheme_authenticated") == json_true() && json_object_get(j_scheme_processed, json_string_value(json_object_get(j_scheme, "scheme_name"))) == NULL) {
                 json_object_set_new(j_scheme_processed, json_string_value(json_object_get(j_scheme, "scheme_name")), json_object());
                 // Increment guss_use_counter for the specified scheme on the specified session
-                escape_scheme_module = h_escape_string(config->glewlwyd_config->conn, json_string_value(json_object_get(j_scheme, "scheme_type")));
-                escape_scheme_name = h_escape_string(config->glewlwyd_config->conn, json_string_value(json_object_get(j_scheme, "scheme_name")));
-                clause_scheme = msprintf("IN (SELECT guasmi_id FROM " GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE " WHERE guasmi_module='%s' AND guasmi_name='%s')", escape_scheme_module, escape_scheme_name);
+                escape_scheme_module = h_escape_string_with_quotes(config->glewlwyd_config->conn, json_string_value(json_object_get(j_scheme, "scheme_type")));
+                escape_scheme_name = h_escape_string_with_quotes(config->glewlwyd_config->conn, json_string_value(json_object_get(j_scheme, "scheme_name")));
+                clause_scheme = msprintf("IN (SELECT guasmi_id FROM " GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE " WHERE guasmi_module=%s AND guasmi_name=%s)", escape_scheme_module, escape_scheme_name);
                 j_query = json_pack("{sss{s{ss}}s{s{ssss}s{ssss}sis{ssss}}}",
                                     "table",
                                     GLEWLWYD_TABLE_USER_SESSION_SCHEME,
@@ -360,11 +360,11 @@ time_t glewlwyd_callback_get_session_age(struct config_plugin * config, const st
     if (session_uid_hash != NULL) {
       if (split_string(scope_list, " ", &scope_array)) {
         for (int i=0; scope_array[i] != NULL; i++) {
-          scope_escaped = h_escape_string(config->glewlwyd_config->conn, scope_array[i]);
+          scope_escaped = h_escape_string_with_quotes(config->glewlwyd_config->conn, scope_array[i]);
           if (scope_list_clause == NULL) {
-            scope_list_clause = msprintf("'%s'", scope_escaped);
+            scope_list_clause = msprintf("%s", scope_escaped);
           } else {
-            scope_list_clause = mstrcatf(scope_list_clause, ",'%s'", scope_escaped);
+            scope_list_clause = mstrcatf(scope_list_clause, ",%s", scope_escaped);
           }
           o_free(scope_escaped);
         }

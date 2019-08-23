@@ -144,8 +144,8 @@ static json_t * get_user_id_from_username(struct config_module * config, json_t 
   unsigned char new_user_id[USER_ID_LENGTH] = {0}, new_user_id_b64[USER_ID_LENGTH*2] = {0};
   size_t new_user_id_b64_len;
   
-  username_escaped = h_escape_string(config->conn, username);
-  username_clause = msprintf(" = UPPER('%s')", username_escaped);
+  username_escaped = h_escape_string_with_quotes(config->conn, username);
+  username_clause = msprintf(" = UPPER(%s)", username_escaped);
   j_query = json_pack("{sss[s]s{s{ssss}sO}}",
                       "table",
                       G_TABLE_WEBAUTHN_USER,
@@ -209,9 +209,9 @@ static json_t * get_credential_list(struct config_module * config, json_t * j_pa
   char * username_escaped, * mod_name_escaped, * username_clause;
   size_t index;
   
-  username_escaped = h_escape_string(config->conn, username);
-  mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
-  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
+  username_escaped = h_escape_string_with_quotes(config->conn, username);
+  mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER(%s) AND gswu_mod_name = %s)", username_escaped, mod_name_escaped);
   j_query = json_pack("{sss[ssss]s{s{ssss}}}",
                       "table",
                       G_TABLE_WEBAUTHN_CREDENTIAL,
@@ -283,9 +283,9 @@ static json_t * generate_new_credential(struct config_module * config, json_t * 
     if ((challenge_hash = generate_hash(config->hash_algorithm, (const char *)challenge_b64)) != NULL) {
       rand_string(session, SESSION_LENGTH);
       if ((session_hash = generate_hash(config->hash_algorithm, session)) != NULL) {
-        username_escaped = h_escape_string(config->conn, username);
-        mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
-        username_clause = msprintf(" (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
+        username_escaped = h_escape_string_with_quotes(config->conn, username);
+        mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+        username_clause = msprintf(" (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER(%s) AND gswu_mod_name = %s)", username_escaped, mod_name_escaped);
         // Disable all credential with status 0 (new) of the same user
         j_query = json_pack("{sss{si}s{s{ssss+}si}}",
                             "table",
@@ -366,9 +366,9 @@ static json_t * generate_new_assertion(struct config_module * config, json_t * j
       rand_string(session, SESSION_LENGTH);
       if ((session_hash = generate_hash(config->hash_algorithm, session)) != NULL) {
         if (mock < 2) {
-          username_escaped = h_escape_string(config->conn, username);
-          mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
-          username_clause = msprintf(" (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
+          username_escaped = h_escape_string_with_quotes(config->conn, username);
+          mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+          username_clause = msprintf(" (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER(%s) AND gswu_mod_name = %s)", username_escaped, mod_name_escaped);
           // Disable all assertions with status 0 (new) of the same user
           j_query = json_pack("{sss{si}s{s{ssss+}si}}",
                               "table",
@@ -450,9 +450,9 @@ static json_t * get_credential_from_session(struct config_module * config, json_
     session_hash = generate_hash(config->hash_algorithm, session);
     if (session_hash != NULL) {
       time(&now);
-      username_escaped = h_escape_string(config->conn, username);
-      mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
-      username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
+      username_escaped = h_escape_string_with_quotes(config->conn, username);
+      mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+      username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER(%s) AND gswu_mod_name = %s)", username_escaped, mod_name_escaped);
       if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
         expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
       } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
@@ -518,9 +518,9 @@ static json_t * get_credential(struct config_module * config, json_t * j_params,
   char * username_escaped, * mod_name_escaped, * username_clause;
   int res;
   
-  username_escaped = h_escape_string(config->conn, username);
-  mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
-  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
+  username_escaped = h_escape_string_with_quotes(config->conn, username);
+  mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER(%s) AND gswu_mod_name = %s)", username_escaped, mod_name_escaped);
   j_query = json_pack("{sss[sss]s{sss{ssss}s{ssss}}}",
                       "table",
                       G_TABLE_WEBAUTHN_CREDENTIAL,
@@ -565,9 +565,9 @@ static int update_credential(struct config_module * config, json_t * j_params, c
   char * username_escaped, * mod_name_escaped, * username_clause;
   int res, ret;
   
-  username_escaped = h_escape_string(config->conn, username);
-  mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
-  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
+  username_escaped = h_escape_string_with_quotes(config->conn, username);
+  mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER(%s) AND gswu_mod_name = %s)", username_escaped, mod_name_escaped);
   j_query = json_pack("{sss{si}s{sss{ssss}}}",
                       "table",
                       G_TABLE_WEBAUTHN_CREDENTIAL,
@@ -601,9 +601,9 @@ static int update_credential_name(struct config_module * config, json_t * j_para
   char * username_escaped, * mod_name_escaped, * username_clause;
   int res, ret;
   
-  username_escaped = h_escape_string(config->conn, username);
-  mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
-  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
+  username_escaped = h_escape_string_with_quotes(config->conn, username);
+  mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+  username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER(%s) AND gswu_mod_name = %s)", username_escaped, mod_name_escaped);
   j_query = json_pack("{sss{ss}s{sss{ssss}}}",
                       "table",
                       G_TABLE_WEBAUTHN_CREDENTIAL,
@@ -643,9 +643,9 @@ static json_t * get_assertion_from_session(struct config_module * config, json_t
     session_hash = generate_hash(config->hash_algorithm, session);
     if (session_hash != NULL) {
       time(&now);
-      username_escaped = h_escape_string(config->conn, username);
-      mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
-      username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER('%s') AND gswu_mod_name = '%s')", username_escaped, mod_name_escaped);
+      username_escaped = h_escape_string_with_quotes(config->conn, username);
+      mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+      username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER(%s) AND gswu_mod_name = %s)", username_escaped, mod_name_escaped);
       if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
         expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
       } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
@@ -711,9 +711,9 @@ static int check_certificate(struct config_module * config, json_t * j_params, c
   int res, ret;
   char * credential_id_escaped, * mod_name_escaped, * where_clause;
   
-  credential_id_escaped = h_escape_string(config->conn, credential_id);
-  mod_name_escaped = h_escape_string(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
-  where_clause = msprintf(" IN (SELECT gswu_id FROM " G_TABLE_WEBAUTHN_CREDENTIAL " WHERE gswc_credential_id='%s' AND gswc_status=1 AND gswu_id IN (SELECT gswu_id FROM " G_TABLE_WEBAUTHN_USER " WHERE gswu_mod_name='%s'))", credential_id_escaped, mod_name_escaped);
+  credential_id_escaped = h_escape_string_with_quotes(config->conn, credential_id);
+  mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
+  where_clause = msprintf(" IN (SELECT gswu_id FROM " G_TABLE_WEBAUTHN_CREDENTIAL " WHERE gswc_credential_id=%s AND gswc_status=1 AND gswu_id IN (SELECT gswu_id FROM " G_TABLE_WEBAUTHN_USER " WHERE gswu_mod_name=%s))", credential_id_escaped, mod_name_escaped);
   j_query = json_pack("{sss[s]s{s{ssss}si}}",
                       "table",
                       G_TABLE_WEBAUTHN_CREDENTIAL,

@@ -45,10 +45,10 @@ struct mod_parameters {
 };
 
 static char * get_pattern_clause(struct mod_parameters * param, const char * pattern) {
-  char * escape_pattern = h_escape_string(param->conn, pattern), * clause = NULL;
+  char * escape_pattern = h_escape_string_with_quotes(param->conn, pattern), * clause = NULL;
   
   if (escape_pattern != NULL) {
-    clause = msprintf("IN (SELECT gu_id from " G_TABLE_USER " WHERE gu_username LIKE '%%%s%%' OR gu_name LIKE '%%%s%%' OR gu_email LIKE '%%%s%%')", escape_pattern, escape_pattern, escape_pattern);
+    clause = msprintf("IN (SELECT gu_id from " G_TABLE_USER " WHERE gu_username LIKE '%%'||%s||'%%' OR gu_name LIKE '%%'||%s||'%%' OR gu_email LIKE '%%'||%s||'%%')", escape_pattern, escape_pattern, escape_pattern);
   }
   o_free(escape_pattern);
   return clause;
@@ -217,8 +217,8 @@ static json_t * database_user_get(const char * username, void * cls, int profile
   int res;
   char * username_escaped, * username_clause;
   
-  username_escaped = h_escape_string(param->conn, username);
-  username_clause = msprintf(" = UPPER('%s')", username_escaped);
+  username_escaped = h_escape_string_with_quotes(param->conn, username);
+  username_clause = msprintf(" = UPPER(%s)", username_escaped);
   j_query = json_pack("{sss[sssss]s{s{ssss}}}",
                       "table",
                       G_TABLE_USER,
@@ -359,20 +359,20 @@ static char * get_password_clause_write(struct mod_parameters * param, const cha
       y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error generate_digest_pbkdf2");
     }
   } else if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
-    password_encoded = h_escape_string(param->conn, password);
+    password_encoded = h_escape_string_with_quotes(param->conn, password);
     if (password_encoded != NULL) {
-      clause = msprintf("PASSWORD('%s')", password_encoded);
+      clause = msprintf("PASSWORD(%s)", password_encoded);
       o_free(password_encoded);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error h_escape_string (mariadb)");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error h_escape_string_with_quotes (mariadb)");
     }
   } else if (param->conn->type == HOEL_DB_TYPE_PGSQL) {
-    password_encoded = h_escape_string(param->conn, password);
+    password_encoded = h_escape_string_with_quotes(param->conn, password);
     if (password_encoded != NULL) {
-      clause = msprintf("crypt('%s', gen_salt('bf'))", password_encoded);
+      clause = msprintf("crypt(%s, gen_salt('bf'))", password_encoded);
       o_free(password_encoded);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error h_escape_string (postgre)");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error h_escape_string_with_quotes (postgre)");
     }
   }
   return clause;
@@ -385,8 +385,8 @@ static char * get_salt_from_password_hash(struct mod_parameters * param, const c
   char * salt = NULL, * username_escaped, * username_clause;
   size_t password_b64_decoded_len;
   
-  username_escaped = h_escape_string(param->conn, username);
-  username_clause = msprintf(" = UPPER('%s')", username_escaped);
+  username_escaped = h_escape_string_with_quotes(param->conn, username);
+  username_clause = msprintf(" = UPPER(%s)", username_escaped);
   j_query = json_pack("{sss[s]s{s{ssss}}}",
                       "table",
                       G_TABLE_USER,
@@ -436,20 +436,20 @@ static char * get_password_clause_check(struct mod_parameters * param, const cha
     }
     o_free(salt);
   } else if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
-    password_encoded = h_escape_string(param->conn, password);
+    password_encoded = h_escape_string_with_quotes(param->conn, password);
     if (password_encoded != NULL) {
-      clause = msprintf(" = PASSWORD('%s')", password_encoded);
+      clause = msprintf(" = PASSWORD(%s)", password_encoded);
       o_free(password_encoded);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error h_escape_string (mariadb)");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error h_escape_string_with_quotes (mariadb)");
     }
   } else if (param->conn->type == HOEL_DB_TYPE_PGSQL) {
-    password_encoded = h_escape_string(param->conn, password);
+    password_encoded = h_escape_string_with_quotes(param->conn, password);
     if (password_encoded != NULL) {
-      clause = msprintf(" = crypt('%s', gu_password)", password_encoded);
+      clause = msprintf(" = crypt(%s, gu_password)", password_encoded);
       o_free(password_encoded);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error h_escape_string (postgre)");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error h_escape_string_with_quotes (postgre)");
     }
   }
   return clause;
@@ -1045,8 +1045,8 @@ int user_module_update(struct config_module * config, const char * username, jso
   char * password_clause;
   char * username_escaped, * username_clause;
   
-  username_escaped = h_escape_string(param->conn, username);
-  username_clause = msprintf(" = UPPER('%s')", username_escaped);  
+  username_escaped = h_escape_string_with_quotes(param->conn, username);
+  username_clause = msprintf(" = UPPER(%s)", username_escaped);  
   j_query = json_pack("{sss[s]s{s{ssss}}}", "table", G_TABLE_USER, "columns", "gu_id", "where", "UPPER(gu_username)", "operator", "raw", "value", username_clause);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
@@ -1109,8 +1109,8 @@ int user_module_update_profile(struct config_module * config, const char * usern
   int res, ret;
   char * username_escaped, * username_clause;
   
-  username_escaped = h_escape_string(param->conn, username);
-  username_clause = msprintf(" = UPPER('%s')", username_escaped);  
+  username_escaped = h_escape_string_with_quotes(param->conn, username);
+  username_clause = msprintf(" = UPPER(%s)", username_escaped);  
   j_query = json_pack("{sss[s]s{s{ssss}}}", "table", G_TABLE_USER, "columns", "gu_id", "where", "UPPER(gu_username)", "operator", "raw", "value", username_clause);
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
@@ -1166,8 +1166,8 @@ int user_module_delete(struct config_module * config, const char * username, voi
   int res, ret;
   char * username_escaped, * username_clause;
   
-  username_escaped = h_escape_string(param->conn, username);
-  username_clause = msprintf(" = UPPER('%s')", username_escaped);  
+  username_escaped = h_escape_string_with_quotes(param->conn, username);
+  username_clause = msprintf(" = UPPER(%s)", username_escaped);  
   j_query = json_pack("{sss{s{ssss}}}",
                       "table",
                       G_TABLE_USER,
@@ -1198,8 +1198,8 @@ int user_module_check_password(struct config_module * config, const char * usern
   char * clause = get_password_clause_check(param, username, password);
   char * username_escaped, * username_clause;
   
-  username_escaped = h_escape_string(param->conn, username);
-  username_clause = msprintf(" = UPPER('%s')", username_escaped);  
+  username_escaped = h_escape_string_with_quotes(param->conn, username);
+  username_clause = msprintf(" = UPPER(%s)", username_escaped);  
   j_query = json_pack("{sss[s]s{s{ssss}s{ssss}}}",
                       "table",
                       G_TABLE_USER,
@@ -1243,8 +1243,8 @@ int user_module_update_password(struct config_module * config, const char * user
   char * password_clause;
   char * username_escaped, * username_clause;
   
-  username_escaped = h_escape_string(param->conn, username);
-  username_clause = msprintf(" = UPPER('%s')", username_escaped);  
+  username_escaped = h_escape_string_with_quotes(param->conn, username);
+  username_clause = msprintf(" = UPPER(%s)", username_escaped);  
   password_clause = get_password_clause_write(param, new_password);
   j_query = json_pack("{sss{s{ss}}s{s{ssss}}}",
                       "table",

@@ -2081,9 +2081,9 @@ static json_t * refresh_token_list_get(struct _oidc_config * config, const char 
     json_object_set_new(j_query, "order_by", json_string(sort));
   }
   if (pattern != NULL) {
-    name_escaped = h_escape_string(config->glewlwyd_config->glewlwyd_config->conn, config->name);
-    pattern_escaped = h_escape_string(config->glewlwyd_config->glewlwyd_config->conn, pattern);
-    pattern_clause = msprintf("IN (SELECT gpor_id FROM "GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN" WHERE (gpor_user_agent LIKE '%%%s%%' OR gpor_issued_for LIKE '%%%s%%') AND gpor_plugin_name='%s')", pattern_escaped, pattern_escaped, name_escaped);
+    name_escaped = h_escape_string_with_quotes(config->glewlwyd_config->glewlwyd_config->conn, config->name);
+    pattern_escaped = h_escape_string_with_quotes(config->glewlwyd_config->glewlwyd_config->conn, pattern);
+    pattern_clause = msprintf("IN (SELECT gpor_id FROM "GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN" WHERE (gpor_user_agent LIKE '%%'||%s||'%%' OR gpor_issued_for LIKE '%%'||%s||'%%') AND gpor_plugin_name=%s)", pattern_escaped, pattern_escaped, name_escaped);
     json_object_set_new(json_object_get(j_query, "where"), "gpor_id", json_pack("{ssss}", "operator", "raw", "value", pattern_clause));
     o_free(pattern_clause);
     o_free(pattern_escaped);
