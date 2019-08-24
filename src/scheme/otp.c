@@ -293,7 +293,7 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
                             json_object_get(j_params, "mod_name"),
                             "gso_last_used",
                               "raw",
-                              SWITCH_DB_TYPE(config->conn->type, "FROM_UNIXTIME(0)", "0", "TO_TIMESTAMP(0)::integer"));
+                              SWITCH_DB_TYPE(config->conn->type, "FROM_UNIXTIME(0)", "0", "TO_TIMESTAMP(0)")); // Let's hope no one will use Glewlwyd before January 1st, 1970!
       res = h_insert(config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
