@@ -101,8 +101,10 @@ pthread_mutex_t global_handler_close_lock;
 pthread_cond_t  global_handler_close_cond;
 
 // Main functions and misc functions
-int  build_config_from_args(int argc, char ** argv, struct config_elements * config);
+int prepare_config(int argc, char ** argv, struct config_elements * config, int * use_config_file, int * use_config_env);
+int build_config_from_env(struct config_elements * config);
 int  build_config_from_file(struct config_elements * config);
+int  build_config_from_args(int argc, char ** argv, struct config_elements * config);
 int  check_config(struct config_elements * config);
 void exit_handler(int handler);
 void exit_server(struct config_elements ** config, int exit_value);
