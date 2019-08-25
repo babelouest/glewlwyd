@@ -16,8 +16,8 @@ external_url="http://localhost:4593"
 # login url relative to external url
 login_url="login.html"
 
-# url prefix
-url_prefix="api"
+# api prefix
+api_prefix="api"
 
 # path to static files for /webapp url
 static_files_path="/usr/share/glewlwyd/webapp/"
