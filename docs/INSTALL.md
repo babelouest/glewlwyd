@@ -220,58 +220,105 @@ $ make
 $ sudo make install
 ```
 
-## Configure glewlwyd.conf
+## Configure glewlwyd
 
-Copy `glewlwyd.conf.sample` to `glewlwyd.conf`, edit the file `glewlwyd.conf` with your own settings.
+Glewlwyd requires several configuration variables to work. You can specify those variables in a configuration file, environment variables, or both. In addition, some variables can be set via command-line arguments.
 
-### external_url
+The command-line arguments have the higher priority, followed by the environment variables, then the configuration file.
 
-Fill this parameter with the exact value of the external url where this instance will be accessible to users, ex `https://glewlwyd.tld`
+To run Glewlwyd with the config file, copy `glewlwyd.conf.sample` to `glewlwyd.conf`, edit the file `glewlwyd.conf` with your own settings.
 
-### SSL/TLS
+The following paragraphs describe all the configuration parameters.
 
-OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avoid data and token to be stolen, or Man-In-The-Middle attacks. Glewlwyd supports starting a secure connection with a private/public key certificate, but it also can be with a classic non-secure HTTP connection, and be available to users behind a HTTPS proxy for example. Glewlwyd won't check that you use it in a secure connection.
+### Port number
 
-### Digest algorithm
+- Config file variable: `port`
+- Environment variable: `GLWD_PORT`
 
-Specify in the config file the parameter `hash_algorithm` to store token and secret digests.
+Optional, The TCP port the service will listen to incoming cnnexions. The port number must be available to the user running Glewlwd process. Default value is 4593.
 
-Algorithms available are SHA1, SHA256, SHA512, MD5. Algorithms recommended are SHA256 or SHA512.
+### External URL
 
-### Database back-end initialisation
+- Config file variable: `external_url`
+- Environment variable: `GLWD_EXTERNAL_URL`
 
-Configure your database backend according to the database you will use.
+Mandatory, exact value of the external url where this instance will be accessible to users, ex `https://glewlwyd.tld`
 
-```
-# MariaDB/Mysql database connection
-database =
-{
-  type     = "mariadb"
-  host     = "localhost"
-  user     = "glewlwyd"
-  password = "glewlwyd"
-  dbname   = "glewlwyd"
-  port     = 0
-}
+### API Prefix
 
-# SQLite database connection
-database =
-{
-  type = "sqlite3"
-  path = "/tmp/glewlwyd.db"
-}
+- Config file variable: `api_prefix`
+- Environment variable: `GLWD_API_PREFIX`
 
-# PostgreSQL database connection
-database =
-{
-  type = "postgre"
-  conninfo = "dbname = glewlwyd"
-}
-```
+Optional, the url prefix where Glewlwyd's APIs will be available. Default value is `/api`.
+
+### Login URL
+
+- Config file variable: `login_url`
+- Environment variable: `GLWD_LOGIN_URL`
+
+Optional, name of the login page. Default value is `login.html`
+
+### Static files path
+
+- Config file variable: `static_files_path`
+- Environment variable: `GLWD_STATIC_FILES_PATH`
+
+Optional, local path to the webapp files. If not set, the front-end application will not be available, only the APIs.
+
+### Static files mime types
+
+- Config file variable: `static_files_mime_types`
+- Environment variable: `GLWD_STATIC_FILES_MIME_TYPES` in JSON array format, example '[{"extension":".html","mime_type":"text/html"}{"extension":".css","mime_type":"text/css"}]'
+
+Optional, list of mime types for the webapp files.
+
+### Allow Origin
+
+- Config file variable: `allow_origin`
+- Environment variable: `GLWD_ALLOW_ORIGIN`
+
+### Logs
+
+#### Log Mode:
+
+- Config file variable: `log_mode`
+- Environment variable: `GLWD_LOG_MODE`
+- Command-line argument: `-m<mode>` or `--log-mode=<mode>`
+
+### Log Level
+
+- Config file variable: `log_level`
+- Environment variable: `GLWD_LOG_LEVEL`
+- Command-line argument: `-l<level>` or `--log-level=<level>`
+
+### Log File Path
+
+- Config file variable: `log_file`
+- Environment variable: `GLWD_LOG_FILE`
+- Command-line argument: `-f<file_path>` or `--log-file=<file_path>`
+
+Optional. Default no logs.
+
+Log modes available are `console`, `journald`, `syslog`, `file`. Multiple values must be separated by a comma, example `console,syslog`.
+Log levels available are `NONE`, `ERROR`, `WARNING`, `INFO`, `DEBUG`.
+
+If log mode `file` is set, log file path must be set to a file path where Glewlwyd process has write access.
 
 ### Cookies configuration
 
-The default config file has the following cookies configuration:
+#### Cookie domain
+
+- Config file variable: `cookie_domain`
+- Environment variable: `GLWD_COOKIE_DOMAIN`
+
+#### Cookie secure
+
+- Config file variable: `cookie_secure`
+- Environment variable: `GLWD_COOKIE_SECURE`
+
+Optional. Default, cookie secure false.
+
+The sample config file has the following cookies configuration:
 
 ```
 # cookie domain
@@ -289,9 +336,152 @@ You must change the value `cookie_domain` accordingly to the domain name Glewlwy
 
 The parameter `cookie_secure` is set to 0 by default, but since you should use Glewlwyd in a https connection, you should set this option to 1.
 
-### Mime types for webapp files
+### Cookie Session values
 
-This section in the config file is used by the static file service whuch will provide the `webapp/` content to the browser. You can add or remove values if you made changes to the front-end and requires to handle new types of files.
+#### Cookie Session expiration (in seconds)
+
+- Config file variable: `session_expiration`
+- Environment variable: `GLWD_SESSION_EXPIRATION`
+
+#### Cookie Session key
+
+- Config file variable: `session_key`
+- Environment variable: `GLWD_SESSION_KEY`
+
+Optional, default values are:
+
+```
+session_expiration = 2419200
+session_key = GLEWLWYD2_SESSION_ID
+```
+
+### Default scope names
+
+#### Admin scope
+
+- Config file variable: `admin_scope`
+- Environment variable: `GLWD_ADMIN_SCOPE`
+
+#### Profile scope
+
+- Config file variable: `profile_scope`
+- Environment variable: `GLWD_PROFILE_SCOPE`
+
+Optional, default values are:
+
+```
+admin_scope="g_admin"
+profile_scope="g_profile"
+```
+
+### Modules paths
+
+#### User modules path
+
+- Config file variable: `user_module_path`
+- Environment variable: `GLWD_USER_MODULE_PATH`
+
+#### Client modules path
+
+- Config file variable: `client_module_path`
+- Environment variable: `GLWD_CLIENT_MODULE_PATH`
+
+#### User auth scheme modules path
+
+- Config file variable: `user_auth_scheme_module_path`
+- Environment variable: `GLWD_AUTH_SCHEME_MODUE_PATH`
+
+#### Plugin modules path
+
+- Config file variable: `plugin_module_path`
+- Environment variable: `GLWD_PLUGIN_MODULE_PATH`
+
+Mandatory, path to modules.
+
+### Digest algorithm
+
+- Config file variable: `hash_algorithm`
+- Environment variable: `GLWD_HASH_ALGORITHM`
+
+Optional, default value is SHA256.
+
+Specify in the config file the parameter `hash_algorithm` to store token and secret digests.
+
+Algorithms available are SHA1, SHA256, SHA512, MD5. Algorithms recommended are SHA256 or SHA512.
+
+### SSL/TLS
+
+#### Use secure connection
+
+- Config file variable: `use_secure_connection`
+- Environment variable: `GLWD_USE_SECURE_CONNECTION`
+
+#### Secure connection key file
+
+- Config file variable: `secure_connection_key_file`
+- Environment variable: `GLWD_SECURE_CONNECTION_KEY_FILE`
+
+#### Secure connection pem file
+
+- Config file variable: `secure_connection_pem_file`
+- Environment variable: `GLWD_SECURE_CONNECTION_PEM_FILE`
+
+#### Secure connection pem file
+
+- Config file variable: `secure_connection_ca_file`
+- Environment variable: `GLWD_SECURE_CONNECTION_CA_FILE`
+
+OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avoid data and token to be stolen, or Man-In-The-Middle attacks. Glewlwyd supports starting a secure connection with a private/public key certificate, but it also can be with a classic non-secure HTTP connection, and be available to users behind a HTTPS proxy for example. Glewlwyd won't check that you use it in a secure connection.
+
+The CA file path is the path to the Certificate of Authority file to authenticate users with the client certificate authentication scheme.
+
+These configuration variables are optionnal. Default is no secure connection.
+
+### Database back-end initialisation
+
+Configure your database backend according to the database you will use.
+
+```
+# MariaDB/Mysql configuration file variables
+database =
+{
+  type     = "mariadb"
+  host     = "localhost"
+  user     = "glewlwyd"
+  password = "glewlwyd"
+  dbname   = "glewlwyd"
+  port     = 0
+}
+# MariaDB/Mysql environment variables
+GLWD_DATABASE_TYPE must be set to "mariadb"
+GLWD_DATABASE_MARIADB_HOST
+GLWD_DATABASE_MARIADB_USER
+GLWD_DATABASE_MARIADB_PASSWORD
+GLWD_DATABASE_MARIADB_DBNAME
+GLWD_DATABASE_MARIADB_PORT
+
+# SQLite database configuration file variables
+database =
+{
+  type = "sqlite3"
+  path = "/tmp/glewlwyd.db"
+}
+# SQLite database environment variables
+GLWD_DATABASE_TYPE must be set to "sqlite3"
+GLWD_DATABASE_SQLITE3_PATH
+
+# PostgreSQL database configuration file variables
+database =
+{
+  type = "postgre"
+  conninfo = "dbname = glewlwyd"
+}
+# PostgreSQL database environment variables
+GLWD_DATABASE_TYPE must be set to "postgre"
+GLWD_DATABASE_POSTGRE_CONNINFO
+```
+
+Database configuration is mandatory.
 
 ## Initialise database
 
