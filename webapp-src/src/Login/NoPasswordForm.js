@@ -8,6 +8,7 @@ import EmailSchemeForm from './scheme/EmailSchemeForm';
 import WebauthnForm from './scheme/WebauthnForm';
 import OTPSchemeForm from './scheme/OTPSchemeForm';
 import PasswordSchemeForm from './scheme/PasswordSchemeForm';
+import CertificateSchemeForm from './scheme/CertificateSchemeForm';
 
 class NoPasswordForm extends Component {
   constructor(props) {
@@ -73,6 +74,8 @@ class NoPasswordForm extends Component {
             curScheme = <OTPSchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
           } else if (scheme.scheme_type === "retype-password") {
             curScheme = <PasswordSchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
+          } else if (scheme.scheme_type === "certificate") {
+            curScheme = <CertificateSchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
           } else {
             curScheme = <div>No can do</div>;
           }
