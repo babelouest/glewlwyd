@@ -60,7 +60,7 @@
     "mail-code-invalid": "Invalid code",
     "webauthn-login-title": "Webauthn Authentification",
     "webauthn-login-button-title": "Run an authentification attempt on the server",
-    "webauthn-login-authentiate": "Login",
+    "webauthn-login-authenticate": "Login",
     "webauthn-trigger-must-register": "You must register a webauthn device",
     "webauthn-error-trigger": "Error while attempting to authenticate",
     "otp-enter-value": "Enter one time password",
@@ -78,7 +78,8 @@
     "select": "Select",
     "select-acount-title": "Select the account to use",
     "manage-users": "Manage connected users",
-    "logout": "Logout"
+    "logout": "Logout",
+    "certificate-login-authenticate": "Authenticate"
   },
   "admin": {
     "menu-users": "Users",
@@ -566,7 +567,12 @@
     "mod-otp-totp-window-ph": "Ex: 1",
     "mod-otp-totp-window-error": "TOTP window is mandatory",
     "mod-otp-totp-start-offset": "Start offset",
-    "mod-otp-totp-start-offset-ph": "Ex: 0"
+    "mod-otp-totp-start-offset-ph": "Ex: 0",
+    "mod-certificate-value-yes": "Yes",
+    "mod-certificate-value-no": "No",
+    "mod-certificate-check-from-certificate-property": "Check with stored certificates",
+    "mod-certificate-user-certificate-property": "Certificate property",
+    "mod-certificate-user-certificate-property-ph": "Ex: x509-certificate"
   },
   "profile": {
     "requires-profile-scope": "Profile scope required",
