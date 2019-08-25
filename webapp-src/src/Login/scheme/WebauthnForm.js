@@ -154,7 +154,7 @@ class WebauthnForm extends Component {
         </div>
         <div className="form-group">
         </div>
-        <button type="button" name="loginBut" id="loginBut" disabled={!this.state.canLogin} className="btn btn-primary" onClick={(e) => this.login(e)} title={i18next.t("login.webauthn-login-button-title")}>{i18next.t("login.webauthn-login-authentiate")}</button>
+        <button type="button" name="loginBut" id="loginBut" disabled={!this.state.canLogin} className="btn btn-primary" onClick={(e) => this.login(e)} title={i18next.t("login.webauthn-login-button-title")}>{i18next.t("login.webauthn-login-authenticate")}</button>
       </div>
     );
   }
