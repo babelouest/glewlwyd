@@ -427,9 +427,10 @@ int main (int argc, char ** argv) {
  */
 void exit_server(struct config_elements ** config, int exit_value) {
   size_t i;
-  int close_logs = ((*config)->log_mode != Y_LOG_MODE_NONE && (*config)->log_level != Y_LOG_LEVEL_NONE);
+  int close_logs = 0;
   
   if (config != NULL && *config != NULL) {
+    close_logs = ((*config)->log_mode != Y_LOG_MODE_NONE && (*config)->log_level != Y_LOG_LEVEL_NONE);
     for (i=0; i<pointer_list_size((*config)->user_module_instance_list); i++) {
       struct _user_module_instance * instance = (struct _user_module_instance *)pointer_list_get_at((*config)->user_module_instance_list, i);
       if (instance != NULL) {
@@ -616,10 +617,10 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->config_m);
     o_free(*config);
     (*config) = NULL;
-  }
 
-  if (close_logs) {
-    y_close_logs();
+    if (close_logs) {
+      y_close_logs();
+    }
   }
   exit(exit_value);
 }
