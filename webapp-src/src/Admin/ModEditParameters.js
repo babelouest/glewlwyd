@@ -8,6 +8,7 @@ import EmailParams from './EmailParams';
 import WebauthnParams from './WebauthnParams';
 import OTPParams from './OTPParams';
 import PasswordParams from './PasswordParams';
+import CertificateParams from './CertificateParams';
 
 class ModEditParameters extends Component {
   constructor(props) {
@@ -47,6 +48,8 @@ class ModEditParameters extends Component {
       return <OTPParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
     } else if (this.state.mod.module === "retype-password") {
       return <PasswordParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
+    } else if (this.state.mod.module === "certificate") {
+      return <CertificateParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
     } else {
       return ("");
     }

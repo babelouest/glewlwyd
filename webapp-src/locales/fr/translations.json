@@ -60,7 +60,7 @@
     "mail-code-invalid": "Code invalide",
     "webauthn-login-title": "Authentification Webauthn",
     "webauthn-login-button-title": "Lancer une tentative d'authentification sur le serveur",
-    "webauthn-login-authentiate": "Authentification",
+    "webauthn-login-authenticate": "Authentification",
     "webauthn-trigger-must-register": "Vous devez enregistrer un composant Webauthn",
     "webauthn-error-trigger": "Erreur lors de la tentative d'authentification",
     "otp-enter-value": "Entrer le code a usage unique",
@@ -78,7 +78,8 @@
     "select": "Sélectionner",
     "select-acount-title": "Sélectionner le compte à utiliser",
     "manage-users": "Gérer les utilisateurs connectés",
-    "logout": "Déconnecter"
+    "logout": "Déconnecter",
+    "certificate-login-authenticate": "Authentifier"
   },
   "admin": {
     "menu-users": "Utilisateurs",
@@ -566,7 +567,12 @@
     "mod-otp-totp-window-ph": "Ex: 1",
     "mod-otp-totp-window-error": "La fenêtre de validité TOTP est obligatoire",
     "mod-otp-totp-start-offset": "Offset de départ",
-    "mod-otp-totp-start-offset-ph": "Ex: 0"
+    "mod-otp-totp-start-offset-ph": "Ex: 0",
+    "mod-certificate-value-yes": "Oui",
+    "mod-certificate-value-no": "Non",
+    "mod-certificate-check-from-certificate-property": "Vérifier avec les certificats enregistrés",
+    "mod-certificate-user-certificate-property": "Champ certificat",
+    "mod-certificate-user-certificate-property-ph": "Ex: x509-certificate"
   },
   "profile": {
     "requires-profile-scope": "Droits de profil requis",
