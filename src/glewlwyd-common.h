@@ -257,6 +257,8 @@ struct config_elements {
   char *                                      api_prefix;
   char *                                      cookie_domain;
   unsigned int                                cookie_secure;
+  unsigned short                              log_mode_args;
+  unsigned short                              log_level_args;
   unsigned long                               log_mode;
   unsigned long                               log_level;
   char *                                      log_file;

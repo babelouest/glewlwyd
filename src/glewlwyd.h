@@ -56,18 +56,19 @@
 #define GLEWLWYD_LOG_NAME "Glewlwyd"
 
 // Configuration default values
-#define GLEWLWYD_DEFAULT_PORT               4593
-#define GLEWLWYD_DEFAULT_PREFIX             "api"
-#define GLEWLWYD_DEFAULT_ALLOW_ORIGIN       "*"
-#define GLEWLWYD_DEFAULT_ADMIN_SCOPE        "g_admin"
-#define GLEWLWYD_DEFAULT_PROFILE_SCOPE      "g_profile"
-#define GLEWLWYD_DEFAULT_HASH_ALGORITHM     digest_SHA256
-
-#define GLEWLWYD_DEFAULT_SESSION_KEY "GLEWLWYD2_SESSION_ID"
+#define GLEWLWYD_DEFAULT_PORT                              4593
+#define GLEWLWYD_DEFAULT_API_PREFIX                        "api"
+#define GLEWLWYD_DEFAULT_ALLOW_ORIGIN                      "*"
+#define GLEWLWYD_DEFAULT_ADMIN_SCOPE                       "g_admin"
+#define GLEWLWYD_DEFAULT_PROFILE_SCOPE                     "g_profile"
+#define GLEWLWYD_DEFAULT_HASH_ALGORITHM                    digest_SHA256
+#define GLEWLWYD_DEFAULT_LOGIN_URL                         "login.html"
+#define GLEWLWYD_DEFAULT_SESSION_KEY                       "GLEWLWYD2_SESSION_ID"
 #define GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE         5256000 // 10 years
+
 #define GLEWLWYD_DEFAULT_SESSION_EXPIRATION_PASSWORD       40320   // 4 weeks
 #define GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION 2592000 // 30 days
-#define GLEWLWYD_SESSION_ID_LENGTH 128
+#define GLEWLWYD_SESSION_ID_LENGTH                         128
 
 #define GLEWLWYD_RUNNING     0
 #define GLEWLWYD_STOP        1
@@ -97,14 +98,48 @@
 #define GLEWLWYD_MODULE_ACTION_STOP  0
 #define GLEWLWYD_MODULE_ACTION_START 1
 
+// Environment variables names
+#define GLEWLWYD_ENV_PORT                       "GLWD_PORT"
+#define GLEWLWYD_ENV_API_PREFIX                 "GLWD_API_PREFIX"
+#define GLEWLWYD_ENV_EXTERNAL_URL               "GLWD_EXTERNAL_URL"
+#define GLEWLWYD_ENV_LOGIN_URL                  "GLWD_LOGIN_URL"
+#define GLEWLWYD_ENV_STATIC_FILES_PATH          "GLWD_STATIC_FILES_PATH"
+#define GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES    "GLWD_STATIC_FILES_MIME_TYPES"
+#define GLEWLWYD_ENV_ALLOW_ORIGIN               "GLWD_ALLOW_ORIGIN"
+#define GLEWLWYD_ENV_LOG_MODE                   "GLWD_LOG_MODE"
+#define GLEWLWYD_ENV_LOG_LEVEL                  "GLWD_LOG_LEVEL"
+#define GLEWLWYD_ENV_LOG_FILE                   "GLWD_LOG_FILE"
+#define GLEWLWYD_ENV_COOKIE_DOMAIN              "GLWD_COOKIE_DOMAIN"
+#define GLEWLWYD_ENV_COOKIE_SECURE              "GLWD_COOKIE_SECURE"
+#define GLEWLWYD_ENV_SESSION_EXPIRATION         "GLWD_SESSION_EXPIRATION"
+#define GLEWLWYD_ENV_SESSION_KEY                "GLWD_SESSION_KEY"
+#define GLEWLWYD_ENV_ADMIN_SCOPE                "GLWD_ADMIN_SCOPE"
+#define GLEWLWYD_ENV_PROFILE_SCOPE              "GLWD_PROFILE_SCOPE"
+#define GLEWLWYD_ENV_USER_MODULE_PATH           "GLWD_USER_MODULE_PATH"
+#define GLEWLWYD_ENV_CLIENT_MODULE_PATH         "GLWD_CLIENT_MODULE_PATH"
+#define GLEWLWYD_ENV_AUTH_SCHEME_MODUE_PATH     "GLWD_AUTH_SCHEME_MODUE_PATH"
+#define GLEWLWYD_ENV_PLUGIN_MODULE_PATH         "GLWD_PLUGIN_MODULE_PATH"
+#define GLEWLWYD_ENV_USE_SECURE_CONNECTION      "GLWD_USE_SECURE_CONNECTION"
+#define GLEWLWYD_ENV_SECURE_CONNECTION_KEY_FILE "GLWD_SECURE_CONNECTION_KEY_FILE"
+#define GLEWLWYD_ENV_SECURE_CONNECTION_PEM_FILE "GLWD_SECURE_CONNECTION_PEM_FILE"
+#define GLEWLWYD_ENV_SECURE_CONNECTION_CA_FILE  "GLWD_SECURE_CONNECTION_CA_FILE"
+#define GLEWLWYD_ENV_HASH_ALGORITHM             "GLWD_HASH_ALGORITHM"
+#define GLEWLWYD_ENV_DATABASE_TYPE              "GLWD_DATABASE_TYPE"
+#define GLEWLWYD_ENV_DATABASE_MARIADB_HOST      "GLWD_DATABASE_MARIADB_HOST"
+#define GLEWLWYD_ENV_DATABASE_MARIADB_USER      "GLWD_DATABASE_MARIADB_USER"
+#define GLEWLWYD_ENV_DATABASE_MARIADB_PASSWORD  "GLWD_DATABASE_MARIADB_PASSWORD"
+#define GLEWLWYD_ENV_DATABASE_MARIADB_DBNAME    "GLWD_DATABASE_MARIADB_DBNAME"
+#define GLEWLWYD_ENV_DATABASE_MARIADB_PORT      "GLWD_DATABASE_MARIADB_PORT"
+#define GLEWLWYD_ENV_DATABASE_SQLITE3_PATH      "GLWD_DATABASE_SQLITE3_PATH"
+#define GLEWLWYD_ENV_DATABASE_POSTGRE_CONNINFO  "GLWD_DATABASE_POSTGRE_CONNINFO"
+
 pthread_mutex_t global_handler_close_lock;
 pthread_cond_t  global_handler_close_cond;
 
 // Main functions and misc functions
-int prepare_config(int argc, char ** argv, struct config_elements * config, int * use_config_file, int * use_config_env);
 int build_config_from_env(struct config_elements * config);
 int  build_config_from_file(struct config_elements * config);
-int  build_config_from_args(int argc, char ** argv, struct config_elements * config);
+int build_config_from_args(int argc, char ** argv, struct config_elements * config, int * use_config_file, int * use_config_env);
 int  check_config(struct config_elements * config);
 void exit_handler(int handler);
 void exit_server(struct config_elements ** config, int exit_value);

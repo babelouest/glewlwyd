@@ -102,11 +102,13 @@ int main (int argc, char ** argv) {
   config->config_m->glewlwyd_module_callback_check_user_password = &glewlwyd_module_callback_check_user_password;
   config->config_m->glewlwyd_module_callback_check_user_session = &glewlwyd_module_callback_check_user_session;
   config->config_file = NULL;
-  config->port = GLEWLWYD_DEFAULT_PORT;
-  config->api_prefix = NULL;
+  config->port = 0;
+  config->api_prefix = o_strdup(GLEWLWYD_DEFAULT_API_PREFIX);
   config->external_url = NULL;
   config->cookie_domain = NULL;
-  config->cookie_secure = 1;
+  config->cookie_secure = 0;
+  config->log_mode_args = 0;
+  config->log_level_args = 0;
   config->log_mode = Y_LOG_MODE_NONE;
   config->log_level = Y_LOG_LEVEL_NONE;
   config->log_file = NULL;
@@ -120,7 +122,7 @@ int main (int argc, char ** argv) {
   config->session_expiration = GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE;
   config->salt_length = GLEWLWYD_DEFAULT_SALT_LENGTH;
   config->hash_algorithm = digest_SHA256;
-  config->login_url = NULL;
+  config->login_url = o_strdup(GLEWLWYD_DEFAULT_LOGIN_URL);
   config->user_module_path = NULL;
   config->user_module_list = NULL;
   config->user_module_instance_list = NULL;
@@ -133,8 +135,8 @@ int main (int argc, char ** argv) {
   config->plugin_module_path = NULL;
   config->plugin_module_list = NULL;
   config->plugin_module_instance_list = NULL;
-  config->admin_scope = NULL;
-  config->profile_scope = NULL;
+  config->admin_scope = o_strdup(GLEWLWYD_DEFAULT_ADMIN_SCOPE);
+  config->profile_scope = o_strdup(GLEWLWYD_DEFAULT_PROFILE_SCOPE);
 
   config->static_file_config = o_malloc(sizeof(struct _static_file_config));
   if (config->static_file_config == NULL) {
@@ -163,8 +165,6 @@ int main (int argc, char ** argv) {
     return 2;
   }
 
-  ulfius_init_instance(config->instance, config->port, NULL, NULL);
-
   if (pthread_mutex_init(&global_handler_close_lock, NULL) || 
       pthread_cond_init(&global_handler_close_cond, NULL)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "init - Error initializing global_handler_close_lock or global_handler_close_cond");
@@ -181,9 +181,9 @@ int main (int argc, char ** argv) {
     return 1;
   }
 
-  // Prepare the parameters from the command-line
-  if (prepare_config(argc, argv, config, &use_config_file, &use_config_env) != G_OK) {
-    fprintf(stderr, "Error command-line parameters\n");
+  // Parse command line arguments
+  if (build_config_from_args(argc, argv, config, &use_config_file, &use_config_env) != G_OK) {
+    fprintf(stderr, "Error parsing command-line parameters\n");
     print_help(stderr);
     exit_server(&config, GLEWLWYD_ERROR);
   }
@@ -200,24 +200,19 @@ int main (int argc, char ** argv) {
     exit_server(&config, GLEWLWYD_ERROR);
   }
 
-  // Parse command line arguments
-  if (build_config_from_args(argc, argv, config) != G_OK) {
-    fprintf(stderr, "Error parsing command-line parameters\n");
-    print_help(stderr);
-    exit_server(&config, GLEWLWYD_ERROR);
-  }
-
   // Check if all mandatory configuration variables are present and correctly typed
-  if (!check_config(config)) {
-    fprintf(stderr, "Error, check the configuration\n");
+  if (check_config(config) != G_OK) {
+    fprintf(stderr, "Error - check the configuration\n");
     exit_server(&config, GLEWLWYD_ERROR);
   }
 
-  if (!y_init_logs(GLEWLWYD_LOG_NAME, config->log_mode, config->log_level, config->log_file, "Starting Glewlwyd SSO authentication service")) {
+  if (config->log_mode != Y_LOG_MODE_NONE && config->log_level != Y_LOG_LEVEL_NONE && !y_init_logs(GLEWLWYD_LOG_NAME, config->log_mode, config->log_level, config->log_file, "Starting Glewlwyd SSO authentication service")) {
     fprintf(stderr, "Error initializing logs\n");
     return 0;
   }
   
+  ulfius_init_instance(config->instance, config->port, NULL, NULL);
+
   // Initialize module config structure
   config->config_m->external_url = config->external_url;
   config->config_m->login_url = config->login_url;
@@ -373,7 +368,7 @@ int main (int argc, char ** argv) {
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_ZERO, &callback_glewlwyd_options, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", config->static_file_config->url_prefix, "*", GLEWLWYD_CALLBACK_PRIORITY_FILE, &callback_static_file, (void*)config->static_file_config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_FILE, &callback_static_file, (void*)config->static_file_config);
   ulfius_set_default_endpoint(config->instance, &callback_default, (void*)config);
 
   // Set default headers
@@ -432,6 +427,7 @@ int main (int argc, char ** argv) {
  */
 void exit_server(struct config_elements ** config, int exit_value) {
   size_t i;
+  int close_logs = ((*config)->log_mode != Y_LOG_MODE_NONE && (*config)->log_level != Y_LOG_LEVEL_NONE);
   
   if (config != NULL && *config != NULL) {
     for (i=0; i<pointer_list_size((*config)->user_module_instance_list); i++) {
@@ -622,25 +618,35 @@ void exit_server(struct config_elements ** config, int exit_value) {
     (*config) = NULL;
   }
 
-  y_close_logs();
+  if (close_logs) {
+    y_close_logs();
+  }
   exit(exit_value);
 }
 
 /**
- * Prepare application configuration based on the command line parameters
+ * Initialize the application configuration based on the command line parameters
  */
-int prepare_config(int argc, char ** argv, struct config_elements * config, int * use_config_file, int * use_config_env) {
+int build_config_from_args(int argc, char ** argv, struct config_elements * config, int * use_config_file, int * use_config_env) {
   int next_option, ret = G_OK;
-  const char * short_options = "c::e::";
+  const char * short_options = "c::e::p::m::l::f::h::v::";
+  char * tmp = NULL, * to_free = NULL, * one_log_mode = NULL;
   static const struct option long_options[]= {
     {"config-file", optional_argument, NULL, 'c'},
     {"env-variables", optional_argument, NULL, 'e'},
+    {"port", optional_argument, NULL, 'p'},
+    {"log-mode", optional_argument, NULL, 'm'},
+    {"log-level", optional_argument, NULL, 'l'},
+    {"log-file", optional_argument, NULL, 'f'},
+    {"help", optional_argument, NULL, 'h'},
+    {"version", optional_argument, NULL, 'v'},
     {NULL, 0, NULL, 0}
   };
-
+  
   if (config != NULL) {
     do {
       next_option = getopt_long(argc, argv, short_options, long_options, NULL);
+      
       switch (next_option) {
         case 'c':
           if (optarg != NULL) {
@@ -659,20 +665,92 @@ int prepare_config(int argc, char ** argv, struct config_elements * config, int 
         case 'e':
           *use_config_env = 1;
           break;
+        case 'p':
+          if (optarg != NULL) {
+            config->port = strtol(optarg, NULL, 10);
+            if (config->port <= 0 || config->port > 65535) {
+              fprintf(stderr, "Error!\nInvalid TCP Port number\n\tPlease specify an integer value between 1 and 65535");
+              ret = G_ERROR_PARAM;
+            }
+          } else {
+            fprintf(stderr, "Error!\nNo TCP Port number specified\n");
+            ret = G_ERROR_PARAM;
+          }
+          break;
+        case 'm':
+          if (optarg != NULL) {
+            config->log_mode_args = 1;
+            tmp = o_strdup(optarg);
+            if (tmp == NULL) {
+              fprintf(stderr, "Error allocating log_mode, exiting\n");
+              ret = G_ERROR_PARAM;
+            }
+            config->log_mode = Y_LOG_MODE_NONE;
+            one_log_mode = strtok(tmp, ",");
+            while (one_log_mode != NULL) {
+              if (0 == o_strcmp("console", one_log_mode)) {
+                config->log_mode += Y_LOG_MODE_CONSOLE;
+              } else if (0 == o_strcmp("syslog", one_log_mode)) {
+                config->log_mode += Y_LOG_MODE_SYSLOG;
+              } else if (0 == o_strcmp("journald", one_log_mode)) {
+                config->log_mode += Y_LOG_MODE_JOURNALD;
+              } else if (0 == o_strcmp("file", one_log_mode)) {
+                config->log_mode += Y_LOG_MODE_FILE;
+              }
+              one_log_mode = strtok(NULL, ",");
+            }
+            o_free(to_free);
+          } else {
+            fprintf(stderr, "Error!\nNo mode specified\n");
+            ret = G_ERROR_PARAM;
+          }
+          break;
+        case 'l':
+          if (optarg != NULL) {
+            config->log_level_args = 1;
+            config->log_level = Y_LOG_LEVEL_NONE;
+            if (0 == o_strcmp("NONE", optarg)) {
+              config->log_level = Y_LOG_LEVEL_NONE;
+            } else if (0 == o_strcmp("ERROR", optarg)) {
+              config->log_level = Y_LOG_LEVEL_ERROR;
+            } else if (0 == o_strcmp("WARNING", optarg)) {
+              config->log_level = Y_LOG_LEVEL_WARNING;
+            } else if (0 == o_strcmp("INFO", optarg)) {
+              config->log_level = Y_LOG_LEVEL_INFO;
+            } else if (0 == o_strcmp("DEBUG", optarg)) {
+              config->log_level = Y_LOG_LEVEL_DEBUG;
+            }
+          } else {
+            fprintf(stderr, "Error!\nNo log level specified\n");
+            ret = G_ERROR_PARAM;
+          }
+          break;
+        case 'f':
+          if (optarg != NULL) {
+            o_free(config->log_file);
+            config->log_file = o_strdup(optarg);
+            if (config->log_file == NULL) {
+              fprintf(stderr, "Error allocating config->log_file, exiting\n");
+              ret = G_ERROR_PARAM;
+            }
+          } else {
+            fprintf(stderr, "Error!\nNo log file specified\n");
+            ret = G_ERROR_PARAM;
+          }
+          break;
+        case 'h':
+          print_help(stdout);
+          break;
+        case 'v':
+          fprintf(stdout, "%s\n", _GLEWLWYD_VERSION_);
+          break;
       }
+      
     } while (next_option != -1);
   } else {
     ret = G_ERROR;
   }
   return ret;
-}
-
-/**
- * Initialize the application configuration based on the environment variables
- */
-int build_config_from_env(struct config_elements * config) {
-  UNUSED(config);
-  return G_ERROR;
 }
 
 /**
@@ -695,14 +773,13 @@ int build_config_from_file(struct config_elements * config) {
     ret = G_ERROR_PARAM;
   }
   
-  if (config->instance->port == GLEWLWYD_DEFAULT_PORT) {
-    // Get Port number to listen to
-    if (config_lookup_int(&cfg, "port", &int_value) == CONFIG_TRUE) {
-      config->instance->port = (uint)int_value;
-    }
+  // Get Port number to listen to
+  if (!config->port && config_lookup_int(&cfg, "port", &int_value) == CONFIG_TRUE) {
+    config->port = (uint)int_value;
   }
   
-  if (config->api_prefix == NULL && config_lookup_string(&cfg, "api_prefix", &str_value) == CONFIG_TRUE) {
+  if (config_lookup_string(&cfg, "api_prefix", &str_value) == CONFIG_TRUE) {
+    o_free(config->api_prefix);
     config->api_prefix = o_strdup(str_value);
     if (config->api_prefix == NULL) {
       fprintf(stderr, "Error allocating config->api_prefix, exiting\n");
@@ -711,7 +788,8 @@ int build_config_from_file(struct config_elements * config) {
     }
   }
 
-  if (config->cookie_domain == NULL && config_lookup_string(&cfg, "cookie_domain", &str_value) == CONFIG_TRUE) {
+  if (config_lookup_string(&cfg, "cookie_domain", &str_value) == CONFIG_TRUE) {
+    o_free(config->cookie_domain);
     config->cookie_domain = o_strdup(str_value);
     if (config->cookie_domain == NULL) {
       fprintf(stderr, "Error allocating config->cookie_domain, exiting\n");
@@ -724,80 +802,76 @@ int build_config_from_file(struct config_elements * config) {
     config->cookie_secure = (uint)int_value;
   }
   
-  if (config->log_mode == Y_LOG_MODE_NONE) {
-    // Get log mode
-    if (config_lookup_string(&cfg, "log_mode", &str_value) == CONFIG_TRUE) {
-      one_log_mode = strtok((char *)str_value, ",");
-      while (one_log_mode != NULL) {
-        if (0 == strncmp("console", one_log_mode, strlen("console"))) {
-          config->log_mode += Y_LOG_MODE_CONSOLE;
-        } else if (0 == strncmp("syslog", one_log_mode, strlen("syslog"))) {
-          config->log_mode += Y_LOG_MODE_SYSLOG;
-        } else if (0 == strncmp("journald", one_log_mode, strlen("journald"))) {
-          config->log_mode += Y_LOG_MODE_JOURNALD;
-        } else if (0 == strncmp("file", one_log_mode, strlen("file"))) {
-          config->log_mode += Y_LOG_MODE_FILE;
-          // Get log file path
-          if (config->log_file == NULL) {
-            if (config_lookup_string(&cfg, "log_file", &str_value_2) == CONFIG_TRUE) {
-              config->log_file = o_strdup(str_value_2);
-              if (config->log_file == NULL) {
-                fprintf(stderr, "Error allocating config->log_file, exiting\n");
-                config_destroy(&cfg);
-                ret = G_ERROR_PARAM;
-              }
+  // Get log mode
+  if (!config->log_mode_args && config_lookup_string(&cfg, "log_mode", &str_value) == CONFIG_TRUE) {
+    config->log_mode = Y_LOG_MODE_NONE;
+    one_log_mode = strtok((char *)str_value, ",");
+    while (one_log_mode != NULL) {
+      if (0 == o_strcmp("console", one_log_mode)) {
+        config->log_mode |= Y_LOG_MODE_CONSOLE;
+      } else if (0 == o_strcmp("syslog", one_log_mode)) {
+        config->log_mode |= Y_LOG_MODE_SYSLOG;
+      } else if (0 == o_strcmp("journald", one_log_mode)) {
+        config->log_mode |= Y_LOG_MODE_JOURNALD;
+      } else if (0 == o_strcmp("file", one_log_mode)) {
+        config->log_mode |= Y_LOG_MODE_FILE;
+        // Get log file path
+        if (config->log_file == NULL) {
+          if (config_lookup_string(&cfg, "log_file", &str_value_2) == CONFIG_TRUE) {
+            config->log_file = o_strdup(str_value_2);
+            if (config->log_file == NULL) {
+              fprintf(stderr, "Error allocating config->log_file, exiting\n");
+              config_destroy(&cfg);
+              ret = G_ERROR_PARAM;
             }
           }
-        } else {
-          fprintf(stderr, "Error, logging mode '%s' unknown\n", one_log_mode);
-          config_destroy(&cfg);
-          ret = G_ERROR_PARAM;
         }
-        one_log_mode = strtok(NULL, ",");
-      }
-    }
-  }
-  
-  if (config->log_level == Y_LOG_LEVEL_NONE) {
-    // Get log level
-    if (config_lookup_string(&cfg, "log_level", &str_value) == CONFIG_TRUE) {
-      if (0 == strncmp("NONE", str_value, strlen("NONE"))) {
-        config->log_level = Y_LOG_LEVEL_NONE;
-      } else if (0 == strncmp("ERROR", str_value, strlen("ERROR"))) {
-        config->log_level = Y_LOG_LEVEL_ERROR;
-      } else if (0 == strncmp("WARNING", str_value, strlen("WARNING"))) {
-        config->log_level = Y_LOG_LEVEL_WARNING;
-      } else if (0 == strncmp("INFO", str_value, strlen("INFO"))) {
-        config->log_level = Y_LOG_LEVEL_INFO;
-      } else if (0 == strncmp("DEBUG", str_value, strlen("DEBUG"))) {
-        config->log_level = Y_LOG_LEVEL_DEBUG;
-      }
-    }
-  }
-
-  if (config->allow_origin == NULL) {
-    // Get allow-origin value for CORS
-    if (config_lookup_string(&cfg, "allow_origin", &str_value) == CONFIG_TRUE) {
-      config->allow_origin = o_strdup(str_value);
-      if (config->allow_origin == NULL) {
-        fprintf(stderr, "Error allocating config->allow_origin, exiting\n");
+      } else {
+        fprintf(stderr, "Error - logging mode '%s' unknown\n", one_log_mode);
         config_destroy(&cfg);
         ret = G_ERROR_PARAM;
       }
+      one_log_mode = strtok(NULL, ",");
+    }
+  }
+  
+  // Get log level
+  if (!config->log_level_args && config_lookup_string(&cfg, "log_level", &str_value) == CONFIG_TRUE) {
+    config->log_level = Y_LOG_LEVEL_NONE;
+    if (0 == o_strcmp("ERROR", str_value)) {
+      config->log_level = Y_LOG_LEVEL_ERROR;
+    } else if (0 == o_strcmp("WARNING", str_value)) {
+      config->log_level = Y_LOG_LEVEL_WARNING;
+    } else if (0 == o_strcmp("INFO", str_value)) {
+      config->log_level = Y_LOG_LEVEL_INFO;
+    } else if (0 == o_strcmp("DEBUG", str_value)) {
+      config->log_level = Y_LOG_LEVEL_DEBUG;
+    }
+  }
+
+  // Get allow-origin value for CORS
+  if (config_lookup_string(&cfg, "allow_origin", &str_value) == CONFIG_TRUE) {
+    o_free(config->allow_origin);
+    config->allow_origin = o_strdup(str_value);
+    if (config->allow_origin == NULL) {
+      fprintf(stderr, "Error allocating config->allow_origin, exiting\n");
+      config_destroy(&cfg);
+      ret = G_ERROR_PARAM;
     }
   }
   
   if (config_lookup_string(&cfg, "session_key", &str_value) == CONFIG_TRUE) {
     o_free(config->session_key);
-    config->session_key = strdup(str_value);
+    config->session_key = o_strdup(str_value);
+  }
+
+  if (config_lookup_int(&cfg, "session_expiration", &int_value) == CONFIG_TRUE) {
+    config->session_expiration = (uint)int_value;
   }
   
-  if (config_lookup_string(&cfg, "external_url", &str_value) != CONFIG_TRUE) {
-    fprintf(stderr, "external_url is mandatory, exiting\n");
-    config_destroy(&cfg);
-    ret = G_ERROR_PARAM;
-  } else {
-    config->external_url = strdup(str_value);
+  if (config_lookup_string(&cfg, "external_url", &str_value) == CONFIG_TRUE) {
+    o_free(config->external_url);
+    config->external_url = o_strdup(str_value);
     if (config->external_url == NULL) {
       fprintf(stderr, "Error allocating resources for config->external_url, exiting\n");
       config_destroy(&cfg);
@@ -805,12 +879,9 @@ int build_config_from_file(struct config_elements * config) {
     }
   }
   
-  if (config_lookup_string(&cfg, "login_url", &str_value) != CONFIG_TRUE) {
-    fprintf(stderr, "login_url is mandatory, exiting\n");
-    config_destroy(&cfg);
-    ret = G_ERROR_PARAM;
-  } else {
-    config->login_url = strdup(str_value);
+  if (config_lookup_string(&cfg, "login_url", &str_value) == CONFIG_TRUE) {
+    o_free(config->login_url);
+    config->login_url = o_strdup(str_value);
     if (config->login_url == NULL) {
       fprintf(stderr, "Error allocating resources for config->login_url, exiting\n");
       config_destroy(&cfg);
@@ -820,6 +891,7 @@ int build_config_from_file(struct config_elements * config) {
   
   // Get path that serve static files
   if (config_lookup_string(&cfg, "static_files_path", &str_value) == CONFIG_TRUE) {
+    o_free(config->static_file_config->files_path);
     config->static_file_config->files_path = o_strdup(str_value);
     if (config->static_file_config->files_path == NULL) {
       fprintf(stderr, "Error allocating config->files_path, exiting\n");
@@ -861,17 +933,17 @@ int build_config_from_file(struct config_elements * config) {
   
   // Get token hash algorithm
   if (config_lookup_string(&cfg, "hash_algorithm", &str_value) == CONFIG_TRUE) {
-    if (!strcmp("SHA1", str_value)) {
+    if (!o_strcmp("SHA1", str_value)) {
       config->hash_algorithm = digest_SHA1;
-    } else if (!strcmp("SHA224", str_value)) {
+    } else if (!o_strcmp("SHA224", str_value)) {
       config->hash_algorithm = digest_SHA224;
-    } else if (!strcmp("SHA256", str_value)) {
+    } else if (!o_strcmp("SHA256", str_value)) {
       config->hash_algorithm = digest_SHA256;
-    } else if (!strcmp("SHA384", str_value)) {
+    } else if (!o_strcmp("SHA384", str_value)) {
       config->hash_algorithm = digest_SHA384;
-    } else if (!strcmp("SHA512", str_value)) {
+    } else if (!o_strcmp("SHA512", str_value)) {
       config->hash_algorithm = digest_SHA512;
-    } else if (!strcmp("MD5", str_value)) {
+    } else if (!o_strcmp("MD5", str_value)) {
       config->hash_algorithm = digest_MD5;
     } else {
       config_destroy(&cfg);
@@ -884,9 +956,7 @@ int build_config_from_file(struct config_elements * config) {
   database = config_setting_get_member(root, "database");
   if (database != NULL) {
     if (config_setting_lookup_string(database, "type", &str_value) == CONFIG_TRUE) {
-      if (0) {
-        // I know, this is for the code below to work
-      } else if (0 == strncmp(str_value, "sqlite3", strlen("sqlite3"))) {
+      if (0 == o_strcmp(str_value, "sqlite3")) {
         if (config_setting_lookup_string(database, "path", &str_value_2) == CONFIG_TRUE) {
           config->conn = h_connect_sqlite(str_value_2);
           if (config->conn == NULL) {
@@ -902,10 +972,10 @@ int build_config_from_file(struct config_elements * config) {
           }
         } else {
           config_destroy(&cfg);
-          fprintf(stderr, "Error, no sqlite database specified\n");
+          fprintf(stderr, "Error - no sqlite database specified\n");
           ret = G_ERROR_PARAM;
         }
-      } else if (0 == strncmp(str_value, "mariadb", strlen("mariadb"))) {
+      } else if (0 == o_strcmp(str_value, "mariadb")) {
         config_setting_lookup_string(database, "host", &str_value_2);
         config_setting_lookup_string(database, "user", &str_value_3);
         config_setting_lookup_string(database, "password", &str_value_4);
@@ -923,7 +993,7 @@ int build_config_from_file(struct config_elements * config) {
             ret = G_ERROR_PARAM;
           }
         }
-      } else if (0 == strncmp(str_value, "postgre", strlen("postgre"))) {
+      } else if (0 == o_strcmp(str_value, "postgre")) {
         config_setting_lookup_string(database, "conninfo", &str_value_2);
         config->conn = h_connect_pgsql(str_value_2);
         if (config->conn == NULL) {
@@ -933,58 +1003,48 @@ int build_config_from_file(struct config_elements * config) {
         }
       } else {
         config_destroy(&cfg);
-        fprintf(stderr, "Error, database type unknown\n");
+        fprintf(stderr, "Error - database type unknown\n");
         ret = G_ERROR_PARAM;
       }
     } else {
       config_destroy(&cfg);
-      fprintf(stderr, "Error, no database type found\n");
+      fprintf(stderr, "Error - no database type found\n");
       ret = G_ERROR_PARAM;
     }
   } else {
     config_destroy(&cfg);
-    fprintf(stderr, "Error, no database setting found\n");
+    fprintf(stderr, "Error - no database setting found\n");
     ret = G_ERROR_PARAM;
   }
 
   if (config_lookup_string(&cfg, "admin_scope", &str_value) == CONFIG_TRUE) {
-    config->admin_scope = strdup(str_value);
+    o_free(config->admin_scope);
+    config->admin_scope = o_strdup(str_value);
   }
   
   if (config_lookup_string(&cfg, "profile_scope", &str_value) == CONFIG_TRUE) {
-    config->profile_scope = strdup(str_value);
+    o_free(config->profile_scope);
+    config->profile_scope = o_strdup(str_value);
   }
   
   if (config_lookup_string(&cfg, "user_module_path", &str_value) == CONFIG_TRUE) {
-    config->user_module_path = strdup(str_value);
-  } else {
-    config_destroy(&cfg);
-    fprintf(stderr, "Error, user_module_path is mandatory\n");
-    ret = G_ERROR_PARAM;
+    o_free(config->user_module_path);
+    config->user_module_path = o_strdup(str_value);
   }
   
   if (config_lookup_string(&cfg, "client_module_path", &str_value) == CONFIG_TRUE) {
-    config->client_module_path = strdup(str_value);
-  } else {
-    config_destroy(&cfg);
-    fprintf(stderr, "Error, client_module_path is mandatory\n");
-    ret = G_ERROR_PARAM;
+    o_free(config->client_module_path);
+    config->client_module_path = o_strdup(str_value);
   }
   
   if (config_lookup_string(&cfg, "user_auth_scheme_module_path", &str_value) == CONFIG_TRUE) {
-    config->user_auth_scheme_module_path = strdup(str_value);
-  } else {
-    config_destroy(&cfg);
-    fprintf(stderr, "Error, user_auth_scheme_module_path is mandatory\n");
-    ret = G_ERROR_PARAM;
+    o_free(config->user_auth_scheme_module_path);
+    config->user_auth_scheme_module_path = o_strdup(str_value);
   }
   
   if (config_lookup_string(&cfg, "plugin_module_path", &str_value) == CONFIG_TRUE) {
-    config->plugin_module_path = strdup(str_value);
-  } else {
-    config_destroy(&cfg);
-    fprintf(stderr, "Error, plugin_module_path is mandatory\n");
-    ret = G_ERROR_PARAM;
+    o_free(config->plugin_module_path);
+    config->plugin_module_path = o_strdup(str_value);
   }
   
   config_destroy(&cfg);
@@ -992,126 +1052,352 @@ int build_config_from_file(struct config_elements * config) {
 }
 
 /**
- * Initialize the application configuration based on the command line parameters
+ * Initialize the application configuration based on the environment variables
  */
-int build_config_from_args(int argc, char ** argv, struct config_elements * config) {
-  int next_option, ret = G_OK;
-  const char * short_options = "p::u::m::l::f::h::v::";
-  char * tmp = NULL, * to_free = NULL, * one_log_mode = NULL;
-  static const struct option long_options[]= {
-    {"port", optional_argument, NULL, 'p'},
-    {"url-prefix", optional_argument, NULL, 'u'},
-    {"log-mode", optional_argument, NULL, 'm'},
-    {"log-level", optional_argument, NULL, 'l'},
-    {"log-file", optional_argument, NULL, 'f'},
-    {"help", optional_argument, NULL, 'h'},
-    {"version", optional_argument, NULL, 'v'},
-    {NULL, 0, NULL, 0}
-  };
+int build_config_from_env(struct config_elements * config) {
+  char * value = NULL, * value2 = NULL, * endptr = NULL, * one_log_mode = NULL;
+  long int lvalue;
+  int ret = G_OK;
+  json_t * j_mime_types, * j_element;
+  size_t index;
   
-  if (config != NULL) {
-    do {
-      next_option = getopt_long(argc, argv, short_options, long_options, NULL);
-      
-      switch (next_option) {
-        case 'p':
-          if (optarg != NULL) {
-            config->instance->port = strtol(optarg, NULL, 10);
-            if (config->instance->port <= 0 || config->instance->port > 65535) {
-              fprintf(stderr, "Error!\nInvalid TCP Port number\n\tPlease specify an integer value between 1 and 65535");
-              ret = G_ERROR_PARAM;
-            }
-          } else {
-            fprintf(stderr, "Error!\nNo TCP Port number specified\n");
-            ret = G_ERROR_PARAM;
-          }
-          break;
-        case 'u':
-          if (optarg != NULL) {
-            config->api_prefix = o_strdup(optarg);
-            if (config->api_prefix == NULL) {
-              fprintf(stderr, "Error allocating config->api_prefix, exiting\n");
-              ret = G_ERROR_PARAM;
-            }
-          } else {
-            fprintf(stderr, "Error!\nNo URL prefix specified\n");
-            ret = G_ERROR_PARAM;
-          }
-          break;
-        case 'm':
-          if (optarg != NULL) {
-            tmp = o_strdup(optarg);
-            if (tmp == NULL) {
-              fprintf(stderr, "Error allocating log_mode, exiting\n");
-              ret = G_ERROR_PARAM;
-            }
-            one_log_mode = strtok(tmp, ",");
-            while (one_log_mode != NULL) {
-              if (0 == strncmp("console", one_log_mode, strlen("console"))) {
-                config->log_mode += Y_LOG_MODE_CONSOLE;
-              } else if (0 == strncmp("syslog", one_log_mode, strlen("syslog"))) {
-                config->log_mode += Y_LOG_MODE_SYSLOG;
-              } else if (0 == strncmp("journald", one_log_mode, strlen("journald"))) {
-                config->log_mode += Y_LOG_MODE_JOURNALD;
-              } else if (0 == strncmp("file", one_log_mode, strlen("file"))) {
-                config->log_mode += Y_LOG_MODE_FILE;
-              }
-              one_log_mode = strtok(NULL, ",");
-            }
-            o_free(to_free);
-          } else {
-            fprintf(stderr, "Error!\nNo mode specified\n");
-            ret = G_ERROR_PARAM;
-          }
-          break;
-        case 'l':
-          if (optarg != NULL) {
-            if (0 == strncmp("NONE", optarg, strlen("NONE"))) {
-              config->log_level = Y_LOG_LEVEL_NONE;
-            } else if (0 == strncmp("ERROR", optarg, strlen("ERROR"))) {
-              config->log_level = Y_LOG_LEVEL_ERROR;
-            } else if (0 == strncmp("WARNING", optarg, strlen("WARNING"))) {
-              config->log_level = Y_LOG_LEVEL_WARNING;
-            } else if (0 == strncmp("INFO", optarg, strlen("INFO"))) {
-              config->log_level = Y_LOG_LEVEL_INFO;
-            } else if (0 == strncmp("DEBUG", optarg, strlen("DEBUG"))) {
-              config->log_level = Y_LOG_LEVEL_DEBUG;
-            }
-          } else {
-            fprintf(stderr, "Error!\nNo log level specified\n");
-            ret = G_ERROR_PARAM;
-          }
-          break;
-        case 'f':
-          if (optarg != NULL) {
-            config->log_file = o_strdup(optarg);
-            if (config->log_file == NULL) {
-              fprintf(stderr, "Error allocating config->log_file, exiting\n");
-              ret = G_ERROR_PARAM;
-            }
-          } else {
-            fprintf(stderr, "Error!\nNo log file specified\n");
-            ret = G_ERROR_PARAM;
-          }
-          break;
-        case 'e':
-          if (build_config_from_env(config) != G_OK) {
-            fprintf(stderr, "Error initializing Glewlwyd with environment variables\n");
-            ret = G_ERROR_PARAM;
-          }
-          break;
-        case 'h':
-          print_help(stdout);
-          break;
-        case 'v':
-          fprintf(stdout, "%s\n", _GLEWLWYD_VERSION_);
-          break;
-      }
-      
-    } while (next_option != -1);
-  } else {
-    ret = G_ERROR;
+  if (!config->port && (value = getenv(GLEWLWYD_ENV_PORT)) != NULL && o_strlen(value)) {
+    endptr = NULL;
+    lvalue = strtol(value, &endptr, 10);
+    if (!(*endptr) && lvalue > 0 && lvalue < 65535) {
+      config->port = (uint)lvalue;
+    } else {
+      fprintf(stderr, "Error invalid port number, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
   }
+  
+  if ((value = getenv(GLEWLWYD_ENV_API_PREFIX)) != NULL && o_strlen(value)) {
+    o_free(config->api_prefix);
+    config->api_prefix = o_strdup(value);
+    if (config->api_prefix == NULL) {
+      fprintf(stderr, "Error allocating config->api_prefix, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_EXTERNAL_URL)) != NULL && o_strlen(value)) {
+    o_free(config->external_url);
+    config->external_url = o_strdup(value);
+    if (config->external_url == NULL) {
+      fprintf(stderr, "Error allocating config->external_url, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_LOGIN_URL)) != NULL && o_strlen(value)) {
+    o_free(config->login_url);
+    config->login_url = o_strdup(value);
+    if (config->login_url == NULL) {
+      fprintf(stderr, "Error allocating config->login_url, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_STATIC_FILES_PATH)) != NULL && o_strlen(value)) {
+    o_free(config->static_file_config->files_path);
+    config->static_file_config->files_path = o_strdup(value);
+    if (config->static_file_config->files_path == NULL) {
+      fprintf(stderr, "Error allocating config->files_path, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES)) != NULL && o_strlen(value)) {
+    j_mime_types = json_loads(value, JSON_DECODE_ANY, NULL);
+    if (json_is_array(j_mime_types)) {
+      json_array_foreach(j_mime_types, index, j_element) {
+        if (json_string_length(json_object_get(j_element, "extension")) && json_string_length(json_object_get(j_element, "mime_type"))) {
+          u_map_put(config->static_file_config->mime_types, json_string_value(json_object_get(j_element, "extension")), json_string_value(json_object_get(j_element, "mime_type")));
+        } else {
+          fprintf(stderr, "Error - variable "GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES" must be a JSON array, example [{\"extension\":\".html\",\"mime_type\":\"text/html\"}], exiting\n");
+          ret = G_ERROR_PARAM;
+          break;
+        }
+      }
+    } else {
+      fprintf(stderr, "Error - variable "GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES" must be a JSON array, example [{\"extension\":\".html\",\"mime_type\":\"text/html\"}], exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+    json_decref(j_mime_types);
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_ALLOW_ORIGIN)) != NULL && o_strlen(value)) {
+    o_free(config->allow_origin);
+    config->allow_origin = o_strdup(value);
+    if (config->allow_origin == NULL) {
+      fprintf(stderr, "Error allocating config->allow_origin, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if (!config->log_mode_args && (value = getenv(GLEWLWYD_ENV_LOG_MODE)) != NULL && o_strlen(value)) {
+    config->log_mode = Y_LOG_MODE_NONE;
+    one_log_mode = strtok((char *)value, ",");
+    while (one_log_mode != NULL && ret == G_OK) {
+      if (0 == o_strcmp("console", one_log_mode)) {
+        config->log_mode |= Y_LOG_MODE_CONSOLE;
+      } else if (0 == o_strcmp("syslog", one_log_mode)) {
+        config->log_mode |= Y_LOG_MODE_SYSLOG;
+      } else if (0 == o_strcmp("journald", one_log_mode)) {
+        config->log_mode |= Y_LOG_MODE_JOURNALD;
+      } else if (0 == o_strcmp("file", one_log_mode)) {
+        config->log_mode |= Y_LOG_MODE_FILE;
+        // Get log file path
+        if ((value2 = getenv(GLEWLWYD_ENV_LOG_FILE)) != NULL && o_strlen(value2)) {
+          o_free(config->log_file);
+          config->log_file = o_strdup(value2);
+          if (config->log_file == NULL) {
+            fprintf(stderr, "Error allocating config->log_file, exiting\n");
+            ret = G_ERROR_PARAM;
+          }
+        }
+      } else {
+        fprintf(stderr, "Error - logging mode '%s' unknown\n", one_log_mode);
+        ret = G_ERROR_PARAM;
+      }
+      one_log_mode = strtok(NULL, ",");
+    }
+  }
+
+  if (!config->log_level_args && (value = getenv(GLEWLWYD_ENV_LOG_LEVEL)) != NULL && o_strlen(value)) {
+    if (0 == o_strcmp("NONE", value)) {
+      config->log_level = Y_LOG_LEVEL_NONE;
+    } else if (0 == o_strcmp("ERROR", value)) {
+      config->log_level = Y_LOG_LEVEL_ERROR;
+    } else if (0 == o_strcmp("WARNING", value)) {
+      config->log_level = Y_LOG_LEVEL_WARNING;
+    } else if (0 == o_strcmp("INFO", value)) {
+      config->log_level = Y_LOG_LEVEL_INFO;
+    } else if (0 == o_strcmp("DEBUG", value)) {
+      config->log_level = Y_LOG_LEVEL_DEBUG;
+    }
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_COOKIE_DOMAIN)) != NULL && o_strlen(value)) {
+    config->cookie_domain = o_strdup(value);
+    if (config->cookie_domain == NULL) {
+      fprintf(stderr, "Error allocating config->cookie_domain, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_COOKIE_SECURE)) != NULL) {
+    config->cookie_secure = (uint)(o_strcmp(value, "1")==0);
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_SESSION_EXPIRATION)) != NULL && o_strlen(value)) {
+    endptr = NULL;
+    lvalue = strtol(value, &endptr, 10);
+    if (!(*endptr) && lvalue > 0) {
+      config->session_expiration = (uint)lvalue;
+    } else {
+      fprintf(stderr, "Error invalid session_expiration number, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_SESSION_KEY)) != NULL && o_strlen(value)) {
+    o_free(config->session_key);
+    config->session_key = o_strdup(value);
+    if (config->session_key == NULL) {
+      fprintf(stderr, "Error allocating config->session_key, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_ADMIN_SCOPE)) != NULL && o_strlen(value)) {
+    o_free(config->admin_scope);
+    config->admin_scope = o_strdup(value);
+    if (config->admin_scope == NULL) {
+      fprintf(stderr, "Error allocating config->admin_scope, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_PROFILE_SCOPE)) != NULL && o_strlen(value)) {
+    o_free(config->profile_scope);
+    config->profile_scope = o_strdup(value);
+    if (config->profile_scope == NULL) {
+      fprintf(stderr, "Error allocating config->profile_scope, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_USER_MODULE_PATH)) != NULL && o_strlen(value)) {
+    o_free(config->user_module_path);
+    config->user_module_path = o_strdup(value);
+    if (config->user_module_path == NULL) {
+      fprintf(stderr, "Error allocating config->user_module_path, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_CLIENT_MODULE_PATH)) != NULL && o_strlen(value)) {
+    o_free(config->client_module_path);
+    config->client_module_path = o_strdup(value);
+    if (config->client_module_path == NULL) {
+      fprintf(stderr, "Error allocating config->client_module_path, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_AUTH_SCHEME_MODUE_PATH)) != NULL && o_strlen(value)) {
+    o_free(config->user_auth_scheme_module_path);
+    config->user_auth_scheme_module_path = o_strdup(value);
+    if (config->user_auth_scheme_module_path == NULL) {
+      fprintf(stderr, "Error allocating config->user_auth_scheme_module_path, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_PLUGIN_MODULE_PATH)) != NULL && o_strlen(value)) {
+    o_free(config->plugin_module_path);
+    config->plugin_module_path = o_strdup(value);
+    if (config->plugin_module_path == NULL) {
+      fprintf(stderr, "Error allocating config->plugin_module_path, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_USE_SECURE_CONNECTION)) != NULL) {
+    config->use_secure_connection = (uint)(o_strcmp(value, "1")==0);
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_SECURE_CONNECTION_KEY_FILE)) != NULL && o_strlen(value)) {
+    o_free(config->secure_connection_key_file);
+    config->secure_connection_key_file = o_strdup(value);
+    if (config->secure_connection_key_file == NULL) {
+      fprintf(stderr, "Error allocating config->secure_connection_key_file, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_SECURE_CONNECTION_PEM_FILE)) != NULL && o_strlen(value)) {
+    o_free(config->secure_connection_pem_file);
+    config->secure_connection_pem_file = o_strdup(value);
+    if (config->secure_connection_pem_file == NULL) {
+      fprintf(stderr, "Error allocating config->secure_connection_pem_file, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_SECURE_CONNECTION_CA_FILE)) != NULL && o_strlen(value)) {
+    o_free(config->secure_connection_ca_file);
+    config->secure_connection_ca_file = o_strdup(value);
+    if (config->secure_connection_ca_file == NULL) {
+      fprintf(stderr, "Error allocating config->secure_connection_ca_file, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_HASH_ALGORITHM)) != NULL && o_strlen(value)) {
+    if (!o_strcmp("SHA1", value)) {
+      config->hash_algorithm = digest_SHA1;
+    } else if (!o_strcmp("SHA224", value)) {
+      config->hash_algorithm = digest_SHA224;
+    } else if (!o_strcmp("SHA256", value)) {
+      config->hash_algorithm = digest_SHA256;
+    } else if (!o_strcmp("SHA384", value)) {
+      config->hash_algorithm = digest_SHA384;
+    } else if (!o_strcmp("SHA512", value)) {
+      config->hash_algorithm = digest_SHA512;
+    } else if (!o_strcmp("MD5", value)) {
+      config->hash_algorithm = digest_MD5;
+    } else {
+      fprintf(stderr, "Error token hash algorithm: %s\n", value);
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_DATABASE_TYPE)) != NULL && o_strlen(value)) {
+    if (config->conn != NULL) {
+      h_close_db(config->conn);
+      h_clean_connection(config->conn);
+    }
+    if (0 == o_strcmp(value, "sqlite3")) {
+      if ((config->conn = h_connect_sqlite(getenv(GLEWLWYD_ENV_DATABASE_SQLITE3_PATH))) == NULL) {
+        fprintf(stderr, "Error opening sqlite database '%s'\n", getenv(GLEWLWYD_ENV_DATABASE_SQLITE3_PATH));
+        ret = G_ERROR_PARAM;
+      } else {
+        if (h_exec_query_sqlite(config->conn, "PRAGMA foreign_keys = ON;") != H_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON;'");
+          ret = G_ERROR_PARAM;
+        }
+      }
+    } else if (0 == o_strcmp(value, "mariadb")) {
+      lvalue = strtol(getenv(GLEWLWYD_ENV_DATABASE_MARIADB_PORT), &endptr, 10);
+      if (!(*endptr) && lvalue > 0 && lvalue < 65535) {
+        if ((config->conn = h_connect_mariadb(getenv(GLEWLWYD_ENV_DATABASE_MARIADB_HOST), getenv(GLEWLWYD_ENV_DATABASE_MARIADB_USER), getenv(GLEWLWYD_ENV_DATABASE_MARIADB_PASSWORD), getenv(GLEWLWYD_ENV_DATABASE_MARIADB_DBNAME), lvalue, NULL)) == NULL) {
+          fprintf(stderr, "Error opening mariadb database '%s'\n", getenv(GLEWLWYD_ENV_DATABASE_MARIADB_DBNAME));
+          ret = G_ERROR_PARAM;
+        } else {
+          if (h_execute_query_mariadb(config->conn, "SET sql_mode='PIPES_AS_CONCAT';", NULL) != H_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error executing mariadb query 'SET sql_mode='PIPES_AS_CONCAT';'");
+            ret = G_ERROR_PARAM;
+          }
+        }
+      }
+    } else if (0 == o_strcmp(value, "postgre")) {
+      if ((config->conn = h_connect_pgsql(getenv(GLEWLWYD_ENV_DATABASE_MARIADB_PORT))) == NULL) {
+        fprintf(stderr, "Error opening postgre database %s\n", getenv(GLEWLWYD_ENV_DATABASE_MARIADB_PORT));
+        ret = G_ERROR_PARAM;
+      }
+    } else {
+      fprintf(stderr, "Error - database type unknown\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  return ret;
+}
+
+/**
+ * Check if all mandatory configuration parameters are present and correct
+ * Initialize some parameters with default value if not set
+ */
+int check_config(struct config_elements * config) {
+  int ret = G_OK;
+  
+  if (!o_strlen(config->external_url)) {
+    fprintf(stderr, "Error - configuration external_url mandatory\n");
+    ret = G_ERROR_PARAM;
+  }
+  
+  if (!o_strlen(config->user_module_path)) {
+    fprintf(stderr, "Error - configuration user_module_path mandatory\n");
+    ret = G_ERROR_PARAM;
+  }
+  
+  if (!o_strlen(config->client_module_path)) {
+    fprintf(stderr, "Error - configuration client_module_path mandatory\n");
+    ret = G_ERROR_PARAM;
+  }
+  
+  if (!o_strlen(config->user_auth_scheme_module_path)) {
+    fprintf(stderr, "Error - configuration user_auth_scheme_module_path mandatory\n");
+    ret = G_ERROR_PARAM;
+  }
+  
+  if (!o_strlen(config->plugin_module_path)) {
+    fprintf(stderr, "Error - configuration plugin_module_path mandatory\n");
+    ret = G_ERROR_PARAM;
+  }
+  
+  if (config->conn == NULL) {
+    fprintf(stderr, "Error - no database configuration specified\n");
+    ret = G_ERROR_PARAM;
+  }
+  
+  if (!config->instance->port) {
+    config->instance->port = GLEWLWYD_DEFAULT_PORT;
+  }
+  
   return ret;
 }
 
@@ -1123,7 +1409,7 @@ void print_help(FILE * output) {
   fprintf(output, "\n");
   fprintf(output, "Version %s\n", _GLEWLWYD_VERSION_);
   fprintf(output, "\n");
-  fprintf(output, "Copyright 2016-2018 Nicolas Mora <mail@babelouest.org>\n");
+  fprintf(output, "Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>\n");
   fprintf(output, "\n");
   fprintf(output, "This program is free software; you can redistribute it and/or\n");
   fprintf(output, "modify it under the terms of the GNU GENERAL PUBLIC LICENSE\n");
@@ -1134,6 +1420,8 @@ void print_help(FILE * output) {
   fprintf(output, "\n");
   fprintf(output, "-c --config-file=PATH\n");
   fprintf(output, "\tPath to configuration file\n");
+  fprintf(output, "-e --env-variables\n");
+  fprintf(output, "\tUse environment variables to configure Glewlwyd\n");
   fprintf(output, "-p --port=PORT\n");
   fprintf(output, "\tPort to listen to\n");
   fprintf(output, "-u --url-prefix=PREFIX\n");
@@ -1175,41 +1463,6 @@ void exit_handler(int signal) {
   pthread_mutex_lock(&global_handler_close_lock);
   pthread_cond_signal(&global_handler_close_cond);
   pthread_mutex_unlock(&global_handler_close_lock);
-}
-
-/**
- * Check if all mandatory configuration parameters are present and correct
- * Initialize some parameters with default value if not set
- */
-int check_config(struct config_elements * config) {
-
-  if (config->instance->port == 0) {
-    config->instance->port = GLEWLWYD_DEFAULT_PORT;
-  }
-  
-  if (config->api_prefix == NULL) {
-    config->api_prefix = o_strdup(GLEWLWYD_DEFAULT_PREFIX);
-    if (config->api_prefix == NULL) {
-      fprintf(stderr, "Error allocating api_prefix, exit\n");
-      return 0;
-    }
-  }
-  
-  if (config->log_mode == Y_LOG_MODE_NONE) {
-    config->log_mode = Y_LOG_MODE_CONSOLE;
-  }
-  
-  if (config->log_level == Y_LOG_LEVEL_NONE) {
-    config->log_level = Y_LOG_LEVEL_ERROR;
-  }
-  
-  if (config->log_mode == Y_LOG_MODE_FILE && config->log_file == NULL) {
-    fprintf(stderr, "Error, you must specify a log file if log mode is set to file\n");
-    print_help(stderr);
-    return 0;
-  }
-  
-  return 1;
 }
 
 int module_instance_parameters_check(const char * module_parameters, const char * instance_parameters) {
