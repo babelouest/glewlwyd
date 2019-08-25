@@ -7,6 +7,7 @@
 - Add more tests
 - Change return type of all modules function `*_init()` to `json_t *` so the front-end will know about the error
 - Improve documentation
+- Can use environment variables as config parameters
 
 ## 2.0.0-b2
 
