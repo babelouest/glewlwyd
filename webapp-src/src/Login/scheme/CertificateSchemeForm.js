@@ -51,7 +51,7 @@ class CertificateSchemeForm extends Component {
     return (
       <form action="#" id="certificateSchemeForm">
         <div className="form-group">
-          <h5>{i18next.t("login.enter-certificate-scheme-value")}</h5>
+          <h5>{i18next.t("login.certificate-scheme-title")}</h5>
         </div>
         <button type="button" name="certificatebut" id="certificatebut" className="btn btn-primary" onClick={(e) => this.validateCertificate(e)} title={i18next.t("login.certificate-login-authenticate")}>{i18next.t("login.certificate-login-authenticate")}</button>
       </form>
