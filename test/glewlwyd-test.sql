@@ -11,7 +11,6 @@ INSERT INTO g_user_module_instance (gumi_module, gumi_name, gumi_display_name, g
 INSERT INTO g_user_auth_scheme_module_instance (guasmi_module, guasmi_name, guasmi_display_name, guasmi_expiration, guasmi_parameters) VALUES ('mock', 'mock_scheme_42', 'Mock 42', 600, '{"mock-value":"42"}');
 INSERT INTO g_user_auth_scheme_module_instance (guasmi_module, guasmi_name, guasmi_display_name, guasmi_expiration, guasmi_parameters, guasmi_max_use) VALUES ('mock', 'mock_scheme_88', 'Mock 88', 600, '{"mock-value":"88"}', 1);
 INSERT INTO g_user_auth_scheme_module_instance (guasmi_module, guasmi_name, guasmi_display_name, guasmi_expiration, guasmi_parameters) VALUES ('mock', 'mock_scheme_95', 'Mock 95', 300, '{"mock-value":"95"}');
-INSERT INTO g_user_auth_scheme_module_instance (guasmi_module, guasmi_name, guasmi_display_name, guasmi_expiration, guasmi_parameters) VALUES ('retype-password', 'pwd', 'Password', 600, '{}');
 INSERT INTO g_client_module_instance (gcmi_module, gcmi_name, gcmi_display_name, gcmi_order, gcmi_parameters) VALUES ('mock', 'mock', 'Mock client module', 0, '{"username-prefix":"","password":"password"}');
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 1, 600);
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1, 600);
