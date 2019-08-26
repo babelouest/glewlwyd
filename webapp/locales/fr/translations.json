@@ -79,6 +79,7 @@
     "select-acount-title": "Sélectionner le compte à utiliser",
     "manage-users": "Gérer les utilisateurs connectés",
     "logout": "Déconnecter",
+    "certificate-scheme-title": "Authentification par certificat client",
     "certificate-login-authenticate": "Authentifier"
   },
   "admin": {
