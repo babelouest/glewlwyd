@@ -75,6 +75,9 @@ static json_t * is_certificate_parameters_valid(json_t * j_parameters) {
       if (json_object_get(j_parameters, "check-from-certificate-property") != NULL && !json_is_boolean(json_object_get(j_parameters, "check-from-certificate-property"))) {
         json_array_append_new(j_array, json_string("check-from-certificate-property is optional and must be a boolean"));
       }
+      if (json_object_get(j_parameters, "use-scheme-storage") != NULL && !json_is_boolean(json_object_get(j_parameters, "use-scheme-storage"))) {
+        json_array_append_new(j_array, json_string("use-scheme-storage is optional and must be a boolean"));
+      }
       if (json_object_get(j_parameters, "user-certificate-property") != NULL && !json_string_length(json_object_get(j_parameters, "user-certificate-property"))) {
         json_array_append_new(j_array, json_string("user-certificate-property is optional and must be a non empty string"));
       }
@@ -96,8 +99,8 @@ static json_t * is_certificate_parameters_valid(json_t * j_parameters) {
       if (json_object_get(j_parameters, "check-from-certificate-property") != json_true() && json_object_get(j_parameters, "check-from-ca") != json_true()) {
         json_array_append_new(j_array, json_string("At least one setting 'check-from-ca' or 'check-from-certificate-property' must be allowed"));
       }
-      if (json_object_get(j_parameters, "check-from-certificate-property") == json_true() && json_object_get(j_parameters, "user-certificate-property") == NULL) {
-        json_array_append_new(j_array, json_string("parameter user-certificate-property is mandatory when check-from-certificate-property is set to true"));
+      if (json_object_get(j_parameters, "check-from-certificate-property") == json_true() && json_object_get(j_parameters, "use-scheme-storage") == json_false() && json_object_get(j_parameters, "user-certificate-property") == NULL) {
+        json_array_append_new(j_array, json_string("parameter user-certificate-property is mandatory when check-from-certificate-property is set to true and use-scheme-storage is set to false"));
       }
       if (json_object_get(j_parameters, "check-from-ca") == json_true() && json_object_get(j_parameters, "user-dn-property") == NULL) {
         json_array_append_new(j_array, json_string("parameter user-dn-property is mandatory when check-from-ca is set to true"));
@@ -442,7 +445,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
     }
     o_free(dn);
     o_free(issuer_dn);
-    ret = G_ERROR_MEMORY;
+    ret = G_ERROR_UNAUTHORIZED;
   } else {
     y_log_message(Y_LOG_LEVEL_DEBUG, "No certificate");
     ret = G_ERROR_UNAUTHORIZED;
