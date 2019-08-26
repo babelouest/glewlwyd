@@ -79,6 +79,7 @@
     "select-acount-title": "Select the account to use",
     "manage-users": "Manage connected users",
     "logout": "Logout",
+    "certificate-scheme-title": "Client certificate authentification",
     "certificate-login-authenticate": "Authenticate"
   },
   "admin": {
