@@ -52,13 +52,13 @@ class Navbar extends Component {
       this.state.config.sessionSchemes.forEach((scheme) => {
         if (scheme.scheme_default) {
           scheme.scheme_default.forEach((page) => {
-            if (page === "admin") {
+            if (page === "profile") {
               schemeDefault = scheme.scheme_name;
             }
           });
         }
       });
-      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURI([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURI(this.state.config.profile_scope) +  + (schemeDefault?("&scheme="+encodeURI(schemeDefault)):"");
+      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURI([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURI(this.state.config.profile_scope) + (schemeDefault?("&scheme="+encodeURI(schemeDefault)):"");
     }
   }
 
