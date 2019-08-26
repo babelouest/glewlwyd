@@ -79,6 +79,7 @@
     "select-acount-title": "Select the account to use",
     "manage-users": "Manage connected users",
     "logout": "Logout",
+    "certificate-scheme-title": "Client certificate authentification",
     "certificate-login-authenticate": "Authenticate"
   },
   "admin": {
@@ -571,6 +572,7 @@
     "mod-certificate-value-yes": "Yes",
     "mod-certificate-value-no": "No",
     "mod-certificate-check-from-certificate-property": "Check with stored certificates",
+    "mod-certificate-use-scheme-storage": "Use scheme storage",
     "mod-certificate-user-certificate-property": "Certificate property",
     "mod-certificate-user-certificate-property-ph": "Ex: x509-certificate"
   },

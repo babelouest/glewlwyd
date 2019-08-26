@@ -79,6 +79,7 @@
     "select-acount-title": "Sélectionner le compte à utiliser",
     "manage-users": "Gérer les utilisateurs connectés",
     "logout": "Déconnecter",
+    "certificate-scheme-title": "Authentification par certificat client",
     "certificate-login-authenticate": "Authentifier"
   },
   "admin": {
@@ -571,6 +572,7 @@
     "mod-certificate-value-yes": "Oui",
     "mod-certificate-value-no": "Non",
     "mod-certificate-check-from-certificate-property": "Vérifier avec les certificats enregistrés",
+    "mod-certificate-use-scheme-storage": "Utiliser le stockage du schéma",
     "mod-certificate-user-certificate-property": "Champ certificat",
     "mod-certificate-user-certificate-property-ph": "Ex: x509-certificate"
   },
