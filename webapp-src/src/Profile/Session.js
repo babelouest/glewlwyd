@@ -209,7 +209,7 @@ class Session extends Component {
       );
     });
     var i = 0;
-    var tokenTables = []
+    var tokenTables = [];
     for (var key in this.state.plugins.oauth2) {
       var oauth2 = this.state.plugins.oauth2[key];
       var oauth2Header =
@@ -267,7 +267,7 @@ class Session extends Component {
         );
       });
       tokenTables.push(
-        <div className="card" key={i}>
+        <div className="card" key={++i}>
           <div className="card-header" id="dataFormatCard">
             <h2 className="mb-0">
               <button className="btn btn-link" type="button" data-toggle="collapse" data-target={"#collapseOauth2-"+key} aria-expanded="true" aria-controls={"collapseOauth2-"+key}>
@@ -282,9 +282,8 @@ class Session extends Component {
           </div>
         </div>
       );
-      i++;
     }
-    i = 0;
+    i = tokenTables.length;
     for (var key in this.state.plugins.oidc) {
       var oidc = this.state.plugins.oidc[key];
       var oidcHeader =
@@ -342,7 +341,7 @@ class Session extends Component {
         );
       });
       tokenTables.push(
-        <div className="card" key={i}>
+        <div className="card" key={++i}>
           <div className="card-header" id="dataFormatCard">
             <h2 className="mb-0">
               <button className="btn btn-link" type="button" data-toggle="collapse" data-target={"#collapseOauth2-"+key} aria-expanded="true" aria-controls={"collapseOauth2-"+key}>
@@ -357,7 +356,6 @@ class Session extends Component {
           </div>
         </div>
       );
-      i++;
     }
     return (
       <div>
