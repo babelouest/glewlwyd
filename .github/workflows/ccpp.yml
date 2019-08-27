@@ -21,7 +21,7 @@ jobs:
         pushd libjwt-1.10.2 && autoreconf -i && ./configure && make && sudo make install && popd
         sudo ldconfig
     - name: cppcheck
-      run: cppcheck --force --enable=warning,missingInclude --error-exitcode=1 .
+      run: cppcheck --force --enable=warning,missingInclude --error-exitcode=1 src/
     - name: build
       run: |
         mkdir build
