@@ -86,6 +86,7 @@
     "certificate-scheme-auth-invalid": "Certificat invalide"
   },
   "admin": {
+    "error-credential-message": "Veuillez vous conncecter avec un utilisateur ayant les droits d'administration",
     "menu-users": "Utilisateurs",
     "menu-clients": "Clients",
     "menu-scopes": "Droits d'accès (scope)",
@@ -580,7 +581,9 @@
     "mod-certificate-user-certificate-property-ph": "Ex: x509-certificate"
   },
   "profile": {
+    "error-credential-message": "Veuillez vous connecter à l'application",
     "requires-profile-scope": "Droits de profil requis",
+    "requires-admin-scope": "Droits d'administrateur requis",
     "menu-user": "Données personnelles",
     "menu-password": "Mot de passe",
     "menu-session": "Sessions",

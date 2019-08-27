@@ -46,7 +46,8 @@ class App extends Component {
       plugins: [],
       PluginModal: {title: "", data: {}, types: [], add: false, callback: false},
       modTypes: {user: [], client: [], scheme: [], plugin: []},
-      profileList: false
+      profileList: false,
+      invalidCredentialMessage: false
     }
     
     this.fetchApi = this.fetchApi.bind(this);
@@ -412,11 +413,9 @@ class App extends Component {
     apiManager.glewlwydRequest("/profile_list")
     .then((res) => {
       this.setState({profileList: res}, () => {
-        if (!res[0]) {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
-        } else {
-          this.fetchUsers()
-          .then(() => {
+        this.fetchUsers()
+        .then(() => {
+          this.setState({invalidCredentialMessage: false}, () => {
             this.fetchClients()
             .always(() => {
               this.fetchScopes();
@@ -428,15 +427,20 @@ class App extends Component {
             this.fetchPlugins();
             this.fetchAllScopes();
           });
-        }
+        })
+        .fail((error) => {
+          this.setState({invalidCredentialMessage: true});
+        });
       });
     })
     .fail((error) => {
-      if (error.status === 401) {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
-      } else {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-      }
+      this.setState({invalidCredentialMessage: true}, () => {
+        if (error.status === 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        }
+      });
     });
   }
 
@@ -1198,6 +1202,10 @@ class App extends Component {
   }
 
 	render() {
+    var invalidCredentialMessage;
+    if (this.state.invalidCredentialMessage) {
+      invalidCredentialMessage = <div className="alert alert-danger" role="alert">{i18next.t("admin.error-credential-message")}</div>
+    }
     if (this.state.config) {
       return (
         <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
@@ -1205,6 +1213,7 @@ class App extends Component {
             <div className="card-header">
               <Navbar active={this.state.curNav} config={this.state.config} loggedIn={this.state.loggedIn} profileList={this.state.profileList}/>
             </div>
+            {invalidCredentialMessage}
             <div className="card-body">
               <div id="carouselBody" className="carousel slide" data-ride="carousel">
                 <div className="carousel-inner">

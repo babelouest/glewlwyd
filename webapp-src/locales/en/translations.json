@@ -86,6 +86,7 @@
     "certificate-scheme-auth-invalid": "Invalid certificate"
   },
   "admin": {
+    "error-credential-message": "Please connect with a user that has admin credentials",
     "menu-users": "Users",
     "menu-clients": "Clients",
     "menu-scopes": "Scopes",
@@ -580,7 +581,9 @@
     "mod-certificate-user-certificate-property-ph": "Ex: x509-certificate"
   },
   "profile": {
+    "error-credential-message": "Please connect to the application",
     "requires-profile-scope": "Profile scope required",
+    "requires-admin-scope": "Admin scope required",
     "menu-user": "Personal data",
     "menu-password": "Password",
     "menu-session": "Sessions",
