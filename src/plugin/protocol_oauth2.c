@@ -259,7 +259,7 @@ static char * generate_access_token(struct _oauth2_config * config, const char *
       jwt_add_grant(jwt, "scope", scope_list);
     }
     if (json_object_get(config->j_params, "additional-parameters") != NULL && j_user != NULL) {
-      json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index, j_element) {
+      json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index = 0, j_element) {
         if (json_is_string(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))) && json_string_length(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
           jwt_add_grant(jwt, json_string_value(json_object_get(j_element, "token-parameter")), json_string_value(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))));
         } else if (json_is_array(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
@@ -458,7 +458,7 @@ static json_t * check_client_valid(struct _oauth2_config * config, const char * 
     } else {
       if (redirect_uri != NULL) {
         uri_found = 0;
-        json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index, j_element) {
+        json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index = 0, j_element) {
           if (0 == o_strcmp(json_string_value(j_element), redirect_uri)) {
             uri_found = 1;
           }
@@ -468,7 +468,7 @@ static json_t * check_client_valid(struct _oauth2_config * config, const char * 
       }
       
       authorization_type_enabled = 0;
-      json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
+      json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index = 0, j_element) {
         if (authorization_type == GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE && 0 == o_strcmp(json_string_value(j_element), "code")) {
           authorization_type_enabled = 1;
         } else if (authorization_type == GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT && 0 == o_strcmp(json_string_value(j_element), "token")) {
@@ -622,7 +622,7 @@ static json_t * get_scope_parameters(struct _oauth2_config * config, const char 
   json_t * j_element = NULL, * j_return = NULL;
   size_t index = 0;
   
-  json_array_foreach(json_object_get(config->j_params, "scope"), index, j_element) {
+  json_array_foreach(json_object_get(config->j_params, "scope"), index = 0, j_element) {
     if (0 == o_strcmp(scope, json_string_value(json_object_get(j_element, "name")))) {
       j_return = json_incref(j_element);
     }
@@ -710,7 +710,7 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
         json_decref(j_query);
         if (res == H_OK && json_array_size(j_result_scope) > 0) {
           if (!json_object_set_new(json_array_get(j_result, 0), "scope", json_array())) {
-            json_array_foreach(j_result_scope, index, j_element) {
+            json_array_foreach(j_result_scope, index = 0, j_element) {
               if (scope_list == NULL) {
                 scope_list = o_strdup(json_string_value(json_object_get(j_element, "name")));
               } else {
@@ -780,14 +780,14 @@ static json_t * validate_session_client_scope(struct _oauth2_config * config, co
     if (check_result_value(j_grant, G_OK)) {
       if (json_array_size(json_object_get(json_object_get(j_grant, "grant"), "scope"))) {
         // Count and store the number of granted scopes
-        json_array_foreach(json_object_get(json_object_get(j_grant, "grant"), "scope"), index, j_scope_grant) {
+        json_array_foreach(json_object_get(json_object_get(j_grant, "grant"), "scope"), index = 0, j_scope_grant) {
           scopes_granted += json_object_get(j_scope_grant, "granted")==json_true();
         }
         json_object_set_new(json_object_get(j_session, "session"), "scopes_granted", json_integer(scopes_granted));
         
         json_object_foreach(json_object_get(json_object_get(j_session, "session"), "scope"), scope_session, j_scope_session) {
           // Evaluate if the scope is granted for the client
-          json_array_foreach(json_object_get(json_object_get(j_grant, "grant"), "scope"), index, j_scope_grant) {
+          json_array_foreach(json_object_get(json_object_get(j_grant, "grant"), "scope"), index = 0, j_scope_grant) {
             if (0 == o_strcmp(scope_session, json_string_value(json_object_get(j_scope_grant, "name")))) {
               json_object_set(j_scope_session, "granted", json_object_get(j_scope_grant, "granted"));
             }
@@ -800,7 +800,7 @@ static json_t * validate_session_client_scope(struct _oauth2_config * config, co
             } else if ((json_object_get(j_scope_session, "password_required") == json_true() && json_object_get(j_scope_session, "password_authenticated") == json_true()) || json_object_get(j_scope_session, "password_required") == json_false()) {
               json_object_foreach(json_object_get(j_scope_session, "schemes"), group, j_group) {
                 group_allowed = 0;
-                json_array_foreach(j_group, index, j_scheme) {
+                json_array_foreach(j_group, index = 0, j_scheme) {
                   if (!group_allowed && json_object_get(j_scheme, "scheme_authenticated") == json_true()) {
                     group_allowed = 1;
                   }
@@ -868,7 +868,7 @@ static json_t * validate_session_client_scope(struct _oauth2_config * config, co
 }
 
 static json_t * validate_refresh_token(struct _oauth2_config * config, const char * refresh_token) {
-  json_t * j_return, * j_query, * j_result, * j_result_scope, * j_element;
+  json_t * j_return, * j_query, * j_result, * j_result_scope, * j_element = NULL;
   char * token_hash, * expires_at_clause;
   int res;
   size_t index = 0;
@@ -928,7 +928,7 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
           res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result_scope, NULL);
           if (res == H_OK) {
             if (!json_object_set_new(json_array_get(j_result, 0), "scope", json_array())) {
-              json_array_foreach(j_result_scope, index, j_element) {
+              json_array_foreach(j_result_scope, index = 0, j_element) {
                 json_array_append(json_object_get(json_array_get(j_result, 0), "scope"), json_object_get(j_element, "scope"));
               }
               j_return = json_pack("{sisO}", "result", G_OK, "token", json_array_get(j_result, 0));
@@ -1008,7 +1008,7 @@ static json_t * refresh_token_list_get(struct _oauth2_config * config, const cha
   res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    json_array_foreach(j_result, index, j_element) {
+    json_array_foreach(j_result, index = 0, j_element) {
       json_object_set(j_element, "rolling_expiration", (json_integer_value(json_object_get(j_element, "gpgr_rolling_expiration"))?json_true():json_false()));
       json_object_set(j_element, "enabled", (json_integer_value(json_object_get(j_element, "gpgr_enabled"))?json_true():json_false()));
       json_object_del(j_element, "gpgr_rolling_expiration");
@@ -1629,7 +1629,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
     if (check_result_value(j_client, G_OK)) {
       if (split_string(u_map_get(request->map_post_body, "scope"), " ", &scope_array) > 0) {
         for (i=0; scope_array[i]!=NULL; i++) {
-          json_array_foreach(json_object_get(json_object_get(j_client, "client"), "scope"), index, j_scope) {
+          json_array_foreach(json_object_get(json_object_get(j_client, "client"), "scope"), index = 0, j_scope) {
             if (0 == o_strcmp(json_string_value(j_scope), scope_array[i])) {
               if (scope_allowed == NULL) {
                 scope_allowed = o_malloc(2 * sizeof(char*));
@@ -2151,7 +2151,7 @@ static json_t * check_parameters (json_t * j_params) {
         json_array_append_new(j_error, json_string("Property 'scope' is optional and must be an array"));
         ret = G_ERROR_PARAM;
       } else {
-        json_array_foreach(json_object_get(j_params, "scope"), index, j_element) {
+        json_array_foreach(json_object_get(j_params, "scope"), index = 0, j_element) {
           if (!json_is_object(j_element)) {
             json_array_append_new(j_error, json_string("'scope' element must be a JSON object"));
             ret = G_ERROR_PARAM;
@@ -2174,7 +2174,7 @@ static json_t * check_parameters (json_t * j_params) {
         json_array_append_new(j_error, json_string("Property 'additional-parameters' is optional and must be an array"));
         ret = G_ERROR_PARAM;
       } else {
-        json_array_foreach(json_object_get(j_params, "additional-parameters"), index, j_element) {
+        json_array_foreach(json_object_get(j_params, "additional-parameters"), index = 0, j_element) {
           if (!json_is_object(j_element)) {
             json_array_append_new(j_error, json_string("'additional-parameters' element must be a JSON object"));
             ret = G_ERROR_PARAM;
