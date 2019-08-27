@@ -5,6 +5,8 @@
   "title-logout": "Log out",
   "add": "Add",
   "login": {
+    "error-scope-unavailable": "Error, no required scope is available",
+    "info-some-scope-unavailable": "Some scopes aren't available",
     "hello": "Hello {{name}}",
     "btn-ok": "OK",
     "btn-reload": "Reload",

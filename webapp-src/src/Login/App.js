@@ -31,7 +31,9 @@ class App extends Component {
       refresh_login: props.config.params.refresh_login,
       forceShowGrant: false,
       selectAccount: false,
-      login_hint: props.config.params.login_hint||""
+      login_hint: props.config.params.login_hint||"",
+      errorScopesUnavailable: false,
+      infoSomeScopeUnavailable: false
     };
 
     this.initProfile = this.initProfile.bind(this);
@@ -119,27 +121,32 @@ class App extends Component {
       var scopeGrantedDetails = {};
       var showGrant = true;
       var showGrantAsterisk = false;
-      res.scope.forEach((scope) => {
-        if (scope.granted) {
-          showGrant = false || this.state.forceShowGrant;
-          scopeGranted.push(scope.name);
-          scopeGrantedDetails[scope.name] = scope;
-        } else {
-          showGrantAsterisk = true;
-        }
-      });
-      if (scopeGranted.length) {
-        apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURI(scopeGranted.join(" ")))
-        .then((schemeRes) => {
-          this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk}, () => {
-            this.parseSchemes();
-          });
-        })
-        .fail((error) => {
-          messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
+      if (res.scope.length) {
+        var infoSomeScopeUnavailable = (scopeList.split(" ").length > res.scope.length);
+        res.scope.forEach((scope) => {
+          if (scope.granted) {
+            showGrant = false || this.state.forceShowGrant;
+            scopeGranted.push(scope.name);
+            scopeGrantedDetails[scope.name] = scope;
+          } else {
+            showGrantAsterisk = true;
+          }
         });
+        if (scopeGranted.length) {
+          apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURI(scopeGranted.join(" ")))
+          .then((schemeRes) => {
+            this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk, infoSomeScopeUnavailable: infoSomeScopeUnavailable}, () => {
+              this.parseSchemes();
+            });
+          })
+          .fail((error) => {
+            messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
+          });
+        } else {
+          this.setState({client: res.client, scope: res.scope, showGrant: true, showGrantAsterisk: true, errorScopesUnavailable: false, infoSomeScopeUnavailable: infoSomeScopeUnavailable});
+        }
       } else {
-        this.setState({client: res.client, scope: res.scope, showGrant: true, showGrantAsterisk: true});
+        this.setState({errorScopesUnavailable: true, infoSomeScopeUnavailable: false});
       }
     })
     .fail((error) => {
@@ -220,16 +227,20 @@ class App extends Component {
     if (this.state.config) {
       var body = "";
       if (this.state.loaded) {
-        if (this.state.newUser || this.state.passwordRequired) {
-          if (!this.state.scheme) {
-            body = <PasswordForm config={this.state.config} username={this.state.login_hint} currentUser={this.state.currentUser} callbackInitProfile={this.initProfile}/>;
-          } else {
-            body = <NoPasswordForm config={this.state.config} username={this.state.login_hint} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
-          }
-        } else if (this.state.selectAccount) {
-          body = <SelectAccount config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
+        if (this.state.errorScopesUnavailable) {
+          body = <div className="alert alert-danger" role="alert">{i18next.t("login.error-scope-unavailable")}</div>
         } else {
-          body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} showGrant={this.state.showGrant}/>;
+          if (this.state.newUser || this.state.passwordRequired) {
+            if (!this.state.scheme) {
+              body = <PasswordForm config={this.state.config} username={this.state.login_hint} currentUser={this.state.currentUser} callbackInitProfile={this.initProfile}/>;
+            } else {
+              body = <NoPasswordForm config={this.state.config} username={this.state.login_hint} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
+            }
+          } else if (this.state.selectAccount) {
+            body = <SelectAccount config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
+          } else {
+            body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} showGrant={this.state.showGrant} infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable}/>;
+          }
         }
       }
       var langList = [];

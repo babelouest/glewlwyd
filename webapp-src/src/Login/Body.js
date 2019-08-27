@@ -16,7 +16,8 @@ class Body extends Component {
       scope: props.scope,
       scheme: props.scheme,
       schemeListRequired: props.schemeListRequired,
-      showGrant: props.showGrant
+      showGrant: props.showGrant,
+      infoSomeScopeUnavailable: props.infoSomeScopeUnavailable
     };
     
     messageDispatcher.subscribe('Body', (message) => {
@@ -31,7 +32,8 @@ class Body extends Component {
       scope: nextProps.scope,
       scheme: nextProps.scheme,
       schemeListRequired: nextProps.schemeListRequired,
-      showGrant: nextProps.showGrant
+      showGrant: nextProps.showGrant,
+      infoSomeScopeUnavailable: nextProps.infoSomeScopeUnavailable
     });
   }
 
@@ -41,7 +43,7 @@ class Body extends Component {
       content = <div id="carouselBody" className="carousel slide" data-ride="carousel">
         <div className="carousel-inner">
           <div className={"carousel-item" + (this.state.showGrant?" active":"")}>
-            <GrantScope config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope}/>
+            <GrantScope config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable} />
           </div>
         </div>
       </div>;

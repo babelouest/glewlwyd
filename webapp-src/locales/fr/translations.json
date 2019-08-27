@@ -5,6 +5,8 @@
   "title-logout": "Se déconnecter",
   "add": "Ajouter",
   "login": {
+    "error-scope-unavailable": "Erreur, aucun scope requis n'est accessible",
+    "info-some-scope-unavailable": "Certains scopes ne sont pas accessibles",
     "hello": "Bonjour {{name}}",
     "btn-ok": "Valider",
     "btn-reload": "Recharger",
