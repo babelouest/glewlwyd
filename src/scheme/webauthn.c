@@ -1255,7 +1255,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL, * credential_id_b64 = NULL, * cbor_auth_data, * cred_pub_key, cert_x[256], cert_y[256], pubkey_export[1024];
   char * challenge_hash = NULL, * message = NULL;
   const char * rpid = NULL;
-  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, cert_x_len, cert_y_len, pubkey_export_len = 1024, index, cbor_bs_handle_len, rpid_len;
+  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, cert_x_len, cert_y_len, pubkey_export_len = 1024, index = 0, cbor_bs_handle_len, rpid_len;
   uint32_t counter = 0;
   int ret = G_OK, res, status, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0;
   unsigned int i;
