@@ -134,6 +134,9 @@ class App extends Component {
 
   closePasswordModal(result, data) {
     $("#passwordModal").modal("hide");
+    if (result) {
+      messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("profile.password-change-success")});
+    }
   }
   
 	render() {

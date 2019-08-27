@@ -26,6 +26,7 @@ class App extends Component {
     this.state = {
       lang: i18next.language,
       config: props.config,
+      passwordMinLength: props.config.PasswordMinLength||8,
       curNav: "users",
       loggedIn: false,
       users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
@@ -801,9 +802,9 @@ class App extends Component {
         if (user.password !== confirmData.password) {
           result = false;
           data["password"] = i18next.t("admin.user-password-error-match");
-        } else if (user.password.length && user.password.length < 8) {
+        } else if (user.password.length && user.password.length < this.state.passwordMinLength) {
           result = false;
-          data["password"] = i18next.t("admin.user-password-error-invalid");
+          data["password"] = i18next.t("admin.user-password-error-invalid", {minLength: this.state.passwordMinLength});
         }
       }
       if (!user.username) {
@@ -825,9 +826,9 @@ class App extends Component {
         if (user.password !== confirmData.password) {
           result = false;
           data["password"] = i18next.t("admin.user-password-error-match");
-        } else if (user.password.length && user.password.length < 8) {
+        } else if (user.password.length && user.password.length < this.state.passwordMinLength) {
           result = false;
-          data["password"] = i18next.t("admin.user-password-error-invalid");
+          data["password"] = i18next.t("admin.user-password-error-invalid", {minLength: this.state.passwordMinLength});
         }
       }
       cb(result, data);
@@ -841,9 +842,9 @@ class App extends Component {
         if (client.password !== confirmData.password) {
           result = false;
           data["password"] = i18next.t("admin.user-password-error-match");
-        } else if (client.password.length && client.password.length < 8) {
+        } else if (client.password.length && client.password.length < this.state.passwordMinLength) {
           result = false;
-          data["password"] = i18next.t("admin.user-password-error-invalid");
+          data["password"] = i18next.t("admin.user-password-error-invalid", {minLength: this.state.passwordMinLength});
         }
       } else if (!client.password && add) {
         result = false;
