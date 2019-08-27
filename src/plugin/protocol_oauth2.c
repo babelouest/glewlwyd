@@ -245,8 +245,8 @@ static char * generate_access_token(struct _oauth2_config * config, const char *
   char salt[OAUTH2_SALT_LENGTH + 1] = {0};
   jwt_t * jwt = NULL;
   char * token = NULL, * property = NULL;
-  json_t * j_element, * j_value;
-  size_t index, index_p;
+  json_t * j_element = NULL, * j_value;
+  size_t index = 0, index_p = 0;
   
   if ((jwt = jwt_dup(config->jwt_key)) != NULL) {
     rand_string_nonce(salt, OAUTH2_SALT_LENGTH);

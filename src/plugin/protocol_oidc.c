@@ -118,8 +118,8 @@ static struct _u_map * get_map(const struct _u_request * request) {
  * return true if the JSON array has a element matching value
  */
 static int json_array_has_string(json_t * j_array, const char * value) {
-  json_t * j_element;
-  size_t index;
+  json_t * j_element = NULL;
+  size_t index = 0;
   
   json_array_foreach(j_array, index, j_element) {
     if (json_is_string(j_element) && 0 == o_strcmp(value, json_string_value(j_element))) {
@@ -312,8 +312,8 @@ static char * get_username_from_sub(struct _oidc_config * config, const char * s
  * Parse a single claim from a claim request
  */
 static int is_claim_parameter_valid(json_t * j_claim) {
-  json_t * j_element;
-  size_t index;
+  json_t * j_element = NULL;
+  size_t index = 0;
   
   if (json_is_null(j_claim)) {
     return G_OK;
@@ -342,8 +342,8 @@ static int is_claim_parameter_valid(json_t * j_claim) {
  */
 static int parse_claims_request(json_t * j_claims) {
   int ret = G_OK;
-  json_t * j_claim_object, * j_element;
-  const char * claim;
+  json_t * j_claim_object, * j_element = NULL;
+  const char * claim = NULL;
   
   if (json_is_object(j_claims)) {
     if ((j_claim_object = json_object_get(j_claims, "userinfo")) != NULL) {
@@ -386,9 +386,9 @@ static char get_url_separator(const char * redirect_uri, int implicit_flow) {
  * Build a JWK based on the public key
  */
 static json_t * extract_jwks_from_pubkey(struct _oidc_config * config) {
-  json_t * j_jwks = NULL, * j_return, * j_element;
+  json_t * j_jwks = NULL, * j_return, * j_element = NULL;
   unsigned char m_enc[2048] = {0}, e_enc[32] = {0}, x_enc[256], y_enc[256], kid[64], kid_enc[128] = {0};
-  size_t index, m_enc_len = 0, e_enc_len = 0, x_enc_len = 0, y_enc_len = 0, kid_len = 64, kid_enc_len = 0;
+  size_t index = 0, m_enc_len = 0, e_enc_len = 0, x_enc_len = 0, y_enc_len = 0, kid_len = 64, kid_enc_len = 0;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_datum_t cert_dat, m_dat, e_dat, x_dat, y_dat;
   gnutls_ecc_curve_t curve = GNUTLS_ECC_CURVE_INVALID;
@@ -541,8 +541,8 @@ static json_t * get_address_claim(struct _oidc_config * config, json_t * j_user)
  * Return the claim value if possible
  */
 static json_t * get_claim_value_from_request(struct _oidc_config * config, const char * claim, json_t * j_claim_request, json_t * j_user) {
-  json_t * j_element, * j_user_property, * j_claim_value = NULL, * j_return = NULL, * j_values_element;
-  size_t index, index_values;
+  json_t * j_element = NULL, * j_user_property, * j_claim_value = NULL, * j_return = NULL, * j_values_element;
+  size_t index = 0, index_values = 0;
   char * endptr = NULL;
   int return_claim = 1, tmp_claim;
   long int lvalue;
@@ -607,11 +607,11 @@ static json_t * get_claim_value_from_request(struct _oidc_config * config, const
  * build a userinfo in JSON format
  */
 static json_t * get_userinfo(struct _oidc_config * config, const char * sub, json_t * j_user, json_t * j_claims_request, const char * scopes) {
-  json_t * j_userinfo = json_pack("{ss}", "sub", sub), * j_claim, * j_user_property, * j_address, * j_scope, * j_claim_request, * j_claim_value;
+  json_t * j_userinfo = json_pack("{ss}", "sub", sub), * j_claim = NULL, * j_user_property, * j_address, * j_scope, * j_claim_request = NULL, * j_claim_value;
   char ** scopes_array = NULL, * endptr;
-  const char * claim;
+  const char * claim = NULL;
   long int lvalue;
-  size_t index, index_scope;
+  size_t index = 0, index_scope = 0;
   
   // Append name if mandatory
   if (0 == o_strcmp("mandatory", json_string_value(json_object_get(config->j_params, "name-claim")))) {
@@ -1044,8 +1044,8 @@ static char * generate_access_token(struct _oidc_config * config, const char * u
   char salt[OIDC_SALT_LENGTH + 1] = {0};
   jwt_t * jwt = NULL;
   char * token = NULL, * property = NULL, * sub = get_sub(config, username, j_client), * str_claims;
-  json_t * j_element, * j_value, * j_claims_grant;
-  size_t index, index_p;
+  json_t * j_element = NULL, * j_value, * j_claims_grant;
+  size_t index = 0, index_p = NULL;
   
   if (sub != NULL) {
     if ((jwt = jwt_dup(config->jwt_key)) != NULL) {
@@ -1408,9 +1408,9 @@ static json_t * check_client_valid(struct _oidc_config * config, const char * cl
  * builds the amr list based on the code
  */
 static int set_amr_list_for_code(struct _oidc_config * config, json_int_t gpoc_id, json_t * j_amr) {
-  json_t * j_query, * j_element;
+  json_t * j_query, * j_element = NULL;
   int ret;
-  size_t index;
+  size_t index = 0;
   
   if (j_amr != NULL) {
     if (json_array_size(j_amr)) {
@@ -1674,9 +1674,9 @@ static int disable_authorization_code(struct _oidc_config * config, json_int_t g
  * return the amr list based on the code
  */
 static json_t * get_amr_list_from_code(struct _oidc_config * config, json_int_t gpoc_id) {
-  json_t * j_query, * j_result, * j_return, * j_element;
+  json_t * j_query, * j_result, * j_return, * j_element = NULL;
   int ret;
-  size_t index;
+  size_t index = 0;
   
   j_query = json_pack("{sss[s]s{sI}}",
                       "table",
@@ -3970,9 +3970,9 @@ static int callback_oidc_clean(const struct _u_request * request, struct _u_resp
 static int callback_oidc_discovery(const struct _u_request * request, struct _u_response * response, void * user_data) {
   UNUSED(request);
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_discovery = json_object(), * j_element;
+  json_t * j_discovery = json_object(), * j_element = NULL;
   char * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, config->name);
-  size_t index;
+  size_t index = NULL;
   
   if (j_discovery != NULL && plugin_url != NULL) {
     json_object_set(j_discovery, "issuer", json_object_get(config->j_params, "iss"));
