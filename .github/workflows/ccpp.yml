@@ -16,7 +16,7 @@ jobs:
         tar xzf libcbor-0.5.0.tar.gz
         mkdir libcbor-0.5.0/build
         pushd libcbor-0.5.0/build && cmake .. && make && sudo make install && popd
-        ldconfig
+        sudo ldconfig
     - name: build
       run: |
         mkdir build
