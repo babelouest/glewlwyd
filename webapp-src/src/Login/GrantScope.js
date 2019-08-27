@@ -12,7 +12,8 @@ class GrantScope extends Component {
       currentUser: props.currentUser,
       client: props.client,
       scope: props.scope,
-      show: props.show
+      show: props.show,
+      infoSomeScopeUnavailable: props.infoSomeScopeUnavailable
     };
     
     this.handleToggleGrantScope = this.handleToggleGrantScope.bind(this);
@@ -28,7 +29,8 @@ class GrantScope extends Component {
       currentUser: nextProps.currentUser, 
       client: nextProps.client, 
       scope: nextProps.scope,
-      show: nextProps.show
+      show: nextProps.show,
+      infoSomeScopeUnavailable: nextProps.infoSomeScopeUnavailable
     });
   }
 
@@ -76,6 +78,10 @@ class GrantScope extends Component {
         </li>
       );
     });
+    var infoSomeScopeUnavailable;
+    if (this.state.infoSomeScopeUnavailable) {
+      infoSomeScopeUnavailable = <div className="alert alert-info" role="alert">{i18next.t("login.info-some-scope-unavailable")}</div>
+    }
     return (
     <div>
       <div className="row">
@@ -88,6 +94,11 @@ class GrantScope extends Component {
           <ul className="list-group">
             {scopeList}
           </ul>
+        </div>
+      </div>
+      <div className="row">
+        <div className="col-md-12">
+          {infoSomeScopeUnavailable}
         </div>
       </div>
       <div className="row">
