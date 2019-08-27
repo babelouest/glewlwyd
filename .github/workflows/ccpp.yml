@@ -1,0 +1,39 @@
+name: C/C++ CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: install dependencies
+      run: |
+        apt-get install -y libconfig-dev libsystemd-dev libjansson-dev libssl-dev libcurl4-gnutls-dev libldap2-dev libmicrohttpd-dev libsqlite3-dev sqlite3 libpq-dev make wget liboath-dev default-mysql-client default-libmysqlclient-dev cmake wget pkg-config
+        wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor-0.5.0.tar.gz
+        tar xzf libcbor-0.5.0.tar.gz
+        mkdir libcbor-0.5.0/build
+        pushd libcbor-0.5.0/build && cmake .. && make && sudo make install && popd
+        ldconfig
+    - name: build
+      run: |
+        mkdir build
+        cd build
+        cmake -DBUILD_GLEWLWYD_TESTING=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib ..
+        make
+        make install
+    - name: build-webapp
+      run: |
+        cd webapp-src
+        npm install
+        make build-webapp
+    - name: test
+      run: |
+        sqlite3 /tmp/glewlwyd.db < docs/database/init.sqlite3.sql
+        sqlite3 /tmp/glewlwyd.db < test/glewlwyd-test.sql
+        glewlwyd --config-file=test/glewlwyd-travis.conf &
+        export G_PID=$!
+        make test || (cat build/Testing/Temporary/LastTest.log && cat /tmp/glewlwyd.log && false)
+        kill $G_PID
