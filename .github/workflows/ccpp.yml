@@ -40,5 +40,6 @@ jobs:
         sqlite3 /tmp/glewlwyd.db < test/glewlwyd-test.sql
         glewlwyd --config-file=test/glewlwyd-travis.conf &
         export G_PID=$!
-        make test || (cat build/Testing/Temporary/LastTest.log && cat /tmp/glewlwyd.log && false)
+        cd build
+        make test || (cat Testing/Temporary/LastTest.log && cat /tmp/glewlwyd.log && false)
         kill $G_PID
