@@ -11,7 +11,7 @@ jobs:
     - uses: actions/checkout@v1
     - name: install dependencies
       run: |
-        sudo apt-get install -y libconfig-dev libsystemd-dev libjansson-dev libssl-dev libcurl4-gnutls-dev libldap2-dev libmicrohttpd-dev libsqlite3-dev sqlite3 libpq-dev make wget liboath-dev default-mysql-client default-libmysqlclient-dev cmake wget pkg-config check libsubunit-dev cppcheck
+        sudo apt-get install -y libconfig-dev libsystemd-dev libjansson-dev libssl-dev libcurl4-gnutls-dev libldap2-dev libmicrohttpd-dev libsqlite3-dev sqlite3 libpq-dev make wget liboath-dev default-mysql-client default-libmysqlclient-dev cmake wget pkg-config check libsubunit-dev cppcheck npm
         wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor-0.5.0.tar.gz
         tar xzf libcbor-0.5.0.tar.gz
         mkdir libcbor-0.5.0/build
