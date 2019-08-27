@@ -181,7 +181,7 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
           j_session_array = json_array();
           if (j_session_array != NULL) {
             json_array_foreach(j_result, index, j_element) {
-              j_user = get_user(config, json_string_value(json_object_get(j_element, "gus_username")), NULL);
+              j_user = get_user_profile(config, json_string_value(json_object_get(j_element, "gus_username")), NULL);
               if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
                 json_object_set(json_object_get(j_user, "user"), "last_login", json_object_get(j_element, "gus_last_login"));
                 json_array_append(j_session_array, json_object_get(j_user, "user"));
