@@ -5,6 +5,8 @@
   "title-logout": "Log out",
   "add": "Add",
   "login": {
+    "error-scope-unavailable": "Error, no required scope is available",
+    "info-some-scope-unavailable": "Some scopes aren't available",
     "hello": "Hello {{name}}",
     "btn-ok": "OK",
     "btn-reload": "Reload",
@@ -84,6 +86,7 @@
     "certificate-scheme-auth-invalid": "Invalid certificate"
   },
   "admin": {
+    "error-credential-message": "Please connect with a user that has admin credentials",
     "menu-users": "Users",
     "menu-clients": "Clients",
     "menu-scopes": "Scopes",
@@ -135,7 +138,7 @@
     "user-ssh-ph": "/path/to/key-file",
     "user-list-title": "User list",
     "user-password-error-match": "Passwords don't match",
-    "user-password-error-invalid": "Password must be at least 8 characters long",
+    "user-password-error-invalid": "Password must be at least {{minLength}} characters long",
     "user-password-mandatory": "Password is mandatory",
     "user-username-mandatory": "Username is mandatory",
     "user-username-exists": "Username already exist",
@@ -578,7 +581,9 @@
     "mod-certificate-user-certificate-property-ph": "Ex: x509-certificate"
   },
   "profile": {
+    "error-credential-message": "Please connect to the application",
     "requires-profile-scope": "Profile scope required",
+    "requires-admin-scope": "Admin scope required",
     "menu-user": "Personal data",
     "menu-password": "Password",
     "menu-session": "Sessions",
@@ -592,12 +597,13 @@
     "password-modal-old-password": "Current password",
     "password-modal-old-password-ph": "Ex: 12345678",
     "password-modal-new-password": "New password",
-    "password-modal-new-password-ph": "8 characters minimum",
+    "password-modal-new-password-ph": "{{minLength}} characters minimum",
     "password-modal-new-password-confirm": "Confirm new password",
-    "password-modal-new-password-confirm-ph": "8 characters minimum",
-    "password-min-characters": "A password must be at least 8 characters length",
+    "password-modal-new-password-confirm-ph": "{{minLength}} characters minimum",
+    "password-min-characters": "A password must be at least {{minLength}} characters length",
     "password-not-match": "Passwords don't match",
     "password-invalid": "Password is invalid",
+    "password-change-success": "Password has been changed",
     "scheme-not-found": "Scheme {{module}} not found",
     "scheme-mock-title": "Scheme {{module}}/{{name}} configuration",
     "scheme-mock-get-register": "Registration status",
