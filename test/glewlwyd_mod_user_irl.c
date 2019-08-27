@@ -290,7 +290,7 @@ START_TEST(test_glwd_mod_user_irl_user_update_profile)
   
   ulfius_init_response(&auth_resp);
   
-  j_profile = json_pack("{sssssssss[ss]}", "username", username, "name", PROFILE_NAME, "email", PROFILE_MAIL, "source", MOD_NAME, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
+  j_profile = json_pack("{sssssss[ss]}", "username", username, "name", PROFILE_NAME, "email", PROFILE_MAIL, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
   ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/profile_list/", NULL, NULL, NULL, NULL, 200, j_profile, NULL, NULL), 1);
   json_decref(j_profile);
   
@@ -298,7 +298,7 @@ START_TEST(test_glwd_mod_user_irl_user_update_profile)
   ck_assert_int_eq(run_simple_test(&auth_req, "PUT", SERVER_URI "/profile/", NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   
-  j_profile = json_pack("{sssssssss[ss]}", "username", username, "name", PROFILE_NAME " Profile Updated", "email", PROFILE_MAIL, "source", MOD_NAME, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
+  j_profile = json_pack("{sssssss[ss]}", "username", username, "name", PROFILE_NAME " Profile Updated", "email", PROFILE_MAIL, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
   ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/profile_list/", NULL, NULL, NULL, NULL, 200, j_profile, NULL, NULL), 1);
   json_decref(j_profile);
   
@@ -332,7 +332,7 @@ START_TEST(test_glwd_mod_user_irl_user_update_profile_case)
   
   ulfius_init_response(&auth_resp);
   
-  j_profile = json_pack("{sssssssss[ss]}", "username", username_case, "name", PROFILE_NAME, "email", PROFILE_MAIL, "source", MOD_NAME, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
+  j_profile = json_pack("{sssssss[ss]}", "username", username_case, "name", PROFILE_NAME, "email", PROFILE_MAIL, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
   ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/profile_list/", NULL, NULL, NULL, NULL, 200, j_profile, NULL, NULL), 1);
   json_decref(j_profile);
   
@@ -340,7 +340,7 @@ START_TEST(test_glwd_mod_user_irl_user_update_profile_case)
   ck_assert_int_eq(run_simple_test(&auth_req, "PUT", SERVER_URI "/profile/", NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   
-  j_profile = json_pack("{sssssssss[ss]}", "username", username_case, "name", PROFILE_NAME " Profile Updated", "email", PROFILE_MAIL, "source", MOD_NAME, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
+  j_profile = json_pack("{sssssss[ss]}", "username", username_case, "name", PROFILE_NAME " Profile Updated", "email", PROFILE_MAIL, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
   ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/profile_list/", NULL, NULL, NULL, NULL, 200, j_profile, NULL, NULL), 1);
   json_decref(j_profile);
   
