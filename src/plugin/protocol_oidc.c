@@ -121,7 +121,7 @@ static int json_array_has_string(json_t * j_array, const char * value) {
   json_t * j_element = NULL;
   size_t index = 0;
   
-  json_array_foreach(j_array, index, j_element) {
+  json_array_foreach(j_array, index = 0, j_element) {
     if (json_is_string(j_element) && 0 == o_strcmp(value, json_string_value(j_element))) {
       return 1;
     }
@@ -326,7 +326,7 @@ static int is_claim_parameter_valid(json_t * j_claim) {
       if (!json_is_array(json_object_get(j_claim, "values"))) {
         return G_ERROR_PARAM;
       } else {
-        json_array_foreach(json_object_get(j_claim, "values"), index, j_element) {
+        json_array_foreach(json_object_get(j_claim, "values"), index = 0, j_element) {
           if (!json_string_length(j_element)) {
             return G_ERROR_PARAM;
           }
@@ -400,7 +400,7 @@ static json_t * extract_jwks_from_pubkey(struct _oidc_config * config) {
       if (json_array_size(json_object_get(config->j_params, "jwks-x5c"))) {
         json_object_set_new(j_jwks, "x5c", json_array());
       }
-      json_array_foreach(json_object_get(config->j_params, "jwks-x5c"), index, j_element) {
+      json_array_foreach(json_object_get(config->j_params, "jwks-x5c"), index = 0, j_element) {
         json_array_append(json_object_get(j_jwks, "x5c"), j_element);
       }
       if (!gnutls_pubkey_init(&pubkey)) {
@@ -547,7 +547,7 @@ static json_t * get_claim_value_from_request(struct _oidc_config * config, const
   int return_claim = 1, tmp_claim;
   long int lvalue;
   
-  json_array_foreach(json_object_get(config->j_params, "claims"), index, j_element) {
+  json_array_foreach(json_object_get(config->j_params, "claims"), index = 0, j_element) {
     if (j_return == NULL && 0 == o_strcmp(json_string_value(json_object_get(j_element, "name")), claim) && json_object_get(j_element, "on-demand") == json_true()) {
       if ((j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_element, "user-property")))) != NULL && json_is_string(j_user_property)) {
         if (json_object_get(j_claim_request, "value") != NULL) {
@@ -674,21 +674,21 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
   
   // Append scopes claims
   if (scopes == NULL || split_string(scopes, " ", &scopes_array)) {
-    json_array_foreach(json_object_get(config->j_params, "name-claim-scope"), index, j_scope) {
+    json_array_foreach(json_object_get(config->j_params, "name-claim-scope"), index = 0, j_scope) {
       if (string_array_has_value((const char **)scopes_array, json_string_value(j_scope))) {
         if (json_object_get(j_user, "name") != NULL) {
           json_object_set(j_userinfo, "name", json_object_get(j_user, "name"));
         }
       }
     }
-    json_array_foreach(json_object_get(config->j_params, "email-claim-scope"), index, j_scope) {
+    json_array_foreach(json_object_get(config->j_params, "email-claim-scope"), index = 0, j_scope) {
       if (string_array_has_value((const char **)scopes_array, json_string_value(j_scope))) {
         if (json_object_get(j_user, "email") != NULL) {
           json_object_set(j_userinfo, "email", json_object_get(j_user, "email"));
         }
       }
     }
-    json_array_foreach(json_object_get(config->j_params, "claims"), index, j_claim) {
+    json_array_foreach(json_object_get(config->j_params, "claims"), index = 0, j_claim) {
       if (json_object_get(j_userinfo, json_string_value(json_object_get(j_claim, "name"))) == NULL) {
         json_array_foreach(json_object_get(j_claim, "scope"), index_scope, j_scope) {
           if (string_array_has_value((const char **)scopes_array, json_string_value(j_scope))) {
@@ -719,7 +719,7 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
   }
   
   // Append mandatory claims
-  json_array_foreach(json_object_get(config->j_params, "claims"), index, j_claim) {
+  json_array_foreach(json_object_get(config->j_params, "claims"), index = 0, j_claim) {
     if (json_object_get(j_claim, "mandatory") == json_true()) {
       j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_claim, "user-property")));
       if (j_user_property != NULL && json_is_string(j_user_property)) {
@@ -1072,7 +1072,7 @@ static char * generate_access_token(struct _oidc_config * config, const char * u
         json_decref(j_claims_grant);
       }
       if (json_object_get(config->j_params, "additional-parameters") != NULL && j_user != NULL) {
-        json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index, j_element) {
+        json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index = 0, j_element) {
           if (json_is_string(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))) && json_string_length(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
             jwt_add_grant(jwt, json_string_value(json_object_get(j_element, "token-parameter")), json_string_value(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))));
           } else if (json_is_array(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
@@ -1267,7 +1267,7 @@ static json_t * check_client_valid_without_secret(struct _oidc_config * config, 
   if (check_result_value(j_client, G_OK)) {
     if (redirect_uri != NULL) {
       uri_found = 0;
-      json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index, j_element) {
+      json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index = 0, j_element) {
         if (0 == o_strcmp(json_string_value(j_element), redirect_uri)) {
           uri_found = 1;
         }
@@ -1277,7 +1277,7 @@ static json_t * check_client_valid_without_secret(struct _oidc_config * config, 
     }
     
     authorization_type_enabled = 0;
-    json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
+    json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index = 0, j_element) {
       if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG && 0 == o_strcmp(json_string_value(j_element), "code")) {
         authorization_type_enabled = 1;
       } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "token")) {
@@ -1351,7 +1351,7 @@ static json_t * check_client_valid(struct _oidc_config * config, const char * cl
     } else {
       if (redirect_uri != NULL) {
         uri_found = 0;
-        json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index, j_element) {
+        json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index = 0, j_element) {
           if (0 == o_strcmp(json_string_value(j_element), redirect_uri)) {
             uri_found = 1;
           }
@@ -1361,7 +1361,7 @@ static json_t * check_client_valid(struct _oidc_config * config, const char * cl
       }
       
       authorization_type_enabled = 0;
-      json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
+      json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index = 0, j_element) {
         if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG && 0 == o_strcmp(json_string_value(j_element), "code")) {
           authorization_type_enabled = 1;
         } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "token")) {
@@ -1416,7 +1416,7 @@ static int set_amr_list_for_code(struct _oidc_config * config, json_int_t gpoc_i
     if (json_array_size(j_amr)) {
       j_query = json_pack("{sss[]}", "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CODE_SHEME, "values");
       if (j_query != NULL) {
-        json_array_foreach(j_amr, index, j_element) {
+        json_array_foreach(j_amr, index = 0, j_element) {
           json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIsO}", "gpoc_id", gpoc_id, "gpoch_scheme_module", j_element));
         }
         if (h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL) == H_OK) {
@@ -1634,7 +1634,7 @@ static json_t * get_scope_parameters(struct _oidc_config * config, const char * 
   json_t * j_element = NULL, * j_return = NULL;
   size_t index = 0;
   
-  json_array_foreach(json_object_get(config->j_params, "scope"), index, j_element) {
+  json_array_foreach(json_object_get(config->j_params, "scope"), index = 0, j_element) {
     if (0 == o_strcmp(scope, json_string_value(json_object_get(j_element, "name")))) {
       j_return = json_incref(j_element);
     }
@@ -1692,7 +1692,7 @@ static json_t * get_amr_list_from_code(struct _oidc_config * config, json_int_t 
     if (json_array_size(j_result)) {
       j_return = json_pack("{sis[]}", "result", G_OK, "amr");
       if (j_return != NULL) {
-        json_array_foreach(j_result, index, j_element) {
+        json_array_foreach(j_result, index = 0, j_element) {
           json_array_append(json_object_get(j_return, "amr"), json_object_get(j_element, "gpoch_scheme_module"));
         }
       } else {
@@ -1770,7 +1770,7 @@ static json_t * validate_authorization_code(struct _oidc_config * config, const 
         json_decref(j_query);
         if (res == H_OK && json_array_size(j_result_scope) > 0) {
           if (!json_object_set_new(json_array_get(j_result, 0), "scope", json_array())) {
-            json_array_foreach(j_result_scope, index, j_element) {
+            json_array_foreach(j_result_scope, index = 0, j_element) {
               if (0 == o_strcmp("openid", json_string_value(json_object_get(j_element, "name")))) {
                 has_scope_openid = 1;
               }
@@ -1848,7 +1848,7 @@ static json_t * validate_session_client_scope(struct _oidc_config * config, cons
     if (check_result_value(j_grant, G_OK)) {
       if (json_array_size(json_object_get(json_object_get(j_grant, "grant"), "scope"))) {
         // Count and store the number of granted scopes
-        json_array_foreach(json_object_get(json_object_get(j_grant, "grant"), "scope"), index, j_scope_grant) {
+        json_array_foreach(json_object_get(json_object_get(j_grant, "grant"), "scope"), index = 0, j_scope_grant) {
           scopes_granted += json_object_get(j_scope_grant, "granted")==json_true();
         }
         json_object_set_new(json_object_get(j_session, "session"), "scopes_granted", json_integer(scopes_granted));
@@ -1856,7 +1856,7 @@ static json_t * validate_session_client_scope(struct _oidc_config * config, cons
         
         json_object_foreach(json_object_get(json_object_get(j_session, "session"), "scope"), scope_session, j_scope_session) {
           // Evaluate if the scope is granted for the client
-          json_array_foreach(json_object_get(json_object_get(j_grant, "grant"), "scope"), index, j_scope_grant) {
+          json_array_foreach(json_object_get(json_object_get(j_grant, "grant"), "scope"), index = 0, j_scope_grant) {
             if (0 == o_strcmp(scope_session, json_string_value(json_object_get(j_scope_grant, "name")))) {
               json_object_set(j_scope_session, "granted", json_object_get(j_scope_grant, "granted"));
             }
@@ -1874,7 +1874,7 @@ static json_t * validate_session_client_scope(struct _oidc_config * config, cons
             } else if ((json_object_get(j_scope_session, "password_required") == json_true() && json_object_get(j_scope_session, "password_authenticated") == json_true()) || json_object_get(j_scope_session, "password_required") == json_false()) {
               json_object_foreach(json_object_get(j_scope_session, "schemes"), group, j_group) {
                 group_allowed = 0;
-                json_array_foreach(j_group, index, j_scheme) {
+                json_array_foreach(j_group, index = 0, j_scheme) {
                   if (!group_allowed && json_object_get(j_scheme, "scheme_authenticated") == json_true()) {
                     if (!json_array_has_string(json_object_get(json_object_get(j_session, "session"), "amr"), json_string_value(json_object_get(j_scheme, "scheme_type")))) {
                       json_array_append(json_object_get(json_object_get(j_session, "session"), "amr"), json_object_get(j_scheme, "scheme_type"));
@@ -1948,7 +1948,7 @@ static json_t * validate_session_client_scope(struct _oidc_config * config, cons
  * Verify that the refresh token is still valid to get an access token
  */
 static json_t * validate_refresh_token(struct _oidc_config * config, const char * refresh_token) {
-  json_t * j_return, * j_query, * j_result, * j_result_scope, * j_element;
+  json_t * j_return, * j_query, * j_result, * j_result_scope, * j_element = NULL;
   char * token_hash, * expires_at_clause;
   int res;
   size_t index = 0;
@@ -2009,7 +2009,7 @@ static json_t * validate_refresh_token(struct _oidc_config * config, const char 
           res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result_scope, NULL);
           if (res == H_OK) {
             if (!json_object_set_new(json_array_get(j_result, 0), "scope", json_array())) {
-              json_array_foreach(j_result_scope, index, j_element) {
+              json_array_foreach(j_result_scope, index = 0, j_element) {
                 json_array_append(json_object_get(json_array_get(j_result, 0), "scope"), json_object_get(j_element, "scope"));
               }
               j_return = json_pack("{sisO}", "result", G_OK, "token", json_array_get(j_result, 0));
@@ -2092,7 +2092,7 @@ static json_t * refresh_token_list_get(struct _oidc_config * config, const char 
   res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    json_array_foreach(j_result, index, j_element) {
+    json_array_foreach(j_result, index = 0, j_element) {
       json_object_set(j_element, "rolling_expiration", (json_integer_value(json_object_get(j_element, "gpor_rolling_expiration"))?json_true():json_false()));
       json_object_set(j_element, "enabled", (json_integer_value(json_object_get(j_element, "gpor_enabled"))?json_true():json_false()));
       json_object_del(j_element, "gpor_rolling_expiration");
@@ -3156,7 +3156,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
     if (check_result_value(j_client, G_OK)) {
       if (split_string(u_map_get(request->map_post_body, "scope"), " ", &scope_array) > 0) {
         for (i=0; scope_array[i]!=NULL; i++) {
-          json_array_foreach(json_object_get(json_object_get(j_client, "client"), "scope"), index, j_scope) {
+          json_array_foreach(json_object_get(json_object_get(j_client, "client"), "scope"), index = 0, j_scope) {
             if (0 == o_strcmp(json_string_value(j_scope), scope_array[i])) {
               if (scope_allowed == NULL) {
                 scope_allowed = o_malloc(2 * sizeof(char*));
@@ -4025,7 +4025,7 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
     json_object_set_new(j_discovery, "claim_types_supported", json_pack("[s]", "normal"));
     json_object_set_new(j_discovery, "claims_parameter_supported", json_true());
     json_object_set_new(j_discovery, "claims_supported", json_array());
-    json_array_foreach(json_object_get(config->j_params, "claims"), index, j_element) {
+    json_array_foreach(json_object_get(config->j_params, "claims"), index = 0, j_element) {
       json_array_append(json_object_get(j_discovery, "claims_supported"), json_object_get(j_element, "name"));
     }
     if (0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "name-claim"))) || 0 == o_strcmp("mandatory", json_string_value(json_object_get(config->j_params, "name-claim")))) {
@@ -4243,7 +4243,7 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("Property 'jwks-x5c' is optional and must be an array of strings"));
       ret = G_ERROR_PARAM;
     } else {
-      json_array_foreach(json_object_get(j_params, "jwks-x5c"), index, j_element) {
+      json_array_foreach(json_object_get(j_params, "jwks-x5c"), index = 0, j_element) {
         if (!json_string_length(j_element)) {
           json_array_append_new(j_error, json_string("Property 'jwks-x5c' is optional and must be an array of strings"));
           ret = G_ERROR_PARAM;
@@ -4267,7 +4267,7 @@ static json_t * check_parameters (json_t * j_params) {
         json_array_append_new(j_error, json_string("Property 'scope' is optional and must be an array"));
         ret = G_ERROR_PARAM;
       } else {
-        json_array_foreach(json_object_get(j_params, "scope"), index, j_element) {
+        json_array_foreach(json_object_get(j_params, "scope"), index = 0, j_element) {
           if (!json_is_object(j_element)) {
             json_array_append_new(j_error, json_string("'scope' element must be a JSON object"));
             ret = G_ERROR_PARAM;
@@ -4291,7 +4291,7 @@ static json_t * check_parameters (json_t * j_params) {
         json_array_append_new(j_error, json_string("Property 'additional-parameters' is optional and must be an array"));
         ret = G_ERROR_PARAM;
       } else {
-        json_array_foreach(json_object_get(j_params, "additional-parameters"), index, j_element) {
+        json_array_foreach(json_object_get(j_params, "additional-parameters"), index = 0, j_element) {
           if (!json_is_object(j_element)) {
             json_array_append_new(j_error, json_string("'additional-parameters' element must be a JSON object"));
             ret = G_ERROR_PARAM;
@@ -4320,7 +4320,7 @@ static json_t * check_parameters (json_t * j_params) {
         json_array_append_new(j_error, json_string("Property 'claims' is optional and must be an array"));
         ret = G_ERROR_PARAM;
       } else {
-        json_array_foreach(json_object_get(j_params, "claims"), index, j_element) {
+        json_array_foreach(json_object_get(j_params, "claims"), index = 0, j_element) {
           if (!json_is_object(j_element)) {
             json_array_append_new(j_error, json_string("'claims' element must be a JSON object"));
             ret = G_ERROR_PARAM;
@@ -4450,7 +4450,7 @@ static json_t * check_parameters (json_t * j_params) {
         json_array_append_new(j_error, json_string("Property 'allowed-scope' is optional and must be an array of strings that includes the value 'openid'"));
         ret = G_ERROR_PARAM;
       } else {
-        json_array_foreach(json_object_get(j_params, "allowed-scope"), index, j_element) {
+        json_array_foreach(json_object_get(j_params, "allowed-scope"), index = 0, j_element) {
           if (!json_string_length(j_element)) {
             json_array_append_new(j_error, json_string("Property 'allowed-scope' is optional and must be an array of strings that includes the value 'openid'"));
             ret = G_ERROR_PARAM;

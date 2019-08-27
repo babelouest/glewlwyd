@@ -65,8 +65,8 @@
 #define SAFETYNET_ISSUED_TO "CN=attest.android.com"
 
 static json_t * is_scheme_parameters_valid(json_t * j_params) {
-  json_t * j_return, * j_error, * j_element;
-  size_t index;
+  json_t * j_return, * j_error, * j_element = NULL;
+  size_t index = 0;
   json_int_t pubkey;
   
   if (json_is_object(j_params)) {
@@ -93,7 +93,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       if (!json_array_size(json_object_get(j_params, "pubKey-cred-params"))) {
         json_array_append_new(j_error, json_string("pubKey-cred-params is mandatory and must be a non empty JSON array"));
       } else {
-        json_array_foreach(json_object_get(j_params, "pubKey-cred-params"), index, j_element) {
+        json_array_foreach(json_object_get(j_params, "pubKey-cred-params"), index = 0, j_element) {
           pubkey = json_integer_value(j_element);
           //if (pubkey != -7 && pubkey != -35 && pubkey != -36 && pubkey != -257 && pubkey != -258 && pubkey != -259) {
           if (pubkey != ECDSA256 && pubkey != ECDSA384 && pubkey != ECDSA512) {
@@ -204,10 +204,10 @@ static json_t * get_user_id_from_username(struct config_module * config, json_t 
 }
 
 static json_t * get_credential_list(struct config_module * config, json_t * j_params, const char * username, int restrict_to_registered) {
-  json_t * j_query, * j_result, * j_return, * j_element;
+  json_t * j_query, * j_result, * j_return, * j_element = NULL;
   int res;
   char * username_escaped, * mod_name_escaped, * username_clause;
-  size_t index;
+  size_t index = 0;
   
   username_escaped = h_escape_string_with_quotes(config->conn, username);
   mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
@@ -240,7 +240,7 @@ static json_t * get_credential_list(struct config_module * config, json_t * j_pa
     if (json_array_size(j_result)) {
       j_return = json_pack("{sis[]}", "result", G_OK, "credential");
       if (j_return != NULL) {
-        json_array_foreach(j_result, index, j_element) {
+        json_array_foreach(j_result, index = 0, j_element) {
           switch (json_integer_value(json_object_get(j_element, "gswc_status"))) {
             case 1:
               json_object_set_new(j_element, "status", json_string("registered"));
@@ -1251,11 +1251,11 @@ static json_t * check_attestation_fido_u2f(unsigned char * credential_id, size_t
  * 
  */
 static json_t * register_new_attestation(struct config_module * config, json_t * j_params, json_t * j_scheme_data, json_t * j_credential) {
-  json_t * j_return, * j_client_data = NULL, * j_error, * j_result, * j_pubkey = NULL, * j_cert = NULL, * j_query, * j_element;
+  json_t * j_return, * j_client_data = NULL, * j_error, * j_result, * j_pubkey = NULL, * j_cert = NULL, * j_query, * j_element = NULL;
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL, * credential_id_b64 = NULL, * cbor_auth_data, * cred_pub_key, cert_x[256], cert_y[256], pubkey_export[1024];
   char * challenge_hash = NULL, * message = NULL;
   const char * rpid = NULL;
-  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, cert_x_len, cert_y_len, pubkey_export_len = 1024, index, cbor_bs_handle_len, rpid_len;
+  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, cert_x_len, cert_y_len, pubkey_export_len = 1024, index = 0, cbor_bs_handle_len, rpid_len;
   uint32_t counter = 0;
   int ret = G_OK, res, status, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0;
   unsigned int i;
@@ -1545,7 +1545,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
             key_type_valid = 1;
           } else if (cbor_isa_uint(cbor_key) && cbor_get_int(cbor_key) == 3 && cbor_isa_negint(cbor_value)) {
             if (cbor_get_int(cbor_value) == 6 || cbor_get_int(cbor_value) == 34 || cbor_get_int(cbor_value) == 35) {
-              json_array_foreach(json_object_get(j_params, "pubKey-cred-params"), index, j_element) {
+              json_array_foreach(json_object_get(j_params, "pubKey-cred-params"), index = 0, j_element) {
                 if (cbor_get_int(cbor_value) == 6 && json_integer_value(json_object_get(j_element, "alg")) == ECDSA256) {
                   key_alg_valid = 1;
                   curve = GNUTLS_ECC_CURVE_SECP256R1;
@@ -2301,8 +2301,8 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  */
 json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls) {
   UNUSED(config);
-  json_t * j_result = is_scheme_parameters_valid(j_parameters), * j_element, * j_return;
-  size_t index;
+  json_t * j_result = is_scheme_parameters_valid(j_parameters), * j_element = NULL, * j_return;
+  size_t index = 0;
   char * message;
   
   if (check_result_value(j_result, G_OK)) {
@@ -2320,7 +2320,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                      "google-root-ca-r2", json_string_length(json_object_get(j_parameters, "google-root-ca-r2"))?json_object_get(j_parameters, "google-root-ca-r2"):json_null(),
                      "mod_name", mod_name,
                      "pubKey-cred-params");
-    json_array_foreach(json_object_get(j_parameters, "pubKey-cred-params"), index, j_element) {
+    json_array_foreach(json_object_get(j_parameters, "pubKey-cred-params"), index = 0, j_element) {
       json_array_append_new(json_object_get((json_t *)*cls, "pubKey-cred-params"), json_pack("{sssO}", "type", "public-key", "alg", j_element));
     }
     j_return = json_pack("{si}", "result", G_OK);
