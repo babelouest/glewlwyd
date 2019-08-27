@@ -11,11 +11,12 @@ class CertificateSchemeForm extends Component {
       config: props.config,
       scheme: props.scheme,
       currentUser: props.currentUser,
-      triggerResult: false,
-      mockValue: ""
+      authResult: false
     };
     
     this.validateCertificate = this.validateCertificate.bind(this);
+    
+    this.validateCertificate();
   }
   
   componentWillReceiveProps(nextProps) {
@@ -23,13 +24,13 @@ class CertificateSchemeForm extends Component {
       config: nextProps.config,
       scheme: nextProps.scheme,
       currentUser: nextProps.currentUser,
-      triggerResult: false,
-      mockValue: ""
+      authResult: false
+    }, () => {
+      this.validateCertificate();
     });
   }
   
-  validateCertificate(e) {
-    e.preventDefault();
+  validateCertificate() {
 		var scheme = {
       scheme_type: this.state.scheme.scheme_type,
       scheme_name: this.state.scheme.scheme_name,
@@ -40,20 +41,30 @@ class CertificateSchemeForm extends Component {
     
     apiManager.glewlwydRequest("/auth/", "POST", scheme)
     .then(() => {
-      messageDispatcher.sendMessage('App', {type: 'loginSuccess', loginSuccess: true});
+      this.setState({authResult: true}, () => {
+        messageDispatcher.sendMessage('App', {type: 'loginSuccess', loginSuccess: true});
+      });
     })
     .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-certificate-value")});
+      this.setState({authResult: false});
     });
   }
   
   render() {
+    var authResult;
+    if (this.state.authResult) {
+      authResult = <div className="alert alert-success" role="alert">{i18next.t("login.certificate-scheme-auth-success")}</div>;
+    } else {
+      authResult = <div className="alert alert-danger" role="alert">{i18next.t("login.certificate-scheme-auth-invalid")}</div>;
+    }
     return (
       <form action="#" id="certificateSchemeForm">
         <div className="form-group">
           <h5>{i18next.t("login.certificate-scheme-title")}</h5>
         </div>
-        <button type="button" name="certificatebut" id="certificatebut" className="btn btn-primary" onClick={(e) => this.validateCertificate(e)} title={i18next.t("login.certificate-login-authenticate")}>{i18next.t("login.certificate-login-authenticate")}</button>
+        <div className="form-group">
+          {authResult}
+        </div>
       </form>
     );
   }
