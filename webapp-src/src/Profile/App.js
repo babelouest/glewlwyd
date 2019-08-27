@@ -32,7 +32,9 @@ class App extends Component {
       messageModal: {
         title: "",
         message: ""
-      }
+      },
+      invalidCredentialMessage: false,
+      invalidDelegateMessage: false
     };
     
     this.fetchProfile = this.fetchProfile.bind(this);
@@ -97,37 +99,49 @@ class App extends Component {
       apiManager.glewlwydRequest("/profile_list")
       .then((res) => {
         if (!res[0] || res[0].scope.indexOf(this.state.config.profile_scope) < 0) {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+          this.setState({invalidDelegateMessage: true}, () => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+          });
         } else {
           this.setState({profileList: res}, () => {
             apiManager.glewlwydRequest("/profile/scheme")
             .then((res) => {
-              this.setState({loggedIn: true, schemeList: res});
+              this.setState({loggedIn: true, schemeList: res, invalidDelegateMessage: false, invalidCredentialMessage: false});
             })
             .fail((error) => {
-              if (error.status === 401) {
-                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
-              } else {
-                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-              }
+              this.setState({invalidDelegateMessage: false, invalidCredentialMessage: true}, () => {
+                if (error.status === 401) {
+                  messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+                } else {
+                  messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+                }
+              });
             });
           });
         }
       })
       .fail((error) => {
-        if (error.status === 401) {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
-        } else {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-        }
+        this.setState({invalidDelegateMessage: false, invalidCredentialMessage: true}, () => {
+          if (error.status === 401) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+          } else {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          }
+        });
       });
     } else {
         apiManager.glewlwydRequest("/profile/scheme")
         .then((res) => {
-          this.setState({loggedIn: true, profileList: [{username: this.state.config.params.delegate}], schemeList: res});
+          this.setState({loggedIn: true, profileList: [{username: this.state.config.params.delegate}], schemeList: res, invalidCredentialMessage: false, invalidDelegateMessage: false});
         })
-        .fail(() => {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        .fail((error) => {
+          this.setState({invalidCredentialMessage: false, invalidDelegateMessage: true}, () => {
+            if (error.status === 401) {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-admin-scope")});
+            } else {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+            }
+          });
         });
     }
   }
@@ -141,7 +155,12 @@ class App extends Component {
   
 	render() {
     if (this.state.config) {
-      var userJsx = "", sessionJsx;
+      var userJsx = "", sessionJsx, invalidMessage;
+      if (this.state.invalidCredentialMessage) {
+        invalidMessage = <div className="alert alert-danger" role="alert">{i18next.t("profile.error-credential-message")}</div>
+      } else if (this.state.invalidDelegateMessage) {
+        invalidMessage = <div className="alert alert-danger" role="alert">{i18next.t("admin.error-credential-message")}</div>
+      }
       if (this.state.config.params.delegate) {
         userJsx = <UserDelegate config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} />
       } else {
@@ -153,6 +172,7 @@ class App extends Component {
             <div className="card-header">
               <Navbar active={this.state.curNav} config={this.state.config} loggedIn={this.state.loggedIn} schemeList={this.state.schemeList} profileList={this.state.profileList}/>
             </div>
+            {invalidMessage}
             <div className="card-body">
               <div id="carouselBody" className="carousel slide" data-ride="carousel">
                 <div className="carousel-inner">
