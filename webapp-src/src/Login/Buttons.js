@@ -93,7 +93,7 @@ class Buttons extends Component {
 	render() {
     var bAnother = "", asterisk = "", bContinue = "";
     if (this.state.canContinue) {
-      bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")} disabled={!this.state.canContinue}>
+      bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")}>
         <i className="fas fa-play btn-icon"></i>{i18next.t("login.continue")}
       </button>;
     }

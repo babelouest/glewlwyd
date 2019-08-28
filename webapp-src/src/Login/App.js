@@ -175,7 +175,7 @@ class App extends Component {
   }
 
   parseSchemes() {
-    var canContinue = true;
+    var canContinue = !!this.state.config.params.callback_url;
     var passwordRequired = false;
     var schemeListRequired = false;
     var scheme = false;
@@ -225,8 +225,11 @@ class App extends Component {
 
 	render() {
     if (this.state.config) {
-      var body = "";
+      var body = "", noCallbackUrlMessage;
       if (this.state.loaded) {
+        if (!this.state.config.params.callback_url) {
+          noCallbackUrlMessage = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-no-callback-url")}</div>
+        }
         if (this.state.errorScopesUnavailable) {
           body = <div className="alert alert-danger" role="alert">{i18next.t("login.error-scope-unavailable")}</div>
         } else {
@@ -267,6 +270,7 @@ class App extends Component {
               </div>
               <h2>{i18next.t("glewlwyd-sso-title")}</h2>
             </div>
+            {noCallbackUrlMessage}
             <div className="card-body">
               {body}
             </div>
