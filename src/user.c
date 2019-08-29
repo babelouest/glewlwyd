@@ -229,7 +229,6 @@ json_t * get_user(struct config_elements * config, const char * username, const 
                 found = 1;
               } else if (!check_result_value(j_user, G_ERROR_NOT_FOUND)) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error, user_module_get for module %s", user_module->name);
-                j_return = json_pack("{si}", "result", G_ERROR);
               }
               json_decref(j_user);
             }
@@ -283,11 +282,7 @@ json_t * get_user_profile(struct config_elements * config, const char * username
               j_profile = user_module->module->user_module_get_profile(config->config_m, username, user_module->cls);
               if (check_result_value(j_profile, G_OK)) {
                 j_return = json_incref(j_profile);
-              } else if (check_result_value(j_profile, G_ERROR_NOT_FOUND)) {
-                j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "user_get_profile - Error user_module_get_profile");
-                j_return = json_pack("{si}", "result", G_ERROR);
+                found = 1;
               }
               json_decref(j_profile);
             }
