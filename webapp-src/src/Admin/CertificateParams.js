@@ -8,7 +8,6 @@ class CertificateParams extends Component {
     
     if (props.mod===undefined) props.mod = {};
     if (props.mod.parameters===undefined) props.mod.parameters = {};
-    if (props.mod.parameters["check-from-certificate-property"]===undefined) props.mod.parameters["check-from-certificate-property"]=false;
     if (props.mod.parameters["use-scheme-storage"]===undefined) props.mod.parameters["use-scheme-storage"]=false;
     if (props.mod.parameters["user-certificate-property"]===undefined) props.mod.parameters["user-certificate-property"]="";
 
@@ -32,7 +31,6 @@ class CertificateParams extends Component {
     
     if (nextProps.mod===undefined) nextProps.mod = {};
     if (nextProps.mod.parameters===undefined) nextProps.mod.parameters = {};
-    if (nextProps.mod.parameters["check-from-certificate-property"]===undefined) nextProps.mod.parameters["check-from-certificate-property"]=false;
     if (nextProps.mod.parameters["use-scheme-storage"]===undefined) nextProps.mod.parameters["use-scheme-storage"]=false;
     if (nextProps.mod.parameters["user-certificate-property"]===undefined) nextProps.mod.parameters["user-certificate-property"]="";
 
@@ -72,22 +70,6 @@ class CertificateParams extends Component {
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-certificate-check-from-certificate-property">{i18next.t("admin.mod-certificate-check-from-certificate-property")}</label>
-            </div>
-            <div className="dropdown">
-              <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-certificate-check-from-certificate-property" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                {i18next.t("admin.mod-certificate-value-"+(this.state.mod.parameters["check-from-certificate-property"]?"yes":"no"))}
-              </button>
-              <div className="dropdown-menu" aria-labelledby="mod-certificate-check-from-certificate-property">
-                <a className={"dropdown-item"+(this.state.mod.parameters["check-from-certificate-property"]?" active":"")} href="#" onClick={(e) => this.setBooleanValue(e, "check-from-certificate-property", true)}>{i18next.t("admin.mod-certificate-value-yes")}</a>
-                <a className={"dropdown-item"+(!this.state.mod.parameters["check-from-certificate-property"]?" active":"")} href="#" onClick={(e) => this.setBooleanValue(e, "check-from-certificate-property", false)}>{i18next.t("admin.mod-certificate-value-no")}</a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-certificate-use-scheme-storage">{i18next.t("admin.mod-certificate-use-scheme-storage")}</label>
             </div>
             <div className="dropdown">
@@ -106,7 +88,7 @@ class CertificateParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-certificate-user-certificate-property">{i18next.t("admin.mod-certificate-user-certificate-property")}</label>
             </div>
-            <input type="text" className="form-control" id="mod-certificate-user-certificate-property" placeholder={i18next.t("admin.mod-certificate-user-certificate-property-ph")} maxLength="256" value={this.state.mod.parameters["user-certificate-property"]} onChange={(e) => this.setTextValue(e, "user-certificate-property")}/>
+            <input type="text" disabled={this.state.mod.parameters["use-scheme-storage"]} className="form-control" id="mod-certificate-user-certificate-property" placeholder={i18next.t("admin.mod-certificate-user-certificate-property-ph")} maxLength="256" value={this.state.mod.parameters["user-certificate-property"]} onChange={(e) => this.setTextValue(e, "user-certificate-property")}/>
           </div>
         </div>
       </div>

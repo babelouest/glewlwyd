@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import SchemeMock from './SchemeMock.js';
 import SchemeWebauthn from './SchemeWebauthn.js';
 import SchemeOTP from './SchemeOTP.js';
+import SchemeCertificate from './SchemeCertificate.js';
 
 class SchemePage extends Component {
   constructor(props) {
@@ -37,6 +38,10 @@ class SchemePage extends Component {
     } else if (this.state.module === "otp") {
       return (
         <SchemeOTP config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} />
+      );
+    } else if (this.state.module === "certificate") {
+      return (
+        <SchemeCertificate config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} />
       );
     } else {
       return (
