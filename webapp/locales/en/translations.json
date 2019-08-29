@@ -4,9 +4,12 @@
   "title-login": "Log in",
   "title-logout": "Log out",
   "add": "Add",
+  "upload": "Upload",
+  "browse": "Browse",
   "login": {
     "error-scope-unavailable": "Error, no required scope is available",
     "info-some-scope-unavailable": "Some scopes aren't available",
+    "warning-no-callback-url": "Warning, callback_url parameter is missing in the URL",
     "hello": "Hello {{name}}",
     "btn-ok": "OK",
     "btn-reload": "Reload",
@@ -83,7 +86,8 @@
     "logout": "Logout",
     "certificate-scheme-title": "Client certificate authentification",
     "certificate-scheme-auth-success": "Valid certificate",
-    "certificate-scheme-auth-invalid": "Invalid certificate"
+    "certificate-scheme-auth-invalid": "Invalid certificate",
+    "certificate-login-authenticate": "Authenticate"
   },
   "admin": {
     "error-credential-message": "Please connect with a user that has admin credentials",
@@ -575,7 +579,6 @@
     "mod-otp-totp-start-offset-ph": "Ex: 0",
     "mod-certificate-value-yes": "Yes",
     "mod-certificate-value-no": "No",
-    "mod-certificate-check-from-certificate-property": "Check with stored certificates",
     "mod-certificate-use-scheme-storage": "Use scheme storage",
     "mod-certificate-user-certificate-property": "Certificate property",
     "mod-certificate-user-certificate-property-ph": "Ex: x509-certificate"
@@ -669,7 +672,18 @@
     "session-disable-title": "Disable a session",
     "session-disable-message": "Do you want to disable this session?",
     "session-disable-token-title": "Disable a token",
-    "session-disable-token-message": "Do you want to disable this token"
+    "session-disable-token-message": "Do you want to disable this token",
+    "scheme-certificate-title": "X509 Certificate authentification",
+    "scheme-certificate-title": "Authentification par certificat X509",
+    "scheme-certificate-table-certificate_id": "Identifier",
+    "scheme-certificate-table-activation": "Activated",
+    "scheme-certificate-table-expiration": "Expires",
+    "scheme-certificate-table-last_used": "Last used",
+    "scheme-certificate-table-last_user_agent": "Last user-agent",
+    "scheme-certificate-add-from-file": "Add a certificat from a file",
+    "scheme-certificate-add-from-request": "Add current certificate",
+    "scheme-certificate-confirm-title": "Delete a certificate",
+    "scheme-certificate-confirm-message": "Are you sure you want to delete thiscertificate?"
   },
   "modal": {
     "close": "Close",
