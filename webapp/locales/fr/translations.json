@@ -4,9 +4,12 @@
   "title-login": "Se connecter",
   "title-logout": "Se déconnecter",
   "add": "Ajouter",
+  "upload": "Téléverser",
+  "browse": "Sélectionner",
   "login": {
     "error-scope-unavailable": "Erreur, aucun scope requis n'est accessible",
     "info-some-scope-unavailable": "Certains scopes ne sont pas accessibles",
+    "warning-no-callback-url": "Attention, le paramètre callback_url est manquant dans l'URL",
     "hello": "Bonjour {{name}}",
     "btn-ok": "Valider",
     "btn-reload": "Recharger",
@@ -83,7 +86,8 @@
     "logout": "Déconnecter",
     "certificate-scheme-title": "Authentification par certificat client",
     "certificate-scheme-auth-success": "Certificat valide",
-    "certificate-scheme-auth-invalid": "Certificat invalide"
+    "certificate-scheme-auth-invalid": "Certificat invalide",
+    "certificate-login-authenticate": "Authentifier"
   },
   "admin": {
     "error-credential-message": "Veuillez vous conncecter avec un utilisateur ayant les droits d'administration",
@@ -575,7 +579,6 @@
     "mod-otp-totp-start-offset-ph": "Ex: 0",
     "mod-certificate-value-yes": "Oui",
     "mod-certificate-value-no": "Non",
-    "mod-certificate-check-from-certificate-property": "Vérifier avec les certificats enregistrés",
     "mod-certificate-use-scheme-storage": "Utiliser le stockage du schéma",
     "mod-certificate-user-certificate-property": "Champ certificat",
     "mod-certificate-user-certificate-property-ph": "Ex: x509-certificate"
@@ -669,7 +672,17 @@
     "session-disable-title": "Désactiver une session",
     "session-disable-message": "Voulez-vous supprimer cette session?",
     "session-disable-token-title": "Désactiver un token",
-    "session-disable-token-message": "Voulez-vous désactiver ce token"
+    "session-disable-token-message": "Voulez-vous désactiver ce token",
+    "scheme-certificate-title": "Authentification par certificat X509",
+    "scheme-certificate-table-certificate_id": "Identifiant",
+    "scheme-certificate-table-activation": "Activé le",
+    "scheme-certificate-table-expiration": "Expire le",
+    "scheme-certificate-table-last_used": "Dernière utilisation",
+    "scheme-certificate-table-last_user_agent": "Dernier user-agent",
+    "scheme-certificate-add-from-file": "Ajouter un certificat à partir d'un fichier",
+    "scheme-certificate-add-from-request": "Ajouter le certificat utilisé",
+    "scheme-certificate-confirm-title": "Suppression d'un certificat",
+    "scheme-certificate-confirm-message": "Êtes-vous sûr de vouloir supprimer ce certificat?"
   },
   "modal": {
     "close": "Fermer",
