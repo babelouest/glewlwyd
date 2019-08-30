@@ -94,6 +94,7 @@ class SchemeCertificate extends Component {
   switchCertStatus(cert) {
     apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "toggle-certificate", certificate_id: cert.certificate_id, enabled: !cert.enabled}})
     .then((res) => {
+      messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-certificate-" + (cert.enabled?"disabled":"enabled"))});
       this.getRegister();
     })
     .fail((err) => {
@@ -129,26 +130,50 @@ class SchemeCertificate extends Component {
 	render() {
     var certificateList = [];
     this.state.certificateList.forEach((cert, index) => {
-      var activation = new Date(cert.activation * 1000), expiration = new Date(cert.expiration * 1000), lastUsed = new Date(cert.last_used * 1000);
-      var switchButton;
-      if (cert.enabled) {
-        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchCertStatus(cert)} title={i18next.t("admin.switch-off")}>
-          <i className="fas fa-toggle-on"></i>
-        </button>;
+      var expiration = new Date(cert.expires_at * 1000), lastUsed = new Date(cert.last_used * 1000);
+      var buttons;
+      if (cert.enabled === true) {
+        buttons = 
+        <div className="btn-group" role="group">
+          <button type="button" className="btn btn-secondary" onClick={(e) => this.switchCertStatus(cert)} title={i18next.t("admin.switch-off")}>
+            <i className="fas fa-toggle-on"></i>
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteCert(e, cert)} title={i18next.t("admin.delete")}>
+            <i className="fas fa-trash"></i>
+          </button>
+        </div>
+      } else if (cert.enabled === false) {
+        buttons = 
+        <div className="btn-group" role="group">
+          <button type="button" className="btn btn-secondary" onClick={(e) => this.switchCertStatus(cert)} title={i18next.t("admin.switch-on")}>
+            <i className="fas fa-toggle-off"></i>
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteCert(e, cert)} title={i18next.t("admin.delete")}>
+            <i className="fas fa-trash"></i>
+          </button>
+        </div>
       } else {
-        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchCertStatus(cert)} title={i18next.t("admin.switch-on")}>
-          <i className="fas fa-toggle-off"></i>
-        </button>;
+        buttons = 
+        <div className="btn-group" role="group">
+          <button type="button" disabled={true} className="btn btn-secondary" title={i18next.t("admin.switch-off")}>
+            <i className="fas fa-toggle-on"></i>
+          </button>
+          <button type="button" disabled={true} className="btn btn-secondary" title={i18next.t("admin.delete")}>
+            <i className="fas fa-trash"></i>
+          </button>
+        </div>
       }
       certificateList.push(
         <tr key={index}>
           <td>
             <span className="d-inline-block" tabindex="0" data-toggle="tooltip" title={cert.certificate_dn}>
-              {cert.certificate_dn.substring(0, 8)}[...]
+              {cert.dn.substring(0, 8)}[...]
             </span>
           </td>
           <td>
-            {activation.toLocaleString()}
+            <span className="d-inline-block" tabindex="0" data-toggle="tooltip" title={cert.certificate_issuer_dn}>
+              {cert.issuer_dn.substring(0, 8)}[...]
+            </span>
           </td>
           <td>
             {expiration.toLocaleString()}
@@ -157,15 +182,7 @@ class SchemeCertificate extends Component {
             {lastUsed.toLocaleString()}
           </td>
           <td>
-            {cert.last_user_agent}
-          </td>
-          <td>
-            <div className="btn-group" role="group">
-              {switchButton}
-              <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteCert(e, cert)} title={i18next.t("admin.delete")}>
-                <i className="fas fa-trash"></i>
-              </button>
-            </div>
+            {buttons}
           </td>
         </tr>
       );
@@ -205,19 +222,16 @@ class SchemeCertificate extends Component {
               <thead>
                 <tr>
                   <th>
-                    {i18next.t("profile.scheme-certificate-table-certificate_id")}
+                    {i18next.t("profile.scheme-certificate-table-certificate_dn")}
                   </th>
                   <th>
-                    {i18next.t("profile.scheme-certificate-table-activation")}
+                    {i18next.t("profile.scheme-certificate-table-certificate_issuer_dn")}
                   </th>
                   <th>
                     {i18next.t("profile.scheme-certificate-table-expiration")}
                   </th>
                   <th>
                     {i18next.t("profile.scheme-certificate-table-last_used")}
-                  </th>
-                  <th>
-                    {i18next.t("profile.scheme-certificate-table-last_user_agent")}
                   </th>
                   <th>
                   </th>
