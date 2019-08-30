@@ -10,6 +10,7 @@
     "error-scope-unavailable": "Erreur, aucun scope requis n'est accessible",
     "info-some-scope-unavailable": "Certains scopes ne sont pas accessibles",
     "warning-no-callback-url": "Attention, le paramètre callback_url est manquant dans l'URL",
+    "warning-error-scheme": "Erreur de schéma",
     "hello": "Bonjour {{name}}",
     "btn-ok": "Valider",
     "btn-reload": "Recharger",
@@ -674,15 +675,17 @@
     "session-disable-token-title": "Désactiver un token",
     "session-disable-token-message": "Voulez-vous désactiver ce token",
     "scheme-certificate-title": "Authentification par certificat X509",
-    "scheme-certificate-table-certificate_id": "Identifiant",
-    "scheme-certificate-table-activation": "Activé le",
+    "scheme-certificate-table-certificate_dn": "Identifiant",
+    "scheme-certificate-table-certificate_issuer_dn": "Émetteur",
     "scheme-certificate-table-expiration": "Expire le",
     "scheme-certificate-table-last_used": "Dernière utilisation",
     "scheme-certificate-table-last_user_agent": "Dernier user-agent",
     "scheme-certificate-add-from-file": "Ajouter un certificat à partir d'un fichier",
     "scheme-certificate-add-from-request": "Ajouter le certificat utilisé",
     "scheme-certificate-confirm-title": "Suppression d'un certificat",
-    "scheme-certificate-confirm-message": "Êtes-vous sûr de vouloir supprimer ce certificat?"
+    "scheme-certificate-confirm-message": "Êtes-vous sûr de vouloir supprimer ce certificat?",
+    "scheme-certificate-enabled": "Certificat activé",
+    "scheme-certificate-disabled": "Certificat désactivé"
   },
   "modal": {
     "close": "Fermer",
