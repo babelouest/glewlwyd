@@ -88,7 +88,6 @@ int is_user_certificate_valid(struct config_module * config, json_t * j_paramete
     if (json_array_size(j_result)) {
       ret = G_OK;
     } else {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "grut 1");
       ret = G_ERROR_UNAUTHORIZED;
     }
     json_decref(j_result);
@@ -100,17 +99,16 @@ int is_user_certificate_valid(struct config_module * config, json_t * j_paramete
   return ret;
 }
 
-static int toggle_enabled_user_certificate_scheme_storage(struct config_module * config, json_t * j_parameters, const char * username, const char * cert_id) {
+static int update_user_certificate_scheme_storage(struct config_module * config, json_t * j_parameters, const char * username, const char * cert_id, int enabled) {
   json_t * j_query;
   int res, ret;
   
-  j_query = json_pack("{sss{s{ss}}s{sOssss}}",
+  j_query = json_pack("{sss{si}s{sOssss}}",
                       "table",
                       GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_CERTIFICATE,
                       "set",
                         "gsuc_enabled",
-                          "raw",
-                          "NOT gsuc_enabled",
+                        enabled,
                       "where",
                         "gsuc_mod_name",
                         json_object_get(j_parameters, "mod_name"),
@@ -187,7 +185,7 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
                     expiration_clause = msprintf("%u", (expires_at));
                     activation_clause = msprintf("%u", (issued_at));
                   }
-                  j_query = json_pack("{ss s{sO ss ss ss ss s{ss} s{ss}}}",
+                  j_query = json_pack("{ss s{sO ss ss ss ss s{ss} s{ss} so}}",
                                       "table",
                                       GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_CERTIFICATE,
                                       "values",
@@ -206,7 +204,9 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
                                           expiration_clause,
                                         "gsuc_activation",
                                           "raw",
-                                          activation_clause);
+                                          activation_clause,
+                                        "gsuc_last_used",
+                                        json_null());
                   o_free(expiration_clause);
                   o_free(activation_clause);
                   if (o_strlen(user_agent)) {
@@ -258,10 +258,11 @@ static json_t * get_user_certificate_from_id(struct config_module * config, json
   json_t * j_query, * j_result, * j_return;
   int res;
   
-  j_query = json_pack("{sss[ssssss]s{sOssss}}",
+  j_query = json_pack("{sss[sssssss]s{sOssss}}",
                       "table",
                       GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_CERTIFICATE,
                       "columns",
+                        "gsuc_x509_certificate_dn AS certificate_dn",
                         "gsuc_x509_certificate_id AS certificate_id",
                         SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gsuc_activation) AS activation", "strftime('%s', gsuc_activation) AS activation", "EXTRACT(EPOCH FROM gsuc_activation)::integer AS activation"),
                         SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gsuc_expiration) AS expiration", "strftime('%s', gsuc_expiration) AS expiration", "EXTRACT(EPOCH FROM gsuc_expiration)::integer AS expiration"),
@@ -302,10 +303,11 @@ static json_t * get_user_certificate_list_scheme_storage(struct config_module * 
   int res;
   size_t index = 0;
   
-  j_query = json_pack("{sss[ssssss]s{sOss}}",
+  j_query = json_pack("{sss[sssssss]s{sOss}}",
                       "table",
                       GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_CERTIFICATE,
                       "columns",
+                        "gsuc_x509_certificate_dn AS certificate_dn",
                         "gsuc_x509_certificate_id AS certificate_id",
                         SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gsuc_activation) AS activation", "strftime('%s', gsuc_activation) AS activation", "EXTRACT(EPOCH FROM gsuc_activation)::integer AS activation"),
                         SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gsuc_expiration) AS expiration", "strftime('%s', gsuc_expiration) AS expiration", "EXTRACT(EPOCH FROM gsuc_expiration)::integer AS expiration"),
@@ -601,10 +603,10 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       if (json_string_length(json_object_get(j_scheme_data, "certificate_id"))) {
         j_result = get_user_certificate_from_id(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "certificate_id")));
         if (check_result_value(j_result, G_OK)) {
-          if (toggle_enabled_user_certificate_scheme_storage(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "certificate_id"))) == G_OK) {
+          if (update_user_certificate_scheme_storage(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "certificate_id")), json_object_get(j_scheme_data, "enabled") == json_true()) == G_OK) {
             j_return = json_pack("{si}", "result", G_OK);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register certificate - Error toggle_enabled_user_certificate_scheme_storage");
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register certificate - Error update_user_certificate_scheme_storage");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
         } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
@@ -624,7 +626,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
           if (delete_user_certificate_scheme_storage(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "certificate_id"))) == G_OK) {
             j_return = json_pack("{si}", "result", G_OK);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register certificate - Error toggle_enabled_user_certificate_scheme_storage");
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register certificate - Error delete_user_certificate_scheme_storage");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
         } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
