@@ -70,7 +70,7 @@ class Plugin extends Component {
           <i className="fas fa-toggle-on"></i>
         </button>;
       } else {
-        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-om")}>
+        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-on")}>
           <i className="fas fa-toggle-off"></i>
         </button>;
       }
