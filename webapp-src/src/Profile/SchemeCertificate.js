@@ -92,7 +92,7 @@ class SchemeCertificate extends Component {
   }
   
   switchCertStatus(cert) {
-    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "toggle-certificate", certificate_id: cert.certificate_id}})
+    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "toggle-certificate", certificate_id: cert.certificate_id, enabled: !cert.enabled}})
     .then((res) => {
       this.getRegister();
     })
@@ -136,14 +136,16 @@ class SchemeCertificate extends Component {
           <i className="fas fa-toggle-on"></i>
         </button>;
       } else {
-        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchCertStatus(cert)} title={i18next.t("admin.switch-om")}>
+        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchCertStatus(cert)} title={i18next.t("admin.switch-on")}>
           <i className="fas fa-toggle-off"></i>
         </button>;
       }
       certificateList.push(
         <tr key={index}>
           <td>
-            {cert.certificate_id.substring(0, 8)}[...]
+            <span className="d-inline-block" tabindex="0" data-toggle="tooltip" title={cert.certificate_dn}>
+              {cert.certificate_dn.substring(0, 8)}[...]
+            </span>
           </td>
           <td>
             {activation.toLocaleString()}
