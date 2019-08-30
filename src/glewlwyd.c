@@ -1395,8 +1395,8 @@ int check_config(struct config_elements * config) {
     ret = G_ERROR_PARAM;
   }
   
-  if (!config->instance->port) {
-    config->instance->port = GLEWLWYD_DEFAULT_PORT;
+  if (!config->port) {
+    config->port = GLEWLWYD_DEFAULT_PORT;
   }
   
   return ret;
