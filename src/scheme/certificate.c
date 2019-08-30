@@ -159,8 +159,8 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
   int res, ret = G_OK;
   gnutls_x509_crt_t cert = NULL;
   gnutls_datum_t cert_dat;
-  char key_id[129] = {0}, key_id_enc[257] = {0}, * expiration_clause, * activation_clause;
-  size_t key_id_len = 128, key_id_enc_len = 256;
+  char key_id[129] = {0}, key_id_enc[257] = {0}, * expiration_clause, * activation_clause, * dn = NULL;
+  size_t key_id_len = 128, key_id_enc_len = 256, dn_len = 0;
   time_t expires_at = 0, issued_at = 0;
   
   if (o_strlen(x509_data)) {
@@ -168,55 +168,74 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
       cert_dat.data = (unsigned char *)x509_data;
       cert_dat.size = o_strlen(x509_data);
       if (gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_PEM) >= 0) {
-        if (gnutls_x509_crt_get_key_id(cert, GNUTLS_KEYID_USE_SHA256, (unsigned char *)key_id, &key_id_len) >= 0 && (expires_at = gnutls_x509_crt_get_expiration_time(cert) && (issued_at = gnutls_x509_crt_get_activation_time(cert)) != (time_t)-1)) {
-          if (!o_base64_encode((unsigned char *)key_id, key_id_len, (unsigned char *)key_id_enc, &key_id_enc_len)) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "add_user_certificate_scheme_storage - Error certificate has invalid key_id");
-            ret = G_ERROR_PARAM;
-          } else {
-            if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-              expiration_clause = msprintf("FROM_UNIXTIME(%u)", (expires_at));
-              activation_clause = msprintf("FROM_UNIXTIME(%u)", (issued_at));
-            } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-              expiration_clause = msprintf("TO_TIMESTAMP(%u)", (expires_at));
-              activation_clause = msprintf("TO_TIMESTAMP(%u)", (issued_at));
-            } else { // HOEL_DB_TYPE_SQLITE
-              expiration_clause = msprintf("%u", (expires_at));
-              activation_clause = msprintf("%u", (issued_at));
-            }
-            j_query = json_pack("{ss s{sO ss ss ss s{ss} s{ss}}}",
-                                "table",
-                                GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_CERTIFICATE,
-                                "values",
-                                  "gsuc_mod_name",
-                                  json_object_get(j_parameters, "mod_name"),
-                                  "gsuc_username",
-                                  username,
-                                  "gsuc_x509_certificate_id",
-                                  key_id_enc,
-                                  "gsuc_x509_certificate_content",
-                                  x509_data,
-                                  "gsuc_expiration",
-                                    "raw",
-                                    expiration_clause,
-                                  "gsuc_activation",
-                                    "raw",
-                                    activation_clause);
-            o_free(expiration_clause);
-            o_free(activation_clause);
-            if (o_strlen(user_agent)) {
-              json_object_set_new(json_object_get(j_query, "values"), "gsuc_last_user_agent", json_string(user_agent));
-            }
-            res = h_insert(config->conn, j_query, NULL);
-            json_decref(j_query);
-            if (res == H_OK) {
-              ret = G_OK;
+        if (gnutls_x509_crt_get_dn(cert, NULL, &dn_len) == GNUTLS_E_SHORT_MEMORY_BUFFER) {
+          if ((dn = o_malloc(dn_len +1)) != NULL) {
+            if (gnutls_x509_crt_get_dn(cert, dn, &dn_len) >= 0) {
+              dn[dn_len] = '\0';
+              if (gnutls_x509_crt_get_key_id(cert, GNUTLS_KEYID_USE_SHA256, (unsigned char *)key_id, &key_id_len) >= 0 && (expires_at = gnutls_x509_crt_get_expiration_time(cert) && (issued_at = gnutls_x509_crt_get_activation_time(cert)) != (time_t)-1)) {
+                if (!o_base64_encode((unsigned char *)key_id, key_id_len, (unsigned char *)key_id_enc, &key_id_enc_len)) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "add_user_certificate_scheme_storage - Error certificate has invalid key_id");
+                  ret = G_ERROR_PARAM;
+                } else {
+                  if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+                    expiration_clause = msprintf("FROM_UNIXTIME(%u)", (expires_at));
+                    activation_clause = msprintf("FROM_UNIXTIME(%u)", (issued_at));
+                  } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+                    expiration_clause = msprintf("TO_TIMESTAMP(%u)", (expires_at));
+                    activation_clause = msprintf("TO_TIMESTAMP(%u)", (issued_at));
+                  } else { // HOEL_DB_TYPE_SQLITE
+                    expiration_clause = msprintf("%u", (expires_at));
+                    activation_clause = msprintf("%u", (issued_at));
+                  }
+                  j_query = json_pack("{ss s{sO ss ss ss ss s{ss} s{ss}}}",
+                                      "table",
+                                      GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_CERTIFICATE,
+                                      "values",
+                                        "gsuc_mod_name",
+                                        json_object_get(j_parameters, "mod_name"),
+                                        "gsuc_username",
+                                        username,
+                                        "gsuc_x509_certificate_id",
+                                        key_id_enc,
+                                        "gsuc_x509_certificate_content",
+                                        x509_data,
+                                        "gsuc_x509_certificate_dn",
+                                        dn,
+                                        "gsuc_expiration",
+                                          "raw",
+                                          expiration_clause,
+                                        "gsuc_activation",
+                                          "raw",
+                                          activation_clause);
+                  o_free(expiration_clause);
+                  o_free(activation_clause);
+                  if (o_strlen(user_agent)) {
+                    json_object_set_new(json_object_get(j_query, "values"), "gsuc_last_user_agent", json_string(user_agent));
+                  }
+                  res = h_insert(config->conn, j_query, NULL);
+                  json_decref(j_query);
+                  if (res == H_OK) {
+                    ret = G_OK;
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "add_user_certificate_scheme_storage - Error executing j_query");
+                    ret = G_ERROR_DB;
+                  }
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "add_user_certificate_scheme_storage - Error gnutls_x509_crt_get_key_id or gnutls_x509_crt_get_expiration_time");
+                ret = G_ERROR;
+              }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "add_user_certificate_scheme_storage - Error executing j_query");
-              ret = G_ERROR_DB;
+              y_log_message(Y_LOG_LEVEL_ERROR, "add_user_certificate_scheme_storage - Error gnutls_x509_crt_get_dn (2)");
+              ret = G_ERROR;
             }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "add_user_certificate_scheme_storage - Error o_malloc dn");
+            ret = G_ERROR;
           }
+          o_free(dn);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "add_user_certificate_scheme_storage - Error gnutls_x509_crt_get_key_id or gnutls_x509_crt_get_expiration_time");
+          y_log_message(Y_LOG_LEVEL_ERROR, "add_user_certificate_scheme_storage - Error gnutls_x509_crt_get_dn (1)");
           ret = G_ERROR;
         }
       } else {
