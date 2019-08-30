@@ -8,6 +8,7 @@ CREATE TABLE gs_user_certificate (
   gsuc_x509_certificate_content TEXT DEFAULT NULL,
   gsuc_x509_certificate_id VARCHAR(128) NOT NULL,
   gsuc_x509_certificate_dn VARCHAR(512) NOT NULL,
+  gsuc_x509_certificate_issuer_dn VARCHAR(512) NOT NULL,
   gsuc_activation TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gsuc_expiration TIMESTAMPTZ DEFAULT NOW(),
   gsuc_last_used TIMESTAMPTZ DEFAULT NOW(),
