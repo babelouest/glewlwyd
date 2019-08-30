@@ -6,31 +6,24 @@ import messageDispatcher from '../../lib/MessageDispatcher';
 class CertificateSchemeForm extends Component {
   constructor(props) {
     super(props);
-
+    
     this.state = {
       config: props.config,
       scheme: props.scheme,
       currentUser: props.currentUser,
-      authResult: -1
+      authResult: false,
+      authValidated: false
     };
     
     this.validateCertificate = this.validateCertificate.bind(this);
-    
-    this.validateCertificate();
   }
   
-  componentWillReceiveProps(nextProps) {
-    this.setState({
-      config: nextProps.config,
-      scheme: nextProps.scheme,
-      currentUser: nextProps.currentUser
-    }, () => {
-      this.validateCertificate();
-    });
+  componentDidUpdate(prevProps) {
+    console.log(prevProps);
   }
   
   validateCertificate() {
-    if (this.state.authResult !== 1) {
+    if (!this.state.authResult) {
       var scheme = {
         scheme_type: this.state.scheme.scheme_type,
         scheme_name: this.state.scheme.scheme_name,
@@ -41,25 +34,29 @@ class CertificateSchemeForm extends Component {
       
       apiManager.glewlwydRequest("/auth/", "POST", scheme)
       .then(() => {
-        this.setState({authResult: 1}, () => {
+        this.setState({authResult: true, authValidated: true}, () => {
           messageDispatcher.sendMessage('App', {type: 'loginSuccess', loginSuccess: true});
         });
       })
       .fail(() => {
-        this.setState({authResult: 0});
+        this.setState({authResult: false, authValidated: true});
       });
     }
   }
   
   render() {
     var authResult;
-    if (this.state.authResult === 1) {
+    if (this.state.authResult === true) {
       authResult = <div className="alert alert-success" role="alert">{i18next.t("login.certificate-scheme-auth-success")}</div>;
-    } else if (this.state.authResult === 0) {
+    } else if (this.state.authResult === false) {
+      var showInvalid;
+      if (this.state.authValidated) {
+        showInvalid = <div className="alert alert-danger" role="alert">{i18next.t("login.certificate-scheme-auth-invalid")}</div>;
+      }
       authResult = 
       <div>
-        <div className="alert alert-danger" role="alert">{i18next.t("login.certificate-scheme-auth-invalid")}</div>
-        <button type="button" className="btn btn-primary" onClick={this.validateCertificate}>
+        {showInvalid}
+        <button type="button" className="btn btn-primary" onClick={() => this.validateCertificate()}>
           {i18next.t("login.certificate-login-authenticate")}
         </button>
       </div>
