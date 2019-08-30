@@ -33,7 +33,8 @@ class App extends Component {
       selectAccount: false,
       login_hint: props.config.params.login_hint||"",
       errorScopesUnavailable: false,
-      infoSomeScopeUnavailable: false
+      infoSomeScopeUnavailable: false,
+      errorScheme: false
     };
 
     this.initProfile = this.initProfile.bind(this);
@@ -198,7 +199,7 @@ class App extends Component {
                 groupAuthenticated = true;
                 schemeListRequired = false;
                 scheme = false;
-              } else if (!scheme || scheme.scheme_last_login < curScheme.scheme_last_login) {
+              } else if ((!scheme || scheme.scheme_last_login < curScheme.scheme_last_login) && curScheme.scheme_registered) {
                 scheme = curScheme;
               }
             });
@@ -213,7 +214,7 @@ class App extends Component {
     if (!passwordRequired && this.state.refresh_login) {
       passwordRequired = true;
     }
-    this.setState({canContinue: canContinue, passwordRequired: passwordRequired, schemeListRequired: schemeListRequired, scheme: scheme});
+    this.setState({canContinue: canContinue, passwordRequired: passwordRequired, schemeListRequired: schemeListRequired, scheme: scheme, errorScheme: (!scheme && !canContinue)});
   }
 
   changeLang(e, lang) {
@@ -225,10 +226,12 @@ class App extends Component {
 
 	render() {
     if (this.state.config) {
-      var body = "", noCallbackUrlMessage;
+      var body = "", message;
       if (this.state.loaded) {
-        if (!this.state.config.params.callback_url) {
-          noCallbackUrlMessage = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-no-callback-url")}</div>
+        if (this.state.errorScheme) {
+          message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-error-scheme")}</div>
+        } else if (!this.state.config.params.callback_url) {
+          message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-no-callback-url")}</div>
         }
         if (this.state.errorScopesUnavailable) {
           body = <div className="alert alert-danger" role="alert">{i18next.t("login.error-scope-unavailable")}</div>
@@ -270,7 +273,7 @@ class App extends Component {
               </div>
               <h2>{i18next.t("glewlwyd-sso-title")}</h2>
             </div>
-            {noCallbackUrlMessage}
+            {message}
             <div className="card-body">
               {body}
             </div>
