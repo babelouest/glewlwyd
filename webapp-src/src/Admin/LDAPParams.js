@@ -35,6 +35,7 @@ class LDAPParams extends Component {
     this.addScopeMatch = this.addScopeMatch.bind(this);
     this.changeScopeMatchProperty = this.changeScopeMatchProperty.bind(this);
     this.changeMatchType = this.changeMatchType.bind(this);
+    this.changedataFormatConvert = this.changedataFormatConvert.bind(this);
     this.changePasswordAlgorithm = this.changePasswordAlgorithm.bind(this);
     this.getMatchType = this.getMatchType.bind(this);
     this.changePageSize = this.changePageSize.bind(this);
@@ -44,7 +45,7 @@ class LDAPParams extends Component {
     this.changeConfidential = this.changeConfidential.bind(this);
   }
   
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     
     if (!nextProps.mod.parameters["scope-match"]) {
       nextProps.mod.parameters["scope-match"] = [];
@@ -96,6 +97,16 @@ class LDAPParams extends Component {
   toggleDataFormatMultiple(e, property) {
     var mod = this.state.mod;
     mod.parameters["data-format"][property]["multiple"] = !mod.parameters["data-format"][property]["multiple"];
+    this.setState({mod: mod});
+  }
+  
+  changedataFormatConvert(e, property, convert) {
+    var mod = this.state.mod;
+    if (convert) {
+      mod.parameters["data-format"][property]["convert"] = convert;
+    } else {
+      delete(mod.parameters["data-format"][property]["convert"]);
+    }
     this.setState({mod: mod});
   }
   
@@ -325,6 +336,22 @@ class LDAPParams extends Component {
             </div>
             <div className="input-group-text">
               <input type="checkbox" className="form-control" id={"mod-database-data-format-multiple-"+property} onChange={(e) => this.toggleDataFormatMultiple(e, property)} checked={this.state.mod.parameters["data-format"][property]["multiple"]} />
+            </div>
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="btn-group" role="group">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor={"dropdownFormatConvert-"+i}>{i18next.t("admin.mod-database-data-format-convert")}</label>
+            </div>
+            <div className="dropdown">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id={"dropdownFormatConvert-"+i} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {i18next.t("admin.mod-database-data-format-convert-"+(this.state.mod.parameters["data-format"][property]["convert"]?this.state.mod.parameters["data-format"][property]["convert"]:"none"))}
+              </button>
+              <div className="dropdown-menu" aria-labelledby={"dropdownFormatConvert-"+i}>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changedataFormatConvert(e, property, false)}>{i18next.t("admin.mod-database-data-format-convert-none")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changedataFormatConvert(e, property, 'base64')}>{i18next.t("admin.mod-database-data-format-convert-base64")}</a>
+              </div>
             </div>
           </div>
         </div>

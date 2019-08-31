@@ -258,7 +258,7 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params, int readonly) {
         } else {
           json_object_foreach(json_object_get(j_params, "data-format"), field, j_element) {
             if (0 == o_strcmp(field, "username") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "email") || 0 == o_strcmp(field, "enabled") || 0 == o_strcmp(field, "password") || 0 == o_strcmp(field, "scope")) {
-              json_array_append_new(j_error, json_string("data-format can not have settings for properties 'username', 'name', 'email', 'enabled', 'scope' or 'password'"));
+              json_array_append_new(j_error, json_string("data-format can't have settings for properties 'username', 'name', 'email', 'enabled', 'scope' or 'password'"));
             } else {
               if (readonly) {
                 if (json_object_get(j_element, "property") == NULL || !json_string_length(json_object_get(j_element, "property"))) {
@@ -329,7 +329,7 @@ static LDAP * connect_ldap_server(json_t * j_params) {
     ldap_unbind_ext(ldap, NULL, NULL);
     ldap = NULL;
   } else if ((result = ldap_sasl_bind_s(ldap, json_string_value(json_object_get(j_params, "bind-dn")), ldap_mech, &cred, NULL, NULL, &servcred)) != LDAP_SUCCESS) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error binding to ldap server mode %s: %s", ldap_mech, ldap_err2string(result));
+    y_log_message(Y_LOG_LEVEL_ERROR, "connect_ldap_server - Error binding to ldap server mode %s: %s", ldap_mech, ldap_err2string(result));
     ldap_unbind_ext(ldap, NULL, NULL);
     ldap = NULL;
   }
@@ -477,6 +477,8 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
   unsigned int i;
   size_t index = 0, index_scope = 0;
   int has_error = 0;
+  unsigned char * value_enc = NULL;
+  size_t value_enc_len = 0;
   
   if (j_mod_value_free_array != NULL) {
     // Count attrs
@@ -736,7 +738,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
         if (0 != o_strcmp(field, "username") && 0 != o_strcmp(field, "name") && 0 != o_strcmp(field, "password") && 0 != o_strcmp(field, "scope") && 0 != o_strcmp(field, "email") && 0 != o_strcmp(field, "enabled")) {
           if ((j_format = json_object_get(json_object_get(j_params, "data-format"), field)) != NULL) {
             if ((!profile && json_object_get(j_format, "write") != json_false()) || (profile && json_object_get(j_format, "profile-write") == json_true())) {
-              if (json_is_array(j_property)) {
+              if (json_is_array(j_property) && json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") == json_true()) {
                 mods[i] = o_malloc(sizeof(LDAPMod));
                 if (mods[i] != NULL) {
                   mods[i]->mod_values = o_malloc((json_array_size(j_property) + 1) * sizeof(char *));
@@ -744,7 +746,29 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
                     mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
                     mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
                     json_array_foreach(j_property, index_scope, j_property_value) {
-                      mods[i]->mod_values[index_scope] = (char *)json_string_value(j_property_value);
+                      if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+                        if (o_base64_decode((const unsigned char *)json_string_value(j_property_value), json_string_length(j_property_value), NULL, &value_enc_len)) {
+                          if ((value_enc = o_malloc(value_enc_len+1)) != NULL) {
+                            if (o_base64_decode((const unsigned char *)json_string_value(j_property_value), json_string_length(j_property_value), value_enc, &value_enc_len)) {
+                              value_enc[value_enc_len] = '\0';
+                              mods[i]->mod_values[index_scope] = (char *)value_enc;
+                            } else {
+                              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (1-2)", json_string_value(j_property_value));
+                              has_error = 1;
+                            }
+                          } else {
+                            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for value_enc (1)");
+                          }
+                        } else {
+                          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (1-1)", json_string_value(j_property_value));
+                          has_error = 1;
+                        }
+                      } else {
+                        mods[i]->mod_values[index_scope] = (char *)json_string_value(j_property_value);
+                      }
+                    }
+                    if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+                      json_array_append_new(j_mod_value_free_array, json_integer(i));
                     }
                     mods[i]->mod_values[json_array_size(j_property)] = NULL;
                   } else {
@@ -755,14 +779,34 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
                   y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (%s)", json_string_value(json_object_get(j_format, "property")), i);
                   has_error = 1;
                 }
-              } else {
+              } else if (json_is_string(j_property) && json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true()) {
                 mods[i] = o_malloc(sizeof(LDAPMod));
                 if (mods[i] != NULL) {
                   mods[i]->mod_values = o_malloc((json_array_size(json_object_get(j_user, "scope")) + 1) * sizeof(char *));
                   if (mods[i]->mod_values != NULL) {
                     mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
                     mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
-                    mods[i]->mod_values[0] = (char *)json_string_value(j_property);
+                    if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+                      if (o_base64_decode((const unsigned char *)json_string_value(j_property), json_string_length(j_property), NULL, &value_enc_len)) {
+                        if ((value_enc = o_malloc(value_enc_len+1)) != NULL) {
+                          if (o_base64_decode((const unsigned char *)json_string_value(j_property), json_string_length(j_property), value_enc, &value_enc_len)) {
+                            value_enc[value_enc_len] = '\0';
+                            mods[i]->mod_values[0] = (char *)value_enc;
+                          } else {
+                            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (2-2)", json_string_value(j_property));
+                            has_error = 1;
+                          }
+                        } else {
+                          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for value_enc (2)");
+                        }
+                      } else {
+                        y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (2-1)", json_string_value(j_property));
+                        has_error = 1;
+                      }
+                      json_array_append_new(j_mod_value_free_array, json_integer(i));
+                    } else {
+                      mods[i]->mod_values[0] = (char *)json_string_value(j_property);
+                    }
                     mods[i]->mod_values[1] = NULL;
                   } else {
                     y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (%s)", json_string_value(json_object_get(j_format, "property")), i);
@@ -772,6 +816,8 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
                   y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (%s)", json_string_value(json_object_get(j_format, "property")), i);
                   has_error = 1;
                 }
+              } else {
+                y_log_message(Y_LOG_LEVEL_WARNING, "get_ldap_write_mod - Error field '%s' has invaid format", field);
               }
               i++;
             }
@@ -825,6 +871,8 @@ static json_t * get_user_from_result(json_t * j_params, json_t * j_properties_us
   char * str_scope;
   struct berval ** result_values = NULL;
   int i;
+  unsigned char * value_dec = NULL;
+  size_t value_dec_len = 0;
   
   if (j_user != NULL) {
     json_object_foreach(j_properties_user, field, j_property) {
@@ -844,10 +892,47 @@ static json_t * get_user_from_result(json_t * j_params, json_t * j_properties_us
           }
         } else if (0 == o_strcmp(field, "username") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "email") || (json_object_get(json_object_get(j_params, "data-format"), field) != NULL &&json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true())) {
           json_object_set_new(j_user, field, json_stringn(result_values[0]->bv_val, result_values[0]->bv_len));
+          if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+            if (o_base64_encode((const unsigned char *)result_values[0]->bv_val, result_values[0]->bv_len, NULL, &value_dec_len)) {
+              if ((value_dec = o_malloc(value_dec_len+1)) != NULL) {
+                if (o_base64_encode((const unsigned char *)result_values[0]->bv_val, result_values[0]->bv_len, value_dec, &value_dec_len)) {
+                  value_dec[value_dec_len] = '\0';
+                  json_object_set_new(j_user, field, json_stringn((const char *)value_dec, value_dec_len));
+                } else {
+                  y_log_message(Y_LOG_LEVEL_WARNING, "get_user_from_result - Error o_base64_encode for LDAP property '%s' (2)", json_string_value(j_property));
+                }
+                o_free(value_dec);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_user_from_result - Error allocating resources for value_dec");
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_WARNING, "get_user_from_result - Error o_base64_encode for LDAP property '%s' (1)", json_string_value(j_property));
+            }
+          } else {
+            json_object_set_new(j_user, field, json_stringn(result_values[0]->bv_val, result_values[0]->bv_len));
+          }
         } else if (json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") == json_true()) {
           json_object_set_new(j_user, field, json_array());
           for (i=0; i<ldap_count_values_len(result_values); i++) {
-            json_array_append_new(json_object_get(j_user, field), json_stringn(result_values[i]->bv_val, result_values[i]->bv_len));
+            if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+              if (o_base64_encode((const unsigned char *)result_values[i]->bv_val, result_values[i]->bv_len, NULL, &value_dec_len)) {
+                if ((value_dec = o_malloc(value_dec_len+1)) != NULL) {
+                  if (o_base64_encode((const unsigned char *)result_values[i]->bv_val, result_values[i]->bv_len, value_dec, &value_dec_len)) {
+                    value_dec[value_dec_len] = '\0';
+                    json_array_append_new(json_object_get(j_user, field), json_stringn((const char *)value_dec, value_dec_len));
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_WARNING, "get_user_from_result - Error o_base64_encode for LDAP property '%s' (2)", json_string_value(j_property));
+                  }
+                  o_free(value_dec);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_user_from_result - Error allocating resources for value_dec");
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_WARNING, "get_user_from_result - Error o_base64_encode for LDAP property '%s' (1)", json_string_value(j_property));
+              }
+            } else {
+              json_array_append_new(json_object_get(j_user, field), json_stringn(result_values[i]->bv_val, result_values[i]->bv_len));
+            }
           }
         }
       }
@@ -1114,7 +1199,7 @@ size_t user_module_count_total(struct config_module * config, const char * patte
   if (ldap != NULL) {
     filter = get_ldap_filter_pattern(j_params, pattern);
     if ((result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(result));
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_count_total ldap - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(result));
     } else {
       counter = ldap_count_entries(ldap, answer);
     }
@@ -1272,7 +1357,7 @@ json_t * user_module_get(struct config_module * config, const char * username, v
     filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), username);
     attrs = get_ldap_read_attributes(j_params, 0, (j_properties_user = json_object()));
     if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get user - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
       j_return = json_pack("{si}", "result", G_ERROR);
     } else {
       // Looping in results, staring at offset, until the end of the list
@@ -1282,7 +1367,7 @@ json_t * user_module_get(struct config_module * config, const char * username, v
         if (j_user != NULL) {
           j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error get_user_from_result");
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap user - Error get_user_from_result");
           j_return = json_pack("{si}", "result", G_ERROR);
         }
         json_decref(j_user);
@@ -1325,7 +1410,7 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
     filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), username);
     attrs = get_ldap_read_attributes(j_params, 1, (j_properties_user = json_object()));
     if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_profile ldap - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
       j_return = json_pack("{si}", "result", G_ERROR);
     } else {
       if (ldap_count_entries(ldap, answer) > 0) {
@@ -1359,7 +1444,7 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
   json_t * j_params = (json_t *)cls;
   json_t * j_result = json_array(), * j_element = NULL, * j_format, * j_value, * j_return, * j_cur_user;
   char * message;
-  size_t index = 0;
+  size_t index = 0, len = 0;
   const char * property;
   
   if (j_result != NULL) {
@@ -1411,18 +1496,30 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
             o_free(message);
           } else {
             json_array_foreach(j_element, index, j_value) {
-              if (!json_is_string(j_value) || !json_string_length(j_value)) {
+              if (!json_string_length(j_value)) {
                 message = msprintf("%s must contain a non empty string value", property);
                 json_array_append_new(j_result, json_string(message));
                 o_free(message);
+              } else if (0 == o_strcmp("base64", json_string_value(json_object_get(j_format, "convert")))) {
+                if (!o_base64_decode((const unsigned char *)json_string_value(j_value), json_string_length(j_value), NULL, &len)) {
+                  message = msprintf("%s must contain a base64 encoded string value", property);
+                  json_array_append_new(j_result, json_string(message));
+                  o_free(message);
+                }
               }
             }
           }
         } else {
-          if (!json_is_string(j_element) || !json_string_length(j_element)) {
+          if (!json_string_length(j_element)) {
             message = msprintf("%s must contain a non empty string value", property);
             json_array_append_new(j_result, json_string(message));
             o_free(message);
+          } else if (0 == o_strcmp("base64", json_string_value(json_object_get(j_format, "convert")))) {
+            if (!o_base64_decode((const unsigned char *)json_string_value(j_element), json_string_length(j_element), NULL, &len)) {
+              message = msprintf("%s must contain a base64 encoded string value", property);
+              json_array_append_new(j_result, json_string(message));
+              o_free(message);
+            }
           }
         }
       }
@@ -1503,7 +1600,7 @@ int user_module_update(struct config_module * config, const char * username, jso
       cur_dn = get_user_dn_from_username(j_params, ldap, username);
       if (cur_dn != NULL) {
         if ((result = ldap_modify_ext_s(ldap, cur_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Error setting new user %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update user - Error update user %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
           ret = G_ERROR;
         } else {
           ret = G_OK;
@@ -1551,7 +1648,7 @@ int user_module_update_profile(struct config_module * config, const char * usern
       cur_dn = get_user_dn_from_username(j_params, ldap, username);
       if (cur_dn != NULL) {
         if ((result = ldap_modify_ext_s(ldap, cur_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Error setting new user %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_profile user - Error update user profile %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
           ret = G_ERROR;
         } else {
           ret = G_OK;
@@ -1595,7 +1692,7 @@ int user_module_delete(struct config_module * config, const char * username, voi
     cur_dn = get_user_dn_from_username(j_params, ldap, username);
     if (cur_dn != NULL) {
       if ((result = ldap_delete_ext_s(ldap, cur_dn, NULL, NULL)) != LDAP_SUCCESS) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error setting new user %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_delete user - Error delete user %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
         ret = G_ERROR;
       } else {
         ret = G_OK;
