@@ -27,7 +27,7 @@ class PasswordModal extends Component {
     this.checkPassword = this.checkPassword.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       passwordMinLength: nextProps.config.PasswordMinLength||8,

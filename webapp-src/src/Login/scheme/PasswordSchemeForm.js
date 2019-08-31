@@ -18,7 +18,7 @@ class PasswordSchemeForm extends Component {
     this.handleChangePasswordValue = this.handleChangePasswordValue.bind(this);
   }
   
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       scheme: nextProps.scheme,

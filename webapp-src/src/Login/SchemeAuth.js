@@ -20,7 +20,7 @@ class SchemeAuth extends Component {
     this.handleSelectScheme = this.handleSelectScheme.bind(this);
   }
   
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       scheme: nextProps.scheme,

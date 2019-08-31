@@ -20,7 +20,7 @@ class UserMod extends Component {
     this.switchModStatus = this.switchModStatus.bind(this);
   }
   
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       mods: nextProps.mods,
       types: nextProps.types

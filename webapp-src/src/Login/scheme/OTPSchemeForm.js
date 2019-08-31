@@ -18,7 +18,7 @@ class OTPSchemeForm extends Component {
     this.handleChangeOTPValue = this.handleChangeOTPValue.bind(this);
   }
   
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       scheme: nextProps.scheme,

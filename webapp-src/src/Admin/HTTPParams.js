@@ -24,7 +24,7 @@ class HTTPParams extends Component {
     this.checkParameters = this.checkParameters.bind(this);
   }
   
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       mod: nextProps.mod,

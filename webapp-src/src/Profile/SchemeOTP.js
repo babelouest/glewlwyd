@@ -27,7 +27,7 @@ class SchemeOTP extends Component {
     this.getRegister();
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       module: nextProps.module,

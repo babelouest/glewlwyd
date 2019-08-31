@@ -19,7 +19,7 @@ class PasswordForm extends Component {
     this.validateLogin = this.validateLogin.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       username: nextProps.username,
       password: "",

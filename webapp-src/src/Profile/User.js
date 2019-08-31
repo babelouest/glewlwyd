@@ -32,7 +32,7 @@ class User extends Component {
     this.saveProfile = this.saveProfile.bind(this);
   }
   
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       pattern: nextProps.pattern,
       profile: nextProps.profile,

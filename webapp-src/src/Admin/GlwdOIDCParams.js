@@ -95,7 +95,7 @@ class GlwdOIDCParams extends Component {
     this.deleteAllowedScope = this.deleteAllowedScope.bind(this);
   }
   
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     
     nextProps.mod.parameters?"":(nextProps.mod.parameters = {});
     nextProps.mod.parameters["jwt-type"]?"":(nextProps.mod.parameters["jwt-type"] = "rsa");
