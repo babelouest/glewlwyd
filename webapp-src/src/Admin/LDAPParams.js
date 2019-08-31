@@ -264,7 +264,7 @@ class LDAPParams extends Component {
   render() {
     var dataFormat = [], scopeMatch = [];
     var i = 0;
-    for (var property in this.state.mod.parameters["data-format"]) {
+    this.state.mod.parameters["data-format"] && Object.keys(this.state.mod.parameters["data-format"]).map(property => {
       var rwAccess = "";
       if (this.state.role === "user") {
         rwAccess = 
@@ -360,7 +360,7 @@ class LDAPParams extends Component {
           <i className="fas fa-trash"></i>
         </button>
       </div>);
-    }
+    });
     this.state.mod.parameters["scope-match"].forEach((match, index) => {
       scopeMatch.push(<div key={index}>
         <hr/>
