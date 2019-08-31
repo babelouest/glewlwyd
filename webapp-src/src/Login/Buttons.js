@@ -29,7 +29,7 @@ class Buttons extends Component {
     
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       userList: nextProps.userList,
       currentUser: nextProps.currentUser,

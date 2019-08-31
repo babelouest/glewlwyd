@@ -88,7 +88,7 @@ class App extends Component {
     }
   }
   
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       config: props.config
     });

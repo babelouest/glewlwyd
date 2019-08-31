@@ -27,7 +27,7 @@ class CertificateParams extends Component {
     this.checkParameters = this.checkParameters.bind(this);
   }
   
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     
     if (nextProps.mod===undefined) nextProps.mod = {};
     if (nextProps.mod.parameters===undefined) nextProps.mod.parameters = {};

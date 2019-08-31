@@ -57,7 +57,7 @@ class PluginEdit extends Component {
     this.changeParameters = this.changeParameters.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       title: nextProps.title,

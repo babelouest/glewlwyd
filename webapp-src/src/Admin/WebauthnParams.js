@@ -77,7 +77,7 @@ class WebauthnParams extends Component {
     this.toggleForceFmtNone = this.toggleForceFmtNone.bind(this);
   }
   
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     
     this.setState({
       config: nextProps.config,

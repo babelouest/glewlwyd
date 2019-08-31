@@ -33,7 +33,7 @@ class DatabaseParams extends Component {
     this.checkParameters = this.checkParameters.bind(this);
   }
   
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (!nextProps.mod.parameters) {
       nextProps.mod.parameters = {};
     }

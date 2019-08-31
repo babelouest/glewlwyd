@@ -18,10 +18,6 @@ class CertificateSchemeForm extends Component {
     this.validateCertificate = this.validateCertificate.bind(this);
   }
   
-  componentDidUpdate(prevProps) {
-    console.log(prevProps);
-  }
-  
   validateCertificate() {
     if (!this.state.authResult) {
       var scheme = {

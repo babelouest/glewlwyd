@@ -20,7 +20,7 @@ class EmailSchemeForm extends Component {
     this.handleChangeCode = this.handleChangeCode.bind(this);
   }
   
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       scheme: nextProps.scheme,
