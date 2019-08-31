@@ -30,6 +30,7 @@ class DatabaseParams extends Component {
     this.getDbType = this.getDbType.bind(this);
     this.changeValue = this.changeValue.bind(this);
     this.addDataFormat = this.addDataFormat.bind(this);
+    this.deleteDataFormat = this.deleteDataFormat.bind(this);
     this.checkParameters = this.checkParameters.bind(this);
   }
   
@@ -107,6 +108,12 @@ class DatabaseParams extends Component {
   toggleDataFormatValue(e, property, value) {
     var mod = this.state.mod;
     mod.parameters["data-format"][property][value] = !mod.parameters["data-format"][property][value];
+    this.setState({mod: mod});
+  }
+  
+  deleteDataFormat(e, property) {
+    var mod = this.state.mod;
+    delete(mod.parameters["data-format"][property]);
     this.setState({mod: mod});
   }
   
@@ -252,7 +259,7 @@ class DatabaseParams extends Component {
     }
     var dataFormat = [];
     var i = 0;
-    for (var property in this.state.mod.parameters["data-format"]) {
+    this.state.mod.parameters["data-format"] && Object.keys(this.state.mod.parameters["data-format"]).map(property => {
       var nameMultipleJsx = <div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -316,6 +323,10 @@ class DatabaseParams extends Component {
               </div>
             </div>
           </div>
+          <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteDataFormat(e, property)} title={i18next.t("admin.mod-data-format-delete")}>
+            <i className="fas fa-trash"></i>
+          </button>
+          <hr/>
         </div>);
       } else if (this.state.role === "client") {
         dataFormat.push(<div key={i++}>
@@ -340,9 +351,13 @@ class DatabaseParams extends Component {
               </div>
             </div>
           </div>
+          <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteDataFormat(e, property)} title={i18next.t("admin.mod-data-format-delete")}>
+            <i className="fas fa-trash"></i>
+          </button>
+          <hr/>
         </div>);
       }
-    }
+    });
     var additionalProperties = <div className="accordion" id="accordionParams">
       <div className="card">
         <div className="card-header" id="dataFormatCard">
