@@ -2438,7 +2438,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     if (u_map_has_key(get_map(request), "id_token_hint")) {
       id_token_hint = u_map_get(get_map(request), "id_token_hint");
     }
-    if (u_map_has_key(get_map(request), "claims")) {
+    if (u_map_has_key(get_map(request), "claims") && o_strlen(u_map_get(get_map(request), "claims"))) {
       j_claims = json_loads(u_map_get(get_map(request), "claims"), JSON_DECODE_ANY, NULL);
       if (j_claims == NULL) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - error claims parameter not in JSON format");
