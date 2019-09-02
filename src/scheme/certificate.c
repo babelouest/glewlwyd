@@ -520,7 +520,7 @@ static int is_certificate_valid_from_ca_chain(struct _cert_param * cert_params, 
 }
 
 static int is_user_certificate_valid_user_property(struct config_module * config, json_t * j_parameters, const char * username, gnutls_x509_crt_t cert) {
-  json_t * j_user_list = get_user_certificate_list_user_property(config, j_parameters, username), * j_element;
+  json_t * j_user_list = get_user_certificate_list_user_property(config, j_parameters, username), * j_element = NULL;
   int ret;
   char key_id[129] = {0};
   size_t index = 0, key_id_len = 128;
