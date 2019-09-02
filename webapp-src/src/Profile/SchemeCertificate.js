@@ -18,7 +18,8 @@ class SchemeCertificate extends Component {
       certificateList: [],
       addModal: false,
       certFile: false,
-      curCert: false
+      curCert: false,
+      fileName: false
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -41,7 +42,8 @@ class SchemeCertificate extends Component {
       registered: false,
       registration: false,
       addModal: false,
-      certFile: false
+      certFile: false,
+      fileName: false
     });
   }
   
@@ -49,10 +51,10 @@ class SchemeCertificate extends Component {
     if (this.state.profile) {
       apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
       .then((res) => {
-        this.setState({certificateList: res});
+        this.setState({certificateList: res, certFile: false, fileName: false});
       })
       .fail((err) => {
-        this.setState({certificateList: []}, () => {
+        this.setState({certificateList: [], certFile: false, fileName: false}, () => {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         });
       });
@@ -64,7 +66,7 @@ class SchemeCertificate extends Component {
     var file = e.target.files[0];
     var fr = new FileReader();
     fr.onload = (ev2) => {
-      this.setState({certFile: ev2.target.result});
+      this.setState({certFile: ev2.target.result, fileName: file.name});
     };
     fr.readAsText(file);
   }
@@ -104,7 +106,7 @@ class SchemeCertificate extends Component {
   
   deleteCert(e, cert) {
     e.preventDefault();
-    this.setState({curCert: cert}, () => {
+    this.setState({curCert: cert, certFile: false, fileName: false}, () => {
       messageDispatcher.sendMessage('App', {
         type: 'confirm',
         title: i18next.t("profile.scheme-certificate-confirm-title"), 
@@ -166,13 +168,13 @@ class SchemeCertificate extends Component {
       certificateList.push(
         <tr key={index}>
           <td>
-            <span className="d-inline-block" tabindex="0" data-toggle="tooltip" title={cert.certificate_dn}>
-              {cert.dn.substring(0, 8)}[...]
+            <span className="d-inline-block" tabIndex="0" data-toggle="tooltip" title={cert.certificate_dn}>
+              {cert.certificate_dn.substring(0, 8)}[...]
             </span>
           </td>
           <td>
-            <span className="d-inline-block" tabindex="0" data-toggle="tooltip" title={cert.certificate_issuer_dn}>
-              {cert.issuer_dn.substring(0, 8)}[...]
+            <span className="d-inline-block" tabIndex="1" data-toggle="tooltip" title={cert.certificate_issuer_dn}>
+              {cert.certificate_issuer_dn.substring(0, 8)}[...]
             </span>
           </td>
           <td>
@@ -205,7 +207,7 @@ class SchemeCertificate extends Component {
               <div className="custom-file">
                 <input type="file" className="custom-file-input" id="addCertificateFromFileInput" aria-describedby="addCertificateFromFile" onChange={(e) => this.selectCertFile(e)} />
                 <label className="custom-file-label" htmlFor="addCertificateFromFile">
-                  {i18next.t("browse")}
+                  {this.state.fileName||i18next.t("browse")}
                 </label>
               </div>
             </div>

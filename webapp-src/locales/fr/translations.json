@@ -474,6 +474,11 @@
     "mod-glwd-jwks-x5c": "Chaine de certificats X5C (optionnel)",
     "mod-glwd-request-parameter-allow": "Autoriser les requêtes par JWT",
     "mod-glwd-request-uri-allow-https-non-secure": "Autoriser les request_uri vers une url https:// non sécurisée",
+    "mod-glwd-url-auth": "URL API Auth pour cette instance",
+    "mod-glwd-url-token": "URL API Token pour cette instance ",
+    "mod-glwd-url-profile": "URL API Profil pour cette instance",
+    "mod-glwd-url-oidc-config": "URL openid-configuration pour cette instance",
+    "mod-glwd-url-userinfo": "URL userinfo pour cette instance",
     "requires-admin-scope": "Droits administrateur requis",
     "success-api-delete-user": "Utilisateur supprimé",
     "error-api-delete-user": "Erreur de suppression de l'utilisateur",
@@ -585,7 +590,14 @@
     "mod-certificate-value-no": "Non",
     "mod-certificate-use-scheme-storage": "Utiliser le stockage du schéma",
     "mod-certificate-user-certificate-property": "Champ certificat",
-    "mod-certificate-user-certificate-property-ph": "Ex: x509-certificate"
+    "mod-certificate-user-certificate-property-ph": "Ex: x509-certificate",
+    "mod-certificate-user-certificate-property-error": "Vous devez remplir ce champ",
+    "mod-certificate-user-certificate-format": "Format du certificat",
+    "mod-certificate-user-certificate-format-PEM": "PEM",
+    "mod-certificate-user-certificate-format-DER": "DER",
+    "mod-certificate-use-ca-chain": "Utiliser une CA",
+    "mod-certificate-user-certificate-ca-chain":"Certificats de CA",
+    "mod-certificate-user-certificate-ca-chain-message": "Veuillez sélectionner tous les certificats de toutes les chaines de certification que vous souhaitez utiliser"
   },
   "profile": {
     "error-credential-message": "Veuillez vous connecter à l'application",
