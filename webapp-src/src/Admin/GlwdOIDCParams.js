@@ -580,6 +580,8 @@ class GlwdOIDCParams extends Component {
   
   render() {
     var keyJsx, certJsx, scopeOverrideList = [], scopeList = [], additionalParametersList = [], claimsList = [], x5cList = [], addressClaim;
+    var baseApiUrl = document.location.href.split('?')[0].split('#')[0] + this.state.config.api_prefix + "/" + (this.state.mod.name||"");
+    var urlOidcConfig = baseApiUrl + "/.well-known/openid-configuration", urlAuth = baseApiUrl + "/auth", urlToken = baseApiUrl + "/token", urlUserinfo = baseApiUrl + "/userinfo";
     if (this.state.mod.parameters["jwt-type"] === "sha") {
       keyJsx =
         <div className="form-group">
@@ -963,6 +965,47 @@ class GlwdOIDCParams extends Component {
 
     return (
       <div>
+        <div className="form-group">
+          <div>
+            <div>
+              <span className="input-group-text" >{i18next.t("admin.mod-glwd-url-oidc-config")}</span>
+            </div>
+            <code>
+              {urlOidcConfig}
+            </code>
+          </div>
+        </div>
+        <div className="form-group">
+          <div>
+            <div>
+              <span className="input-group-text" >{i18next.t("admin.mod-glwd-url-auth")}</span>
+            </div>
+            <code>
+              {urlAuth}
+            </code>
+          </div>
+        </div>
+        <div className="form-group">
+          <div>
+            <div>
+              <span className="input-group-text" >{i18next.t("admin.mod-glwd-url-token")}</span>
+            </div>
+            <code>
+              {urlToken}
+            </code>
+          </div>
+        </div>
+        <div className="form-group">
+          <div>
+            <div>
+              <span className="input-group-text" >{i18next.t("admin.mod-glwd-url-userinfo")}</span>
+            </div>
+            <code>
+              {urlUserinfo}
+            </code>
+          </div>
+        </div>
+        <hr/>
         <div className="accordion" id="accordionAuthType">
           <div className="card">
             <div className="card-header" id="addParamCard">

@@ -282,6 +282,8 @@ class GlwdOauth2Params extends Component {
   
   render() {
     var keyJsx, certJsx, scopeOverrideList = [], scopeList = [], additionalParametersList = [];
+    var baseApiUrl = document.location.href.split('?')[0].split('#')[0] + this.state.config.api_prefix + "/" + (this.state.mod.name||"");
+    var urlAuth = baseApiUrl + "/auth", urlToken = baseApiUrl + "/token", urlProfile = baseApiUrl + "/profile";
     if (this.state.mod.parameters["jwt-type"] === "sha") {
       keyJsx =
         <div className="form-group">
@@ -416,6 +418,36 @@ class GlwdOauth2Params extends Component {
     });
     return (
       <div>
+        <div className="form-group">
+          <div>
+            <div>
+              <span className="input-group-text" >{i18next.t("admin.mod-glwd-url-auth")}</span>
+            </div>
+            <code>
+              {urlAuth}
+            </code>
+          </div>
+        </div>
+        <div className="form-group">
+          <div>
+            <div>
+              <span className="input-group-text" >{i18next.t("admin.mod-glwd-url-token")}</span>
+            </div>
+            <code>
+              {urlToken}
+            </code>
+          </div>
+        </div>
+        <div className="form-group">
+          <div>
+            <div>
+              <span className="input-group-text" >{i18next.t("admin.mod-glwd-url-profile")}</span>
+            </div>
+            <code>
+              {urlProfile}
+            </code>
+          </div>
+        </div>
         <hr/>
         <div className="accordion" id="accordionSignature">
           <div className="card">
