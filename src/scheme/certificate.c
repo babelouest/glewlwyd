@@ -33,6 +33,22 @@
 
 #define GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_CERTIFICATE "gs_user_certificate"
 
+/**
+ * 
+ * How-To generate a cert chain with cient certificates
+ * 
+ * Root cert/key
+ * openssl genrsa -out root.key 4096
+ * openssl req -x509 -new -nodes -key root.key -sha256 -days 1024 -out root.crt
+ * 
+ * Client cert/key/pfx
+ * openssl genrsa -out client.key 4096
+ * openssl req -new -key client.key -out client.csr
+ * openssl x509 -req -in client.csr -CA root.crt -CAkey root.key -CAcreateserial -out client.crt -days 500 -sha256
+ * openssl pkcs12 -export -out client.pfx -inkey client.key -in client.crt
+ * 
+ */
+
 struct _cert_chain_element {
   gnutls_x509_crt_t            cert;
   char                       * dn;
