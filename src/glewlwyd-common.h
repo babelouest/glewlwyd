@@ -34,6 +34,9 @@
 #include <yder.h>
 #include <hoel.h>
 
+#include <gnutls/gnutls.h>
+#include <gnutls/x509.h>
+
 #include "static_file_callback.h"
 
 /**
