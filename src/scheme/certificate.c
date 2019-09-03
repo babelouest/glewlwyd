@@ -37,6 +37,9 @@
  * 
  * How-To generate a cert chain with cient certificates
  * 
+ * OpenSSL
+ * =======
+ * 
  * Root cert/key
  * openssl genrsa -out root.key 4096
  * openssl req -x509 -new -nodes -key root.key -sha256 -days 1024 -out root.crt
@@ -46,6 +49,20 @@
  * openssl req -new -key client.key -out client.csr
  * openssl x509 -req -in client.csr -CA root.crt -CAkey root.key -CAcreateserial -out client.crt -days 500 -sha256
  * openssl pkcs12 -export -out client.pfx -inkey client.key -in client.crt
+ * 
+ * GnuTLS
+ * ======
+ * 
+ * Root cert/key
+ * certtool --generate-privkey --outfile root.key --bits=4096
+ * certtool --generate-request --load-privkey root.key --outfile root.csr
+ * certtool --generate-self-signed --load-privkey root.key --outfile root.crt
+ * 
+ * Client cert/key/pfx
+ * certtool --generate-privkey --outfile client.key --bits=4096
+ * certtool --generate-request --load-privkey client.key --outfile client.csr
+ * certtool --generate-certificate --load-request client.csr --load-ca-certificate root.crt --load-ca-privkey root.key --outfile client.crt
+ * certtool --load-certificate client.crt --load-privkey client.key --to-p12 --outder --outfile client.pfx
  * 
  */
 
