@@ -37,7 +37,7 @@ class SchemeWebauthn extends Component {
     this.getCredentials();
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       module: nextProps.module,

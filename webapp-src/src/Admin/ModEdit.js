@@ -88,7 +88,7 @@ class ModEdit extends Component {
     this.toggleAllowUserRegister = this.toggleAllowUserRegister.bind(this);
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     
     if (!nextProps.mod) {
       nextProps.mod = {};

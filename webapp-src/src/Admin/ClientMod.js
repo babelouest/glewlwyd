@@ -21,7 +21,7 @@ class ClientMod extends Component {
     this.switchModStatus = this.switchModStatus.bind(this);
   }
   
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       mods: nextProps.mods,
       types: nextProps.types

@@ -22,7 +22,7 @@ class ScopeEdit extends Component {
     this.handleRemoveScheme = this.handleRemoveScheme.bind(this);
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       title: nextProps.title,
       scope: nextProps.scope,

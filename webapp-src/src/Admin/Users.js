@@ -24,7 +24,7 @@ class Users extends Component {
     this.delegateUser = this.delegateUser.bind(this);
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       users: nextProps.users
     });

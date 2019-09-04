@@ -41,7 +41,7 @@ class EditRecord extends Component {
     }
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       title: nextProps.title,
       pattern: nextProps.pattern,

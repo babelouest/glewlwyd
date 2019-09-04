@@ -23,7 +23,7 @@ class MockParams extends Component {
     this.checkParameters = this.checkParameters.bind(this);
   }
   
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       mod: nextProps.mod,
       role: nextProps.role,

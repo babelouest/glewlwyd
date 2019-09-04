@@ -12,7 +12,7 @@ class UserDelegate extends Component {
     
   }
   
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       profile: nextProps.profile
     });

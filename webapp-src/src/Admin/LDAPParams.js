@@ -45,7 +45,7 @@ class LDAPParams extends Component {
     this.changeConfidential = this.changeConfidential.bind(this);
   }
   
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     
     if (!nextProps.mod.parameters["scope-match"]) {
       nextProps.mod.parameters["scope-match"] = [];

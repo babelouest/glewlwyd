@@ -24,7 +24,7 @@ class Body extends Component {
     });
   }
   
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       currentUser: nextProps.currentUser,

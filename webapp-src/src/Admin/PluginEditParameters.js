@@ -16,7 +16,7 @@ class PluginEditParameters extends Component {
     };
   }
   
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       mod: nextProps.mod,
