@@ -52,7 +52,7 @@ class GlwdOauth2Params extends Component {
     this.deleteAdditionalProperty = this.deleteAdditionalProperty.bind(this);
   }
   
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     
     nextProps.mod.parameters?"":(nextProps.mod.parameters = {});
     nextProps.mod.parameters["jwt-type"]?"":(nextProps.mod.parameters["jwt-type"] = "rsa");

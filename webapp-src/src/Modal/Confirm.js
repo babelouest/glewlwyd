@@ -13,7 +13,7 @@ class Confirm extends Component {
     this.closeModal = this.closeModal.bind(this);
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       title: nextProps.title,
       message: nextProps.message,

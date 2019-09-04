@@ -24,7 +24,7 @@ class Navbar extends Component {
     this.changeProfile = this.changeProfile.bind(this);
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       loggedIn: nextProps.loggedIn, 
       schemeList: nextProps.schemeList,

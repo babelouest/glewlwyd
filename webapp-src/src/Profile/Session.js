@@ -34,7 +34,7 @@ class Session extends Component {
     }
   }
   
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       profile: nextProps.profile,

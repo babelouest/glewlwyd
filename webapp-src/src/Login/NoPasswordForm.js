@@ -24,7 +24,7 @@ class NoPasswordForm extends Component {
     this.validateUsername = this.validateUsername.bind(this);
   }
   
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       username: nextProps.username,

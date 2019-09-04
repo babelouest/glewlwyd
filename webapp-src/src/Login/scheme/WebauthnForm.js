@@ -20,7 +20,7 @@ class WebauthnForm extends Component {
     this.triggerScheme();
   }
   
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       scheme: nextProps.scheme,

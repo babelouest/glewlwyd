@@ -16,7 +16,7 @@ class Edit extends Component {
     this.changeValue = this.changeValue.bind(this);
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       title: nextProps.title,
       message: nextProps.message,

@@ -23,7 +23,7 @@ class Clients extends Component {
     this.navigatePerPage = this.navigatePerPage.bind(this);
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       clients: nextProps.clients
     });

@@ -33,7 +33,7 @@ class SchemeCertificate extends Component {
     this.getRegister();
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       module: nextProps.module,
