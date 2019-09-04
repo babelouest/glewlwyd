@@ -597,7 +597,8 @@
     "mod-certificate-user-certificate-format-DER": "DER",
     "mod-certificate-use-ca-chain": "Use a CA",
     "mod-certificate-user-certificate-ca-chain":"CA certificates",
-    "mod-certificate-user-certificate-ca-chain-message": "Select all the certificates of the CA chains you want to use for validation"
+    "mod-certificate-user-certificate-ca-chain-message": "Select all the certificates of the CA chains you want to use for validation",
+    "mod-certificate-user-certificate-ca-chain-delete": "Delete"
   },
   "profile": {
     "error-credential-message": "Please connect to the application",
