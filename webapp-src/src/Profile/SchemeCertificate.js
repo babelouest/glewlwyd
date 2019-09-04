@@ -19,7 +19,8 @@ class SchemeCertificate extends Component {
       addModal: false,
       certFile: false,
       curCert: false,
-      fileName: false
+      fileName: false,
+      activeCert: false
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -29,6 +30,7 @@ class SchemeCertificate extends Component {
     this.switchCertStatus = this.switchCertStatus.bind(this);
     this.deleteCert = this.deleteCert.bind(this);
     this.confirmDeleteCert = this.confirmDeleteCert.bind(this);
+    this.testCertificate = this.testCertificate.bind(this);
     
     this.getRegister();
   }
@@ -51,7 +53,7 @@ class SchemeCertificate extends Component {
     if (this.state.profile) {
       apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
       .then((res) => {
-        this.setState({certificateList: res, certFile: false, fileName: false});
+        this.setState({certificateList: res, certFile: false, fileName: false, activeCert: false});
       })
       .fail((err) => {
         this.setState({certificateList: [], certFile: false, fileName: false}, () => {
@@ -78,7 +80,11 @@ class SchemeCertificate extends Component {
         this.getRegister();
       })
       .fail((err) => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        if (err.status === 400) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-certificate-invalid")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        }
       });
     }
   }
@@ -89,7 +95,11 @@ class SchemeCertificate extends Component {
       this.getRegister();
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      if (err.status === 400) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-certificate-invalid")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
     });
   }
   
@@ -116,16 +126,35 @@ class SchemeCertificate extends Component {
     });
   }
   
-  confirmDeleteCert() {
-    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "delete-certificate", certificate_id: this.state.curCert.certificate_id}})
+  confirmDeleteCert(result) {
+    if (result) {
+      apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "delete-certificate", certificate_id: this.state.curCert.certificate_id}})
+      .then((res) => {
+        this.getRegister();
+      })
+      .fail((err) => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      })
+      .always(() => {
+        messageDispatcher.sendMessage('App', {type: 'closeConfirm'});
+      });
+    } else {
+      messageDispatcher.sendMessage('App', {type: 'closeConfirm'});
+    }
+  }
+  
+  testCertificate() {
+    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "test-certificate"}})
     .then((res) => {
-      this.getRegister();
+      this.setState({activeCert: res});
+      messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-certificate-test-valid")});
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-    })
-    .always(() => {
-      messageDispatcher.sendMessage('App', {type: 'closeConfirm'});
+      if (err.status === 400 || err.status === 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-certificate-invalid")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
     });
   }
   
@@ -133,7 +162,10 @@ class SchemeCertificate extends Component {
     var certificateList = [];
     this.state.certificateList.forEach((cert, index) => {
       var expiration = new Date(cert.expires_at * 1000), lastUsed = new Date(cert.last_used * 1000);
-      var buttons;
+      var buttons, checked;
+      if (this.state.activeCert && cert.certificate_id === this.state.activeCert.certificate_id) {
+        checked = <i className="far fa-check-circle btn-icon-right text-success"></i>;
+      }
       if (cert.enabled === true) {
         buttons = 
         <div className="btn-group" role="group">
@@ -171,6 +203,7 @@ class SchemeCertificate extends Component {
             <span className="d-inline-block" tabIndex="0" data-toggle="tooltip" title={cert.certificate_dn}>
               {cert.certificate_dn.substring(0, 8)}[...]
             </span>
+            {checked}
           </td>
           <td>
             <span className="d-inline-block" tabIndex="1" data-toggle="tooltip" title={cert.certificate_issuer_dn}>
@@ -213,9 +246,17 @@ class SchemeCertificate extends Component {
             </div>
           </div>
           <div className="col-md-6">
-            <button type="button" className="btn btn-outline-secondary" onClick={this.addCertificateFromRequest} title={i18next.t("profile.scheme-certificate-add-from-request")}>
-              <i className="fas fa-file-contract"></i>
-            </button>
+            <div className="btn-group" role="group" aria-label="current-certificate">
+              <button type="button" className="btn btn-outline-secondary" onClick={this.addCertificateFromRequest} title={i18next.t("profile.scheme-certificate-add-from-request")}>
+                <i className="fas fa-file-contract"></i>
+              </button>
+              <button type="button" className="btn btn-outline-secondary" onClick={this.testCertificate} title={i18next.t("profile.scheme-certificate-test")}>
+                <i className="fas fa-question-circle"></i>
+              </button>
+              <button type="button" className="btn btn-outline-secondary" onClick={this.getRegister} title={i18next.t("profile.scheme-certificate-refresh")}>
+                <i className="fas fa-sync"></i>
+              </button>
+            </div>
           </div>
         </div>
         <div className="row">

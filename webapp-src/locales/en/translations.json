@@ -698,10 +698,14 @@
     "scheme-certificate-table-last_user_agent": "Last user-agent",
     "scheme-certificate-add-from-file": "Add a certificat from a file",
     "scheme-certificate-add-from-request": "Add current certificate",
+    "scheme-certificate-test": "Test current certificate",
+    "scheme-certificate-refresh": "Refresh",
     "scheme-certificate-confirm-title": "Delete a certificate",
     "scheme-certificate-confirm-message": "Are you sure you want to delete this certificate?",
     "scheme-certificate-enabled": "Certificate enabled",
-    "scheme-certificate-disabled": "Certificate disabled"
+    "scheme-certificate-disabled": "Certificate disabled",
+    "scheme-certificate-invalid": "Invalid certificate",
+    "scheme-certificate-test-valid": "Certificat valide"
   },
   "modal": {
     "close": "Close",
