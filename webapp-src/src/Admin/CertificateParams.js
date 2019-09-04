@@ -34,9 +34,10 @@ class CertificateParams extends Component {
     this.setUseCaChain = this.setUseCaChain.bind(this);
     this.selectCertFile = this.selectCertFile.bind(this);
     this.addCertificateFile = this.addCertificateFile.bind(this);
+    this.deleteCertificateFile = this.deleteCertificateFile.bind(this);
   }
   
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     
     if (nextProps.mod===undefined) nextProps.mod = {};
     if (nextProps.mod.parameters===undefined) nextProps.mod.parameters = {};
@@ -85,6 +86,12 @@ class CertificateParams extends Component {
     }
   }
   
+  deleteCertificateFile(e, index) {
+    var mod = this.state.mod;
+    mod.parameters["ca-chain"].splice(index, 1);
+    this.setState({mod: mod});
+  }
+  
   setBooleanValue(e, param, value) {
     var mod = this.state.mod;
     mod.parameters[param] = value;
@@ -119,7 +126,12 @@ class CertificateParams extends Component {
     if (this.state.useCAChain) {
       this.state.mod.parameters["ca-chain"].forEach((cert, index) => {
         CAChainList.push(
-          <div className="alert alert-primary" key={index}>{cert["file-name"].substring(0, 40)}</div>
+          <div className="alert alert-primary" key={index}>
+            {cert["file-name"].substring(0, 40)}
+            <button type="button" className="close" aria-label={i18next.t("admin.mod-certificate-user-certificate-ca-chain-delete")} onClick={(e) => this.deleteCertificateFile(e, index)}>
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
         );
       });
       uploadButton = <div className="input-group mb-3">

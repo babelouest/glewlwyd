@@ -597,7 +597,8 @@
     "mod-certificate-user-certificate-format-DER": "DER",
     "mod-certificate-use-ca-chain": "Utiliser une CA",
     "mod-certificate-user-certificate-ca-chain":"Certificats de CA",
-    "mod-certificate-user-certificate-ca-chain-message": "Veuillez sélectionner tous les certificats de toutes les chaines de certification que vous souhaitez utiliser"
+    "mod-certificate-user-certificate-ca-chain-message": "Veuillez sélectionner tous les certificats de toutes les chaines de certification que vous souhaitez utiliser",
+    "mod-certificate-user-certificate-ca-chain-delete": "Supprimer"
   },
   "profile": {
     "error-credential-message": "Veuillez vous connecter à l'application",
