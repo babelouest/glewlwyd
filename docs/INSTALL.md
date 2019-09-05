@@ -428,14 +428,16 @@ Algorithms available are SHA1, SHA256, SHA512, MD5. Algorithms recommended are S
 - Config file variable: `secure_connection_pem_file`
 - Environment variable: `GLWD_SECURE_CONNECTION_PEM_FILE`
 
-#### Secure connection pem file
+#### Secure connection ca file
+
+This configuration is mandatory only if you want to use TLS Certificate authentication schemes, it must contain the CA certificate file used to authenticate clients certificates. Otherwise you can skip it.
+
+If this option is set, users can still connect to Glewlwyd without TLS certificate.
 
 - Config file variable: `secure_connection_ca_file`
 - Environment variable: `GLWD_SECURE_CONNECTION_CA_FILE`
 
 OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avoid data and token to be stolen, or Man-In-The-Middle attacks. Glewlwyd supports starting a secure connection with a private/public key certificate, but it also can be with a classic non-secure HTTP connection, and be available to users behind a HTTPS proxy for example. Glewlwyd won't check that you use it in a secure connection.
-
-The CA file path is the path to the Certificate of Authority file to authenticate users with the client certificate authentication scheme.
 
 These configuration variables are optionnal. Default is no secure connection.
 
