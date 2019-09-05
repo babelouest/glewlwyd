@@ -27,7 +27,7 @@
 
 The installation comes with a default configuration that can be updated or overwritten via the administration page.
 
-The default configuration uses Glewlwyd's database as backend for users and clients. The retype-password scheme is instanciated for a session duration of 10 minutes, it's used to authenticate `g_admin` and `g_profile` scopes (for admin page and profile page). The other authentication schemes are available but must be instanciated and configured.
+The default configuration uses Glewlwyd's database as backend for users and clients. The scopes `g_admin` and `g_profile` (for admin page and profile page) are configured for a session duration of 10 minutes.
 
 The following plugins are available but must be instanciated and configured either:
 
@@ -123,6 +123,7 @@ Go to `parameters/schemes` menu in the navigation tab. Click on the `+` button t
 - E-mail code scheme
 - Webauthn scheme
 - HOTP/TOTP scheme
+- TLS Certificate scheme
 - Retype-password password scheme
 
 You can add instances of the same scheme as many times as you want, if you need different configurations or to access different scopes in different contexts. A scheme instance is distinguished by its module name and its instance name, example `webauthn/AdminWebauthn`, `webauthn/UserWebauthn`.
@@ -140,6 +141,12 @@ Read the full [documentation](EMAIL.md).
 The Webauthn Schema implements authentification based on the [Webauthn API](https://w3c.github.io/webauthn/). This allows users to authenticate to Glewlwyd using physical devices: Android phones, Yubikeys, etc.
 
 Read the full [documentation](WEBAUTHN.md).
+
+#### TLS Certificate scheme
+
+The TLS Certificates scheme requires [SSL/TLS with CA certificate](https://github.com/babelouest/glewlwyd/blob/master/docs/INSTALL.md#ssltls) enabled.
+
+Read the full [documentation](CERTIFICATE.md).
 
 #### HOTP/TOTP scheme
 
@@ -168,10 +175,11 @@ Go to `parameters/plugins` menu in the navigation tab. Click on the `+` button t
 
 #### Glewlwyd Oauth2 plugin
 
-This module has about the same behaviour as the legacy Glewlwyd 1.x Oauth2. The new features available are:
+This module has the same behaviour as the legacy Glewlwyd 1.x Oauth2. The new features available are:
 
 - Allow to use a refresh token as a `"rolling refresh"`, so every time an access token is refreshed, the lifetime of the refresh token will be reset to the original duration. So if a token is refreshed periodically, users won't have to reconnect and request a new refresh token every 2 weeks or so.
 - Allow to overwrite default `rolling refresh` setting and refresh token duration for every scope individually. `rolling refresh` disabled and the lowest refresh token duration have precedence in case of conflicting scopes settings.
+- Allow to add mutiple user properties in the `access_token` rather than one.
 
 Read the full [documentation](OAUTH2.md).
 
@@ -402,7 +410,7 @@ Then you should see the new property in the user edit modal:
 
 Glewlwyd allows non-password authentication. You can use any other scheme installed to authenticate a user. If a required scope has the option `Password` checked, the password will be mandatory to grant access to this scope.
 
-One or more schemes schemes must be already installed: E-mail code, Webauthn or HOTP/TOTP. Then the scheme must be defined in the file `webapp/config.json` in the `sessionSchemes` array. The pattern is the following:
+One or more schemes must be already installed: E-mail code, Webauthn, Client certificate or HOTP/TOTP. Then the scheme must be defined in the file `webapp/config.json` in the `sessionSchemes` array. The pattern is the following:
 
 ```javascript
 {
