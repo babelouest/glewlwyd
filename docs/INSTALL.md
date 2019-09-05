@@ -171,7 +171,6 @@ The available options for cmake are:
 - `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support
 - `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
 - `-DBUILD_GLEWLWYD_TESTING=[on|off]` (default `off`): Build testing tree
-- `-DINSECURE_COOKIE=[on|off]` (default `off`): Build with cookies flag secure to `false`, for development use only!
 - `-DWITH_MOCK=[on|off]` (default `off`): Build mock modules, for development use only!
 - `-DWITH_USER_DATABASE=[on|off]` (default `on`): Build user database backend module
 - `-DWITH_USER_LDAP=[on|off]` (default `on`): Build user LDAP backend module
@@ -183,6 +182,7 @@ The available options for cmake are:
 - `-DWITH_SCHEME_OTP=[on|off]` (default `on`): Build authentication scheme `OTP`
 - `-DWITH_SCHEME_WEBAUTHN=[on|off]` (default `on`): Build authentication scheme `Webauthn`
 - `-DWITH_PLUGIN_OAUTH2=[on|off]` (default `on`): Build Plugin `Glewlwyd OAuth2`
+- `-DWITH_PLUGIN_OIDC=[on|off]` (default `on`): Build Plugin `OpenID Connect`
 
 #### Good ol' Makefile
 
@@ -229,6 +229,8 @@ The command-line arguments have the higher priority, followed by the environment
 To run Glewlwyd with the config file, copy `glewlwyd.conf.sample` to `glewlwyd.conf`, edit the file `glewlwyd.conf` with your own settings.
 
 The following paragraphs describe all the configuration parameters.
+
+To enable environment variables in Glewlwyd, you must execute the program with the `-e` command-line argument.
 
 ### Port number
 
@@ -507,7 +509,12 @@ mysql> SOURCE docs/database/init.mariadb.sql
 Initialise a SQLite3 database:
 
 ```shell
-$ sqlite3 /var/cache/glewlwyd/glewlwyd.db < database/init.sqlite3.sql
+$ sqlite3 /var/cache/glewlwyd/glewlwyd.db < docs/database/init.sqlite3.sql
+```
+
+Initialize a PostgreSQL database:
+```shell
+$ psql -Uglewlwyd -W -fdocs/database/init.postgre.sql
 ```
 
 #### Security warning!
@@ -579,10 +586,13 @@ Run the application using the service command if you installed the init file:
 $ sudo service glewlwyd start
 ```
 
-You can also manually start the application like this:
+You can also manually start the application:
 
 ```shell
-$ ./glewlwyd --config-file=glewlwyd.conf
+$ # start Glewlwyd using a configuration file
+$ glewlwyd --config-file=glewlwyd.conf
+$ # start Glewlwyd using environment variables
+$ GLWD_PORT=4593 GLWD_EXTERNAL_URL=http://localhost:4593 GLWD_STATIC_FILES_PATH=/usr/share/glewlwyd/webapp [...] glewlwyd --env-variables
 ```
 
 By default, Glewlwyd is available on TCP port 4593.
