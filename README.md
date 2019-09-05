@@ -4,7 +4,9 @@
 
 Single-Sign-On (SSO) server with multiple factor authentication.
 
-Provides OpenID Connect and basic OAuth2 authentication processus.
+Authentication processus supported:
+- OAuth2
+- OpenID Connect
 
 Allows users to authenticate via multiple factors:
 - Password
@@ -15,6 +17,7 @@ Allows users to authenticate via multiple factors:
 Users and clients can be stored and managed from various backends:
 - Database
 - LDAP service
+- HTTP Backend service providing Basic Authentication
 
 Based on a plugin architecture to make it easier to add or update storing backends, authentication schemes or processus.
 
@@ -38,15 +41,15 @@ The full installation documentation is available in the [install documentation](
 
 ## Getting started
 
-The [Getting started documentation](docs/GETTING_STARTED.md) will help you complete the installation of Glewlwyd.
+The [Getting started documentation](docs/GETTING_STARTED.md) will help administrators configure Glewlwyd's modules and authentication schemes.
 
 ## User documentation
 
-The [documentation](docs/USER.md) to help Glewlwyd's users manage their profile and log in to Glewlwyd is available.
+The [documentation](docs/USER.md) will help Glewlwyd's users manage their profile and log in to Glewlwyd.
 
 ## Core API
 
-The full core API documention is available in the [API documentation](docs/API.md)
+The full core REST API documention is available in the [API documentation](docs/API.md)
 
 ## Plugins architecture
 
