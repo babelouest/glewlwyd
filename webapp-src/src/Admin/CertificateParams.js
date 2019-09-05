@@ -32,6 +32,7 @@ class CertificateParams extends Component {
     this.setTextValue = this.setTextValue.bind(this);
     this.checkParameters = this.checkParameters.bind(this);
     this.setUseCaChain = this.setUseCaChain.bind(this);
+    this.setValue = this.setValue.bind(this);
     this.selectCertFile = this.selectCertFile.bind(this);
     this.addCertificateFile = this.addCertificateFile.bind(this);
     this.deleteCertificateFile = this.deleteCertificateFile.bind(this);
@@ -101,6 +102,13 @@ class CertificateParams extends Component {
   setTextValue(e, param) {
     var mod = this.state.mod;
     mod.parameters[param] = e.target.value;
+    this.setState({mod: mod});
+  }
+  
+  setValue(e, param, value) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters[param] = value;
     this.setState({mod: mod});
   }
   
