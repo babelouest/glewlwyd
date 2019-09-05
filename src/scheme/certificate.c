@@ -1187,7 +1187,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     }
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
   
   return j_return;
