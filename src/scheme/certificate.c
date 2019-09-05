@@ -162,20 +162,24 @@ static json_t * parse_certificate(const char * x509_data, int der_format) {
             if (gnutls_x509_crt_get_dn(cert, dn, &dn_len) >= 0) {
               dn[dn_len] = '\0';
               if (get_certificate_id(cert, key_id_enc, &key_id_enc_len) == G_OK && (expires_at = gnutls_x509_crt_get_expiration_time(cert) && (issued_at = gnutls_x509_crt_get_activation_time(cert)) != (time_t)-1)) {
-                j_return = json_pack("{sis{sssisissssss}}",
+                j_return = json_pack("{sis{sssisisssssissss}}",
                                      "result",
                                      G_OK,
                                      "certificate",
-                                       "key_id",
+                                       "certificate_id",
                                        key_id_enc,
-                                       "issued_at",
+                                       "activation",
                                        issued_at,
-                                       "expires_at",
+                                       "expiration",
                                        expires_at,
-                                       "dn",
+                                       "certificate_dn",
                                        dn,
-                                       "issuer_dn",
+                                       "certificate_issuer_dn",
                                        issuer_dn!=NULL?issuer_dn:"",
+                                       "last_used",
+                                       0,
+                                       "last_user_agent",
+                                       "",
                                        "x509",
                                        x509_data);
               } else {
@@ -275,7 +279,7 @@ static json_t * get_user_certificate_from_id_user_property(struct config_module 
     if (json_is_string(j_user_certificate)) {
       j_parsed_certificate = parse_certificate(json_string_value(j_user_certificate), (0 == o_strcmp("DER", json_string_value(json_object_get(j_parameters, "user-certificate-format")))));
       if (check_result_value(j_parsed_certificate, G_OK)) {
-        if (0 == o_strcmp(cert_id, json_string_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "key_id")))) {
+        if (0 == o_strcmp(cert_id, json_string_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "certificate_id")))) {
           j_return = json_pack("{sisO}", "result", G_OK, "certificate", json_object_get(j_parsed_certificate, "certificate"));
         } else {
           j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
@@ -289,7 +293,7 @@ static json_t * get_user_certificate_from_id_user_property(struct config_module 
       json_array_foreach(j_user_certificate, index, j_element) {
         j_parsed_certificate = parse_certificate(json_string_value(j_element), (0 == o_strcmp("DER", json_string_value(json_object_get(j_parameters, "user-certificate-format")))));
         if (check_result_value(j_parsed_certificate, G_OK)) {
-          if (0 == o_strcmp(cert_id, json_string_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "key_id")))) {
+          if (0 == o_strcmp(cert_id, json_string_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "certificate_id")))) {
             j_return = json_pack("{sisO}", "result", G_OK, "certificate", json_object_get(j_parsed_certificate, "certificate"));
           }
         } else {
@@ -321,6 +325,7 @@ static json_t * get_user_certificate_list_user_property(struct config_module * c
     if (json_is_string(j_user_certificate)) {
       j_parsed_certificate = parse_certificate(json_string_value(j_user_certificate), (0 == o_strcmp("DER", json_string_value(json_object_get(j_parameters, "user-certificate-format")))));
       if (check_result_value(j_parsed_certificate, G_OK)) {
+        json_object_del(json_object_get(j_parsed_certificate, "certificate"), "x509");
         j_return = json_pack("{sis[O]}", "result", G_OK, "certificate", json_object_get(j_parsed_certificate, "certificate"));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use certificate - Error parse_certificate (1)");
@@ -332,6 +337,7 @@ static json_t * get_user_certificate_list_user_property(struct config_module * c
         json_array_foreach(j_user_certificate, index, j_element) {
           j_parsed_certificate = parse_certificate(json_string_value(j_element), (0 == o_strcmp("DER", json_string_value(json_object_get(j_parameters, "user-certificate-format")))));
           if (check_result_value(j_parsed_certificate, G_OK)) {
+            json_object_del(json_object_get(j_parsed_certificate, "certificate"), "x509");
             json_array_append(json_object_get(j_return, "certificate"), json_object_get(j_parsed_certificate, "certificate"));
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use certificate - Error parse_certificate (2)");
@@ -465,7 +471,7 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
   if (o_strlen(x509_data)) {
     j_parsed_certificate = parse_certificate(x509_data, 0);
     if (check_result_value(j_parsed_certificate, G_OK)) {
-      j_result = get_user_certificate_from_id_scheme_storage(config, j_parameters, username, json_string_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "key_id")));
+      j_result = get_user_certificate_from_id_scheme_storage(config, j_parameters, username, json_string_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "certificate_id")));
       if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
         if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
           expiration_clause = msprintf("FROM_UNIXTIME(%"JSON_INTEGER_FORMAT")", json_integer_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "expires_at")));
@@ -486,7 +492,7 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
                               "gsuc_username",
                               username,
                               "gsuc_x509_certificate_id",
-                              json_object_get(json_object_get(j_parsed_certificate, "certificate"), "key_id"),
+                              json_object_get(json_object_get(j_parsed_certificate, "certificate"), "certificate_id"),
                               "gsuc_x509_certificate_content",
                               json_object_get(json_object_get(j_parsed_certificate, "certificate"), "x509"),
                               "gsuc_x509_certificate_dn",
@@ -645,7 +651,7 @@ static int is_user_certificate_valid_user_property(struct config_module * config
     if (get_certificate_id(cert, key_id_enc, &key_id_enc_len) == G_OK) {
       ret = G_ERROR_UNAUTHORIZED;
       json_array_foreach(json_object_get(j_user_list, "certificate"), index, j_element) {
-        if (0 == o_strcmp((const char *)key_id_enc, json_string_value(json_object_get(j_element, "key_id")))) {
+        if (0 == o_strcmp((const char *)key_id_enc, json_string_value(json_object_get(j_element, "certificate_id")))) {
           ret = G_OK;
         }
       }
@@ -1086,16 +1092,16 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
           if (check_result_value(j_result, G_OK)) {
             j_return = json_pack("{sisO}", "result", G_OK, "response", json_object_get(j_result, "certificate"));
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register - Error o_base64_encode");
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register - Error get_user_certificate_from_id_scheme_storage");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
           json_decref(j_result);
         } else {
           j_result = get_user_certificate_from_id_user_property(config, ((struct _cert_param *)cls)->j_parameters, username, (const char *)key_id_enc);
           if (check_result_value(j_result, G_OK)) {
-            j_return = json_incref(j_result);
+            j_return = json_pack("{sisO}", "result", G_OK, "response", json_object_get(j_result, "certificate"));
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register - Error o_base64_encode");
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register - Error get_user_certificate_from_id_user_property");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
           json_decref(j_result);
