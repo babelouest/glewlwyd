@@ -161,7 +161,7 @@ class SchemeCertificate extends Component {
 	render() {
     var certificateList = [];
     this.state.certificateList.forEach((cert, index) => {
-      var expiration = new Date(cert.expires_at * 1000), lastUsed = new Date(cert.last_used * 1000);
+      var expiration = new Date(cert.expiration * 1000), lastUsed = new Date(cert.last_used * 1000);
       var buttons, checked;
       if (this.state.activeCert && cert.certificate_id === this.state.activeCert.certificate_id) {
         checked = <i className="far fa-check-circle btn-icon-right text-success"></i>;
