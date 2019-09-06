@@ -75,7 +75,7 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
   int res;
   
   scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
-  if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
+  if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
     res = scheme_instance->module->user_auth_scheme_module_validate(config->config_m, request, username, j_scheme_value, scheme_instance->cls);
     if (res == G_OK || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM || res == G_ERROR_NOT_FOUND || res == G_ERROR) {
       j_return = json_pack("{si}", "result", res);
@@ -94,7 +94,7 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
   json_t * j_return = NULL, * j_response = NULL;
   
   scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
-  if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
+  if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
     j_response = scheme_instance->module->user_auth_scheme_module_trigger(config->config_m, request, username, j_trigger_parameters, scheme_instance->cls);
     if (check_result_value(j_response, G_OK)) {
       if (json_object_get(j_response, "response") != NULL) {
@@ -121,7 +121,7 @@ json_t * auth_register_user_scheme(struct config_elements * config, const char *
   
   if (json_is_object(j_register_parameters)) {
     scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
-    if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
+    if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
       if (delegate || scheme_instance->guasmi_allow_user_register) {
         j_response = scheme_instance->module->user_auth_scheme_module_register(config->config_m, request, username, j_register_parameters, scheme_instance->cls);
         if (check_result_value(j_response, G_OK)) {
@@ -158,7 +158,7 @@ json_t * auth_register_get_user_scheme(struct config_elements * config, const ch
   json_t * j_return = NULL, * j_response = NULL;
   
   scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
-  if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name)) {
+  if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
     j_response = scheme_instance->module->user_auth_scheme_module_register_get(config->config_m, request, username, scheme_instance->cls);
     if (check_result_value(j_response, G_OK)) {
       if (json_object_get(j_response, "response") != NULL) {
