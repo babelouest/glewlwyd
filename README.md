@@ -13,6 +13,7 @@ Allows users to authenticate via multiple factors:
 - One-time password (TOTP/HOTP)
 - Webauthn (Yubikey or Android safetynet)
 - Random Code sent via e-mail
+- TLS Certificate
 
 Users and clients can be stored and managed from various backends:
 - Database
