@@ -14,6 +14,8 @@
     - [E-mail code scheme](#e-mail-code-scheme)
     - [Webauthn scheme](#webauthn-scheme)
     - [HOTP/TOTP scheme](#hotptotp-scheme)
+    - [TLS Certificate scheme](#tls-certificate-scheme)
+    - [Retype-password scheme](#retype-password-scheme)
   - [Scopes](#scopes)
   - [Plugins](#plugins)
     - [Glewlwyd Oauth2 plugin](#glewlwyd-oauth2-plugin)
@@ -124,7 +126,7 @@ Go to `parameters/schemes` menu in the navigation tab. Click on the `+` button t
 - Webauthn scheme
 - HOTP/TOTP scheme
 - TLS Certificate scheme
-- Retype-password password scheme
+- Retype-password scheme
 
 You can add instances of the same scheme as many times as you want, if you need different configurations or to access different scopes in different contexts. A scheme instance is distinguished by its module name and its instance name, example `webauthn/AdminWebauthn`, `webauthn/UserWebauthn`.
 
@@ -142,17 +144,21 @@ The Webauthn Schema implements authentification based on the [Webauthn API](http
 
 Read the full [documentation](WEBAUTHN.md).
 
+#### HOTP/TOTP scheme
+
+The OTP Schema implements authentification based on One-Time-Password using OATH standard defined in [HOTP](https://tools.ietf.org/html/rfc4226) and [TOTP](https://tools.ietf.org/html/rfc6238).
+
+Read the full [documentation](OTP.md).
+
 #### TLS Certificate scheme
 
 The TLS Certificates scheme requires [SSL/TLS with CA certificate](https://github.com/babelouest/glewlwyd/blob/master/docs/INSTALL.md#ssltls) enabled.
 
 Read the full [documentation](CERTIFICATE.md).
 
-#### HOTP/TOTP scheme
+#### Retype-password scheme
 
-The OTP Schema implements authentification based on One-Time-Password using OATH standard defined in [HOTP](https://tools.ietf.org/html/rfc4226) and [TOTP](https://tools.ietf.org/html/rfc6238).
-
-Read the full [documentation](OTP.md).
+The Retype-password schema allows to make mandatory to retype the user password to authenticate, even if the session is authenticated with a valid password. This scheme may be useful to force user to retype its password in some critical process.
 
 ### Scopes
 
