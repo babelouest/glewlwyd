@@ -1053,7 +1053,7 @@ int main(int argc, char *argv[])
   ulfius_set_json_body_request(&auth_req, j_body);
   json_decref(j_body);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
-  if (res == U_OK && auth_resp.status == 200) {
+  if (res == U_OK && auth_resp.status == 200 && auth_resp.nb_cookies) {
     for (i=0; i<auth_resp.nb_cookies; i++) {
       char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
       u_map_put(admin_req.map_header, "Cookie", cookie);
@@ -1063,7 +1063,7 @@ int main(int argc, char *argv[])
     }
   } else {
     do_test = 0;
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication %s (%d/%d)", ADMIN_USERNAME, res, auth_resp.status);
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication %s (%d/%d/%d)", ADMIN_USERNAME, res, auth_resp.status, auth_resp.nb_cookies);
   }
   ulfius_clean_response(&auth_resp);
   ulfius_clean_request(&auth_req);
@@ -1077,7 +1077,7 @@ int main(int argc, char *argv[])
   ulfius_set_json_body_request(&auth_req, j_body);
   json_decref(j_body);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
-  if (res == U_OK && auth_resp.status == 200) {
+  if (res == U_OK && auth_resp.status == 200 && auth_resp.nb_cookies) {
     for (i=0; i<auth_resp.nb_cookies; i++) {
       char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
       u_map_put(user_req.map_header, "Cookie", cookie);
@@ -1087,7 +1087,7 @@ int main(int argc, char *argv[])
     }
   } else {
     do_test = 0;
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication %s", USERNAME);
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication %s (%d/%d/%d)", USERNAME, res, auth_resp.status, auth_resp.nb_cookies);
   }
   ulfius_clean_response(&auth_resp);
   ulfius_clean_request(&auth_req);
