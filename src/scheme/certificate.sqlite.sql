@@ -9,9 +9,9 @@ CREATE TABLE gs_user_certificate (
   gsuc_x509_certificate_id TEXT NOT NULL,
   gsuc_x509_certificate_dn TEXT NOT NULL,
   gsuc_x509_certificate_issuer_dn TEXT NOT NULL,
-  gsuc_activation TIMESTAMP NOT NULL DEFAULT NOW(),
-  gsuc_expiration TIMESTAMP DEFAULT NOW(),
-  gsuc_last_used TIMESTAMP DEFAULT NOW(),
+  gsuc_activation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gsuc_expiration TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gsuc_last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   gsuc_last_user_agent TEXT DEFAULT NULL
 );
 CREATE INDEX i_gsuc_username ON gs_user_certificate(gsuc_username);
