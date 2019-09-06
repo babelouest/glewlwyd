@@ -105,6 +105,10 @@ Corresponding LDAP property name.
 
 If this option is checked, the property values will be available as an array of string values, otherwise a single string value.
 
+#### Convert
+
+If this option is set to `base64`, the property content will be converted to base64 for Glewlwyd. On the other hand, if this property is writable by Glewlwyd, the data must be in base64.
+
 #### Read (admin)
 
 If this option is checked, plugins, schemes and administrators can have access to this property in read mode.
