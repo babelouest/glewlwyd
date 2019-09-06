@@ -42,6 +42,7 @@ DROP TABLE IF EXISTS gs_webauthn_assertion;
 DROP TABLE IF EXISTS gs_webauthn_credential;
 DROP TABLE IF EXISTS gs_webauthn_user;
 DROP TABLE IF EXISTS gs_otp;
+DROP TABLE IF EXISTS gs_user_certificate;
 
 CREATE TABLE g_user_module_instance (
   gumi_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -447,6 +448,23 @@ CREATE TABLE gs_otp (
   gso_totp_time_step_size INTEGER
 );
 CREATE INDEX i_gsso_username ON gs_otp(gso_username);
+
+CREATE TABLE gs_user_certificate (
+  gsuc_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gsuc_mod_name TEXT NOT NULL,
+  gsuc_username TEXT NOT NULL,
+  gsuc_enabled INTEGER DEFAULT 1,
+  gsuc_x509_certificate_content TEXT DEFAULT NULL,
+  gsuc_x509_certificate_id TEXT NOT NULL,
+  gsuc_x509_certificate_dn TEXT NOT NULL,
+  gsuc_x509_certificate_issuer_dn TEXT NOT NULL,
+  gsuc_activation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gsuc_expiration TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gsuc_last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gsuc_last_user_agent TEXT DEFAULT NULL
+);
+CREATE INDEX i_gsuc_username ON gs_user_certificate(gsuc_username);
+CREATE INDEX i_gsuc_x509_certificate_id ON gs_user_certificate(gsuc_x509_certificate_id);
 
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 1, 600);
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1, 600);
