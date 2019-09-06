@@ -1060,9 +1060,10 @@ int main(int argc, char *argv[])
       u_map_put(admin_req.map_header, "Cookie", cookie);
       o_free(cookie);
       y_log_message(Y_LOG_LEVEL_DEBUG, "User %s authenticated", ADMIN_USERNAME);
+      do_test = 1;
     }
-    do_test = 1;
   } else {
+    do_test = 0;
     y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication");
   }
   ulfius_clean_response(&auth_resp);
@@ -1077,15 +1078,16 @@ int main(int argc, char *argv[])
   ulfius_set_json_body_request(&auth_req, j_body);
   json_decref(j_body);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
-  if (res == U_OK && auth_resp.status == 200) {
+  if (do_test && res == U_OK && auth_resp.status == 200) {
     for (i=0; i<auth_resp.nb_cookies; i++) {
       char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
       u_map_put(user_req.map_header, "Cookie", cookie);
       o_free(cookie);
       y_log_message(Y_LOG_LEVEL_DEBUG, "User %s authenticated", USERNAME);
+      do_test = 1;
     }
-    do_test = 1;
   } else {
+    do_test = 0;
     y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication");
   }
   ulfius_clean_response(&auth_resp);
@@ -1102,6 +1104,8 @@ int main(int argc, char *argv[])
     srunner_run_all(sr, CK_VERBOSE);
     number_failed = srunner_ntests_failed(sr);
     srunner_free(sr);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Tests not executed");
   }
   
   ulfius_clean_request(&admin_req);
