@@ -110,6 +110,10 @@ Corresponding LDAP property name.
 
 If this option is checked, the property values will be available as an array of string values, otherwise a single string value.
 
+#### Convert
+
+If this option is set to `base64`, the property content will be converted to base64 for Glewlwyd. On the other hand, if this property is writable by Glewlwyd, the data must be in base64.
+
 ### Scope field property
 
 This section allows to specify a correspondance between a Glewlwyd scope and a value in the scope property. The main goal is to use an existing LDAP service whose clients have property that can be related to scopes (group names, etc.). For example, the group name value `accounting` will correspond to the scope `mail`.
