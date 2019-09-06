@@ -423,6 +423,19 @@ if (WITH_SCHEME_WEBAUTHN)
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodwebauthn)
 endif ()
 
+option(WITH_SCHEME_CERTIFICATE "Build certificate scheme module" on)
+if (WITH_SCHEME_CERTIFICATE)
+	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/certificate.c)
+
+	set(MOD_LIBS ${ULFIUS_LIBRARIES} ${GNUTLS_LIBRARIES} "-ldl")
+
+	add_library(schememodcertificate MODULE ${LIB_SRC})
+	set_target_properties(schememodcertificate PROPERTIES
+			COMPILE_OPTIONS -Wextra)
+	target_link_libraries(schememodcertificate ${MOD_LIBS})
+	set(SCHEME_MODULES ${SCHEME_MODULES} schememodcertificate)
+endif ()
+
 # plugins modules
 
 if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
@@ -608,6 +621,10 @@ if (BUILD_GLEWLWYD_TESTING)
 			set (TESTS ${TESTS} glewlwyd_scheme_retype_password)
 		endif ()
 
+		if (WITH_SCHEME_CERTIFICATE)
+			set(TESTS_SSL glewlwyd_scheme_certificate)
+		endif ()
+		
 		configure_file(
 				"${CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
 				"${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake"
@@ -655,6 +672,12 @@ if (BUILD_GLEWLWYD_TESTING)
 						MATH(EXPR COUNTER "${COUNTER}+1")
 				endforeach ()
 			endif ()
+		endforeach ()
+		
+		foreach (t ${TESTS_SSL})
+			add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
+			target_include_directories(${t} PUBLIC ${TST_DIR})
+			target_link_libraries(${t} PUBLIC ${TST_LIBS})
 		endforeach ()
 				
 	endif ()
@@ -745,8 +768,10 @@ message(STATUS "Build Database backend client module: ${WITH_CLIENT_DATABASE}")
 message(STATUS "Build LDAP backend client module:     ${WITH_CLIENT_LDAP}")
 message(STATUS "Build retype password scheme module:  ${WITH_SCHEME_RETYPE_PASSWORD}")
 message(STATUS "Build e-mail scheme module:           ${WITH_SCHEME_EMAIL}")
-message(STATUS "WITH_SCHEME_OTP:                      ${WITH_SCHEME_OTP}")
+message(STATUS "Build OTP scheme module:              ${WITH_SCHEME_OTP}")
 message(STATUS "Build Webauthn scheme module:         ${WITH_SCHEME_WEBAUTHN}")
+message(STATUS "Build retype password scheme module:  ${WITH_SCHEME_RETYPE_PASSWORD}")
+message(STATUS "Build Certificate scheme module:      ${WITH_SCHEME_CERTIFICATE}")
 message(STATUS "Build legacy oauth2 plugin module:    ${WITH_PLUGIN_OAUTH2}")
 message(STATUS "Build OpenID Connect plugin module:   ${WITH_PLUGIN_OIDC}")
 message(STATUS "Build the testing tree:               ${BUILD_GLEWLWYD_TESTING}")
