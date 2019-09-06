@@ -58,6 +58,6 @@ script:
   - ln -s ../test/cert/ .
   - glewlwyd --config-file=cert/glewlwyd-cert-ci.conf &
   - export G_PID=$!
-  - ./glewlwyd_scheme_certificate
+  - ./glewlwyd_scheme_certificate || (cat /tmp/glewlwyd-https.log && false)
   - kill $G_PID
   - popd
