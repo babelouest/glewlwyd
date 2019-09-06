@@ -1036,7 +1036,6 @@ int main(int argc, char *argv[])
   json_t * j_body;
   int res, do_test = 0, i;
   
-  oath_init();
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
   // Getting a valid session id for authenticated http requests
@@ -1064,7 +1063,7 @@ int main(int argc, char *argv[])
     }
   } else {
     do_test = 0;
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication (%d/%d)", res, auth_resp.status);
   }
   ulfius_clean_response(&auth_resp);
   ulfius_clean_request(&auth_req);
@@ -1112,7 +1111,6 @@ int main(int argc, char *argv[])
   ulfius_clean_request(&user_req);
   
   y_close_logs();
-  oath_done();
 
   return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
