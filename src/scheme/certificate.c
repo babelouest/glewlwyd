@@ -409,7 +409,7 @@ static json_t * get_user_certificate_list_scheme_storage(struct config_module * 
   int res;
   size_t index = 0;
   
-  j_query = json_pack("{sss[ssssssss]s{sOss}}",
+  j_query = json_pack("{sss[ssssssss]s{sOss}ss}",
                       "table",
                       GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_CERTIFICATE,
                       "columns",
@@ -425,7 +425,9 @@ static json_t * get_user_certificate_list_scheme_storage(struct config_module * 
                         "gsuc_mod_name",
                         json_object_get(j_parameters, "mod_name"),
                         "gsuc_username",
-                        username);
+                        username,
+                      "order_by",
+                      "gsuc_id");
   if (enabled) {
     json_object_set_new(json_object_get(j_query, "where"), "gsuc_enabled", json_integer(1));
   }
@@ -496,9 +498,9 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
                               "gsuc_x509_certificate_content",
                               json_object_get(json_object_get(j_parsed_certificate, "certificate"), "x509"),
                               "gsuc_x509_certificate_dn",
-                              json_object_get(json_object_get(j_parsed_certificate, "certificate"), "dn"),
+                              json_object_get(json_object_get(j_parsed_certificate, "certificate"), "certificate_dn"),
                               "gsuc_x509_certificate_issuer_dn",
-                              json_object_get(json_object_get(j_parsed_certificate, "certificate"), "issuer_dn"),
+                              json_object_get(json_object_get(j_parsed_certificate, "certificate"), "certificate_issuer_dn"),
                               "gsuc_expiration",
                                 "raw",
                                 expiration_clause,
@@ -533,6 +535,7 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
       y_log_message(Y_LOG_LEVEL_ERROR, "add_user_certificate_scheme_storage - Error parse_certificate");
       ret = G_ERROR;
     }
+    json_decref(j_parsed_certificate);
   } else {
     ret = G_ERROR_PARAM;
   }
@@ -577,6 +580,7 @@ static int is_certificate_valid_from_ca_chain(struct _cert_param * cert_params, 
       cert_chain_len = 1;
       cert_chain_element = get_cert_chain_element_from_dn(cert_params, issuer_dn);
       while (cert_chain_element != NULL) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "cert is %s", cert_chain_element->dn);
         if (cert_chain_element->issuer_cert == NULL) {
           root_x509 = cert_chain_element->cert;
           y_log_message(Y_LOG_LEVEL_DEBUG, "root cert is %s", cert_chain_element->dn);
@@ -622,8 +626,8 @@ static int is_certificate_valid_from_ca_chain(struct _cert_param * cert_params, 
         }
         o_free(cert_chain);
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "is_certificate_valid_from_ca_chain - no root certificate");
-        ret = G_ERROR;
+        y_log_message(Y_LOG_LEVEL_DEBUG, "is_certificate_valid_from_ca_chain - no root certificate found");
+        ret = G_ERROR_UNAUTHORIZED;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "is_certificate_valid_from_ca_chain - Error gnutls_x509_crt_get_issuer_dn (2)");
@@ -1111,7 +1115,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         j_return = json_pack("{si}", "result", G_ERROR);
       }
     } else {
-      j_return = json_pack("{si}", "result", ret);
+      j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     }
   } else if (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage") == json_true()) {
     if (0 == o_strcmp("upload-certificate", json_string_value(json_object_get(j_scheme_data, "register")))) {
