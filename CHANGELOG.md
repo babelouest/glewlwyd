@@ -1,5 +1,20 @@
 # Glewlwyd Changelog
 
+## 2.0.0-rc1
+
+- Improve documentation
+- Improve OpenID Connect core plugin
+- Add OpenID Connect discovery
+- Add OpenID Connect core requests
+- Add OpenID Connect address claims
+- Add option max_age for session passwords
+- Change OpenID Connect access token payload format to match id_token format
+- Fix PostgreSQL database
+- TOTP: forbid to use the same code twice
+- Allow to use environment variables instead of or in addition to configuration file
+- Add scheme TLS certificate
+- Allow to use profile picture for users
+
 ## 2.0.0-b3
 
 - Add OpenID Connect core plugin
