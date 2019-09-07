@@ -12,6 +12,7 @@ class SchemeAuth extends Component {
       config: props.config,
       scheme: props.scheme,
       schemeListRequired: props.schemeListRequired,
+      client: props.client,
       currentUser: props.currentUser,
       canContinue: !props.scheme,
       show: props.show
@@ -25,6 +26,7 @@ class SchemeAuth extends Component {
       config: nextProps.config,
       scheme: nextProps.scheme,
       schemeListRequired: nextProps.schemeListRequired,
+      client: nextProps.client,
       currentUser: nextProps.currentUser,
       canContinue: !nextProps.scheme,
       show: nextProps.show
@@ -72,12 +74,26 @@ class SchemeAuth extends Component {
         </div>
       );
     } else {
+      var connectMessage;
+      if (this.state.client) {
+        connectMessage = i18next.t("login.connect-to", {client:this.state.client.name||this.state.client.client_id});
+      } else {
+        connectMessage = i18next.t("login.connection");
+      }
       return (
+      <div>
         <div className="row">
           <div className="col-md-12">
-            <h3>{i18next.t("login.wish-message")}</h3>
+            <h3>{connectMessage}</h3>
           </div>
         </div>
+        <hr/>
+        <div className="row">
+          <div className="col-md-12">
+            <h4>{i18next.t("login.wish-message")}</h4>
+          </div>
+        </div>
+      </div>
       );
     }
   }

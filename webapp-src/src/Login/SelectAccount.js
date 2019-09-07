@@ -64,6 +64,22 @@ class SelectAccount extends Component {
   render() {
     var userList = [];
     this.state.userList.forEach((user, index) => {
+      var inputUser;
+      if (this.state.config.profilePicture && user[this.state.config.profilePicture.userProperty]) {
+        var picData = user[this.state.config.profilePicture.userProperty];
+        if (Array.isArray(picData)) {
+          picData = picData[0];
+        }
+        inputUser = 
+        <div>
+          <input type="radio" className="input-hidden" onChange={() => this.handleToggleGrantScope(user)} name="select-user" id={"select-user-" + user.username} checked={selected}/>
+          <label htmlFor={"select-user-" + user.username}>
+            <img className="img-thumb" src={"data:"+this.state.config.profilePicture.type+";base64,"+picData} alt={this.state.config.profilePicture.userProperty} />
+          </label>
+        </div>
+      } else {
+        inputUser = <input type="radio" className="form-control" onChange={() => this.handleToggleGrantScope(user)} name="select-user" id={"select-user-" + user.username} checked={selected}/>
+      }
       var selected = (user.username===this.state.currentUser.username);
       userList.push(
         <li className={"list-group-item" + (selected?" active":"")} key={index}>
@@ -71,7 +87,7 @@ class SelectAccount extends Component {
             <div className="col">
               <div className="input-group mb-3">
                 <div className="input-group-prepend">
-                  <input type="radio" className="form-control" onChange={() => this.handleToggleGrantScope(user)} name="select-user" id={"select-user-" + user.username} checked={selected}/>
+                  {inputUser}
                 </div>
                 <div className="btn-icon-right">
                   <label className="form-check-label" htmlFor={"select-user-" + user.username}>{user.name||user.username}</label>

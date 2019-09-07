@@ -38,7 +38,7 @@ class Body extends Component {
   }
 
 	render() {
-    var content;
+    var content, profilePicture;
     if (this.state.showGrant) {
       content = <div id="carouselBody" className="carousel slide" data-ride="carousel">
         <div className="carousel-inner">
@@ -50,14 +50,27 @@ class Body extends Component {
     } else {
       content = <div className="row">
         <div className="col-md-12">
-          <SchemeAuth config={this.state.config} currentUser={this.state.currentUser} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} />
+          <SchemeAuth config={this.state.config} currentUser={this.state.currentUser} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} client={this.state.client} />
         </div>
       </div>
     }
+    if (this.state.config.profilePicture && this.state.currentUser[this.state.config.profilePicture.property]) {
+      var picData = this.state.currentUser[this.state.config.profilePicture.property];
+      if (Array.isArray(picData)) {
+        picData = picData[0];
+      }
+      profilePicture = 
+        <div className="row">
+          <div className="col-md-12 text-center">
+            <img className="btn-icon-right img-medium" src={"data:"+this.state.config.profilePicture.type+";base64,"+picData} alt={this.state.config.profilePicture.property} />
+          </div>
+        </div>
+    }
 		return (
       <div>
+        {profilePicture}
         <div className="row">
-          <div className="col-md-12">
+          <div className="col-md-12 text-center">
             <h4>{i18next.t("login.hello", {name: (this.state.currentUser.name || this.state.currentUser.username)})}</h4>
           </div>
         </div>

@@ -10,3 +10,19 @@
   font-size: 80%;
   color: #dc3545;
 }
+.img-thumb {
+  width: 100%;
+  max-width: 50px;
+  height: 100%;
+  max-height: 50px;
+}
+.img-medium {
+  width: 100%;
+  max-width: 100px;
+  height: 100%;
+  max-height: 100px;
+}
+.input-hidden {
+  position: absolute;
+  left: -9999px;
+}
