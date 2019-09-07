@@ -32,7 +32,7 @@ Its plugin architecture makes it easy to add new modules or plugins, or modify e
 
 ![logged in](docs/screenshots/login-nopassword.png)
 
-Glewlwyd 2.0 Beta 3 is out. Glewlwyd 2.0 is not complete yet but you can install the Beta version, check out the new features and send feedbacks if you feel like it.
+Glewlwyd 2.0 Realease Candidate 1 is out. All the planned new functionalities gor Release 2.0 are now implemented. What's left before the official release is to make sure no critical or important bugs are still present. Feel free to install, test it, and [send feedbacks](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
 
 Important! Due to database reworking of the application, you can't upgrade an existing installation from Glewlwyd 1.x to Glewlwyd 2.x.
 
