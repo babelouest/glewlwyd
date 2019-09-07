@@ -65,7 +65,7 @@ class UserMod extends Component {
 	render() {
     var mods = [];
     this.state.mods.forEach((mod, index) => {
-      var module = "", buttonUp = "", switchButton = "";
+      var module = "", buttonUp = "", switchButton = "", buttonUpSmall, switchButtonSmall;
       this.state.types.forEach((type) => {
         if (mod.module === type.name) {
           module = type.display_name;
@@ -75,26 +75,38 @@ class UserMod extends Component {
         buttonUp = 
           <button type="button" className="btn btn-secondary" onClick={(e) => this.moveModUp(e, mod, this.state.mods[index - 1])} title={i18next.t("admin.move-up")}>
             <i className="fas fa-sort-up"></i>
-          </button>
+          </button>;
+        buttonUpSmall = <a className="dropdown-item" href="#" onClick={(e) => moveModUp(e, mod, this.state.mods[index - 1])} alt={i18next.t("admin.move-up")}>
+          <i className="fas fa-sort-up btn-icon"></i>
+          {i18next.t("admin.move-up")}
+        </a>
       }
       if (mod.enabled) {
         switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-off")}>
-          <i className="fas fa-toggle-on"></i>
-        </button>;
-      } else {
-        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-on")}>
           <i className="fas fa-toggle-off"></i>
         </button>;
+        switchButtonSmall = <a className="dropdown-item" href="#" onClick={(e) => this.switchModStatus(mod)} alt={i18next.t("admin.switch-off")}>
+          <i className="fas fa-toggle-on btn-icon"></i>
+          {i18next.t("admin.switch-off")}
+        </a>
+      } else {
+        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-on")}>
+          <i className="fas fa-toggle-on"></i>
+        </button>;
+        switchButtonSmall = <a className="dropdown-item" href="#" onClick={(e) => this.switchModStatus(mod)} alt={i18next.t("admin.switch-on")}>
+          <i className="fas fa-toggle-on btn-icon"></i>
+          {i18next.t("admin.switch-on")}
+        </a>
       }
       mods.push(<tr key={index}>
-        <td>{mod.order_rank}</td>
+        <td className="d-none d-lg-table-cell">{mod.order_rank}</td>
         <td>{module}</td>
         <td>{mod.name}</td>
-        <td>{mod.display_name||""}</td>
-        <td>{(mod.readonly?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
-        <td>{(mod.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
+        <td className="d-none d-lg-table-cell">{mod.display_name||""}</td>
+        <td className="d-none d-lg-table-cell">{(mod.readonly?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
+        <td className="d-none d-lg-table-cell">{(mod.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
         <td>
-          <div className="btn-group" role="group">
+          <div className="btn-group d-none d-lg-table-cell" role="group">
             {switchButton}
             <button type="button" className="btn btn-secondary" onClick={(e) => this.editMod(e, mod)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
@@ -103,6 +115,23 @@ class UserMod extends Component {
               <i className="fas fa-trash"></i>
             </button>
             {buttonUp}
+          </div>
+          <div className="dropdown d-block d-lg-none">
+            <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuNav" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i className="fas fa-chevron-circle-down"></i>
+            </button>
+            <div className="dropdown-menu" aria-labelledby="dropdownMenuNav">
+              {switchButtonSmall}
+              <a className="dropdown-item" href="#" onClick={(e) => this.editMod(e, mod)} alt={i18next.t("admin.edit")}>
+                <i className="fas fa-edit btn-icon"></i>
+                {i18next.t("admin.edit")}
+              </a>
+              <a className="dropdown-item" href="#" onClick={(e) => this.deleteMod(e, mod)} alt={i18next.t("admin.delete")}>
+                <i className="fas fa-trash btn-icon"></i>
+                {i18next.t("admin.delete")}
+              </a>
+              {buttonUpSmall}
+            </div>
           </div>
         </td>
       </tr>);
@@ -121,7 +150,7 @@ class UserMod extends Component {
           </th>
         </tr>
         <tr>
-          <th>
+          <th className="d-none d-lg-table-cell">
             {i18next.t("admin.order")}
           </th>
           <th>
@@ -130,13 +159,13 @@ class UserMod extends Component {
           <th>
             {i18next.t("admin.name")}
           </th>
-          <th>
+          <th className="d-none d-lg-table-cell">
             {i18next.t("admin.display-name")}
           </th>
-          <th>
+          <th className="d-none d-lg-table-cell">
             {i18next.t("admin.readonly")}
           </th>
-          <th>
+          <th className="d-none d-lg-table-cell">
             {i18next.t("admin.enabled")}
           </th>
           <th>

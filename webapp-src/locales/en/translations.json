@@ -186,6 +186,7 @@
     "scope-list-title": "Scope list",
     "add-scope-title": "Add a scope",
     "edit-scope-title": "Update a scope",
+    "scope-add": "Add",
     "scope-name": "Name",
     "scope-password-max-age": "Password session duration (0: unlimited)",
     "scope-password-max-age-ph": "Ex: 600",

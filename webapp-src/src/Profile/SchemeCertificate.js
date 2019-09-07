@@ -205,15 +205,15 @@ class SchemeCertificate extends Component {
             </span>
             {checked}
           </td>
-          <td>
+          <td className="d-none d-lg-table-cell">
             <span className="d-inline-block" tabIndex="1" data-toggle="tooltip" title={cert.certificate_issuer_dn}>
               {cert.certificate_issuer_dn.substring(0, 8)}[...]
             </span>
           </td>
-          <td>
+          <td className="d-none d-lg-table-cell">
             {expiration.toLocaleString()}
           </td>
-          <td>
+          <td className="d-none d-lg-table-cell">
             {lastUsed.toLocaleString()}
           </td>
           <td>
@@ -267,13 +267,13 @@ class SchemeCertificate extends Component {
                   <th>
                     {i18next.t("profile.scheme-certificate-table-certificate_dn")}
                   </th>
-                  <th>
+                  <th className="d-none d-lg-table-cell">
                     {i18next.t("profile.scheme-certificate-table-certificate_issuer_dn")}
                   </th>
-                  <th>
+                  <th className="d-none d-lg-table-cell">
                     {i18next.t("profile.scheme-certificate-table-expiration")}
                   </th>
-                  <th>
+                  <th className="d-none d-lg-table-cell">
                     {i18next.t("profile.scheme-certificate-table-last_used")}
                   </th>
                   <th>
