@@ -186,6 +186,7 @@
     "scope-list-title": "Liste des scopes",
     "add-scope-title": "Ajouter un scope",
     "edit-scope-title": "Modifier un scope",
+    "scope-add": "Ajouter",
     "scope-name": "Nom",
     "scope-name-ph": "Ex: courriel",
     "scope-password-max-age": "Durée de session du mot de passe en secondes (0: illimité)",
