@@ -44,6 +44,15 @@
       "profile-read": true,
       "profile-write": false
     },{
+      "name": "picture",
+      "list": false,
+      "type": "image/jpeg",
+      "forceShow": true,
+      "edit": true,
+      "label": "admin.picture",
+      "profile-read": true,
+      "profile-write": false
+    },{
       "name": "scope",
       "list": true,
       "forceShow": true,
@@ -135,5 +144,9 @@
       "scheme_display_name": "login.password-title",
       "scheme_type": "retype-password"
     }
-  ]
+  ],
+  "profilePicture": {
+    "property": "picture",
+    "type": "image/jpeg"
+  }
 }
