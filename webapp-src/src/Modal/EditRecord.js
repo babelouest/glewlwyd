@@ -34,6 +34,8 @@ class EditRecord extends Component {
     this.changeEltConfirm = this.changeEltConfirm.bind(this);
     this.changeTextArea = this.changeTextArea.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
+    this.uploadImage = this.uploadImage.bind(this);
+    this.removeImage = this.removeImage.bind(this);
     this.setPwd = this.setPwd.bind(this);
 
     if (this.state.add) {
@@ -127,6 +129,33 @@ class EditRecord extends Component {
               } else {
                 inputJsx = <input type="file" disabled={true} className="form-control" />
               }
+            } else if (pattern.type && pattern.type.startsWith("image")) {
+              var img = [];
+              elt.forEach((curElt, index) => {
+                img.push(
+                  <a href="#" onClick={(e) => this.removeImage(e, pattern.name, index)} title={i18next.t("remove")} ><img key={index} className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+curElt} alt={pattern.name+"-"+index} /></a>
+                );
+              });
+              if (pattern.edit || this.state.add) {
+                inputJsx = 
+                <div>
+                  <div className="custom-file">
+                    <input type="file" className={"custom-file-input" + validInput} onChange={(e) => this.uploadImage(e, pattern.name, true)} id={"modal-image-" + pattern.name} />
+                    <label className="custom-file-label" htmlFor={"modal-image-" + pattern.name}>
+                      {i18next.t("browse")}
+                    </label>
+                  </div>
+                  {img}
+                </div>
+              } else {
+                var img = [];
+                elt.forEach((curElt, index) => {
+                  img.push(
+                    <img key={index} className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+curElt} alt={pattern.name+"-"+index} />
+                  );
+                });
+                inputJsx = img;
+              }
             } else {
               inputJsx = <div className="input-group">
                 <input type="text" className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} onChange={(e) => this.changeListAddElt(e, pattern.name)} value={this.state.listAddValue[pattern.name]}/>
@@ -151,7 +180,7 @@ class EditRecord extends Component {
               </div>
             </div>
           }
-          if (pattern.type !== "textarea") {
+          if (pattern.type !== "textarea" && pattern.type && !pattern.type.startsWith("image")) {
             elt.forEach((val, index) => {
               var displayVal = val;
               if (pattern.type === "file") {
@@ -188,6 +217,25 @@ class EditRecord extends Component {
             inputJsx = <input type="file" className={"form-control" + validInput} onChange={(e) => this.uploadFile(e, pattern.name)} />
           } else {
             inputJsx = <input type="file" disabled={true} className="form-control" />
+          }
+        } else if (pattern.type && pattern.type.startsWith("image")) {
+          var img;
+          if (elt) {
+            img = <a href="#" onClick={(e) => this.removeImage(e, pattern.name, -1)} title={i18next.t("remove")} ><img className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+elt} alt={pattern.name} /></a>
+          }
+          if (pattern.edit || this.state.add) {
+            inputJsx = 
+            <div>
+              <div className="custom-file">
+                <input type="file" className={"custom-file-input" + validInput} onChange={(e) => this.uploadImage(e, pattern.name)} id={"modal-image-" + pattern.name} />
+                <label className="custom-file-label" htmlFor={"modal-image-" + pattern.name}>
+                  {i18next.t("browse")}
+                </label>
+              </div>
+              {img}
+            </div>
+          } else {
+            inputJsx = <img className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+elt} alt={pattern.name} />;
           }
         } else {
           if (pattern.edit === false && !this.state.add) {
@@ -360,6 +408,34 @@ class EditRecord extends Component {
       this.setState({data: data});
     };
     fr.readAsText(file);
+  }
+  
+  uploadImage(e, name, list) {
+    var data = this.state.data;
+    var file = e.target.files[0];
+    var fr = new FileReader();
+    fr.onload = (ev2) => {
+      if (list) {
+        if (!data[name]) {
+          data[name] = [];
+        }
+        data[name].push(btoa(ev2.target.result));
+      } else {
+        data[name] = btoa(ev2.target.result);
+      }
+      this.setState({data: data});
+    };
+    fr.readAsBinaryString(file);
+  }
+  
+  removeImage(e, name, index) {
+    var data = this.state.data;
+    if (index > -1) {
+      data[name].splice(index, 1);
+    } else {
+      delete(data[name]);
+    }
+    this.setState({data: data});
   }
   
   setPwd(e, name, act) {

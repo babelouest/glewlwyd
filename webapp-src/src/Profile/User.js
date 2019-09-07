@@ -28,6 +28,8 @@ class User extends Component {
     this.changeEltConfirm = this.changeEltConfirm.bind(this);
     this.changeTextArea = this.changeTextArea.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
+    this.uploadImage = this.uploadImage.bind(this);
+    this.removeImage = this.removeImage.bind(this);
     this.editElt = this.editElt.bind(this);
     this.saveProfile = this.saveProfile.bind(this);
   }
@@ -160,6 +162,34 @@ class User extends Component {
     fr.readAsText(file);
   }
   
+  uploadImage(e, name, list) {
+    var profile = this.state.profile;
+    var file = e.target.files[0];
+    var fr = new FileReader();
+    fr.onload = (ev2) => {
+      if (list) {
+        if (!profile[name]) {
+          profile[name] = [];
+        }
+        profile[name].push(btoa(ev2.target.result));
+      } else {
+        profile[name] = btoa(ev2.target.result);
+      }
+      this.setState({profile: profile});
+    };
+    fr.readAsBinaryString(file);
+  }
+  
+  removeImage(e, name, index) {
+    var profile = this.state.profile;
+    if (index > -1) {
+      profile[name].splice(index, 1);
+    } else {
+      delete(profile[name]);
+    }
+    this.setState({profile: profile});
+  }
+  
   saveProfile(e) {
     apiManager.glewlwydRequest("/profile", "PUT", this.state.profile)
     .then((res) => {
@@ -192,6 +222,33 @@ class User extends Component {
               inputJsx = <input type="file" className={"form-control" + validInput} onChange={(e) => this.uploadFile(e, pattern.name, true)} />
             } else {
               inputJsx = <input type="file" disabled={true} className="form-control" />
+            }
+          } else if (pattern.type && pattern.type.startsWith("image")) {
+            var img = [];
+            elt.forEach((curElt, index) => {
+              img.push(
+                <a href="#" onClick={(e) => this.removeImage(e, pattern.name, index)} title={i18next.t("remove")} ><img key={index} className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+curElt} alt={pattern.name+"-"+index} /></a>
+              );
+            });
+            if (pattern.edit || this.state.add) {
+              inputJsx = 
+              <div>
+                <div className="custom-file">
+                  <input type="file" className={"custom-file-input" + validInput} onChange={(e) => this.uploadImage(e, pattern.name, true)} id={"modal-image-" + pattern.name} />
+                  <label className="custom-file-label" htmlFor={"modal-image-" + pattern.name}>
+                    {i18next.t("browse")}
+                  </label>
+                </div>
+                {img}
+              </div>
+            } else {
+              var img = [];
+              elt.forEach((curElt, index) => {
+                img.push(
+                  <img key={index} className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+curElt} alt={pattern.name+"-"+index} />
+                );
+              });
+              inputJsx = img;
             }
           } else {
             if (pattern["profile-write"]) {
@@ -229,7 +286,7 @@ class User extends Component {
           if (pattern.type === "file") {
             displayVal = val.substring(0, val.indexOf("/"));
           }
-          if (pattern.type !== "textarea") {
+          if (pattern.type && pattern.type !== "textarea" && !pattern.type.startsWith("image")) {
             if (pattern["profile-write"] !== true && !this.state.add) {
               listJsx.push(<span className="badge badge-primary btn-icon-right" key={index}>
                              {displayVal}
@@ -278,6 +335,25 @@ class User extends Component {
           inputJsx = <input type="file" className={"form-control" + validInput} onChange={(e) => this.uploadFile(e, pattern.name)} />
         } else {
           inputJsx = <input type="file" disabled={true} className="form-control" />
+        }
+      } else if (pattern.type && pattern.type.startsWith("image")) {
+        var img;
+        if (elt) {
+          img = <a href="#" onClick={(e) => this.removeImage(e, pattern.name, -1)} title={i18next.t("remove")} ><img className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+elt} alt={pattern.name} /></a>
+        }
+        if (pattern.edit || this.state.add) {
+          inputJsx = 
+          <div>
+            <div className="custom-file">
+              <input type="file" className={"custom-file-input" + validInput} onChange={(e) => this.uploadImage(e, pattern.name)} id={"modal-image-" + pattern.name} />
+              <label className="custom-file-label" htmlFor={"modal-image-" + pattern.name}>
+                {i18next.t("browse")}
+              </label>
+            </div>
+            {img}
+          </div>
+        } else {
+          inputJsx = <img className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+elt} alt={pattern.name} />;
         }
       } else {
         if (pattern["profile-write"] !== true && !this.state.add) {
