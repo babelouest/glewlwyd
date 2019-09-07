@@ -69,8 +69,8 @@ class Scopes extends Component {
     this.state.scopes.list.forEach((scope, index) => {
       scopes.push(<tr key={index}>
         <td>{scope.name}</td>
-        <td>{scope.display_name||""}</td>
-        <td>{scope.description||""}</td>
+        <td className="d-none d-lg-table-cell">{scope.display_name||""}</td>
+        <td className="d-none d-lg-table-cell">{scope.description||""}</td>
         <td>
           <div className="btn-group" role="group">
             <button type="button" className="btn btn-secondary" onClick={(e) => this.editScope(e, scope)} title={i18next.t("admin.edit")}>
@@ -91,7 +91,7 @@ class Scopes extends Component {
             <h4>{i18next.t("admin.scope-list-title")}</h4>
           </th>
           <th colSpan="3">
-            <form className="form-inline" onSubmit={(e) => this.searchScopes(e)}>
+            <form className="form-inline d-none d-lg-table-cell" onSubmit={(e) => this.searchScopes(e)}>
               <div className="input-group mr-sm-2">
                 <input className="form-control" type="search" placeholder={i18next.t("admin.nav-search-placeholder")} aria-label="Search" onChange={this.handleChangeSearchPattern} value={this.state.handleChangeSearchPattern}/>
                 <button className="btn btn-secondary my-sm-0" type="submit" title={i18next.t("admin.nav-search-title")} onClick={(e) => this.searchScopes(e)}>{i18next.t("admin.nav-search")}</button>
@@ -119,16 +119,35 @@ class Scopes extends Component {
                 </button>
               </div>
             </form>
+            <div className="dropdown d-block d-lg-none">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuNav" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i className="fas fa-chevron-circle-down"></i>
+              </button>
+              <div className="dropdown-menu" aria-labelledby="dropdownMenuNav">
+                <a className="dropdown-item" href="#" onClick={(e) => this.navigate(e, -1)} alt={i18next.t("admin.nav-previous")}>
+                  <i className="fas fa-backward btn-icon"></i>
+                  {i18next.t("admin.nav-previous")}
+                </a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.navigate(e, 1)} alt={i18next.t("admin.nav-next")}>
+                  <i className="fas fa-forward btn-icon"></i>
+                  {i18next.t("admin.nav-next")}
+                </a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.addScope(e)} alt={i18next.t("admin.scope-add")}>
+                  <i className="fas fa-plus btn-icon"></i>
+                  {i18next.t("admin.scope-add")}
+                </a>
+              </div>
+            </div>
           </th>
         </tr>
         <tr>
           <th>
             {i18next.t("admin.name")}
           </th>
-          <th>
+          <th className="d-none d-lg-table-cell">
             {i18next.t("admin.display-name")}
           </th>
-          <th>
+          <th className="d-none d-lg-table-cell">
             {i18next.t("admin.description")}
           </th>
           <th>

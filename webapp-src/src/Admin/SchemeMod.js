@@ -56,7 +56,7 @@ class SchemeMod extends Component {
 	render() {
     var mods = [];
     this.state.mods.forEach((mod, index) => {
-      var module = "", switchButton = "";
+      var module = "", switchButton = "", switchButtonSmall;
       this.state.types.forEach((type) => {
         if (mod.module === type.name) {
           module = type.display_name;
@@ -64,20 +64,28 @@ class SchemeMod extends Component {
       });
       if (mod.enabled) {
         switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-off")}>
-          <i className="fas fa-toggle-on"></i>
-        </button>;
-      } else {
-        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-on")}>
           <i className="fas fa-toggle-off"></i>
         </button>;
+        switchButtonSmall = <a className="dropdown-item" href="#" onClick={(e) => this.switchModStatus(mod)} alt={i18next.t("admin.switch-off")}>
+          <i className="fas fa-toggle-on btn-icon"></i>
+          {i18next.t("admin.switch-off")}
+        </a>
+      } else {
+        switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-on")}>
+          <i className="fas fa-toggle-on"></i>
+        </button>;
+        switchButtonSmall = <a className="dropdown-item" href="#" onClick={(e) => this.switchModStatus(mod)} alt={i18next.t("admin.switch-on")}>
+          <i className="fas fa-toggle-on btn-icon"></i>
+          {i18next.t("admin.switch-on")}
+        </a>
       }
       mods.push(<tr key={index}>
         <td>{module}</td>
         <td>{mod.name}</td>
-        <td>{mod.display_name||""}</td>
-        <td>{(mod.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
+        <td className="d-none d-lg-table-cell">{mod.display_name||""}</td>
+        <td className="d-none d-lg-table-cell">{(mod.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
         <td>
-          <div className="btn-group" role="group">
+          <div className="btn-group d-none d-lg-table-cell" role="group">
             {switchButton}
             <button type="button" className="btn btn-secondary" onClick={(e) => this.editMod(e, mod)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
@@ -86,6 +94,22 @@ class SchemeMod extends Component {
               <i className="fas fa-trash"></i>
             </button>
           </div>
+          <div className="dropdown d-block d-lg-none">
+            <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuNav" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i className="fas fa-chevron-circle-down"></i>
+            </button>
+            <div className="dropdown-menu" aria-labelledby="dropdownMenuNav">
+              {switchButtonSmall}
+              <a className="dropdown-item" href="#" onClick={(e) => this.editMod(e, mod)} alt={i18next.t("admin.edit")}>
+                <i className="fas fa-edit btn-icon"></i>
+                {i18next.t("admin.edit")}
+              </a>
+              <a className="dropdown-item" href="#" onClick={(e) => this.deleteMod(e, mod)} alt={i18next.t("admin.delete")}>
+                <i className="fas fa-trash btn-icon"></i>
+                {i18next.t("admin.delete")}
+              </a>
+            </div>
+          </div>
         </td>
       </tr>);
     });
@@ -93,10 +117,8 @@ class SchemeMod extends Component {
     <table className="table table-responsive table-striped">
       <thead>
         <tr>
-          <th colSpan="3">
+          <th colSpan="4">
             <h4>{i18next.t("admin.scheme-mod-list-title")}</h4>
-          </th>
-          <th colSpan="1">
             <button type="button" className="btn btn-secondary" onClick={(e) => this.addMod(e)} title={i18next.t("admin.add")}>
               <i className="fas fa-plus"></i>
             </button>
@@ -109,10 +131,10 @@ class SchemeMod extends Component {
           <th>
             {i18next.t("admin.name")}
           </th>
-          <th>
+          <th className="d-none d-lg-table-cell">
             {i18next.t("admin.display-name")}
           </th>
-          <th>
+          <th className="d-none d-lg-table-cell">
             {i18next.t("admin.enabled")}
           </th>
           <th>

@@ -14,7 +14,8 @@ class SchemeOTP extends Component {
       name: props.name,
       profile: props.profile,
       myOtp: false,
-      errorList: {}
+      errorList: {},
+      otpUrl: false
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -32,7 +33,7 @@ class SchemeOTP extends Component {
       config: nextProps.config,
       module: nextProps.module,
       name: nextProps.name,
-      profile: nextProps.profile,
+      profile: nextProps.profile
     }, () => {
       this.getRegister();
     });
@@ -83,7 +84,11 @@ class SchemeOTP extends Component {
     }
     $('#qrcode').empty();
     if (url) {
-      $('#qrcode').qrcode(url);
+      this.setState({otpUrl: url}, () => {
+        $('#qrcode').qrcode(url);
+      });
+    } else {
+      this.setState({otpUrl: false});
     }
   }
   
@@ -252,7 +257,9 @@ class SchemeOTP extends Component {
         {jsxTOTP}
         <div className="row">
           <div className="col-md-12">
-            <div id="qrcode"></div>
+            <a href={this.state.otpUrl}>
+              <div id="qrcode"></div>
+            </a>
           </div>
         </div>
         <div className="row">
