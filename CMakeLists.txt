@@ -702,17 +702,47 @@ install(TARGETS ${SCHEME_MODULES}
 install(TARGETS ${PLUGIN_MODULES}
 		DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/plugin)
 install(DIRECTORY docs/database/
-		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/database/ COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/database/ COMPONENT runtime)
 install(FILES README.md
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/ COMPONENT runtime)
+install(FILES CHANGELOG.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/ COMPONENT runtime)
 install(FILES docs/API.md
-		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/ COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/CERTIFICATE.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/CLIENT_DATABASE.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/CLIENT_LDAP.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/GETTING_STARTED.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 install(FILES docs/INSTALL.md
-		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/ COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/OAUTH2.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/OIDC.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/OTP.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/README.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/SCOPE.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/USER_DATABASE.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/USER_HTTP.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/USER_LDAP.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/USER.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/WEBAUTHN.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 install(FILES docs/glewlwyd.service
-		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/ COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 install(FILES docs/glewlwyd-init
-		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/ COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 
 set(TARGETS glewlwyd)
 
