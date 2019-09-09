@@ -127,11 +127,7 @@ class Users extends Component {
               <h4>{i18next.t("admin.user-list-title")}</h4>
             </th>
             <th colSpan="4">
-              <form className="form-inline d-none d-lg-table-cell" onSubmit={(e) => this.searchUsers(e)}>
-                <div className="input-group mr-sm-2">
-                  <input className="form-control" type="search" placeholder={i18next.t("admin.nav-search-placeholder")} aria-label="Search" onChange={this.handleChangeSearchPattern} value={this.state.users.searchPattern||""}/>
-                  <button className="btn btn-secondary my-sm-0" type="submit" title={i18next.t("admin.nav-search-title")} onClick={(e) => this.searchUsers(e)}>{i18next.t("admin.nav-search")}</button>
-                </div>
+              <form className="form-inline d-none d-lg-block" onSubmit={(e) => this.searchUsers(e)}>
                 <div className="btn-group" role="group">
                   <button type="button" className="btn btn-secondary" onClick={(e) => this.navigate(e, -1)} title={i18next.t("admin.nav-previous")} disabled={!this.state.users.offset}>
                     <i className="fas fa-backward"></i>
@@ -153,6 +149,10 @@ class Users extends Component {
                   <button type="button" className="btn btn-secondary" onClick={(e) => this.addUser(e)} title={i18next.t("admin.user-add")}>
                     <i className="fas fa-plus"></i>
                   </button>
+                </div>
+                <div className="btn-group btn-icon-right" role="group">
+                  <input className="form-control" type="search" placeholder={i18next.t("admin.nav-search-placeholder")} aria-label="Search" onChange={this.handleChangeSearchPattern} value={this.state.users.searchPattern||""}/>
+                  <button className="btn btn-secondary my-sm-0" type="submit" title={i18next.t("admin.nav-search-title")} onClick={(e) => this.searchUsers(e)}>{i18next.t("admin.nav-search")}</button>
                 </div>
               </form>
               <div className="dropdown d-block d-lg-none">

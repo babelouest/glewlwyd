@@ -91,11 +91,7 @@ class Scopes extends Component {
             <h4>{i18next.t("admin.scope-list-title")}</h4>
           </th>
           <th colSpan="3">
-            <form className="form-inline d-none d-lg-table-cell" onSubmit={(e) => this.searchScopes(e)}>
-              <div className="input-group mr-sm-2">
-                <input className="form-control" type="search" placeholder={i18next.t("admin.nav-search-placeholder")} aria-label="Search" onChange={this.handleChangeSearchPattern} value={this.state.handleChangeSearchPattern}/>
-                <button className="btn btn-secondary my-sm-0" type="submit" title={i18next.t("admin.nav-search-title")} onClick={(e) => this.searchScopes(e)}>{i18next.t("admin.nav-search")}</button>
-              </div>
+            <form className="form-inline d-none d-lg-block" onSubmit={(e) => this.searchScopes(e)}>
               <div className="btn-group" role="group">
                 <button type="button" className="btn btn-secondary" onClick={(e) => this.navigate(e, -1)} title={i18next.t("admin.nav-previous")} disabled={!this.state.offset}>
                   <i className="fas fa-backward"></i>
@@ -117,6 +113,10 @@ class Scopes extends Component {
                 <button type="button" className="btn btn-secondary" onClick={(e) => this.addScope(e)} title={i18next.t("admin.scope-add")}>
                   <i className="fas fa-plus"></i>
                 </button>
+              </div>
+              <div className="btn-group btn-icon-right" role="group">
+                <input className="form-control" type="search" placeholder={i18next.t("admin.nav-search-placeholder")} aria-label="Search" onChange={this.handleChangeSearchPattern} value={this.state.handleChangeSearchPattern}/>
+                <button className="btn btn-secondary my-sm-0" type="submit" title={i18next.t("admin.nav-search-title")} onClick={(e) => this.searchScopes(e)}>{i18next.t("admin.nav-search")}</button>
               </div>
             </form>
             <div className="dropdown d-block d-lg-none">
