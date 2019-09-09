@@ -6,6 +6,7 @@
 *.csr
 *.crl
 *.pem
+*.der
 *.log
 *.err
 *.so
