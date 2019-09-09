@@ -62,12 +62,12 @@ Size of the key to sign the tokens. The sizes supported are 256 bits, 384 bits o
 
 ### Secret key
 
-Private key file used to sign if the selected algorithm is `RSA` or `ECDSA`. Must be an X509 PEM file.
+Private key file used to sign if the selected algorithm is `RSA` or `ECDSA`. Must be a PEM format file.
 Shared secret if the selected algorithm is `SHA`.
 
 ### Public key
 
-Public certificate file used to validate access tokens if the selected algorithm is `RSA` or `ECDSA`. Must be an X509 PEM file.
+Public key file used to validate access tokens if the selected algorithm is `RSA` or `ECDSA`. Must be a PEM format file.
 
 ### Access token duration (seconds)
 
