@@ -257,7 +257,7 @@ class SchemeOTP extends Component {
         {jsxTOTP}
         <div className="row">
           <div className="col-md-12">
-            <a href={this.state.otpUrl}>
+            <a href={this.state.otpUrl} title={this.state.otpUrl}>
               <div id="qrcode"></div>
             </a>
           </div>
