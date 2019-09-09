@@ -161,7 +161,7 @@ static json_t * parse_certificate(const char * x509_data, int der_format) {
           if ((dn = o_malloc(dn_len +1)) != NULL) {
             if (gnutls_x509_crt_get_dn(cert, dn, &dn_len) >= 0) {
               dn[dn_len] = '\0';
-              if (get_certificate_id(cert, key_id_enc, &key_id_enc_len) == G_OK && (expires_at = gnutls_x509_crt_get_expiration_time(cert) && (issued_at = gnutls_x509_crt_get_activation_time(cert)) != (time_t)-1)) {
+              if (get_certificate_id(cert, key_id_enc, &key_id_enc_len) == G_OK && (expires_at = gnutls_x509_crt_get_expiration_time(cert)) != (time_t)-1 && (issued_at = gnutls_x509_crt_get_activation_time(cert)) != (time_t)-1) {
                 j_return = json_pack("{sis{sssisisssssissss}}",
                                      "result",
                                      G_OK,
@@ -183,7 +183,7 @@ static json_t * parse_certificate(const char * x509_data, int der_format) {
                                        "x509",
                                        x509_data);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "parse_certificate - Error gnutls_x509_crt_get_key_id or gnutls_x509_crt_get_expiration_time");
+                y_log_message(Y_LOG_LEVEL_ERROR, "parse_certificate - Error gnutls_x509_crt_get_key_id or gnutls_x509_crt_get_expiration_time or gnutls_x509_crt_get_activation_time");
                 j_return = json_pack("{si}", "result", G_ERROR);
               }
             } else {
@@ -476,14 +476,14 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
       j_result = get_user_certificate_from_id_scheme_storage(config, j_parameters, username, json_string_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "certificate_id")));
       if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
         if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-          expiration_clause = msprintf("FROM_UNIXTIME(%"JSON_INTEGER_FORMAT")", json_integer_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "expires_at")));
-          activation_clause = msprintf("FROM_UNIXTIME(%"JSON_INTEGER_FORMAT")", json_integer_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "issued_at")));
+          expiration_clause = msprintf("FROM_UNIXTIME(%"JSON_INTEGER_FORMAT")", json_integer_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "expiration")));
+          activation_clause = msprintf("FROM_UNIXTIME(%"JSON_INTEGER_FORMAT")", json_integer_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "activation")));
         } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-          expiration_clause = msprintf("TO_TIMESTAMP(%"JSON_INTEGER_FORMAT")", json_integer_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "expires_at")));
-          activation_clause = msprintf("TO_TIMESTAMP(%"JSON_INTEGER_FORMAT")", json_integer_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "issued_at")));
+          expiration_clause = msprintf("TO_TIMESTAMP(%"JSON_INTEGER_FORMAT")", json_integer_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "expiration")));
+          activation_clause = msprintf("TO_TIMESTAMP(%"JSON_INTEGER_FORMAT")", json_integer_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "activation")));
         } else { // HOEL_DB_TYPE_SQLITE
-          expiration_clause = msprintf("%"JSON_INTEGER_FORMAT"", json_integer_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "expires_at")));
-          activation_clause = msprintf("%"JSON_INTEGER_FORMAT"", json_integer_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "issued_at")));
+          expiration_clause = msprintf("%"JSON_INTEGER_FORMAT"", json_integer_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "expiration")));
+          activation_clause = msprintf("%"JSON_INTEGER_FORMAT"", json_integer_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "activation")));
         }
         j_query = json_pack("{ss s{sO ss sO sO sO sO s{ss} s{ss} so}}",
                             "table",
