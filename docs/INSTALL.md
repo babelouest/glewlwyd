@@ -114,6 +114,31 @@ $ sudo dpkg -i glewlwyd_2.0.0-rc1_ubuntu_disco_x86_64.deb
 
 If there's no package available for your distribution, you can recompile it manually using `CMake` or `Makefile`.
 
+## Docker
+
+### Quickstart for tests only
+
+Run the docker image `babelouest/glewlwyd_quickstart` hosted on docker cloud, example:
+
+```shell
+docker run --rm -it -p 4593:4593 babelouest/glewlwyd_quickstart
+```
+
+This image uses a sqlite3 database hosted inside the docker instance, so all data will be lost when the docker instance will be stopped.
+In this instance, both configuration files `glewlwyd.conf` (backend) and `config.json` (frontend) are stored in `/etc/glewlwyd`.
+
+You can overwrite the configuration files `glewlwyd.conf` and `config.json` by mounting a volume on `/etc/glewlwyd` when you run the docker image. Point this volume to a local directory on the host.
+
+You can use the files [docker/config/glewlwyd.conf](docker/config/glewlwyd.conf) and [docker/config/config.json](docker/config/config.json) as a starting point to build your config files for docker.
+
+```shell
+docker run --rm -it -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd babelouest/glewlwyd_quickstart
+```
+
+### Docker image builder
+
+The directory [docker](docker) contains a Docker file to rebuild the docker image.
+
 ## Manual install from source
 
 Download the [latest source tarball](https://github.com/babelouest/glewlwyd/releases/latest) or [git clone](https://github.com/babelouest/glewlwyd.git) from GitHub.
