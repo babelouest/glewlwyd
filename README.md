@@ -40,6 +40,16 @@ Important! Due to database reworking of the application, you can't upgrade an ex
 
 The full installation documentation is available in the [install documentation](docs/INSTALL.md).
 
+## Docker
+
+The docker image is available, run the following command:
+
+```shell
+$ docker run --rm -it -p 4593:4593 babelouest/glewlwyd_quickstart
+```
+
+More information in the [install documentation](docs/INSTALL.md#docker).
+
 ## Getting started
 
 The [Getting started documentation](docs/GETTING_STARTED.md) will help administrators configure Glewlwyd's modules and authentication schemes.
