@@ -1,0 +1,152 @@
+{
+  "GlewlwydUrl": "./",
+  "ProfileUrl": "profile.html",
+  "AdminUrl": "index.html",
+  "LoginUrl": "login.html",
+  "PasswordMinLength": 8,
+  "pattern": {
+    "user": [{
+      "name": "username",
+      "edit": false,
+      "label": "admin.user-username",
+      "placeholder": "admin.user-username-ph",
+      "forceShow": true,
+      "required": true,
+      "profile-read": true,
+      "profile-write": false
+    },{
+      "name": "password",
+      "type": "password",
+      "profile": false,
+      "edit": true,
+      "label": "admin.user-password",
+      "placeholder": "admin.user-password-ph",
+      "placeholderConfirm": "admin.user-password-confirm-ph",
+      "forceShow": true,
+      "required": true,
+      "profile-read": false,
+      "profile-write": false
+    },{
+      "name": "name",
+      "profile": true,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.user-name",
+      "placeholder": "admin.user-name-ph",
+      "profile-read": true,
+      "profile-write": true
+    },{
+      "name": "email",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.user-email",
+      "placeholder": "admin.user-email-ph",
+      "profile-read": true,
+      "profile-write": false
+    },{
+      "name": "picture",
+      "list": false,
+      "type": "image/jpeg",
+      "forceShow": true,
+      "edit": true,
+      "label": "admin.picture",
+      "profile-read": true,
+      "profile-write": false
+    },{
+      "name": "scope",
+      "list": true,
+      "forceShow": true,
+      "edit": true,
+      "label": "admin.user-scope",
+      "profile-read": true,
+      "profile-write": false
+    },{
+      "name": "enabled",
+      "type": "boolean",
+      "defaultValue": true,
+      "forceShow": true,
+      "edit": true,
+      "label": "admin.user-enabled"
+    }],
+    "client": [{
+      "name": "client_id",
+      "edit": false,
+      "forceShow": true,
+      "label": "admin.client-clientid",
+      "placeholder": "admin.client-clientid-ph",
+      "required": true
+    },{
+      "name": "name",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-name",
+      "placeholder": "admin.client-name-ph"
+    },{
+      "name": "confidential",
+      "edit": true,
+      "defaultValue": false,
+      "forceShow": true,
+      "type": "boolean",
+      "label": "admin.client-confidential"
+    },{
+      "name": "client_secret",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-secret",
+      "placeholder": "admin.client-secret-ph"
+    },{
+      "name": "password",
+      "type": "password",
+      "profile": false,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-password",
+      "placeholder": "admin.client-password-ph",
+      "placeholderConfirm": "admin.client-password-confirm-ph"
+    },{
+      "name": "scope",
+      "list": true,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-scope"
+    },{
+      "name": "redirect_uri",
+      "list": true,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-redirect-uri",
+      "placeholder": "admin.client-redirect-uri-ph"
+    },{
+      "name": "authorization_type",
+      "list": true,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-authorization-type",
+      "listElements": ["code","token","id_token","password","none","client","refresh_token","delete_token"]
+    },{
+      "name": "sector_identifier_uri",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-sector-identifier-uri",
+      "placeholder": "admin.client-sector-identifier-uri-ph"
+    },{
+      "name": "enabled",
+      "type": "boolean",
+      "defaultValue": true,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-enabled"
+    }]
+  },
+  "sessionSchemes": [
+    {
+      "scheme_name": "pwd",
+      "scheme_display_name": "login.password-title",
+      "scheme_type": "retype-password"
+    }
+  ],
+  "profilePicture": {
+    "property": "picture",
+    "type": "image/jpeg"
+  }
+}
