@@ -2,6 +2,19 @@
 
 This documentation is intended to help Glewlwyd Users to manage their profile and register authentication schemes, and understand the login workflow.
 
+- [Profile page](#profile-page)
+- [Profile Personal data](#profile-personal-data)
+- [Sessions and tokens](#sessions-and-tokens)
+- [Password](#password)
+- [Schemes](#schemes)
+  - [Webauthn](#webauthn)
+  - [OTP](#otp)
+  - [TLS Certificates](#tls-certificates)
+- [Login to Glewlwyd](#login-to-glewlwyd)
+  - [Grant access](#grant-access)
+  - [Multiple sessions](#multiple-sessions)
+  - [Authentication complete](#authentication-complete)
+
 ## Profile page
 
 ![profile-data](screenshots/profile-data.png)
@@ -70,6 +83,24 @@ Moving factor: This option is the starting offset of the HOTP configuration. Usu
 ##### TOTP parameter
 
 Step size (seconds): This option is the time window specifying the duration of a one-time password. This duration must be long enough to vive time to the user to read and type it, but short enough to give an attacker enough time to reuse an already used password. The tipical duration is 30 seconds.
+
+### TLS Certificates
+
+![profile-certificate](screenshots/profile-certificate.png)
+
+TLS Certificates is an authentication scheme allowing the user to authenticate to Glewlwyd via the TLS certificate he or she is using to connect to Glewlwyd web service in his or her browser.
+
+#### Registration
+
+You need a certificate emitted by the certificate of authority that the Glewlwyd service is using.
+
+You can either add the certificate file manually by clicking on the `browse` button, select the X509n cert file in PEM format, then click on the `Upload` button.
+
+Also, if you're currently browsing using your certificate, you can click on the button `Add current certificate`.
+
+#### Test certificate
+
+If you already have registered at least one certificate and want to test the authentication with the current certificate you're using while browsinig, you can click on the `Test current certificate` button. If the authentication is successful, the certificate used to authenticate will be highlighted in the list.
 
 ## Login to Glewlwyd
 
