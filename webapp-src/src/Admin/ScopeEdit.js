@@ -8,6 +8,8 @@ class ScopeEdit extends Component {
       title: props.title,
       scope: props.scope,
       add: props.add,
+      errorList: {},
+      hasError: false,
       modSchemes: props.modSchemes,
       callback: props.callback
     }
@@ -27,6 +29,8 @@ class ScopeEdit extends Component {
       title: nextProps.title,
       scope: nextProps.scope,
       add: nextProps.add,
+      errorList: {},
+      hasError: false,
       modSchemes: nextProps.modSchemes,
       callback: nextProps.callback
     });
@@ -44,6 +48,8 @@ class ScopeEdit extends Component {
             delete(scope.description);
           }
           this.state.callback(result, scope);
+        } else {
+          this.setState({errorList: {name: i18next.t("admin.scope-error-name")}, hasError: true});
         }
       }
     } else {
@@ -129,6 +135,10 @@ class ScopeEdit extends Component {
     var modSchemeListDisplayName = [];
     var modSchemeListJsx;
     var modSchemeDropdown;
+    var hasError;
+    if (this.state.hasError) {
+      hasError = <span className="error-input text-right">{i18next.t("admin.error-input")}</span>;
+    }
     // Create list of schemes
     this.state.modSchemes.forEach((scheme) => {
       if (scheme.enabled) {
@@ -217,8 +227,9 @@ class ScopeEdit extends Component {
                   <div className="input-group-prepend">
                     <label className="input-group-text" className="input-group-text" htmlFor="scope-name">{i18next.t("admin.scope-name")}</label>
                   </div>
-                  <input type="text" className="form-control" id="scope-name" placeholder={i18next.t("admin.scope-name-ph")} maxLength="128" value={this.state.scope.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
+                  <input type="text" className={this.state.errorList["name"]?"form-control is-invalid":"form-control"} id="scope-name" placeholder={i18next.t("admin.scope-name-ph")} maxLength="128" value={this.state.scope.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
                 </div>
+                {this.state.errorList["name"]?<span className="error-input">{i18next.t(this.state.errorList["name"])}</span>:""}
               </div>
               <div className="form-group">
                 <div className="input-group mb-3">
@@ -269,6 +280,7 @@ class ScopeEdit extends Component {
             </form>
           </div>
           <div className="modal-footer">
+            {hasError}
             <button type="button" className="btn btn-secondary" onClick={(e) => this.closeModal(e, false)}>{i18next.t("modal.close")}</button>
             <button type="button" className="btn btn-primary" onClick={(e) => this.closeModal(e, true)}>{i18next.t("modal.ok")}</button>
           </div>

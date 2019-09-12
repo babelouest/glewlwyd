@@ -228,6 +228,40 @@ class LDAPParams extends Component {
         errorList["client_id-property"] = i18next.t("admin.mod-ldap-client_id-property-error")
       }
     }
+    this.state.mod.parameters["data-format"] && Object.keys(this.state.mod.parameters["data-format"]).map(property => {
+      if (property) {
+        if (!this.state.mod.parameters["data-format"][property].property) {
+          hasError = true;
+          errorList["data-format"] = {};
+          errorList["data-format"][property] = i18next.t("admin.mod-ldap-data-format-property-ldap-error");
+        }
+      } else {
+        hasError = true;
+        errorList["data-format"] = {error: i18next.t("admin.mod-data-format-property-error")};
+      }
+    });
+    this.state.mod.parameters["scope-match"].forEach((match, index) => {
+      if (!match["ldap-value"]) {
+        if (!errorList["scope-match"]) {
+          errorList["scope-match"] = [];
+        }
+        if (!errorList["scope-match"][index]) {
+          errorList["scope-match"][index] = {};
+        }
+        hasError = true;
+        errorList["scope-match"][index].ldap = i18next.t("admin.mod-ldap-scope-match-ldap-value-error")
+      }
+      if (!match["scope-value"]) {
+        if (!errorList["scope-match"]) {
+          errorList["scope-match"] = [];
+        }
+        if (!errorList["scope-match"][index]) {
+          errorList["scope-match"][index] = {};
+        }
+        hasError = true;
+        errorList["scope-match"][index].scope = i18next.t("admin.mod-ldap-scope-match-scope-value-error")
+      }
+    });
     if (!this.state.mod.readonly) {
       if (!this.state.mod.parameters["rdn-property"]) {
         hasError = true;
@@ -257,7 +291,9 @@ class LDAPParams extends Component {
         }
       });
     } else {
-      this.setState({errorList: errorList});
+      this.setState({errorList: errorList}, () => {
+        messageDispatcher.sendMessage('ModEdit', {type: "modInvalid"});
+      });
     }
   }
   
@@ -318,16 +354,18 @@ class LDAPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor={"mod-database-data-format-name-"+property}>{i18next.t("admin.mod-database-data-format-property")}</label>
             </div>
-            <input type="text" className="form-control" id={"mod-database-data-format-name-"+property} onChange={(e) => this.changeDataFormatProperty(e, property)} value={property} placeholder={i18next.t("admin.mod-database-data-format-property-ph")} />
+            <input type="text" className={this.state.errorList["data-format"]&&this.state.errorList["data-format"].error?"form-control is-invalid":"form-control"} id={"mod-database-data-format-name-"+property} onChange={(e) => this.changeDataFormatProperty(e, property)} value={property} placeholder={i18next.t("admin.mod-database-data-format-property-ph")} />
           </div>
+          {this.state.errorList["data-format"]&&this.state.errorList["data-format"].error?<span className="error-input">{i18next.t(this.state.errorList["data-format"].error)}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor={"mod-database-data-format-ldap-name-"+property}>{i18next.t("admin.mod-database-data-format-ldap-property")}</label>
             </div>
-            <input type="text" className="form-control" id={"mod-database-data-format-ldap-name-"+property} onChange={(e) => this.changeDataFormatLdapProperty(e, property)} value={this.state.mod.parameters["data-format"][property].property} placeholder={i18next.t("admin.mod-database-data-format-ldap-property-ph")} />
+            <input type="text" className={this.state.errorList["data-format"]&&this.state.errorList["data-format"][property]?"form-control is-invalid":"form-control"} id={"mod-database-data-format-ldap-name-"+property} onChange={(e) => this.changeDataFormatLdapProperty(e, property)} value={this.state.mod.parameters["data-format"][property].property} placeholder={i18next.t("admin.mod-database-data-format-ldap-property-ph")} />
           </div>
+          {this.state.errorList["data-format"]&&this.state.errorList["data-format"][property]?<span className="error-input">{i18next.t(this.state.errorList["data-format"][property])}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -369,16 +407,18 @@ class LDAPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor={"mod-ldap-scope-match-ldap-"+index}>{i18next.t("admin.mod-ldap-scope-match-ldap")}</label>
             </div>
-            <input type="text" className="form-control" id={"mod-ldap-scope-match-ldap-"+index} onChange={(e) => this.changeScopeMatchProperty(e, index, "ldap-value")} value={match["ldap-value"]} placeholder={i18next.t("admin.mod-ldap-scope-match-ldap-ph")} />
+            <input type="text" className={this.state.errorList["scope-match"]&&this.state.errorList["scope-match"][index]&&this.state.errorList["scope-match"][index].ldap?"form-control is-invalid":"form-control"} id={"mod-ldap-scope-match-ldap-"+index} onChange={(e) => this.changeScopeMatchProperty(e, index, "ldap-value")} value={match["ldap-value"]} placeholder={i18next.t("admin.mod-ldap-scope-match-ldap-ph")} />
           </div>
+          {this.state.errorList["scope-match"]&&this.state.errorList["scope-match"][index]&&this.state.errorList["scope-match"][index].ldap?<span className="error-input">{i18next.t(this.state.errorList["scope-match"][index].ldap)}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor={"mod-ldap-scope-match-scope-"+index}>{i18next.t("admin.mod-ldap-scope-match-scope")}</label>
             </div>
-            <input type="text" className="form-control" id={"mod-ldap-scope-match-scope-"+index} onChange={(e) => this.changeScopeMatchProperty(e, index, "scope-value")} value={match["scope-value"]} placeholder={i18next.t("admin.mod-ldap-scope-match-scope-ph")} />
+            <input type="text" className={this.state.errorList["scope-match"]&&this.state.errorList["scope-match"][index]&&this.state.errorList["scope-match"][index].scope?"form-control is-invalid":"form-control"} id={"mod-ldap-scope-match-scope-"+index} onChange={(e) => this.changeScopeMatchProperty(e, index, "scope-value")} value={match["scope-value"]} placeholder={i18next.t("admin.mod-ldap-scope-match-scope-ph")} />
           </div>
+          {this.state.errorList["scope-match"]&&this.state.errorList["scope-match"][index]&&this.state.errorList["scope-match"][index].scope?<span className="error-input">{i18next.t(this.state.errorList["scope-match"][index].scope)}</span>:""}
         </div>
         <div className="form-group">
           <div className="btn-group" role="group">
@@ -613,6 +653,7 @@ class LDAPParams extends Component {
             <div className="card-header" id="dataFormatCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseDataFormat" aria-expanded="true" aria-controls="collapseDataFormat">
+                  {this.state.errorList["data-format"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-data-format")}
                 </button>
               </h2>
@@ -631,6 +672,7 @@ class LDAPParams extends Component {
             <div className="card-header" id="scopeMatchCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseScopeMatch" aria-expanded="true" aria-controls="collapseScopeMatch">
+                  {this.state.errorList["scope-match"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-scope-match")}
                 </button>
               </h2>

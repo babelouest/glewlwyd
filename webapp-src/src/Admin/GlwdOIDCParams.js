@@ -461,26 +461,32 @@ class GlwdOIDCParams extends Component {
     if (!this.state.mod.parameters["iss"]) {
       hasError = true;
       errorList["iss"] = "admin.mod-glwd-iss-error";
+      errorList["general"] = true;
     }
     if (!this.state.mod.parameters["key"]) {
       hasError = true;
       errorList["key"] = "admin.mod-glwd-key-error";
+      errorList["signature"] = true;
     }
     if (this.state.mod.parameters["jwt-type"] !== "sha" && !this.state.mod.parameters["cert"]) {
       hasError = true;
       errorList["cert"] = "admin.mod-glwd-cert-error";
+      errorList["signature"] = true;
     }
     if (!this.state.mod.parameters["access-token-duration"]) {
       hasError = true;
       errorList["access-token-duration"] = "admin.mod-glwd-access-token-duration-error";
+      errorList["token"] = true;
     }
     if (!this.state.mod.parameters["refresh-token-duration"]) {
       hasError = true;
       errorList["refresh-token-duration"] = "admin.mod-glwd-refresh-token-duration-error";
+      errorList["token"] = true;
     }
     if (!this.state.mod.parameters["code-duration"]) {
       hasError = true;
       errorList["code-duration"] = "admin.mod-glwd-code-duration-error";
+      errorList["token"] = true;
     }
     this.state.mod.parameters["additional-parameters"].forEach((addParam, index) => {
       if (!addParam["user-parameter"]) {
@@ -574,7 +580,9 @@ class GlwdOIDCParams extends Component {
         messageDispatcher.sendMessage('ModPlugin', {type: "modValid"});
       });
     } else {
-      this.setState({errorList: errorList});
+      this.setState({errorList: errorList}, () => {
+        messageDispatcher.sendMessage('ModPlugin', {type: "modInvalid"});
+      });
     }
   }
   
@@ -1006,16 +1014,17 @@ class GlwdOIDCParams extends Component {
           </div>
         </div>
         <hr/>
-        <div className="accordion" id="accordionAuthType">
+        <div className="accordion" id="accordionGenral">
           <div className="card">
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
-                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseAuthType" aria-expanded="true" aria-controls="collapseAuthType">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseGenral" aria-expanded="true" aria-controls="collapseAuthType">
+                  {this.state.errorList["general"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-oidc-general-title")}
                 </button>
               </h2>
             </div>
-            <div id="collapseAuthType" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionAuthType">
+            <div id="collapseGenral" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionGenral">
               <div className="card-body">
                 <div className="form-group">
                   <div className="input-group mb-3">
@@ -1087,6 +1096,7 @@ class GlwdOIDCParams extends Component {
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseSignature" aria-expanded="true" aria-controls="collapseSignature">
+                  {this.state.errorList["signature"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-sign-title")}
                 </button>
               </h2>
@@ -1140,6 +1150,7 @@ class GlwdOIDCParams extends Component {
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseToken" aria-expanded="true" aria-controls="collapseToken">
+                  {this.state.errorList["general"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-token-title")}
                 </button>
               </h2>
@@ -1183,6 +1194,21 @@ class GlwdOIDCParams extends Component {
                     </div>
                   </div>
                 </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionAuthType">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseAuthType" aria-expanded="true" aria-controls="collapseAuthType">
+                  {this.state.errorList["token"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
+                  {i18next.t("admin.mod-glwd-auth-type-title")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapseAuthType" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionAuthType">
+              <div className="card-body">
                 <div className="form-group">
                   <div className="input-group mb-3">
                     <div className="input-group-prepend">
@@ -1194,20 +1220,6 @@ class GlwdOIDCParams extends Component {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-        <div className="accordion" id="accordionAuthType">
-          <div className="card">
-            <div className="card-header" id="addParamCard">
-              <h2 className="mb-0">
-                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseAuthType" aria-expanded="true" aria-controls="collapseAuthType">
-                  {i18next.t("admin.mod-glwd-auth-type-title")}
-                </button>
-              </h2>
-            </div>
-            <div id="collapseAuthType" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionAuthType">
-              <div className="card-body">
                 <div className="form-group">
                   <div className="input-group mb-3">
                     <div className="input-group-prepend">
@@ -1287,6 +1299,7 @@ class GlwdOIDCParams extends Component {
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOpenidConfig" aria-expanded="true" aria-controls="collapseOpenidConfig">
+                  {this.state.errorList["configuration"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-openid-configuration-title")}
                 </button>
               </h2>
@@ -1370,6 +1383,7 @@ class GlwdOIDCParams extends Component {
             <div className="card-header" id="dataFormatCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseDataFormat" aria-expanded="true" aria-controls="collapseDataFormat">
+                  {this.state.errorList["scope-override"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-scope-override")}
                 </button>
               </h2>
@@ -1395,6 +1409,7 @@ class GlwdOIDCParams extends Component {
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseAddParam" aria-expanded="true" aria-controls="collapseAddParam">
+                  {this.state.errorList["additional-parameters"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-additional-parameter")}
                 </button>
               </h2>
@@ -1417,6 +1432,7 @@ class GlwdOIDCParams extends Component {
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseAddClaim" aria-expanded="true" aria-controls="collapseAddParam">
+                  {this.state.errorList["claims"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-claims")}
                 </button>
               </h2>

@@ -19,21 +19,22 @@ class PluginEdit extends Component {
       parametersValid: true,
       nameInvalid: false,
       nameInvalidMessage: false,
-      typeInvalidMessage: false
+      typeInvalidMessage: false,
+      hasError: false
     }
     
     messageDispatcher.subscribe('ModPlugin', (message) => {
       if (message.type === 'modValid') {
-        this.setState({check: false}, () => {
+        this.setState({check: false, hasError: false}, () => {
           if (this.state.add && !this.state.mod.name) {
-            this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-mandatory"), typeInvalidMessage: false});
+            this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-mandatory"), typeInvalidMessage: false, hasError: true});
           } else if (!this.state.mod.module) {
-            this.setState({nameInvalid: false, nameInvalidMessage: false, typeInvalidMessage: i18next.t("admin.error-mod-type-mandatory")});
+            this.setState({nameInvalid: false, nameInvalidMessage: false, typeInvalidMessage: i18next.t("admin.error-mod-type-mandatory"), hasError: true});
           } else if (this.state.parametersValid) {
             if (this.state.add) {
               apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(this.state.mod.name), "GET")
               .then(() => {
-                this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-exist"), typeInvalidMessage: false});
+                this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-exist"), typeInvalidMessage: false, hasError: true});
               })
               .fail((err) => {
                 if (err.status === 404) {
@@ -47,6 +48,8 @@ class PluginEdit extends Component {
             }
           }
         });
+      } else if (message.type === 'modInvalid') {
+        this.setState({check: false, hasError: true});
       }
     });
 
@@ -69,7 +72,8 @@ class PluginEdit extends Component {
       parametersValid: true,
       nameInvalid: false,
       nameInvalidMessage: false,
-      typeInvalidMessage: false
+      typeInvalidMessage: false,
+      hasError: false
     });
   }
 
@@ -146,6 +150,10 @@ class PluginEdit extends Component {
         </div>
       </div>;
     }
+    var hasError;
+    if (this.state.hasError) {
+      hasError = <span className="error-input text-right">{i18next.t("admin.error-input")}</span>;
+    }
 		return (
       <div className="modal fade" id="editPluginModal" tabIndex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
         <div className="modal-dialog modal-lg" role="document">
@@ -188,6 +196,7 @@ class PluginEdit extends Component {
               </form>
             </div>
             <div className="modal-footer">
+              {hasError}
               <button type="button" className="btn btn-secondary" onClick={(e) => this.closeModal(e, false)}>{i18next.t("modal.close")}</button>
               <button type="button" className="btn btn-primary" onClick={(e) => this.closeModal(e, true)}>{i18next.t("modal.ok")}</button>
             </div>
