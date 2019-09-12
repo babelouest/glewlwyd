@@ -83,7 +83,9 @@ class HTTPParams extends Component {
         }
       });
     } else {
-      this.setState({errorList: errorList});
+      this.setState({errorList: errorList}, () => {
+        messageDispatcher.sendMessage('ModEdit', {type: "modInvalid"});
+      });
     }
   }
   
@@ -120,7 +122,7 @@ class HTTPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-http-url">{i18next.t("admin.mod-http-url")}</label>
             </div>
-            <input type="text" className={this.state.errorList["url"]?"form-control is-invalid":"form-control"} id="mod-http-url" onChange={(e) => this.changeParam(e, "url")} value={this.state.mod.parameters["url"]} placeholder={i18next.t("admin.mod-http-url-ph")} />
+            <input type="text" className={this.state.errorList["url"]?"form-control is-invalid":"form-control"} id="mod-http-url" onChange={(e) => this.changeParam(e, "url")} value={this.state.mod.parameters["url"]||""} placeholder={i18next.t("admin.mod-http-url-ph")} />
           </div>
           {this.state.errorList["url"]?<span className="error-input">{i18next.t(this.state.errorList["url"])}</span>:""}
         </div>

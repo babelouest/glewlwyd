@@ -218,22 +218,27 @@ class GlwdOauth2Params extends Component {
     if (!this.state.mod.parameters["key"]) {
       hasError = true;
       errorList["key"] = "admin.mod-glwd-key-error";
+      errorList["signature"] = true;
     }
     if (this.state.mod.parameters["jwt-type"] !== "sha" && !this.state.mod.parameters["cert"]) {
       hasError = true;
       errorList["cert"] = "admin.mod-glwd-cert-error";
+      errorList["signature"] = true;
     }
     if (!this.state.mod.parameters["access-token-duration"]) {
       hasError = true;
       errorList["access-token-duration"] = "admin.mod-glwd-access-token-duration-error";
+      errorList["token"] = true;
     }
     if (!this.state.mod.parameters["refresh-token-duration"]) {
       hasError = true;
       errorList["refresh-token-duration"] = "admin.mod-glwd-refresh-token-duration-error";
+      errorList["token"] = true;
     }
     if (!this.state.mod.parameters["code-duration"]) {
       hasError = true;
       errorList["code-duration"] = "admin.mod-glwd-code-duration-error";
+      errorList["token"] = true;
     }
     this.state.mod.parameters["additional-parameters"].forEach((addParam, index) => {
       if (!addParam["user-parameter"]) {
@@ -276,7 +281,9 @@ class GlwdOauth2Params extends Component {
         messageDispatcher.sendMessage('ModPlugin', {type: "modValid"});
       });
     } else {
-      this.setState({errorList: errorList});
+      this.setState({errorList: errorList}, () => {
+        messageDispatcher.sendMessage('ModPlugin', {type: "modInvalid"});
+      });
     }
   }
   
@@ -454,6 +461,7 @@ class GlwdOauth2Params extends Component {
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseSignature" aria-expanded="true" aria-controls="collapseSignature">
+                  {this.state.errorList["signature"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-sign-title")}
                 </button>
               </h2>
@@ -507,6 +515,7 @@ class GlwdOauth2Params extends Component {
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseToken" aria-expanded="true" aria-controls="collapseToken">
+                  {this.state.errorList["token"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-token-title")}
                 </button>
               </h2>
@@ -559,6 +568,7 @@ class GlwdOauth2Params extends Component {
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseAuthType" aria-expanded="true" aria-controls="collapseAuthType">
+                  {this.state.errorList["auth-type"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-auth-type-title")}
                 </button>
               </h2>
@@ -624,6 +634,7 @@ class GlwdOauth2Params extends Component {
             <div className="card-header" id="dataFormatCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseScope" aria-expanded="true" aria-controls="collapseScope">
+                  {this.state.errorList["scope-override"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-scope-override")}
                 </button>
               </h2>
@@ -649,6 +660,7 @@ class GlwdOauth2Params extends Component {
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseAddParam" aria-expanded="true" aria-controls="collapseAddParam">
+                  {this.state.errorList["additional-parameters"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-additional-parameter")}
                 </button>
               </h2>

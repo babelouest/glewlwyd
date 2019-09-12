@@ -16,6 +16,7 @@ class EditRecord extends Component {
       listAddValue: this.initListAdd(props.pattern),
       listEltConfirm: this.initListConfirm(props.pattern),
       listError: {},
+      hasError: false,
       listPwd: this.initListPwd(props.pattern, props.add),
     }
 
@@ -56,6 +57,7 @@ class EditRecord extends Component {
       listAddValue: this.initListAdd(nextProps.pattern),
       listEltConfirm: this.initListConfirm(nextProps.pattern),
       listError: {},
+      hasError: false,
       listPwd: this.initListPwd(nextProps.pattern, nextProps.add),
     }, () => {
       if (nextProps.add) {
@@ -87,7 +89,7 @@ class EditRecord extends Component {
             if (res) {
               this.state.cb(result, this.state.data);
             } else {
-              this.setState({listError: data});
+              this.setState({listError: data, hasError: true});
             }
           });
         } else {
@@ -456,7 +458,7 @@ class EditRecord extends Component {
   }
 
 	render() {
-    var editLines = [], sourceLine = [], curSource = false;
+    var editLines = [], sourceLine = [], curSource = false, hasError;
     this.state.pattern.forEach((pat, index) => {
       var line = this.editElt(pat, this.state.data[pat.name], index);
       if (line) {
@@ -469,6 +471,9 @@ class EditRecord extends Component {
       }
       sourceLine.push(<a className="dropdown-item" key={index} href="#" onClick={(e) => this.changeSource(e, source.name)}>{source.display_name}</a>);
     });
+    if (this.state.hasError) {
+      hasError = <span className="error-input text-right">{i18next.t("admin.error-input")}</span>;
+    }
     var sourceJsx = <div className="form-group">
       <div className="input-group mb-3">
         <div className="input-group-prepend">
@@ -501,8 +506,9 @@ class EditRecord extends Component {
             </form>
           </div>
           <div className="modal-footer">
+            {hasError}
             <button type="button" className="btn btn-secondary" onClick={(e) => this.closeModal(e, false)}>{i18next.t("modal.close")}</button>
-            <button type="button" className="btn btn-primary" onClick={(e) => this.closeModal(e, true)}>{i18next.t("modal.ok")}</button>
+            <button type="button" className="btn btn-primary " onClick={(e) => this.closeModal(e, true)}>{i18next.t("modal.ok")}</button>
           </div>
         </div>
       </div>

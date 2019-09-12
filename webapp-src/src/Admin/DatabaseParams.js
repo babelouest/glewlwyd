@@ -151,15 +151,28 @@ class DatabaseParams extends Component {
         hasError = true;
         errorList["connection-type"] = i18next.t("admin.mod-database-connection-type-error")
       }
-      if (!hasError) {
-        this.setState({errorList: {}}, () => {
-          messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
-        });
-      } else {
-        this.setState({errorList: errorList});
-      }
+      this.state.mod.parameters["data-format"] && Object.keys(this.state.mod.parameters["data-format"]).map(property => {
+        if (!property) {
+          hasError = true;
+          errorList["data-format"] = i18next.t("admin.mod-ldap-data-format-property-error");
+        }
+      });
     } else {
-      messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
+      this.state.mod.parameters["data-format"] && Object.keys(this.state.mod.parameters["data-format"]).map(property => {
+        if (!property) {
+          hasError = true;
+          errorList["data-format"] = i18next.t("admin.mod-data-format-property-error");
+        }
+      });
+    }
+    if (!hasError) {
+      this.setState({errorList: {}}, () => {
+        messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
+      });
+    } else {
+      this.setState({errorList: errorList}, () => {
+        messageDispatcher.sendMessage('ModEdit', {type: "modInvalid"});
+      });
     }
   }
   
@@ -266,8 +279,9 @@ class DatabaseParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor={"mod-database-data-format-name-"+property}>{i18next.t("admin.mod-database-data-format-property")}</label>
             </div>
-            <input type="text" className="form-control" id={"mod-database-data-format-name-"+property} onChange={(e) => this.changeDataFormatProperty(e, property)} value={property} placeholder={i18next.t("admin.mod-database-data-format-property-ph")} />
+            <input type="text" className={this.state.errorList["data-format"]?"form-control is-invalid":"form-control"} id={"mod-database-data-format-name-"+property} onChange={(e) => this.changeDataFormatProperty(e, property)} value={property} placeholder={i18next.t("admin.mod-database-data-format-property-ph")} />
           </div>
+          {this.state.errorList["data-format"]?<span className="error-input">{i18next.t(this.state.errorList["data-format"])}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -363,6 +377,7 @@ class DatabaseParams extends Component {
         <div className="card-header" id="dataFormatCard">
           <h2 className="mb-0">
             <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseDataFormat" aria-expanded="true" aria-controls="collapseDataFormat">
+              {this.state.errorList["data-format"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
               {i18next.t("admin.mod-data-format")}
             </button>
           </h2>

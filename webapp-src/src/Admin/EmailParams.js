@@ -229,7 +229,7 @@ class EmailParams extends Component {
             <div className="input-group-prepend">
               <span className="input-group-text" >{i18next.t("admin.mod-email-body-pattern")}</span>
             </div>
-            <textarea className={this.state.errorList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-email-body-pattern" onChange={(e) => this.changeParam(e, "body-pattern")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} >{this.state.mod.parameters["body-pattern"]||""}</textarea>
+            <textarea className={this.state.errorList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-email-body-pattern" onChange={(e) => this.changeParam(e, "body-pattern")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} defaultValue={this.state.mod.parameters["body-pattern"]||""}></textarea>
           </div>
           {this.state.errorList["body-pattern"]?<span className="error-input">{i18next.t(this.state.errorList["body-pattern"])}</span>:""}
         </div>

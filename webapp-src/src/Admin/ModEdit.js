@@ -51,32 +51,35 @@ class ModEdit extends Component {
       nameInvalid: false,
       nameInvalidMessage: false,
       typeInvalidMessage: false,
-      check: false
+      check: false,
+      hasError: false
     }
     
     messageDispatcher.subscribe('ModEdit', (message) => {
       if (message.type === 'modValid') {
         this.setState({check: false}, () => {
-          if (this.state.add && !this.state.mod.name) {
-            this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-mandatory"), typeInvalidMessage: false});
-          } else if (!this.state.mod.module) {
-            this.setState({nameInvalid: false, nameInvalidMessage: false, typeInvalidMessage: i18next.t("admin.error-mod-type-mandatory")});
-          } else if (this.state.parametersValid) {
-            if (this.state.add) {
+          if (this.state.add) {
+            if (!this.state.mod.name) {
+              this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-mandatory"), typeInvalidMessage: false, hasError: true});
+            } else if (!this.state.mod.module) {
+              this.setState({nameInvalid: false, nameInvalidMessage: false, typeInvalidMessage: i18next.t("admin.error-mod-type-mandatory"), hasError: true});
+            } else {
               apiManager.glewlwydRequest("/mod/" + this.state.role + "/" + encodeURI(this.state.mod.name), "GET")
               .then(() => {
-                this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-exist"), typeInvalidMessage: false});
+                this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-exist"), typeInvalidMessage: false, hasError: true});
               })
               .fail((err) => {
                 if (err.status === 404) {
                   this.state.callback(true, this.state.mod);
                 }
               });
-            } else {
-              this.state.callback(true, this.state.mod);
             }
+          } else {
+            this.state.callback(true, this.state.mod);
           }
         });
+      } else if (message.type === 'modInvalid') {
+        this.setState({check: false, hasError: true});
       }
     });
 
@@ -132,7 +135,8 @@ class ModEdit extends Component {
       parametersValid: true,
       nameInvalid: false,
       nameInvalidMessage: false,
-      typeInvalidMessage: false
+      typeInvalidMessage: false,
+      hasError: false
     });
   }
     
@@ -215,6 +219,10 @@ class ModEdit extends Component {
           modType = <span className="badge badge-primary btn-icon-right">{mod.display_name}</span>
         }
       });
+    }
+    var hasError;
+    if (this.state.hasError) {
+      hasError = <span className="error-input text-right">{i18next.t("admin.error-input")}</span>;
     }
     var readonly = "";
     var schemeParams = "";
@@ -304,6 +312,7 @@ class ModEdit extends Component {
             </form>
           </div>
           <div className="modal-footer">
+            {hasError}
             <button type="button" className="btn btn-secondary" onClick={(e) => this.closeModal(e, false)}>{i18next.t("modal.close")}</button>
             <button type="button" className="btn btn-primary" onClick={(e) => this.closeModal(e, true)}>{i18next.t("modal.ok")}</button>
           </div>
