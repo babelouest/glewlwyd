@@ -236,7 +236,7 @@ json_t * is_user_module_valid(struct config_elements * config, json_t * j_module
           json_array_append_new(j_error_list, json_string("Module is mandatory and must be a non empty string of at most 128 characters"));
         }
       }
-      if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) == 0 || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
+      if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
         json_array_append_new(j_error_list, json_string("display_name is optional and must be a non empty string of at most 256 characters"));
       }
       if (json_object_get(j_module, "parameters") == NULL || !json_is_object(json_object_get(j_module, "parameters"))) {
@@ -627,7 +627,7 @@ json_t * is_user_auth_scheme_module_valid(struct config_elements * config, json_
           json_array_append_new(j_error_list, json_string("Module is mandatory and must be a non empty string of at most 128 characters"));
         }
       }
-      if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) == 0 || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
+      if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
         json_array_append_new(j_error_list, json_string("display_name is optional and must be a non empty string of at most 256 characters"));
       }
       if (json_object_get(j_module, "expiration") == NULL || !json_is_integer(json_object_get(j_module, "expiration")) || json_integer_value(json_object_get(j_module, "expiration")) <= 0) {
@@ -1021,7 +1021,7 @@ json_t * is_client_module_valid(struct config_elements * config, json_t * j_modu
           json_array_append_new(j_error_list, json_string("Module is mandatory and must be a non empty string of at most 128 characters"));
         }
       }
-      if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) == 0 || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
+      if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
         json_array_append_new(j_error_list, json_string("display_name is optional and must be a non empty string of at most 256 characters"));
       }
       if (json_object_get(j_module, "parameters") == NULL || !json_is_object(json_object_get(j_module, "parameters"))) {
@@ -1428,7 +1428,7 @@ json_t * is_plugin_module_valid(struct config_elements * config, json_t * j_modu
           json_array_append_new(j_error_list, json_string("Module is mandatory and must be a non empty string of at most 128 characters"));
         }
       }
-      if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) == 0 || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
+      if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
         json_array_append_new(j_error_list, json_string("display_name is optional and must be a non empty string of at most 256 characters"));
       }
       if (json_object_get(j_module, "parameters") == NULL || !json_is_object(json_object_get(j_module, "parameters"))) {
