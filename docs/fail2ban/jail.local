@@ -1,0 +1,5 @@
+[glewlwyd]
+enabled  = true
+filter   = glewlwyd
+logpath  = /var/log/glewlwyd.log
+port     = http,https
