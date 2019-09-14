@@ -8,6 +8,8 @@ class CertificateParams extends Component {
     
     if (props.mod===undefined) props.mod = {};
     if (props.mod.parameters===undefined) props.mod.parameters = {};
+    if (props.mod.parameters["cert-source"]===undefined) props.mod.parameters["cert-source"]="TLS";
+    if (props.mod.parameters["header-name"]===undefined) props.mod.parameters["header-name"]="SSL_CLIENT_CERT";
     if (props.mod.parameters["use-scheme-storage"]===undefined) props.mod.parameters["use-scheme-storage"]=false;
     if (props.mod.parameters["user-certificate-property"]===undefined) props.mod.parameters["user-certificate-property"]="";
     if (props.mod.parameters["user-certificate-format"]===undefined) props.mod.parameters["user-certificate-format"]="PEM";
@@ -28,6 +30,7 @@ class CertificateParams extends Component {
       this.checkParameters();
     }
     
+    this.setCertSource = this.setCertSource.bind(this);
     this.setBooleanValue = this.setBooleanValue.bind(this);
     this.setTextValue = this.setTextValue.bind(this);
     this.checkParameters = this.checkParameters.bind(this);
@@ -42,6 +45,8 @@ class CertificateParams extends Component {
     
     if (nextProps.mod===undefined) nextProps.mod = {};
     if (nextProps.mod.parameters===undefined) nextProps.mod.parameters = {};
+    if (nextProps.mod.parameters["cert-source"]===undefined) nextProps.mod.parameters["cert-source"]="TLS";
+    if (nextProps.mod.parameters["header-name"]===undefined) nextProps.mod.parameters["header-name"]="SSL_CLIENT_CERT";
     if (nextProps.mod.parameters["use-scheme-storage"]===undefined) nextProps.mod.parameters["use-scheme-storage"]=false;
     if (nextProps.mod.parameters["user-certificate-property"]===undefined) nextProps.mod.parameters["user-certificate-property"]="";
     if (nextProps.mod.parameters["user-certificate-format"]===undefined) nextProps.mod.parameters["user-certificate-format"]="PEM";
@@ -59,6 +64,13 @@ class CertificateParams extends Component {
         this.checkParameters();
       }
     });
+  }
+  
+  setCertSource(e, source) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["cert-source"] = source;
+    this.setState({mod: mod});
   }
   
   setUseCaChain(value) {
@@ -120,12 +132,20 @@ class CertificateParams extends Component {
         errorList["user-certificate-property"] = i18next.t("admin.mod-certificate-user-certificate-property-error")
       }
     }
+    if (!this.state.mod.parameters["header-name"]) {
+      if (this.state.mod.parameters["header-name"] === "") {
+        hasError = true;
+        errorList["header-name"] = i18next.t("admin.mod-certificate-header-name-error")
+      }
+    }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
         messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
       });
     } else {
-      this.setState({errorList: errorList});
+      this.setState({errorList: errorList}, () => {
+        messageDispatcher.sendMessage('ModEdit', {type: "modInvalid"});
+      });
     }
   }
   
@@ -159,6 +179,32 @@ class CertificateParams extends Component {
     return (
       <div>
         <hr/>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-certificate-cert-source">{i18next.t("admin.mod-certificate-cert-source")}</label>
+            </div>
+            <div className="dropdown">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-certificate-cert-source" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {i18next.t("admin.mod-certificate-cert-source-"+this.state.mod.parameters["cert-source"])}
+              </button>
+              <div className="dropdown-menu" aria-labelledby="mod-certificate-cert-source">
+                <a className={"dropdown-item"+(this.state.mod.parameters["cert-source"]==="TLS"?" active":"")} href="#" onClick={(e) => this.setCertSource(e, "TLS")}>{i18next.t("admin.mod-certificate-cert-source-TLS")}</a>
+                <a className={"dropdown-item"+(this.state.mod.parameters["cert-source"]==="header"?" active":"")} href="#" onClick={(e) => this.setCertSource(e, "header")}>{i18next.t("admin.mod-certificate-cert-source-header")}</a>
+                <a className={"dropdown-item"+(this.state.mod.parameters["cert-source"]==="both"?" active":"")} href="#" onClick={(e) => this.setCertSource(e, "both")}>{i18next.t("admin.mod-certificate-cert-source-both")}</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-certificate-header-name">{i18next.t("admin.mod-certificate-header-name")}</label>
+            </div>
+            <input type="text" disabled={this.state.mod.parameters["cert-source"]==="TLS"} className={this.state.errorList["header-name"]?"form-control is-invalid":"form-control"} id="mod-certificate-header-name" placeholder={i18next.t("admin.mod-certificate-header-name-ph")} value={this.state.mod.parameters["header-name"]} onChange={(e) => this.setTextValue(e, "header-name")}/>
+          </div>
+          {this.state.errorList["header-name"]?<span className="error-input">{i18next.t(this.state.errorList["header-name"])}</span>:""}
+        </div>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
