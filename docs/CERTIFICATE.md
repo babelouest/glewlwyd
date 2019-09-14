@@ -35,6 +35,39 @@ Maximum number of times a valid authentification with this scheme is possible. T
 
 If this option is unchecked, only administrator can register this scheme for every user via the administration page.
 
+### Certificate source
+
+Source of the client certificate to be picked by the scheme. Either in the TLS session, the HTTP header or both.
+
+If you intent to use Glewlwyd directly, set this option to `TLS Session`. You must also configure Glewlwyd in secure mode with the proper `secure_connection_ca_file` value. This configuration value must be set to your CA certificate or your CA chain certificate in order to validate clients certificates provided.
+
+Important security warning!
+If you don't use Glewlwyd Glewlwyd behind a proxy, this option MUST be set to `TLS Session` only, otherwise, an attacker could manually change the header value to fake any valid user without having to know its certificate key.
+
+If you set this value to `HTTP Header` or `both`, it allows to use Glewlwyd behind a reverse proxy such as Apache's `mod_proxy`. You must then configure the proxy to validate thhe clients certificate using your CA certificate and of the client certificate is valid, the proxy must forward the X509 certificate to Glewlwyd in a specified header.
+
+Here is an example of configuration using Apache web server.
+You must have enabled the modules `ssl`, `proxy`, `proxy_http`, `headers`.
+
+```config
+SSLCACertificateFile /path/to/ca.crt
+SSLVerifyClient optional
+SSLVerifyDepth 2
+
+RequestHeader set SSL_CLIENT_CERT ""
+
+ProxyPass / http://localhost:4593/
+
+<Location /api/>
+  RequestHeader set SSL_CLIENT_CERT "%{SSL_CLIENT_CERT}s"
+</Location>
+```
+
+### Corresponding header property
+
+Name of the header property that will contain the client certificate in PEM format without newlines.
+Using the example config above, you must set the value `SSL_CLIENT_CERT`.
+
 ### Use scheme storage
 
 If this option is set to `yes`, the registered certificates will be stored in the database, in a specific table for this scheme. If this option is set to `no`, the registered certificates will be extracted from the user properies.
