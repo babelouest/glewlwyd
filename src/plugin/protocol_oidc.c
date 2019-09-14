@@ -2970,6 +2970,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
         }
         json_decref(j_user);
       } else {
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request));
         j_body = json_pack("{ss}", "error", "invalid_code");
         ulfius_set_json_body_response(response, 403, j_body);
         json_decref(j_body);
