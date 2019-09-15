@@ -125,7 +125,7 @@ static json_int_t get_last_serial(struct config_module * config) {
 
 static int generate_pkcs12(gnutls_x509_privkey_t privkey_x509, gnutls_x509_crt_t crt, gnutls_pkcs12_t pkcs12, const char * password) {
   int res, bag_index, ret = G_ERROR;
-  gnutls_pkcs12_bag_t bag, key_bag;
+  gnutls_pkcs12_bag_t bag = NULL, key_bag = NULL;
   unsigned char key_id_dat[1024];
   size_t key_id_dat_size = 1024;
   gnutls_datum_t key_id = {NULL, 0}, cert_dat = {NULL, 0}, key_dat = {NULL, 0};
