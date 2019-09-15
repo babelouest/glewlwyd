@@ -132,7 +132,7 @@ static int generate_pkcs12(gnutls_x509_privkey_t privkey_x509, gnutls_x509_crt_t
 
   do {
     if ((res = gnutls_x509_privkey_get_key_id(privkey_x509, 0, key_id_dat, &key_id_dat_size)) < 0) {
-      fprintf(stderr, "error gnutls_x509_privkey_get_key_id: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_privkey_get_key_id: %d", res);
       break;
     }
     
@@ -140,76 +140,76 @@ static int generate_pkcs12(gnutls_x509_privkey_t privkey_x509, gnutls_x509_crt_t
     key_id.size = key_id_dat_size;
 
     if ((res = gnutls_pkcs12_bag_init(&bag)) < 0) {
-      fprintf(stderr, "error gnutls_pkcs12_bag_init: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_pkcs12_bag_init: %d", res);
       break;
     }
       
     if ((res = gnutls_pkcs12_bag_init(&key_bag)) < 0) {
-      fprintf(stderr, "error gnutls_pkcs12_bag_init: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_pkcs12_bag_init: %d", res);
       break;
     }
     
     if ((res = gnutls_x509_crt_export2(crt, GNUTLS_X509_FMT_DER, &cert_dat)) < 0) {
-      fprintf(stderr, "error gnutls_x509_crt_export2: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_crt_export2: %d", res);
       break;
     }
     
     if ((res = gnutls_x509_privkey_export2_pkcs8(privkey_x509, GNUTLS_X509_FMT_DER, password, GNUTLS_PKCS_USE_PBES2_AES_128, &key_dat)) < 0) {
-      fprintf(stderr, "error gnutls_x509_privkey_export2_pkcs8: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_privkey_export2_pkcs8: %d", res);
       break;
     }
 
     if ((res = gnutls_pkcs12_bag_set_data(bag, GNUTLS_BAG_CERTIFICATE, &cert_dat)) < 0) {
-      fprintf(stderr, "error gnutls_pkcs12_bag_set_data: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_pkcs12_bag_set_data: %d", res);
       break;
     }
 
     bag_index = res;
 
     if ((res = gnutls_pkcs12_bag_set_friendly_name(bag, bag_index, G_PKCS12_FRIENDLY_NAME)) < 0) {
-      fprintf(stderr, "error gnutls_pkcs12_bag_set_friendly_name: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_pkcs12_bag_set_friendly_name: %d", res);
       break;
     }
 
     if ((res = gnutls_pkcs12_bag_set_key_id(bag, bag_index, &key_id)) < 0) {
-      fprintf(stderr, "error gnutls_pkcs12_bag_set_key_id: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_pkcs12_bag_set_key_id: %d", res);
       break;
     }
 
     if ((res = gnutls_pkcs12_bag_encrypt(bag, password, GNUTLS_PKCS_USE_PKCS12_RC2_40)) < 0) {
-      fprintf(stderr, "error gnutls_pkcs12_bag_encrypt: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_pkcs12_bag_encrypt: %d", res);
       break;
     }
 
     if ((res = gnutls_pkcs12_bag_set_data(key_bag, GNUTLS_BAG_PKCS8_ENCRYPTED_KEY, &key_dat)) < 0) {
-      fprintf(stderr, "error gnutls_pkcs12_bag_set_data: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_pkcs12_bag_set_data: %d", res);
       break;
     }
 
     bag_index = res;
 
     if ((res = gnutls_pkcs12_bag_set_friendly_name(key_bag, bag_index, G_PKCS12_FRIENDLY_NAME)) < 0) {
-      fprintf(stderr, "error gnutls_pkcs12_bag_set_friendly_name: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_pkcs12_bag_set_friendly_name: %d", res);
       break;
     }
 
     if ((res = gnutls_pkcs12_bag_set_key_id(key_bag, bag_index, &key_id)) < 0) {
-      fprintf(stderr, "error gnutls_pkcs12_bag_set_key_id: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_pkcs12_bag_set_key_id: %d", res);
       break;
     }
 
     if ((res = gnutls_pkcs12_set_bag(pkcs12, bag)) < 0) {
-      fprintf(stderr, "error gnutls_pkcs12_set_bag: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_pkcs12_set_bag: %d", res);
       break;
     }
     
     if ((res = gnutls_pkcs12_set_bag(pkcs12, key_bag)) < 0) {
-      fprintf(stderr, "error gnutls_pkcs12_set_bag: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_pkcs12_set_bag: %d", res);
       break;
     }
 
     if ((res = gnutls_pkcs12_generate_mac(pkcs12, password)) < 0) {
-      fprintf(stderr, "error gnutls_pkcs12_generate_mac: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_pkcs12_generate_mac: %d", res);
       break;
     }
 
@@ -226,8 +226,8 @@ static int generate_pkcs12(gnutls_x509_privkey_t privkey_x509, gnutls_x509_crt_t
 
 static char * get_dn_for_user(struct config_module * config, json_t * j_parameters, const char * username) {
   char * dn = NULL, * tmp, * pattern;
-  const char * key;
-  json_t * j_user = config->glewlwyd_module_callback_get_user(config, username), * j_property;
+  const char * key = NULL;
+  json_t * j_user = config->glewlwyd_module_callback_get_user(config, username), * j_property = NULL;
   
   if (check_result_value(j_user, G_OK)) {
     dn = o_strdup(json_string_value(json_object_get(json_object_get(j_parameters, "request-certificate"), "dn-format")));
@@ -262,77 +262,77 @@ static int generate_key_cert(struct config_module * config, json_t * j_parameter
 
   do {
     if (dn == NULL) {
-      fprintf(stderr, "error dn\n");
+      y_log_message(Y_LOG_LEVEL_ERROR, "error dn");
       break;
     }
     
     if ((res = gnutls_x509_privkey_init(&key_issuer)) < 0) {
-      fprintf(stderr, "error gnutls_x509_privkey_init: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_privkey_init: %d", res);
       break;
     }
     
     if ((res = gnutls_x509_crt_init(&crt_issuer)) < 0) {
-      fprintf(stderr, "error gnutls_x509_crt_init: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_crt_init: %d", res);
       break;
     }
     
     dat.data = (unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-key"), "cert-file"));
     dat.size = json_string_length(json_object_get(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-key"), "cert-file"));
     if ((res = gnutls_x509_privkey_import(key_issuer, &dat, GNUTLS_X509_FMT_PEM)) < 0) {
-      fprintf(stderr, "error gnutls_x509_privkey_import: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_privkey_import: %d", res);
       break;
     }
 
     dat.data = (unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-cert"), "cert-file"));
     dat.size = json_string_length(json_object_get(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-cert"), "cert-file"));
     if ((res = gnutls_x509_crt_import(crt_issuer, &dat, GNUTLS_X509_FMT_PEM)) < 0) {
-      fprintf(stderr, "error gnutls_x509_crt_import: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_crt_import: %d", res);
       break;
     }
     
     if ((res = gnutls_x509_crt_set_version(crt, 1)) < 0) {
-      fprintf(stderr, "error gnutls_x509_crt_set_version: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_crt_set_version: %d", res);
       break;
     }
 
-    if ((res = gnutls_x509_privkey_generate(privkey_x509, GNUTLS_PK_RSA, gnutls_sec_param_to_pk_bits(GNUTLS_PK_RSA, GNUTLS_SEC_PARAM_MEDIUM), GNUTLS_PRIVKEY_FLAG_PROVABLE)) < 0) {
-      fprintf(stderr, "error gnutls_x509_privkey_generate: %d\n", res);
+    if ((res = gnutls_x509_privkey_generate(privkey_x509, GNUTLS_PK_RSA, gnutls_sec_param_to_pk_bits(GNUTLS_PK_RSA, GNUTLS_SEC_PARAM_MEDIUM), GNUTLS_PRIVKEY_SIGN_FLAG_TLS1_RSA)) < 0) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_privkey_generate: %d", res);
       break;
     }
     
     if ((res = gnutls_privkey_import_x509(privkey, privkey_x509, GNUTLS_PRIVKEY_IMPORT_AUTO_RELEASE)) < 0) {
-      fprintf(stderr, "error gnutls_privkey_import_x509: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_privkey_import_x509: %d", res);
       break;
     }
     
     if ((res = gnutls_x509_crt_set_key(crt, privkey_x509)) < 0) {
-      fprintf(stderr, "error gnutls_x509_crt_set_key: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_crt_set_key: %d", res);
       break;
     }
     
     if ((res = gnutls_x509_crt_set_expiration_time(crt, (time_t)expiration)) < 0) {
-      fprintf(stderr, "error gnutls_x509_crt_set_expiration_time: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_crt_set_expiration_time: %d", res);
       break;
     }
     
     if ((res = gnutls_x509_crt_set_activation_time(crt, (time_t)activation)) < 0) {
-      fprintf(stderr, "error gnutls_x509_crt_set_activation_time: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_crt_set_activation_time: %d", res);
       break;
     }
     
     if ((res = gnutls_x509_crt_set_serial(crt, &serial, sizeof(serial))) < 0) {
-      fprintf(stderr, "error gnutls_x509_crt_set_serial: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_crt_set_serial: %d", res);
       break;
     }
     
     
     if ((res = gnutls_x509_crt_set_dn(crt, dn, &err)) < 0) {
-      fprintf(stderr, "error gnutls_x509_crt_set_dn: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_crt_set_dn: %d", res);
       break;
     }
     
     if ((res = gnutls_x509_crt_sign2(crt, crt_issuer, key_issuer, GNUTLS_DIG_SHA256, 0)) < 0) {
-      fprintf(stderr, "error gnutls_x509_crt_sign2: %d\n", res);
+      y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_crt_sign2: %d", res);
       break;
     }
     
@@ -415,32 +415,32 @@ static json_t * generate_new_certificate(struct config_module * config, json_t *
   rand_string(password, G_PKCS12_PASSWORD_LENGTH);
   
   if ((res = gnutls_x509_privkey_init(&privkey_x509)) < 0) {
-    fprintf(stderr, "error gnutls_x509_privkey_init: %d\n", res);
+    y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_privkey_init: %d", res);
     ret = G_ERROR;
   }
 
   if ((res = gnutls_privkey_init(&privkey)) < 0) {
-    fprintf(stderr, "error gnutls_privkey_init: %d\n", res);
+    y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_privkey_init: %d", res);
     ret = G_ERROR;
   }
 
   if (ret == G_OK && (res = gnutls_x509_crt_init(&crt)) < 0) {
-    fprintf(stderr, "error gnutls_x509_crt_init: %d\n", res);
+    y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_x509_crt_init: %d", res);
     ret = G_ERROR;
   }
   
   if (ret == G_OK && (res = gnutls_pkcs12_init(&pkcs12)) < 0) {
-    fprintf(stderr, "error gnutls_pkcs12_init: %d\n", res);
+    y_log_message(Y_LOG_LEVEL_ERROR, "error gnutls_pkcs12_init: %d", res);
     ret = G_ERROR;
   }
   
   if (ret == G_OK && (ret = generate_key_cert(config, j_parameters, username, privkey_x509, privkey, crt, activation, expiration)) != G_OK) {
-    fprintf(stderr, "error generate_key_cert\n");
+    y_log_message(Y_LOG_LEVEL_ERROR, "error generate_key_cert");
     ret = G_ERROR;
   }
   
   if (ret == G_OK && (ret = generate_pkcs12(privkey_x509, crt, pkcs12, password)) != G_OK) {
-    fprintf(stderr, "error generate_pkcs12\n");
+    y_log_message(Y_LOG_LEVEL_ERROR, "error generate_pkcs12");
     ret = G_ERROR;
   }
   
