@@ -84,6 +84,7 @@
     "webauthn-title": "Webauthn",
     "otp-title": "Code à usage unique",
     "password-title": "Mot de passe",
+    "certificate-title": "Certificat TLS",
     "select": "Sélectionner",
     "select-acount-title": "Sélectionner le compte à utiliser",
     "manage-users": "Gérer les utilisateurs connectés",
@@ -617,7 +618,19 @@
     "mod-certificate-use-ca-chain": "Utiliser une CA",
     "mod-certificate-user-certificate-ca-chain":"Certificats de CA",
     "mod-certificate-user-certificate-ca-chain-message": "Veuillez sélectionner tous les certificats de toutes les chaines de certification que vous souhaitez utiliser",
-    "mod-certificate-user-certificate-ca-chain-delete": "Supprimer"
+    "mod-certificate-user-certificate-ca-chain-delete": "Supprimer",
+    "mod-certificate-request-certificate-enabled": "Autoriser l'émission de certificats PKCS#12",
+    "mod-certificate-request-certificate-select-issuer-cert": "Certificat X509 PEM de l'émetteur - {{file}}",
+    "mod-certificate-request-certificate-select-issuer-key": "Clé privée X509 PEM de l'émetteur - {{file}}",
+    "mod-certificate-request-certificate-expiration": "Expiration (secondes)",
+    "mod-certificate-request-certificate-expiration-ph": "Ex: 31536000 (365 jours)",
+    "mod-certificate-request-certificate-dn": "Format du DN des certificats émis",
+    "mod-certificate-request-certificate-dn-ph": "Ex: cn={username},dc=glewlwyd,dc=org",
+    "mod-certificate-request-certificate-allow-multiple": "Autoriser plusieurs certificats pour chaque utilisateur",
+    "mod-certificate-request-certificate-dn-error": "Le champ est obligatoire",
+    "mod-certificate-request-certificate-expiration-error": "Le champ expiration doit être un entier positif non null",
+    "mod-certificate-request-certificate-issuer-key-error": "La clé privée est obligatoire",
+    "mod-certificate-request-certificate-issuer-cert-error": "Le certificat est obligatoire"
   },
   "profile": {
     "error-credential-message": "Veuillez vous connecter à l'application",
@@ -724,7 +737,15 @@
     "scheme-certificate-enabled": "Certificat activé",
     "scheme-certificate-disabled": "Certificat désactivé",
     "scheme-certificate-invalid": "Certificat invalide",
-    "scheme-certificate-test-valid": "Certificat valide"
+    "scheme-certificate-test-valid": "Certificat valide",
+    "scheme-certificate-request-new": "Demander un certificat au serveur",
+    "scheme-certificate-p12-file-save": "Enregistrer le certificat",
+    "scheme-certificate-p12-file-password": "Mot de passe:",
+    "scheme-certificate-p12-file-show-password": "Voir le mot de passe",
+    "scheme-certificate-p12-file-hide-password": "Cacher le mot de passe",
+    "scheme-certificate-p12-file-copy-password": "Copier dans le presse-papiers",
+    "scheme-certificate-p12-file-copy-password-success": "Mot de passe copié dans le presse-papier",
+    "scheme-certificate-p12-file-copy-password-error": "Erreur lors de la copie dans le presse-papier"
   },
   "modal": {
     "close": "Fermer",

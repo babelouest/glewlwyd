@@ -21,6 +21,8 @@ class CertificateParams extends Component {
       check: props.check,
       certFile: false,
       fileName: false,
+      requestCertFile: {},
+      requestCertFileName: {},
       useCAChain: props.mod.parameters["ca-chain"].length,
       hasError: false,
       errorList: {}
@@ -39,6 +41,12 @@ class CertificateParams extends Component {
     this.selectCertFile = this.selectCertFile.bind(this);
     this.addCertificateFile = this.addCertificateFile.bind(this);
     this.deleteCertificateFile = this.deleteCertificateFile.bind(this);
+    this.setRequestCertificate = this.setRequestCertificate.bind(this);
+    this.addRequestCertificateFile = this.addRequestCertificateFile.bind(this);
+    this.selectRequestCertificateFile = this.selectRequestCertificateFile.bind(this);
+    this.setRequestCertificateExpiration = this.setRequestCertificateExpiration.bind(this);
+    this.setDnFormatValue = this.setDnFormatValue.bind(this);
+    this.setRequestCertificateAllowMultiple = this.setRequestCertificateAllowMultiple.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -99,6 +107,35 @@ class CertificateParams extends Component {
     }
   }
   
+  selectRequestCertificateFile(e, property) {
+    var profile = this.state.profile;
+    var file = e.target.files[0];
+    var fr = new FileReader();
+    fr.onload = (ev2) => {
+      var requestCertFileName = this.state.requestCertFileName;
+      var requestCertFile = this.state.requestCertFile;
+      requestCertFile[property] = ev2.target.result;
+      requestCertFileName[property] = file.name;
+      this.setState({requestCertFile: requestCertFile, requestCertFileName: requestCertFileName});
+    };
+    fr.readAsText(file);
+  }
+  
+  addRequestCertificateFile(property) {
+    if (this.state.requestCertFile[property]) {
+      var mod = this.state.mod;
+      var requestCertFileName = this.state.requestCertFileName;
+      var requestCertFile = this.state.requestCertFile;
+      mod.parameters["request-certificate"][property] = {
+        "file-name": requestCertFileName[property],
+        "cert-file": requestCertFile[property]
+      }
+      delete(requestCertFileName[property]);
+      delete(requestCertFile[property]);
+      this.setState({mod: mod, requestCertFileName: requestCertFileName, requestCertFile: requestCertFile});
+    }
+  }
+  
   deleteCertificateFile(e, index) {
     var mod = this.state.mod;
     mod.parameters["ca-chain"].splice(index, 1);
@@ -124,6 +161,44 @@ class CertificateParams extends Component {
     this.setState({mod: mod});
   }
   
+  setRequestCertificate(e, value) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    if (value) {
+      mod.parameters["request-certificate"] = {
+        "issuer-cert": {"file-name": "", "cert-file": ""},
+        "issuer-key": {"file-name": "", "cert-file": ""},
+        "expiration": 60*60*24*365, // 1 year
+        "dn-format": "cn={username},dc=glewlwyd,dc=tld",
+        "allow-multiple": false
+      };
+    } else {
+      delete(mod.parameters["request-certificate"]);
+    }
+    this.setState({mod: mod});
+  }
+  
+  setRequestCertificateExpiration(e) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["request-certificate"]["expiration"] = parseInt(e.target.value);
+    this.setState({mod: mod});
+  }
+  
+  setDnFormatValue(e) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["request-certificate"]["dn-format"] = e.target.value;
+    this.setState({mod: mod});
+  }
+  
+  setRequestCertificateAllowMultiple(e, value) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["request-certificate"]["allow-multiple"] = value;
+    this.setState({mod: mod});
+  }
+  
   checkParameters() {
     var errorList = {}, hasError = false;
     if (!this.state.mod.parameters["use-scheme-storage"]) {
@@ -138,6 +213,24 @@ class CertificateParams extends Component {
         errorList["header-name"] = i18next.t("admin.mod-certificate-header-name-error")
       }
     }
+    if (this.state.mod.parameters["request-certificate"]) {
+      if (this.state.mod.parameters["request-certificate"]["dn-format"] === "") {
+        hasError = true;
+        errorList["request-certificate-dn"] = i18next.t("admin.mod-certificate-request-certificate-dn-error")
+      }
+      if (!this.state.mod.parameters["request-certificate"]["expiration"]) {
+        hasError = true;
+        errorList["request-certificate-expiration"] = i18next.t("admin.mod-certificate-request-certificate-expiration-error")
+      }
+      if (this.state.mod.parameters["request-certificate"]["issuer-key"]["cert-file"] === "" || this.state.mod.parameters["request-certificate"]["issuer-key"]["file-name"] === "") {
+        hasError = true;
+        errorList["request-certificate-issuer-key"] = i18next.t("admin.mod-certificate-request-certificate-issuer-key-error")
+      }
+      if (this.state.mod.parameters["request-certificate"]["issuer-cert"]["cert-file"] === "" || this.state.mod.parameters["request-certificate"]["issuer-cert"]["file-name"] === "") {
+        hasError = true;
+        errorList["request-certificate-issuer-cert"] = i18next.t("admin.mod-certificate-request-certificate-issuer-cert-error")
+      }
+    }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
         messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
@@ -150,7 +243,7 @@ class CertificateParams extends Component {
   }
   
   render() {
-    var CAChainList = [], uploadButton;
+    var CAChainList = [], uploadButton, requestCertificate;
     if (this.state.useCAChain) {
       this.state.mod.parameters["ca-chain"].forEach((cert, index) => {
         CAChainList.push(
@@ -162,7 +255,8 @@ class CertificateParams extends Component {
           </div>
         );
       });
-      uploadButton = <div className="input-group mb-3">
+      uploadButton = 
+      <div className="input-group mb-3">
         <div className="input-group-prepend">
           <button className="btn btn-outline-secondary" type="button" id="addCertificateFromFile" title={i18next.t("admin.mod-certificate-user-certificate-ca-chain-add-from-file")} onClick={this.addCertificateFile}>
             {i18next.t("upload")}
@@ -173,6 +267,83 @@ class CertificateParams extends Component {
           <label className="custom-file-label" htmlFor="addCertificateFromFile">
             {this.state.fileName||i18next.t("browse")}
           </label>
+        </div>
+      </div>
+    }
+    if (this.state.mod.parameters["request-certificate"]) {
+      requestCertificate = 
+      <div>
+        <div className="form-group">
+          <div className="alert alert-primary">
+            {i18next.t("admin.mod-certificate-request-certificate-select-issuer-cert", {file: this.state.mod.parameters["request-certificate"]["issuer-cert"]["file-name"].substring(0, 40)})}
+          </div>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <button className="btn btn-outline-secondary" type="button" id="addRequestCertificateCertFromFile" title={i18next.t("admin.mod-certificate-request-certificate-add-from-file")} onClick={() => this.addRequestCertificateFile("issuer-cert")}>
+                {i18next.t("upload")}
+              </button>
+            </div>
+            <div className="custom-file">
+              <input type="file" className="custom-file-input" id="addRequestCertificateCertFromFileInput" aria-describedby="addRequestCertificateCertFromFile" onChange={(e) => this.selectRequestCertificateFile(e, "issuer-cert")} />
+              <label className="custom-file-label" htmlFor="addRequestCertificateCertFromFile">
+                {this.state.requestCertFileName["issuer-cert"]||i18next.t("browse")}
+              </label>
+            </div>
+          </div>
+          {this.state.errorList["request-certificate-issuer-cert"]?<span className="error-input">{i18next.t(this.state.errorList["request-certificate-issuer-cert"])}</span>:""}
+        </div>
+        <div className="form-group">
+          <div className="alert alert-primary">
+            {i18next.t("admin.mod-certificate-request-certificate-select-issuer-key", {file: this.state.mod.parameters["request-certificate"]["issuer-key"]["file-name"].substring(0, 40)})}
+          </div>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <button className="btn btn-outline-secondary" type="button" id="addRequestCertificateKeyFromFile" title={i18next.t("admin.mod-certificate-request-certificate-add-from-file")} onClick={() => this.addRequestCertificateFile("issuer-key")}>
+                {i18next.t("upload")}
+              </button>
+            </div>
+            <div className="custom-file">
+              <input type="file" className="custom-file-input" id="addRequestCertificateKeyFromFileInput" aria-describedby="addRequestCertificateKeyFromFile" onChange={(e) => this.selectRequestCertificateFile(e, "issuer-key")} />
+              <label className="custom-file-label" htmlFor="addRequestCertificateKeyFromFile">
+                {this.state.requestCertFileName["issuer-key"]||i18next.t("browse")}
+              </label>
+            </div>
+          </div>
+          {this.state.errorList["request-certificate-issuer-key"]?<span className="error-input">{i18next.t(this.state.errorList["request-certificate-issuer-key"])}</span>:""}
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-certificate-request-certificate-expiration">{i18next.t("admin.mod-certificate-request-certificate-expiration")}</label>
+            </div>
+            <input type="number" min="1" step="1" className={this.state.errorList["request-certificate-expiration"]?"form-control is-invalid":"form-control"} id="mod-certificate-header-name" placeholder={i18next.t("admin.mod-certificate-request-certificate-expiration-ph")} value={this.state.mod.parameters["request-certificate"]["expiration"]} onChange={(e) => this.setRequestCertificateExpiration(e)}/>
+          </div>
+          {this.state.errorList["request-certificate-expiration"]?<span className="error-input">{i18next.t(this.state.errorList["request-certificate-expiration"])}</span>:""}
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-certificate-request-certificate-dn">{i18next.t("admin.mod-certificate-request-certificate-dn")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["request-certificate-dn"]?"form-control is-invalid":"form-control"} id="mod-certificate-request-certificate-dn" placeholder={i18next.t("admin.mod-certificate-request-certificate-dn-ph")} value={this.state.mod.parameters["request-certificate"]["dn-format"]} onChange={(e) => this.setDnFormatValue(e)}/>
+          </div>
+          {this.state.errorList["request-certificate-dn"]?<span className="error-input">{i18next.t(this.state.errorList["request-certificate-dn"])}</span>:""}
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-certificate-request-certificate-allow-multiple">{i18next.t("admin.mod-certificate-request-certificate-allow-multiple")}</label>
+            </div>
+            <div className="dropdown">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-certificate-request-certificate-allow-multiple" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {i18next.t("admin.mod-certificate-value-"+(this.state.mod.parameters["request-certificate"]["allow-multiple"]?"yes":"no"))}
+              </button>
+              <div className="dropdown-menu" aria-labelledby="mod-certificate-request-certificate-allow-multiple">
+                <a className={"dropdown-item"+(this.state.mod.parameters["request-certificate"]["allow-multiple"]?" active":"")} href="#" onClick={(e) => this.setRequestCertificateAllowMultiple(e, true)}>{i18next.t("admin.mod-certificate-value-yes")}</a>
+                <a className={"dropdown-item"+(!this.state.mod.parameters["request-certificate"]["allow-multiple"]?" active":"")} href="#" onClick={(e) => this.setRequestCertificateAllowMultiple(e, false)}>{i18next.t("admin.mod-certificate-value-no")}</a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     }
@@ -205,6 +376,25 @@ class CertificateParams extends Component {
           </div>
           {this.state.errorList["header-name"]?<span className="error-input">{i18next.t(this.state.errorList["header-name"])}</span>:""}
         </div>
+        <hr/>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-certificate-request-certificate-enabled">{i18next.t("admin.mod-certificate-request-certificate-enabled")}</label>
+            </div>
+            <div className="dropdown">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-certificate-request-certificate-enabled" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {i18next.t("admin.mod-certificate-value-"+(this.state.mod.parameters["request-certificate"]!==undefined?"yes":"no"))}
+              </button>
+              <div className="dropdown-menu" aria-labelledby="mod-certificate-request-certificate-enabled">
+                <a className={"dropdown-item"+(this.state.mod.parameters["request-certificate"]?" active":"")} href="#" onClick={(e) => this.setRequestCertificate(e, true)}>{i18next.t("admin.mod-certificate-value-yes")}</a>
+                <a className={"dropdown-item"+(!this.state.mod.parameters["request-certificate"]?" active":"")} href="#" onClick={(e) => this.setRequestCertificate(e, false)}>{i18next.t("admin.mod-certificate-value-no")}</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        {requestCertificate}
+        <hr/>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
