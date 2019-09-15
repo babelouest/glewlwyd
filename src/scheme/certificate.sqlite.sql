@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS gs_user_certificate;
+DROP TABLE IF EXISTS gs_user_pkcs12;
 
 CREATE TABLE gs_user_certificate (
   gsuc_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,3 +17,16 @@ CREATE TABLE gs_user_certificate (
 );
 CREATE INDEX i_gsuc_username ON gs_user_certificate(gsuc_username);
 CREATE INDEX i_gsuc_x509_certificate_id ON gs_user_certificate(gsuc_x509_certificate_id);
+
+CREATE TABLE gs_user_pkcs12 (
+  gsup_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gsup_mod_name TEXT NOT NULL,
+  gsup_username TEXT NOT NULL,
+  gsup_pkcs12_content TEXT DEFAULT NULL,
+  gsup_pkcs12_password TEXT DEFAULT NULL,
+  gsup_activation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gsup_expiration TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gsup_host TEXT DEFAULT NULL,
+  gsup_user_agent TEXT DEFAULT NULL
+);
+CREATE INDEX i_gsup_username ON gs_user_pkcs12(gsup_username);
