@@ -25,6 +25,10 @@
  *
  */
 
+#include <gnutls/gnutls.h>
+#include <gnutls/x509.h>
+#include <gnutls/abstract.h>
+#include <gnutls/pkcs12.h>
 #include <string.h>
 #include <jansson.h>
 #include <yder.h>
@@ -32,11 +36,17 @@
 #include "../glewlwyd-common.h"
 
 #define GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_CERTIFICATE "gs_user_certificate"
+#define GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_PKCS12 "gs_user_pkcs12"
 
-#define CERT_SOURCE_TLS    0x01
-#define CERT_SOURCE_HEADER 0x10
+#define G_CERT_SOURCE_TLS    0x01
+#define G_CERT_SOURCE_HEADER 0x10
+
+#define G_PKCS12_FRIENDLY_NAME "Glewlwyd generated PKCS#12"
+#define G_PKCS12_PASSWORD_LENGTH 16
 
 int user_auth_scheme_module_validate(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls);
+
+static int add_user_certificate_scheme_storage(struct config_module * config, json_t * j_parameters, const char * x509_data, const char * username, const char * user_agent);
 
 /**
  * 
@@ -83,7 +93,523 @@ struct _cert_param {
   size_t                        cert_array_len;
   struct _cert_chain_element ** cert_array;
   ushort                        cert_source;
+  pthread_mutex_t               cert_request_lock;
 };
+
+static json_int_t get_last_serial(struct config_module * config) {
+  json_t * j_query, * j_result;
+  int res;
+  json_int_t ret = 0;
+
+  j_query = json_pack("{sss[s]sssi}",
+                      "table",
+                      GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_PKCS12,
+                      "columns",
+                        "gsup_id",
+                      "order_by",
+                      "gsup_id DESC",
+                      "limit",
+                      1);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result)) {
+      ret = json_integer_value(json_object_get(json_array_get(j_result, 0), "gsup_id"));
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_stored_generated_certificate - Error executing j_query");
+  }
+  return ret;
+}
+
+static int generate_pkcs12(gnutls_x509_privkey_t privkey_x509, gnutls_x509_crt_t crt, gnutls_pkcs12_t pkcs12, const char * password) {
+  int res, bag_index, ret = G_ERROR;
+  gnutls_pkcs12_bag_t bag, key_bag;
+  unsigned char key_id_dat[1024];
+  size_t key_id_dat_size = 1024;
+  gnutls_datum_t key_id = {NULL, 0}, cert_dat = {NULL, 0}, key_dat = {NULL, 0};
+
+  do {
+    if ((res = gnutls_x509_privkey_get_key_id(privkey_x509, 0, key_id_dat, &key_id_dat_size)) < 0) {
+      fprintf(stderr, "error gnutls_x509_privkey_get_key_id: %d\n", res);
+      break;
+    }
+    
+    key_id.data = key_id_dat;
+    key_id.size = key_id_dat_size;
+
+    if ((res = gnutls_pkcs12_bag_init(&bag)) < 0) {
+      fprintf(stderr, "error gnutls_pkcs12_bag_init: %d\n", res);
+      break;
+    }
+      
+    if ((res = gnutls_pkcs12_bag_init(&key_bag)) < 0) {
+      fprintf(stderr, "error gnutls_pkcs12_bag_init: %d\n", res);
+      break;
+    }
+    
+    if ((res = gnutls_x509_crt_export2(crt, GNUTLS_X509_FMT_DER, &cert_dat)) < 0) {
+      fprintf(stderr, "error gnutls_x509_crt_export2: %d\n", res);
+      break;
+    }
+    
+    if ((res = gnutls_x509_privkey_export2_pkcs8(privkey_x509, GNUTLS_X509_FMT_DER, password, GNUTLS_PKCS_USE_PBES2_AES_128, &key_dat)) < 0) {
+      fprintf(stderr, "error gnutls_x509_privkey_export2_pkcs8: %d\n", res);
+      break;
+    }
+
+    if ((res = gnutls_pkcs12_bag_set_data(bag, GNUTLS_BAG_CERTIFICATE, &cert_dat)) < 0) {
+      fprintf(stderr, "error gnutls_pkcs12_bag_set_data: %d\n", res);
+      break;
+    }
+
+    bag_index = res;
+
+    if ((res = gnutls_pkcs12_bag_set_friendly_name(bag, bag_index, G_PKCS12_FRIENDLY_NAME)) < 0) {
+      fprintf(stderr, "error gnutls_pkcs12_bag_set_friendly_name: %d\n", res);
+      break;
+    }
+
+    if ((res = gnutls_pkcs12_bag_set_key_id(bag, bag_index, &key_id)) < 0) {
+      fprintf(stderr, "error gnutls_pkcs12_bag_set_key_id: %d\n", res);
+      break;
+    }
+
+    if ((res = gnutls_pkcs12_bag_encrypt(bag, password, GNUTLS_PKCS_USE_PKCS12_RC2_40)) < 0) {
+      fprintf(stderr, "error gnutls_pkcs12_bag_encrypt: %d\n", res);
+      break;
+    }
+
+    if ((res = gnutls_pkcs12_bag_set_data(key_bag, GNUTLS_BAG_PKCS8_ENCRYPTED_KEY, &key_dat)) < 0) {
+      fprintf(stderr, "error gnutls_pkcs12_bag_set_data: %d\n", res);
+      break;
+    }
+
+    bag_index = res;
+
+    if ((res = gnutls_pkcs12_bag_set_friendly_name(key_bag, bag_index, G_PKCS12_FRIENDLY_NAME)) < 0) {
+      fprintf(stderr, "error gnutls_pkcs12_bag_set_friendly_name: %d\n", res);
+      break;
+    }
+
+    if ((res = gnutls_pkcs12_bag_set_key_id(key_bag, bag_index, &key_id)) < 0) {
+      fprintf(stderr, "error gnutls_pkcs12_bag_set_key_id: %d\n", res);
+      break;
+    }
+
+    if ((res = gnutls_pkcs12_set_bag(pkcs12, bag)) < 0) {
+      fprintf(stderr, "error gnutls_pkcs12_set_bag: %d\n", res);
+      break;
+    }
+    
+    if ((res = gnutls_pkcs12_set_bag(pkcs12, key_bag)) < 0) {
+      fprintf(stderr, "error gnutls_pkcs12_set_bag: %d\n", res);
+      break;
+    }
+
+    if ((res = gnutls_pkcs12_generate_mac(pkcs12, password)) < 0) {
+      fprintf(stderr, "error gnutls_pkcs12_generate_mac: %d\n", res);
+      break;
+    }
+
+    ret = G_OK;
+  } while (0);
+
+  gnutls_pkcs12_bag_deinit(bag);
+  gnutls_pkcs12_bag_deinit(key_bag);
+  gnutls_free(cert_dat.data);
+  gnutls_free(key_dat.data);
+
+  return ret;
+}
+
+static char * get_dn_for_user(struct config_module * config, json_t * j_parameters, const char * username) {
+  char * dn = NULL, * tmp, * pattern;
+  const char * key;
+  json_t * j_user = config->glewlwyd_module_callback_get_user(config, username), * j_property;
+  
+  if (check_result_value(j_user, G_OK)) {
+    dn = o_strdup(json_string_value(json_object_get(json_object_get(j_parameters, "request-certificate"), "dn-format")));
+    json_object_foreach(json_object_get(j_user, "user"), key, j_property) {
+      if (o_strchr(dn, '{') == NULL) {
+        // If there's no more pattern to replace in DN, exit foreach
+        break;
+      }
+      if (json_is_string(j_property)) {
+        pattern = msprintf("{%s}", key);
+        tmp = str_replace(dn, pattern, json_string_value(j_property));
+        o_free(dn);
+        o_free(pattern);
+        dn = tmp;
+      }
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_dn_for_user - Error glewlwyd_module_callback_get_user");
+  }
+  json_decref(j_user);
+  return dn;
+}
+
+static int generate_key_cert(struct config_module * config, json_t * j_parameters, const char * username, gnutls_x509_privkey_t privkey_x509, gnutls_privkey_t privkey, gnutls_x509_crt_t crt, time_t activation, time_t expiration) {
+  gnutls_x509_privkey_t key_issuer = NULL;
+  gnutls_x509_crt_t crt_issuer = NULL;
+  gnutls_datum_t dat;
+  const char * err = NULL;
+  int res, ret = G_ERROR;
+  json_int_t serial = get_last_serial(config);
+  char * dn = get_dn_for_user(config, j_parameters, username);
+
+  do {
+    if (dn == NULL) {
+      fprintf(stderr, "error dn\n");
+      break;
+    }
+    
+    if ((res = gnutls_x509_privkey_init(&key_issuer)) < 0) {
+      fprintf(stderr, "error gnutls_x509_privkey_init: %d\n", res);
+      break;
+    }
+    
+    if ((res = gnutls_x509_crt_init(&crt_issuer)) < 0) {
+      fprintf(stderr, "error gnutls_x509_crt_init: %d\n", res);
+      break;
+    }
+    
+    dat.data = (unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-key"), "cert-file"));
+    dat.size = json_string_length(json_object_get(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-key"), "cert-file"));
+    if ((res = gnutls_x509_privkey_import(key_issuer, &dat, GNUTLS_X509_FMT_PEM)) < 0) {
+      fprintf(stderr, "error gnutls_x509_privkey_import: %d\n", res);
+      break;
+    }
+
+    dat.data = (unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-cert"), "cert-file"));
+    dat.size = json_string_length(json_object_get(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-cert"), "cert-file"));
+    if ((res = gnutls_x509_crt_import(crt_issuer, &dat, GNUTLS_X509_FMT_PEM)) < 0) {
+      fprintf(stderr, "error gnutls_x509_crt_import: %d\n", res);
+      break;
+    }
+    
+    if ((res = gnutls_x509_crt_set_version(crt, 1)) < 0) {
+      fprintf(stderr, "error gnutls_x509_crt_set_version: %d\n", res);
+      break;
+    }
+
+    if ((res = gnutls_x509_privkey_generate(privkey_x509, GNUTLS_PK_RSA, gnutls_sec_param_to_pk_bits(GNUTLS_PK_RSA, GNUTLS_SEC_PARAM_MEDIUM), GNUTLS_PRIVKEY_FLAG_PROVABLE)) < 0) {
+      fprintf(stderr, "error gnutls_x509_privkey_generate: %d\n", res);
+      break;
+    }
+    
+    if ((res = gnutls_privkey_import_x509(privkey, privkey_x509, GNUTLS_PRIVKEY_IMPORT_AUTO_RELEASE)) < 0) {
+      fprintf(stderr, "error gnutls_privkey_import_x509: %d\n", res);
+      break;
+    }
+    
+    if ((res = gnutls_x509_crt_set_key(crt, privkey_x509)) < 0) {
+      fprintf(stderr, "error gnutls_x509_crt_set_key: %d\n", res);
+      break;
+    }
+    
+    if ((res = gnutls_x509_crt_set_expiration_time(crt, (time_t)expiration)) < 0) {
+      fprintf(stderr, "error gnutls_x509_crt_set_expiration_time: %d\n", res);
+      break;
+    }
+    
+    if ((res = gnutls_x509_crt_set_activation_time(crt, (time_t)activation)) < 0) {
+      fprintf(stderr, "error gnutls_x509_crt_set_activation_time: %d\n", res);
+      break;
+    }
+    
+    if ((res = gnutls_x509_crt_set_serial(crt, &serial, sizeof(serial))) < 0) {
+      fprintf(stderr, "error gnutls_x509_crt_set_serial: %d\n", res);
+      break;
+    }
+    
+    
+    if ((res = gnutls_x509_crt_set_dn(crt, dn, &err)) < 0) {
+      fprintf(stderr, "error gnutls_x509_crt_set_dn: %d\n", res);
+      break;
+    }
+    
+    if ((res = gnutls_x509_crt_sign2(crt, crt_issuer, key_issuer, GNUTLS_DIG_SHA256, 0)) < 0) {
+      fprintf(stderr, "error gnutls_x509_crt_sign2: %d\n", res);
+      break;
+    }
+    
+    ret = G_OK;
+  } while (0);
+  
+  if (key_issuer) {
+    gnutls_x509_privkey_deinit(key_issuer);
+  }
+  if (crt_issuer) {
+    gnutls_x509_crt_deinit(crt_issuer);
+  }
+  o_free(dn);
+  
+  return ret;
+}
+
+static int store_generated_certificate(struct config_module * config, json_t * j_parameters, const char * username, const char * p12_content, const char * password, time_t activation, time_t expiration, const char * host, const char * user_agent) {
+  json_t * j_query;
+  char * expiration_clause = NULL, * activation_clause = NULL;
+  int res, ret;
+  
+  if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+    expiration_clause = msprintf("FROM_UNIXTIME(%ld)", expiration);
+    activation_clause = msprintf("FROM_UNIXTIME(%ld)", activation);
+  } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+    expiration_clause = msprintf("TO_TIMESTAMP(%ld)", expiration);
+    activation_clause = msprintf("TO_TIMESTAMP(%ld)", activation);
+  } else { // HOEL_DB_TYPE_SQLITE
+    expiration_clause = msprintf("%ld", expiration);
+    activation_clause = msprintf("%ld", activation);
+  }
+  j_query = json_pack("{sss{sOsssosos{ss}s{ss}ssss}}",
+                      "table",
+                      GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_PKCS12,
+                      "values",
+                        "gsup_mod_name",
+                        json_object_get(j_parameters, "mod_name"),
+                        "gsup_username",
+                        username,
+                        "gsup_pkcs12_content",
+                        p12_content!=NULL?json_string(p12_content):json_null(),
+                        "gsup_pkcs12_password",
+                        password!=NULL?json_string(password):json_null(),
+                        "gsup_activation",
+                          "raw",
+                          activation_clause,
+                        "gsup_expiration",
+                          "raw",
+                          expiration_clause,
+                        "gsup_host",
+                        host,
+                        "gsup_user_agent",
+                        user_agent!=NULL?user_agent:"");
+  o_free(expiration_clause);
+  o_free(activation_clause);
+  res = h_insert(config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    ret = G_OK;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "store_generated_certificate - Error executing j_query");
+    ret = G_ERROR_DB;
+  }
+  return ret;
+}
+
+static json_t * generate_new_certificate(struct config_module * config, json_t * j_parameters, const char * username, const char * user_agent, time_t activation, time_t expiration) {
+  int res, ret = G_OK;
+  gnutls_privkey_t privkey = NULL;
+  gnutls_x509_privkey_t privkey_x509 = NULL;
+  gnutls_x509_crt_t crt = NULL;
+  gnutls_pkcs12_t pkcs12 = NULL;
+  gnutls_datum_t export_p12 = {NULL, 0}, export_cert = {NULL, 0};
+  char password[G_PKCS12_PASSWORD_LENGTH+1] = {};
+  json_t * j_return;
+  unsigned char * pkcs12_encoded = NULL;
+  size_t pkcs12_encoded_len = 0;
+  
+  rand_string(password, G_PKCS12_PASSWORD_LENGTH);
+  
+  if ((res = gnutls_x509_privkey_init(&privkey_x509)) < 0) {
+    fprintf(stderr, "error gnutls_x509_privkey_init: %d\n", res);
+    ret = G_ERROR;
+  }
+
+  if ((res = gnutls_privkey_init(&privkey)) < 0) {
+    fprintf(stderr, "error gnutls_privkey_init: %d\n", res);
+    ret = G_ERROR;
+  }
+
+  if (ret == G_OK && (res = gnutls_x509_crt_init(&crt)) < 0) {
+    fprintf(stderr, "error gnutls_x509_crt_init: %d\n", res);
+    ret = G_ERROR;
+  }
+  
+  if (ret == G_OK && (res = gnutls_pkcs12_init(&pkcs12)) < 0) {
+    fprintf(stderr, "error gnutls_pkcs12_init: %d\n", res);
+    ret = G_ERROR;
+  }
+  
+  if (ret == G_OK && (ret = generate_key_cert(config, j_parameters, username, privkey_x509, privkey, crt, activation, expiration)) != G_OK) {
+    fprintf(stderr, "error generate_key_cert\n");
+    ret = G_ERROR;
+  }
+  
+  if (ret == G_OK && (ret = generate_pkcs12(privkey_x509, crt, pkcs12, password)) != G_OK) {
+    fprintf(stderr, "error generate_pkcs12\n");
+    ret = G_ERROR;
+  }
+  
+  if (ret == G_OK) {
+    if ((res = gnutls_x509_crt_export2(crt, GNUTLS_X509_FMT_PEM, &export_cert)) >= 0) {
+      if (add_user_certificate_scheme_storage(config, j_parameters, (const char *)export_cert.data, username, user_agent) == G_OK) {
+        if ((res = gnutls_pkcs12_export2(pkcs12, GNUTLS_X509_FMT_DER, &export_p12)) >= 0) {
+          if (o_base64_encode(export_p12.data, export_p12.size, NULL, &pkcs12_encoded_len)) {
+            if ((pkcs12_encoded = o_malloc(pkcs12_encoded_len+1)) != NULL) {
+              if (o_base64_encode(export_p12.data, export_p12.size, pkcs12_encoded, &pkcs12_encoded_len)) {
+                pkcs12_encoded[pkcs12_encoded_len] = '\0';
+                j_return = json_pack("{sis{ssss}}", "result", G_OK, "certificate", "p12", pkcs12_encoded, "password", password);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_certificate - Error o_base64_encode (1)");
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
+              o_free(pkcs12_encoded);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_certificate - Error o_malloc");
+              j_return = json_pack("{si}", "result", G_ERROR);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_certificate - Error o_base64_encode (1)");
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
+          gnutls_free(export_p12.data);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_certificate - Error gnutls_pkcs12_export: %s", gnutls_strerror(res));
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_certificate - Error add_user_certificate_scheme_storage");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      gnutls_free(export_cert.data);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_certificate - Error gnutls_x509_crt_export2: %s", gnutls_strerror(res));
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  
+  if (privkey != NULL) {
+    gnutls_privkey_deinit(privkey);
+  }
+  
+  if (crt != NULL) {
+    gnutls_x509_crt_deinit(crt);
+  }
+  
+  if (pkcs12 != NULL) {
+    gnutls_pkcs12_deinit(pkcs12);
+  }
+  
+  return j_return;
+}
+
+static json_t * get_stored_generated_certificate(struct config_module * config, json_t * j_parameters, const char * username) {
+  json_t * j_query, * j_result, * j_return;
+  int res;
+  char * expiration_clause;
+  time_t now;
+  
+  time(&now);
+  if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+    expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+  } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+    expiration_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+  } else { // HOEL_DB_TYPE_SQLITE
+    expiration_clause = msprintf("> %u", (now));
+  }
+  j_query = json_pack("{sss[ssss]s{sOsss{ssss}s{ssss}s{ssss}}sssi}",
+                      "table",
+                      GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_PKCS12,
+                      "columns",
+                        "gsup_pkcs12_content AS p12",
+                        "gsup_pkcs12_password AS password",
+                        SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gsup_activation) AS activation", "strftime('%s', gsup_activation) AS activation", "EXTRACT(EPOCH FROM gsup_activation)::integer AS activation"),
+                        SWITCH_DB_TYPE(config->conn->type, "UNIX_TIMESTAMP(gsup_expiration) AS expiration", "strftime('%s', gsup_expiration) AS expiration", "EXTRACT(EPOCH FROM gsup_expiration)::integer AS expiration"),
+                      "where",
+                        "gsup_mod_name",
+                        json_object_get(j_parameters, "mod_name"),
+                        "gsup_username",
+                        username,
+                        "gsup_expiration",
+                          "operator",
+                          "raw",
+                          "value",
+                          expiration_clause,
+                        "gsup_pkcs12_content",
+                          "operator",
+                          "raw",
+                          "value",
+                          "IS NOT NULL",
+                        "gsup_pkcs12_password",
+                          "operator",
+                          "raw",
+                          "value",
+                          "IS NOT NULL",
+                      "order_by",
+                      "gsup_expiration DESC",
+                      "limit",
+                      1);
+  o_free(expiration_clause);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result)) {
+      j_return = json_pack("{sisO}", "result", G_OK, "certificate", json_array_get(j_result, 0));
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_stored_generated_certificate - Error executing j_query");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  return j_return;
+}
+
+static json_t * get_generated_certificate(struct config_module * config, json_t * j_parameters, const char * username, const char * ip_source, const char * user_agent) {
+  json_t * j_return = NULL, * j_certificate, * j_new_cetificate;
+  time_t activation, expiration;
+  
+  if (json_object_get(json_object_get(j_parameters, "request-certificate"), "allow-multiple") == json_true()) {
+    time(&activation);
+    expiration = activation + json_integer_value(json_object_get(json_object_get(j_parameters, "request-certificate"), "expiration"));
+    j_certificate = generate_new_certificate(config, j_parameters, username, user_agent, activation, expiration);
+    if (check_result_value(j_certificate, G_OK)) {
+      if (store_generated_certificate(config, j_parameters, username, NULL, NULL, activation, expiration, ip_source, user_agent) == G_OK) {
+        j_return = json_incref(j_certificate);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_generated_certificate - Error store_generated_certificate");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_generated_certificate - Error generate_new_certificate (1)");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_certificate);
+  } else {
+    j_certificate = get_stored_generated_certificate(config, j_parameters, username);
+    if (check_result_value(j_certificate, G_OK)) {
+      j_return = json_pack("{sis{sOsO}}", "result", G_OK, "certificate", "p12", json_object_get(json_object_get(j_certificate, "certificate"), "p12"), "password", json_object_get(json_object_get(j_certificate, "certificate"), "password"));
+    } else if (check_result_value(j_certificate, G_ERROR_NOT_FOUND)) {
+      time(&activation);
+      expiration = activation + json_integer_value(json_object_get(json_object_get(j_parameters, "request-certificate"), "expiration"));
+      j_new_cetificate = generate_new_certificate(config, j_parameters, username, user_agent, activation, expiration);
+      if (check_result_value(j_new_cetificate, G_OK)) {
+        if (store_generated_certificate(config, j_parameters, username, json_string_value(json_object_get(json_object_get(j_new_cetificate, "certificate"), "p12")), json_string_value(json_object_get(json_object_get(j_new_cetificate, "certificate"), "password")), activation, expiration, ip_source, user_agent) == G_OK) {
+          j_return = json_incref(j_new_cetificate);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_generated_certificate - Error store_generated_certificate");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_generated_certificate - Error generate_new_certificate (2)");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      json_decref(j_new_cetificate);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_generated_certificate - Error get_stored_generated_certificate");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_certificate);
+  }
+  return j_return;
+}
 
 static int get_certificate_id(gnutls_x509_crt_t cert, unsigned char * cert_id, size_t * cert_id_len) {
   int ret;
@@ -366,7 +892,7 @@ static json_t * get_user_certificate_list_user_property(struct config_module * c
 static json_t * get_user_certificate_from_id_scheme_storage(struct config_module * config, json_t * j_parameters, const char * username, const char * cert_id) {
   json_t * j_query, * j_result, * j_return;
   int res;
-  
+
   j_query = json_pack("{sss[ssssssss]s{sOssss}}",
                       "table",
                       GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_CERTIFICATE,
@@ -858,6 +1384,25 @@ static json_t * is_certificate_parameters_valid(json_t * j_parameters) {
           }
         }
       }
+      if (json_object_get(j_parameters, "request-certificate") != NULL && !json_is_object(json_object_get(j_parameters, "request-certificate"))) {
+        json_array_append_new(j_array, json_string("request-certificate is optional and must be a JSON object"));
+      } else if (json_object_get(j_parameters, "request-certificate") != NULL) {
+        if (!json_is_object(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-cert")) || !json_string_length(json_object_get(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-cert"), "file-name")) || !json_string_length(json_object_get(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-cert"), "cert-file"))) {
+          json_array_append_new(j_array, json_string("request-certificate.issuer-cert is mandatory and must be a JSON object with the format {file-name: '', cert-file: ''} with non empty string values"));
+        }
+        if (!json_is_object(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-key")) || !json_string_length(json_object_get(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-key"), "file-name")) || !json_string_length(json_object_get(json_object_get(json_object_get(j_parameters, "request-certificate"), "issuer-key"), "cert-file"))) {
+          json_array_append_new(j_array, json_string("request-certificate.issuer-key is mandatory and must be a JSON object with the format {file-name: '', cert-file: ''} with non empty string values"));
+        }
+        if (json_integer_value(json_object_get(json_object_get(j_parameters, "request-certificate"), "expiration")) <= 0) {
+          json_array_append_new(j_array, json_string("request-certificate.expiration is mandatory and must be a positive integer"));
+        }
+        if (!json_string_length(json_object_get(json_object_get(j_parameters, "request-certificate"), "dn-format"))) {
+          json_array_append_new(j_array, json_string("request-certificate.dn-format is mandatory and must be a non empty string"));
+        }
+        if (json_object_get(json_object_get(j_parameters, "request-certificate"), "allow-multiple") != NULL && !json_is_boolean(json_object_get(json_object_get(j_parameters, "request-certificate"), "allow-multiple"))) {
+          json_array_append_new(j_array, json_string("request-certificate.allow-multiple is optional and must be a boolean, default false"));
+        }
+      }
     } else {
       json_array_append_new(j_array, json_string("certificate parameters must be a JSON object"));
     }
@@ -970,25 +1515,36 @@ int user_auth_scheme_module_unload(struct config_module * config) {
 json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls) {
   UNUSED(config);
   UNUSED(mod_name);
+  pthread_mutexattr_t mutexattr;
   json_t * j_result = is_certificate_parameters_valid(j_parameters), * j_return;
   
   if (check_result_value(j_result, G_OK)) {
     json_object_set_new(j_parameters, "mod_name", json_string(mod_name));
     if ((*cls = o_malloc(sizeof(struct _cert_param))) != NULL) {
-      ((struct _cert_param *)*cls)->cert_source = 0;
-      ((struct _cert_param *)*cls)->cert_array_len = 0;
-      ((struct _cert_param *)*cls)->cert_array = NULL;
-      if (json_object_get(j_parameters, "cert-source") == NULL || 0 == o_strcmp("TLS", json_string_value(json_object_get(j_parameters, "cert-source")))) {
-        ((struct _cert_param *)*cls)->cert_source = CERT_SOURCE_TLS;
-      } else if (0 == o_strcmp("header", json_string_value(json_object_get(j_parameters, "cert-source")))) {
-        ((struct _cert_param *)*cls)->cert_source = CERT_SOURCE_HEADER;
+      pthread_mutexattr_init ( &mutexattr );
+      pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
+      if (!pthread_mutex_init(&((struct _cert_param *)*cls)->cert_request_lock, &mutexattr)) {
+        ((struct _cert_param *)*cls)->cert_source = 0;
+        ((struct _cert_param *)*cls)->cert_array_len = 0;
+        ((struct _cert_param *)*cls)->cert_array = NULL;
+        if (json_object_get(j_parameters, "cert-source") == NULL || 0 == o_strcmp("TLS", json_string_value(json_object_get(j_parameters, "cert-source")))) {
+          ((struct _cert_param *)*cls)->cert_source = G_CERT_SOURCE_TLS;
+        } else if (0 == o_strcmp("header", json_string_value(json_object_get(j_parameters, "cert-source")))) {
+          ((struct _cert_param *)*cls)->cert_source = G_CERT_SOURCE_HEADER;
+        } else {
+          ((struct _cert_param *)*cls)->cert_source = G_CERT_SOURCE_TLS|G_CERT_SOURCE_HEADER;
+        }
+        if (parse_ca_chain(json_object_get(j_parameters, "ca-chain"), &(((struct _cert_param *)*cls)->cert_array), &(((struct _cert_param *)*cls)->cert_array_len)) == G_OK) {
+          ((struct _cert_param *)*cls)->j_parameters = json_incref(j_parameters);
+          j_return = json_pack("{si}", "result", G_OK);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init certificate - Error parse_ca_chain");
+          o_free(*cls);
+          *cls = NULL;
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
       } else {
-        ((struct _cert_param *)*cls)->cert_source = CERT_SOURCE_TLS|CERT_SOURCE_HEADER;
-      }
-      if (parse_ca_chain(json_object_get(j_parameters, "ca-chain"), &(((struct _cert_param *)*cls)->cert_array), &(((struct _cert_param *)*cls)->cert_array_len)) == G_OK) {
-        ((struct _cert_param *)*cls)->j_parameters = json_incref(j_parameters);
-        j_return = json_pack("{si}", "result", G_OK);
-      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init certificate - Error pthread_mutex_init");
         o_free(*cls);
         *cls = NULL;
         j_return = json_pack("{si}", "result", G_ERROR);
@@ -1026,6 +1582,7 @@ int user_auth_scheme_module_close(struct config_module * config, void * cls) {
   UNUSED(config);
   size_t i;
   
+  pthread_mutex_destroy(&((struct _cert_param *)cls)->cert_request_lock);
   json_decref(((struct _cert_param *)cls)->j_parameters);
   for (i=0; i<((struct _cert_param *)cls)->cert_array_len; i++) {
     o_free(((struct _cert_param *)cls)->cert_array[i]->dn);
@@ -1107,9 +1664,9 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
   if (0 == o_strcmp("test-certificate", json_string_value(json_object_get(j_scheme_data, "register")))) {
     ret = user_auth_scheme_module_validate(config, http_request, username, NULL, cls);
     if (ret == G_OK) {
-      if ((((struct _cert_param *)cls)->cert_source & CERT_SOURCE_TLS) && http_request->client_cert != NULL) {
+      if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_TLS) && http_request->client_cert != NULL) {
         cert = http_request->client_cert;
-      } else if ((((struct _cert_param *)cls)->cert_source & CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL) {
+      } else if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL) {
         if (!gnutls_x509_crt_init(&cert)) {
           clean_cert = 1;
           cert_dat.data = (unsigned char *)header_cert;
@@ -1161,7 +1718,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     }
   } else if (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage") == json_true()) {
     if (0 == o_strcmp("upload-certificate", json_string_value(json_object_get(j_scheme_data, "register")))) {
-      if ((ret = add_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, json_string_value(json_object_get(j_scheme_data, "x509")), username, NULL)) == G_OK) {
+      if ((ret = add_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, json_string_value(json_object_get(j_scheme_data, "x509")), username, u_map_get_case(http_request->map_header, "user-agent"))) == G_OK) {
         j_return = json_pack("{si}", "result", G_OK);
       } else if (ret == G_ERROR_PARAM) {
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -1170,9 +1727,9 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         j_return = json_pack("{si}", "result", G_ERROR);
       }
     } else if (0 == o_strcmp("use-certificate", json_string_value(json_object_get(j_scheme_data, "register")))) {
-      if ((((struct _cert_param *)cls)->cert_source & CERT_SOURCE_TLS) && http_request->client_cert != NULL) {
+      if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_TLS) && http_request->client_cert != NULL) {
         if ((x509_data = ulfius_export_client_certificate_pem(http_request)) != NULL) {
-          if ((ret = add_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, x509_data, username, NULL)) == G_OK) {
+          if ((ret = add_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, x509_data, username, u_map_get_case(http_request->map_header, "user-agent"))) == G_OK) {
             j_return = json_pack("{si}", "result", G_OK);
           } else if (ret == G_ERROR_PARAM) {
             j_return = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -1185,8 +1742,8 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
           y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register certificate - Error ulfius_export_client_certificate_pem");
           j_return = json_pack("{si}", "result", G_ERROR);
         }
-      } else if ((((struct _cert_param *)cls)->cert_source & CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL) {
-        if ((ret = add_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, header_cert, username, NULL)) == G_OK) {
+      } else if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL) {
+        if ((ret = add_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, header_cert, username, u_map_get_case(http_request->map_header, "user-agent"))) == G_OK) {
           j_return = json_pack("{si}", "result", G_OK);
         } else if (ret == G_ERROR_PARAM) {
           j_return = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -1198,6 +1755,15 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_register certificate - No certificate");
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
       }
+    } else if (0 == o_strcmp("request-certificate", json_string_value(json_object_get(j_scheme_data, "register"))) && json_object_get(((struct _cert_param *)cls)->j_parameters, "request-certificate") != NULL) {
+      j_result = get_generated_certificate(config, ((struct _cert_param *)cls)->j_parameters, username, get_ip_source(http_request), u_map_get_case(http_request->map_header, "user-agent"));
+      if (check_result_value(j_result, G_OK)) {
+        j_return = json_pack("{sis{sOsO}}", "result", G_OK, "response", "p12", json_object_get(json_object_get(j_result, "certificate"), "p12"), "password", json_object_get(json_object_get(j_result, "certificate"), "password"));
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register certificate - Error get_generated_certificate");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      json_decref(j_result);
     } else if (0 == o_strcmp("toggle-certificate", json_string_value(json_object_get(j_scheme_data, "register")))) {
       if (json_string_length(json_object_get(j_scheme_data, "certificate_id"))) {
         j_result = get_user_certificate_from_id_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "certificate_id")));
@@ -1356,9 +1922,9 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
   gnutls_datum_t cert_dat;
 
   // Get or parse certificate
-  if ((((struct _cert_param *)cls)->cert_source & CERT_SOURCE_TLS) && http_request->client_cert != NULL) {
+  if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_TLS) && http_request->client_cert != NULL) {
     cert = http_request->client_cert;
-  } else if ((((struct _cert_param *)cls)->cert_source & CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL) {
+  } else if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL) {
     if (!gnutls_x509_crt_init(&cert)) {
       clean_cert = 1;
       cert_dat.data = (unsigned char *)header_cert;
