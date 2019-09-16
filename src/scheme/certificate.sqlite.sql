@@ -22,6 +22,7 @@ CREATE TABLE gs_user_pkcs12 (
   gsup_id INTEGER PRIMARY KEY AUTOINCREMENT,
   gsup_mod_name TEXT NOT NULL,
   gsup_username TEXT NOT NULL,
+  gsup_x509_certificate_content TEXT DEFAULT NULL,
   gsup_pkcs12_content TEXT DEFAULT NULL,
   gsup_pkcs12_password TEXT DEFAULT NULL,
   gsup_activation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

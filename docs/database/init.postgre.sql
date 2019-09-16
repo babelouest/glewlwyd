@@ -43,6 +43,7 @@ DROP TABLE IF EXISTS gs_webauthn_credential;
 DROP TABLE IF EXISTS gs_webauthn_user;
 DROP TABLE IF EXISTS gs_otp;
 DROP TABLE IF EXISTS gs_user_certificate;
+DROP TABLE IF EXISTS gs_user_pkcs12;
 
 CREATE TABLE g_user_module_instance (
   gumi_id SERIAL PRIMARY KEY,
@@ -465,6 +466,20 @@ CREATE TABLE gs_user_certificate (
 );
 CREATE INDEX i_gsuc_username ON gs_user_certificate(gsuc_username);
 CREATE INDEX i_gsuc_x509_certificate_id ON gs_user_certificate(gsuc_x509_certificate_id);
+
+CREATE TABLE gs_user_pkcs12 (
+  gsup_id SERIAL PRIMARY KEY,
+  gsup_mod_name VARCHAR(128) NOT NULL,
+  gsup_username VARCHAR(128) NOT NULL,
+  gsup_x509_certificate_content BLOB DEFAULT NULL,
+  gsup_pkcs12_content BLOB DEFAULT NULL,
+  gsup_pkcs12_password VARCHAR(32) DEFAULT NULL,
+  gsup_activation TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  gsup_expiration TIMESTAMPTZ DEFAULT NOW(),
+  gsup_host VARCHAR(512) DEFAULT NULL,
+  gsup_user_agent VARCHAR(512) DEFAULT NULL
+);
+CREATE INDEX i_gsup_username ON gs_user_pkcs12(gsup_username);
 
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 1, 600);
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1, 600);
