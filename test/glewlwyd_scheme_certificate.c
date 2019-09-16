@@ -1264,7 +1264,7 @@ START_TEST(test_glwd_scheme_certificate_register_request_certificate_get_registe
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
-  ck_assert_int_eq(json_array_size(j_result), 2);
+  ck_assert_int_ge(json_array_size(json_object_get(j_result, "certificate")), 2);
 
   json_decref(j_parameters);
   json_decref(j_result);
@@ -1288,7 +1288,7 @@ START_TEST(test_glwd_scheme_certificate_register_request_certificate_deregister_
   ck_assert_int_eq(resp.status, 200);
   ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
   
-  json_array_foreach(j_result, index, j_element) {
+  json_array_foreach(json_object_get(j_result, "certificate"), index, j_element) {
     j_parameters = json_pack("{sssssss{sssO}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "register", "delete-certificate", "certificate_id", json_object_get(j_element, "certificate_id"));
     ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
     json_decref(j_parameters);
@@ -1438,7 +1438,7 @@ START_TEST(test_glwd_scheme_certificate_register_request_certificate_get_registe
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
-  ck_assert_int_eq(json_array_size(j_result), 1);
+  ck_assert_int_eq(json_array_size(json_object_get(j_result, "certificate")), 1);
 
   json_decref(j_parameters);
   json_decref(j_result);
@@ -1462,7 +1462,7 @@ START_TEST(test_glwd_scheme_certificate_register_request_certificate_deregister_
   ck_assert_int_eq(resp.status, 200);
   ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
   
-  json_array_foreach(j_result, index, j_element) {
+  json_array_foreach(json_object_get(j_result, "certificate"), index, j_element) {
     j_parameters = json_pack("{sssssss{sssO}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "register", "delete-certificate", "certificate_id", json_object_get(j_element, "certificate_id"));
     ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
     json_decref(j_parameters);
