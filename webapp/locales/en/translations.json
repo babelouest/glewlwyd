@@ -621,7 +621,7 @@
     "mod-certificate-user-certificate-ca-chain-delete": "Delete",
     "mod-certificate-request-certificate-enabled": "Allow to emit PKCS#12 certificates for the clients",
     "mod-certificate-request-certificate-select-issuer-cert": "Issuer certificate X509 PEM - {{file}}",
-    "mod-certificate-request-certificate-select-issuer-key": "Issuer provate key X509 PEM - {{file}}",
+    "mod-certificate-request-certificate-select-issuer-key": "Issuer private key X509 PEM - {{file}}",
     "mod-certificate-request-certificate-expiration": "Expiration (seconds)",
     "mod-certificate-request-certificate-expiration-ph": "Ex: 31536000 (365 days)",
     "mod-certificate-request-certificate-dn": "DN format for the issued certificates",
