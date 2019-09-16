@@ -15,7 +15,9 @@ class SchemeOTP extends Component {
       profile: props.profile,
       myOtp: false,
       errorList: {},
-      otpUrl: false
+      otpUrl: false,
+      allowHotp: false,
+      allowTotp: false
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -43,19 +45,21 @@ class SchemeOTP extends Component {
     if (this.state.profile) {
       apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
       .then((res) => {
-        this.setState({myOtp: res});
+        var myOtp;
+        if (res.type === "NONE" || !res.type) {
+          myOtp = {
+            type: "NONE",
+            secret: "",
+            moving_factor: 0,
+            time_step_size: res["totp-window"]
+          };
+        } else {
+          myOtp = res;
+        }
+        this.setState({myOtp: myOtp, allowHotp: res["hotp-allow"], allowTotp: res["totp-allow"]});
       })
       .fail((err) => {
-        if (err.status === 404) {
-          this.setState({myOtp: {
-            type: "NONE",
-            secret: "", 
-            moving_factor: 0,
-            time_step_size: 30
-          }});
-        } else {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-        }
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
       })
       .always(() => {
         this.showQRCode();
@@ -179,7 +183,7 @@ class SchemeOTP extends Component {
   }
   
 	render() {
-    var jsxHOTP, jsxTOTP, secretJsx;
+    var jsxHOTP, jsxTOTP, secretJsx, jsxHotpOption, jsxTotpOption;
     secretJsx = 
       <div className="row">
         <div className="col-md-12">
@@ -191,7 +195,7 @@ class SchemeOTP extends Component {
             <div className="input-group-append">
               <button className="btn btn-outline-secondary" type="button" onClick={this.generateSecret}>{i18next.t("profile.scheme-otp-generate-secret")}</button>
             </div>
-            {!!this.state.errorList.secret?<span className="error-input">{i18next.t(this.state.errorList.secret)}</span>:""}
+            {!!this.state.errorList.secret?<span className="error-input">{this.state.errorList.secret}</span>:""}
           </div>
         </div>
       </div>
@@ -205,7 +209,7 @@ class SchemeOTP extends Component {
                 <span className="input-group-text">{i18next.t("profile.scheme-otp-moving_factor")}</span>
               </div>
               <input type="number" min="0" step="1" className={!!this.state.errorList.moving_factor?"form-control is-invalid":"form-control"} id="scheme-otp-moving_factor" onChange={(e) => this.changeParam(e, "moving_factor", 1)} value={this.state.myOtp.moving_factor} placeholder={i18next.t("profile.scheme-otp-moving_factor-ph")} />
-              {!!this.state.errorList.moving_factor?<span className="error-input">{i18next.t(this.state.errorList.moving_factor)}</span>:""}
+              {!!this.state.errorList.moving_factor?<span className="error-input">{this.state.errorList.moving_factor}</span>:""}
             </div>
           </div>
         </div>
@@ -220,11 +224,17 @@ class SchemeOTP extends Component {
                 <span className="input-group-text">{i18next.t("profile.scheme-otp-time_step_size")}</span>
               </div>
               <input type="number" min="0" step="1" className={!!this.state.errorList.time_step_size?"form-control is-invalid":"form-control"} id="scheme-otp-time_step_size" onChange={(e) => this.changeParam(e, "time_step_size", 1)} value={this.state.myOtp.time_step_size} placeholder={i18next.t("profile.scheme-otp-time_step_size-ph")} />
-              {!!this.state.errorList.time_step_size?<span className="error-input">{i18next.t(this.state.errorList.time_step_size)}</span>:""}
+              {!!this.state.errorList.time_step_size?<span className="error-input">{this.state.errorList.time_step_size}</span>:""}
             </div>
           </div>
         </div>
       </div>
+    }
+    if (this.state.allowHotp) {
+      jsxHotpOption = <a className={"dropdown-item"+(this.state.myOtp.type==="HOTP"?" active":"")} href="#" onClick={(e) => this.changeType(e, "HOTP")}>{i18next.t("profile.scheme-otp-type-HOTP")}</a>;
+    }
+    if (this.state.allowTotp) {
+      jsxTotpOption = <a className={"dropdown-item"+(this.state.myOtp.type==="TOTP"?" active":"")} href="#" onClick={(e) => this.changeType(e, "TOTP")}>{i18next.t("profile.scheme-otp-type-TOTP")}</a>;
     }
 
     return (
@@ -245,8 +255,8 @@ class SchemeOTP extends Component {
                   {i18next.t("profile.scheme-otp-type-" + this.state.myOtp.type)}
                 </button>
                 <div className="dropdown-menu" aria-labelledby="scheme-otp-type">
-                  <a className={"dropdown-item"+(this.state.myOtp.type==="TOTP"?" active":"")} href="#" onClick={(e) => this.changeType(e, "TOTP")}>{i18next.t("profile.scheme-otp-type-TOTP")}</a>
-                  <a className={"dropdown-item"+(this.state.myOtp.type==="HOTP"?" active":"")} href="#" onClick={(e) => this.changeType(e, "HOTP")}>{i18next.t("profile.scheme-otp-type-HOTP")}</a>
+                  {jsxTotpOption}
+                  {jsxHotpOption}
                   <a className={"dropdown-item"+(this.state.myOtp.type==="NONE"?" active":"")} href="#" onClick={(e) => this.changeType(e, "NONE")}>{i18next.t("profile.scheme-otp-type-NONE")}</a>
                 </div>
               </div>
