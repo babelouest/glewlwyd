@@ -22,7 +22,9 @@ class SchemeCertificate extends Component {
       fileName: false,
       activeCert: false,
       downloadCert: false,
-      showPassword: false
+      showPassword: false,
+      canAddCert: false,
+      canRequestCert: false
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -53,7 +55,9 @@ class SchemeCertificate extends Component {
       fileName: false,
       activeCert: false,
       downloadCert: false,
-      showPassword: false
+      showPassword: false,
+      canAddCert: false,
+      canRequestCert: false
     });
   }
   
@@ -61,10 +65,10 @@ class SchemeCertificate extends Component {
     if (this.state.profile) {
       return apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
       .then((res) => {
-        this.setState({certificateList: res, certFile: false, fileName: false, activeCert: false, downloadCert: false});
+        this.setState({certificateList: res.certificate, canAddCert: res["add-certificate"], certFile: false, canRequestCert: res["request-certificate"], fileName: false, activeCert: false, downloadCert: false});
       })
       .fail((err) => {
-        this.setState({certificateList: [], certFile: false, fileName: false, downloadCert: false}, () => {
+        this.setState({certificateList: [], canAddCert: false, canRequestCert: false, certFile: false, fileName: false, downloadCert: false}, () => {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         });
       });
@@ -304,12 +308,12 @@ class SchemeCertificate extends Component {
           <div className="col-md-6">
             <div className="input-group mb-3">
               <div className="input-group-prepend">
-                <button className="btn btn-outline-secondary" type="button" id="addCertificateFromFile" title={i18next.t("profile.scheme-certificate-add-from-file")} onClick={this.addCertificateFile}>
+                <button className="btn btn-outline-secondary" type="button" disabled={!this.state.canAddCert} id="addCertificateFromFile" title={i18next.t("profile.scheme-certificate-add-from-file")} onClick={this.addCertificateFile}>
                   {i18next.t("upload")}
                 </button>
               </div>
               <div className="custom-file">
-                <input type="file" className="custom-file-input" id="addCertificateFromFileInput" aria-describedby="addCertificateFromFile" onChange={(e) => this.selectCertFile(e)} />
+                <input type="file" disabled={!this.state.canAddCert} className="custom-file-input" id="addCertificateFromFileInput" aria-describedby="addCertificateFromFile" onChange={(e) => this.selectCertFile(e)} />
                 <label className="custom-file-label" htmlFor="addCertificateFromFile">
                   {this.state.fileName||i18next.t("browse")}
                 </label>
@@ -318,13 +322,13 @@ class SchemeCertificate extends Component {
           </div>
           <div className="col-md-6">
             <div className="btn-group" role="group" aria-label="current-certificate">
-              <button type="button" className="btn btn-outline-secondary" onClick={this.addCertificateFromRequest} title={i18next.t("profile.scheme-certificate-add-from-request")}>
+              <button type="button" className="btn btn-outline-secondary" disabled={!this.state.canAddCert} onClick={this.addCertificateFromRequest} title={i18next.t("profile.scheme-certificate-add-from-request")}>
                 <i className="fas fa-file-contract"></i>
               </button>
               <button type="button" className="btn btn-outline-secondary" onClick={this.testCertificate} title={i18next.t("profile.scheme-certificate-test")}>
                 <i className="fas fa-question-circle"></i>
               </button>
-              <button type="button" className="btn btn-outline-secondary" onClick={this.requestNewCertificate} title={i18next.t("profile.scheme-certificate-request-new")}>
+              <button type="button" className="btn btn-outline-secondary" disabled={!this.state.canRequestCert} onClick={this.requestNewCertificate} title={i18next.t("profile.scheme-certificate-request-new")}>
                 <i className="fas fa-external-link-alt"></i>
               </button>
               <button type="button" className="btn btn-outline-secondary" onClick={this.getRegister} title={i18next.t("profile.scheme-certificate-refresh")}>

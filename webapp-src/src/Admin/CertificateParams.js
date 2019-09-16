@@ -290,7 +290,7 @@ class CertificateParams extends Component {
               </label>
             </div>
           </div>
-          {this.state.errorList["request-certificate-issuer-cert"]?<span className="error-input">{i18next.t(this.state.errorList["request-certificate-issuer-cert"])}</span>:""}
+          {this.state.errorList["request-certificate-issuer-cert"]?<span className="error-input">{this.state.errorList["request-certificate-issuer-cert"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="alert alert-primary">
@@ -309,7 +309,7 @@ class CertificateParams extends Component {
               </label>
             </div>
           </div>
-          {this.state.errorList["request-certificate-issuer-key"]?<span className="error-input">{i18next.t(this.state.errorList["request-certificate-issuer-key"])}</span>:""}
+          {this.state.errorList["request-certificate-issuer-key"]?<span className="error-input">{this.state.errorList["request-certificate-issuer-key"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -318,7 +318,7 @@ class CertificateParams extends Component {
             </div>
             <input type="number" min="1" step="1" className={this.state.errorList["request-certificate-expiration"]?"form-control is-invalid":"form-control"} id="mod-certificate-header-name" placeholder={i18next.t("admin.mod-certificate-request-certificate-expiration-ph")} value={this.state.mod.parameters["request-certificate"]["expiration"]} onChange={(e) => this.setRequestCertificateExpiration(e)}/>
           </div>
-          {this.state.errorList["request-certificate-expiration"]?<span className="error-input">{i18next.t(this.state.errorList["request-certificate-expiration"])}</span>:""}
+          {this.state.errorList["request-certificate-expiration"]?<span className="error-input">{this.state.errorList["request-certificate-expiration"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -327,7 +327,7 @@ class CertificateParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["request-certificate-dn"]?"form-control is-invalid":"form-control"} id="mod-certificate-request-certificate-dn" placeholder={i18next.t("admin.mod-certificate-request-certificate-dn-ph")} value={this.state.mod.parameters["request-certificate"]["dn-format"]} onChange={(e) => this.setDnFormatValue(e)}/>
           </div>
-          {this.state.errorList["request-certificate-dn"]?<span className="error-input">{i18next.t(this.state.errorList["request-certificate-dn"])}</span>:""}
+          {this.state.errorList["request-certificate-dn"]?<span className="error-input">{this.state.errorList["request-certificate-dn"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -374,7 +374,7 @@ class CertificateParams extends Component {
             </div>
             <input type="text" disabled={this.state.mod.parameters["cert-source"]==="TLS"} className={this.state.errorList["header-name"]?"form-control is-invalid":"form-control"} id="mod-certificate-header-name" placeholder={i18next.t("admin.mod-certificate-header-name-ph")} value={this.state.mod.parameters["header-name"]} onChange={(e) => this.setTextValue(e, "header-name")}/>
           </div>
-          {this.state.errorList["header-name"]?<span className="error-input">{i18next.t(this.state.errorList["header-name"])}</span>:""}
+          {this.state.errorList["header-name"]?<span className="error-input">{this.state.errorList["header-name"]}</span>:""}
         </div>
         <hr/>
         <div className="form-group">
@@ -418,7 +418,7 @@ class CertificateParams extends Component {
             </div>
             <input type="text" disabled={this.state.mod.parameters["use-scheme-storage"]} className={this.state.errorList["user-certificate-property"]?"form-control is-invalid":"form-control"} id="mod-certificate-user-certificate-property" placeholder={i18next.t("admin.mod-certificate-user-certificate-property-ph")} maxLength="256" value={this.state.mod.parameters["user-certificate-property"]} onChange={(e) => this.setTextValue(e, "user-certificate-property")}/>
           </div>
-          {this.state.errorList["user-certificate-property"]?<span className="error-input">{i18next.t(this.state.errorList["user-certificate-property"])}</span>:""}
+          {this.state.errorList["user-certificate-property"]?<span className="error-input">{this.state.errorList["user-certificate-property"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">

@@ -300,7 +300,7 @@ class GlwdOauth2Params extends Component {
             </div>
             <input type="password" className={this.state.errorList["key"]?"form-control is-invalid":"form-control"} id="mod-glwd-key" onChange={(e) => this.changeParam(e, "key")} value={this.state.mod.parameters["key"]} placeholder={i18next.t("admin.mod-glwd-key-ph")} />
           </div>
-          {this.state.errorList["key"]?<span className="error-input">{i18next.t(this.state.errorList["key"])}</span>:""}
+          {this.state.errorList["key"]?<span className="error-input">{this.state.errorList["key"]}</span>:""}
         </div>;
     } else {
       keyJsx =
@@ -315,7 +315,7 @@ class GlwdOauth2Params extends Component {
             </div>
           </div>
           {this.state.mod.parameters["key"]?<div className="alert alert-primary">{this.state.mod.parameters["key"].substring(0, 40)}</div>:""}
-          {this.state.errorList["key"]?<span className="error-input">{i18next.t(this.state.errorList["key"])}</span>:""}
+          {this.state.errorList["key"]?<span className="error-input">{this.state.errorList["key"]}</span>:""}
         </div>;
       certJsx =
         <div className="form-group">
@@ -329,7 +329,7 @@ class GlwdOauth2Params extends Component {
             </div>
           </div>
           {this.state.mod.parameters["cert"]?<div className="alert alert-primary">{this.state.mod.parameters["cert"].substring(0, 40)}</div>:""}
-          {this.state.errorList["cert"]?<span className="error-input">{i18next.t(this.state.errorList["cert"])}</span>:""}
+          {this.state.errorList["cert"]?<span className="error-input">{this.state.errorList["cert"]}</span>:""}
         </div>;
     }
     this.state.config.pattern.user.forEach((pattern) => {
@@ -405,7 +405,7 @@ class GlwdOauth2Params extends Component {
               <label className="input-group-text" htmlFor={"mod-glwd-additional-parameter-user-parameter-"+parameter["user-parameter"]}>{i18next.t("admin.mod-glwd-additional-parameter-user-parameter")}</label>
             </div>
             <input type="text" className={hasUserError?"form-control is-invalid":"form-control"} id={"mod-glwd-additional-parameter-user-parameter-"+parameter["user-parameter"]} onChange={(e) => this.setAdditionalPropertyUserParameter(e, index)} value={parameter["user-parameter"]} placeholder={i18next.t("admin.mod-glwd-additional-parameter-user-parameter-ph")} />
-            {hasUserError?<span className="error-input">{i18next.t(this.state.errorList["additional-parameters"][index]["user"])}</span>:""}
+            {hasUserError?<span className="error-input">{this.state.errorList["additional-parameters"][index]["user"]}</span>:""}
           </div>
         </div>
         <div className="form-group">
@@ -415,7 +415,7 @@ class GlwdOauth2Params extends Component {
             </div>
             <input type="text" className={hasTokenError?"form-control is-invalid":"form-control"} id={"mod-glwd-additional-parameter-token-parameter-"+parameter["token-parameter"]} onChange={(e) => this.setAdditionalPropertyTokenParameter(e, index)} value={parameter["token-parameter"]} placeholder={i18next.t("admin.mod-glwd-additional-parameter-token-parameter-ph")} />
           </div>
-          {hasTokenError?<span className="error-input">{i18next.t(this.state.errorList["additional-parameters"][index]["token"])}</span>:""}
+          {hasTokenError?<span className="error-input">{this.state.errorList["additional-parameters"][index]["token"]}</span>:""}
         </div>
         <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteAdditionalProperty(e, index)} title={i18next.t("admin.mod-additional-parameter-token-delete")}>
           <i className="fas fa-trash"></i>
@@ -484,7 +484,7 @@ class GlwdOauth2Params extends Component {
                       </div>
                     </div>
                   </div>
-                  {this.state.errorList["jwt-type"]?<span className="error-input">{i18next.t(this.state.errorList["jwt-type"])}</span>:""}
+                  {this.state.errorList["jwt-type"]?<span className="error-input">{this.state.errorList["jwt-type"]}</span>:""}
                 </div>
                 <div className="form-group">
                   <div className="input-group mb-3">
@@ -502,7 +502,7 @@ class GlwdOauth2Params extends Component {
                       </div>
                     </div>
                   </div>
-                  {this.state.errorList["jwt-key-size"]?<span className="error-input">{i18next.t(this.state.errorList["jwt-key-size"])}</span>:""}
+                  {this.state.errorList["jwt-key-size"]?<span className="error-input">{this.state.errorList["jwt-key-size"]}</span>:""}
                 </div>
                 {keyJsx}
                 {certJsx}
@@ -529,7 +529,7 @@ class GlwdOauth2Params extends Component {
                     </div>
                     <input type="number" min="0" step="1" className={this.state.errorList["access-token-duration"]?"form-control is-invalid":"form-control"} id="mod-glwd-access-token-duration" onChange={(e) => this.changeNumberParam(e, "access-token-duration")} value={this.state.mod.parameters["access-token-duration"]} placeholder={i18next.t("admin.mod-glwd-access-token-duration-ph")} />
                   </div>
-                  {this.state.errorList["access-token-duration"]?<span className="error-input">{i18next.t(this.state.errorList["access-token-duration"])}</span>:""}
+                  {this.state.errorList["access-token-duration"]?<span className="error-input">{this.state.errorList["access-token-duration"]}</span>:""}
                 </div>
                 <div className="form-group">
                   <div className="input-group mb-3">
@@ -538,7 +538,7 @@ class GlwdOauth2Params extends Component {
                     </div>
                     <input type="number" min="0" step="1" className={this.state.errorList["refresh-token-duration"]?"form-control is-invalid":"form-control"} id="mod-glwd-refresh-token-duration" onChange={(e) => this.changeNumberParam(e, "refresh-token-duration")} value={this.state.mod.parameters["refresh-token-duration"]} placeholder={i18next.t("admin.mod-glwd-refresh-token-duration-ph")} />
                   </div>
-                  {this.state.errorList["refresh-token-duration"]?<span className="error-input">{i18next.t(this.state.errorList["refresh-token-duration"])}</span>:""}
+                  {this.state.errorList["refresh-token-duration"]?<span className="error-input">{this.state.errorList["refresh-token-duration"]}</span>:""}
                 </div>
                 <div className="form-group">
                   <div className="input-group mb-3">
@@ -547,7 +547,7 @@ class GlwdOauth2Params extends Component {
                     </div>
                     <input type="number" min="0" step="1" className={this.state.errorList["code-duration"]?"form-control is-invalid":"form-control"} id="mod-glwd-code-duration" onChange={(e) => this.changeNumberParam(e, "code-duration")} value={this.state.mod.parameters["code-duration"]} placeholder={i18next.t("admin.mod-glwd-code-duration-ph")} />
                   </div>
-                  {this.state.errorList["code-duration"]?<span className="error-input">{i18next.t(this.state.errorList["code-duration"])}</span>:""}
+                  {this.state.errorList["code-duration"]?<span className="error-input">{this.state.errorList["code-duration"]}</span>:""}
                 </div>
                 <div className="form-group">
                   <div className="input-group mb-3">

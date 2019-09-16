@@ -201,7 +201,7 @@ class DatabaseParams extends Component {
             <a className="dropdown-item" href="#" onClick={(e) => this.changeDbType(e, 'postgre')}>{i18next.t("admin.mod-database-type-postgre")}</a>
           </div>
         </div>
-        {this.state.errorList["connection-type"]?<span className="error-input">{i18next.t(this.state.errorList["connection-type"])}</span>:""}
+        {this.state.errorList["connection-type"]?<span className="error-input">{this.state.errorList["connection-type"]}</span>:""}
       </div>;
       if (this.state.mod.parameters["connection-type"] === "sqlite") {
         dbParams = <div className="form-group">
@@ -211,7 +211,7 @@ class DatabaseParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["sqlite-dbpath"]?"form-control is-invalid":"form-control"} id="mod-database-sqlite-dbpath" onChange={(e) => this.changeValue(e, "sqlite-dbpath")} value={this.state.mod.parameters["sqlite-dbpath"]} placeholder={i18next.t("admin.mod-database-sqlite-dbpath-ph")} />
           </div>
-          {this.state.errorList["sqlite-dbpath"]?<span className="error-input">{i18next.t(this.state.errorList["sqlite-dbpath"])}</span>:""}
+          {this.state.errorList["sqlite-dbpath"]?<span className="error-input">{this.state.errorList["sqlite-dbpath"]}</span>:""}
         </div>;
       } else if (this.state.mod.parameters["connection-type"] === "mariadb") {
         dbParams = <div><div className="form-group">
@@ -221,7 +221,7 @@ class DatabaseParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["mariadb-host"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-host" onChange={(e) => this.changeValue(e, "mariadb-host")} value={this.state.mod.parameters["mariadb-host"]} placeholder={i18next.t("admin.mod-database-mariadb-host-ph")} />
           </div>
-          {this.state.errorList["mariadb-host"]?<span className="error-input">{i18next.t(this.state.errorList["mariadb-host"])}</span>:""}
+          {this.state.errorList["mariadb-host"]?<span className="error-input">{this.state.errorList["mariadb-host"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -230,7 +230,7 @@ class DatabaseParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["mariadb-user"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-user" onChange={(e) => this.changeValue(e, "mariadb-user")} value={this.state.mod.parameters["mariadb-user"]} placeholder={i18next.t("admin.mod-database-mariadb-user-ph")} />
           </div>
-          {this.state.errorList["mariadb-user"]?<span className="error-input">{i18next.t(this.state.errorList["mariadb-user"])}</span>:""}
+          {this.state.errorList["mariadb-user"]?<span className="error-input">{this.state.errorList["mariadb-user"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -239,7 +239,7 @@ class DatabaseParams extends Component {
             </div>
             <input type="password" className={this.state.errorList["mariadb-password"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-password" onChange={(e) => this.changeValue(e, "mariadb-password")} value={this.state.mod.parameters["mariadb-password"]} placeholder={i18next.t("admin.mod-database-mariadb-password-ph")} />
           </div>
-          {this.state.errorList["mariadb-password"]?<span className="error-input">{i18next.t(this.state.errorList["mariadb-password"])}</span>:""}
+          {this.state.errorList["mariadb-password"]?<span className="error-input">{this.state.errorList["mariadb-password"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -248,7 +248,7 @@ class DatabaseParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["mariadb-dbname"]?"form-control is-invalid":"form-control"} id="mod-database-mariadb-dbname" onChange={(e) => this.changeValue(e, "mariadb-dbname")} value={this.state.mod.parameters["mariadb-dbname"]} placeholder={i18next.t("admin.mod-database-mariadb-dbname-ph")} />
           </div>
-          {this.state.errorList["mariadb-dbname"]?<span className="error-input">{i18next.t(this.state.errorList["mariadb-dbname"])}</span>:""}
+          {this.state.errorList["mariadb-dbname"]?<span className="error-input">{this.state.errorList["mariadb-dbname"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -266,7 +266,7 @@ class DatabaseParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["postgre-conninfo"]?"form-control is-invalid":"form-control"} id="mod-database-postgre-conninfo" onChange={(e) => this.changeValue(e, "postgre-conninfo")} value={this.state.mod.parameters["postgre-conninfo"]} placeholder={i18next.t("admin.mod-database-postgre-conninfo-ph")} />
           </div>
-          {this.state.errorList["postgre-conninfo"]?<span className="error-input">{i18next.t(this.state.errorList["postgre-conninfo"])}</span>:""}
+          {this.state.errorList["postgre-conninfo"]?<span className="error-input">{this.state.errorList["postgre-conninfo"]}</span>:""}
         </div>;
       }
     }
@@ -281,7 +281,7 @@ class DatabaseParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["data-format"]?"form-control is-invalid":"form-control"} id={"mod-database-data-format-name-"+property} onChange={(e) => this.changeDataFormatProperty(e, property)} value={property} placeholder={i18next.t("admin.mod-database-data-format-property-ph")} />
           </div>
-          {this.state.errorList["data-format"]?<span className="error-input">{i18next.t(this.state.errorList["data-format"])}</span>:""}
+          {this.state.errorList["data-format"]?<span className="error-input">{this.state.errorList["data-format"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">

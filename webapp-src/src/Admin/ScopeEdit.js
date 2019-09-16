@@ -229,7 +229,7 @@ class ScopeEdit extends Component {
                   </div>
                   <input type="text" className={this.state.errorList["name"]?"form-control is-invalid":"form-control"} id="scope-name" placeholder={i18next.t("admin.scope-name-ph")} maxLength="128" value={this.state.scope.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
                 </div>
-                {this.state.errorList["name"]?<span className="error-input">{i18next.t(this.state.errorList["name"])}</span>:""}
+                {this.state.errorList["name"]?<span className="error-input">{this.state.errorList["name"]}</span>:""}
               </div>
               <div className="form-group">
                 <div className="input-group mb-3">
