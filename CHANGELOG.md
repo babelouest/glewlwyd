@@ -1,5 +1,12 @@
 # Glewlwyd Changelog
 
+## 2.0.0-rc2
+
+- Allow to emit certificates for certificate scheme
+- Fix UI bugs
+- Add docker image
+- Add Fail2ban script and config
+
 ## 2.0.0-rc1
 
 - Improve documentation
