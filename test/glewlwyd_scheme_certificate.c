@@ -1198,7 +1198,7 @@ START_TEST(test_glwd_scheme_certificate_register_request_certificate_auth_succes
   ulfius_clean_response(&resp);
   ck_assert_ptr_ne(j_response, NULL);
   ck_assert_int_eq(o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_response, "p12")), json_string_length(json_object_get(j_response, "p12")), NULL, &p12_dec_len), 1);
-  p12_dec = o_malloc(p12_dec_len);
+  p12_dec = o_malloc(p12_dec_len+1);
   ck_assert_ptr_ne(p12_dec, NULL);
   ck_assert_int_eq(o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_response, "p12")), json_string_length(json_object_get(j_response, "p12")), p12_dec, &p12_dec_len), 1);
   ck_assert_int_ge(gnutls_pkcs12_init(&pkcs12), 0);
@@ -1372,7 +1372,7 @@ START_TEST(test_glwd_scheme_certificate_register_request_certificate_auth_succes
   ulfius_clean_response(&resp);
   ck_assert_ptr_ne(j_response, NULL);
   ck_assert_int_eq(o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_response, "p12")), json_string_length(json_object_get(j_response, "p12")), NULL, &p12_dec_len), 1);
-  p12_dec = o_malloc(p12_dec_len);
+  p12_dec = o_malloc(p12_dec_len+1);
   ck_assert_ptr_ne(p12_dec, NULL);
   ck_assert_int_eq(o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_response, "p12")), json_string_length(json_object_get(j_response, "p12")), p12_dec, &p12_dec_len), 1);
   ck_assert_int_ge(gnutls_pkcs12_init(&pkcs12), 0);
