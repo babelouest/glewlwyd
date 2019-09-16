@@ -124,7 +124,7 @@ class HTTPParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["url"]?"form-control is-invalid":"form-control"} id="mod-http-url" onChange={(e) => this.changeParam(e, "url")} value={this.state.mod.parameters["url"]||""} placeholder={i18next.t("admin.mod-http-url-ph")} />
           </div>
-          {this.state.errorList["url"]?<span className="error-input">{i18next.t(this.state.errorList["url"])}</span>:""}
+          {this.state.errorList["url"]?<span className="error-input">{this.state.errorList["url"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -143,7 +143,7 @@ class HTTPParams extends Component {
             </div>
             {scopeJsx}
           </div>
-          {this.state.errorList["default-scope"]?<span className="error-input">{i18next.t(this.state.errorList["default-scope"])}</span>:""}
+          {this.state.errorList["default-scope"]?<span className="error-input">{this.state.errorList["default-scope"]}</span>:""}
         </div>
       </div>
     );

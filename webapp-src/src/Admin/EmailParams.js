@@ -139,7 +139,7 @@ class EmailParams extends Component {
             </div>
             <input type="number" min="0" max="65536" step="1" className={this.state.errorList["code-length"]?"form-control is-invalid":"form-control"} id="mod-email-code-length" onChange={(e) => this.changeParam(e, "code-length")} value={this.state.mod.parameters["code-length"]} placeholder={i18next.t("admin.mod-email-code-length-ph")} />
           </div>
-          {this.state.errorList["code-length"]?<span className="error-input">{i18next.t(this.state.errorList["code-length"])}</span>:""}
+          {this.state.errorList["code-length"]?<span className="error-input">{this.state.errorList["code-length"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -148,7 +148,7 @@ class EmailParams extends Component {
             </div>
             <input type="number" min="0" max="65536" step="1" className={this.state.errorList["code-duration"]?"form-control is-invalid":"form-control"} id="mod-email-code-duration" onChange={(e) => this.changeParam(e, "code-duration")} value={this.state.mod.parameters["code-duration"]} placeholder={i18next.t("admin.mod-email-code-duration-ph")} />
           </div>
-          {this.state.errorList["code-duration"]?<span className="error-input">{i18next.t(this.state.errorList["code-duration"])}</span>:""}
+          {this.state.errorList["code-duration"]?<span className="error-input">{this.state.errorList["code-duration"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -157,7 +157,7 @@ class EmailParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["host"]?"form-control is-invalid":"form-control"} id="mod-email-host" onChange={(e) => this.changeParam(e, "host")} value={this.state.mod.parameters["host"]} placeholder={i18next.t("admin.mod-email-host-ph")} />
           </div>
-          {this.state.errorList["host"]?<span className="error-input">{i18next.t(this.state.errorList["host"])}</span>:""}
+          {this.state.errorList["host"]?<span className="error-input">{this.state.errorList["host"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -166,7 +166,7 @@ class EmailParams extends Component {
             </div>
             <input type="number" min="0" max="65536" step="1" className={this.state.errorList["port"]?"form-control is-invalid":"form-control"} id="mod-email-port" onChange={(e) => this.changeParam(e, "port", true)} value={this.state.mod.parameters["port"]} placeholder={i18next.t("admin.mod-email-port-ph")} />
           </div>
-          {this.state.errorList["port"]?<span className="error-input">{i18next.t(this.state.errorList["port"])}</span>:""}
+          {this.state.errorList["port"]?<span className="error-input">{this.state.errorList["port"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -195,7 +195,7 @@ class EmailParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["user"]?"form-control is-invalid":"form-control"} id="mod-email-user" onChange={(e) => this.changeParam(e, "user")} value={this.state.mod.parameters["user"]} placeholder={i18next.t("admin.mod-email-user-ph")} />
           </div>
-          {this.state.errorList["user"]?<span className="error-input">{i18next.t(this.state.errorList["user"])}</span>:""}
+          {this.state.errorList["user"]?<span className="error-input">{this.state.errorList["user"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -204,7 +204,7 @@ class EmailParams extends Component {
             </div>
             <input type="password" className={this.state.errorList["password"]?"form-control is-invalid":"form-control"} id="mod-email-password" onChange={(e) => this.changeParam(e, "password")} value={this.state.mod.parameters["password"]} placeholder={i18next.t("admin.mod-email-password-ph")} />
           </div>
-          {this.state.errorList["password"]?<span className="error-input">{i18next.t(this.state.errorList["password"])}</span>:""}
+          {this.state.errorList["password"]?<span className="error-input">{this.state.errorList["password"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -213,7 +213,7 @@ class EmailParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["from"]?"form-control is-invalid":"form-control"} id="mod-email-from" onChange={(e) => this.changeParam(e, "from")} value={this.state.mod.parameters["from"]} placeholder={i18next.t("admin.mod-email-from-ph")} />
           </div>
-          {this.state.errorList["from"]?<span className="error-input">{i18next.t(this.state.errorList["from"])}</span>:""}
+          {this.state.errorList["from"]?<span className="error-input">{this.state.errorList["from"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -222,7 +222,7 @@ class EmailParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["subject"]?"form-control is-invalid":"form-control"} id="mod-email-subject" onChange={(e) => this.changeParam(e, "subject")} value={this.state.mod.parameters["subject"]||""} placeholder={i18next.t("admin.mod-email-subject-ph")} />
           </div>
-          {this.state.errorList["subject"]?<span className="error-input">{i18next.t(this.state.errorList["subject"])}</span>:""}
+          {this.state.errorList["subject"]?<span className="error-input">{this.state.errorList["subject"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -231,7 +231,7 @@ class EmailParams extends Component {
             </div>
             <textarea className={this.state.errorList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-email-body-pattern" onChange={(e) => this.changeParam(e, "body-pattern")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} defaultValue={this.state.mod.parameters["body-pattern"]||""}></textarea>
           </div>
-          {this.state.errorList["body-pattern"]?<span className="error-input">{i18next.t(this.state.errorList["body-pattern"])}</span>:""}
+          {this.state.errorList["body-pattern"]?<span className="error-input">{this.state.errorList["body-pattern"]}</span>:""}
         </div>
       </div>
     );

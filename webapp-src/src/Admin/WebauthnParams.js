@@ -224,22 +224,22 @@ class WebauthnParams extends Component {
         <div className="form-group">
           <label htmlFor="mod-webauthn-challenge-length">{i18next.t("admin.mod-webauthn-challenge-length")}</label>
           <input type="number" min="0" step="1" className={this.state.errorList["challenge-length"]?"form-control is-invalid":"form-control"} id="mod-webauthn-challenge-length" onChange={(e) => this.changeParam(e, "challenge-length")} value={this.state.mod.parameters["challenge-length"]} placeholder={i18next.t("admin.mod-webauthn-challenge-length-ph")} />
-          {this.state.errorList["challenge-length"]?<span className="error-input">{i18next.t(this.state.errorList["challenge-length"])}</span>:""}
+          {this.state.errorList["challenge-length"]?<span className="error-input">{this.state.errorList["challenge-length"]}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-webauthn-credential-expiration">{i18next.t("admin.mod-webauthn-credential-expiration")}</label>
           <input type="number" min="0" step="1" className={this.state.errorList["credential-expiration"]?"form-control is-invalid":"form-control"} id="mod-webauthn-credential-expiration" onChange={(e) => this.changeParam(e, "credential-expiration", true)} value={this.state.mod.parameters["credential-expiration"]} placeholder={i18next.t("admin.mod-webauthn-credential-expiration-ph")} />
-          {this.state.errorList["credential-expiration"]?<span className="error-input">{i18next.t(this.state.errorList["credential-expiration"])}</span>:""}
+          {this.state.errorList["credential-expiration"]?<span className="error-input">{this.state.errorList["credential-expiration"]}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-webauthn-credential-assertion">{i18next.t("admin.mod-webauthn-credential-assertion")}</label>
           <input type="number" min="0" step="1" className={this.state.errorList["credential-assertion"]?"form-control is-invalid":"form-control"} id="mod-webauthn-credential-assertion" onChange={(e) => this.changeParam(e, "credential-assertion", true)} value={this.state.mod.parameters["credential-assertion"]} placeholder={i18next.t("admin.mod-webauthn-credential-assertion-ph")} />
-          {this.state.errorList["credential-assertion"]?<span className="error-input">{i18next.t(this.state.errorList["credential-assertion"])}</span>:""}
+          {this.state.errorList["credential-assertion"]?<span className="error-input">{this.state.errorList["credential-assertion"]}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-webauthn-rp-origin">{i18next.t("admin.mod-webauthn-rp-origin")}</label>
           <input type="text" className={this.state.errorList["rp-origin"]?"form-control is-invalid":"form-control"} id="mod-webauthn-rp-origin" onChange={(e) => this.changeParam(e, "rp-origin")} value={this.state.mod.parameters["rp-origin"]} placeholder={i18next.t("admin.mod-webauthn-rp-origin-ph")} />
-          {this.state.errorList["rp-origin"]?<span className="error-input">{i18next.t(this.state.errorList["rp-origin"])}</span>:""}
+          {this.state.errorList["rp-origin"]?<span className="error-input">{this.state.errorList["rp-origin"]}</span>:""}
         </div>
         <div className="form-group">
           <label htmlFor="mod-webauthn-pubKey-cred-params">{i18next.t("admin.mod-webauthn-pubKey-cred-params")}</label>
@@ -281,7 +281,7 @@ class WebauthnParams extends Component {
               </label>
             </li>
           </ul>
-          {this.state.errorList["pubKey-cred-params"]?<span className="error-input">{i18next.t(this.state.errorList["pubKey-cred-params"])}</span>:""}
+          {this.state.errorList["pubKey-cred-params"]?<span className="error-input">{this.state.errorList["pubKey-cred-params"]}</span>:""}
         </div>
         <hr/>
         <div className="form-group">

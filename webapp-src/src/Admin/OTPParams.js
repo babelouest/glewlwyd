@@ -172,7 +172,7 @@ class OTPParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["issuer"]?"form-control is-invalid":"form-control"} id="mod-otp-issuer" onChange={(e) => this.changeParam(e, "issuer")} value={this.state.mod.parameters["issuer"]} placeholder={i18next.t("admin.mod-otp-issuer-ph")} />
           </div>
-          {this.state.errorList["issuer"]?<span className="error-input">{i18next.t(this.state.errorList["issuer"])}</span>:""}
+          {this.state.errorList["issuer"]?<span className="error-input">{this.state.errorList["issuer"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -181,7 +181,7 @@ class OTPParams extends Component {
             </div>
             <input type="number" min="0" max="128" step="1" className={this.state.errorList["secret-minimum-size"]?"form-control is-invalid":"form-control"} id="mod-otp-secret-minimum-size" onChange={(e) => this.changeParam(e, "secret-minimum-size", 1)} value={this.state.mod.parameters["secret-minimum-size"]} placeholder={i18next.t("admin.mod-otp-secret-minimum-size-ph")} />
           </div>
-          {this.state.errorList["secret-minimum-size"]?<span className="error-input">{i18next.t(this.state.errorList["secret-minimum-size"])}</span>:""}
+          {this.state.errorList["secret-minimum-size"]?<span className="error-input">{this.state.errorList["secret-minimum-size"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -190,7 +190,7 @@ class OTPParams extends Component {
             </div>
             <input type="number" min="6" max="8" step="1" className={this.state.errorList["otp-length"]?"form-control is-invalid":"form-control"} id="mod-otp-otp-length" onChange={(e) => this.changeParam(e, "otp-length", 1)} value={this.state.mod.parameters["otp-length"]} placeholder={i18next.t("admin.mod-otp-otp-length-ph")} />
           </div>
-          {this.state.errorList["otp-length"]?<span className="error-input">{i18next.t(this.state.errorList["otp-length"])}</span>:""}
+          {this.state.errorList["otp-length"]?<span className="error-input">{this.state.errorList["otp-length"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -209,7 +209,7 @@ class OTPParams extends Component {
             </div>
             <input type="number" min="0" max="16" step="1" className={this.state.errorList["hotp-window"]?"form-control is-invalid":"form-control"} id="mod-otp-hotp-window" onChange={(e) => this.changeParam(e, "hotp-window", 1)} value={this.state.mod.parameters["hotp-window"]} placeholder={i18next.t("admin.mod-otp-hotp-window-ph")} disabled={!this.state.mod.parameters["hotp-allow"]}/>
           </div>
-          {this.state.errorList["hotp-window"]?<span className="error-input">{i18next.t(this.state.errorList["hotp-window"])}</span>:""}
+          {this.state.errorList["hotp-window"]?<span className="error-input">{this.state.errorList["hotp-window"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -228,7 +228,7 @@ class OTPParams extends Component {
             </div>
             <input type="number" min="0" max="16" step="1" className={this.state.errorList["totp-window"]?"form-control is-invalid":"form-control"} id="mod-otp-totp-window" onChange={(e) => this.changeParam(e, "totp-window", 1)} value={this.state.mod.parameters["totp-window"]} placeholder={i18next.t("admin.mod-otp-totp-window-ph")} disabled={!this.state.mod.parameters["totp-allow"]}/>
           </div>
-          {this.state.errorList["totp-window"]?<span className="error-input">{i18next.t(this.state.errorList["totp-window"])}</span>:""}
+          {this.state.errorList["totp-window"]?<span className="error-input">{this.state.errorList["totp-window"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -237,7 +237,7 @@ class OTPParams extends Component {
             </div>
             <input type="number" min="0" max="16" step="1" className={this.state.errorList["totp-start-offset"]?"form-control is-invalid":"form-control"} id="mod-otp-totp-start-offset" onChange={(e) => this.changeParam(e, "totp-window", 1)} value={this.state.mod.parameters["totp-window"]} placeholder={i18next.t("admin.mod-otp-totp-start-offset-ph")} disabled={!this.state.mod.parameters["totp-allow"]}/>
           </div>
-          {this.state.errorList["totp-start-offset"]?<span className="error-input">{i18next.t(this.state.errorList["totp-start-offset"])}</span>:""}
+          {this.state.errorList["totp-start-offset"]?<span className="error-input">{this.state.errorList["totp-start-offset"]}</span>:""}
         </div>
       </div>
     );
