@@ -650,9 +650,19 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
   if (check_result_value(j_otp, G_OK)) {
     json_object_set(json_object_get(j_otp, "otp"), "digits", json_object_get((json_t *)cls, "otp-length"));
     json_object_set(json_object_get(j_otp, "otp"), "issuer", json_object_get((json_t *)cls, "issuer"));
+    json_object_set(json_object_get(j_otp, "otp"), "hotp-allow", json_object_get((json_t *)cls, "hotp-allow")==json_false()?json_false():json_true());
+    json_object_set(json_object_get(j_otp, "otp"), "totp-allow", json_object_get((json_t *)cls, "totp-allow")==json_false()?json_false():json_true());
     j_return = json_pack("{sisO}", "result", G_OK, "response", json_object_get(j_otp, "otp"));
   } else if (check_result_value(j_otp, G_ERROR_NOT_FOUND)) {
-    j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    j_return = json_pack("{sis{sssososIsIsI}}", 
+                         "result", G_OK, 
+                         "response", 
+                           "type", "NONE", 
+                           "hotp-allow", json_object_get((json_t *)cls, "hotp-allow")==json_false()?json_false():json_true(), 
+                           "totp-allow", json_object_get((json_t *)cls, "totp-allow")==json_false()?json_false():json_true(),
+                           "hotp-window", json_integer_value(json_object_get((json_t *)cls, "hotp-window")),
+                           "totp-window", json_object_get((json_t *)cls, "totp-window")!=NULL?json_integer_value(json_object_get((json_t *)cls, "totp-window")):G_TOTP_DEFAULT_TIME_STEP_SIZE,
+                           "totp-start-offset", json_object_get((json_t *)cls, "totp-start-offset")!=NULL?json_integer_value(json_object_get((json_t *)cls, "totp-start-offset")):G_TOTP_DEFAULT_START_OFFSET);
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register_get otp - Error get_otp");
