@@ -625,7 +625,7 @@
     "mod-certificate-request-certificate-expiration": "Expiration (seconds)",
     "mod-certificate-request-certificate-expiration-ph": "Ex: 31536000 (365 days)",
     "mod-certificate-request-certificate-dn": "DN format for the issued certificates",
-    "mod-certificate-request-certificate-dn-ph": "Ex: cn={username},dc=glewlwyd,dc=org",
+    "mod-certificate-request-certificate-dn-ph": "Ex: cn={username},o=user,ou=glewlwyd",
     "mod-certificate-request-certificate-allow-multiple": "Allow multiple certificates for each user",
     "mod-certificate-request-certificate-dn-error": "The propoerty is mandatory",
     "mod-certificate-request-certificate-expiration-error": "Expiration must be non null positive integer",
