@@ -82,9 +82,42 @@ This option is available if the option `Use scheme storage` is set to `no`. This
 
 Because the internal format of the user properties is JSON, if the certificate format is set to `DER`, the certificate must be converted to base64. In fact, this option exists to use the LDAP property `userCertificate` which is stored in DER format. In that case, the property `userCertificate` must be converted in base64 in the LDAP backend configuration.
 
+### Allow to emit PKCS#12 certificates for the clients
+
+This options allows Glewlwyd to emit pair of certificate and key as PKCS#12 format that will be signed by the provided certificate. The users must then request a certificate in the profile page and inmport this certificate in their browser using the given password. Every time a certificate is generated, it will be registered in the user's certificate list.
+
+### Issuer certificate X509 PEM
+
+Issuer certificate to sign the generated certificate.
+
+### Issuer prvate key X509 PEM
+
+Issuer key to sign the generated certificates.
+
+### Expiration (seconds)
+
+Expiration in seconds of the generated certificates.
+
+### DN format for the issued certificates
+
+Pattern that will be used to generate the DN (Distinguished Name) of every generated certificates.
+
+You can use variables that will be replaced by the user's properties values. A variable must use the format `{user_property}`, and the corresponding property MUST be a single value, not an array.
+If a variable doesn't have a corresponding property in the user, it will be ignored and left as is, so make sure you use variables present in all users that will request new certificates with this option.
+
+For example, a DN format can have the following value: `cn={name},uid={username},o=user,ou=glewlwyd`.
+
+The variables `{name}` and `{username}` will be replaced by (for example) `Dave Lopper` and `user1`: `cn=Dave Lopper,uid=username,o=user,ou=glewlwyd`.
+
+### Allow multiple certificates for each user
+
+If this option is set to `No`, each time a user will request a certificate, a new PKCS#12 certificate will be generated. Otherwise, a PKCS#12 certificate will be generated at the first request, then will be reused every time the user make the request.
+
+Security warning: If this option is set to `Yes`, then the generated PKCS#12 certificate and its password will be stored unencrypted in the database to make it available at each request.
+
 ### CA Certificates
 
-This section was designed to validate the client certificate using the full chain of trust until the root CA. After completing it, I realized it's may not be helpful since the user certificate must be validated with the CA file given in Glewlwyd config file.
+This section was designed to validate the client certificate using the full chain of trust until the root CA.
 
 ### Use a CA
 
