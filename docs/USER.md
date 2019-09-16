@@ -102,6 +102,10 @@ Also, if you're currently browsing using your certificate, you can click on the 
 
 If you already have registered at least one certificate and want to test the authentication with the current certificate you're using while browsinig, you can click on the `Test current certificate` button. If the authentication is successful, the certificate used to authenticate will be highlighted in the list.
 
+#### Request a certificate to the server
+
+If this option is enabled, you can then request a valid certificate for your authentication. After clicking on the button, a PKCS#12 certificate will be available for download. You must save this file, then import it in your browser certificate list using the provided password.
+
 ## Login to Glewlwyd
 
 ![login-new-user](screenshots/login-new-user.png)
