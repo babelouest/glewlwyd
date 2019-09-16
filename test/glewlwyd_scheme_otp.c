@@ -50,6 +50,8 @@
 #define OTP_USER_TYPE_HOTP "HOTP"
 #define OTP_USER_MOVING_FACTOR 0
 
+#define OTP_USER_TYPE_NONE "NONE"
+
 struct _u_request user_req;
 struct _u_request admin_req;
 
@@ -169,18 +171,20 @@ START_TEST(test_glwd_scheme_otp_irl_get_register)
                                 "secret", OTP_USER_SECRET, 
                                 "type", OTP_USER_TYPE_HOTP, 
                                 "moving_factor", OTP_USER_MOVING_FACTOR),
-         * j_result = json_pack("{sssssi}", 
-                                "secret", OTP_USER_SECRET, 
-                                "type", OTP_USER_TYPE_HOTP, 
-                                "moving_factor", OTP_USER_MOVING_FACTOR);
-  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 404, NULL, NULL, NULL), 1);
+         * j_result = json_pack("{ss}", "type", OTP_USER_TYPE_NONE);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, j_result, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_params);
+  json_decref(j_result);
   
   j_params = json_pack("{ssssss}", 
                         "username", USERNAME, 
                         "scheme_type", MODULE_MODULE, 
                         "scheme_name", MODULE_NAME);
+  j_result = json_pack("{sssssi}", 
+                        "secret", OTP_USER_SECRET, 
+                        "type", OTP_USER_TYPE_HOTP, 
+                        "moving_factor", OTP_USER_MOVING_FACTOR);
   ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_params);
   json_decref(j_result);
@@ -191,9 +195,11 @@ START_TEST(test_glwd_scheme_otp_irl_get_register)
                         "scheme_name", MODULE_NAME, 
                         "value", 
                           "type", "NONE");
+  j_result = json_pack("{ss}", "type", OTP_USER_TYPE_NONE);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
-  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 404, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_params);
+  json_decref(j_result);
 }
 END_TEST
 
