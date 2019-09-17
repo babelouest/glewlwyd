@@ -79,6 +79,13 @@ This document is intended to describe Glewlwyd's core API endpoints. Glewlwyd's 
   - [Get list of schemes available by delegation](#get-list-of-schemes-available-by-delegation)
   - [Register an auth scheme for a profile by delegation](#register-an-auth-scheme-for-a-profile-by-delegation)
   - [Get registration on an auth scheme for a profile by delegation](#get-registration-on-an-auth-scheme-for-a-profile-by-delegation)
+- [Authentication Scheme APIs](#authentication-scheme-apis)
+  - [Mock authentication scheme](#mock-authentication-scheme)
+  - [E-mail OTP authentication scheme](#e-mail-otp-authentication-scheme)
+  - [HOTP/TOTP authentication scheme](#hotptotp-authentication-scheme)
+  - [Password authentication scheme](#password-authentication-scheme)
+  - [Webauthn authentication scheme](#webauthn-authentication-scheme)
+  - [TLS Certificate authentication scheme](#tls-certificate-authentication-scheme)
 
 ## Endpoints authentication
 
@@ -3207,3 +3214,656 @@ A JSON array with the error messages
 Code 401
 
 No enabled authenticated user for this session
+
+## Authentication Scheme APIs
+
+This chapter will describe the specific paramters for the authentication schemes.
+
+The following APIs will be further explained for each scheme:
+
+- Register scheme: `POST` `/api/profile/scheme/register/`
+- Get scheme registration: `PUT` `/api/profile/scheme/register/`
+- Trigger scheme: `POST` `/api/auth/scheme/trigger`
+- Authentication using scheme: `POST` `/api/auth`
+
+For each APIs, the request and/or response body format will be described. This documentation is an addendum to the generic API documentation above.
+
+### Mock authentication scheme
+
+This scheme exist for tests use only, it simply is an authentication scheme that will behave as a normal scheme and implements all the functions to help designing and programming Glewlwyd.
+
+#### Register scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "mock"
+  scheme_name: string: mandatory
+  value: {
+    register: boolean, mandatory
+  }
+}
+```
+
+Set the parameter `value.register` to `true` or `false` to enable or disable the scheme for the user.
+
+#### Get scheme registration
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "mock"
+  scheme_name: string: mandatory
+}
+```
+
+##### Response body format
+
+```javascript
+boolean
+```
+
+The response value will be `true` or `false` depending on the scheme registration status.
+
+#### Trigger scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "mock"
+  scheme_name: string: mandatory
+  value: {} empty object, mandatory
+}
+```
+
+##### Response body format
+
+```javascript
+{
+  code: string, will contain the mock value expected to authenticate the user
+}
+```
+
+#### Authentication using scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "mock"
+  scheme_name: string: mandatory
+  value: {
+    code: string, mandatory
+  }
+}
+```
+
+### E-mail OTP authentication scheme
+
+This authentication scheme sends an one-time password to the e-mail of the user and awaits for the user to retype the password in the login page. Therefore, no registration is possible for the user, and the get registration API will return a HTTP status 200 if the user has an e-mail address and 400 otherwise.
+
+#### Trigger scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "email"
+  scheme_name: string: mandatory
+  value: {} empty object, mandatory
+}
+```
+
+#### Authentication using scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "email"
+  scheme_name: string: mandatory
+  value: {
+    code: string, mandatory
+  }
+}
+```
+
+### HOTP/TOTP authentication scheme
+
+#### Register scheme
+
+##### Request body format
+
+Request a random secret for a new OTP to the server. The random secret will be returned in a base32 string format.
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "otp"
+  scheme_name: string: mandatory
+  value: {
+    generate-secret: true
+  }
+}
+```
+
+Delete current OTP setting for the current user
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "otp"
+  scheme_name: string: mandatory
+  value: {
+    type: "NONE"
+  }
+}
+```
+
+Setup current OTP setting as HOTP
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "otp"
+  scheme_name: string: mandatory
+  value: {
+    type: "HOTP"
+    secret: base32 string, mandatory
+    moving_factor: positive integer, optional
+  }
+}
+```
+
+Setup current OTP setting as HT
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "otp"
+  scheme_name: string: mandatory
+  value: {
+    type: "HOTP"
+    secret: base32 string, mandatory
+    time_step_size: non zero positive integer, optional
+  }
+}
+```
+
+#### Get scheme registration
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "otp"
+  scheme_name: string: mandatory
+}
+```
+
+##### Response body format
+
+```javascript
+{
+  digits: integer, number of digits required on the authentication code
+  issuer: string, will contain the issuer value (a metadata)
+  hotp-allow: boolean, set to true if the user is allowed to register a HOTP
+  totp-allow: boolean, set to true if the user is allowed to register a TOTP
+  type: string, will contain one of the following values: "NONE", "HOTP" or "TOTP"
+  secret: string, secret registered if a scheme is registered
+  moving_factor: integer
+  time_step_size: integer
+}
+```
+
+Example, for a TOTP registration:
+
+```javascript
+{
+  digits: 6,
+  issuer: "https://glewlwyd.tld",
+  hotp-allow: true,
+  totp-allow: true,
+  type: "TOTP",
+  secret: "abcd1234===",
+  moving_factor: 0
+  time_step_size: 30
+}
+```
+
+#### Trigger scheme
+
+N/A
+
+#### Authentication using scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "otp"
+  scheme_name: string: mandatory
+  value: string, mandatory
+}
+```
+
+### Password authentication scheme
+
+This authentication scheme simply uses the password field of the user - if it's possible - therefore, this scheme simply has an authentication API implemented
+
+#### Register scheme
+
+N/A
+
+#### Get scheme registration
+
+N/A
+
+#### Trigger scheme
+
+N/A
+
+#### Authentication using scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "otp"
+  scheme_name: string: mandatory
+  value: {
+    password: string, mandatory
+  }
+}
+```
+
+### Webauthn authentication scheme
+
+This scheme is based on the [Webauthn API](https://w3c.github.io/webauthn/).
+
+#### Register scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "webauthn"
+  scheme_name: string: mandatory
+  value: {
+    register: string, values available are "new-credential", "register-credential", "remove-credential", "disable-credential", "enable-credential", "edit-credential", "trigger-assertion" or "validate-assertion"
+    // Other values depending on the register value
+  }
+}
+```
+
+- Request body format for `register: "new-credential"`
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "webauthn"
+  scheme_name: string: mandatory
+  value: {
+    register: "new-credential"
+  }
+}
+```
+
+- Response body format for `register: "new-credential"`
+
+```javascript
+{
+  session: string
+  challenge: string
+  pubKey-cred-params: array of string, list of public key formats accepted
+  attestation-required: boolean, set to false if scheme accepts fmt type "none"
+  user: {
+    id: string
+    name: string
+  }
+  rpId: string, relaying part id
+}
+```
+
+- Request body format for `register: "register-credential"`
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "webauthn"
+  scheme_name: string: mandatory
+  value: {
+    register: "register-credential",
+    session: string, must be the session id sent in the previous "register-credential"
+    credential: { // The credential object is returned by the Webauthn API call `navigator.credentials.create` in the profile page
+      rawId: string
+      response: {
+        clientDataJSON: string
+        attestationObject: string
+      }
+    }
+  }
+}
+```
+
+- Response body format for `register: "register-credential"`
+
+HTTP Status 200 on success, 401 on error registration, 400 on error parameters, 404 on error in the session id, 500 otherwise
+
+- Request body format for `register: "remove-credential"`, `register: "disable-credential"`, `register: "enable-credential"`
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "webauthn"
+  scheme_name: string: mandatory
+  value: {
+    register: "remove-credential" || "disable-credential" || enable-credential",
+    credential_id: string, must a valid `credential_id` returned by the get_gegister API
+  }
+}
+```
+
+- Response body format for `register: "register-credential"`
+
+HTTP Status 200 on success, 400 on error parameters, 404 on error in the credential_id, 500 otherwise
+
+- Request body format for `register: "trigger-assertion"`
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "webauthn"
+  scheme_name: string: mandatory
+  value: {
+    register: "trigger-assertion"
+  }
+}
+```
+
+- Response body format for `register: "trigger-assertion"`
+
+```javascript
+{
+  allowCredentials: array of strings, list of credentials accepted for the user
+  session: string
+  challenge: string
+  user: {
+    id: string
+    name: string
+  }
+  rpId: string, relaying part id
+}
+```
+
+- Request body format for `register: "validate-assertion"`
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "webauthn"
+  scheme_name: string: mandatory
+  value: {
+    register: "validate-assertion",
+    session: string, must be the session id sent in the previous "register-credential"
+    credential: { // The credential object is returned by the Webauthn API call `navigator.credentials.get` in the profile page
+      rawId: string
+      response: {
+        clientDataJSON: string
+        authenticatorData: string
+      }
+    }
+  }
+}
+```
+
+- Response body format for `register: "register-credential"`
+
+HTTP Status 200 on success, 401 on error registration, 400 on error parameters, 404 on error in the session id, 500 otherwise
+
+#### Get scheme registration
+
+##### Response body format
+
+```javascript
+[
+  {
+    credential_id: string, identifier of the credential
+    name: string, display name of the credential
+    created_at: integer, UNIX epoch time where the credential was created
+    status: string, status of the credential, values available are "registered" or "disabled"
+  }
+]
+```
+
+#### Trigger scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "webauthn"
+  scheme_name: string: mandatory
+  value: {}
+}
+```
+
+##### Response body format
+
+```javascript
+{
+  allowCredentials: array of strings, list of credentials accepted for the user, can be a fake list depending on the scheme configuration and the username requested
+  session: string
+  challenge: string
+  user: {
+    id: string
+    name: string
+  }
+  rpId: string, relaying part id
+}
+```
+
+#### Authentication using scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "webauthn"
+  scheme_name: string: mandatory
+  value: {
+    register: "validate-assertion",
+    session: string, must be the session id sent in the previous "register-credential"
+    credential: { // The credential object is returned by the Webauthn API call `navigator.credentials.get` in the profile page
+      rawId: string
+      response: {
+        clientDataJSON: string
+        authenticatorData: string
+      }
+    }
+  }
+}
+```
+
+### TLS Certificate authentication scheme
+
+This authentication scheme is based on TLS certificate authentication. The first level of authentication is provided by the TLS layer deep down the application, therefore a user can't authenticate with an invalid certificate or a certificate not provided by the configured CA. The scheme module is used to integrate the auth result in Glewlwyd's authentication process with the session, and is also used to manage registered certificates and emit new certificates if possible.
+
+To successfully authenticate a user in Glewlwyd's process using the TLS certificate, the used certificate must be valid for the TLS layer AND must be previously regostered in the user's authorized certificate list.
+
+#### Register scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "certificate"
+  scheme_name: string: mandatory
+  value: {
+    register: string, values available are "test-certificate", "upload-certificate", "use-certificate", "request-certificate", "toggle-certificate" or "delete-certificate"
+    // Other values depending on the register value
+  }
+}
+```
+
+- Request body format for `register: "test-certificate"`
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "certificate"
+  scheme_name: string: mandatory
+  value: {
+    register: "test-certificate"
+  }
+}
+```
+
+- Response for `register: "test-certificate"`
+
+HTTP Status 200 on success, 401 on test error, 400 on error parameters, 500 otherwise
+
+- Request body format for `register: "upload-certificate"`
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "certificate"
+  scheme_name: string: mandatory
+  value: {
+    register: "upload-certificate"
+    x509: string, a X509 certificate in PEM format
+  }
+}
+```
+
+- Response for `register: "upload-certificate"`
+
+HTTP Status 200 on success, 400 on error parameters, 500 otherwise
+
+- Request body format for `register: "use-certificate"`
+
+This register action uses the certificate currently used in the TLS layer.
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "certificate"
+  scheme_name: string: mandatory
+  value: {
+    register: "use-certificate"
+  }
+}
+```
+
+- Response for `register: "upload-certificate"`
+
+HTTP Status 200 on success, 400 on error parameters, 500 otherwise
+
+- Request body format for `register: "request-certificate"`
+
+This register action returns a `PKCS#12` file in DER format encoded in base64 with a random generated password to unlock the provided file.
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "certificate"
+  scheme_name: string: mandatory
+  value: {
+    register: "request-certificate"
+  }
+}
+```
+
+- Response body format for `register: "request-certificate"`
+
+```javascript
+{
+  p12: string, PKCS#12 file in DER format encoded in base64
+  password: string, used to unlck the PKCS#12 file
+}
+```
+
+- Request body format for `register: "toggle-certificate"`
+
+This register action enable or disable a registered certificate
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "certificate"
+  scheme_name: string: mandatory
+  value: {
+    register: "toggle-certificate"
+    certificate_id: string, a certificate_id registered to the user, mandatory
+    enabled: boolean, set the status to enabled or disabled for the certificate
+  }
+}
+```
+
+- Request body format for `register: "delete-certificate"`
+
+This register action deletes a registered certificate
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "certificate"
+  scheme_name: string: mandatory
+  value: {
+    register: "delete-certificate"
+    certificate_id: string, a certificate_id registered to the user, mandatory
+  }
+}
+```
+
+#### Get scheme registration
+
+##### Response body format
+
+```javascript
+[
+  {
+    credential_id: string, identifier of the certificate
+    certificate_dn: DN of the certificate
+    certificate_issuer_dn: DN Of the issuer of the certificate
+    activation: integer, UNIX Epoch time where the certificate was activated
+    expiration: integer, UNIX Epoch time where the certificate will expire
+    last_used: integer, UNIX Epoch time when the certificate was last succesfully used to authenticate a user, optional
+    last_user_agent: string, value of the user-agent when the certificate was last succesfully used to authenticate a user, optional
+    enabled: boolean
+  }
+]
+```
+
+#### Trigger scheme
+
+N/A
+
+#### Authentication using scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "certificate"
+  scheme_name: string: mandatory
+  value: {}
+}
+```
