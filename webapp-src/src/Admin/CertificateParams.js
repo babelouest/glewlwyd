@@ -10,7 +10,7 @@ class CertificateParams extends Component {
     if (props.mod.parameters===undefined) props.mod.parameters = {};
     if (props.mod.parameters["cert-source"]===undefined) props.mod.parameters["cert-source"]="TLS";
     if (props.mod.parameters["header-name"]===undefined) props.mod.parameters["header-name"]="SSL_CLIENT_CERT";
-    if (props.mod.parameters["use-scheme-storage"]===undefined) props.mod.parameters["use-scheme-storage"]=false;
+    if (props.mod.parameters["use-scheme-storage"]===undefined) props.mod.parameters["use-scheme-storage"]=true;
     if (props.mod.parameters["user-certificate-property"]===undefined) props.mod.parameters["user-certificate-property"]="";
     if (props.mod.parameters["user-certificate-format"]===undefined) props.mod.parameters["user-certificate-format"]="PEM";
     if (props.mod.parameters["ca-chain"]===undefined) props.mod.parameters["ca-chain"]=[];
@@ -55,7 +55,7 @@ class CertificateParams extends Component {
     if (nextProps.mod.parameters===undefined) nextProps.mod.parameters = {};
     if (nextProps.mod.parameters["cert-source"]===undefined) nextProps.mod.parameters["cert-source"]="TLS";
     if (nextProps.mod.parameters["header-name"]===undefined) nextProps.mod.parameters["header-name"]="SSL_CLIENT_CERT";
-    if (nextProps.mod.parameters["use-scheme-storage"]===undefined) nextProps.mod.parameters["use-scheme-storage"]=false;
+    if (nextProps.mod.parameters["use-scheme-storage"]===undefined) nextProps.mod.parameters["use-scheme-storage"]=true;
     if (nextProps.mod.parameters["user-certificate-property"]===undefined) nextProps.mod.parameters["user-certificate-property"]="";
     if (nextProps.mod.parameters["user-certificate-format"]===undefined) nextProps.mod.parameters["user-certificate-format"]="PEM";
     if (nextProps.mod.parameters["ca-chain"]===undefined) nextProps.mod.parameters["ca-chain"]=[];
@@ -169,7 +169,7 @@ class CertificateParams extends Component {
         "issuer-cert": {"file-name": "", "cert-file": ""},
         "issuer-key": {"file-name": "", "cert-file": ""},
         "expiration": 60*60*24*365, // 1 year
-        "dn-format": "cn={username},dc=glewlwyd,dc=tld",
+        "dn-format": "cn={username},ou=users,o=glewlwyd",
         "allow-multiple": false
       };
     } else {
@@ -380,24 +380,6 @@ class CertificateParams extends Component {
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-certificate-request-certificate-enabled">{i18next.t("admin.mod-certificate-request-certificate-enabled")}</label>
-            </div>
-            <div className="dropdown">
-              <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-certificate-request-certificate-enabled" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                {i18next.t("admin.mod-certificate-value-"+(this.state.mod.parameters["request-certificate"]!==undefined?"yes":"no"))}
-              </button>
-              <div className="dropdown-menu" aria-labelledby="mod-certificate-request-certificate-enabled">
-                <a className={"dropdown-item"+(this.state.mod.parameters["request-certificate"]?" active":"")} href="#" onClick={(e) => this.setRequestCertificate(e, true)}>{i18next.t("admin.mod-certificate-value-yes")}</a>
-                <a className={"dropdown-item"+(!this.state.mod.parameters["request-certificate"]?" active":"")} href="#" onClick={(e) => this.setRequestCertificate(e, false)}>{i18next.t("admin.mod-certificate-value-no")}</a>
-              </div>
-            </div>
-          </div>
-        </div>
-        {requestCertificate}
-        <hr/>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-certificate-use-scheme-storage">{i18next.t("admin.mod-certificate-use-scheme-storage")}</label>
             </div>
             <div className="dropdown">
@@ -436,6 +418,25 @@ class CertificateParams extends Component {
             </div>
           </div>
         </div>
+        <hr/>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-certificate-request-certificate-enabled">{i18next.t("admin.mod-certificate-request-certificate-enabled")}</label>
+            </div>
+            <div className="dropdown">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-certificate-request-certificate-enabled" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {i18next.t("admin.mod-certificate-value-"+(this.state.mod.parameters["request-certificate"]!==undefined?"yes":"no"))}
+              </button>
+              <div className="dropdown-menu" aria-labelledby="mod-certificate-request-certificate-enabled">
+                <a className={"dropdown-item"+(this.state.mod.parameters["request-certificate"]?" active":"")} href="#" onClick={(e) => this.setRequestCertificate(e, true)}>{i18next.t("admin.mod-certificate-value-yes")}</a>
+                <a className={"dropdown-item"+(!this.state.mod.parameters["request-certificate"]?" active":"")} href="#" onClick={(e) => this.setRequestCertificate(e, false)}>{i18next.t("admin.mod-certificate-value-no")}</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        {requestCertificate}
+        <hr/>
         <div className="accordion" id="accordionParams">
           <div className="card">
             <div className="card-header" id="CAChainCard">
