@@ -11,6 +11,7 @@ Currently, the following schemes are available:
 - [HOTP/TOTP](otp.c)
 - [Webauthn](webauthn.c)
 - [Short session password](password.c)
+- [TLS Certificate](certificate.c)
 
 A Glewlwyd module requires the library [Jansson](https://github.com/akheron/Jansson).
 
