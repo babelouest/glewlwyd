@@ -780,7 +780,7 @@ static json_t * parse_certificate(const char * x509_data, int der_format) {
   return j_return;
 }
 
-static int update_user_certificate_scheme_storage(struct config_module * config, json_t * j_parameters, const char * username, const char * cert_id, int enabled) {
+static int update_user_certificate_enabled_scheme_storage(struct config_module * config, json_t * j_parameters, const char * username, const char * cert_id, int enabled) {
   json_t * j_query;
   int res, ret;
   
@@ -797,6 +797,46 @@ static int update_user_certificate_scheme_storage(struct config_module * config,
                         username,
                         "gsuc_x509_certificate_id",
                         cert_id);
+  res = h_update(config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    ret = G_OK;
+  } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "toggle_enabled_user_certificate_scheme_storage - Error executing j_query");
+    ret = G_ERROR_DB;
+  }
+  return ret;
+}
+
+static int update_user_certificate_last_used_scheme_storage(struct config_module * config, json_t * j_parameters, const char * username, const char * cert_id, const char * user_agent) {
+  json_t * j_query;
+  int res, ret;
+  char * last_used_clause;
+  
+  if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+    last_used_clause = msprintf("FROM_UNIXTIME(%u)", time(NULL));
+  } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+    last_used_clause = msprintf("TO_TIMESTAMP(%u)", time(NULL));
+  } else { // HOEL_DB_TYPE_SQLITE
+    last_used_clause = msprintf("%u", time(NULL));
+  }
+  j_query = json_pack("{sss{s{ss}ss}s{sOssss}}",
+                      "table",
+                      GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_CERTIFICATE,
+                      "set",
+                        "gsuc_last_used",
+                          "raw",
+                          last_used_clause,
+                        "gsuc_last_user_agent",
+                        user_agent!=NULL?user_agent:"",
+                      "where",
+                        "gsuc_mod_name",
+                        json_object_get(j_parameters, "mod_name"),
+                        "gsuc_username",
+                        username,
+                        "gsuc_x509_certificate_id",
+                        cert_id);
+  o_free(last_used_clause);
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -1278,10 +1318,19 @@ static int is_user_certificate_valid_scheme_storage(struct config_module * confi
 }
 
 static int is_user_certificate_valid(struct config_module * config, json_t * j_parameters, const char * username, gnutls_x509_crt_t cert) {
-  if (json_object_get(j_parameters, "use-scheme-storage") == json_true()) {
-    return is_user_certificate_valid_scheme_storage(config, j_parameters, username, cert);
+  time_t now, exp;
+
+  time(&now);
+  exp = gnutls_x509_crt_get_expiration_time(cert);
+  if (exp != (time_t)-1 && now < exp) {
+    if (json_object_get(j_parameters, "use-scheme-storage") == json_true()) {
+      return is_user_certificate_valid_scheme_storage(config, j_parameters, username, cert);
+    } else {
+      return is_user_certificate_valid_user_property(config, j_parameters, username, cert);
+    }
   } else {
-    return is_user_certificate_valid_user_property(config, j_parameters, username, cert);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "is_user_certificate_valid - Certificate expired");
+    return G_ERROR_UNAUTHORIZED;
   }
 }
 
@@ -1802,10 +1851,10 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       if (json_string_length(json_object_get(j_scheme_data, "certificate_id"))) {
         j_result = get_user_certificate_from_id_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "certificate_id")));
         if (check_result_value(j_result, G_OK)) {
-          if (update_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "certificate_id")), json_object_get(j_scheme_data, "enabled") == json_true()) == G_OK) {
+          if (update_user_certificate_enabled_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "certificate_id")), json_object_get(j_scheme_data, "enabled") == json_true()) == G_OK) {
             j_return = json_pack("{si}", "result", G_OK);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register certificate - Error update_user_certificate_scheme_storage");
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register certificate - Error update_user_certificate_enabled_scheme_storage");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
         } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
@@ -1954,6 +2003,8 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
   const char * header_cert = NULL;
   gnutls_x509_crt_t cert = NULL;
   gnutls_datum_t cert_dat;
+  unsigned char cert_id[257] = {};
+  size_t cert_id_len = 256;
 
   // Get or parse certificate
   if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_TLS) && http_request->client_cert != NULL) {
@@ -1983,6 +2034,30 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
           ret = G_ERROR;
         } else if (ret == G_ERROR_UNAUTHORIZED) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_validate certificate - is_certificate_valid_from_ca_chain unauthorized");
+        } else if (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage") == json_true()) {
+          if (get_certificate_id(cert, cert_id, &cert_id_len) == G_OK) {
+            cert_id[cert_id_len] = '\0';
+            if (update_user_certificate_last_used_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, (const char *)cert_id, u_map_get_case(http_request->map_header, "user-agent")) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate certificate - Error update_user_certificate_last_used_scheme_storage");
+              ret = G_ERROR;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate certificate - Error get_certificate_id");
+            ret = G_ERROR;
+          }
+        }
+      } else {
+        if (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage") == json_true()) {
+          if (get_certificate_id(cert, cert_id, &cert_id_len) == G_OK) {
+            cert_id[cert_id_len] = '\0';
+            if (update_user_certificate_last_used_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, (const char *)cert_id, u_map_get_case(http_request->map_header, "user-agent")) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate certificate - Error update_user_certificate_last_used_scheme_storage");
+              ret = G_ERROR;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate certificate - Error get_certificate_id");
+            ret = G_ERROR;
+          }
         }
       }
     } else if (res == G_ERROR_UNAUTHORIZED) {
