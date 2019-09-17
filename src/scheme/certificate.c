@@ -462,7 +462,7 @@ static json_t * generate_new_certificate(struct config_module * config, struct _
               if ((pkcs12_encoded = o_malloc(pkcs12_encoded_len+1)) != NULL) {
                 if (o_base64_encode(export_p12.data, export_p12.size, pkcs12_encoded, &pkcs12_encoded_len)) {
                   pkcs12_encoded[pkcs12_encoded_len] = '\0';
-                  j_return = json_pack("{sis{ssss%ss}}", "result", G_OK, "certificate", "p12", pkcs12_encoded, "x509_cert", export_cert.data, export_cert.size, "password", password);
+                  j_return = json_pack("{sis{ssss#ss}}", "result", G_OK, "certificate", "p12", pkcs12_encoded, "x509_cert", export_cert.data, export_cert.size, "password", password);
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_certificate - Error o_base64_encode (1)");
                   j_return = json_pack("{si}", "result", G_ERROR);
