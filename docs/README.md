@@ -7,7 +7,7 @@ Tis folder contains full documentation for Glewlwyd and additional resources.
 ### General
 
 - [Install Glewlwyd](INSTALL.md)
-- [Getting started](GETTING_STARTED)
+- [Getting started](GETTING_STARTED.md)
 - [Scopes](SCOPE.md)
 - [User documentation](USER.md)
 
@@ -21,6 +21,7 @@ Tis folder contains full documentation for Glewlwyd and additional resources.
 - [Install Authentication Scheme HOTP/TOTP](OTP.md)
 - [Install Authentication Scheme Webauthn](WEBAUTHN.md)
 - [Install Authentication Scheme E-mail code](EMAIL.md)
+- [Install Authentication Scheme TLS certificate](CERTIFICATE.md)
 
 ### Plugins
 
