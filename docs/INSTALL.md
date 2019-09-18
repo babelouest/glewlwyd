@@ -119,10 +119,10 @@ If there's no package available for your distribution, you can recompile it manu
 
 ### Quickstart for tests only
 
-Run the docker image `babelouest/glewlwyd_quickstart` hosted on docker cloud, example:
+Run the docker image `babelouest/glewlwyd` hosted on docker cloud, example:
 
 ```shell
-docker run --rm -it -p 4593:4593 babelouest/glewlwyd_quickstart
+docker run --rm -it -p 4593:4593 babelouest/glewlwyd
 ```
 
 This image uses a sqlite3 database hosted inside the docker instance, so all data will be lost when the docker instance will be stopped.
@@ -133,7 +133,7 @@ You can overwrite the configuration files `glewlwyd.conf` and `config.json` by m
 You can use the files [docker/config/glewlwyd.conf](docker/config/glewlwyd.conf) and [docker/config/config.json](docker/config/config.json) as a starting point to build your config files for docker.
 
 ```shell
-docker run --rm -it -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd babelouest/glewlwyd_quickstart
+docker run --rm -it -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd babelouest/glewlwyd
 ```
 
 ### Docker image builder

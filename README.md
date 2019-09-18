@@ -45,7 +45,7 @@ The full installation documentation is available in the [install documentation](
 A docker image is available for tests on localhost, run the following command:
 
 ```shell
-$ docker run --rm -it -p 4593:4593 babelouest/glewlwyd_quickstart
+$ docker run --rm -it -p 4593:4593 babelouest/glewlwyd
 ```
 
 And open the address [http://localhost:4593/](http://localhost:4593/) on your browser.
