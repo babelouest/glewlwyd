@@ -4,6 +4,8 @@ The following scripts are available:
 
 ## Initialize Glewlwyd with the default settings and all tables for all schemes and modules
 
+The initialized database will contain the user `admin` using the password `password`.
+
 - [MariaDB/MySQL initialization](init.mariadb.sql)
 - [Postgre SQL initialization](init.postgre.sql)
 - [SQlite 3 initialization](init.sqlite3.sql)
@@ -44,13 +46,19 @@ The following scripts are available:
 - [Postgre SQL initialization](../../src/scheme/webauthn.postgre.sql)
 - [SQlite 3 initialization](../../src/scheme/webauthn.sqlite3.sql)
 
+## TLS Certificate scheme only
+
+- [MariaDB/MySQL initialization](../../src/scheme/certificate.mariadb.sql)
+- [Postgre SQL initialization](../../src/scheme/certificate.postgre.sql)
+- [SQlite 3 initialization](../../src/scheme/certificate.sqlite3.sql)
+
 ## OAuth2 plugin only
 
 - [MariaDB/MySQL initialization](../../src/scheme/protocol_oauth2.mariadb.sql)
 - [Postgre SQL initialization](../../src/scheme/protocol_oauth2.postgre.sql)
 - [SQlite 3 initialization](../../src/scheme/protocol_oauth2.sqlite3.sql)
 
-## OpenID COnnect plugin only
+## OpenID Connect plugin only
 
 - [MariaDB/MySQL initialization](../../src/scheme/protocol_oidc.mariadb.sql)
 - [Postgre SQL initialization](../../src/scheme/protocol_oidc.postgre.sql)
