@@ -32,9 +32,9 @@ Its plugin architecture makes it easy to add new modules or plugins, or modify e
 
 ![logged in](docs/screenshots/login-nopassword.png)
 
-Glewlwyd 2.0 Realease Candidate 1 is out. All the planned new functionalities gor Release 2.0 are now implemented. What's left before the official release is to make sure no critical or important bugs are still present. Feel free to install, test it, and [send feedbacks](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
+Glewlwyd 2.0 Realease Candidate 2 [is out](releases/tag/v2.0.0-rc2). All the planned new functionalities gor Release 2.0 are now implemented. What's left before the official release is to make sure no critical or important bugs are still present. Feel free to [install](docs/INSTALL.md), test it, and [send feedbacks](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
 
-Important! Due to database reworking of the application, you can't upgrade an existing installation from Glewlwyd 1.x to Glewlwyd 2.x.
+Important! Due to complete database reworking of the application, you can't upgrade an existing installation from Glewlwyd 1.x to Glewlwyd 2.x.
 
 ## Installation
 
@@ -58,7 +58,7 @@ The [Getting started documentation](docs/GETTING_STARTED.md) will help administr
 
 ## User documentation
 
-The [documentation](docs/USER.md) will help Glewlwyd's users manage their profile and log in to Glewlwyd.
+The [user documentation](docs/USER.md) will help Glewlwyd's users manage their profile and log in to Glewlwyd.
 
 ## Core API
 
@@ -74,7 +74,7 @@ You can update the existing plugins or add new ones depending on your needs, che
 
 ## Screenshots
 
-Go to the [Screenshots](docs/screenshots) folder.
+Go to the [Screenshots](docs/screenshots) folder to get a visual idea of Glewlwyd.
 
 ## Questions, problems or feature requests
 
