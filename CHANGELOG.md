@@ -3,7 +3,9 @@
 ## 2.0.0-rc2
 
 - Allow to emit certificates for certificate scheme
+- Bug fixes and improvements on certificate scheme
 - Fix UI bugs
+- Fix small backend bugs
 - Add docker image
 - Add Fail2ban script and config
 
