@@ -57,26 +57,26 @@ libcbor
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-rc1/glewlwyd-full_2.0.0-rc1_debian_buster_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0-rc1_debian_buster_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-rc2/glewlwyd-full_2.0.0-rc2_debian_buster_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0-rc2_debian_buster_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.1_debian_buster_x86_64.deb
 $ sudo dpkg -i libyder_1.4.8_debian_buster_x86_64.deb
 $ sudo dpkg -i libhoel_1.4.11_debian_buster_x86_64.deb
 $ sudo dpkg -i libulfius_2.6.3_debian_buster_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0-rc1_debian_buster_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0-rc2_debian_buster_x86_64.deb
 ```
 
 #### Install Glewlwyd on Raspbian Stretch for Raspberry Pi
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-b1_raspbian_stretch_armv6l.tar.gz
-$ tar xf glewlwyd-full_2.0.0_Debian_stretch_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-rc2_raspbian_stretch_armv6l.tar.gz
+$ tar xf glewlwyd-full_2.0.0-rc2_Debian_stretch_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.0_Debian_stretch_x86_64.deb
 $ sudo dpkg -i libyder_1.4.6_Debian_stretch_x86_64.deb
 $ sudo dpkg -i libhoel_1.4.11_Debian_stretch_x86_64.deb
 $ sudo dpkg -i libulfius_2.6.1_Debian_stretch_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0-b1_Debian_stretch_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0-rc2_Debian_stretch_x86_64.deb
 ```
 
 #### Install Glewlwyd on Ubuntu 18.04 LTS Bionic
@@ -91,26 +91,26 @@ $ autoreconf -i
 $ ./configure --without-openssl
 $ make && sudo make install
 $ cd ..
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-rc1/glewlwyd-full_2.0.0-rc1_ubuntu_bionic_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0-rc1_ubuntu_bionic_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-rc2/glewlwyd-full_2.0.0-rc2_ubuntu_bionic_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0-rc2_ubuntu_bionic_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.1_ubuntu_bionic_x86_64.deb
 $ sudo dpkg -i libyder_1.4.8_ubuntu_bionic_x86_64.deb
 $ sudo dpkg -i libhoel_1.4.11_ubuntu_bionic_x86_64.deb
 $ sudo dpkg -i libulfius_2.6.3_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0-rc1_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0-rc2_ubuntu_bionic_x86_64.deb
 ```
 
 #### Install Glewlwyd on Ubuntu 19.04 Disco
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-rc1/glewlwyd-full_2.0.0-rc1_ubuntu_disco_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0-rc1_ubuntu_disco_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-rc2/glewlwyd-full_2.0.0-rc2_ubuntu_disco_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0-rc2_ubuntu_disco_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.1_ubuntu_disco_x86_64.deb
 $ sudo dpkg -i libyder_1.4.8_ubuntu_disco_x86_64.deb
 $ sudo dpkg -i libhoel_1.4.11_ubuntu_disco_x86_64.deb
 $ sudo dpkg -i libulfius_2.6.3_ubuntu_disco_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0-rc1_ubuntu_disco_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0-rc2_ubuntu_disco_x86_64.deb
 ```
 
 If there's no package available for your distribution, you can recompile it manually using `CMake` or `Makefile`.
