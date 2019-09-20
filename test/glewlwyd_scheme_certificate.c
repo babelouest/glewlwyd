@@ -1198,7 +1198,7 @@ START_TEST(test_glwd_scheme_certificate_register_request_certificate_auth_succes
   ulfius_clean_response(&resp);
   ck_assert_ptr_ne(j_response, NULL);
   ck_assert_int_eq(o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_response, "p12")), json_string_length(json_object_get(j_response, "p12")), NULL, &p12_dec_len), 1);
-  p12_dec = o_malloc(p12_dec_len+1);
+  p12_dec = o_malloc(p12_dec_len+4);
   ck_assert_ptr_ne(p12_dec, NULL);
   ck_assert_int_eq(o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_response, "p12")), json_string_length(json_object_get(j_response, "p12")), p12_dec, &p12_dec_len), 1);
   ck_assert_int_ge(gnutls_pkcs12_init(&pkcs12), 0);
@@ -1293,7 +1293,6 @@ START_TEST(test_glwd_scheme_certificate_register_request_certificate_deregister_
     ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
     json_decref(j_parameters);
   }
-  json_decref(j_parameters);
   json_decref(j_result);
   ulfius_clean_response(&resp);
 }
@@ -1353,7 +1352,7 @@ START_TEST(test_glwd_scheme_certificate_register_request_certificate_auth_succes
                                 "scheme_name", MODULE_NAME,
                                 "value");
   unsigned char * p12_dec;
-  size_t p12_dec_len;
+  size_t p12_dec_len = 0;
   gnutls_pkcs12_t pkcs12 = NULL;
   gnutls_datum_t dat, dat_key, dat_cert;
   gnutls_x509_privkey_t key = NULL;
@@ -1372,7 +1371,7 @@ START_TEST(test_glwd_scheme_certificate_register_request_certificate_auth_succes
   ulfius_clean_response(&resp);
   ck_assert_ptr_ne(j_response, NULL);
   ck_assert_int_eq(o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_response, "p12")), json_string_length(json_object_get(j_response, "p12")), NULL, &p12_dec_len), 1);
-  p12_dec = o_malloc(p12_dec_len+1);
+  p12_dec = o_malloc(p12_dec_len+4);
   ck_assert_ptr_ne(p12_dec, NULL);
   ck_assert_int_eq(o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_response, "p12")), json_string_length(json_object_get(j_response, "p12")), p12_dec, &p12_dec_len), 1);
   ck_assert_int_ge(gnutls_pkcs12_init(&pkcs12), 0);
@@ -1467,7 +1466,6 @@ START_TEST(test_glwd_scheme_certificate_register_request_certificate_deregister_
     ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
     json_decref(j_parameters);
   }
-  json_decref(j_parameters);
   json_decref(j_result);
   ulfius_clean_response(&resp);
 }
