@@ -26,3 +26,12 @@
   position: absolute;
   left: -9999px;
 }
+.toast-container {
+  position: absolute;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 5px;
+  padding: 5px;
+  background: white;
+  z-index: 9999;
+}

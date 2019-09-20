@@ -78,7 +78,7 @@ class Notification extends Component {
           </strong>
       }
       toast.push(
-        <div style={{position: "absolute", top: (85 + (index * 90)), right: 5, borderWidth: "1px", borderStyle: "solid", borderRadius: "5px", padding: "5px"}} key={index}>
+        <div className="toast-container" style={{top: (85 + (index * 90)), right: 5}} key={index}>
           <div className="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div className="toast-header">
               {badge}
