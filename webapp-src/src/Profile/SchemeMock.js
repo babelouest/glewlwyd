@@ -38,7 +38,7 @@ class SchemeMock extends Component {
   
   getRegister() {
     if (this.state.profile) {
-      apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
+      apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name}, true)
       .then((res) => {
         this.setState({registration: i18next.t("profile.scheme-mock-register-status-registered"), registered: true});
       })

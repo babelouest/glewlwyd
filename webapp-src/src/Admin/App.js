@@ -99,6 +99,7 @@ class App extends Component {
         this.fetchApi();
       } else if (message.type === 'loggedIn') {
         this.setState({loggedIn: message.message}, () => {
+          console.log("loggedIn", this.state.loggedIn);
           if (!this.state.loggedIn) {
             this.fetchApi();
           }
@@ -429,17 +430,38 @@ class App extends Component {
           });
         })
         .fail((error) => {
-          this.setState({invalidCredentialMessage: true});
+          this.setState({
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
         });
       });
     })
     .fail((error) => {
       this.setState({invalidCredentialMessage: true}, () => {
-        if (error.status === 401) {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
-        } else {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-        }
+        this.setState({
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: []
+        }, () => {
+          if (error.status === 401) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          } else {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          }
+        });
       });
     });
   }
@@ -456,7 +478,17 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
-        this.setState({loggedIn: false});
+        this.setState({
+          loggedIn: false,
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: []
+        });
       }
     });
   }
@@ -472,7 +504,17 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: false});
+        this.setState({
+          loggedIn: false,
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: []
+        });
       }
     });
   }
@@ -488,7 +530,17 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: false});
+        this.setState({
+          loggedIn: false,
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: []
+        });
       }
     });
   }
@@ -526,7 +578,17 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: false});
+        this.setState({
+          loggedIn: false,
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: []
+        });
       }
     });
   }
@@ -539,7 +601,17 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: false});
+        this.setState({
+          loggedIn: false,
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: []
+        });
       }
     });
   }
@@ -552,7 +624,17 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: false});
+        this.setState({
+          loggedIn: false,
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: []
+        });
       }
     });
   }
@@ -565,7 +647,17 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: false});
+        this.setState({
+          loggedIn: false,
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: []
+        });
       }
     });
   }
@@ -578,7 +670,17 @@ class App extends Component {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({loggedIn: false});
+        this.setState({
+          loggedIn: false,
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: []
+        });
       }
     });
   }
@@ -1218,25 +1320,25 @@ class App extends Component {
               <div id="carouselBody" className="carousel slide" data-ride="carousel">
                 <div className="carousel-inner">
                   <div className={"carousel-item" + (this.state.curNav==="users"?" active":"")}>
-                    <Users config={this.state.config} users={this.state.users} />
+                    <Users config={this.state.config} users={this.state.users} loggedIn={this.state.loggedIn} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="clients"?" active":"")}>
-                    <Clients config={this.state.config} clients={this.state.clients} />
+                    <Clients config={this.state.config} clients={this.state.clients} loggedIn={this.state.loggedIn} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="scopes"?" active":"")}>
-                    <Scopes config={this.state.config} scopes={this.state.scopes} />
+                    <Scopes config={this.state.config} scopes={this.state.scopes} loggedIn={this.state.loggedIn} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="users-mod"?" active":"")}>
-                    <UserMod mods={this.state.modUsers} types={this.state.modTypes.user} />
+                    <UserMod mods={this.state.modUsers} types={this.state.modTypes.user} loggedIn={this.state.loggedIn} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="clients-mod"?" active":"")}>
-                    <ClientMod mods={this.state.modClients} types={this.state.modTypes.client} />
+                    <ClientMod mods={this.state.modClients} types={this.state.modTypes.client} loggedIn={this.state.loggedIn} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="auth-schemes"?" active":"")}>
-                    <SchemeMod mods={this.state.modSchemes} types={this.state.modTypes.scheme} />
+                    <SchemeMod mods={this.state.modSchemes} types={this.state.modTypes.scheme} loggedIn={this.state.loggedIn} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="plugins"?" active":"")}>
-                    <Plugin mods={this.state.plugins} types={this.state.modTypes.plugin}/>
+                    <Plugin mods={this.state.plugins} types={this.state.modTypes.plugin} loggedIn={this.state.loggedIn} />
                   </div>
                 </div>
               </div>

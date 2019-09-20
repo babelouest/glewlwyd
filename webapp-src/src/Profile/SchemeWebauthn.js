@@ -62,7 +62,7 @@ class SchemeWebauthn extends Component {
   
   getCredentials() {
     if (this.state.profile) {
-      apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
+      apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name}, true)
       .then((res) => {
         var credentialAvailable = false;
         res.forEach(cred => {
@@ -259,7 +259,8 @@ class SchemeWebauthn extends Component {
             session: result.session, 
             credential: publicKeyCredential
           }
-        })
+        },
+        true)
         .then(() => {
           messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-assertion-success")});
         })

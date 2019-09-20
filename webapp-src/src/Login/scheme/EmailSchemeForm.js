@@ -66,7 +66,7 @@ class EmailSchemeForm extends Component {
 			}
 		};
     
-    apiManager.glewlwydRequest("/auth/", "POST", scheme)
+    apiManager.glewlwydRequest("/auth/", "POST", scheme, true)
     .then(() => {
       messageDispatcher.sendMessage('App', {type: 'loginSuccess'});
     })
