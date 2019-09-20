@@ -38,10 +38,14 @@ class Navbar extends Component {
     if (this.state.loggedIn) {
       apiManager.glewlwydRequest("/auth/?username=" + encodeURI(this.state.profileList[0].username), "DELETE")
       .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.success-delete-session")});
         messageDispatcher.sendMessage('App', {type: 'loggedIn', loggedIn: false});
       })
-      .fail(() => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
+      .fail((err) => {
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
+        }
+        messageDispatcher.sendMessage('App', {type: 'loggedIn', loggedIn: false});
       });
     } else {
       var schemeDefault = false;

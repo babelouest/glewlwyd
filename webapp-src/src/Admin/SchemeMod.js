@@ -11,7 +11,8 @@ class SchemeMod extends Component {
       config: props.config,
       mods: props.mods,
       curMod: {},
-      types: props.types
+      types: props.types,
+      loggedIn: props.loggedIn
     }
 
     this.addMod = this.addMod.bind(this);
@@ -23,7 +24,8 @@ class SchemeMod extends Component {
   componentWillReceiveProps(nextProps) {
     this.setState({
       mods: nextProps.mods,
-      types: nextProps.types
+      types: nextProps.types,
+      loggedIn: nextProps.loggedIn
     });
   }
 
@@ -119,7 +121,7 @@ class SchemeMod extends Component {
         <tr>
           <th colSpan="4">
             <h4>{i18next.t("admin.scheme-mod-list-title")}</h4>
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.addMod(e)} title={i18next.t("admin.add")}>
+            <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.addMod(e)} title={i18next.t("admin.add")}>
               <i className="fas fa-plus"></i>
             </button>
           </th>

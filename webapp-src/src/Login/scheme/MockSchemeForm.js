@@ -45,7 +45,7 @@ class MockSchemeForm extends Component {
         }
       };
       
-      apiManager.glewlwydRequest("/auth/scheme/trigger/", "POST", scheme)
+      apiManager.glewlwydRequest("/auth/scheme/trigger/", "POST", scheme, true)
       .then((res) => {
         this.setState({triggerResult: res.code});
       })

@@ -52,6 +52,7 @@ class Buttons extends Component {
     })
     .fail(() => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
+      messageDispatcher.sendMessage('App', {type: 'InitProfile'});
     });
   }
   

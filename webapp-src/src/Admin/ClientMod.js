@@ -11,7 +11,8 @@ class ClientMod extends Component {
       config: props.config,
       mods: props.mods,
       curMod: {},
-      types: props.types
+      types: props.types,
+      loggedIn: props.loggedIn
     }
 
     this.addMod = this.addMod.bind(this);
@@ -24,7 +25,8 @@ class ClientMod extends Component {
   componentWillReceiveProps(nextProps) {
     this.setState({
       mods: nextProps.mods,
-      types: nextProps.types
+      types: nextProps.types,
+      loggedIn: nextProps.loggedIn
     });
   }
 
@@ -145,7 +147,7 @@ class ClientMod extends Component {
             <h4>{i18next.t("admin.client-mod-list-title")}</h4>
           </th>
           <th colSpan="1">
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.addMod(e)} title={i18next.t("admin.add")}>
+            <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.addMod(e)} title={i18next.t("admin.add")}>
               <i className="fas fa-plus"></i>
             </button>
           </th>

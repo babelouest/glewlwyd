@@ -8,7 +8,8 @@ class Clients extends Component {
 
     this.state = {
       config: props.config,
-      clients: props.clients
+      clients: props.clients,
+      loggedIn: props.loggedIn
     }
 
     messageDispatcher.subscribe('Clients', (message) => {
@@ -25,7 +26,8 @@ class Clients extends Component {
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      clients: nextProps.clients
+      clients: nextProps.clients,
+      loggedIn: nextProps.loggedIn
     });
   }
 
@@ -94,11 +96,11 @@ class Clients extends Component {
           <th colSpan="3">
             <form className="form-inline d-none d-lg-block" onSubmit={(e) => this.searchClients(e)}>
               <div className="btn-group" role="group">
-                <button type="button" className="btn btn-secondary" onClick={(e) => this.navigate(e, -1)} title={i18next.t("admin.nav-previous")} disabled={!this.state.clients.offset}>
+                <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.navigate(e, -1)} title={i18next.t("admin.nav-previous")} disabled={!this.state.clients.offset}>
                   <i className="fas fa-backward"></i>
                 </button>
                 <div className="btn-group" role="group">
-                  <button id="btnGroupNavPerPage" type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <button disabled={!this.state.loggedIn} id="btnGroupNavPerPage" type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     {i18next.t("admin.nav-per-page")}
                   </button>
                   <div className="dropdown-menu" aria-labelledby="btnGroupNavperPage">
@@ -108,20 +110,20 @@ class Clients extends Component {
                     <a className={"dropdown-item" + (this.state.clients.limit===100?" active":"")} href="#" onClick={(e) => this.navigatePerPage(e, 100)}>100</a>
                   </div>
                 </div>
-                <button type="button" className="btn btn-secondary" onClick={(e) => this.navigate(e, 1)} title={i18next.t("admin.nav-next")}>
+                <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.navigate(e, 1)} title={i18next.t("admin.nav-next")}>
                   <i className="fas fa-forward"></i>
                 </button>
-                <button type="button" className="btn btn-secondary" onClick={(e) => this.addClient(e)} title={i18next.t("admin.client-add")}>
+                <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.addClient(e)} title={i18next.t("admin.client-add")}>
                   <i className="fas fa-plus"></i>
                 </button>
               </div>
               <div className="btn-group btn-icon-right" role="group">
-                <input className="form-control" type="search" placeholder={i18next.t("admin.nav-search-placeholder")} aria-label="Search" onChange={this.handleChangeSearchPattern} value={this.state.clients.searchPattern||""}/>
-                <button className="btn btn-secondary my-sm-0" type="submit" title={i18next.t("admin.nav-search-title")} onClick={(e) => this.searchClients(e)}>{i18next.t("admin.nav-search")}</button>
+                <input disabled={!this.state.loggedIn} className="form-control" type="search" placeholder={i18next.t("admin.nav-search-placeholder")} aria-label="Search" onChange={this.handleChangeSearchPattern} value={this.state.clients.searchPattern||""}/>
+                <button disabled={!this.state.loggedIn} className="btn btn-secondary my-sm-0" type="submit" title={i18next.t("admin.nav-search-title")} onClick={(e) => this.searchClients(e)}>{i18next.t("admin.nav-search")}</button>
               </div>
           </form>
             <div className="dropdown d-block d-lg-none">
-              <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuNav" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <button disabled={!this.state.loggedIn} className="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuNav" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i className="fas fa-chevron-circle-down"></i>
               </button>
               <div className="dropdown-menu" aria-labelledby="dropdownMenuNav">
