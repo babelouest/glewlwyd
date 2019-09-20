@@ -1,3 +1,5 @@
+import messageDispatcher from '../lib/MessageDispatcher';
+
 class APIManager {
 	constructor() {
     this.GlewlwydApiPrefix = "";
@@ -36,8 +38,13 @@ class APIManager {
     }
 	}
 
-  glewlwydRequest(url, method="GET", data=false) {
-    return this.request(this.GlewlwydApiPrefix + url, method, data);
+  glewlwydRequest(url, method="GET", data=false, unsafe=false) {
+    return this.request(this.GlewlwydApiPrefix + url, method, data)
+    .fail((err) => {
+      if (unsafe && err.status === 401) {
+        messageDispatcher.sendMessage('App', {type: "loggedIn", message: false});
+      }
+    });
   }
 
   glewlwydRequestSub(url, method="GET", data=false) {
