@@ -1127,6 +1127,7 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
           ret = G_ERROR_DB;
         }
       } else if (check_result_value(j_result, G_OK)) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "add_user_certificate_scheme_storage - get_user_certificate_from_id_scheme_storage error param");
         ret = G_ERROR_PARAM;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "add_user_certificate_scheme_storage - Error get_user_certificate_from_id_scheme_storage");
@@ -1134,6 +1135,7 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
       }
       json_decref(j_result);
     } else if (check_result_value(j_parsed_certificate, G_ERROR_PARAM)) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "add_user_certificate_scheme_storage - parse_certificate error param");
       ret = G_ERROR_PARAM;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "add_user_certificate_scheme_storage - Error parse_certificate");
@@ -1141,6 +1143,7 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
     }
     json_decref(j_parsed_certificate);
   } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "add_user_certificate_scheme_storage - x509 empty");
     ret = G_ERROR_PARAM;
   }
 
