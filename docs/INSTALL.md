@@ -600,7 +600,7 @@ Then, you must update your `jail.local` file (On Debian-based distrib it's locat
 enabled  = true
 filter   = glewlwyd
 logpath  = /var/log/glewlwyd.log
-port     = http,https
+port     = https,4593 # the TCP port where Glewlwyd is available
 ```
 
 Check out [Fail2ban](https://www.fail2ban.org/) documentation for more information.
