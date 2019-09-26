@@ -797,8 +797,11 @@ static int validate_safetynet_ca_root(json_t * j_params, gnutls_x509_crt_t cert_
       len = ftell(fl);
       cert_content = malloc(len);
       if (cert_content != NULL) {
-        fseek(fl, 0, SEEK_SET);
-        fread(cert_content, 1, len, fl);
+        if (fseek(fl, 0, SEEK_SET) == -1) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error fseek");
+        } else if (fread(cert_content, 1, len, fl) != len) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error fread");
+        }
         fclose(fl);
         cert_dat.data = (unsigned char *)cert_content;
         cert_dat.size = len;
@@ -1255,7 +1258,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL, * credential_id_b64 = NULL, * cbor_auth_data, * cred_pub_key, cert_x[256], cert_y[256], pubkey_export[1024];
   char * challenge_hash = NULL, * message = NULL;
   const char * rpid = NULL;
-  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, cert_x_len, cert_y_len, pubkey_export_len = 1024, index = 0, cbor_bs_handle_len, rpid_len;
+  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, cert_x_len = 0, cert_y_len = 0, pubkey_export_len = 1024, index = 0, cbor_bs_handle_len, rpid_len;
   uint32_t counter = 0;
   int ret = G_OK, res, status, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0;
   unsigned int i;
