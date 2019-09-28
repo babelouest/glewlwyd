@@ -20,7 +20,8 @@ class SchemeWebauthn extends Component {
       editIndex: -1,
       editValue: "",
       removeIndex: -1,
-      credAssertion: false
+      credAssertion: false,
+      webauthnEnabled: !!window.PublicKeyCredential
     };
     
     this.getCredentials = this.getCredentials.bind(this);
@@ -380,7 +381,7 @@ class SchemeWebauthn extends Component {
   }
   
 	render() {
-    var credentialList = [];
+    var credentialList = [], disabledMessage;
     this.state.credentialList.forEach((cred, index) => {
       var createdAt = new Date(cred.created_at*1000);
       if (this.state.editIndex === index) {
@@ -474,6 +475,14 @@ class SchemeWebauthn extends Component {
         );
       }
     });
+    if (!this.state.webauthnEnabled) {
+      disabledMessage = 
+        <div className="row">
+          <div className="col-md-12">
+            <div className="alert alert-danger" role="alert">{i18next.t("profile.scheme-webauthn-disabled")}</div>
+          </div>
+        </div>
+    }
     return (
       <div>
         <div className="row">
@@ -481,6 +490,7 @@ class SchemeWebauthn extends Component {
             <h4>{i18next.t("profile.scheme-webauthn-title", {module: this.state.module, name: this.state.name})}</h4>
           </div>
         </div>
+        {disabledMessage}
         <div className="row">
           <div className="col-md-12">
             <button type="button" className="btn btn-primary" onClick={(e) => this.getCredentials(e)}>{i18next.t("login.btn-reload")}</button>
@@ -518,8 +528,8 @@ class SchemeWebauthn extends Component {
         <div className="row">
           <div className="col-md-12">
             <div className="btn-group" role="group">
-              <button type="button" className="btn btn-primary" onClick={(e) => this.createCredential(e)} title={i18next.t("profile.scheme-webauthn-register-title")}>{i18next.t("profile.scheme-webauthn-register")}</button>
-              <button type="button" className="btn btn-primary" onClick={(e) => this.testAssertion(e)} disabled={!this.state.credentialAvailable} title={i18next.t("profile.scheme-webauthn-test-title")}>{i18next.t("profile.scheme-webauthn-test-registration")}</button>
+              <button type="button" disabled={!this.state.webauthnEnabled} className="btn btn-primary" onClick={(e) => this.createCredential(e)} title={i18next.t("profile.scheme-webauthn-register-title")}>{i18next.t("profile.scheme-webauthn-register")}</button>
+              <button type="button" className="btn btn-primary" onClick={(e) => this.testAssertion(e)} disabled={!this.state.credentialAvailable||!this.state.webauthnEnabled} title={i18next.t("profile.scheme-webauthn-test-registration-title")}>{i18next.t("profile.scheme-webauthn-test-registration")}</button>
             </div>
           </div>
         </div>

@@ -11,7 +11,8 @@ class WebauthnForm extends Component {
       config: props.config,
       scheme: props.scheme,
       currentUser: props.currentUser,
-      canLogin: false
+      canLogin: false,
+      webauthnEnabled: !!window.PublicKeyCredential
     };
     
     this.triggerScheme = this.triggerScheme.bind(this);
@@ -147,14 +148,24 @@ class WebauthnForm extends Component {
   }
   
   render() {
+    var disabledMessage;
+    if (!this.state.webauthnEnabled) {
+      disabledMessage =                                                                                                                                                
+        <div className="row">
+          <div className="col-md-12">
+            <div className="alert alert-danger" role="alert">{i18next.t("profile.scheme-webauthn-disabled")}</div>
+          </div>
+        </div>
+    }
     return (
       <div>
         <div className="form-group">
           <h5>{i18next.t("login.webauthn-login-title")}</h5>
         </div>
         <div className="form-group">
+          {disabledMessage}
         </div>
-        <button type="button" name="loginBut" id="loginBut" disabled={!this.state.canLogin} className="btn btn-primary" onClick={(e) => this.login(e)} title={i18next.t("login.webauthn-login-button-title")}>{i18next.t("login.webauthn-login-authenticate")}</button>
+        <button type="button" name="loginBut" id="loginBut" disabled={!this.state.canLogin||!this.state.webauthnEnabled} className="btn btn-primary" onClick={(e) => this.login(e)} title={i18next.t("login.webauthn-login-button-title")}>{i18next.t("login.webauthn-login-authenticate")}</button>
       </div>
     );
   }
