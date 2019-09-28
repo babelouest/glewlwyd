@@ -672,6 +672,7 @@
     "scheme-mock-register-status-registered": "Registered",
     "scheme-mock-register-status-not-registered": "Not registered",
     "scheme-webauthn-title": "Web Authentication components",
+    "scheme-webauthn-disabled": "Webauthn isn't available with your browser",
     "scheme-webauthn-register": "New component",
     "scheme-webauthn-register-title": "Register a new component with your profile",
     "scheme-webauthn-test-registration": "Test",
