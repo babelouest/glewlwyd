@@ -628,6 +628,8 @@ Example:
 }
 ```
 
+The front-end application is written in Javascript using mostly ReactJS and JQuery, ES6 minimum is required. Browsers like Firefox, Chrom[e|ium], Edge or Safari work fine, Internet Explorer or Opera shouldn't work properly because of their incompatible Javascript support. Please use a supported browser for Glewlwyd.
+
 ### Login, Admin and Profile pages
 
 These pages are used when a user requires some access to Glewlwyd. They are simple html pages with a small JavaScript/JQuery application in it to provide the expected behavior, and vanilla bootstrap 4 for the visual consistency. Glewlwyd front-end source code is under license MIT. Fell free to update them to fit your needs or to adapt the front-end to your identity.
