@@ -799,45 +799,48 @@ static int validate_safetynet_ca_root(json_t * j_params, gnutls_x509_crt_t cert_
       if (cert_content != NULL) {
         if (fseek(fl, 0, SEEK_SET) == -1) {
           y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error fseek");
+          ret = G_ERROR;
         } else if (fread(cert_content, 1, len, fl) != len) {
           y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error fread");
-        }
-        fclose(fl);
-        cert_dat.data = (unsigned char *)cert_content;
-        cert_dat.size = len;
-        if (!gnutls_x509_crt_init(&cert_x509[json_array_size(j_header_x5c)]) && 
-            !gnutls_x509_crt_import(cert_x509[json_array_size(j_header_x5c)], &cert_dat, GNUTLS_X509_FMT_DER)) {
-          if (!gnutls_x509_crt_init(&root_x509) && 
-              !gnutls_x509_crt_import(root_x509, &cert_dat, GNUTLS_X509_FMT_DER)) {
-            if (!gnutls_x509_trust_list_init(&tlist, 0)) {
-              if (gnutls_x509_trust_list_add_cas(tlist, &root_x509, 1, 0) >= 0) {
-                if (gnutls_x509_trust_list_verify_crt(tlist, cert_x509, (json_array_size(j_header_x5c)+1), 0, &result, NULL) >= 0) {
-                  if (!result) {
-                    ret = G_OK;
+          ret = G_ERROR;
+        } else {
+          cert_dat.data = (unsigned char *)cert_content;
+          cert_dat.size = len;
+          if (!gnutls_x509_crt_init(&cert_x509[json_array_size(j_header_x5c)]) && 
+              !gnutls_x509_crt_import(cert_x509[json_array_size(j_header_x5c)], &cert_dat, GNUTLS_X509_FMT_DER)) {
+            if (!gnutls_x509_crt_init(&root_x509) && 
+                !gnutls_x509_crt_import(root_x509, &cert_dat, GNUTLS_X509_FMT_DER)) {
+              if (!gnutls_x509_trust_list_init(&tlist, 0)) {
+                if (gnutls_x509_trust_list_add_cas(tlist, &root_x509, 1, 0) >= 0) {
+                  if (gnutls_x509_trust_list_verify_crt(tlist, cert_x509, (json_array_size(j_header_x5c)+1), 0, &result, NULL) >= 0) {
+                    if (!result) {
+                      ret = G_OK;
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_safetynet_ca_root - certificate chain invalid");
+                      ret = G_ERROR;
+                    }
                   } else {
-                    y_log_message(Y_LOG_LEVEL_DEBUG, "validate_safetynet_ca_root - certificate chain invalid");
+                    y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_verify_crt");
                     ret = G_ERROR;
                   }
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_verify_crt");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_add_cas");
                   ret = G_ERROR;
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_add_cas");
+                y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_init");
                 ret = G_ERROR;
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_init");
+              y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error import root cert");
               ret = G_ERROR;
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error import root cert");
+            y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error import last cert");
             ret = G_ERROR;
           }
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error import last cert");
-          ret = G_ERROR;
         }
+        fclose(fl);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error allocating resources for cert_content");
         ret = G_ERROR_MEMORY;
