@@ -214,6 +214,9 @@ class App extends Component {
     if (!passwordRequired && this.state.refresh_login) {
       passwordRequired = true;
     }
+    if (canContinue) {
+      scheme = false;
+    }
     this.setState({canContinue: canContinue, passwordRequired: passwordRequired, schemeListRequired: schemeListRequired, scheme: scheme, errorScheme: (!scheme && !canContinue)});
   }
 
