@@ -55,10 +55,17 @@ if (getParameterByName("ui_locales")) {
   i18nextOpt.lng = getParameterByName("ui_locales").split(" ")[0];
 }
 
-i18next
-.use(Backend)
-.use(LanguageDetector)
-.init(i18nextOpt)
-.then(() => {
-  initApp()
-});
+try {
+  i18next
+  .use(Backend)
+  .use(LanguageDetector)
+  .init(i18nextOpt)
+  .then(() => {
+    initApp()
+  });
+} catch (e) {
+  $("#root").html('<div class="alert alert-danger" role="alert">' +
+                    '<i class="fas fa-exclamation-triangle"></i>' +
+                    '<span class="btn-icon-right">You must use a browser compatible with Glewlwyd SSO</span>' +
+                  '</div>');
+}
