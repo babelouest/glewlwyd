@@ -36,7 +36,8 @@ class NoPasswordForm extends Component {
     this.setState({username: e.target.value});
   }
   
-  validateUsername() {
+  validateUsername(e) {
+    e.preventDefault();
     if (this.state.username) {
       this.setState({usernameValidated: true});
     }
