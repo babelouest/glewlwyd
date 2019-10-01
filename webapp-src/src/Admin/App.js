@@ -128,7 +128,7 @@ class App extends Component {
         } else if (message.role === 'scope') {
           var confirmModal = {
             title: i18next.t("admin.confirm-delete-scope-title", {scope: message.scope.name}),
-            message: i18next.t("admin.confirm-delete-scope", {username: message.scope.scope, name: message.scope.display_name}),
+            message: i18next.t("admin.confirm-delete-scope", {scope: message.scope.name, name: message.scope.display_name}),
             callback: this.confirmDeleteScope
           }
           this.setState({confirmModal: confirmModal, curScope: message.scope}, () => {
