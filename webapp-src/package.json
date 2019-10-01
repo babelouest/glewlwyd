@@ -5,7 +5,8 @@
 	"main": "index.js",
 	"scripts": {
 		"dev": "webpack-dev-server --config webpack.dev.config.js --disable-host-check --host 0.0.0.0",
-		"build": "webpack"
+		"build": "webpack",
+		"polyfill": "webpack --config webpack.polyfill.config.js"
 	},
 	"author": "",
 	"license": "MIT",
@@ -18,6 +19,8 @@
 		"babel-loader": "^7.1.2",
 		"babel-preset-env": "^1.6.1",
 		"babel-preset-react": "^6.24.1",
+		"babel-preset-es2015": "^6.22.0",
+		"babel-polyfill": "^6.22.0",
 		"css-loader": "^1.0.0",
 		"style-loader": "^0.23.1",
 		"webpack": "^4.7.0",
