@@ -35,6 +35,7 @@ jobs:
         cd webapp-src
         npm install
         make build-webapp
+        make build-polyfill-webapp
     - name: test
       run: |
         sqlite3 /tmp/glewlwyd.db < docs/database/init.sqlite3.sql
