@@ -286,7 +286,7 @@ class User extends Component {
           if (pattern.type === "file") {
             displayVal = val.substring(0, val.indexOf("/"));
           }
-          if (pattern.type && pattern.type !== "textarea" && !pattern.type.startsWith("image")) {
+          if ((pattern.type && pattern.type !== "textarea" && !pattern.type.startsWith("image")) || !pattern.type) {
             if (pattern["profile-write"] !== true && !this.state.add) {
               listJsx.push(<span className="badge badge-primary btn-icon-right" key={index}>
                              {displayVal}

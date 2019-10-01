@@ -182,7 +182,7 @@ class EditRecord extends Component {
               </div>
             </div>
           }
-          if (pattern.type !== "textarea" && pattern.type && !pattern.type.startsWith("image")) {
+          if ((pattern.type && pattern.type !== "textarea" && !pattern.type.startsWith("image")) || !pattern.type) {
             elt.forEach((val, index) => {
               var displayVal = val;
               if (pattern.type === "file") {
