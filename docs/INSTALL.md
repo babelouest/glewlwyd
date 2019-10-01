@@ -628,7 +628,9 @@ Example:
 }
 ```
 
-The front-end application is written in Javascript using mostly ReactJS and JQuery, ES6 minimum is required. Browsers like Firefox, Chrom[e|ium], Edge or Safari work fine, Internet Explorer or Opera shouldn't work properly because of their incompatible Javascript support. Please use a supported browser for Glewlwyd.
+The front-end application is written in Javascript using mostly ReactJS and JQuery, ES6 minimum is required. Recent versions of browsers like Firefox, Chrom[e|ium], Edge or Safari work fine.
+
+By choice, Glewlwyd isn't available for Internet Explorer or browser with a poor javascript engine. If you really need it you can build the front-end application with `babel-polyfill`. Check out the [webapp-src documentation](../webapp-src/README.md).
 
 ### Login, Admin and Profile pages
 
