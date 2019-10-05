@@ -4,6 +4,7 @@
 
 - Fix bug on state value sent back not url re-encoded
 - Check libconfig >= 1.4
+- Fix gcc9 warning
 
 ## 1.4.9
 
