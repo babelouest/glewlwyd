@@ -692,10 +692,15 @@ json_t * get_client_list_ldap(struct config_elements * config, const char * sear
         cookie = NULL;
       }
       
-      result = ldap_parse_pageresponse_control(ldap, *returned_controls, &total_count, &new_cookie);
-      if (result != LDAP_SUCCESS) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap_parse_pageresponse_control, message: %s", ldap_err2string(result));
-        j_result = json_pack("{si}", "result", G_ERROR);
+      if (returned_controls != NULL) {
+        result = ldap_parse_pageresponse_control(ldap, *returned_controls, &total_count, &new_cookie);
+        if (result != LDAP_SUCCESS) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error ldap_parse_pageresponse_control, message: %s", ldap_err2string(result));
+          j_result = json_pack("{si}", "result", G_ERROR);
+          break;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error returned_controls is NULL");
         break;
       }
       
@@ -713,8 +718,7 @@ json_t * get_client_list_ldap(struct config_elements * config, const char * sear
         break;
       }
       
-      if (returned_controls != NULL)
-      {
+      if (returned_controls != NULL) {
         ldap_controls_free(returned_controls);
         returned_controls = NULL;
       }
