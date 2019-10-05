@@ -371,13 +371,15 @@ class User extends Component {
                        className={"form-control" + validInput} 
                        id={"modal-edit-" + pattern.name} 
                        placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} 
-                       onChange={(e) => this.changeElt(e, pattern.name)} value={elt||""}/>
+                       onChange={(e) => this.changeElt(e, pattern.name)} value={elt||""}
+                       autoComplete="new-password" />
                  <input type="password" 
                         className={"form-control" + validInput} 
                         id={"modal-edit-confirm" + pattern.name} 
                         placeholder={i18next.t(pattern.placeholderConfirm)} 
                         value={this.state.listEltConfirm[pattern.name]||""} 
-                        onChange={(e) => this.changeEltConfirm(e, pattern.name)} />
+                        onChange={(e) => this.changeEltConfirm(e, pattern.name)}
+                        autoComplete="new-password" />
               </div>
           } else {
             inputJsx = <input type={(pattern.type||"text")} 

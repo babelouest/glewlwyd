@@ -55,7 +55,7 @@ class NoPasswordForm extends Component {
               <div className="input-group-prepend">
                 <label className="input-group-text" htmlFor="username">{i18next.t("login.login")}</label>
               </div>
-              <input type="text" className="form-control" name="username" id="username" autoFocus="" required="" placeholder={i18next.t("login.login-placeholder")} value={this.state.username} onChange={this.handleChangeUsername}/>
+              <input type="text" className="form-control" name="username" id="username" autoFocus={true} required="" placeholder={i18next.t("login.login-placeholder")} value={this.state.username} onChange={this.handleChangeUsername} autoFocus/>
             </div>
           </div>
           <button type="submit" name="usernamebut" id="usernamebut" className="btn btn-primary" onClick={(e) => this.validateUsername(e)} title={i18next.t("login.sign-in-title")}>{i18next.t("login.btn-ok")}</button>
