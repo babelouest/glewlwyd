@@ -1,5 +1,13 @@
 # Glewlwyd Changelog
 
+## 2.0.0
+
+- Fix UI bugs
+- Fix Microsoft Edge bug
+- Add possibility to build UI with Internet Explorer support
+- Fix gcc9 warnings
+- Add `autocomplete="off"` and `autofocus` properties in some input
+
 ## 2.0.0-rc2
 
 - Allow to emit certificates for certificate scheme
