@@ -22,20 +22,25 @@
 WEBAPP_DEST=../webapp
 JSC=npm
 
+all: webapp
+
 install-dev:
 	$(JSC) install
 
 dev:
 	$(JSC) run dev
 
-build-webapp:
-	$(JSC) run build
+webapp: build-webapp install-webapp
+
+polyfill: build-polyfill-webapp install-webapp
+
+install-webapp:
 	find $(WEBAPP_DEST) ! -name config.json ! -name webapp ! -name .gitignore -delete
 	cp -R index.html login.html profile.html config.json.sample favicon.ico css/ js/ locales/ webfonts/ $(WEBAPP_DEST)
 	cp output/admin.js output/login.js output/profile.js $(WEBAPP_DEST)
 
+build-webapp:
+	$(JSC) run build
+
 build-polyfill-webapp:
 	$(JSC) run polyfill
-	find $(WEBAPP_DEST) ! -name config.json ! -name webapp ! -name .gitignore -delete
-	cp -R index.html login.html profile.html config.json.sample favicon.ico css/ js/ locales/ webfonts/ $(WEBAPP_DEST)
-	cp output/admin.js output/login.js output/profile.js $(WEBAPP_DEST)

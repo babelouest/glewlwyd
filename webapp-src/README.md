@@ -24,7 +24,7 @@ Then open the address [http://localhost:3000/](http://localhost:3000/) on your b
 ## Build front-end
 
 ```shell
-$ make build-webapp
+$ make
 ```
 
 The built web application will be available in `glewlwyd/webapp`.
