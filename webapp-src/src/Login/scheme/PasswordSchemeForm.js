@@ -62,7 +62,15 @@ class PasswordSchemeForm extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="value">{i18next.t("login.password-value-label")}</label>
             </div>
-            <input type="password" className="form-control" name="value" id="value" autoFocus="" required="" placeholder={i18next.t("login.error-value-expected", {value: (this.state.triggerResult)})} value={this.state.value||""} onChange={this.handleChangePasswordValue}/>
+            <input type="password" 
+                   className="form-control" 
+                   name="value" 
+                   id="value" 
+                   required="" 
+                   placeholder={i18next.t("login.error-value-expected", {value: (this.state.triggerResult)})} 
+                   value={this.state.value||""} 
+                   onChange={this.handleChangePasswordValue} 
+                   autoFocus={true}/>
           </div>
         </div>
         <button type="submit" name="but" id="but" className="btn btn-primary" onClick={(e) => this.validatePasswordValue(e)} title={i18next.t("login.password-button-title")}>{i18next.t("login.btn-ok")}</button>

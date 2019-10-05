@@ -62,7 +62,15 @@ class OTPSchemeForm extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="value">{i18next.t("login.otp-value-label")}</label>
             </div>
-            <input type="text" className="form-control" name="value" id="value" autoFocus="" required="" placeholder={i18next.t("login.error-value-expected", {value: (this.state.triggerResult)})} value={this.state.value||""} onChange={this.handleChangeOTPValue}/>
+            <input type="text" 
+                   className="form-control" 
+                   name="value" id="value" 
+                   required="" 
+                   placeholder={i18next.t("login.error-value-expected", {value: (this.state.triggerResult)})} 
+                   value={this.state.value||""} 
+                   onChange={this.handleChangeOTPValue} 
+                   autoFocus={true} 
+                   autoComplete="false"/>
           </div>
         </div>
         <button type="submit" name="but" id="but" className="btn btn-primary" onClick={(e) => this.validateOTPValue(e)} title={i18next.t("login.otp-button-title")}>{i18next.t("login.btn-ok")}</button>

@@ -107,7 +107,13 @@ class PasswordModal extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-old-password">{i18next.t("profile.password-modal-old-password")}</label>
                     </div>
-                    <input type="password" className={"form-control" + (this.state.oldPasswordInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("profile.password-modal-old-password-ph")} value={this.state.old_password} onChange={(e) => this.changeOldPassword(e)} />
+                    <input type="password" 
+                           autoComplete="current-password" 
+                           className={"form-control" + (this.state.oldPasswordInvalid?" is-invalid":"")} 
+                           id="mod-name" 
+                           placeholder={i18next.t("profile.password-modal-old-password-ph")} 
+                           value={this.state.old_password} 
+                           onChange={(e) => this.changeOldPassword(e)} />
                   </div>
                   <span className={"error-input" + (this.state.oldPasswordInvalid?"":" hidden")}>{this.state.oldPasswordInvalidMessage}</span>
                 </div>
@@ -116,7 +122,13 @@ class PasswordModal extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-new-password">{i18next.t("profile.password-modal-new-password")}</label>
                     </div>
-                    <input type="password" className={"form-control" + (this.state.passwordInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("profile.password-modal-new-password-ph", {minLength: this.state.passwordMinLength})} value={this.state.password} onChange={(e) => this.changeNewPassword(e)} />
+                    <input type="password" 
+                           autoComplete="new-password" 
+                           className={"form-control" + (this.state.passwordInvalid?" is-invalid":"")} 
+                           id="mod-name" 
+                           placeholder={i18next.t("profile.password-modal-new-password-ph", {minLength: this.state.passwordMinLength})} 
+                           value={this.state.password} 
+                           onChange={(e) => this.changeNewPassword(e)} />
                   </div>
                   <span className={"error-input" + (this.state.passwordInvalid?"":" hidden")}>{this.state.passwordInvalidMessage}</span>
                 </div>
@@ -125,7 +137,13 @@ class PasswordModal extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-new-password-confirm">{i18next.t("profile.password-modal-new-password-confirm")}</label>
                     </div>
-                    <input type="password" className={"form-control" + (this.state.passwordConfirmInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("profile.password-modal-new-password-confirm-ph", {minLength: this.state.passwordMinLength})} value={this.state.password_confirm} onChange={(e) => this.changeNewPasswordConfirm(e)} />
+                    <input type="password" 
+                           autoComplete="new-password" 
+                           className={"form-control" + (this.state.passwordConfirmInvalid?" is-invalid":"")} 
+                           id="mod-name" 
+                           placeholder={i18next.t("profile.password-modal-new-password-confirm-ph", {minLength: this.state.passwordMinLength})} 
+                           value={this.state.password_confirm} 
+                           onChange={(e) => this.changeNewPasswordConfirm(e)} />
                   </div>
                   <span className={"error-input" + (this.state.passwordConfirmInvalid?"":" hidden")}>{this.state.passwordConfirmInvalidMessage}</span>
                 </div>

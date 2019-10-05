@@ -83,7 +83,7 @@ class EmailSchemeForm extends Component {
     var validateButton, inputCode;
     if (this.state.showValidate) {
       validateButton = <button type="submit" name="mailbut" id="mailbut" className="btn btn-primary" onClick={(e) => this.validateCode(e)} title={i18next.t("login.mail-code-button-title")}>{i18next.t("login.btn-ok")}</button>;
-      inputCode = <input type="text" className="form-control" name="code" id="code" autoFocus="" required="" placeholder={i18next.t("login.mail-code-ph")} value={this.state.code||""} onChange={this.handleChangeCode}/>;
+      inputCode = <input type="text" className="form-control" name="code" id="code" autoFocus={true} required="" placeholder={i18next.t("login.mail-code-ph")} value={this.state.code||""} onChange={this.handleChangeCode} autoComplete="false"/>;
     }
       return (
         <form action="#" id="mailSchemeForm" onSubmit={(e) => this.validateCode(e)}>
