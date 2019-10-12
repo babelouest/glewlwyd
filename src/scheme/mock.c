@@ -307,7 +307,7 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
   if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
     j_return = json_pack("{sisO}", "result", G_OK, "response", json_true());
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
   return j_return;
 }
