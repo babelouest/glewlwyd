@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import i18next from 'i18next';
 
 import apiManager from '../lib/APIManager';
 import messageDispatcher from '../lib/MessageDispatcher';
@@ -43,7 +44,7 @@ class SchemeMock extends Component {
         this.setState({registration: i18next.t("profile.scheme-mock-register-status-registered"), registered: true});
       })
       .fail((err) => {
-        if (err.status === 401) {
+        if (err.status === 400) {
           this.setState({registration: i18next.t("profile.scheme-mock-register-status-not-registered"), registered: false});
         } else {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
