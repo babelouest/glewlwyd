@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import apiManager from '../lib/APIManager';
 import messageDispatcher from '../lib/MessageDispatcher';
 import Notification from '../lib/Notification';
+import i18next from 'i18next';
 
 import Confirm from '../Modal/Confirm';
 import EditRecord from '../Modal/EditRecord';

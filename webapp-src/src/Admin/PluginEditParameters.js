@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import i18next from 'i18next';
 
 import MockPluginParams from './MockPluginParams';
 import GlwdOauth2Params from './GlwdOauth2Params';
