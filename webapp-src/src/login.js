@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Backend from '../js/i18nextXHRBackend';
-import LanguageDetector from '../js/i18nextBrowserLanguageDetector';
+import i18next from 'i18next';
+import Backend from 'i18next-xhr-backend';
+import LanguageDetector from 'i18next-browser-languagedetector';
 
 import apiManager from './lib/APIManager';
 import App from './Login/App';
