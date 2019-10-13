@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import i18next from 'i18next';
+import qrcode from 'qrcode-generator';
 
 import apiManager from '../lib/APIManager';
 import messageDispatcher from '../lib/MessageDispatcher';
@@ -87,10 +88,13 @@ class SchemeOTP extends Component {
                   "period=" + this.state.myOtp.time_step_size;
       }
     }
-    $('#qrcode').empty();
+    document.getElementById('qrcode').innerHTML = ''
     if (url) {
       this.setState({otpUrl: url}, () => {
-        $('#qrcode').qrcode(url);
+        var qr = qrcode(0, 'L');
+        qr.addData(url);
+        qr.make();
+        document.getElementById('qrcode').innerHTML = qr.createSvgTag(4);
       });
     } else {
       this.setState({otpUrl: false});
@@ -267,8 +271,8 @@ class SchemeOTP extends Component {
         {jsxHOTP}
         {jsxTOTP}
         <div className="row">
-          <div className="col-md-12">
-            <a href={this.state.otpUrl} title={this.state.otpUrl}>
+          <div className="col-md-4">
+            <a href={this.state.otpUrl||""} title={this.state.otpUrl||""}>
               <div id="qrcode"></div>
             </a>
           </div>
