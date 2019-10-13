@@ -1,3 +1,12 @@
+/**
+ * webpack.config.js
+ * 
+ * webpack configuration for build in production
+ * 
+ * Copyright 2019 Nicolas Mora <mail@babelouest.org>
+ * 
+ */
+
 var path = require('path');
 var webpack = require('webpack');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
@@ -54,10 +63,10 @@ module.exports = {
 			}
 		})
 	],
-  optimization: {
-    splitChunks: {
-      chunks: 'all',
-      filename: 'vendors.js'
-    }
-  }
+	optimization: {
+		splitChunks: {
+			chunks: 'all',
+			filename: 'vendors.js'
+		}
+	}
 }
