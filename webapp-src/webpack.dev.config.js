@@ -1,3 +1,14 @@
+/**
+ * webpack.dev.config.js
+ * 
+ * webpack configuration for development mode
+ * Will run a http server providing the webapp
+ * on http://localhost:3000/
+ * 
+ * Copyright 2019 Nicolas Mora <mail@babelouest.org>
+ * 
+ */
+
 var path = require('path');
 
 module.exports = {

@@ -1,3 +1,14 @@
+/**
+ * webpack.polyfill.config.js
+ * 
+ * webpack configuration for build in production
+ * with polyfill plugin so old javascript engine (i.e. < es6)
+ * can run the build app
+ * 
+ * Copyright 2019 Nicolas Mora <mail@babelouest.org>
+ * 
+ */
+
 var path = require('path');
 var webpack = require('webpack');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
@@ -54,10 +65,10 @@ module.exports = {
 			}
 		})
 	],
-  optimization: {
-    splitChunks: {
-      chunks: 'all',
-      filename: 'vendors.js'
-    }
-  }
+	optimization: {
+		splitChunks: {
+			chunks: 'all',
+			filename: 'vendors.js'
+		}
+	}
 }
