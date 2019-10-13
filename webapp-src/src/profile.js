@@ -1,3 +1,14 @@
+/**
+ * 
+ * Glewlwyd profile application
+ * 
+ * Web application for users to manage their profile
+ * Used to manage personal data and schemes registration
+ * 
+ * Copyright 2019 Nicolas Mora <mail@babelouest.org>
+ * 
+ */
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 import i18next from 'i18next';

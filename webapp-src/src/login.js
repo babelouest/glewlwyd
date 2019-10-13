@@ -1,3 +1,14 @@
+/**
+ * 
+ * Glewlwyd login application
+ * 
+ * Web application for users to login to Glewlwyd
+ * Handle password and schemes authentication
+ * 
+ * Copyright 2019 Nicolas Mora <mail@babelouest.org>
+ * 
+ */
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 import i18next from 'i18next';
