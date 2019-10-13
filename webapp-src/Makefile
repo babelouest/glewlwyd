@@ -37,7 +37,7 @@ polyfill: build-polyfill-webapp install-webapp
 install-webapp:
 	find $(WEBAPP_DEST) ! -name config.json ! -name webapp ! -name .gitignore -delete
 	cp -R index.html login.html profile.html config.json.sample favicon.ico css/ js/ locales/ webfonts/ $(WEBAPP_DEST)
-	cp output/admin.js output/login.js output/profile.js $(WEBAPP_DEST)
+	cp output/*.js $(WEBAPP_DEST)
 
 build-webapp:
 	$(JSC) run build
