@@ -7,6 +7,8 @@
 - Add possibility to build UI with Internet Explorer support
 - Fix gcc9 warnings
 - Add `autocomplete="off"` and `autofocus` properties in some input
+- Clean UI code a lot by adding most libraries in `package.json` instead of static files in `webapp-src/js`
+- Use vanilla `qrcode-generator` instead of `jquery.qrcode` because the last one embedded the first one, so it was overkill
 
 ## 2.0.0-rc2
 
