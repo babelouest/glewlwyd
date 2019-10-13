@@ -18,6 +18,7 @@ class SchemeOTP extends Component {
       myOtp: false,
       errorList: {},
       otpUrl: false,
+      qrcode: "",
       allowHotp: false,
       allowTotp: false
     };
@@ -88,16 +89,13 @@ class SchemeOTP extends Component {
                   "period=" + this.state.myOtp.time_step_size;
       }
     }
-    document.getElementById('qrcode').innerHTML = ''
     if (url) {
-      this.setState({otpUrl: url}, () => {
-        var qr = qrcode(0, 'L');
-        qr.addData(url);
-        qr.make();
-        document.getElementById('qrcode').innerHTML = qr.createSvgTag(4);
-      });
+      var qr = qrcode(0, 'L');
+      qr.addData(url);
+      qr.make();
+      this.setState({otpUrl: url, qrcode: qr.createSvgTag(4)});
     } else {
-      this.setState({otpUrl: false});
+      this.setState({otpUrl: false, qrcode: ""});
     }
   }
   
@@ -188,7 +186,7 @@ class SchemeOTP extends Component {
   }
   
 	render() {
-    var jsxHOTP, jsxTOTP, secretJsx, jsxHotpOption, jsxTotpOption;
+    var jsxHOTP, jsxTOTP, secretJsx, jsxHotpOption, jsxTotpOption, jsxQrcode;
     secretJsx = 
       <div className="row">
         <div className="col-md-12">
@@ -241,6 +239,16 @@ class SchemeOTP extends Component {
     if (this.state.allowTotp) {
       jsxTotpOption = <a className={"dropdown-item"+(this.state.myOtp.type==="TOTP"?" active":"")} href="#" onClick={(e) => this.changeType(e, "TOTP")}>{i18next.t("profile.scheme-otp-type-TOTP")}</a>;
     }
+    if (this.state.otpUrl) {
+      jsxQrcode = 
+        <div className="row">
+          <div className="col-md-4">
+            <a href={this.state.otpUrl} title={this.state.otpUrl}>
+              <div dangerouslySetInnerHTML={{__html: this.state.qrcode}} />
+            </a>
+          </div>
+        </div>
+    }
 
     return (
       <div>
@@ -270,13 +278,7 @@ class SchemeOTP extends Component {
         </div>
         {jsxHOTP}
         {jsxTOTP}
-        <div className="row">
-          <div className="col-md-4">
-            <a href={this.state.otpUrl||""} title={this.state.otpUrl||""}>
-              <div id="qrcode"></div>
-            </a>
-          </div>
-        </div>
+        {jsxQrcode}
         <div className="row">
           <div className="col-md-12">
             <hr/>
