@@ -1,3 +1,13 @@
+/**
+ * 
+ * Glewlwyd admin application
+ * 
+ * Web application to manage users, clients, scopes, module instances, scheme instances and plugin instances
+ * 
+ * Copyright 2019 Nicolas Mora <mail@babelouest.org>
+ * 
+ */
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 import i18next from 'i18next';
