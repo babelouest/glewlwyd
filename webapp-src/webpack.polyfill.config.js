@@ -53,5 +53,11 @@ module.exports = {
 			}
 			}
 		})
-	]
+	],
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+      filename: 'vendors.js'
+    }
+  }
 }
