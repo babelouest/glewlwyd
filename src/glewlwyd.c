@@ -1406,7 +1406,7 @@ int check_config(struct config_elements * config) {
  * Print help message to output file specified
  */
 void print_help(FILE * output) {
-  fprintf(output, "\nGlewlwyd OAuth2 authentication server\n");
+  fprintf(output, "\nGlewlwyd Single-Sign-On (SSO) server with multiple factor authentication\n");
   fprintf(output, "\n");
   fprintf(output, "Version %s\n", _GLEWLWYD_VERSION_);
   fprintf(output, "\n");
