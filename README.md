@@ -48,6 +48,9 @@ A docker image is available for tests on localhost, run the following command:
 $ docker run --rm -it -p 4593:4593 babelouest/glewlwyd
 ```
 
+User: `admin`
+Password: `password`
+
 And open the address [http://localhost:4593/](http://localhost:4593/) on your browser.
 
 More information in the [install documentation](docs/INSTALL.md#docker).
