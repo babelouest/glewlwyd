@@ -589,6 +589,7 @@ The `glewlwyd.conf` has the following content:
 
 failregex = ^.* - Glewlwyd WARNING: Security - Authorization invalid for username .* at IP Address <HOST>
             ^.* - Glewlwyd WARNING: Security - Code invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Token invalid at IP Address <HOST>
             ^.* - Glewlwyd WARNING: Security - Scheme email - code sent for username .* at IP Address <HOST>
 ignoreregex =
 ```
