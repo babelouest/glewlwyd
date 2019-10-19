@@ -47,6 +47,26 @@ An access token payload has the following JSON format:
 }
 ```
 
+## Generate a key pair for JWT access tokens signatures
+
+To create a key/certificate pair in RSA or ECDSA format, run the following commands on a linux shell with openssl installed:
+
+```shell
+$ # RSA KEY
+$ # private key
+$ openssl genrsa -out private-rsa.key 4096
+$ # public key
+$ openssl rsa -in private-rsa.key -outform PEM -pubout -out public-rsa.pem
+
+$ # ECDSA KEY
+$ # private key
+$ openssl ecparam -genkey -name secp521r1 -noout -out private-ecdsa.key
+$ # public key
+$ openssl ec -in private-ecdsa.key -pubout -out public-ecdsa.pem
+```
+
+For more information on keys generation, see [OpenSSL Documentation](https://www.openssl.org/docs/).
+
 ## Installation
 
 ![plugin-oidc](screenshots/plugin-oidc.png)
