@@ -1758,7 +1758,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
       }
       o_free(issued_for);
     } else if (check_result_value(j_refresh, G_ERROR_NOT_FOUND)) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 get_access_token_from_refresh - Error token not found");
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
       response->status = 400;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 get_access_token_from_refresh - Error validate_refresh_token");
@@ -1810,7 +1810,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
         response->status = 400;
       }
     } else if (check_result_value(j_refresh, G_ERROR_NOT_FOUND)) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 delete_refresh_token - token invalid");
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
       response->status = 400;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 delete_refresh_token - Error validate_refresh_token");
