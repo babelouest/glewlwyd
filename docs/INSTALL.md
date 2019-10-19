@@ -46,6 +46,7 @@ libcurl
 libldap2
 libmariadbclient
 libsqlite3
+libpq
 libconfig
 libgnutls
 libjwt
@@ -113,7 +114,7 @@ $ sudo dpkg -i libulfius_2.6.3_ubuntu_disco_x86_64.deb
 $ sudo dpkg -i glewlwyd_2.0.0-rc2_ubuntu_disco_x86_64.deb
 ```
 
-If there's no package available for your distribution, you can recompile it manually using `CMake` or `Makefile`.
+If there's no package available for your distribution, you can compile it manually using `CMake` or `Makefile`.
 
 ## Docker
 
@@ -125,7 +126,10 @@ Run the docker image `babelouest/glewlwyd` hosted on docker cloud, example:
 docker run --rm -it -p 4593:4593 babelouest/glewlwyd
 ```
 
-This image uses a sqlite3 database hosted inside the docker instance, so all data will be lost when the docker instance will be stopped.
+User: `admin`
+Password : `password`
+
+This image configuration uses a sqlite3 database hosted inside the docker instance, so all data will be lost when the docker instance will be stopped.
 In this instance, both configuration files `glewlwyd.conf` (backend) and `config.json` (frontend) are stored in `/etc/glewlwyd`.
 
 You can overwrite the configuration files `glewlwyd.conf` and `config.json` by mounting a volume on `/etc/glewlwyd` when you run the docker image. Point this volume to a local directory on the host.
@@ -149,16 +153,8 @@ Download the [latest source tarball](https://github.com/babelouest/glewlwyd/rele
 On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install those dependencies using the following command:
 
 ```shell
-$ sudo apt-get install autoconf automake libtool libmicrohttpd-dev sqlite3 libsqlite3-dev default-libmysqlclient-dev libpq-dev libgnutls-dev libconfig-dev libssl-dev libldap2-dev liboath-dev
+$ sudo apt-get install libmicrohttpd-dev sqlite3 libsqlite3-dev default-libmysqlclient-dev libpq-dev libgnutls-dev libconfig-dev libldap2-dev liboath-dev libjwt-dev libcbor-dev
 ```
-
-#### Journald logs
-
-The library libsystemd-dev is required if you want to log messages in journald service. If you don't want or can't have journald, you can compile yder library without journald support. See [Yder documentation](https://github.com/babelouest/yder).
-
-#### Libssl vs GnuTLS
-
-Both libraries are mentioned required, but you can skip libssl if you run `./configure` when installing `libjwt` with the option `--without-openssl`. `gnutls` 3.5.8 minimum is required. For this documentation to be compatible with most Linux distributions, libssl isn't removed from the required libraries yet.
 
 #### Libmicrohttpd bug on POST parameters
 
@@ -223,7 +219,7 @@ $ sudo make install
 # Install Hoel
 $ git clone https://github.com/babelouest/hoel.git
 $ cd hoel/src/
-$ make DISABLE_POSTGRESQL=1
+$ make
 $ sudo make install
 
 # Install Glewlwyd
@@ -250,7 +246,7 @@ To enable environment variables in Glewlwyd, you must execute the program with t
 - Config file variable: `port`
 - Environment variable: `GLWD_PORT`
 
-Optional, The TCP port the service will listen to incoming cnnexions. The port number must be available to the user running Glewlwd process. Default value is 4593.
+Optional, The TCP port the service will listen to incoming connexions. The port number must be available to the user running Glewlwd process. Default value is 4593.
 
 ### External URL
 
@@ -396,22 +392,28 @@ profile_scope="g_profile"
 - Config file variable: `user_module_path`
 - Environment variable: `GLWD_USER_MODULE_PATH`
 
+Mandatory, path to user modules.
+
 #### Client modules path
 
 - Config file variable: `client_module_path`
 - Environment variable: `GLWD_CLIENT_MODULE_PATH`
+
+Mandatory, path to client modules.
 
 #### User auth scheme modules path
 
 - Config file variable: `user_auth_scheme_module_path`
 - Environment variable: `GLWD_AUTH_SCHEME_MODUE_PATH`
 
+Mandatory, path to authentication scheme modules.
+
 #### Plugin modules path
 
 - Config file variable: `plugin_module_path`
 - Environment variable: `GLWD_PLUGIN_MODULE_PATH`
 
-Mandatory, path to modules.
+Mandatory, path to plugin modules.
 
 ### Digest algorithm
 
@@ -548,7 +550,7 @@ An administrator in the LDAP back-end is a user who has the `admin_scope` (defau
 
 ### Install as a service
 
-The files `glewlwyd-init` (SysV init) and `glewlwyd.service` (Systemd) can be used to have glewlwyd as a daemon. They are fitted for a Raspbian distribution, but can easily be changed for other systems. It's highky recommended to run glewlwyd as a user without root access. Glewlwyd requires to be able top open a TCP port connection, a full access to the glewlwyd database, read access to the config file `glewlwyd.conf` and the installed `webapp/` folder (typically /usr/share/glewlwyd/webapp`.
+The files `glewlwyd-init` (SysV init) and `glewlwyd.service` (Systemd) can be used to run glewlwyd as a daemon. They are fitted for a Raspbian distribution, but can easily be changed for other systems. It's highky recommended to run glewlwyd as a user without root access. Glewlwyd requires to be able to open a TCP port connection, a full access to the glewlwyd database, read access to the config file `glewlwyd.conf` and the installed `webapp/` folder (typically /usr/share/glewlwyd/webapp`.
 
 #### Install as a SysV init daemon and run
 
