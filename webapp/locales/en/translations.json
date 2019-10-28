@@ -482,7 +482,7 @@
     "mod-glwd-addr-claim-country": "Country property",
     "mod-glwd-addr-claim-country-ph": "Ex: country",
     "mod-glwd-addr-claim-mandatory": "Mandatory",
-    "mod-glwd-oidc-general-title": "Genral",
+    "mod-glwd-oidc-general-title": "General",
     "mod-glwd-sign-title": "Tokens signature",
     "mod-glwd-token-title": "Tokens parameter",
     "mod-glwd-auth-type-title": "Authentication types",
