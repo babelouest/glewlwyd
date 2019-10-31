@@ -27,7 +27,7 @@
   - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
   - [Non-password authentication](#non-password-authentication)
 
-The installation comes with a default configuration that can be updated or overwritten via the administration page.
+The installation comes with a default configuration that can be updated or overwritten via the administration page or the configuration file.
 
 The default configuration uses Glewlwyd's database as backend for users and clients. The scopes `g_admin` and `g_profile` (for admin page and profile page) are configured for a session duration of 10 minutes.
 
@@ -60,11 +60,11 @@ Go to `parameters/user` menu in the navigation tab. Click on the `+` button to a
 - LDAP
 - HTTP authentication
 
-You can add the same instance of the same user backend module as many times as you want. A user backend module is distinguished by its module name and its instance name, example `database/localDB`, `ldap/companyAD`. The instance name must be unique though, i.e. you can't have `database/local` and `ldap/local` as user backend instances.
+You can add the same instance of the same user backend module as many times as you want. A user backend module is identified by its module name and its instance name, example `database/localDB`, `ldap/companyAD`. The instance name must be unique though, i.e. you can't have `database/local` and `ldap/local` as user backend instances.
 
 #### Database backend
 
-The database backend requires an access to a database. You can use the same backend as the Glewlwyd server or use a different database. If you use a different database, it must be initialized with the script available in `docs/database/user/database.[sqlite3|mariadb|postgresql].sql`.
+The database backend requires an access to a database. You can use the same backend as the Glewlwyd server or use a different database. If you use a different database, it must be initialized with the script available in `src/user/database.[sqlite3|mariadb|postgresql].sql`.
 
 Read the full [documentation](USER_DATABASE.md).
 
@@ -76,7 +76,7 @@ Read the full [documentation](USER_LDAP.md).
 
 #### HTTP authentication
 
-With this user backend module, every time a user/password access is required, Glewlwyd will use the login/password provided to authenticate to the HTTP service configured and return the result: user valid, user invalid or server error. You must set at least one scope that will be available for all users connecting via this backend.
+With this user backend module, every time a user/password access is required, Glewlwyd will use the login/password provided to authenticate on the HTTP service configured and return the result: user valid, user invalid or server error. You must set at least one scope that will be available for all users connecting via this backend.
 
 This module is read-only, and no user data will be stored in Glewlwyd's storage system, except the user sessions. Which means getting the user list of an HTTP backend will always return an empty list and getting the details of any username will return a build-up JSON object with the following data:
 
@@ -104,7 +104,7 @@ You can add the same instance of the same client backend module as many times as
 
 #### Database backend
 
-The database backend requires an access to a database. You can use the same backend as the Glewlwyd server or use a different database. If you use a different database, it must be initialized with the script available in `docs/database/client/database.[sqlite3|mariadb|postgresql].sql`.
+The database backend requires an access to a database. You can use the same backend as the Glewlwyd server or use a different database. If you use a different database, it must be initialized with the script available in `src/client/database.[sqlite3|mariadb|postgresql].sql`.
 
 Read the full [documentation](CLIENT_DATABASE.md).
 
@@ -152,13 +152,13 @@ Read the full [documentation](OTP.md).
 
 #### TLS Certificate scheme
 
-The TLS Certificates scheme requires [SSL/TLS with CA certificate](https://github.com/babelouest/glewlwyd/blob/master/docs/INSTALL.md#ssltls) enabled.
+The TLS Certificates scheme requires [SSL/TLS with CA certificate](https://github.com/babelouest/glewlwyd/blob/master/docs/INSTALL.md#ssltls) enabled or a reverse proxy configured to authenticate certificates and transfer the certificate data to Glewlwyd's API.
 
 Read the full [documentation](CERTIFICATE.md).
 
 #### Retype-password scheme
 
-The Retype-password schema allows to make mandatory to retype the user password to authenticate, even if the session is authenticated with a valid password. This scheme may be useful to force user to retype its password in some critical process.
+The Retype-password schema allows to mandatory retype the user password to authenticate, even if the session is authenticated with a valid password. This scheme may be useful to force user to retype its password in some critical process.
 
 ### Scopes
 
@@ -183,7 +183,7 @@ Go to `parameters/plugins` menu in the navigation tab. Click on the `+` button t
 
 This module has the same behaviour as the legacy Glewlwyd 1.x Oauth2. The new features available are:
 
-- Allow to use a refresh token as a `"rolling refresh"`, so every time an access token is refreshed, the lifetime of the refresh token will be reset to the original duration. So if a token is refreshed periodically, users won't have to reconnect and request a new refresh token every 2 weeks or so.
+- Allow to use a refresh token as a `"rolling refresh"`, so every time an access token is refreshed, the lifetime of the refresh token will be reset to the original duration. Then if a token is refreshed periodically, users won't have to reconnect and request a new refresh token every 2 weeks or so.
 - Allow to overwrite default `rolling refresh` setting and refresh token duration for every scope individually. `rolling refresh` disabled and the lowest refresh token duration have precedence in case of conflicting scopes settings.
 - Allow to add mutiple user properties in the `access_token` rather than one.
 
