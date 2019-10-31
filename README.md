@@ -32,7 +32,7 @@ Its plugin architecture makes it easy to add new modules or plugins, or modify e
 
 ![logged in](docs/screenshots/login-nopassword.png)
 
-Glewlwyd 2.0 Realease Candidate 2 [is out](https://github.com/babelouest/glewlwyd/releases/tag/v2.0.0-rc2). All the planned new functionalities before Release 2.0 are now implemented. What's left before the official 2.0 release is to make sure no critical or important bugs are still present. Feel free to [install](docs/INSTALL.md), test it, and [send feedbacks](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
+Glewlwyd 2.0 [is released](https://github.com/babelouest/glewlwyd/releases/tag/v2.0.). Feel free to [install](docs/INSTALL.md), test it, and [send feedbacks](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
 
 Important! Due to a complete database reworking of the application, you can't upgrade an existing installation from Glewlwyd 1.x to Glewlwyd 2.x.
 
@@ -48,8 +48,8 @@ A docker image is available for tests on localhost, run the following command:
 $ docker run --rm -it -p 4593:4593 babelouest/glewlwyd
 ```
 
-User: `admin`
-Password: `password`
+- User: `admin`
+- Password: `password`
 
 And open the address [http://localhost:4593/](http://localhost:4593/) on your browser.
 
