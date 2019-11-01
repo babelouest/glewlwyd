@@ -6,7 +6,7 @@
    * [Install Glewlwyd on Raspbian Stretch for Raspberry Pi](#install-glewlwyd-on-raspbian-stretch-for-raspberry-pi)
    * [Install Glewlwyd on Debian Buster](#install-glewlwyd-on-debian-buster)
    * [Install Glewlwyd on Ubuntu 18.04 LTS Bionic](#install-glewlwyd-on-ubuntu-1804-lts-bionic)
-   * [Install Glewlwyd on Ubuntu 19.04 Disco](#install-glewlwyd-on-ubuntu-1904-disco)
+   * [Install Glewlwyd on Ubuntu 19.04 Eoan](#install-glewlwyd-on-ubuntu-1904-eoan)
 3. [Docker](#docker)
 4. [Manual install from source](#manual-install-from-source)
    * [Dependencies](#dependencies)
@@ -28,10 +28,10 @@
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/glewlwyd.svg)](https://repology.org/metapackage/glewlwyd)
 
-Glewlwyd 1.x is available in Debian based distributions as official package. Check out your distribution documentation to install the package automatically.
+Glewlwyd is available in some distributions as official package. Check out your distribution documentation to install the package automatically.
 
 ```shell
-$ # Example for Ubuntu 19.04
+$ # Example to install Glewlwyd 1.4.9 on Ubuntu 19.10
 $ apt install glewlwyd
 ```
 
@@ -58,26 +58,26 @@ libcbor
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-rc2/glewlwyd-full_2.0.0-rc2_debian_buster_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0-rc2_debian_buster_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.0.0_debian_buster_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0_debian_buster_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.1_debian_buster_x86_64.deb
 $ sudo dpkg -i libyder_1.4.8_debian_buster_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.11_debian_buster_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.3_debian_buster_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0-rc2_debian_buster_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.12_debian_buster_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.4_debian_buster_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0_debian_buster_x86_64.deb
 ```
 
-#### Install Glewlwyd on Raspbian Stretch for Raspberry Pi
+#### Install Glewlwyd on Raspbian Buster for Raspberry Pi
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-b1/glewlwyd-full_2.0.0-rc2_raspbian_stretch_armv6l.tar.gz
-$ tar xf glewlwyd-full_2.0.0-rc2_Debian_stretch_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.0.0_Debian_stretch_x86_64.deb
-$ sudo dpkg -i libyder_1.4.6_Debian_stretch_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.11_Debian_stretch_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.1_Debian_stretch_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0-rc2_Debian_stretch_x86_64.deb
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.0.0_raspbian_buster_armv6l.tar.gz
+$ tar xf glewlwyd-full_2.0.0_raspbian_buster_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.0.0_raspbian_buster_x86_64.deb
+$ sudo dpkg -i libyder_1.4.6_raspbian_buster_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.12_raspbian_buster_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.1_raspbian_buster_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0_raspbian_buster_x86_64.deb
 ```
 
 #### Install Glewlwyd on Ubuntu 18.04 LTS Bionic
@@ -92,26 +92,26 @@ $ autoreconf -i
 $ ./configure --without-openssl
 $ make && sudo make install
 $ cd ..
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-rc2/glewlwyd-full_2.0.0-rc2_ubuntu_bionic_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0-rc2_ubuntu_bionic_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.0.0_ubuntu_bionic_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0_ubuntu_bionic_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.1_ubuntu_bionic_x86_64.deb
 $ sudo dpkg -i libyder_1.4.8_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.11_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.3_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0-rc2_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.12_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.4_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0_ubuntu_bionic_x86_64.deb
 ```
 
-#### Install Glewlwyd on Ubuntu 19.04 Disco
+#### Install Glewlwyd on Ubuntu 19.10 Eoan
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0-rc2/glewlwyd-full_2.0.0-rc2_ubuntu_disco_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0-rc2_ubuntu_disco_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.0.1_ubuntu_disco_x86_64.deb
-$ sudo dpkg -i libyder_1.4.8_ubuntu_disco_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.11_ubuntu_disco_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.3_ubuntu_disco_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0-rc2_ubuntu_disco_x86_64.deb
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.0.0_ubuntu_eoan_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.0.0_ubuntu_eoan_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.0.1_ubuntu_eoan_x86_64.deb
+$ sudo dpkg -i libyder_1.4.8_ubuntu_eoan_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.12_ubuntu_eoan_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.4_ubuntu_eoan_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.0.0_ubuntu_eoan_x86_64.deb
 ```
 
 If there's no package available for your distribution, you can compile it manually using `CMake` or `Makefile`.
@@ -126,8 +126,8 @@ Run the docker image `babelouest/glewlwyd` hosted on docker cloud, example:
 docker run --rm -it -p 4593:4593 babelouest/glewlwyd
 ```
 
-User: `admin`
-Password : `password`
+- User: `admin`
+- Password : `password`
 
 This image configuration uses a sqlite3 database hosted inside the docker instance, so all data will be lost when the docker instance will be stopped.
 In this instance, both configuration files `glewlwyd.conf` (backend) and `config.json` (frontend) are stored in `/etc/glewlwyd`.
@@ -156,7 +156,7 @@ On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install
 $ sudo apt-get install libmicrohttpd-dev sqlite3 libsqlite3-dev default-libmysqlclient-dev libpq-dev libgnutls-dev libconfig-dev libldap2-dev liboath-dev libjwt-dev libcbor-dev
 ```
 
-#### Libmicrohttpd bug on POST parameters
+#### Libmicrohttpd 0.9.38 minimum required
 
 With Libmicrohttpd 0.9.37 and older version, there is a bug when parsing `application/x-www-form-urlencoded` parameters. This is fixed in later version, from the 0.9.38, so if your Libmicrohttpd version is older than that, I suggest getting a newer version of [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/).
 
@@ -233,13 +233,15 @@ $ sudo make install
 
 Glewlwyd requires several configuration variables to work. You can specify those variables in a configuration file, environment variables, or both. In addition, some variables can be set via command-line arguments.
 
-The command-line arguments have the higher priority, followed by the environment variables, then the configuration file.
-
 To run Glewlwyd with the config file, copy `glewlwyd.conf.sample` to `glewlwyd.conf`, edit the file `glewlwyd.conf` with your own settings.
 
 The following paragraphs describe all the configuration parameters.
 
 To enable environment variables in Glewlwyd, you must execute the program with the `-e` command-line argument.
+
+You can use environment variable configuration, configuration file and command-line arguments at the same time, just keep in mind the following priority order: command-line arguments have the higher priority, followed by the environment variables, then the configuration file.
+
+When you change the configuration file or the environment variables values, you must restart Glewlwyd to use the new configuration.
 
 ### Port number
 
@@ -420,11 +422,11 @@ Mandatory, path to plugin modules.
 - Config file variable: `hash_algorithm`
 - Environment variable: `GLWD_HASH_ALGORITHM`
 
-Optional, default value is SHA256.
+Optional, default value is `SHA256`.
 
 Specify in the config file the parameter `hash_algorithm` to store token and secret digests.
 
-Algorithms available are SHA1, SHA256, SHA512, MD5. Algorithms recommended are SHA256 or SHA512.
+Algorithms available are `SHA1`, `SHA256`, `SHA512` and `MD5`. Algorithms recommended are `SHA256` or `SHA512`.
 
 ### SSL/TLS
 
@@ -445,14 +447,14 @@ Algorithms available are SHA1, SHA256, SHA512, MD5. Algorithms recommended are S
 
 #### Secure connection ca file
 
-This configuration is mandatory only if you want to use TLS Certificate authentication schemes, it must contain the CA certificate file used to authenticate clients certificates. Otherwise you can skip it.
+This configuration is mandatory only if you want to use TLS Certificate authentication schemes in direct access, it must contain the CA certificate file used to authenticate clients certificates. Otherwise you can skip it.
 
 If this option is set, users can still connect to Glewlwyd without TLS certificate.
 
 - Config file variable: `secure_connection_ca_file`
 - Environment variable: `GLWD_SECURE_CONNECTION_CA_FILE`
 
-OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avoid data and token to be stolen, or Man-In-The-Middle attacks. Glewlwyd supports starting a secure connection with a private/public key certificate, but it also can be with a classic non-secure HTTP connection, and be available to users behind a HTTPS proxy for example. Glewlwyd won't check that you use it in a secure connection.
+OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avoid data and token to be stolen, or Man-In-The-Middle attacks. Glewlwyd supports starting a secure connection with a private/public key certificate, but it also can be with a classic non-secure HTTP connection, and be available to users behind a HTTPS proxy for example. Glewlwyd won't check that you use it in a secure connection, but you should.
 
 These configuration variables are optionnal. Default is no secure connection.
 
@@ -483,7 +485,7 @@ GLWD_DATABASE_MARIADB_PORT
 database =
 {
   type = "sqlite3"
-  path = "/tmp/glewlwyd.db"
+  path = "/var/cache/glewlwyd/glewlwyd.db"
 }
 # SQLite database environment variables
 GLWD_DATABASE_TYPE must be set to "sqlite3"
@@ -530,6 +532,9 @@ $ sqlite3 /var/cache/glewlwyd/glewlwyd.db < docs/database/init.sqlite3.sql
 ```
 
 Initialize a PostgreSQL database:
+
+We assume you already have a PostgreSQL database called glewlwyd, check out [PostreSQL documentation](https://www.postgresql.org/docs/9.1/manage-ag-createdb.html) for more information on how to create a PostgreSQL database.
+
 ```shell
 $ psql -Uglewlwyd -W -fdocs/database/init.postgre.sql
 ```
@@ -550,7 +555,7 @@ An administrator in the LDAP back-end is a user who has the `admin_scope` (defau
 
 ### Install as a service
 
-The files `glewlwyd-init` (SysV init) and `glewlwyd.service` (Systemd) can be used to run glewlwyd as a daemon. They are fitted for a Raspbian distribution, but can easily be changed for other systems. It's highky recommended to run glewlwyd as a user without root access. Glewlwyd requires to be able to open a TCP port connection, a full access to the glewlwyd database, read access to the config file `glewlwyd.conf` and the installed `webapp/` folder (typically /usr/share/glewlwyd/webapp`.
+The files `docs/glewlwyd-init` (SysV init) and `docs/glewlwyd.service` (Systemd) can be used to run glewlwyd as a daemon. They are fitted for a Raspbian distribution, but can easily be changed for other systems. It's highly recommended to run Glewlwyd as a user without root access. Glewlwyd requires to be able to open a TCP port connection, a full access to the glewlwyd database, read access to the config file `glewlwyd.conf` and the installed `webapp/` folder (typically `/usr/share/glewlwyd/webapp`.
 
 #### Install as a SysV init daemon and run
 
@@ -574,8 +579,9 @@ You can add specific filter for fail2ban to ban potential attackers.
 
 The `glewlwyd.conf` file is available in [fail2ban/glewlwyd.conf](fail2ban/glewlwyd.conf). It will ban the IP addresses using the following rules:
 - `Authorization invalid` - on a failed auth
-- `Code invalid` - on a invalid code in OAuth2 or OIDC
-- `Scheme email - code sent` - when an OTP code is sent via e-mail, to avoid spamming users
+- `Code invalid` - on invalid code in OAuth2 or OIDC
+- `Token invalid` - on invalid token refresh or token delete in OAuth2 or OIDC
+- `Scheme email - code sent` - when an OTP code is sent via e-mail, to mitigate users spam
 
 The `glewlwyd.conf` has the following content:
 
@@ -618,7 +624,7 @@ The built front-end files are located in the webapp/ directory.
 
 The front-end configuration file must be available under `webapp/config.json` you can copy the file `webapp/config.json.sample`.
 
-You must modify the urls of the API and the html page to match your configuration:
+You should update the urls of the API and the html page to match your configuration:
 
 Example:
 
@@ -637,7 +643,7 @@ By choice, Glewlwyd isn't available for Internet Explorer or browser with a poor
 
 ### Login, Admin and Profile pages
 
-These pages are used when a user requires some access to Glewlwyd. They are simple html pages with a small JavaScript/JQuery application in it to provide the expected behavior, and vanilla bootstrap 4 for the visual consistency. Glewlwyd front-end source code is under license MIT. Fell free to update them to fit your needs or to adapt the front-end to your identity.
+These pages are used when a user requires some access to Glewlwyd. They are simple html pages with a small JavaScript/JQuery application in it to provide the expected behavior, and vanilla bootstrap 4 for the visual consistency. Glewlwyd front-end source code is under MIT license. Fell free to update them to fit your needs or to adapt the front-end to your identity.
 
 ## Run Glewlwyd
 
