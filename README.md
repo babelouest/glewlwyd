@@ -32,7 +32,7 @@ Its plugin architecture makes it easy to add new modules or plugins, or modify e
 
 ![logged in](docs/screenshots/login-nopassword.png)
 
-Glewlwyd 2.0 [is released](https://github.com/babelouest/glewlwyd/releases/tag/v2.0.). Feel free to [install](docs/INSTALL.md), test it, and [send feedbacks](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
+Glewlwyd 2.0 [is released](https://github.com/babelouest/glewlwyd/releases/tag/v2.0.0). Feel free to [install](docs/INSTALL.md), test it, and [send feedbacks](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
 
 Important! Due to a complete database reworking of the application, you can't upgrade an existing installation from Glewlwyd 1.x to Glewlwyd 2.x.
 
