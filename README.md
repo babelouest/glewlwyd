@@ -11,7 +11,7 @@ Authentication processus supported:
 Allows users to authenticate via multiple factors:
 - Password
 - One-time password (TOTP/HOTP)
-- Webauthn (Yubikey, Android safetynet, or none)
+- Webauthn (Yubikey, Android devices)
 - One-time password sent via e-mail
 - TLS Certificate
 
