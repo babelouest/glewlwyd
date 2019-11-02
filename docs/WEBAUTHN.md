@@ -7,7 +7,7 @@ The Webauthn Schema implements authentification based on the [Webauthn API](http
 The user needs to register its device to Glewlwyd first, then when a webauthn authentication is required, the user plugs its device, end the authentication process is validated without the users need to enter a password.
 
 As for now, the following attestation formats are supported by Glewlwyd:
-- Android Safetynet Atttestation (Android devices)
+- Android Safetynet Attestation (Android devices with fingerprint or secret code)
 - FIDO U2F Attestation (ex: Yubikeys)
 
 ## Installation
@@ -45,7 +45,7 @@ Allow device to register to Glewlwyd without a certificate (fmt: 'none'). Check 
 
 ### Force attestation without validation certificate (much lesser safe)
 
-Force all registration to Glewlwyd without a certificate (attestation: 'none', so fmt returned: 'none'). Check this option if you don't want to manage FISO2 devices chain of trust and want to accept all FIDO2 device a user wants to register.
+Force all registration to Glewlwyd without a certificate (attestation set to 'none', therefore fmt returned is 'none'). Check this option if you don't want to manage FIDO2 devices chain of trust and want to accept all FIDO2 device a user wants to register.
 
 ### User must have a valid session to connect
 
@@ -86,4 +86,4 @@ More information is available in this [android developper](https://developer.and
 This is used during the registration of an android device using webauthn. The device certificate will be validated with the 'GlobalSign Root CA certificate - R2'.
 It is highly recommended to [download](https://pki.goog/) this certificate to the server hosting Glewlwyd in DER format and fill this option.
 
-The reason why this certificate isn't hardcoded in Glewlwyd source code or isn't shipped with Glewlwyd package is because Google won't allow to redistribute the certificate in terms compatible with Glewlwyd's license.
+The reason why this certificate isn't hardcoded in Glewlwyd source code or isn't shipped with Glewlwyd package is because Google won't allow to redistribute the certificate in terms compatible with [Glewlwyd's license](../LICENSE).
