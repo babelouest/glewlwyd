@@ -146,7 +146,17 @@ The directory [docker](docker) contains a Docker file to rebuild the docker imag
 
 ## Manual install from source
 
-Download the [latest source tarball](https://github.com/babelouest/glewlwyd/releases/latest) or [git clone](https://github.com/babelouest/glewlwyd.git) from GitHub.
+Glewlwyd has been successfuly compiled for the folowing distribtions:
+
+- Fedora 29+
+- OpenSuse Leap 15
+- OpenSuse Tumbleweed
+
+And probably more!
+
+Let me know if Glewlwyd can be installed and working on your distribution by opening an [issue](https://github.com/babelouest/glewlwyd/issues), if needed, you can describe the non-documented commands required for your case.
+
+Download the [latest source tarball](https://github.com/babelouest/glewlwyd/releases/latest) or [git clone](https://github.com/babelouest/glewlwyd.git) from master branch in GitHub.
 
 ### Dependencies
 
