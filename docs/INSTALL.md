@@ -23,6 +23,7 @@
 8. [Fail2ban filter](#fail2ban-filter)
 9. [Front-end application](#front-end-application)
 10. [Run Glewlwyd](#run-glewlwyd)
+11. [Getting started with the application](#getting-started-with-the-application)
 
 ### Distribution packages
 
@@ -118,6 +119,8 @@ If there's no package available for your distribution, you can compile it manual
 
 ## Docker
 
+The docker page is available at the following address: [https://hub.docker.com/r/babelouest/glewlwyd](https://hub.docker.com/r/babelouest/glewlwyd)
+
 ### Quickstart for tests only
 
 Run the docker image `babelouest/glewlwyd` hosted on docker cloud, example:
@@ -129,8 +132,13 @@ docker run --rm -it -p 4593:4593 babelouest/glewlwyd
 - User: `admin`
 - Password : `password`
 
-This image configuration uses a sqlite3 database hosted inside the docker instance, so all data will be lost when the docker instance will be stopped.
+This image configuration uses a sqlite3 database hosted inside the docker instance, so all data will be lost when the docker instance will be stopped. Also, this docker instance can be accessible vie the address [http://localhost:4593/](http://localhost:4593).
+
 In this instance, both configuration files `glewlwyd.conf` (backend) and `config.json` (frontend) are stored in `/etc/glewlwyd`.
+
+If you need to make the docker instance available in a network, you must update the configuration files as explained below by updating at least the configuration variable `external_url`.
+
+**Customize configuration files without rebuilding the docker image**
 
 You can overwrite the configuration files `glewlwyd.conf` and `config.json` by mounting a volume on `/etc/glewlwyd` when you run the docker image. Point this volume to a local directory on the host.
 
@@ -653,7 +661,16 @@ By choice, Glewlwyd isn't available for Internet Explorer or browser with a poor
 
 ### Login, Admin and Profile pages
 
-These pages are used when a user requires some access to Glewlwyd. They are simple html pages with a small JavaScript/JQuery application in it to provide the expected behavior, and vanilla bootstrap 4 for the visual consistency. Glewlwyd front-end source code is under MIT license. Fell free to update them to fit your needs or to adapt the front-end to your identity.
+These pages are used when a user requires some access to Glewlwyd. They are simple html pages with a small JavaScript/JQuery/ReactJS application in it to provide the expected behavior, and vanilla bootstrap 4 for the visual consistency. Glewlwyd front-end source code is under MIT license. Fell free to update them to fit your needs or to adapt the front-end to your identity.
+
+### Customize css
+
+If you need to customize the css only, you can update the following files:
+- [webapp/css/glewlwyd-custom.css](webapp/css/glewlwyd-custom.css): update the css for the 3 applications (admin, login, profile)
+- [webapp/css/profile-custom.css](webapp/css/profile-custom.css) : update the css for the profile application only
+- [webapp/css/admin-custom.css](webapp/css/admin-custom.css) : update the css for the admin application only
+- [webapp/css/login-custom.css](webapp/css/login-custom.css) : update the css for the login application only
+
 
 ## Run Glewlwyd
 
@@ -673,3 +690,7 @@ $ GLWD_PORT=4593 GLWD_EXTERNAL_URL=http://localhost:4593 GLWD_STATIC_FILES_PATH=
 ```
 
 By default, Glewlwyd is available on TCP port 4593.
+
+## Getting started with the application
+
+When your Glewlwyd instance is up and running, you can complete its configuration with the [getting started documentation](GETTING_STARTED.md).
