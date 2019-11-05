@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 2.0.1
+
+- Add custom css files so users can safely adapt css to their own identity
+
 ## 2.0.0
 
 - Fix UI bugs
