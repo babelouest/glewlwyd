@@ -859,8 +859,159 @@ static int validate_safetynet_ca_root(json_t * j_params, gnutls_x509_crt_t cert_
 
 /**
  * 
+ * Validate the attStmt object under the packed format
+ * https://w3c.github.io/webauthn/#sctn-packed-attestation
+ * (Step) Hey girl, when you smile
+ * You got to know that you drive me wild
+ * 
+ */
+static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, const unsigned char * client_data) {
+  json_t * j_error = json_array(), * j_return;
+  cbor_item_t * key, * alg = NULL, * sig = NULL, * x5c_array = NULL, * cert_leaf = NULL;
+  size_t i, client_data_hash_len = 32, cert_export_len = 128, cert_export_b64_len = 0;
+  char * message;
+  gnutls_pubkey_t pubkey = NULL;
+  gnutls_x509_crt_t cert = NULL;
+  gnutls_datum_t cert_dat, data, signature;
+  int ret, sig_alg = GNUTLS_SIGN_UNKNOWN;
+  unsigned char client_data_hash[32], cert_export[128], cert_export_b64[256];
+
+  data.data = NULL;
+  UNUSED(j_params);
+  
+  if (j_error != NULL) {
+    do {
+      for (i=0; i<cbor_map_size(att_stmt); i++) {
+        key = cbor_map_handle(att_stmt)[i].key;
+        if (cbor_isa_string(key)) {
+          if (0 == o_strncmp((const char *)cbor_string_handle(key), "alg", MIN(o_strlen("alg"), cbor_string_length(key))) && cbor_isa_negint(cbor_map_handle(att_stmt)[i].value)) {
+            alg = cbor_map_handle(att_stmt)[i].value;
+            if (cbor_get_int(alg) == 6) {
+              sig_alg = GNUTLS_SIGN_ECDSA_SHA256;
+            } else if (cbor_get_int(alg) == 34) {
+              sig_alg = GNUTLS_SIGN_ECDSA_SHA384;
+            } else if (cbor_get_int(alg) == 35) {
+              sig_alg = GNUTLS_SIGN_ECDSA_SHA512;
+            }
+            if (sig_alg == GNUTLS_SIGN_UNKNOWN) {
+              json_array_append_new(j_error, json_string("Signature algorithm not supported"));
+              break;
+            }
+          } else if (0 == o_strncmp((const char *)cbor_string_handle(key), "sig", MIN(o_strlen("sig"), cbor_string_length(key))) && cbor_isa_bytestring(cbor_map_handle(att_stmt)[i].value)) {
+            sig = cbor_map_handle(att_stmt)[i].value;
+          } else if (0 == o_strncmp((const char *)cbor_string_handle(key), "x5c", MIN(o_strlen("x5c"), cbor_string_length(key))) && cbor_isa_array(cbor_map_handle(att_stmt)[i].value) && cbor_array_size(cbor_map_handle(att_stmt)[i].value)) {
+            x5c_array = cbor_map_handle(att_stmt)[i].value;
+          } else if (0 == o_strncmp((const char *)cbor_string_handle(key), "ecdaaKeyId", MIN(o_strlen("ecdaaKeyId"), cbor_string_length(key)))) {
+            json_array_append_new(j_error, json_string("ecdaaKeyId not supported"));
+            break;
+          }
+        } else {
+          message = msprintf("attStmt map element %zu key is not a string", i);
+          json_array_append_new(j_error, json_string(message));
+          o_free(message);
+          break;
+        }
+      }
+      
+      if (json_array_size(j_error)) {
+        break;
+      }
+      
+      if (alg == NULL || sig == NULL) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_packed - Error alg or sig are not mapped in att_stmt");
+        break;
+      }
+      
+      // packed disable SELF attestation for now
+      if (x5c_array == NULL) {
+        json_array_append_new(j_error, json_string("SELF(SURROGATE) not supported"));
+        break;
+      }
+      
+      if (gnutls_x509_crt_init(&cert)) {
+        json_array_append_new(j_error, json_string("check_attestation_packed - Error gnutls_x509_crt_init"));
+        break;
+      }
+      if (gnutls_pubkey_init(&pubkey)) {
+        json_array_append_new(j_error, json_string("check_attestation_packed - Error gnutls_pubkey_init"));
+        break;
+      }
+
+      cert_leaf = cbor_array_get(x5c_array, 0);
+      cert_dat.data = cbor_bytestring_handle(cert_leaf);
+      cert_dat.size = cbor_bytestring_length(cert_leaf);
+      
+      if ((ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
+        json_array_append_new(j_error, json_string("Error importing x509 certificate"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error gnutls_pcert_import_x509_raw: %d", ret);
+        break;
+      }
+      if ((ret = gnutls_pubkey_import_x509(pubkey, cert, 0)) < 0) {
+        json_array_append_new(j_error, json_string("Error importing x509 certificate"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error gnutls_pubkey_import_x509: %d", ret);
+        break;
+      }
+      signature.data = cbor_bytestring_handle(sig);
+      signature.size = cbor_bytestring_length(sig);
+      
+      if (!generate_digest_raw(digest_SHA256, client_data, o_strlen((char *)client_data), client_data_hash, &client_data_hash_len)) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error generate_digest_raw client_data");
+        break;
+      }
+      
+      if ((data.data = o_malloc(cbor_bytestring_length(auth_data) + 32)) == NULL) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error o_malloc data.data");
+        break;
+      }
+      
+      memcpy(data.data, cbor_bytestring_handle(auth_data), cbor_bytestring_length(auth_data));
+      memcpy(data.data + cbor_bytestring_length(auth_data), client_data_hash, client_data_hash_len);
+      data.size = cbor_bytestring_length(auth_data) + 32;
+      
+      if (gnutls_pubkey_verify_data2(pubkey, sig_alg, 0, &data, &signature)) {
+        json_array_append_new(j_error, json_string("Invalid signature"));
+      }
+      
+      if ((ret = gnutls_x509_crt_get_key_id(cert, GNUTLS_KEYID_USE_SHA256, cert_export, &cert_export_len)) < 0) {
+        json_array_append_new(j_error, json_string("Error exporting x509 certificate"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error gnutls_x509_crt_get_key_id: %d", ret);
+        break;
+      }
+      
+      if (!o_base64_encode(cert_export, cert_export_len, cert_export_b64, &cert_export_b64_len)) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error o_base64_encode cert_export");
+        break;
+      }
+      
+    } while (0);
+    
+    if (json_array_size(j_error)) {
+      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
+    } else {
+      j_return = json_pack("{sis{ss%}}", "result", G_OK, "data", "certificate", cert_export_b64, cert_export_b64_len);
+    }
+    json_decref(j_error);
+    gnutls_x509_crt_deinit(cert);
+    gnutls_pubkey_deinit(pubkey);
+    o_free(data.data);
+    if (cert_leaf != NULL) {
+      cbor_decref(&cert_leaf);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_packed - Error allocating resources for j_error");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  return j_return;
+}
+
+/**
+ * 
  * Validate the attStmt object under the Android SafetyNet format
- * https://w3c.github.io/webauthn/#android-safetynet-attestation
+ * https://w3c.github.io/webauthn/#sctn-android-safetynet-attestation
  * (step) hey girl, in your eyes
  * I see a picture of me all the time
  * 
@@ -1102,7 +1253,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
 /**
  * 
  * Validate the attStmt object under the fido-u2f format
- * https://w3c.github.io/webauthn/#fido-u2f-attestation
+ * https://w3c.github.io/webauthn/#sctn-fido-u2f-attestation
  * Gonna get to you girl
  * Really want you in my world
  * 
@@ -1478,7 +1629,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_USER_VERIFY));
         
         // Step 12 ignored for now (no extension)
-        //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_ED));
+        //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_ED));
         
         credential_id_len = cbor_bs_handle[CRED_ID_L_OFFSET+1] | (cbor_bs_handle[CRED_ID_L_OFFSET] << 8);
         if (cbor_bs_handle_len < CRED_ID_L_OFFSET+2+credential_id_len) {
@@ -1595,8 +1746,18 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         
         // Steps 13-14
         if (0 == o_strncmp("packed", (char *)fmt, MIN(fmt_len, o_strlen("packed")))) {
-          json_array_append_new(j_error, json_string("fmt 'packed' not handled yet"));
-          ret = G_ERROR_PARAM;
+          j_result = check_attestation_packed(j_params, auth_data, att_stmt, client_data);
+          if (check_result_value(j_result, G_ERROR_PARAM)) {
+            json_array_extend(j_error, json_object_get(j_result, "error"));
+            ret = G_ERROR_PARAM;
+          } else if (!check_result_value(j_result, G_OK)) {
+            ret = G_ERROR_PARAM;
+            y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error check_attestation_packed");
+            json_array_append_new(j_error, json_string("internal error"));
+          } else {
+            j_cert = json_incref(json_object_get(json_object_get(j_result, "data"), "certificate"));
+          }
+          json_decref(j_result);
         } else if (0 == o_strncmp("tpm", (char *)fmt, MIN(fmt_len, o_strlen("tpm")))) {
           json_array_append_new(j_error, json_string("fmt 'tpm' not handled yet"));
           ret = G_ERROR_PARAM;
@@ -1839,7 +2000,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         ret = G_ERROR_PARAM;
         break;
       }
-      if (auth_data_len != 37) {
+      if (auth_data_len < 37) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error authenticatorData invalid");
         ret = G_ERROR_PARAM;
         break;
@@ -1878,7 +2039,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       
       // Step 13 ignored for now
       //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", !!(*flags & FLAG_USER_VERIFY));
-      //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension data: %d", !!(*flags & FLAG_ED));
+      //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension: %d", !!(*flags & FLAG_ED));
       
       // Step 14 ignored for now (no extension)
       
