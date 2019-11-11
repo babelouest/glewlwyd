@@ -20,8 +20,8 @@
 #
 
 CC=gcc
-CFLAGS=-c -Wall -Werror -Wextra -D_REENTRANT $(ADDITIONALFLAGS)
-LIBS=-lorcania -lyder -lulfius -lhoel -ldl -ljansson -lgnutls -lconfig -ljwt -lnettle -lhogweed
+CFLAGS=-c -Wall -Werror -Wextra -D_REENTRANT $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags libulfius) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(shell pkg-config --cflags gnutls) $(shell pkg-config --cflags libconfig) $(shell pkg-config --cflags libjwt) $(shell pkg-config --cflags nettle) $(shell pkg-config --cflags hogweed) $(ADDITIONALFLAGS)
+LIBS=$(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs libulfius) $(shell pkg-config --libs libhoel) $(shell pkg-config --libs jansson) $(shell pkg-config --libs gnutls) $(shell pkg-config --libs libconfig) $(shell pkg-config --libs libjwt) $(shell pkg-config --libs nettle) $(shell pkg-config --libs hogweed) -ldl
 OBJECTS=glewlwyd.o misc.o static_file_callback.o webservice.o session.o user.o scope.o plugin.o client.o module.o
 PREFIX=/usr/local
 CONFIG_FILE=../glewlwyd.conf

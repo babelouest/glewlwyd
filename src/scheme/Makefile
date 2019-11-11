@@ -22,8 +22,8 @@
 DEST=/usr/local
 MODULES_TARGET=$(DEST)/lib/glewlwyd/scheme
 CC=gcc
-CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(ADDITIONALFLAGS)
-LIBS=-lorcania -lyder -lulfius -ldl -ljansson
+CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(shell pkg-config --cflags libjwt) $(shell pkg-config --cflags libcbor) $(ADDITIONALFLAGS)
+LIBS=$(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs libhoel) $(shell pkg-config --libs jansson) -ldl
 TARGET=libmodemail.so libmodwebauthn.so libmodotp.so libmodpassword.so libmodcertificate.so
 
 all: release
@@ -41,10 +41,10 @@ libmodemail.so: email.o misc.o
 	$(CC) -shared -Wl,-soname,libmodemail.so -o libmodemail.so email.o misc.o $(LIBS)
 
 libmodwebauthn.so: webauthn.o misc.o
-	$(CC) -shared -Wl,-soname,libmodwebauthn.so -o libmodwebauthn.so webauthn.o misc.o $(LIBS) -lcbor -ljwt
+	$(CC) -shared -Wl,-soname,libmodwebauthn.so -o libmodwebauthn.so webauthn.o misc.o $(LIBS) $(shell pkg-config --libs libcbor) $(shell pkg-config --libs libjwt)
 
 libmodotp.so: otp.o misc.o
-	$(CC) -shared -Wl,-soname,libmodotp.so -o libmodotp.so otp.o misc.o $(LIBS) -loath
+	$(CC) -shared -Wl,-soname,libmodotp.so -o libmodotp.so otp.o misc.o $(LIBS) $(shell pkg-config --libs liboath)
 
 libmodpassword.so: password.o misc.o
 	$(CC) -shared -Wl,-soname,libmodpassword.so -o libmodpassword.so password.o misc.o $(LIBS)

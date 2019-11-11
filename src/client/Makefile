@@ -22,8 +22,8 @@
 DEST=/usr/local
 MODULES_TARGET=$(DEST)/lib/glewlwyd/client
 CC=gcc
-CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(ADDITIONALFLAGS)
-LIBS=-lorcania -lyder -lulfius -ldl -ljansson
+CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(ADDITIONALFLAGS)
+LIBS=$(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs jansson) -ldl
 TARGET=libmoddatabase.so libmodldap.so
 
 all: release
@@ -38,7 +38,7 @@ libmodmock.so: ../glewlwyd-common.h mock.o misc.o
 	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o misc.o $(LIBS)
 
 libmoddatabase.so: ../glewlwyd-common.h database.o misc.o
-	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o misc.o $(LIBS) -lhoel
+	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o misc.o $(LIBS) $(shell pkg-config --libs libhoel)
 
 libmodldap.so: ../glewlwyd-common.h ldap.o misc.o
 	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o misc.o $(LIBS) -lldap
