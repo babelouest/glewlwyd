@@ -22,8 +22,8 @@
 LOCAL=/usr/local
 MODULES_TARGET=$(LOCAL)/lib/glewlwyd/user
 CC=gcc
-CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(ADDITIONALFLAGS)
-LIBS=-ljansson -lorcania -lyder -ldl
+CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(ADDITIONALFLAGS)
+LIBS=$(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs jansson) -ldl
 LDFLAGS += -Wl,-R '-Wl,-R$$ORIGIN'
 TARGET=libmoddatabase.so libmodldap.so libmodhttp.so
 all: release
@@ -38,7 +38,7 @@ libmodmock.so: mock.o misc.o
 	$(CC) -shared -Wl,-soname,libmodmock.so mock.o misc.o -o libmodmock.so $(LIBS) $(LDFLAGS)
 
 libmoddatabase.so: ../glewlwyd-common.h database.o misc.o
-	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o misc.o $(LIBS) -lhoel
+	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o misc.o $(LIBS) $(shell pkg-config --libs libhoel)
 
 libmodldap.so: ../glewlwyd-common.h ldap.o misc.o
 	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o misc.o $(LIBS) -lldap
