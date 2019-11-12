@@ -111,7 +111,7 @@ class PasswordModal extends Component {
                     <input type="password" 
                            autoComplete="current-password" 
                            className={"form-control" + (this.state.oldPasswordInvalid?" is-invalid":"")} 
-                           id="mod-name" 
+                           id="oldPassword" 
                            placeholder={i18next.t("profile.password-modal-old-password-ph")} 
                            value={this.state.old_password} 
                            onChange={(e) => this.changeOldPassword(e)} />
@@ -126,7 +126,7 @@ class PasswordModal extends Component {
                     <input type="password" 
                            autoComplete="new-password" 
                            className={"form-control" + (this.state.passwordInvalid?" is-invalid":"")} 
-                           id="mod-name" 
+                           id="newPassword" 
                            placeholder={i18next.t("profile.password-modal-new-password-ph", {minLength: this.state.passwordMinLength})} 
                            value={this.state.password} 
                            onChange={(e) => this.changeNewPassword(e)} />
@@ -141,7 +141,7 @@ class PasswordModal extends Component {
                     <input type="password" 
                            autoComplete="new-password" 
                            className={"form-control" + (this.state.passwordConfirmInvalid?" is-invalid":"")} 
-                           id="mod-name" 
+                           id="retypeNewPassword" 
                            placeholder={i18next.t("profile.password-modal-new-password-confirm-ph", {minLength: this.state.passwordMinLength})} 
                            value={this.state.password_confirm} 
                            onChange={(e) => this.changeNewPasswordConfirm(e)} />
