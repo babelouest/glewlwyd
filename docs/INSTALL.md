@@ -2,21 +2,21 @@
 
 1. [Distribution packages](#distribution-packages)
 2. [Pre-compiled packages](#pre-compiled-packages)
-   * [Install Glewlwyd on Debian Stretch](#install-glewlwyd-on-debian-stretch)
-   * [Install Glewlwyd on Raspbian Stretch for Raspberry Pi](#install-glewlwyd-on-raspbian-stretch-for-raspberry-pi)
+   * [Install Glewlwyd on Raspbian Stretch for Raspberry Pi](#install-glewlwyd-on-raspbian-buster-for-raspberry-pi)
    * [Install Glewlwyd on Debian Buster](#install-glewlwyd-on-debian-buster)
-   * [Install Glewlwyd on Ubuntu 18.04 LTS Bionic](#install-glewlwyd-on-ubuntu-1804-lts-bionic)
-   * [Install Glewlwyd on Ubuntu 19.04 Eoan](#install-glewlwyd-on-ubuntu-1904-eoan)
+   * [Install Glewlwyd on Ubuntu 18.04 LTS Bionic](#install-glewlwyd-on-ubuntu-18-04-lts-bionic)
+   * [Install Glewlwyd on Ubuntu 19.10 Eoan](#install-glewlwyd-on-ubuntu-19-10-eoan)
 3. [Docker](#docker)
 4. [Manual install from source](#manual-install-from-source)
    * [Dependencies](#dependencies)
    * [Build Glewlwyd and its dependencies](#build-glewlwyd-and-its-dependencies)
-5. [Configure glewlwyd.conf](#configure-glewlwydconf)
-   * [external_url](#external_url)
-   * [SSL/TLS](#ssltls)
+5. [Configure glewlwyd.conf](#configure-glewlwyd)
+   * [Port number](#port-number)
+   * [External URL](#external-url)
+   * [SSL/TLS](#ssl-tls)
    * [Digest algorithm](#digest-algorithm)
    * [Database back-end initialisation](#database-back-end-initialisation)
-   * [Mime types for webapp files](#mime-types-for-webapp-files)
+   * [Static files mime types](#static-files-mime-types)
    * [Install as a service](#install-as-a-service)
 6. [Initialise database](#initialise-database)
 7. [Install as a service](#install-as-a-service)
@@ -25,18 +25,18 @@
 10. [Run Glewlwyd](#run-glewlwyd)
 11. [Getting started with the application](#getting-started-with-the-application)
 
-### Distribution packages
+## Distribution packages
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/glewlwyd.svg)](https://repology.org/metapackage/glewlwyd)
 
 Glewlwyd is available in some distributions as official package. Check out your distribution documentation to install the package automatically.
 
 ```shell
-$ # Example to install Glewlwyd 1.4.9 on Ubuntu 19.10
+$ # Example to install Glewlwyd 2.0.0 on Ubuntu 19.10
 $ apt install glewlwyd
 ```
 
-### Pre-compiled packages
+## Pre-compiled packages
 
 You can install Glewlwyd with a pre-compiled package available in the [release pages](https://github.com/babelouest/glewlwyd/releases/). The package files `glewlwyd-full_*` contain the package libraries of `orcania`, `yder`, `ulfius` and `hoel` pre-compiled for `glewlwyd`, plus `glewlwyd` package. To install a pre-compiled package, you need the following libraries installed:
 
@@ -55,7 +55,7 @@ liboath
 libcbor
 ```
 
-#### Install Glewlwyd on Debian Buster
+### Install Glewlwyd on Debian Buster
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
@@ -68,7 +68,7 @@ $ sudo dpkg -i libulfius_2.6.4_debian_buster_x86_64.deb
 $ sudo dpkg -i glewlwyd_2.0.0_debian_buster_x86_64.deb
 ```
 
-#### Install Glewlwyd on Raspbian Buster for Raspberry Pi
+### Install Glewlwyd on Raspbian Buster for Raspberry Pi
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
@@ -81,7 +81,7 @@ $ sudo dpkg -i libulfius_2.6.1_raspbian_buster_x86_64.deb
 $ sudo dpkg -i glewlwyd_2.0.0_raspbian_buster_x86_64.deb
 ```
 
-#### Install Glewlwyd on Ubuntu 18.04 LTS Bionic
+### Install Glewlwyd on Ubuntu 18.04 LTS Bionic
 
 ```shell
 $ # Note: libjwt provided with Ubuntu 18.04 LTS Bionic is too old to work with Glewlwyd module Webauthn
@@ -102,7 +102,7 @@ $ sudo dpkg -i libulfius_2.6.4_ubuntu_bionic_x86_64.deb
 $ sudo dpkg -i glewlwyd_2.0.0_ubuntu_bionic_x86_64.deb
 ```
 
-#### Install Glewlwyd on Ubuntu 19.10 Eoan
+### Install Glewlwyd on Ubuntu 19.10 Eoan
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
@@ -513,7 +513,7 @@ GLWD_DATABASE_SQLITE3_PATH
 database =
 {
   type = "postgre"
-  conninfo = "dbname = glewlwyd"
+  conninfo = "host=localhost port=5432 dbname=glewlwyd user=glewlwyd password=secret"
 }
 # PostgreSQL database environment variables
 GLWD_DATABASE_TYPE must be set to "postgre"
@@ -551,31 +551,39 @@ $ sqlite3 /var/cache/glewlwyd/glewlwyd.db < docs/database/init.sqlite3.sql
 
 Initialize a PostgreSQL database:
 
-We assume you already have a PostgreSQL database called glewlwyd, check out [PostreSQL documentation](https://www.postgresql.org/docs/9.1/manage-ag-createdb.html) for more information on how to create a PostgreSQL database.
+Check out [PostgreSQL documentation](https://www.postgresql.org/docs) and select your version for more information the used commands.
 
 ```shell
-$ psql -Uglewlwyd -W -fdocs/database/init.postgre.sql
+$ psql -hlocalhost -Upostgres
+postgres=# create role glewlwyd login password 'secret';
+postgres=# create database glewlwyd owner glewlwyd;
+postgres=# grant connect on database glewlwyd to glewlwyd;
+postgres=# \c glewlwyd
+glewlwyd=# create extension pgcrypto;
+glewlwyd=# \c glewlwyd glewlwyd
+glewlwyd=> \i docs/database/init.postgre.sql
+glewlwyd=> \q
 ```
 
-#### Security warning!
+### Security warning!
 
 Those scripts create a valid database that allow to use glewlwyd. But to avoid potential security issues, you must change the admin password when you first connect to the application.
 
-#### Built-in scope values
+### Built-in scope values
 
 If you want to use a different name for admin scope (default is `g_admin`), or the profile scope (default is `g_profile`), you must update the init script with your own value before running it, change the lines below accordingly.
 
-#### Administrator user
+### Administrator user
 
 An administrator must be present in the back-end to manage the application (manage scopes, users, clients, resources, authorization types).
 
 An administrator in the LDAP back-end is a user who has the `admin_scope` (default `g_admin`) in its scope list.
 
-### Install as a service
+## Install as a service
 
 The files `docs/glewlwyd-init` (SysV init) and `docs/glewlwyd.service` (Systemd) can be used to run glewlwyd as a daemon. They are fitted for a Raspbian distribution, but can easily be changed for other systems. It's highly recommended to run Glewlwyd as a user without root access. Glewlwyd requires to be able to open a TCP port connection, a full access to the glewlwyd database, read access to the config file `glewlwyd.conf` and the installed `webapp/` folder (typically `/usr/share/glewlwyd/webapp`.
 
-#### Install as a SysV init daemon and run
+### Install as a SysV init daemon and run
 
 ```shell
 $ sudo cp glewlwyd-init /etc/init.d/glewlwyd
@@ -583,7 +591,7 @@ $ sudo update-rc.d glewlwyd defaults
 $ sudo service glewlwyd start
 ```
 
-#### Install as a Systemd daemon and run
+### Install as a Systemd daemon and run
 
 ```shell
 $ sudo cp glewlwyd.service /etc/systemd/system
