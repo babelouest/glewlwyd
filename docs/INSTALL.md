@@ -32,7 +32,7 @@
 Glewlwyd is available in some distributions as official package. Check out your distribution documentation to install the package automatically.
 
 ```shell
-$ # Example to install Glewlwyd 2.0.0 on Ubuntu 19.10
+$ # Example to install Glewlwyd 1.4.9 on Ubuntu 19.10
 $ apt install glewlwyd
 ```
 
@@ -551,7 +551,7 @@ $ sqlite3 /var/cache/glewlwyd/glewlwyd.db < docs/database/init.sqlite3.sql
 
 Initialize a PostgreSQL database:
 
-Check out [PostgreSQL documentation](https://www.postgresql.org/docs) and select your version for more information the used commands.
+Check out [PostgreSQL documentation](https://www.postgresql.org/docs) and select your version for more information on the following commands.
 
 ```shell
 $ psql -hlocalhost -Upostgres
