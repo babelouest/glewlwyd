@@ -89,7 +89,6 @@
     "select": "Sélectionner",
     "select-acount-title": "Sélectionner le compte à utiliser",
     "manage-users": "Gérer les utilisateurs connectés",
-    "logout": "Déconnecter",
     "certificate-scheme-title": "Authentification par certificat client",
     "certificate-scheme-auth-success": "Certificat valide",
     "certificate-scheme-auth-invalid": "Certificat invalide",
