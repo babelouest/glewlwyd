@@ -48,7 +48,10 @@ class SchemeMod extends Component {
     .then(() => {
       messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
     })
-    .fail(() => {
+    .fail((err) => {
+      if (err.status === 400) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+      }
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
     })
     .always(() => {
