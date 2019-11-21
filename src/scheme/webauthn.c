@@ -116,6 +116,7 @@ static json_t * get_cert_from_file_path(const char * path) {
       j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
     }
     o_free(cert_content);
+    fclose(fl);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error fopen %s", path);
     j_return = json_pack("{si}", "result", G_ERROR);
