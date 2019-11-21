@@ -70,7 +70,7 @@ static json_t * get_cert_from_file_path(const char * path) {
   FILE * fl;
   size_t len, issued_for_len = 128;
   char * cert_content, issued_for[128] = {0};
-  json_t * j_return;
+  json_t * j_return = NULL;
   
   fl = fopen(path, "r");
   if (fl != NULL) {
@@ -848,8 +848,8 @@ static int validate_certificate_from_root(json_t * j_params, gnutls_x509_crt_t c
   gnutls_datum_t cert_dat = {NULL, 0}, issuer_dat = {NULL, 0};
   gnutls_x509_trust_list_t tlist = NULL;
   gnutls_x509_crt_t cert_x509[2], root_x509 = NULL;
-  json_t * j_cert;
-  size_t index;
+  json_t * j_cert = NULL;
+  size_t index = 0;
   char * issuer;
   
   if ((res = gnutls_x509_crt_get_issuer_dn2(cert_leaf, &issuer_dat)) >= 0) {
