@@ -55,13 +55,18 @@ class WebauthnParams extends Component {
       props.mod.parameters["seed"] = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     }
     
+    if (props.mod.parameters["root-ca-list"] === undefined) {
+      props.mod.parameters["root-ca-list"] = [];
+    }
+    
     this.state = {
       config: props.config,
       mod: props.mod,
       role: props.role,
       check: props.check,
       hasError: false,
-      errorList: {}
+      errorList: {},
+      rootCaPath: ""
     };
     
     if (this.state.check) {
@@ -76,6 +81,9 @@ class WebauthnParams extends Component {
     this.generateSeed = this.generateSeed.bind(this);
     this.toggleAllowFmtNone = this.toggleAllowFmtNone.bind(this);
     this.toggleForceFmtNone = this.toggleForceFmtNone.bind(this);
+    this.handleChangeRootCaPath = this.handleChangeRootCaPath.bind(this);
+    this.addRootCaPath = this.addRootCaPath.bind(this);
+    this.deleteCaPath = this.deleteCaPath.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -143,6 +151,25 @@ class WebauthnParams extends Component {
     this.setState({mod: mod});
   }
   
+  handleChangeRootCaPath(e) {
+    this.setState({rootCaPath: e.target.value});
+  }
+  
+  addRootCaPath() {
+    if (this.state.rootCaPath) {
+      var mod = this.state.mod;
+      mod.parameters["root-ca-list"].push(this.state.rootCaPath);
+      this.setState({rootCaPath: "", mod: mod});
+    }
+  }
+  
+  deleteCaPath(e, index) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["root-ca-list"].splice(index, 1);
+    this.setState({mod: mod});
+  }
+  
   checkParameters() {
     var errorList = {}, hasError = false;
     if (!this.state.mod.parameters["challenge-length"]) {
@@ -175,6 +202,12 @@ class WebauthnParams extends Component {
   }
   
   render() {
+    var listRootCaPath = [];
+    this.state.mod.parameters["root-ca-list"].forEach((caPath, index) => {
+      listRootCaPath.push(
+        <a href="#" onClick={(e) => this.deleteCaPath(e, index)} key={index}><span className="badge badge-primary btn-icon-right">{caPath}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>
+      );
+    });
     return (
       <div>
         <div className="form-group">
@@ -283,6 +316,25 @@ class WebauthnParams extends Component {
             </li>
           </ul>
           {this.state.errorList["pubKey-cred-params"]?<span className="error-input">{this.state.errorList["pubKey-cred-params"]}</span>:""}
+        </div>
+        <hr/>
+        <div className="form-group">
+          <label>{i18next.t("admin.mod-webauthn-root-ca-list")}</label>
+        </div>
+        <div className="form-group">
+          <a href="https://developers.yubico.com/U2F/yubico-u2f-ca-certs.txt" className="badge badge-primary" target="_blank">{i18next.t("admin.mod-webauthn-root-ca-yubico-link")}</a>
+        </div>
+        <div className="form-group">
+          <label htmlFor="webauthn-root-ca-path-input">{i18next.t("admin.mod-webauthn-root-ca-path")}</label>
+          <div className="input-group">
+            <input type="text" className="form-control" id="webauthn-root-ca-path-input" placeholder={i18next.t("admin.mod-webauthn-root-ca-path-ph")} onChange={this.handleChangeRootCaPath} value={this.state.rootCaPath}/>
+            <div className="input-group-append">
+              <button className="btn btn-outline-secondary" type="button" onClick={this.addRootCaPath} title={i18next.t("modal.list-add-title")}>
+                <i className="fas fa-plus"></i>
+              </button>
+            </div>
+          </div>
+          <div className="btn-icon-right">{listRootCaPath}</div>
         </div>
         <hr/>
         <div className="form-group">
