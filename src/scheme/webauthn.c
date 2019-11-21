@@ -64,10 +64,70 @@
 
 #define SAFETYNET_ISSUED_TO "CN=attest.android.com"
 
+static json_t * get_cert_from_file_path(const char * path) {
+  gnutls_x509_crt_t cert = NULL;
+  gnutls_datum_t cert_dat = {NULL, 0}, export_dat = {NULL, 0};
+  FILE * fl;
+  size_t len, issued_for_len = 128;
+  char * cert_content, issued_for[128] = {0};
+  json_t * j_return;
+  
+  fl = fopen(path, "r");
+  if (fl != NULL) {
+    fseek(fl, 0, SEEK_END);
+    len = ftell(fl);
+    cert_content = o_malloc(len);
+    if (cert_content != NULL) {
+      if (fseek(fl, 0, SEEK_SET) == -1) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error fseek");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      } else if (fread(cert_content, 1, len, fl) != len) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error fread");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      } else {
+        cert_dat.data = (unsigned char *)cert_content;
+        cert_dat.size = len;
+        if (!gnutls_x509_crt_init(&cert)) {
+          if (gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER) >= 0 || gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_PEM) >= 0) {
+            if (!gnutls_x509_crt_get_dn(cert, issued_for, &issued_for_len)) {
+              if (gnutls_x509_crt_export2(cert, GNUTLS_X509_FMT_PEM, &export_dat) >= 0) {
+                j_return = json_pack("{sis{ss%ss%}}", "result", G_OK, "certificate", "dn", issued_for, issued_for_len, "x509", export_dat.data, export_dat.size);
+                gnutls_free(export_dat.data);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error gnutls_x509_crt_export2");
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error gnutls_x509_crt_get_dn");
+              j_return = json_pack("{si}", "result", G_ERROR);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error gnutls_x509_crt_import");
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error gnutls_x509_crt_init");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+        gnutls_x509_crt_deinit(cert);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error o_malloc cert_content");
+      j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+    }
+    o_free(cert_content);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error fopen %s", path);
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  return j_return;
+}
+
 static json_t * is_scheme_parameters_valid(json_t * j_params) {
-  json_t * j_return, * j_error, * j_element = NULL;
+  json_t * j_return, * j_error, * j_element = NULL, * j_cert;
   size_t index = 0;
   json_int_t pubkey;
+  char * message;
   
   if (json_is_object(j_params)) {
     j_error = json_array();
@@ -110,6 +170,38 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       }
       if (json_object_get(j_params, "google-root-ca-r2") != NULL && !json_is_string(json_object_get(j_params, "google-root-ca-r2"))) {
         json_array_append_new(j_error, json_string("google-root-ca-r2 is optional and must be a non empty string"));
+      } else if (json_string_length(json_object_get(j_params, "google-root-ca-r2"))) {
+        j_cert = get_cert_from_file_path(json_string_value(json_object_get(j_params, "google-root-ca-r2")));
+        if (check_result_value(j_cert, G_OK)) {
+          json_object_set(j_params, "google-root-ca-r2-content", json_object_get(j_cert, "certificate"));
+        } else {
+          message = msprintf("Error parsing google-root-ca-r2 certificate file %s", json_string_value(json_object_get(j_params, "google-root-ca-r2")));
+          json_array_append_new(j_error, json_string(message));
+          o_free(message);
+        }
+        json_decref(j_cert);
+      }
+      if (json_object_get(j_params, "root-ca-list") != NULL) {
+        if (!json_is_array(json_object_get(j_params, "root-ca-list"))) {
+          json_array_append_new(j_error, json_string("root-ca-list is optional and must be an array of non empty strings"));
+        } else {
+          json_object_set_new(j_params, "root-ca-array", json_array());
+          json_array_foreach(json_object_get(j_params, "root-ca-list"), index, j_element) {
+            if (!json_string_length(j_element)) {
+              json_array_append_new(j_error, json_string("root-ca-list is optional and must be an array of non empty strings"));
+            } else {
+              j_cert = get_cert_from_file_path(json_string_value(j_element));
+              if (check_result_value(j_cert, G_OK)) {
+                json_array_append(json_object_get(j_params, "root-ca-array"), json_object_get(j_cert, "certificate"));
+              } else {
+                message = msprintf("Error parsing certificate file %s", json_string_value(j_element));
+                json_array_append_new(j_error, json_string(message));
+                o_free(message);
+              }
+              json_decref(j_cert);
+            }
+          }
+        }
       }
       if (json_object_get(j_params, "allow-fmt-none") != NULL && !json_is_boolean(json_object_get(j_params, "allow-fmt-none"))) {
         json_array_append_new(j_error, json_string("allow-fmt-none is optional and must be a boolean"));
@@ -750,6 +842,65 @@ static int check_certificate(struct config_module * config, json_t * j_params, c
   return ret;
 }
 
+static int validate_certificate_from_root(json_t * j_params, gnutls_x509_crt_t cert_leaf) {
+  int ret = G_ERROR_NOT_FOUND, res;
+  unsigned int result;
+  gnutls_datum_t cert_dat = {NULL, 0}, issuer_dat = {NULL, 0};
+  gnutls_x509_trust_list_t tlist = NULL;
+  gnutls_x509_crt_t cert_x509[2], root_x509 = NULL;
+  json_t * j_cert;
+  size_t index;
+  char * issuer;
+  
+  if ((res = gnutls_x509_crt_get_issuer_dn2(cert_leaf, &issuer_dat)) >= 0) {
+    issuer = o_strndup((const char *)issuer_dat.data, issuer_dat.size);
+    json_array_foreach(json_object_get(j_params, "root-ca-array"), index, j_cert) {
+      if (0 == o_strcmp(issuer, json_string_value(json_object_get(j_cert, "dn")))) {
+        cert_dat.data = (unsigned char *)json_string_value(json_object_get(j_cert, "x509"));
+        cert_dat.size = json_string_length(json_object_get(j_cert, "x509"));
+        if (!gnutls_x509_crt_init(&root_x509) && !gnutls_x509_crt_import(root_x509, &cert_dat, GNUTLS_X509_FMT_PEM)) {
+          cert_x509[0] = cert_leaf;
+          cert_x509[1] = root_x509;
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "validate_certificate_from_root - Error import root cert");
+          ret = G_ERROR;
+        }
+      }
+    }
+    o_free(issuer);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "validate_certificate_from_root - Error gnutls_x509_crt_get_issuer_dn2: %d", res);
+    ret = G_ERROR;
+  }
+  gnutls_free(issuer_dat.data);
+  
+  if (ret == G_OK) {
+    if (!gnutls_x509_trust_list_init(&tlist, 0)) {
+      if (gnutls_x509_trust_list_add_cas(tlist, &root_x509, 1, 0) >= 0) {
+        if (gnutls_x509_trust_list_verify_crt(tlist, cert_x509, 2, 0, &result, NULL) >= 0) {
+          if (result) {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "validate_certificate_from_root - certificate chain invalid");
+            ret = G_ERROR;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "validate_certificate_from_root - Error gnutls_x509_trust_list_verify_crt");
+          ret = G_ERROR;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "validate_certificate_from_root - Error gnutls_x509_trust_list_add_cas");
+        ret = G_ERROR;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "validate_certificate_from_root - Error gnutls_x509_trust_list_init");
+      ret = G_ERROR;
+    }
+  }
+  gnutls_x509_crt_deinit(root_x509);
+  gnutls_x509_trust_list_deinit(tlist, 0);
+  return ret;
+}
+
 static int validate_safetynet_ca_root(json_t * j_params, gnutls_x509_crt_t cert_leaf, json_t * j_header_x5c) {
   gnutls_x509_crt_t cert_x509[(json_array_size(j_header_x5c)+1)], root_x509 = NULL;
   gnutls_x509_trust_list_t tlist = NULL;
@@ -757,10 +908,8 @@ static int validate_safetynet_ca_root(json_t * j_params, gnutls_x509_crt_t cert_
   unsigned int result, i;
   json_t * j_cert;
   unsigned char * header_cert_decoded;
-  size_t header_cert_decoded_len, len;
+  size_t header_cert_decoded_len;
   gnutls_datum_t cert_dat;
-  FILE *fl;
-  char * cert_content;
   
   cert_x509[0] = cert_leaf;
   for (i=1; i<json_array_size(j_header_x5c); i++) {
@@ -791,61 +940,40 @@ static int validate_safetynet_ca_root(json_t * j_params, gnutls_x509_crt_t cert_
   }
   
   if (ret == G_OK) {
-    fl = fopen(json_string_value(json_object_get(j_params, "google-root-ca-r2")), "r");
-    if (fl != NULL) {
-      fseek(fl, 0, SEEK_END);
-      len = ftell(fl);
-      cert_content = malloc(len);
-      if (cert_content != NULL) {
-        if (fseek(fl, 0, SEEK_SET) == -1) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error fseek");
-          ret = G_ERROR;
-        } else if (fread(cert_content, 1, len, fl) != len) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error fread");
-          ret = G_ERROR;
-        } else {
-          cert_dat.data = (unsigned char *)cert_content;
-          cert_dat.size = len;
-          if (!gnutls_x509_crt_init(&cert_x509[json_array_size(j_header_x5c)]) && 
-              !gnutls_x509_crt_import(cert_x509[json_array_size(j_header_x5c)], &cert_dat, GNUTLS_X509_FMT_DER)) {
-            if (!gnutls_x509_crt_init(&root_x509) && 
-                !gnutls_x509_crt_import(root_x509, &cert_dat, GNUTLS_X509_FMT_DER)) {
-              if (!gnutls_x509_trust_list_init(&tlist, 0)) {
-                if (gnutls_x509_trust_list_add_cas(tlist, &root_x509, 1, 0) >= 0) {
-                  if (gnutls_x509_trust_list_verify_crt(tlist, cert_x509, (json_array_size(j_header_x5c)+1), 0, &result, NULL) >= 0) {
-                    if (!result) {
-                      ret = G_OK;
-                    } else {
-                      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_safetynet_ca_root - certificate chain invalid");
-                      ret = G_ERROR;
-                    }
-                  } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_verify_crt");
-                    ret = G_ERROR;
-                  }
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_add_cas");
-                  ret = G_ERROR;
-                }
+    cert_dat.data = (unsigned char *)json_string_value(json_object_get(json_object_get(j_params, "google-root-ca-r2-content"), "x509"));
+    cert_dat.size = json_string_length(json_object_get(json_object_get(j_params, "google-root-ca-r2-content"), "x509"));
+    if (!gnutls_x509_crt_init(&cert_x509[json_array_size(j_header_x5c)]) && 
+        !gnutls_x509_crt_import(cert_x509[json_array_size(j_header_x5c)], &cert_dat, GNUTLS_X509_FMT_PEM)) {
+      if (!gnutls_x509_crt_init(&root_x509) && 
+          !gnutls_x509_crt_import(root_x509, &cert_dat, GNUTLS_X509_FMT_PEM)) {
+        if (!gnutls_x509_trust_list_init(&tlist, 0)) {
+          if (gnutls_x509_trust_list_add_cas(tlist, &root_x509, 1, 0) >= 0) {
+            if (gnutls_x509_trust_list_verify_crt(tlist, cert_x509, (json_array_size(j_header_x5c)+1), 0, &result, NULL) >= 0) {
+              if (!result) {
+                ret = G_OK;
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_init");
+                y_log_message(Y_LOG_LEVEL_DEBUG, "validate_safetynet_ca_root - certificate chain invalid");
                 ret = G_ERROR;
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error import root cert");
+              y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_verify_crt");
               ret = G_ERROR;
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error import last cert");
+            y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_add_cas");
             ret = G_ERROR;
           }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_trust_list_init");
+          ret = G_ERROR;
         }
-        fclose(fl);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error allocating resources for cert_content");
-        ret = G_ERROR_MEMORY;
+        y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error import root cert");
+        ret = G_ERROR;
       }
-      o_free(cert_content);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error import last cert");
+      ret = G_ERROR;
     }
   }
   // Clean after me
@@ -872,7 +1000,7 @@ static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_d
   char * message;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
-  gnutls_datum_t cert_dat, data, signature;
+  gnutls_datum_t cert_dat, data, signature, cert_issued_by;
   int ret, sig_alg = GNUTLS_SIGN_UNKNOWN;
   unsigned char client_data_hash[32], cert_export[128], cert_export_b64[256];
 
@@ -973,11 +1101,25 @@ static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_d
       
       if (gnutls_pubkey_verify_data2(pubkey, sig_alg, 0, &data, &signature)) {
         json_array_append_new(j_error, json_string("Invalid signature"));
+        break;
       }
       
       if ((ret = gnutls_x509_crt_get_key_id(cert, GNUTLS_KEYID_USE_SHA256, cert_export, &cert_export_len)) < 0) {
         json_array_append_new(j_error, json_string("Error exporting x509 certificate"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error gnutls_x509_crt_get_key_id: %d", ret);
+        break;
+      }
+      
+      if (json_object_get(j_params, "root-ca-list") != json_null() && validate_certificate_from_root(j_params, cert) != G_OK) {
+        json_array_append_new(j_error, json_string("Unrecognized certificate authority"));
+        if (gnutls_x509_crt_get_issuer_dn2(cert, &cert_issued_by) >= 0) {
+          message = msprintf("Unrecognized certificate autohority: %.*s", cert_issued_by.size, cert_issued_by.data);
+          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - %s", message);
+          o_free(message);
+          gnutls_free(cert_issued_by.data);
+        } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Unrecognized certificate autohority (unable to get issuer dn)");
+        }
         break;
       }
       
@@ -1258,14 +1400,14 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
  * Really want you in my world
  * 
  */
-static json_t * check_attestation_fido_u2f(unsigned char * credential_id, size_t credential_id_len, unsigned char * cert_x, size_t cert_x_len, unsigned char * cert_y, size_t cert_y_len, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * client_data) {
+static json_t * check_attestation_fido_u2f(json_t * j_params, unsigned char * credential_id, size_t credential_id_len, unsigned char * cert_x, size_t cert_x_len, unsigned char * cert_y, size_t cert_y_len, cbor_item_t * att_stmt, unsigned char * rpid_hash, size_t rpid_hash_len, const unsigned char * client_data) {
   json_t * j_error = json_array(), * j_return;
   cbor_item_t * key = NULL, * x5c = NULL, * sig = NULL, * att_cert = NULL;
   int i, ret;
   char * message = NULL;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
-  gnutls_datum_t cert_dat, data, signature;
+  gnutls_datum_t cert_dat, data, signature, cert_issued_by;
   unsigned char data_signed[200], client_data_hash[32], cert_export[32], cert_export_b64[64];
   size_t data_signed_offset = 0, client_data_hash_len = 32, cert_export_len = 32, cert_export_b64_len = 0;
   
@@ -1315,6 +1457,18 @@ static json_t * check_attestation_fido_u2f(unsigned char * credential_id, size_t
       if ((ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
         json_array_append_new(j_error, json_string("Error importing x509 certificate"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_fido_u2f - Error gnutls_pcert_import_x509_raw: %d", ret);
+        break;
+      }
+      if (json_object_get(j_params, "root-ca-list") != json_null() && validate_certificate_from_root(j_params, cert) != G_OK) {
+        json_array_append_new(j_error, json_string("Unrecognized certificate authority"));
+        if (gnutls_x509_crt_get_issuer_dn2(cert, &cert_issued_by) >= 0) {
+          message = msprintf("Unrecognized certificate autohority: %.*s", cert_issued_by.size, cert_issued_by.data);
+          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_fido_u2f - %s", message);
+          o_free(message);
+          gnutls_free(cert_issued_by.data);
+        } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_fido_u2f - Unrecognized certificate autohority (unable to get issuer dn)");
+        }
         break;
       }
       if ((ret = gnutls_pubkey_import_x509(pubkey, cert, 0)) < 0) {
@@ -1778,7 +1932,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           }
           json_decref(j_result);
         } else if (0 == o_strncmp("fido-u2f", (char *)fmt, MIN(fmt_len, o_strlen("fido-u2f")))) {
-          j_result = check_attestation_fido_u2f((cbor_auth_data+CREDENTIAL_ID_OFFSET), credential_id_len, cert_x, cert_x_len, cert_y, cert_y_len, att_stmt, rpid_hash, rpid_hash_len, client_data);
+          j_result = check_attestation_fido_u2f(j_params, (cbor_auth_data+CREDENTIAL_ID_OFFSET), credential_id_len, cert_x, cert_x_len, cert_y, cert_y_len, att_stmt, rpid_hash, rpid_hash_len, client_data);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             json_array_extend(j_error, json_object_get(j_result, "error"));
             ret = G_ERROR_PARAM;
@@ -2039,9 +2193,9 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       
       // Step 13 ignored for now
       //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.userVerified: %d", !!(*flags & FLAG_USER_VERIFY));
-      //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension: %d", !!(*flags & FLAG_ED));
       
       // Step 14 ignored for now (no extension)
+      //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension: %d", !!(*flags & FLAG_ED));
       
       // Step 15
       if (!generate_digest_raw(digest_SHA256, client_data, client_data_len, cdata_hash, &cdata_hash_len)) {
@@ -2473,7 +2627,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
   char * message;
   
   if (check_result_value(j_result, G_OK)) {
-    *cls = json_pack("{sO sO sO sO sI sI sO ss sO sO sO ss s[]}",
+    *cls = json_pack("{sO sO sO sO sI sI sO ss sO sO sO sO sO sO ss s[]}",
                      "challenge-length", json_object_get(j_parameters, "challenge-length"),
                      "rp-origin", json_object_get(j_parameters, "rp-origin"),
                      "credential-expiration", json_object_get(j_parameters, "credential-expiration"),
@@ -2485,6 +2639,9 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                      "allow-fmt-none", json_object_get(j_parameters, "allow-fmt-none")!=NULL?json_object_get(j_parameters, "allow-fmt-none"):json_false(),
                      "force-fmt-none", json_object_get(j_parameters, "force-fmt-none")!=NULL?json_object_get(j_parameters, "force-fmt-none"):json_false(),
                      "google-root-ca-r2", json_string_length(json_object_get(j_parameters, "google-root-ca-r2"))?json_object_get(j_parameters, "google-root-ca-r2"):json_null(),
+                     "google-root-ca-r2-content", json_object_get(j_parameters, "google-root-ca-r2-content")!=NULL?json_object_get(j_parameters, "google-root-ca-r2-content"):json_null(),
+                     "root-ca-list", json_array_size(json_object_get(j_parameters, "root-ca-list"))?json_object_get(j_parameters, "root-ca-list"):json_null(),
+                     "root-ca-array", json_object_get(j_parameters, "root-ca-array")!=NULL?json_object_get(j_parameters, "root-ca-array"):json_null(),
                      "mod_name", mod_name,
                      "pubKey-cred-params");
     json_array_foreach(json_object_get(j_parameters, "pubKey-cred-params"), index, j_element) {
