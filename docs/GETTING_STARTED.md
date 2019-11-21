@@ -3,29 +3,43 @@
 - [Installation](#installation)
 - [First connection to the administration page](#first-connection-to-the-administration-page)
 - [Configure backends, schemes, scopes and plugins](#configure-backends-schemes-and-plugins)
-  - [User backend modules](#user-backend-modules)
-    - [Database backend](#database-backend)
-    - [LDAP backend](#ldap-backend)
-    - [HTTP authentication backend](#http-authentication-backend)
-  - [Client backend module](#client-backend-module)
-    - [Database backend](#database-backend-1)
-    - [LDAP backend](#ldap-backend-1)
-  - [Authentication schemes](#authentication-schemes)
-    - [E-mail code scheme](#e-mail-code-scheme)
-    - [Webauthn scheme](#webauthn-scheme)
-    - [HOTP/TOTP scheme](#hotptotp-scheme)
-    - [TLS Certificate scheme](#tls-certificate-scheme)
-    - [Retype-password scheme](#retype-password-scheme)
-  - [Scopes](#scopes)
-  - [Plugins](#plugins)
-    - [Glewlwyd Oauth2 plugin](#glewlwyd-oauth2-plugin)
-    - [OpenID Connect Core Plugin](#openid-connect-core-plugin)
-  - [Configure environment to use Glewlwyd Oauth2](#configure-environment-to-use-glewlwyd-oauth2)
-- [How-tos](#how-tos)
-  - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
-  - [User profile delegation](#user-profile-delegation)
-  - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
-  - [Non-password authentication](#non-password-authentication)
+    - [User backend modules](#user-backend-modules)
+      - [Database backend](#database-backend)
+      - [LDAP backend](#ldap-backend)
+      - [HTTP authentication backend](#http-authentication)
+    - [Client backend module](#client-backend-module)
+      - [Database backend](#database-backend)
+      - [LDAP backend](#ldap-backend)
+    - [Authentication schemes](#authentication-schemes)
+      - [E-mail code scheme](#e-mail-code-scheme)
+      - [Webauthn scheme](#webauthn-scheme)
+      - [HOTP/TOTP scheme](#hotp-totp-scheme)
+      - [TLS Certificate scheme](#tls-certificate-scheme)
+      - [Retype-password scheme](#retype-password-scheme)
+    - [Scopes](#scopes)
+    - [Plugins](#plugins)
+      - [Glewlwyd Oauth2 plugin](#glewlwyd-oauth2-plugin)
+      - [OpenID Connect Core Plugin](#openid-connect-core-plugin)
+    - [Configure environment to use Glewlwyd Oauth2](#configure-environment-to-use-glewlwyd-oauth2)
+      - [Create the client](#create-the-client)
+      - [Configure scopes](#configure-scopes)
+      - [Setup the required scopes for a user](#setup-the-required-scopes-for-a-user)
+- [How-Tos](#how-tos)
+      - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
+      - [Step 1: Change admin password](#step-1-change-admin-password)
+      - [Step 2: Add OTP and Webauthn schemes](#step-2-add-otp-and-webauthn-schemes)
+      - [Step 3: Add scopes in Glewlwyd](#step-3-add-scopes-in-glewlwyd)
+      - [Step 4: Add a Glewlwyd OAuth2 plugin instance](#step-4-add-a-glewlwyd-oauth2-plugin-instance)
+      - [Step 5: Add the client Taliesin](#step-5-add-the-client-taliesin)
+      - [Step 6: Add a simple user abd setup admin user](#step-6-add-a-simple-user-and-setup-admin-user)
+      - [Step 7: Configure OTP and Webauthn for admin](#step-7-configure-otp-and-webauthn-for-admin)
+      - [Step 8: Configure Taliesin's `config.json` file](#step-8-configure-taliesin-s-config-json-file)
+      - [Step 9: Open Taliesin in your browser](#step-9-open-taliesin-in-your-browser)
+    - [User profile delegation](#user-profile-delegation)
+    - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
+      - [Step 1: Add a specific data format](#step-1-add-a-specific-data-format)
+      - [Step 2: Update webapp/config.json to show the new property](#step-2-update-webapp-config-json-to-show-the-new-property) 
+    - [Non-password authentication](#non-password-authentication)
 
 The installation comes with a default configuration that can be updated or overwritten via the administration page or the configuration file.
 
@@ -44,7 +58,7 @@ Install Glewlwyd via the packages, CMake or Makefile. See the [installation docu
 
 ![admin](screenshots/user-list.png)
 
-Open the administration page in your browser. The default url is [http://localhost:4953/](http://localhost:4953/). Use the default login `admin` with the default password `password`.
+Open the administration page in your browser. The default url is [http://localhost:4593/](http://localhost:4593/). Use the default login `admin` with the default password `password`.
 
 Make sure to change the default password for the `admin` user to a more secure password.
 
@@ -235,13 +249,13 @@ Go to `Users` menu in the navigation tab, Click on the `Edit` button for an exis
 
 When the user will connect to the client with Glewlwyd, he will need to validate the authentication schemes for the scopes required with this client.
 
-## How-tos
+## How-Tos
 
 ### Use case: Configure Glewlwyd to authenticate with Taliesin
 
 This use case is based on the following assertions:
 - Glewlwyd is freshly installed with default configuration
-- Glewlwyd is installed on the local machine and available at the address [http://localhost:4953/](http://localhost:4953/)
+- Glewlwyd is installed on the local machine and available at the address [http://localhost:4593/](http://localhost:4593/)
 - Taliesin is installed on the local machine and available at the address [http://localhost:8576/](http://localhost:8576/)
 - The scope `taliesin` will be configured as a rolling refresh, with password only
 - The scope `taliesin_admin` will be configured as standard refresh token, without rolling refresh enabled, with password and OTP 2nd factor or Webauthn enabled
@@ -256,7 +270,7 @@ $ # public key
 $ openssl rsa -in private-rsa.key -outform PEM -pubout -out public-rsa.pem
 ```
 
-Open the Glewlwyd admin page [http://localhost:4953/](http://localhost:4953/) in your browser, connect as administrator (admin/password)
+Open the Glewlwyd admin page [http://localhost:4593/](http://localhost:4593/) in your browser, connect as administrator (admin/password)
 
 #### Step 1: Change admin password
 
@@ -295,7 +309,7 @@ Go to `Users` menu in the navigation tab. Click on the `+` button to add a new u
 
 In the new user modal, enter `t_user` in the username field, `Taliesin User` in the name field, set a password (8 characters minimum), add the scopes `g_profile` and `taliesin`. Click `Ok`. The new user `t_user` should appear in the users list.
 
-#### Step 7: configure OTP and Webauthn for admin
+#### Step 7: Configure OTP and Webauthn for admin
 
 Click on the `delegate profile` button for the user `admin`. In the new page, select `otp` in the navigation bar.
 
@@ -305,7 +319,7 @@ Register a new Webauthn device. Select `Webauthn` in the navigation bar.
 
 Two types of Webauthn devices are currently supported: `fido-u2f` types like Yubikeys and `android-safetynet` types like Android phones or tablet, version 7 or above. Click on the button `Register` to add a new registration. Follow the steps on your browser to complete the registration. You can test the authentification by clicking on the `Test` button.
 
-#### Step 8: configure Taliesin's `config.json` file
+#### Step 8: Configure Taliesin's `config.json` file
 
 Open the file `webapp/config.json` on an editor. The file should look like this now:
 
