@@ -32,9 +32,18 @@
 #include <jwt.h>
 #include <jansson.h>
 #include <cbor.h>
+#include <ldap.h>
 #include <yder.h>
 #include <orcania.h>
 #include "../glewlwyd-common.h"
+
+const char * iso_3166_list[] = {"AF", "AX", "AL", "DZ", "AS", "AD", "AO", "AI", "AQ", "AG", "AR", "AM", "AW", "AU", "AT", "AZ", "BH", "BS", "BD", "BB", "BY", "BE", "BZ", "BJ", "BM", "BT", "BO", "BQ", "BA", "BW", "BV", "BR", "IO", "BN", "BG", "BF", "BI", "KH", "CM", "CA", "CV", "KY", "CF", "TD", "CL", "CN", "CX", "CC", "CO", "KM", "CG", "CD", "CK", "CR", "CI", "HR", "CU", "CW", "CY", "CZ", "DK", "DJ", "DM", "DO", "EC", "EG", "SV", "GQ", "ER", "EE", "ET", "FK", "FO", "FJ", "FI", "FR", "GF", "PF", "TF", "GA", "GM", "GE", "DE", "GH", "GI", "GR", "GL", "GD", "GP", "GU", "GT", "GG", "GN", "GW", "GY", "HT", "HM", "VA", "HN", "HK", "HU", "IS", "IN", "ID", "IR", "IQ", "IE", "IM", "IL", "IT", "JM", "JP", "JE", "JO", "KZ", "KE", "KI", "KP", "KR", "KW", "KG", "LA", "LV", "LB", "LS", "LR", "LY", "LI", "LT", "LU", "MO", "MK", "MG", "MW", "MY", "MV", "ML", "MT", "MH", "MQ", "MR", "MU", "YT", "MX", "FM", "MD", "MC", "MN", "ME", "MS", "MA", "MZ", "MM", "NA", "NR", "NP", "NL", "NC", "NZ", "NI", "NE", "NG", "NU", "NF", "MP", "NO", "OM", "PK", "PW", "PS", "PA", "PG", "PY", "PE", "PH", "PN", "PL", "PT", "PR", "QA", "RE", "RO", "RU", "RW", "BL", "SH", "KN", "LC", "MF", "PM", "VC", "WS", "SM", "ST", "SA", "SN", "RS", "SC", "SL", "SG", "SX", "SK", "SI", "SB", "SO", "ZA", "GS", "SS", "ES", "LK", "SD", "SR", "SJ", "SZ", "SE", "CH", "SY", "TW", "TJ", "TZ", "TH", "TL", "TG", "TK", "TO", "TT", "TN", "TR", "TM", "TC", "TV", "UG", "UA", "AE", "GB", "US", "UM", "UY", "UZ", "VU", "VE", "VN", "VG", "VI", "WF", "EH", "YE", "ZM", "ZW", NULL};
+#define G_PACKED_CERT_O_KEY "O="
+#define G_PACKED_CERT_OU_KEY "OU="
+#define G_PACKED_CERT_C_KEY "C="
+#define G_PACKED_CERT_CN_KEY "CN="
+#define G_PACKED_CERT_OU_VALUE "Authenticator Attestation"
+#define G_PACKED_OID_AAGUID "1.3.6.1.4.1.45724.1.1.4"
 
 #define G_TABLE_WEBAUTHN_USER       "gs_webauthn_user"
 #define G_TABLE_WEBAUTHN_CREDENTIAL "gs_webauthn_credential"
@@ -986,6 +995,85 @@ static int validate_safetynet_ca_root(json_t * j_params, gnutls_x509_crt_t cert_
   return ret;
 }
 
+static int validate_packed_leaf_certificate(gnutls_x509_crt_t cert, unsigned char * aaguid) {
+  int ret = G_OK, i, c_valid = 0, o_valid = 0, ou_valid = 0, cn_valid = 0;
+  unsigned int critial = 1, ca = 1;
+  char cert_dn[128], ** dn_exploded = NULL;
+  unsigned char aaguid_oid[32];
+  size_t cert_dn_len = 128, aaguid_oid_len = 32;
+  
+  do {
+    if (gnutls_x509_crt_get_version(cert) != 3) {
+      ret = G_ERROR_PARAM;
+      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Invalid certificate version");
+      break;
+    }
+    
+    if ((ret = gnutls_x509_crt_get_dn(cert, cert_dn, &cert_dn_len)) < 0) {
+      ret = G_ERROR_PARAM;
+      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Error gnutls_x509_crt_get_dn");
+      break;
+    }
+    
+    if ((dn_exploded = ldap_explode_dn(cert_dn, 0)) == NULL) {
+      ret = G_ERROR;
+      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Error ldap_explode_dn");
+      break;
+    }
+    
+    for (i=0; dn_exploded[i] != NULL; i++) {
+      if (0 == o_strncasecmp(G_PACKED_CERT_C_KEY, dn_exploded[i], o_strlen(G_PACKED_CERT_C_KEY)) && string_array_has_value(iso_3166_list, dn_exploded[i]+o_strlen(G_PACKED_CERT_C_KEY))) {
+        c_valid = 1;
+      } else if (0 == o_strncasecmp(G_PACKED_CERT_O_KEY, dn_exploded[i], o_strlen(G_PACKED_CERT_O_KEY)) && o_strlen(dn_exploded[i]) > 2) {
+        o_valid = 1;
+      } else if (0 == o_strncasecmp(G_PACKED_CERT_CN_KEY, dn_exploded[i], o_strlen(G_PACKED_CERT_CN_KEY)) && o_strlen(dn_exploded[i]) > 3) {
+        cn_valid = 1;
+      } else if (0 == o_strncasecmp(G_PACKED_CERT_OU_KEY, dn_exploded[i], o_strlen(G_PACKED_CERT_OU_KEY)) && 0 == o_strcmp(G_PACKED_CERT_OU_VALUE, dn_exploded[i]+o_strlen(G_PACKED_CERT_OU_KEY))) {
+        ou_valid = 1;
+      }
+    }
+    ber_memvfree((void **)dn_exploded);
+    
+    if (!c_valid || !o_valid || !cn_valid || !ou_valid) {
+      ret = G_ERROR_PARAM;
+      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Invalid dn - C:%s - O:%s - OU:%s - CN:%s", c_valid?"valid":"invalid", o_valid?"valid":"invalid", ou_valid?"valid":"invalid", cn_valid?"valid":"invalid");
+      break;
+    }
+    
+    if (gnutls_x509_crt_get_basic_constraints(cert, &critial, &ca, NULL) < 0) {
+      ret = G_ERROR;
+      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Error gnutls_x509_crt_get_basic_constraints");
+      break;
+    }
+    
+    if (ca) {
+      ret = G_ERROR_PARAM;
+      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Error basic constraints for CA is set to true");
+      break;
+    }
+    
+    if (gnutls_x509_crt_get_extension_by_oid(cert, G_PACKED_OID_AAGUID, 0, aaguid_oid, &aaguid_oid_len, NULL) < 0) {
+      ret = G_ERROR_PARAM;
+      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Error gnutls_x509_crt_get_extension_by_oid");
+      break;
+    }
+    
+    if (aaguid_oid_len != AAGUID_LEN+2) {
+      ret = G_ERROR_PARAM;
+      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Invalid aaguid_oid_len size %zu", aaguid_oid_len);
+      break;
+    }
+    
+    if (memcmp(aaguid_oid+2, aaguid, AAGUID_LEN)) {
+      ret = G_ERROR_PARAM;
+      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Invalid aaguid_oid match");
+      break;
+    }
+  } while (0);
+  
+  return ret;
+}
+
 /**
  * 
  * Validate the attStmt object under the packed format
@@ -1102,6 +1190,11 @@ static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_d
       
       if (gnutls_pubkey_verify_data2(pubkey, sig_alg, 0, &data, &signature)) {
         json_array_append_new(j_error, json_string("Invalid signature"));
+        break;
+      }
+      
+      if (validate_packed_leaf_certificate(cert, (cbor_bytestring_handle(auth_data)+ATTESTED_CRED_DATA_OFFSET)) != G_OK) {
+        json_array_append_new(j_error, json_string("Invalid certificate"));
         break;
       }
       
