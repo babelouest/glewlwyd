@@ -78,7 +78,7 @@ static json_t * get_cert_from_file_path(const char * path) {
   gnutls_datum_t cert_dat = {NULL, 0}, export_dat = {NULL, 0};
   FILE * fl;
   size_t len, issued_for_len = 128;
-  char * cert_content, issued_for[128] = {0};
+  char * cert_content, issued_for[128] = {};
   json_t * j_return = NULL;
   
   fl = fopen(path, "r");
@@ -852,16 +852,20 @@ static int check_certificate(struct config_module * config, json_t * j_params, c
   return ret;
 }
 
-static int validate_certificate_from_root(json_t * j_params, gnutls_x509_crt_t cert_leaf) {
+static int validate_certificate_from_root(json_t * j_params, gnutls_x509_crt_t cert_leaf, cbor_item_t * x5c_array) {
   int ret = G_ERROR_NOT_FOUND, res;
   unsigned int result;
   gnutls_datum_t cert_dat = {NULL, 0}, issuer_dat = {NULL, 0};
   gnutls_x509_trust_list_t tlist = NULL;
-  gnutls_x509_crt_t cert_x509[2], root_x509 = NULL;
+  gnutls_x509_crt_t cert_x509[cbor_array_size(x5c_array)+1], root_x509 = NULL;
   json_t * j_cert = NULL;
-  size_t index = 0;
+  cbor_item_t * cbor_cert = NULL;
+  size_t index = 0, i = 0, x5c_array_size = cbor_array_size(x5c_array);
   char * issuer;
   
+  for (i=0; i<x5c_array_size+1; i++) {
+    cert_x509[i] = NULL;
+  }
   if ((res = gnutls_x509_crt_get_issuer_dn2(cert_leaf, &issuer_dat)) >= 0) {
     issuer = o_strndup((const char *)issuer_dat.data, issuer_dat.size);
     json_array_foreach(json_object_get(j_params, "root-ca-array"), index, j_cert) {
@@ -870,7 +874,17 @@ static int validate_certificate_from_root(json_t * j_params, gnutls_x509_crt_t c
         cert_dat.size = json_string_length(json_object_get(j_cert, "x509"));
         if (!gnutls_x509_crt_init(&root_x509) && !gnutls_x509_crt_import(root_x509, &cert_dat, GNUTLS_X509_FMT_PEM)) {
           cert_x509[0] = cert_leaf;
-          cert_x509[1] = root_x509;
+          for (i=1; i<x5c_array_size; i++) {
+            cbor_cert = cbor_array_get(x5c_array, i);
+            cert_dat.data = cbor_bytestring_handle(cbor_cert);
+            cert_dat.size = cbor_bytestring_length(cbor_cert);
+            if (gnutls_x509_crt_init(&cert_x509[i]) < 0 || gnutls_x509_crt_import(cert_x509[i], &cert_dat, GNUTLS_X509_FMT_DER) < 0) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "validate_certificate_from_root - Error import chain cert at index %zu", i);
+              ret = G_ERROR;
+            }
+            cbor_decref(&cbor_cert);
+          }
+          cert_x509[x5c_array_size] = root_x509;
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "validate_certificate_from_root - Error import root cert");
@@ -907,6 +921,9 @@ static int validate_certificate_from_root(json_t * j_params, gnutls_x509_crt_t c
     }
   }
   gnutls_x509_crt_deinit(root_x509);
+  for (i=1; i<x5c_array_size; i++) {
+    gnutls_x509_crt_deinit(cert_x509[i]);
+  }
   gnutls_x509_trust_list_deinit(tlist, 0);
   return ret;
 }
@@ -1082,7 +1099,7 @@ static int validate_packed_leaf_certificate(gnutls_x509_crt_t cert, unsigned cha
  * You got to know that you drive me wild
  * 
  */
-static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, const unsigned char * client_data) {
+static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, const unsigned char * client_data, gnutls_pubkey_t g_key) {
   json_t * j_error = json_array(), * j_return;
   cbor_item_t * key, * alg = NULL, * sig = NULL, * x5c_array = NULL, * cert_leaf = NULL;
   size_t i, client_data_hash_len = 32, cert_export_len = 128, cert_export_b64_len = 0;
@@ -1142,85 +1159,90 @@ static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_d
       
       // packed disable SELF attestation for now
       if (x5c_array == NULL) {
-        json_array_append_new(j_error, json_string("SELF(SURROGATE) not supported"));
-        break;
-      }
-      
-      if (gnutls_x509_crt_init(&cert)) {
-        json_array_append_new(j_error, json_string("check_attestation_packed - Error gnutls_x509_crt_init"));
-        break;
-      }
-      if (gnutls_pubkey_init(&pubkey)) {
-        json_array_append_new(j_error, json_string("check_attestation_packed - Error gnutls_pubkey_init"));
-        break;
-      }
-
-      cert_leaf = cbor_array_get(x5c_array, 0);
-      cert_dat.data = cbor_bytestring_handle(cert_leaf);
-      cert_dat.size = cbor_bytestring_length(cert_leaf);
-      
-      if ((ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
-        json_array_append_new(j_error, json_string("Error importing x509 certificate"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error gnutls_pcert_import_x509_raw: %d", ret);
-        break;
-      }
-      if ((ret = gnutls_pubkey_import_x509(pubkey, cert, 0)) < 0) {
-        json_array_append_new(j_error, json_string("Error importing x509 certificate"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error gnutls_pubkey_import_x509: %d", ret);
-        break;
-      }
-      signature.data = cbor_bytestring_handle(sig);
-      signature.size = cbor_bytestring_length(sig);
-      
-      if (!generate_digest_raw(digest_SHA256, client_data, o_strlen((char *)client_data), client_data_hash, &client_data_hash_len)) {
-        json_array_append_new(j_error, json_string("Internal error"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error generate_digest_raw client_data");
-        break;
-      }
-      
-      if ((data.data = o_malloc(cbor_bytestring_length(auth_data) + 32)) == NULL) {
-        json_array_append_new(j_error, json_string("Internal error"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error o_malloc data.data");
-        break;
-      }
-      
-      memcpy(data.data, cbor_bytestring_handle(auth_data), cbor_bytestring_length(auth_data));
-      memcpy(data.data + cbor_bytestring_length(auth_data), client_data_hash, client_data_hash_len);
-      data.size = cbor_bytestring_length(auth_data) + 32;
-      
-      if (gnutls_pubkey_verify_data2(pubkey, sig_alg, 0, &data, &signature)) {
-        json_array_append_new(j_error, json_string("Invalid signature"));
-        break;
-      }
-      
-      if (validate_packed_leaf_certificate(cert, (cbor_bytestring_handle(auth_data)+ATTESTED_CRED_DATA_OFFSET)) != G_OK) {
-        json_array_append_new(j_error, json_string("Invalid certificate"));
-        break;
-      }
-      
-      if ((ret = gnutls_x509_crt_get_key_id(cert, GNUTLS_KEYID_USE_SHA256, cert_export, &cert_export_len)) < 0) {
-        json_array_append_new(j_error, json_string("Error exporting x509 certificate"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error gnutls_x509_crt_get_key_id: %d", ret);
-        break;
-      }
-      
-      if (json_object_get(j_params, "root-ca-list") != json_null() && validate_certificate_from_root(j_params, cert) != G_OK) {
-        json_array_append_new(j_error, json_string("Unrecognized certificate authority"));
-        if (gnutls_x509_crt_get_issuer_dn2(cert, &cert_issued_by) >= 0) {
-          message = msprintf("Unrecognized certificate autohority: %.*s", cert_issued_by.size, cert_issued_by.data);
-          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - %s", message);
-          o_free(message);
-          gnutls_free(cert_issued_by.data);
-        } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Unrecognized certificate autohority (unable to get issuer dn)");
+        if (gnutls_pubkey_verify_data2(g_key, sig_alg, 0, &data, &signature)) {
+          json_array_append_new(j_error, json_string("Invalid signature"));
+          break;
         }
-        break;
-      }
-      
-      if (!o_base64_encode(cert_export, cert_export_len, cert_export_b64, &cert_export_b64_len)) {
-        json_array_append_new(j_error, json_string("Internal error"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error o_base64_encode cert_export");
-        break;
+        
+        cert_export_b64_len = 0;
+        cert_export_b64[0] = '\0';
+      } else {
+        if (gnutls_x509_crt_init(&cert)) {
+          json_array_append_new(j_error, json_string("check_attestation_packed - Error gnutls_x509_crt_init"));
+          break;
+        }
+        if (gnutls_pubkey_init(&pubkey)) {
+          json_array_append_new(j_error, json_string("check_attestation_packed - Error gnutls_pubkey_init"));
+          break;
+        }
+
+        cert_leaf = cbor_array_get(x5c_array, 0);
+        cert_dat.data = cbor_bytestring_handle(cert_leaf);
+        cert_dat.size = cbor_bytestring_length(cert_leaf);
+        
+        if ((ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
+          json_array_append_new(j_error, json_string("Error importing x509 certificate"));
+          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error gnutls_pcert_import_x509_raw: %d", ret);
+          break;
+        }
+        if ((ret = gnutls_pubkey_import_x509(pubkey, cert, 0)) < 0) {
+          json_array_append_new(j_error, json_string("Error importing x509 certificate"));
+          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error gnutls_pubkey_import_x509: %d", ret);
+          break;
+        }
+        signature.data = cbor_bytestring_handle(sig);
+        signature.size = cbor_bytestring_length(sig);
+        
+        if (!generate_digest_raw(digest_SHA256, client_data, o_strlen((char *)client_data), client_data_hash, &client_data_hash_len)) {
+          json_array_append_new(j_error, json_string("Internal error"));
+          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error generate_digest_raw client_data");
+          break;
+        }
+        
+        if ((data.data = o_malloc(cbor_bytestring_length(auth_data) + 32)) == NULL) {
+          json_array_append_new(j_error, json_string("Internal error"));
+          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error o_malloc data.data");
+          break;
+        }
+        
+        memcpy(data.data, cbor_bytestring_handle(auth_data), cbor_bytestring_length(auth_data));
+        memcpy(data.data + cbor_bytestring_length(auth_data), client_data_hash, client_data_hash_len);
+        data.size = cbor_bytestring_length(auth_data) + 32;
+        
+        if (gnutls_pubkey_verify_data2(pubkey, sig_alg, 0, &data, &signature)) {
+          json_array_append_new(j_error, json_string("Invalid signature"));
+          break;
+        }
+        
+        if (validate_packed_leaf_certificate(cert, (cbor_bytestring_handle(auth_data)+ATTESTED_CRED_DATA_OFFSET)) != G_OK) {
+          json_array_append_new(j_error, json_string("Invalid certificate"));
+          break;
+        }
+        
+        if ((ret = gnutls_x509_crt_get_key_id(cert, GNUTLS_KEYID_USE_SHA256, cert_export, &cert_export_len)) < 0) {
+          json_array_append_new(j_error, json_string("Error exporting x509 certificate"));
+          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error gnutls_x509_crt_get_key_id: %d", ret);
+          break;
+        }
+        
+        if (json_object_get(j_params, "root-ca-list") != json_null() && validate_certificate_from_root(j_params, cert, x5c_array) != G_OK) {
+          json_array_append_new(j_error, json_string("Unrecognized certificate authority"));
+          if (gnutls_x509_crt_get_issuer_dn2(cert, &cert_issued_by) >= 0) {
+            message = msprintf("Unrecognized certificate autohority: %.*s", cert_issued_by.size, cert_issued_by.data);
+            y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - %s", message);
+            o_free(message);
+            gnutls_free(cert_issued_by.data);
+          } else {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Unrecognized certificate autohority (unable to get issuer dn)");
+          }
+          break;
+        }
+        
+        if (!o_base64_encode(cert_export, cert_export_len, cert_export_b64, &cert_export_b64_len)) {
+          json_array_append_new(j_error, json_string("Internal error"));
+          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error o_base64_encode cert_export");
+          break;
+        }
       }
       
     } while (0);
@@ -1553,7 +1575,7 @@ static json_t * check_attestation_fido_u2f(json_t * j_params, unsigned char * cr
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_fido_u2f - Error gnutls_pcert_import_x509_raw: %d", ret);
         break;
       }
-      if (json_object_get(j_params, "root-ca-list") != json_null() && validate_certificate_from_root(j_params, cert) != G_OK) {
+      if (json_object_get(j_params, "root-ca-list") != json_null() && validate_certificate_from_root(j_params, cert, x5c) != G_OK) {
         json_array_append_new(j_error, json_string("Unrecognized certificate authority"));
         if (gnutls_x509_crt_get_issuer_dn2(cert, &cert_issued_by) >= 0) {
           message = msprintf("Unrecognized certificate autohority: %.*s", cert_issued_by.size, cert_issued_by.data);
@@ -1994,7 +2016,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         
         // Steps 13-14
         if (0 == o_strncmp("packed", (char *)fmt, MIN(fmt_len, o_strlen("packed")))) {
-          j_result = check_attestation_packed(j_params, auth_data, att_stmt, client_data);
+          j_result = check_attestation_packed(j_params, auth_data, att_stmt, client_data, g_key);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             json_array_extend(j_error, json_object_get(j_result, "error"));
             ret = G_ERROR_PARAM;
