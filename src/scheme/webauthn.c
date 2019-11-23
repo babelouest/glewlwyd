@@ -1069,23 +1069,20 @@ static int validate_packed_leaf_certificate(gnutls_x509_crt_t cert, unsigned cha
       break;
     }
     
-    if (gnutls_x509_crt_get_extension_by_oid(cert, G_PACKED_OID_AAGUID, 0, aaguid_oid, &aaguid_oid_len, NULL) < 0) {
-      ret = G_ERROR_PARAM;
-      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Error gnutls_x509_crt_get_extension_by_oid");
-      break;
+    if (gnutls_x509_crt_get_extension_by_oid(cert, G_PACKED_OID_AAGUID, 0, aaguid_oid, &aaguid_oid_len, NULL) >= 0) {
+      if (aaguid_oid_len != AAGUID_LEN+2) {
+        ret = G_ERROR_PARAM;
+        y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Invalid aaguid_oid_len size %zu", aaguid_oid_len);
+        break;
+      }
+      
+      if (memcmp(aaguid_oid+2, aaguid, AAGUID_LEN)) {
+        ret = G_ERROR_PARAM;
+        y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Invalid aaguid_oid match");
+        break;
+      }
     }
     
-    if (aaguid_oid_len != AAGUID_LEN+2) {
-      ret = G_ERROR_PARAM;
-      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Invalid aaguid_oid_len size %zu", aaguid_oid_len);
-      break;
-    }
-    
-    if (memcmp(aaguid_oid+2, aaguid, AAGUID_LEN)) {
-      ret = G_ERROR_PARAM;
-      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_packed_leaf_certificate - Invalid aaguid_oid match");
-      break;
-    }
   } while (0);
   
   return ret;
