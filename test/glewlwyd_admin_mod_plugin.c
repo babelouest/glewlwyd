@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
   ulfius_set_json_body_request(&auth_req, j_body);
   json_decref(j_body);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
-  if (res == U_OK && auth_resp.status == 200) {
+  if (res == U_OK && auth_resp.status == 200 && auth_resp.nb_cookies) {
     for (i=0; i<auth_resp.nb_cookies; i++) {
       char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
       u_map_put(admin_req.map_header, "Cookie", cookie);

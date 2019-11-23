@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
   auth_req.auth_basic_user = strdup(CLIENT);
   auth_req.auth_basic_password = strdup(CLIENT_PASSWORD);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
-  if (res == U_OK && auth_resp.status == 200) {
+  if (res == U_OK && auth_resp.status == 200 && auth_resp.nb_cookies) {
     json_t * json_body = ulfius_get_json_body_response(&auth_resp, NULL);
     refresh_token = o_strdup(json_string_value(json_object_get(json_body, "refresh_token")));
     y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USERNAME);
