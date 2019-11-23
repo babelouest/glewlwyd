@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
   u_map_put(auth_req.map_post_body, "password", PASSWORD);
   u_map_put(auth_req.map_post_body, "scope", SCOPE_LIST);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
-  if (res == U_OK && auth_resp.status == 200) {
+  if (res == U_OK && auth_resp.status == 200 && auth_resp.nb_cookies) {
     json_t * json_body = ulfius_get_json_body_response(&auth_resp, NULL);
     bearer_token = msprintf("Bearer %s", json_string_value(json_object_get(json_body, "access_token")));
     refresh_token = o_strdup(json_string_value(json_object_get(json_body, "refresh_token")));
