@@ -56,12 +56,14 @@ char * get_file_content(const char * file_path) {
     if (buffer) {
       res = fread (buffer, 1, length, f);
       if (res != length) {
-        fprintf(stderr, "fread warning, reading %zu while expecting %zu", res, length);
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_file_content - fread warning, reading %zu while expecting %zu", res, length);
       }
       // Add null character at the end of buffer, just in case
       buffer[length] = '\0';
     }
     fclose (f);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_file_content - error opening file %s\n", file_path);
   }
   
   return buffer;
