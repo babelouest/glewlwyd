@@ -1154,6 +1154,25 @@ static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_d
         break;
       }
       
+      if (!generate_digest_raw(digest_SHA256, client_data, o_strlen((char *)client_data), client_data_hash, &client_data_hash_len)) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error generate_digest_raw client_data");
+        break;
+      }
+      
+      if ((data.data = o_malloc(cbor_bytestring_length(auth_data) + client_data_hash_len)) == NULL) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error o_malloc data.data");
+        break;
+      }
+      
+      signature.data = cbor_bytestring_handle(sig);
+      signature.size = cbor_bytestring_length(sig);
+      
+      memcpy(data.data, cbor_bytestring_handle(auth_data), cbor_bytestring_length(auth_data));
+      memcpy(data.data + cbor_bytestring_length(auth_data), client_data_hash, client_data_hash_len);
+      data.size = cbor_bytestring_length(auth_data) + client_data_hash_len;
+        
       // packed disable SELF attestation for now
       if (x5c_array == NULL) {
         if (gnutls_pubkey_verify_data2(g_key, sig_alg, 0, &data, &signature)) {
@@ -1182,29 +1201,12 @@ static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_d
           y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error gnutls_pcert_import_x509_raw: %d", ret);
           break;
         }
+        
         if ((ret = gnutls_pubkey_import_x509(pubkey, cert, 0)) < 0) {
           json_array_append_new(j_error, json_string("Error importing x509 certificate"));
           y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error gnutls_pubkey_import_x509: %d", ret);
           break;
         }
-        signature.data = cbor_bytestring_handle(sig);
-        signature.size = cbor_bytestring_length(sig);
-        
-        if (!generate_digest_raw(digest_SHA256, client_data, o_strlen((char *)client_data), client_data_hash, &client_data_hash_len)) {
-          json_array_append_new(j_error, json_string("Internal error"));
-          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error generate_digest_raw client_data");
-          break;
-        }
-        
-        if ((data.data = o_malloc(cbor_bytestring_length(auth_data) + 32)) == NULL) {
-          json_array_append_new(j_error, json_string("Internal error"));
-          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - Error o_malloc data.data");
-          break;
-        }
-        
-        memcpy(data.data, cbor_bytestring_handle(auth_data), cbor_bytestring_length(auth_data));
-        memcpy(data.data + cbor_bytestring_length(auth_data), client_data_hash, client_data_hash_len);
-        data.size = cbor_bytestring_length(auth_data) + 32;
         
         if (gnutls_pubkey_verify_data2(pubkey, sig_alg, 0, &data, &signature)) {
           json_array_append_new(j_error, json_string("Invalid signature"));
