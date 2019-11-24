@@ -51,11 +51,11 @@ script:
   - sqlite3 /tmp/glewlwyd.db < ../test/glewlwyd-test.sql
   - glewlwyd --config-file=../test/glewlwyd-travis.conf &
   - export G_PID=$!
+  - ../test/cert/create-cert.sh
+  - ln -s ../test/cert/ .
   - make test || (cat Testing/Temporary/LastTest.log && cat /tmp/glewlwyd.log && false)
   - kill $G_PID
   - make glewlwyd_scheme_certificate
-  - ../test/cert/create-cert.sh
-  - ln -s ../test/cert/ .
   - glewlwyd --config-file=cert/glewlwyd-cert-ci.conf &
   - export G_PID=$!
   - ./glewlwyd_scheme_certificate || (cat /tmp/glewlwyd-https.log && false)

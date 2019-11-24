@@ -43,10 +43,10 @@ jobs:
         glewlwyd --config-file=test/glewlwyd-travis.conf &
         export G_PID=$!
         cd build
-        make test || (cat Testing/Temporary/LastTest.log && cat /tmp/glewlwyd.log && false)
-        kill $G_PID
         ../test/cert/create-cert.sh
         ln -s ../test/cert/ .
+        make test || (cat Testing/Temporary/LastTest.log && cat /tmp/glewlwyd.log && false)
+        kill $G_PID
         glewlwyd --config-file=cert/glewlwyd-cert-ci.conf &
         make glewlwyd_scheme_certificate
         sleep 1
