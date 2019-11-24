@@ -51,7 +51,7 @@ script:
   - sqlite3 /tmp/glewlwyd.db < ../test/glewlwyd-test.sql
   - glewlwyd --config-file=../test/glewlwyd-travis.conf &
   - export G_PID=$!
-  - ../test/cert/create-cert.sh
+  - ../test/cert/create-cert.sh || (cat ../test/cert/certtool.log && false)
   - ln -s ../test/cert/ .
   - make test || (cat Testing/Temporary/LastTest.log && cat /tmp/glewlwyd.log && false)
   - kill $G_PID
