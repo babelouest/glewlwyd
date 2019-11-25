@@ -3,6 +3,14 @@
 DEST=../test/cert
 RET=0
 
+certtool --generate-privkey --key-type=ecdsa >/dev/null 2>&1
+
+if [ $? -eq 0 ]; then
+  ECDSA="--key-type=ecdsa"
+else
+  ECDSA="--ecdsa"
+fi
+
 # clean old certs
 rm -f $DEST/server.* $DEST/root* $DEST/client* $DEST/packed*
 
@@ -269,7 +277,7 @@ else
 fi
 
 # client packed invalid ou
-certtool --generate-privkey --outfile $DEST/client-p-iu.key --key-type=ecdsa --sec-param High 2>>$DEST/certtool.log
+certtool --generate-privkey --outfile $DEST/client-p-iu.key $ECDSA --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "client-p-iu.key    \033[0;32mOK\033[0m\n"
@@ -295,7 +303,7 @@ else
 fi
 
 # client packed invalid c
-certtool --generate-privkey --outfile $DEST/client-p-ic.key --key-type=ecdsa --sec-param High 2>>$DEST/certtool.log
+certtool --generate-privkey --outfile $DEST/client-p-ic.key $ECDSA --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "client-p-ic.key    \033[0;32mOK\033[0m\n"
@@ -321,7 +329,7 @@ else
 fi
 
 # client packed c not present
-certtool --generate-privkey --outfile $DEST/client-p-mc.key --key-type=ecdsa --sec-param High 2>>$DEST/certtool.log
+certtool --generate-privkey --outfile $DEST/client-p-mc.key $ECDSA --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "client-p-mc.key    \033[0;32mOK\033[0m\n"
@@ -347,7 +355,7 @@ else
 fi
 
 # client packed o not present
-certtool --generate-privkey --outfile $DEST/client-p-mo.key --key-type=ecdsa --sec-param High 2>>$DEST/certtool.log
+certtool --generate-privkey --outfile $DEST/client-p-mo.key $ECDSA --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "client-p-mo.key    \033[0;32mOK\033[0m\n"
@@ -373,7 +381,7 @@ else
 fi
 
 # client packed cn not present
-certtool --generate-privkey --outfile $DEST/client-p-mcn.key --key-type=ecdsa --sec-param High 2>>$DEST/certtool.log
+certtool --generate-privkey --outfile $DEST/client-p-mcn.key $ECDSA --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "client-p-mcn.key   \033[0;32mOK\033[0m\n"
@@ -399,7 +407,7 @@ else
 fi
 
 # client packed invalid extension aaguid
-certtool --generate-privkey --outfile $DEST/client-p-ia.key --key-type=ecdsa --sec-param High 2>>$DEST/certtool.log
+certtool --generate-privkey --outfile $DEST/client-p-ia.key $ECDSA --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "client-p-ia.key    \033[0;32mOK\033[0m\n"
