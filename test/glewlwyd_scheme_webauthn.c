@@ -18662,7 +18662,7 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd scheme webauthn");
   tc_core = tcase_create("test_glwd_scheme_webauthn_irl");
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add);
-  /*tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_new_credential);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error_bad_formed_response);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json_challenge);
@@ -18738,7 +18738,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_list_credential_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_2_success);
-  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_trigger_flaggerbasted);*/
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_trigger_flaggerbasted);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_signature);
@@ -18766,7 +18766,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add_with_ca_2);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_unregistered_ca);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove);
-  /*tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add_2);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_u2f_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_u2f_2_collision_error);
@@ -18784,7 +18784,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove_2);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add_3);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_trigger_not_flaggerbasted);
-  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove);*/
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
