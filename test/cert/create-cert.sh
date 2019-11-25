@@ -251,7 +251,7 @@ else
 fi
 
 # client packed valid
-certtool --generate-privkey --outfile $DEST/client-p-v.key --key-type=ecdsa --sec-param High 2>>$DEST/certtool.log
+certtool --generate-privkey --outfile $DEST/client-p-v.key $ECDSA --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "client-p-v.key     \033[0;32mOK\033[0m\n"
