@@ -41,7 +41,7 @@ jobs:
         sqlite3 /tmp/glewlwyd.db < docs/database/init.sqlite3.sql
         sqlite3 /tmp/glewlwyd.db < test/glewlwyd-test.sql
         cd build
-        glewlwyd --config-file=test/glewlwyd-travis.conf &
+        glewlwyd --config-file=../test/glewlwyd-travis.conf &
         export G_PID=$!
         ../test/cert/create-cert.sh || (cat ../test/cert/certtool.log && false)
         ln -s ../test/cert/ .
