@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
   ulfius_set_json_body_request(&auth_req, j_body);
   json_decref(j_body);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
-  if (res == U_OK && auth_resp.status == 200 && auth_resp.nb_cookies) {
+  if (res == U_OK && auth_resp.status == 200) {
     for (i=0; i<auth_resp.nb_cookies; i++) {
       char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
       u_map_put(user_req.map_header, "Cookie", cookie);
@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
     ulfius_set_json_body_request(&auth_req, j_body);
     json_decref(j_body);
     res = ulfius_send_http_request(&auth_req, &auth_resp);
-    if (res == U_OK && auth_resp.status == 200 && auth_resp.nb_cookies) {
+    if (res == U_OK && auth_resp.status == 200) {
       j_register = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", "mock", "scheme_name", "mock_scheme_95", "value", "register", json_true());
       run_simple_test(&register_req, "POST", SERVER_URI "/profile/scheme/register/", NULL, NULL, j_register, NULL, 200, NULL, NULL, NULL);
       json_decref(j_register);
@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
       ulfius_set_json_body_request(&auth_req, j_body);
       json_decref(j_body);
       res = ulfius_send_http_request(&auth_req, &auth_resp);
-      if (res == U_OK && auth_resp.status == 200 && auth_resp.nb_cookies) {
+      if (res == U_OK && auth_resp.status == 200) {
         y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USERNAME);
     
         scope_req.http_verb = strdup("PUT");

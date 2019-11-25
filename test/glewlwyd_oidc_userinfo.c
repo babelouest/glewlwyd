@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
   ulfius_set_json_body_request(&auth_req, j_body);
   json_decref(j_body);
   res = ulfius_send_http_request(&auth_req, &auth_resp);
-  if (res == U_OK && auth_resp.status == 200 && auth_resp.nb_cookies) {
+  if (res == U_OK && auth_resp.status == 200) {
     if (auth_resp.nb_cookies) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "Admin %s authenticated", ADMIN_USERNAME);
       cookie = msprintf("%s=%s", auth_resp.map_cookie[0].key, auth_resp.map_cookie[0].value);
@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
     ulfius_set_json_body_request(&auth_req, j_body);
     json_decref(j_body);
     res = ulfius_send_http_request(&auth_req, &auth_resp);
-    if (res == U_OK && auth_resp.status == 200 && auth_resp.nb_cookies) {
+    if (res == U_OK && auth_resp.status == 200) {
       if (auth_resp.nb_cookies) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "User %s authenticated", USER_USERNAME);
         cookie = msprintf("%s=%s", auth_resp.map_cookie[0].key, auth_resp.map_cookie[0].value);
