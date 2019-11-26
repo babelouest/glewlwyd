@@ -148,7 +148,7 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
   UNUSED(config);
   UNUSED(username);
   UNUSED(cls);
-  return json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+  return json_pack("{sis{sssOso}}", "result", G_OK, "user", "username", username, "scope", json_object_get((json_t *)cls, "default-scope"), "enabled", json_true());
 }
 
 json_t * user_module_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
