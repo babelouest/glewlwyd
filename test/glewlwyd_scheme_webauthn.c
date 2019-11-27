@@ -224,7 +224,7 @@ END_TEST
 
 START_TEST(test_glwd_scheme_webauthn_irl_module_add_2)
 {
-  json_t * j_parameters = json_pack("{sssssssisis{sosssisisisss[iii]sisisss{sosososososo}}}", 
+  json_t * j_parameters = json_pack("{sssssssisis{sosssisisisss[iii]sisiss}}", 
                                     "module", MODULE_MODULE, 
                                     "name", MODULE_NAME_2, 
                                     "display_name", MODULE_DISPLAY_NAME, 
@@ -240,14 +240,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_module_add_2)
                                       "pubKey-cred-params", WEBAUTHN_PUBKEY_CRED_ECDSA_256, WEBAUTHN_PUBKEY_CRED_ECDSA_384, WEBAUTHN_PUBKEY_CRED_ECDSA_512, 
                                       "ctsProfileMatch", WEBAUTHN_CTS_PROFILE_MATCH, 
                                       "basicIntegrity", WEBAUTHN_BASIC_INTEGRITY, 
-                                      "google-root-ca-r2", WEBAUTHN_GOOGLE_ROOT_CA_R2,
-                                      "fmt", 
-                                        "packed", json_true(),
-                                        "tpm", json_true(),
-                                        "android-key", json_true(),
-                                        "android-safetynet", json_true(),
-                                        "fido-u2f", json_true(),
-                                        "none", json_true());
+                                      "google-root-ca-r2", WEBAUTHN_GOOGLE_ROOT_CA_R2);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   
