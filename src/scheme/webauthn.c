@@ -216,8 +216,8 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       if (json_object_get(j_params, "force-fmt-none") != NULL && !json_is_boolean(json_object_get(j_params, "force-fmt-none"))) {
         json_array_append_new(j_error, json_string("allow-fmt-none is optional and must be a boolean"));
       }
-      if (json_object_get(j_params, "fmt") == NULL || !json_is_object(json_object_get(j_params, "fmt")) || (json_object_get(json_object_get(j_params, "fmt"), "packed") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "tpm") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "android-key") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "android-safetynet") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "fido-u2f") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "none") != json_true())) {
-        json_array_append_new(j_error, json_string("fmt must be a JSON object filled with supported formats: 'packed' 'tpm', 'android-key', 'android-safetynet', fido-u2f', none'"));
+      if (json_object_get(j_params, "fmt") != NULL && (!json_is_object(json_object_get(j_params, "fmt")) || (json_object_get(json_object_get(j_params, "fmt"), "packed") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "tpm") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "android-key") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "android-safetynet") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "fido-u2f") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "none") != json_true()))) {
+        json_array_append_new(j_error, json_string("fmt must be a JSON object filled with supported formats: 'packed' 'tpm', 'android-key', 'android-safetynet', 'fido-u2f', 'none'"));
       }
       if (json_array_size(j_error)) {
         j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
@@ -2737,7 +2737,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
   char * message;
   
   if (check_result_value(j_result, G_OK)) {
-    *cls = json_pack("{sO sO sO sO sI sI sO ss sO sO sO sO sO sO ss s[]}",
+    *cls = json_pack("{sO sO sO sO sI sI sO ss so sO sO sO sO sO ss s[]}",
                      "challenge-length", json_object_get(j_parameters, "challenge-length"),
                      "rp-origin", json_object_get(j_parameters, "rp-origin"),
                      "credential-expiration", json_object_get(j_parameters, "credential-expiration"),
@@ -2746,7 +2746,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                      "basicIntegrity", json_object_get(j_parameters, "basicIntegrity")!=NULL?json_integer_value(json_object_get(j_parameters, "basicIntegrity")):-1,
                      "session-mandatory", json_object_get(j_parameters, "session-mandatory")!=NULL?json_object_get(j_parameters, "session-mandatory"):json_true(),
                      "seed", !json_string_length(json_object_get(j_parameters, "seed"))?"":json_string_value(json_object_get(j_parameters, "seed")),
-                     "fmt", json_object_get(j_parameters, "fmt"),
+                     "fmt", json_object_get(j_parameters, "fmt")!=NULL?json_deep_copy(json_object_get(j_parameters, "fmt")):json_pack("{sosososososo}", "packed", json_true(), "tpm", json_true(), "android-key", json_true(), "android-safetynet", json_true(), "fido-u2f", json_true(), "none", json_true()),
                      "force-fmt-none", json_object_get(j_parameters, "force-fmt-none")!=NULL?json_object_get(j_parameters, "force-fmt-none"):json_false(),
                      "google-root-ca-r2", json_string_length(json_object_get(j_parameters, "google-root-ca-r2"))?json_object_get(j_parameters, "google-root-ca-r2"):json_null(),
                      "google-root-ca-r2-content", json_object_get(j_parameters, "google-root-ca-r2-content")!=NULL?json_object_get(j_parameters, "google-root-ca-r2-content"):json_null(),
