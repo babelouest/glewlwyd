@@ -43,12 +43,15 @@ class WebauthnParams extends Component {
       props.mod.parameters["session-mandatory"] = false;
     }
     
-    if (props.mod.parameters["allow-fmt-none"] === undefined) {
-      props.mod.parameters["allow-fmt-none"] = false;
-    }
-    
-    if (props.mod.parameters["force-fmt-none"] === undefined) {
-      props.mod.parameters["force-fmt-none"] = false;
+    if (props.mod.parameters.fmt === undefined) {
+      props.mod.parameters.fmt = {
+        "packed": true,
+        "tpm": false,
+        "android-key": false,
+        "android-safetynet": true,
+        "fido-u2f": true,
+        "none": true
+      };
     }
     
     if (props.mod.parameters["seed"] === undefined) {
@@ -79,11 +82,11 @@ class WebauthnParams extends Component {
     this.changeSIParam = this.changeSIParam.bind(this);
     this.toggleSessionMandatory = this.toggleSessionMandatory.bind(this);
     this.generateSeed = this.generateSeed.bind(this);
-    this.toggleAllowFmtNone = this.toggleAllowFmtNone.bind(this);
     this.toggleForceFmtNone = this.toggleForceFmtNone.bind(this);
     this.handleChangeRootCaPath = this.handleChangeRootCaPath.bind(this);
     this.addRootCaPath = this.addRootCaPath.bind(this);
     this.deleteCaPath = this.deleteCaPath.bind(this);
+    this.toggleFmt = this.toggleFmt.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -127,15 +130,15 @@ class WebauthnParams extends Component {
     this.setState({mod: mod});
   }
   
-  toggleAllowFmtNone(e) {
-    var mod = this.state.mod;
-    mod.parameters["allow-fmt-none"] = !mod.parameters["allow-fmt-none"];
-    this.setState({mod: mod});
-  }
-  
   toggleForceFmtNone(e) {
     var mod = this.state.mod;
     mod.parameters["force-fmt-none"] = !mod.parameters["force-fmt-none"];
+    this.setState({mod: mod});
+  }
+  
+  toggleFmt(e, fmt) {
+    var mod = this.state.mod;
+    mod.parameters.fmt[fmt] = !mod.parameters.fmt[fmt];
     this.setState({mod: mod});
   }
   
@@ -192,6 +195,10 @@ class WebauthnParams extends Component {
       hasError = true;
       errorList["pubKey-cred-params"] = i18next.t("admin.mod-webauthn-pubKey-cred-params-error")
     }
+    if (!this.state.mod.parameters.fmt["packed"] && !this.state.mod.parameters.fmt["tpm"] && !this.state.mod.parameters.fmt["android-key"] && !this.state.mod.parameters.fmt["android-safetynet"] && !this.state.mod.parameters.fmt["fido-u2f"] && !this.state.mod.parameters.fmt["none"]) {
+      hasError = true;
+      errorList["fmt"] = i18next.t("admin.mod-webauthn-fmt-error")
+    }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
         messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
@@ -205,7 +212,7 @@ class WebauthnParams extends Component {
     var listRootCaPath = [];
     this.state.mod.parameters["root-ca-list"].forEach((caPath, index) => {
       listRootCaPath.push(
-        <a href="#" onClick={(e) => this.deleteCaPath(e, index)} key={index}><span className="badge badge-primary btn-icon-right">{caPath}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>
+        <div><a href="#" onClick={(e) => this.deleteCaPath(e, index)} key={index}><span className="badge badge-primary btn-icon-right">{caPath}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a></div>
       );
     });
     return (
@@ -219,18 +226,6 @@ class WebauthnParams extends Component {
             </div>
             <div className="input-group-text">
               <input className="form-control" type="checkbox" value="" id="mod-webauthn-session-mandatory-check" checked={this.state.mod.parameters["session-mandatory"]} onChange={(e) => this.toggleSessionMandatory(e)}/>
-            </div>
-          </div>
-        </div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-webauthn-allow-fmt-none" disabled={!!this.state.mod.parameters["force-fmt-none"]}>
-                {i18next.t("admin.mod-webauthn-allow-fmt-none")}
-              </label>
-            </div>
-            <div className="input-group-text">
-              <input className="form-control" type="checkbox" value="" id="mod-webauthn-allow-fmt-none" checked={this.state.mod.parameters["allow-fmt-none"]} onChange={(e) => this.toggleAllowFmtNone(e)} disabled={!!this.state.mod.parameters["force-fmt-none"]}/>
             </div>
           </div>
         </div>
@@ -276,6 +271,49 @@ class WebauthnParams extends Component {
           {this.state.errorList["rp-origin"]?<span className="error-input">{this.state.errorList["rp-origin"]}</span>:""}
         </div>
         <div className="form-group">
+          <label htmlFor="mod-webauthn-fmt-params">{i18next.t("admin.mod-webauthn-fmt-params")}</label>
+          <ul>
+            <li>
+              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-fmt-packed" checked={this.state.mod.parameters.fmt["packed"]} onChange={(e) => this.toggleFmt(e, "packed")}/>
+              <label className="form-check-label" htmlFor="mod-webauthn-fmt-packed">
+                {i18next.t("admin.mod-webauthn-fmt-packed-label")}
+              </label>
+            </li>
+            <li>
+              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-fmt-tpm" checked={this.state.mod.parameters.fmt["tpm"]} onChange={(e) => this.toggleFmt(e, "tpm")} disabled={true}/>
+              <label className="form-check-label" htmlFor="mod-webauthn-fmt-tpm" title={i18next.t("admin.mod-webauthn-unsupported")}>
+                {i18next.t("admin.mod-webauthn-fmt-tpm-label")}
+              </label>
+            </li>
+            <li>
+              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-fmt-android-key" checked={this.state.mod.parameters.fmt["android-key"]} onChange={(e) => this.toggleFmt(e, "android-key")} disabled={true}/>
+              <label className="form-check-label" htmlFor="mod-webauthn-fmt-android-key" title={i18next.t("admin.mod-webauthn-unsupported")}>
+                {i18next.t("admin.mod-webauthn-fmt-android-key-label")}
+              </label>
+            </li>
+            <li>
+              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-fmt-android-safetynet" checked={this.state.mod.parameters.fmt["android-safetynet"]} onChange={(e) => this.toggleFmt(e, "android-safetynet")}/>
+              <label className="form-check-label" htmlFor="mod-webauthn-fmt-android-safetynet">
+                {i18next.t("admin.mod-webauthn-fmt-android-safetynet-label")}
+              </label>
+            </li>
+            <li>
+              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-fmt-fido-u2f" checked={this.state.mod.parameters.fmt["fido-u2f"]} onChange={(e) => this.toggleFmt(e, "fido-u2f")}/>
+              <label className="form-check-label" htmlFor="mod-webauthn-fmt-fido-u2f">
+                {i18next.t("admin.mod-webauthn-fmt-fido-u2f-label")}
+              </label>
+            </li>
+            <li>
+              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-fmt-none" checked={this.state.mod.parameters.fmt["none"]} onChange={(e) => this.toggleFmt(e, "none")}/>
+              <label className="form-check-label" htmlFor="mod-webauthn-fmt-none">
+                {i18next.t("admin.mod-webauthn-fmt-none-label")}
+              </label>
+            </li>
+          </ul>
+          {this.state.errorList["fmt"]?<span className="error-input">{this.state.errorList["fmt"]}</span>:""}
+        </div>
+        <hr/>
+        <div className="form-group">
           <label htmlFor="mod-webauthn-pubKey-cred-params">{i18next.t("admin.mod-webauthn-pubKey-cred-params")}</label>
           <ul>
             <li>
@@ -298,19 +336,19 @@ class WebauthnParams extends Component {
             </li>
             <li>
               <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-rsa-sha256-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-257)>-1} onChange={(e) => this.togglePubkey(e, -257)} disabled={true}/>
-              <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-rsa-sha256-check">
+              <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-rsa-sha256-check" title={i18next.t("admin.mod-webauthn-unsupported")}>
                 {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-rsa-sha256")}
               </label>
             </li>
             <li>
               <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-rsa-sha384-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-258)>-1} onChange={(e) => this.togglePubkey(e, -258)} disabled={true}/>
-              <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-rsa-sha384-check">
+              <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-rsa-sha384-check" title={i18next.t("admin.mod-webauthn-unsupported")}>
                 {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-rsa-sha384")}
               </label>
             </li>
             <li>
               <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-pubKey-cred-params-rsa-sha512-check" checked={this.state.mod.parameters["pubKey-cred-params"].indexOf(-259)>-1} onChange={(e) => this.togglePubkey(e, -259)} disabled={true}/>
-              <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-rsa-sha512-check">
+              <label className="form-check-label" htmlFor="mod-webauthn-pubKey-cred-params-rsa-sha512-check" title={i18next.t("admin.mod-webauthn-unsupported")}>
                 {i18next.t("admin.mod-webauthn-pubKey-cred-params-label-rsa-sha512")}
               </label>
             </li>
