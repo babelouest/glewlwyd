@@ -213,11 +213,11 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
           }
         }
       }
-      if (json_object_get(j_params, "allow-fmt-none") != NULL && !json_is_boolean(json_object_get(j_params, "allow-fmt-none"))) {
-        json_array_append_new(j_error, json_string("allow-fmt-none is optional and must be a boolean"));
-      }
       if (json_object_get(j_params, "force-fmt-none") != NULL && !json_is_boolean(json_object_get(j_params, "force-fmt-none"))) {
         json_array_append_new(j_error, json_string("allow-fmt-none is optional and must be a boolean"));
+      }
+      if (json_object_get(j_params, "fmt") == NULL || !json_is_object(json_object_get(j_params, "fmt")) || (json_object_get(json_object_get(j_params, "fmt"), "packed") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "tpm") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "android-key") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "android-safetynet") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "fido-u2f") != json_true() && json_object_get(json_object_get(j_params, "fmt"), "none") != json_true())) {
+        json_array_append_new(j_error, json_string("fmt must be a JSON object filled with supported formats: 'packed' 'tpm', 'android-key', 'android-safetynet', fido-u2f', none'"));
       }
       if (json_array_size(j_error)) {
         j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
@@ -2014,7 +2014,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         }
         
         // Steps 13-14
-        if (0 == o_strncmp("packed", (char *)fmt, MIN(fmt_len, o_strlen("packed")))) {
+        if (0 == o_strncmp("packed", (char *)fmt, MIN(fmt_len, o_strlen("packed"))) && (json_object_get(json_object_get(j_params, "fmt"), "packed") == json_true())) {
           j_result = check_attestation_packed(j_params, auth_data, att_stmt, client_data, g_key);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             json_array_extend(j_error, json_object_get(j_result, "error"));
@@ -2027,13 +2027,13 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
             j_cert = json_incref(json_object_get(json_object_get(j_result, "data"), "certificate"));
           }
           json_decref(j_result);
-        } else if (0 == o_strncmp("tpm", (char *)fmt, MIN(fmt_len, o_strlen("tpm")))) {
-          json_array_append_new(j_error, json_string("fmt 'tpm' not handled yet"));
+        } else if (0 == o_strncmp("tpm", (char *)fmt, MIN(fmt_len, o_strlen("tpm"))) && (json_object_get(json_object_get(j_params, "fmt"), "tpm") == json_true())) {
+          json_array_append_new(j_error, json_string("Format 'tpm' not supported yet"));
           ret = G_ERROR_PARAM;
-        } else if (0 == o_strncmp("android-key", (char *)fmt, MIN(fmt_len, o_strlen("android-key")))) {
-          json_array_append_new(j_error, json_string("fmt 'android-key' not handled yet"));
+        } else if (0 == o_strncmp("android-key", (char *)fmt, MIN(fmt_len, o_strlen("android-key"))) && (json_object_get(json_object_get(j_params, "fmt"), "android-key") == json_true())) {
+          json_array_append_new(j_error, json_string("Format 'android-key' not supported yet"));
           ret = G_ERROR_PARAM;
-        } else if (0 == o_strncmp("android-safetynet", (char *)fmt, MIN(fmt_len, o_strlen("android-safetynet")))) {
+        } else if (0 == o_strncmp("android-safetynet", (char *)fmt, MIN(fmt_len, o_strlen("android-safetynet"))) && (json_object_get(json_object_get(j_params, "fmt"), "android-safetynet") == json_true())) {
           j_result = check_attestation_android_safetynet(j_params, auth_data, att_stmt, client_data);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             json_array_extend(j_error, json_object_get(j_result, "error"));
@@ -2046,7 +2046,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
             j_cert = json_incref(json_object_get(json_object_get(j_result, "data"), "certificate"));
           }
           json_decref(j_result);
-        } else if (0 == o_strncmp("fido-u2f", (char *)fmt, MIN(fmt_len, o_strlen("fido-u2f")))) {
+        } else if (0 == o_strncmp("fido-u2f", (char *)fmt, MIN(fmt_len, o_strlen("fido-u2f"))) && (json_object_get(json_object_get(j_params, "fmt"), "fido-u2f") == json_true())) {
           j_result = check_attestation_fido_u2f(j_params, (cbor_auth_data+CREDENTIAL_ID_OFFSET), credential_id_len, cert_x, cert_x_len, cert_y, cert_y_len, att_stmt, rpid_hash, rpid_hash_len, client_data);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             json_array_extend(j_error, json_object_get(j_result, "error"));
@@ -2059,21 +2059,16 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
             j_cert = json_incref(json_object_get(json_object_get(j_result, "data"), "certificate"));
           }
           json_decref(j_result);
-        } else if (0 == o_strncmp("none", (char *)fmt, MIN(fmt_len, o_strlen("none")))) {
-          if (json_object_get(j_params, "allow-fmt-none") == json_true() || json_object_get(j_params, "force-fmt-none") == json_true()) {
-            if (att_stmt != NULL && cbor_isa_map(att_stmt) && cbor_map_is_definite(att_stmt) && !cbor_map_size(att_stmt)) {
-              j_cert = json_string("");
-            } else {
-              y_log_message(Y_LOG_LEVEL_DEBUG, "register_new_attestation - response type 'none' has invalid format");
-              json_array_append_new(j_error, json_string("response invalid"));
-              ret = G_ERROR_PARAM;
-            }
+        } else if (0 == o_strncmp("none", (char *)fmt, MIN(fmt_len, o_strlen("none"))) && (json_object_get(json_object_get(j_params, "fmt"), "none") == json_true() || json_object_get(j_params, "force-fmt-none") == json_true())) {
+          if (att_stmt != NULL && cbor_isa_map(att_stmt) && cbor_map_is_definite(att_stmt) && !cbor_map_size(att_stmt)) {
+            j_cert = json_string("");
           } else {
-            json_array_append_new(j_error, json_string("Attestation without certification isn't allowed"));
+            y_log_message(Y_LOG_LEVEL_DEBUG, "register_new_attestation - response type 'none' has invalid format");
+            json_array_append_new(j_error, json_string("response invalid"));
             ret = G_ERROR_PARAM;
           }
         } else {
-          message = msprintf("fmt '%.*s' not handled by Glewlwyd Webauthn scheme", fmt_len, fmt);
+          message = msprintf("Format '%.*s' is not supported by Glewlwyd Webauthn scheme", fmt_len, fmt);
           json_array_append_new(j_error, json_string(message));
           o_free(message);
           ret = G_ERROR_PARAM;
@@ -2751,7 +2746,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                      "basicIntegrity", json_object_get(j_parameters, "basicIntegrity")!=NULL?json_integer_value(json_object_get(j_parameters, "basicIntegrity")):-1,
                      "session-mandatory", json_object_get(j_parameters, "session-mandatory")!=NULL?json_object_get(j_parameters, "session-mandatory"):json_true(),
                      "seed", !json_string_length(json_object_get(j_parameters, "seed"))?"":json_string_value(json_object_get(j_parameters, "seed")),
-                     "allow-fmt-none", json_object_get(j_parameters, "allow-fmt-none")!=NULL?json_object_get(j_parameters, "allow-fmt-none"):json_false(),
+                     "fmt", json_object_get(j_parameters, "fmt"),
                      "force-fmt-none", json_object_get(j_parameters, "force-fmt-none")!=NULL?json_object_get(j_parameters, "force-fmt-none"):json_false(),
                      "google-root-ca-r2", json_string_length(json_object_get(j_parameters, "google-root-ca-r2"))?json_object_get(j_parameters, "google-root-ca-r2"):json_null(),
                      "google-root-ca-r2-content", json_object_get(j_parameters, "google-root-ca-r2-content")!=NULL?json_object_get(j_parameters, "google-root-ca-r2-content"):json_null(),
