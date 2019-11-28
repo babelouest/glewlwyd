@@ -26,8 +26,11 @@
 #define ADMIN_USERNAME "admin"
 #define ADMIN_PASSWORD "password"
 
-#define HTTP_USER     "httpuser1"
-#define HTTP_PASSWORD "http_user_password"
+#define HTTP_USER        "httpuser1"
+#define HTTP_USER_FORMAT "prefix/httpuser1@suffix"
+#define HTTP_PASSWORD    "http_user_password"
+
+#define USERNAME_FORMAT "prefix/{USERNAME}@suffix"
 
 #define MOD_NAME "mod_irl"
 
@@ -43,6 +46,23 @@ int auth_basic (const struct _u_request * request, struct _u_response * response
   if (request->auth_basic_user != NULL && 
       request->auth_basic_password != NULL) {
     if (0 == o_strcmp(request->auth_basic_user, HTTP_USER) && 
+        0 == o_strcmp(request->auth_basic_password, HTTP_PASSWORD)) {
+      return U_CALLBACK_CONTINUE;
+    } else {
+      return U_CALLBACK_UNAUTHORIZED;
+    }
+  } else {
+    return U_CALLBACK_UNAUTHORIZED;
+  }
+}
+
+/**
+ * Auth function for basic authentication with formatted username
+ */
+int auth_basic_format (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  if (request->auth_basic_user != NULL && 
+      request->auth_basic_password != NULL) {
+    if (0 == o_strcmp(request->auth_basic_user, HTTP_USER_FORMAT) && 
         0 == o_strcmp(request->auth_basic_password, HTTP_PASSWORD)) {
       return U_CALLBACK_CONTINUE;
     } else {
@@ -157,6 +177,22 @@ START_TEST(test_glwd_http_auth_module_delete)
 }
 END_TEST
 
+START_TEST(test_glwd_http_auth_module_format_add)
+{
+  char * param_url;
+  if (host == NULL) {
+    param_url = msprintf("http://%s:%d/auth/format/", HOST, PORT);
+  } else {
+    param_url = msprintf("http://%s:%d/auth/format/", host, PORT);
+  }
+  json_t * j_params = json_pack("{sssssssis{sssos[ss]ss}}", "module", "http", "name", "mod_irl", "display_name", "HTTP", "order_rank", 1, "parameters", "url", param_url, "check-server-certificate", json_true(), "default-scope", "g_profile", "scope1", "username-format", USERNAME_FORMAT);
+  char * url = SERVER_URI "/mod/user";
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  o_free(param_url);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -165,6 +201,10 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd mod HTTP Auth");
   tc_core = tcase_create("test_glwd_http_auth");
   tcase_add_test(tc_core, test_glwd_http_auth_module_add);
+  tcase_add_test(tc_core, test_glwd_http_auth_http_auth_success);
+  tcase_add_test(tc_core, test_glwd_http_auth_http_auth_fail);
+  tcase_add_test(tc_core, test_glwd_http_auth_module_delete);
+  tcase_add_test(tc_core, test_glwd_http_auth_module_format_add);
   tcase_add_test(tc_core, test_glwd_http_auth_http_auth_success);
   tcase_add_test(tc_core, test_glwd_http_auth_http_auth_fail);
   tcase_add_test(tc_core, test_glwd_http_auth_module_delete);
@@ -195,11 +235,13 @@ int main(int argc, char *argv[])
     y_log_message(Y_LOG_LEVEL_INFO, "Error ulfius_init_instance, abort");
     return(1);
   }
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, 0, &auth_basic, "auth param");
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, 0, &auth_basic, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/format", 0, &auth_basic_format, NULL);
   if (ulfius_start_framework(&instance) == U_OK) {
     y_log_message(Y_LOG_LEVEL_INFO, "Start framework on port %d", instance.port);
   } else {
     y_log_message(Y_LOG_LEVEL_INFO, "Error starting framework");
+    return(1);
   }
   
   ulfius_init_request(&admin_req);
