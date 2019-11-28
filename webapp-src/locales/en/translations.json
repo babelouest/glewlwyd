@@ -581,7 +581,7 @@
     "mod-webauthn-pubKey-cred-params-label-rsa-sha512": "RSA w/ SHA-512",
     "mod-webauthn-root-ca-list": "Root certificates list for FIDO2 or Packed devices (Leave empty list if you dont want to verify the components certificates)",
     "mod-webauthn-root-ca-yubico-link": "Example: Yubico inc. root CA certificate",
-    "mod-webauthn-root-ca-path": "Certificate file path on the server",
+    "mod-webauthn-root-ca-path": "Certificates file path on the server",
     "mod-webauthn-root-ca-path-ph": "Ex: /path/to/ca.pem",
     "mod-webauthn-safetynet-integrity-link": "More information about potential integrity",
     "mod-webauthn-safetynet-integrity-params": "Potential integrity verdict for Android SafetyNet devices",
