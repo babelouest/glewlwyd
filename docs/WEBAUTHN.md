@@ -39,10 +39,6 @@ Maximum number of times a valid authentification with this scheme is possible. T
 
 If this option is unchecked, only administrator can register this scheme for every user via the administration page.
 
-### Allow attestations without validation certificate (less safe)
-
-Allow device to register to Glewlwyd without a certificate (fmt: 'none'). Check this option could make your webauthn authentication less safe but you can accept browser of FIDO2 devices less secured.
-
 ### Force attestation without validation certificate (much lesser safe)
 
 Force all registration to Glewlwyd without a certificate (attestation set to 'none', therefore fmt returned is 'none'). Check this option if you don't want to manage FIDO2 devices chain of trust and want to accept all FIDO2 device a user wants to register.
@@ -72,9 +68,17 @@ Maximum duration in seconds between the first step and the last step of the auth
 
 Value of the relying party that will be used and compared to during the registration and authentication process. It must correspond to the address of the web server hosting the front-end application. It must be an `https://` address unless you're using only under `localhost` (but why would you?).
 
+### Supported webauthn formats
+
+Select the formats you want your Webauthn scheme to support. You must select at least one format. Format TPM and Android Key are not supported yet.
+
 ### Signature algorithm
 
 Signature algorithms supported. Currently, only ECDSA signatures are supported.
+
+### Certificate file path on the server
+
+These are the certificates provided by the security key manufactors used to validate the full chain. If you enter no certificate, then no chain trust will be checked when a FIDO2 device will register, which can lead to man in the middle attack. Therefore you're strongly suggested to specify the manufactors you support.
 
 ### Android Safetynet integrity: Expected ctsProfileMatch value and Expected basicIntegrity value
 
