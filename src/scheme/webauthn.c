@@ -2685,6 +2685,21 @@ json_t * user_auth_scheme_module_load(struct config_module * config) {
                        "type",
                        "string",
                        "mandatory",
+                       json_false(),
+                     "root-ca-list",
+                       "type",
+                       "list",
+                       "mandatory",
+                       json_false(),
+                     "force-fmt-none",
+                       "type",
+                       "boolean",
+                       "mandatory",
+                       json_false(),
+                     "fmt",
+                       "type",
+                       "object",
+                       "mandatory",
                        json_false());
 }
 
