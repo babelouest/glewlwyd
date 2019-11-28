@@ -33,7 +33,7 @@ class PluginEdit extends Component {
             this.setState({nameInvalid: false, nameInvalidMessage: false, typeInvalidMessage: i18next.t("admin.error-mod-type-mandatory"), hasError: true});
           } else if (this.state.parametersValid) {
             if (this.state.add) {
-              apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(this.state.mod.name), "GET")
+              apiManager.glewlwydRequest("/mod/plugin/" + encodeURIComponent(this.state.mod.name), "GET")
               .then(() => {
                 this.setState({nameInvalid: true, nameInvalidMessage: i18next.t("admin.error-mod-name-exist"), typeInvalidMessage: false, hasError: true});
               })

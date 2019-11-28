@@ -37,7 +37,7 @@ class Navbar extends Component {
 
   toggleLogin() {
     if (this.state.loggedIn) {
-      apiManager.glewlwydRequest("/auth/?username=" + encodeURI(this.state.profileList[0].username), "DELETE")
+      apiManager.glewlwydRequest("/auth/?username=" + encodeURIComponent(this.state.profileList[0].username), "DELETE")
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.success-delete-session")});
         messageDispatcher.sendMessage('App', {type: 'loggedIn', loggedIn: false});
@@ -59,7 +59,7 @@ class Navbar extends Component {
           });
         }
       });
-      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURI([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURI(this.state.config.admin_scope) + (schemeDefault?("&scheme="+encodeURI(schemeDefault)):"");
+      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.admin_scope) + (schemeDefault?("&scheme="+encodeURIComponent(schemeDefault)):"");
     }
   }
 
@@ -91,7 +91,7 @@ class Navbar extends Component {
           });
         }
       });
-      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURI([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURI(this.state.config.profile_scope) + (schemeDefault?("&scheme="+encodeURI(schemeDefault)):"") + "&prompt=login";
+      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.profile_scope) + (schemeDefault?("&scheme="+encodeURIComponent(schemeDefault)):"") + "&prompt=login";
     }
   }
 

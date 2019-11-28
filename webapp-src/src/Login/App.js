@@ -117,7 +117,7 @@ class App extends Component {
   }
 
   checkClientScope(clientId, scopeList) {
-    apiManager.glewlwydRequest("/auth/grant/" + encodeURI(clientId) + "/" + encodeURI(scopeList))
+    apiManager.glewlwydRequest("/auth/grant/" + encodeURIComponent(clientId) + "/" + encodeURIComponent(scopeList))
     .then((res) => {
       var scopeGranted = [];
       var scopeGrantedDetails = {};
@@ -135,7 +135,7 @@ class App extends Component {
           }
         });
         if (scopeGranted.length) {
-          apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURI(scopeGranted.join(" ")))
+          apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURIComponent(scopeGranted.join(" ")))
           .then((schemeRes) => {
             this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk, infoSomeScopeUnavailable: infoSomeScopeUnavailable}, () => {
               this.parseSchemes();
