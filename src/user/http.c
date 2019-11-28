@@ -62,7 +62,12 @@ json_t * user_module_load(struct config_module * config) {
                        "mandatory",
                        json_true(),
                        "values",
-                        "string");
+                        "string",
+                     "username-format",
+                       "type",
+                       "string",
+                       "mandatory",
+                       json_false());
 }
 
 int user_module_unload(struct config_module * config) {
@@ -89,6 +94,10 @@ json_t * user_module_init(struct config_module * config, int readonly, json_t * 
     } else if (json_object_get(j_params, "default-scope") == NULL || !json_is_array(json_object_get(j_params, "default-scope"))) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter default-scope is mandatory must be an array of non empty strings");
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter default-scope is mandatory must be an array of non empty strings");
+      ret = G_ERROR_PARAM;
+    } else if (json_string_length(json_object_get(j_params, "username-format")) && o_strstr(json_string_value(json_object_get(j_params, "username-format")), "{USERNAME}") == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter username-format is optional and must contain {USERNAME}");
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter username-format is optional and must contain {USERNAME}");
       ret = G_ERROR_PARAM;
     } else {
       json_array_foreach(json_object_get(j_params, "default-scope"), index, j_element) {
@@ -203,7 +212,11 @@ int user_module_check_password(struct config_module * config, const char * usern
   if (json_object_get((json_t *)cls, "check-server-certificate") == json_false()) {
     request.check_server_certificate = 0;
   }
-  request.auth_basic_user = o_strdup(username);
+  if (json_string_length(json_object_get((json_t *)cls, "username-format"))) {
+    request.auth_basic_user = str_replace(json_string_value(json_object_get((json_t *)cls, "username-format")), "{USERNAME}", username);
+  } else {
+    request.auth_basic_user = o_strdup(username);
+  }
   request.auth_basic_password = o_strdup(password);
   
   res = ulfius_send_http_request(&request, &response);
