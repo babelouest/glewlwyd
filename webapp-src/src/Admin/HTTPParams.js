@@ -77,6 +77,10 @@ class HTTPParams extends Component {
       hasError = true;
       errorList["default-scope"] = i18next.t("admin.mod-http-default-scope-error")
     }
+    if (this.state.mod.parameters["username-format"] && !this.state.mod.parameters["username-format"].includes("{USERNAME}")) {
+      hasError = true;
+      errorList["username-format"] = i18next.t("admin.mod-http-username-format-error")
+    }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
         if (this.state.role === "user") {
@@ -101,7 +105,7 @@ class HTTPParams extends Component {
     });
     if (this.state.mod.parameters["default-scope"]) {
       this.state.mod.parameters["default-scope"].forEach((scope, index) => {
-        defaultScopeList.push(<a href="#" onClick={(e) => this.deleteDefaultScope(e, index)} key={index}><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
+        defaultScopeList.push(<a className="btn-icon-right" href="#" onClick={(e) => this.deleteDefaultScope(e, index)} key={index}><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
       });
     }
     var scopeJsx = 
@@ -145,6 +149,15 @@ class HTTPParams extends Component {
             {scopeJsx}
           </div>
           {this.state.errorList["default-scope"]?<span className="error-input">{this.state.errorList["default-scope"]}</span>:""}
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-http-username-format">{i18next.t("admin.mod-http-username-format")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["username-format"]?"form-control is-invalid":"form-control"} id="mod-http-username-format" onChange={(e) => this.changeParam(e, "username-format")} value={this.state.mod.parameters["username-format"]||""} placeholder={i18next.t("admin.mod-http-username-format-ph")} />
+          </div>
+          {this.state.errorList["username-format"]?<span className="error-input">{this.state.errorList["username-format"]}</span>:""}
         </div>
       </div>
     );
