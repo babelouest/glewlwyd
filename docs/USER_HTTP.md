@@ -49,3 +49,7 @@ Check this option if the HTTP service uses TLS and if you want to validate the c
 ### Default scopes
 
 Select all the scopes that will be available for a connected user. At least one scope is mandatory.
+
+### Username format on HTTP server
+
+Fill this option if you want the users to enter their username only, without surrounding patterns. For example, if the login format on the HTTP server uses the format `\\domain\username`, then you can fill this option with `\\domain\{USERNAME}`. This option is optional, but if you fill it, the pattern `{USERNAME}` must be present in the format.
