@@ -52,7 +52,7 @@ class GrantScope extends Component {
         scopeList.push(scope.name);
       }
     });
-    apiManager.glewlwydRequest("/auth/grant/" + encodeURI(this.state.client.client_id), "PUT", {scope: scopeList.join(" ")})
+    apiManager.glewlwydRequest("/auth/grant/" + encodeURIComponent(this.state.client.client_id), "PUT", {scope: scopeList.join(" ")})
     .then(() => {
       messageDispatcher.sendMessage('App', {type: 'GrantComplete'});
     })

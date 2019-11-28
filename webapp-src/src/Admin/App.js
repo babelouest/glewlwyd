@@ -337,9 +337,9 @@ class App extends Component {
         }
       } else if (message.type === 'swap') {
         if (message.role === 'userMod') {
-          apiManager.glewlwydRequest("/mod/user/" + encodeURI(message.mod.name), "PUT", message.mod)
+          apiManager.glewlwydRequest("/mod/user/" + encodeURIComponent(message.mod.name), "PUT", message.mod)
           .then(() => {
-            return apiManager.glewlwydRequest("/mod/user/" + encodeURI(message.previousMod.name), "PUT", message.previousMod)
+            return apiManager.glewlwydRequest("/mod/user/" + encodeURIComponent(message.previousMod.name), "PUT", message.previousMod)
             .fail(() => {
               messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
             })
@@ -352,9 +352,9 @@ class App extends Component {
             this.fetchUsers();
           });
         } else if (message.role === 'clientMod') {
-          apiManager.glewlwydRequest("/mod/client/" + encodeURI(message.mod.name), "PUT", message.mod)
+          apiManager.glewlwydRequest("/mod/client/" + encodeURIComponent(message.mod.name), "PUT", message.mod)
           .then(() => {
-            return apiManager.glewlwydRequest("/mod/client/" + encodeURI(message.previousMod.name), "PUT", message.previousMod)
+            return apiManager.glewlwydRequest("/mod/client/" + encodeURIComponent(message.previousMod.name), "PUT", message.previousMod)
             .fail(() => {
               messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
             })
@@ -688,7 +688,7 @@ class App extends Component {
   
   confirmDeleteUser(result) {
     if (result) {
-      apiManager.glewlwydRequest("/user/" + encodeURI(this.state.curUser.username), "DELETE")
+      apiManager.glewlwydRequest("/user/" + encodeURIComponent(this.state.curUser.username), "DELETE")
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-user")});
       })
@@ -712,7 +712,7 @@ class App extends Component {
 
   confirmDeleteClient(result) {
     if (result) {
-      apiManager.glewlwydRequest("/client/" + encodeURI(this.state.curClient.client_id), "DELETE")
+      apiManager.glewlwydRequest("/client/" + encodeURIComponent(this.state.curClient.client_id), "DELETE")
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-client")});
       })
@@ -736,7 +736,7 @@ class App extends Component {
 
   confirmDeleteScope(result) {
     if (result) {
-      apiManager.glewlwydRequest("/scope/" + encodeURI(this.state.curScope.name), "DELETE")
+      apiManager.glewlwydRequest("/scope/" + encodeURIComponent(this.state.curScope.name), "DELETE")
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-scope")});
       })
@@ -760,7 +760,7 @@ class App extends Component {
 
   confirmEditUser(result, user) {
     if (result) {
-      apiManager.glewlwydRequest("/user/" + encodeURI(user.username), "PUT", user)
+      apiManager.glewlwydRequest("/user/" + encodeURIComponent(user.username), "PUT", user)
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-set-user")});
       })
@@ -784,7 +784,7 @@ class App extends Component {
 
   confirmEditClient(result, client) {
     if (result) {
-      apiManager.glewlwydRequest("/client/" + encodeURI(client.client_id), "PUT", client)
+      apiManager.glewlwydRequest("/client/" + encodeURIComponent(client.client_id), "PUT", client)
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-set-client")});
       })
@@ -808,7 +808,7 @@ class App extends Component {
 
   confirmEditScope(result, scope) {
     if (result) {
-      apiManager.glewlwydRequest("/scope/" + encodeURI(scope.name), "PUT", scope)
+      apiManager.glewlwydRequest("/scope/" + encodeURIComponent(scope.name), "PUT", scope)
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-set-scope")});
       })
@@ -919,7 +919,7 @@ class App extends Component {
         data["username"] = i18next.t("admin.user-username-mandatory");
         cb(result, data);
       } else {
-        apiManager.glewlwydRequest("/user/" + encodeURI(user.username))
+        apiManager.glewlwydRequest("/user/" + encodeURIComponent(user.username))
         .then(() => {
           result = false;
           data["username"] = i18next.t("admin.user-username-exists");
@@ -964,7 +964,7 @@ class App extends Component {
         data["client_id"] = i18next.t("admin.client-client-id-mandatory");
         cb(result, data);
       } else {
-        apiManager.glewlwydRequest("/client/" + encodeURI(client.client_id))
+        apiManager.glewlwydRequest("/client/" + encodeURIComponent(client.client_id))
         .then(() => {
           result = false;
           data["client_id"] = i18next.t("admin.client-client-id-exists");
@@ -1006,9 +1006,9 @@ class App extends Component {
 
   confirmEditUserMod(result, mod) {
     if (result) {
-      apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name), "PUT", mod)
+      apiManager.glewlwydRequest("/mod/user/" + encodeURIComponent(mod.name), "PUT", mod)
       .then(() => {
-        apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name) + "/reset/", "PUT")
+        apiManager.glewlwydRequest("/mod/user/" + encodeURIComponent(mod.name) + "/reset/", "PUT")
         .then(() => {
           messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
         })
@@ -1038,7 +1038,7 @@ class App extends Component {
 
   confirmDeleteUserMod(result) {
     if (result) {
-      apiManager.glewlwydRequest("/mod/user/" + encodeURI(this.state.curMod.name), "DELETE")
+      apiManager.glewlwydRequest("/mod/user/" + encodeURIComponent(this.state.curMod.name), "DELETE")
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-mod")});
       })
@@ -1089,9 +1089,9 @@ class App extends Component {
 
   confirmEditClientMod(result, mod) {
     if (result) {
-      apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name), "PUT", mod)
+      apiManager.glewlwydRequest("/mod/client/" + encodeURIComponent(mod.name), "PUT", mod)
       .then(() => {
-        apiManager.glewlwydRequest("/mod/client/" + encodeURI(mod.name) + "/reset/", "PUT")
+        apiManager.glewlwydRequest("/mod/client/" + encodeURIComponent(mod.name) + "/reset/", "PUT")
         .then(() => {
           messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
         })
@@ -1121,7 +1121,7 @@ class App extends Component {
 
   confirmDeleteClientMod(result) {
     if (result) {
-      apiManager.glewlwydRequest("/mod/client/" + encodeURI(this.state.curMod.name), "DELETE")
+      apiManager.glewlwydRequest("/mod/client/" + encodeURIComponent(this.state.curMod.name), "DELETE")
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-mod")});
       })
@@ -1171,9 +1171,9 @@ class App extends Component {
 
   confirmEditSchemeMod(result, mod) {
     if (result) {
-      apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(mod.name), "PUT", mod)
+      apiManager.glewlwydRequest("/mod/scheme/" + encodeURIComponent(mod.name), "PUT", mod)
       .then(() => {
-          apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(mod.name) + "/reset/", "PUT")
+          apiManager.glewlwydRequest("/mod/scheme/" + encodeURIComponent(mod.name) + "/reset/", "PUT")
           .then(() => {
             messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
           })
@@ -1202,7 +1202,7 @@ class App extends Component {
 
   confirmDeleteSchemeMod(result) {
     if (result) {
-      apiManager.glewlwydRequest("/mod/scheme/" + encodeURI(this.state.curMod.name), "DELETE")
+      apiManager.glewlwydRequest("/mod/scheme/" + encodeURIComponent(this.state.curMod.name), "DELETE")
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-mod")});
       })
@@ -1251,9 +1251,9 @@ class App extends Component {
 
   confirmEditPluginMod(result, mod) {
     if (result) {
-      apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name), "PUT", mod)
+      apiManager.glewlwydRequest("/mod/plugin/" + encodeURIComponent(mod.name), "PUT", mod)
       .then(() => {
-        apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(mod.name) + "/reset/", "PUT")
+        apiManager.glewlwydRequest("/mod/plugin/" + encodeURIComponent(mod.name) + "/reset/", "PUT")
         .then(() => {
           messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
         })
@@ -1282,7 +1282,7 @@ class App extends Component {
 
   confirmDeletePluginMod(result) {
     if (result) {
-      apiManager.glewlwydRequest("/mod/plugin/" + encodeURI(this.state.curMod.name), "DELETE")
+      apiManager.glewlwydRequest("/mod/plugin/" + encodeURIComponent(this.state.curMod.name), "DELETE")
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-mod")});
       })

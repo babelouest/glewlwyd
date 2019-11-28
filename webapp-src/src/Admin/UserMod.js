@@ -50,7 +50,7 @@ class UserMod extends Component {
 
   switchModStatus(mod) {
     var action = (mod.enabled?"disable":"enable");
-    apiManager.glewlwydRequest("/mod/user/" + encodeURI(mod.name) + "/" + action + "/", "PUT")
+    apiManager.glewlwydRequest("/mod/user/" + encodeURIComponent(mod.name) + "/" + action + "/", "PUT")
     .then(() => {
       messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
     })

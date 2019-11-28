@@ -75,14 +75,14 @@ class SchemeOTP extends Component {
     if (this.state.myOtp.issuer && this.state.profile.username && this.state.myOtp.secret && this.state.myOtp.digits) {
       if (this.state.myOtp.type === "HOTP" && this.state.myOtp.moving_factor !== undefined) {
         url = "otpauth://hotp/" + encodeURIComponent(this.state.myOtp.issuer) + ":" + encodeURIComponent(this.state.profile.username) + "?" +
-                  "issuer=" + encodeURI([location.protocol, '//', location.host].join('')) + "&" +
+                  "issuer=" + encodeURIComponent([location.protocol, '//', location.host].join('')) + "&" +
                   "secret=" + encodeURIComponent(this.state.myOtp.secret) + "&" +
                   "digits=" + this.state.myOtp.digits + "&" +
                   "algorithm=SHA1&" +
                   "counter=" + this.state.myOtp.moving_factor;
       } else if (this.state.myOtp.type === "TOTP" && this.state.myOtp.time_step_size) {
         url = "otpauth://totp/" + encodeURIComponent(this.state.myOtp.issuer) + ":" + encodeURIComponent(this.state.profile.username) + "?" +
-                  "issuer=" + encodeURI([location.protocol, '//', location.host].join('')) + "&" +
+                  "issuer=" + encodeURIComponent([location.protocol, '//', location.host].join('')) + "&" +
                   "secret=" + encodeURIComponent(this.state.myOtp.secret) + "&" +
                   "digits=" + this.state.myOtp.digits + "&" +
                   "algorithm=SHA1&" +
