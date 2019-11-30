@@ -73,7 +73,7 @@ class HTTPParams extends Component {
       hasError = true;
       errorList["url"] = i18next.t("admin.mod-http-url-error")
     }
-    if (!this.state.mod.parameters["default-scope"]) {
+    if (!this.state.mod.parameters["default-scope"] && this.state.role === "user") {
       hasError = true;
       errorList["default-scope"] = i18next.t("admin.mod-http-default-scope-error")
     }
@@ -83,9 +83,7 @@ class HTTPParams extends Component {
     }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
-        if (this.state.role === "user") {
-          messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
-        }
+        messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
       });
     } else {
       this.setState({errorList: errorList}, () => {
@@ -94,32 +92,45 @@ class HTTPParams extends Component {
     }
   }
   
-  render() {
-    var scopeList = [], defaultScopeList = [];
-    this.state.config.pattern.user.forEach((pattern) => {
-      if (pattern.name === "scope") {
-        pattern.listElements.forEach((scope, index) => {
-          scopeList.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.addScope(e, scope)}>{scope}</a>);
+  render() {    
+    var defaultScopeJsx;
+    if (this.state.role === "user") {
+      var scopeList = [], defaultScopeList = [];
+      this.state.config.pattern.user.forEach((pattern) => {
+        if (pattern.name === "scope") {
+          pattern.listElements.forEach((scope, index) => {
+            scopeList.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.addScope(e, scope)}>{scope}</a>);
+          });
+        }
+      });
+      if (this.state.mod.parameters["default-scope"]) {
+        this.state.mod.parameters["default-scope"].forEach((scope, index) => {
+          defaultScopeList.push(<a className="btn-icon-right" href="#" onClick={(e) => this.deleteDefaultScope(e, index)} key={index}><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
         });
       }
-    });
-    if (this.state.mod.parameters["default-scope"]) {
-      this.state.mod.parameters["default-scope"].forEach((scope, index) => {
-        defaultScopeList.push(<a className="btn-icon-right" href="#" onClick={(e) => this.deleteDefaultScope(e, index)} key={index}><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
-      });
+      var scopeJsx = 
+        <div className="dropdown">
+          <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-http-default-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            {i18next.t("admin.mod-http-default-scope")}
+          </button>
+          <div className="dropdown-menu" aria-labelledby="mod-http-default-scope">
+            {scopeList}
+          </div>
+          <div>
+            {defaultScopeList}
+          </div>
+        </div>;
+      defaultScopeJsx = 
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-default-scope">{i18next.t("admin.mod-http-default-scope")}</label>
+            </div>
+            {scopeJsx}
+          </div>
+          {this.state.errorList["default-scope"]?<span className="error-input">{this.state.errorList["default-scope"]}</span>:""}
+        </div>
     }
-    var scopeJsx = 
-      <div className="dropdown">
-        <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-http-default-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          {i18next.t("admin.mod-http-default-scope")}
-        </button>
-        <div className="dropdown-menu" aria-labelledby="mod-http-default-scope">
-          {scopeList}
-        </div>
-        <div>
-          {defaultScopeList}
-        </div>
-      </div>;
     return (
       <div>
         <div className="form-group">
@@ -141,15 +152,7 @@ class HTTPParams extends Component {
             </div>
           </div>
         </div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-default-scope">{i18next.t("admin.mod-http-default-scope")}</label>
-            </div>
-            {scopeJsx}
-          </div>
-          {this.state.errorList["default-scope"]?<span className="error-input">{this.state.errorList["default-scope"]}</span>:""}
-        </div>
+        {defaultScopeJsx}
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
