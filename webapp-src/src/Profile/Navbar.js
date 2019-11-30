@@ -102,7 +102,7 @@ class Navbar extends Component {
 	render() {
     var langList = [], schemeList = [], profileList = [];
     var profileDropdown;
-    ["en","fr"].forEach((lang, i) => {
+    this.state.config.lang.forEach((lang, i) => {
       if (lang === i18next.language) {
         langList.push(<a className="dropdown-item active" href="#" key={i}>{lang}</a>);
       } else {
