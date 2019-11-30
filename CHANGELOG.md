@@ -3,6 +3,11 @@
 ## 2.0.1
 
 - Add custom css files so users can safely adapt css to their own identity
+- Add packed format support in webauthn scheme
+- improve webauthn scheme
+- Fix i18n errors and typos
+- Add Dutch translation in UI
+- Add HTTP Basic Authentication Scheme
 
 ## 2.0.0
 
