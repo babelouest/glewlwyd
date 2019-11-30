@@ -34,7 +34,7 @@
 
 json_t * user_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{sisssssss{s{ssso}s{sssoso}s{sssos[s]}}}",
+  return json_pack("{sisssssss{s{ssso}s{sssoso}s{sssos[s]}s{ssso}}}",
                    "result",
                    G_OK,
                    "name",
@@ -224,6 +224,9 @@ int user_module_check_password(struct config_module * config, const char * usern
     if (response.status == 200) {
       ret = G_OK;
     } else {
+      if (response.status != 401 && response.status != 403) {
+        y_log_message(Y_LOG_LEVEL_WARNING, "user_module_check_password http - Error connecting to webservice %s, response status is %d", request.http_url, response.status);
+      }
       ret = G_ERROR_UNAUTHORIZED;
     }
   } else {
