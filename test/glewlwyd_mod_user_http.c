@@ -19,9 +19,10 @@
 #define SERVER_URI "http://localhost:4593/api"
 #define CLIENT "client1_id"
 
-#define HOST   "localhost"
-#define PORT   2884
-#define PREFIX "/auth"
+#define HOST            "localhost"
+#define PORT             2884
+#define PORT_UNAVAILABLE 4882
+#define PREFIX           "/auth"
 
 #define ADMIN_USERNAME "admin"
 #define ADMIN_PASSWORD "password"
@@ -193,6 +194,22 @@ START_TEST(test_glwd_http_auth_module_format_add)
 }
 END_TEST
 
+START_TEST(test_glwd_http_auth_module_unavailable_add)
+{
+  char * param_url;
+  if (host == NULL) {
+    param_url = msprintf("http://%s:%d/", HOST, PORT_UNAVAILABLE);
+  } else {
+    param_url = msprintf("http://%s:%d/", host, PORT_UNAVAILABLE);
+  }
+  json_t * j_params = json_pack("{sssssssis{sssos[ss]ss}}", "module", "http", "name", "mod_irl", "display_name", "HTTP", "order_rank", 1, "parameters", "url", param_url, "check-server-certificate", json_true(), "default-scope", "g_profile", "scope1", "username-format", USERNAME_FORMAT);
+  char * url = SERVER_URI "/mod/user";
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  o_free(param_url);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -206,6 +223,9 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_http_auth_module_delete);
   tcase_add_test(tc_core, test_glwd_http_auth_module_format_add);
   tcase_add_test(tc_core, test_glwd_http_auth_http_auth_success);
+  tcase_add_test(tc_core, test_glwd_http_auth_http_auth_fail);
+  tcase_add_test(tc_core, test_glwd_http_auth_module_delete);
+  tcase_add_test(tc_core, test_glwd_http_auth_module_unavailable_add);
   tcase_add_test(tc_core, test_glwd_http_auth_http_auth_fail);
   tcase_add_test(tc_core, test_glwd_http_auth_module_delete);
   tcase_set_timeout(tc_core, 30);
