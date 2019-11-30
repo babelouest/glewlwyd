@@ -65,7 +65,7 @@ START_TEST(test_glwd_scheme_retype_password_irl_authenticate_error)
                                 "scheme_name", MODULE_NAME, 
                                 "value", 
                                  "password", "error");
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_params);
 }
 END_TEST
