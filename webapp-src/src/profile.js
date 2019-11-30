@@ -32,6 +32,9 @@ var getParameterByName = function (name, url) {
 var initApp = () => {
   apiManager.request("config.json")
   .then((frontEndConfig) => {
+    if (!frontEndConfig.lang) {
+      frontEndConfig.lang = ["en","fr","nl"];
+    }
     apiManager.request(frontEndConfig.GlewlwydUrl + "config/")
     .then((serverConfig) => {
       if (getParameterByName("delegate")) {
@@ -69,7 +72,7 @@ try {
     }
   })
   .then(() => {
-    initApp()
+    initApp();
   });
 } catch (e) {
   $("#root").html('<div class="alert alert-danger" role="alert">' +
