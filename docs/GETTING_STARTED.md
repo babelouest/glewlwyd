@@ -179,6 +179,8 @@ The Retype-password schema allows to mandatory retype the user password to authe
 
 The HTTP Basic Authentication performs a login/password authentication against a specified webservice that requires HTTP Basic Authentication. This scheme is similar to [HTTP authentication backend](#http-authentication) but requires users to be already added to any backend (Database or LDAP). The advantage is that you can specify different scopes for each users and add any other additional data for the users.
 
+Read the full [documentation](HTTP.md).
+
 ### Scopes
 
 ![scope-list](screenshots/scope-list.png)
