@@ -16,6 +16,7 @@
       - [HOTP/TOTP scheme](#hotp-totp-scheme)
       - [TLS Certificate scheme](#tls-certificate-scheme)
       - [Retype-password scheme](#retype-password-scheme)
+      - [HTTP Basic Authentication scheme](#http-basic-authentication-scheme)
     - [Scopes](#scopes)
     - [Plugins](#plugins)
       - [Glewlwyd Oauth2 plugin](#glewlwyd-oauth2-plugin)
@@ -173,6 +174,10 @@ Read the full [documentation](CERTIFICATE.md).
 #### Retype-password scheme
 
 The Retype-password schema allows to mandatory retype the user password to authenticate, even if the session is authenticated with a valid password. This scheme may be useful to force user to retype its password in some critical process.
+
+#### HTTP Basic Authentication scheme
+
+The HTTP Basic Authentication performs a login/password authentication against a specified webservice that requires HTTP Basic Authentication. This scheme is similar to [HTTP authentication backend](#http-authentication) but requires users to be already added to any backend (Database or LDAP). The advantage is that you can specify different scopes for each users and add any other additional data for the users.
 
 ### Scopes
 

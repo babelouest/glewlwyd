@@ -640,6 +640,22 @@ port     = https,4593 # the TCP port where Glewlwyd is available
 
 Check out [Fail2ban](https://www.fail2ban.org/) documentation for more information.
 
+## Logrotate configuration
+
+You can add a logrotate configuration file to help you managing Glewlwyd's logs.
+
+Example of a `/etc/logrotate.d/glewlwyd` file. This file will create a new log file every week, compress the old files and keep 52 files (1 year):
+
+```
+/var/log/glewlwyd.log {
+        rotate 52
+        weekly
+        compress
+        copytruncate
+        missingok
+}
+```
+
 ## Front-end application
 
 All front-end pages have a minimal design, feel free to modify them for your own need, or create your own application. The source code is available in `/webapp-src` and requires nodejs and npm or yarn to build.
@@ -667,6 +683,16 @@ The front-end application is written in Javascript using mostly ReactJS and JQue
 
 By choice, Glewlwyd isn't available for Internet Explorer or browser with a poor javascript engine. If you really need it you can build the front-end application with `babel-polyfill`. Check out the [webapp-src documentation](../webapp-src/README.md).
 
+### UI Language
+
+The languages available in the front-end are English, French and Dutch. If you make a language file for another lang, you can add it in your Glewlwyd installation by adding the file in  `webapp/{lang}/translation.json` where `{lang}` is the translation language in ISO 639-1 format (2 letters). Then, add your new language 2-letters code in the `webapp/config.json` file in the `lang` key, example for adding korean language:
+
+```json
+"lang": ["en","fr","nl","ko"],
+```
+
+Also, feel free to send your new language file if you want to add it in the official project. The new language file must be under MIT license to be added in the project repository.
+
 ### Login, Admin and Profile pages
 
 These pages are used when a user requires some access to Glewlwyd. They are simple html pages with a small JavaScript/JQuery/ReactJS application in it to provide the expected behavior, and vanilla bootstrap 4 for the visual consistency. Glewlwyd front-end source code is under MIT license. Fell free to update them to fit your needs or to adapt the front-end to your identity.
@@ -678,7 +704,6 @@ If you need to customize the css only, you can update the following files:
 - [webapp/css/profile-custom.css](webapp/css/profile-custom.css) : update the css for the profile application only
 - [webapp/css/admin-custom.css](webapp/css/admin-custom.css) : update the css for the admin application only
 - [webapp/css/login-custom.css](webapp/css/login-custom.css) : update the css for the login application only
-
 
 ## Run Glewlwyd
 
