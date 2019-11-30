@@ -24,7 +24,7 @@ MODULES_TARGET=$(DEST)/lib/glewlwyd/scheme
 CC=gcc
 CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(shell pkg-config --cflags libjwt) $(shell pkg-config --cflags libcbor) $(ADDITIONALFLAGS)
 LIBS=$(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs libhoel) $(shell pkg-config --libs jansson) -ldl
-TARGET=libmodemail.so libmodwebauthn.so libmodotp.so libmodpassword.so libmodcertificate.so
+TARGET=libmodemail.so libmodwebauthn.so libmodotp.so libmodpassword.so libmodcertificate.so libmodhttp.so
 
 all: release
 
@@ -51,6 +51,9 @@ libmodpassword.so: password.o misc.o
 
 libmodcertificate.so: certificate.o misc.o
 	$(CC) -shared -Wl,-soname,libmodcertificate.so -o libmodcertificate.so certificate.o misc.o $(LIBS)
+
+libmodhttp.so: http.o misc.o
+	$(CC) -shared -Wl,-soname,libmodhttp.so -o libmodhttp.so http.o misc.o $(LIBS)
 
 clean:
 	rm -f *.o *.so
