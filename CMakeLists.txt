@@ -436,6 +436,19 @@ if (WITH_SCHEME_CERTIFICATE)
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodcertificate)
 endif ()
 
+option(WITH_SCHEME_HTTP "Build HTTP Basic Auth scheme module" on)
+if (WITH_SCHEME_HTTP)
+	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/http.c)
+
+	set(MOD_LIBS ${ULFIUS_LIBRARIES} ${GNUTLS_LIBRARIES} "-ldl")
+
+	add_library(schememodhttp MODULE ${LIB_SRC})
+	set_target_properties(schememodhttp PROPERTIES
+			COMPILE_OPTIONS -Wextra)
+	target_link_libraries(schememodhttp ${MOD_LIBS})
+	set(SCHEME_MODULES ${SCHEME_MODULES} schememodhttp)
+endif ()
+
 # plugins modules
 
 if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
@@ -621,10 +634,14 @@ if (BUILD_GLEWLWYD_TESTING)
 			set (TESTS ${TESTS} glewlwyd_scheme_retype_password)
 		endif ()
 
+		if (WITH_SCHEME_HTTP)
+			set(TESTS ${TESTS} glewlwyd_scheme_http)
+		endif ()
+
 		if (WITH_SCHEME_CERTIFICATE)
 			set(TESTS_SSL glewlwyd_scheme_certificate)
 		endif ()
-		
+
 		configure_file(
 				"${CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
 				"${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake"
@@ -799,18 +816,18 @@ add_custom_target(dist_g
 	COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
 message(STATUS "Build Mock modules:                   ${WITH_MOCK}")
-message(STATUS "Build Database backend user:          ${WITH_USER_DATABASE}")
-message(STATUS "Build LDAP backend user module:       ${WITH_USER_LDAP}")
-message(STATUS "Build HTTP backend user module:       ${WITH_USER_HTTP}")
-message(STATUS "Build Database backend client module: ${WITH_CLIENT_DATABASE}")
-message(STATUS "Build LDAP backend client module:     ${WITH_CLIENT_LDAP}")
-message(STATUS "Build retype password scheme module:  ${WITH_SCHEME_RETYPE_PASSWORD}")
-message(STATUS "Build e-mail scheme module:           ${WITH_SCHEME_EMAIL}")
-message(STATUS "Build OTP scheme module:              ${WITH_SCHEME_OTP}")
-message(STATUS "Build Webauthn scheme module:         ${WITH_SCHEME_WEBAUTHN}")
-message(STATUS "Build retype password scheme module:  ${WITH_SCHEME_RETYPE_PASSWORD}")
-message(STATUS "Build Certificate scheme module:      ${WITH_SCHEME_CERTIFICATE}")
-message(STATUS "Build legacy oauth2 plugin module:    ${WITH_PLUGIN_OAUTH2}")
-message(STATUS "Build OpenID Connect plugin module:   ${WITH_PLUGIN_OIDC}")
+message(STATUS "Build backend user module Database:   ${WITH_USER_DATABASE}")
+message(STATUS "Build backend user module LDAP:       ${WITH_USER_LDAP}")
+message(STATUS "Build backend user module HTTP:       ${WITH_USER_HTTP}")
+message(STATUS "Build backend client module Database: ${WITH_CLIENT_DATABASE}")
+message(STATUS "Build backend client module LDAP:     ${WITH_CLIENT_LDAP}")
+message(STATUS "Build scheme module retype password:  ${WITH_SCHEME_RETYPE_PASSWORD}")
+message(STATUS "Build scheme module e-mail code:      ${WITH_SCHEME_EMAIL}")
+message(STATUS "Build scheme module OTP:              ${WITH_SCHEME_OTP}")
+message(STATUS "Build scheme module Webauthn:         ${WITH_SCHEME_WEBAUTHN}")
+message(STATUS "Build scheme module TLS Certificate:  ${WITH_SCHEME_CERTIFICATE}")
+message(STATUS "Build scheme module HTTP:             ${WITH_SCHEME_HTTP}")
+message(STATUS "Build plugin module legacy oauth2:    ${WITH_PLUGIN_OAUTH2}")
+message(STATUS "Build plugin module OpenID Connect:   ${WITH_PLUGIN_OIDC}")
 message(STATUS "Build the testing tree:               ${BUILD_GLEWLWYD_TESTING}")
 message(STATUS "Build RPM package:                    ${BUILD_RPM}")
