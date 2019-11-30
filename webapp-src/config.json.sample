@@ -4,6 +4,7 @@
   "AdminUrl": "http://localhost:4593/index.html",
   "LoginUrl": "http://localhost:4593/login.html",
   "PasswordMinLength": 8,
+  "lang": ["en","fr","nl"],
   "pattern": {
     "user": [{
       "name": "username",
