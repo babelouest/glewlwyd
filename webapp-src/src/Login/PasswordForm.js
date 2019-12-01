@@ -60,7 +60,7 @@ class PasswordForm extends Component {
     if (this.state.currentUser) {
       inputUsername = <input type="text" className="form-control" name="username" id="username" disabled={true} value={this.state.currentUser.username} />
     } else {
-      inputUsername = <input type="text" className="form-control" name="username" id="username" autoFocus={true} required="" placeholder={i18next.t("login.login-placeholder")} value={this.state.username} onChange={this.handleChangeUsername}/>;
+      inputUsername = <input type="text" className="form-control" name="username" id="username" required="" placeholder={i18next.t("login.login-placeholder")} value={this.state.username} onChange={this.handleChangeUsername} autoFocus={true}/>;
     }
 		return (
       <form action="#" id="passwordForm">
@@ -80,7 +80,7 @@ class PasswordForm extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="password">{i18next.t("login.password")}</label>
             </div>
-            <input type="password" className="form-control" name="password" id="password" required="" placeholder={i18next.t("login.password-placeholder")} value={this.state.password} onChange={this.handleChangePassword} autoFocus={true}/>
+            <input type="password" className="form-control" name="password" id="password" required="" placeholder={i18next.t("login.password-placeholder")} value={this.state.password} onChange={this.handleChangePassword} autoFocus={!!this.state.currentUser}/>
           </div>
         </div>
         <button type="submit" name="loginbut" id="loginbut" className="btn btn-primary" onClick={(e) => this.validateLogin(e)} title={i18next.t("login.sign-in-title")}>{i18next.t("login.btn-ok")}</button>
