@@ -110,7 +110,7 @@ class Scopes extends Component {
                     <a className={"dropdown-item" + (this.state.limit===100?" active":"")} href="#" onClick={(e) => this.navigatePerPage(e, 100)}>100</a>
                   </div>
                 </div>
-                <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.navigate(e, 1)} title={i18next.t("admin.nav-next")}>
+                <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.navigate(e, 1)} title={i18next.t("admin.nav-next")} disabled={this.state.limit>this.state.scopes.list.length}>
                   <i className="fas fa-forward"></i>
                 </button>
                 <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.addScope(e)} title={i18next.t("admin.scope-add")}>
