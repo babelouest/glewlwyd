@@ -552,7 +552,6 @@
     "mod-email-subject-error": "Onderwerp is verplicht",
     "mod-email-body-pattern-error": "E-mail tekst is verplicht en moet de tekenreeks {CODE} bevatten",
     "mod-webauthn-session-mandatory": "De gebruiker moet een geldige sessie hebben om te verbinden",
-    "mod-webauthn-allow-fmt-none": "Sta attesten toe zonder validatiecertificaat (minder veilig)",
     "mod-webauthn-force-fmt-none": "Forceer attesten zonder validatiecertificaat (veel minder veilig)",
     "mod-webauthn-seed": "Een willekeurige startwaarde gebruiken om  de kans op inbraak te verminderen",
     "mod-webauthn-seed-ph": "Een willekeurige tekenreeks van maximaal 128 tekens",
