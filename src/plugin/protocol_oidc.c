@@ -2630,7 +2630,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
       break;
     }
     
-    // If parameter prompt=none is set, id_token_hint must be set and correspond to the last id_token provided by the client for the current user
+    // If parameter prompt=none is set, id_token_hint must be set and correspond to the last id_token provided by the client for the current user
     if (0 == o_strcmp("none", prompt)) {
       if (o_strlen(id_token_hint)) {
         if (!jwt_decode(&jwt_id_token_hint, id_token_hint, (const unsigned char *)config->oidc_resource_config->jwt_decode_key, o_strlen(config->oidc_resource_config->jwt_decode_key)) && (jwt_get_alg(jwt_id_token_hint) == config->oidc_resource_config->jwt_alg)) {
@@ -3432,7 +3432,7 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
  */
 static int callback_oidc_authorization(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  const char * response_type = NULL, * redirect_uri = NULL, * client_id = NULL, * nonce = NULL;
+  const char * response_type = NULL, * redirect_uri = NULL, * client_id = NULL, * nonce = NULL, * state_value = NULL;
   int result = U_CALLBACK_CONTINUE;
   char * redirect_url, ** resp_type_array = NULL, * authorization_code = NULL, * access_token = NULL, * id_token = NULL, * expires_in_str = NULL, * iat_str = NULL, * query_parameters = NULL, * state = NULL, * str_request = NULL;
   json_t * j_auth_result = NULL, * j_request = NULL, * j_client = NULL;
@@ -3446,6 +3446,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   ret = G_OK;
   if (u_map_has_key(get_map(request), "state")) {
     state = get_state_param(u_map_get(get_map(request), "state"));
+	state_value = u_map_get(get_map(request), "state");
   }
 
   if (u_map_has_key(get_map(request), "response_type")) {
@@ -3528,6 +3529,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         }
         if (state == NULL) {
           state = get_state_param(json_string_value(json_object_get(json_object_get(j_request, "request"), "state")));
+		  state_value = json_string_value(json_object_get(json_object_get(j_request, "request"), "state"));
         }
       }
     }
@@ -3549,7 +3551,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         time(&now);
         
         if (state != NULL) {
-          u_map_put(&map_query, "state", state);
+          u_map_put(&map_query, "state", state_value);
         }
         
         if (!string_array_has_value((const char **)resp_type_array, "code") && 
