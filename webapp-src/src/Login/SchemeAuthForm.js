@@ -39,7 +39,7 @@ class SchemeAuthForm extends Component {
       return (<WebauthnForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>);
     } else if (this.state.scheme.scheme_type === "otp") {
       return (<OTPSchemeForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>);
-    } else if (this.state.scheme.scheme_type === "retype-password") {
+    } else if (this.state.scheme.scheme_type === "retype-password" || this.state.scheme.scheme_type === "http") {
       return (<PasswordSchemeForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>);
     } else if (this.state.scheme.scheme_type === "certificate") {
       return (<CertificateSchemeForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>);

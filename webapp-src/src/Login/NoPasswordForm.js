@@ -74,7 +74,7 @@ class NoPasswordForm extends Component {
             curScheme = <WebauthnForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
           } else if (scheme.scheme_type === "otp") {
             curScheme = <OTPSchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
-          } else if (scheme.scheme_type === "retype-password") {
+          } else if (scheme.scheme_type === "retype-password" || scheme.scheme_type === "http") {
             curScheme = <PasswordSchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
           } else if (scheme.scheme_type === "certificate") {
             curScheme = <CertificateSchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
