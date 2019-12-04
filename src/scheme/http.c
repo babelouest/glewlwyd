@@ -247,7 +247,7 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
   UNUSED(config);
   UNUSED(username);
   UNUSED(cls);
-  return GLEWLWYD_IS_AVAILABLE;
+  return GLEWLWYD_IS_REGISTERED;
 }
 
 /**
