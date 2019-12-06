@@ -92,7 +92,8 @@
     "certificate-scheme-title": "Authentification par certificat client",
     "certificate-scheme-auth-success": "Certificat valide",
     "certificate-scheme-auth-invalid": "Certificat invalide",
-    "certificate-login-authenticate": "Authentifier"
+    "certificate-login-authenticate": "Authentifier",
+    "http-title": "HTTP"
   },
   "admin": {
     "error-credential-message": "Veuillez vous conncecter avec un utilisateur ayant les droits d'administration",
@@ -172,7 +173,7 @@
     "client-password-confirm-ph": "Confirmer le mot de passe",
     "client-scope": "Droits",
     "client-redirect-uri": "URIs de redirection",
-    "client-redirect-uri-ph": "Ex: https://example.com/",
+    "client-redirect-uri-ph": "Ex: https://glewlwyd.tld/",
     "client-authorization-type": "Types d'autorisation",
     "client-enabled": "Actif",
     "client-client-id-mandatory": "L'identifiant client est obligatoire",
@@ -336,11 +337,11 @@
     "mod-database-data-format-convert-base64": "Base64",
     "mod-http-default-scope": "Scopes par défaut",
     "mod-http-url": "URL",
-    "mod-http-url-ph": "Ex: http://example.com/",
+    "mod-http-url-ph": "Ex: http://glewlwyd.tld/",
     "mod-check-server-certificate": "Valider le certificat du serveur",
     "mod-http-username-format": "Format du nom d'utilisateur sur le serveur HTTP",
-    "mod-http-username-format-ph": "Ex: domain/{USERNAME}, {USERNAME}@example.com",
-    "mod-http-username-format-error": "Le format est optionel et doit contenir la chaine {USERNAME}",
+    "mod-http-username-format-ph": "Ex: domain/{username}, {username}@glewlwyd.tld",
+    "mod-http-username-format-error": "Le format est optionel et doit contenir la chaine {username}",
     "mod-mock-username-prefix-required": "Préfixe requis",
     "mod-mock-client-id-prefix-required": "Préfixe requis",
     "mod-mock-scheme-value-required": "Valeur de schéma requise",

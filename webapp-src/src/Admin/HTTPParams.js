@@ -77,7 +77,7 @@ class HTTPParams extends Component {
       hasError = true;
       errorList["default-scope"] = i18next.t("admin.mod-http-default-scope-error")
     }
-    if (this.state.mod.parameters["username-format"] && !this.state.mod.parameters["username-format"].includes("{USERNAME}")) {
+    if (this.state.mod.parameters["username-format"] && !this.state.mod.parameters["username-format"].includes("{username}") && this.state.role === "user") {
       hasError = true;
       errorList["username-format"] = i18next.t("admin.mod-http-username-format-error")
     }
