@@ -41,4 +41,9 @@ Check this option if the HTTP service uses TLS and if you want to validate the c
 
 ### Username format on HTTP server
 
-Fill this option if you want the users to enter their username only, without surrounding patterns. For example, if the login format on the HTTP server uses the format `\\domain\username`, then you can fill this option with `\\domain\{USERNAME}`. This option is optional, but if you fill it, the pattern `{USERNAME}` must be present in the format.
+This option can be used to build the `auth_basic_user` value using the user properties values in a specified format. You can use any user property values as long as it is not a list. The property must be specified surrounded by `{}`.
+
+Format examples:
+- `{username}@glewlwyd.tld`
+- `{domain}/{username}`
+- `{specific_property}_{phone}`
