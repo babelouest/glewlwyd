@@ -63,6 +63,39 @@
  */
 
 /**
+ * Builds the auth_basic_user from the format given in parameter and the user data
+ */
+static char * format_auth_basic_user(const char * format, json_t * j_user) {
+  const char * format_offset = format;
+  char * result = NULL, * sub;
+  int ret = G_OK;
+
+  while (o_strchr(format_offset, '{') != NULL && o_strchr(format_offset, '}') != NULL && ret == G_OK) {
+    // Append until '{'
+    if (o_strchr(format_offset, '{') != format_offset) {
+      result = mstrcatf(result, "%.*s", (o_strchr(format_offset, '{') - format_offset), format_offset);
+    }
+    // extract string between '{' and '}'
+    sub = o_strndup(o_strchr(format_offset, '{')+1, (o_strchr(format_offset, '}')-o_strchr(format_offset, '{')-1));
+    // Get value from user
+    if (json_is_string(json_object_get(j_user, sub))) {
+      result = mstrcatf(result, "%s", json_string_value(json_object_get(j_user, sub)));
+      format_offset = o_strchr(format_offset, '}') + 1;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "format_auth_basic_user - Error, property %s missing or invalid for user %s", sub, json_string_value(json_object_get(j_user, "username")));
+      ret = G_ERROR;
+    }
+    o_free(sub);
+  }
+  result = mstrcatf(result, "%s", format_offset);
+  if (ret != G_OK) {
+    o_free(result);
+    result = NULL;
+  }
+  return result;
+}
+
+/**
  * 
  * user_auth_scheme_module_load
  * 
@@ -186,9 +219,9 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
     } else if (json_object_get(j_parameters, "check-server-certificate") != NULL && !json_is_boolean(json_object_get(j_parameters, "check-server-certificate"))) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init http - parameter check-server-certificate is optional and must be a boolean");
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter check-server-certificate is optional and must be a boolean");
-    } else if (json_string_length(json_object_get(j_parameters, "username-format")) && o_strstr(json_string_value(json_object_get(j_parameters, "username-format")), "{USERNAME}") == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init http - parameter username-format is optional and must contain {USERNAME}");
-      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter username-format is optional and must contain {USERNAME}");
+    } else if (json_string_length(json_object_get(j_parameters, "username-format")) && (o_strchr(json_string_value(json_object_get(j_parameters, "username-format")), '{') == NULL || o_strchr(json_string_value(json_object_get(j_parameters, "username-format")), '}') == NULL)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init http - parameter username-format is optional and must contain a property name, e.g. {username}");
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter username-format is optional and must contain a property name, e.g. {username}");
       ret = G_ERROR_PARAM;
     }
     if (ret == G_OK) {
@@ -369,6 +402,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
   struct _u_request request;
   struct _u_response response;
   int res, ret;
+  json_t * j_user = NULL;
   
   if (json_string_length(json_object_get(j_scheme_data, "password"))) {
     ulfius_init_request(&request);
@@ -379,24 +413,35 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
       request.check_server_certificate = 0;
     }
     if (json_string_length(json_object_get((json_t *)cls, "username-format"))) {
-      request.auth_basic_user = str_replace(json_string_value(json_object_get((json_t *)cls, "username-format")), "{USERNAME}", username);
+      j_user = config->glewlwyd_module_callback_get_user(config, username);
+      if (check_result_value(j_user, G_OK)) {
+        request.auth_basic_user = format_auth_basic_user(json_string_value(json_object_get((json_t *)cls, "username-format")), json_object_get(j_user, "user"));
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate http - Error glewlwyd_module_callback_get_user for username %s", username);
+      }
+      json_decref(j_user);
     } else {
       request.auth_basic_user = o_strdup(username);
     }
     request.auth_basic_password = o_strdup(json_string_value(json_object_get(j_scheme_data, "password")));
     
-    res = ulfius_send_http_request(&request, &response);
-    if (res == H_OK) {
-      if (response.status == 200) {
-        ret = G_OK;
-      } else {
-        if (response.status != 401 && response.status != 403) {
-          y_log_message(Y_LOG_LEVEL_WARNING, "user_auth_scheme_module_validate http - Error connecting to webservice %s, response status is %d", request.http_url, response.status);
+    if (request.auth_basic_user != NULL && request.auth_basic_password != NULL) {
+      res = ulfius_send_http_request(&request, &response);
+      if (res == H_OK) {
+        if (response.status == 200) {
+          ret = G_OK;
+        } else {
+          if (response.status != 401 && response.status != 403) {
+            y_log_message(Y_LOG_LEVEL_WARNING, "user_auth_scheme_module_validate http - Error connecting to webservice %s, response status is %d", request.http_url, response.status);
+          }
+          ret = G_ERROR_UNAUTHORIZED;
         }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate http - Error ulfius_send_http_request");
         ret = G_ERROR_UNAUTHORIZED;
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate http - Error ulfius_send_http_request");
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate http - Error invalid auth_basic values");
       ret = G_ERROR_UNAUTHORIZED;
     }
     
