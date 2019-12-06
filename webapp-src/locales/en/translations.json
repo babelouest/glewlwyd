@@ -92,7 +92,8 @@
     "certificate-scheme-title": "Client certificate authentification",
     "certificate-scheme-auth-success": "Valid certificate",
     "certificate-scheme-auth-invalid": "Invalid certificate",
-    "certificate-login-authenticate": "Authenticate"
+    "certificate-login-authenticate": "Authenticate",
+    "http-title": "HTTP"
   },
   "admin": {
     "error-credential-message": "Please connect with a user that has admin credentials",
@@ -172,7 +173,7 @@
     "client-password-confirm-ph": "Confirm the password",
     "client-scope": "Scope",
     "client-redirect-uri": "Redirect URIs",
-    "client-redirect-uri-ph": "Ex: https://example.com/",
+    "client-redirect-uri-ph": "Ex: https://glewlwyd.tld/",
     "client-authorization-type": "Authorization types",
     "client-enabled": "Enabled",
     "client-client-id-mandatory": "Client ID is mandatory",
@@ -336,11 +337,11 @@
     "mod-database-data-format-convert-base64": "Base64",
     "mod-http-default-scope": "Default scopes",
     "mod-http-url": "URL",
-    "mod-http-url-ph": "Ex: http://example.com/",
+    "mod-http-url-ph": "Ex: http://glewlwyd.tld/",
     "mod-check-server-certificate": "Validate server certificate",
     "mod-http-username-format": "Username format on HTTP server",
-    "mod-http-username-format-ph": "Ex: domain/{USERNAME}, {USERNAME}@example.com",
-    "mod-http-username-format-error": "Format is optional and must contain {USERNAME}",
+    "mod-http-username-format-ph": "Ex: domain/{username}, {username}@glewlwyd.tld",
+    "mod-http-username-format-error": "Format is optional and must contain {username}",
     "mod-mock-username-prefix-required": "Prefix required",
     "mod-mock-client-id-prefix-required": "Prefix required",
     "mod-mock-scheme-value-required": "Scheme value required",
