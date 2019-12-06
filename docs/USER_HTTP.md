@@ -52,4 +52,4 @@ Select all the scopes that will be available for a connected user. At least one 
 
 ### Username format on HTTP server
 
-Fill this option if you want the users to enter their username only, without surrounding patterns. For example, if the login format on the HTTP server uses the format `\\domain\username`, then you can fill this option with `\\domain\{USERNAME}`. This option is optional, but if you fill it, the pattern `{USERNAME}` must be present in the format.
+Fill this option if you want the users to enter their username only, without surrounding patterns. For example, if the login format on the HTTP server uses the format `\\domain\username`, then you can fill this option with `\\domain\{username}`. This option is optional, but if you fill it, the pattern `{username}` must be present in the format.
