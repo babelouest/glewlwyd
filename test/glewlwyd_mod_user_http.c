@@ -31,7 +31,7 @@
 #define HTTP_USER_FORMAT "prefix/httpuser1@suffix"
 #define HTTP_PASSWORD    "http_user_password"
 
-#define USERNAME_FORMAT "prefix/{USERNAME}@suffix"
+#define USERNAME_FORMAT "prefix/{username}@suffix"
 
 #define MOD_NAME "mod_irl"
 
