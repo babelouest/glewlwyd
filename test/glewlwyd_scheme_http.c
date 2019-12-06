@@ -28,12 +28,10 @@
 #define ADMIN_PASSWORD "password"
 
 #define USERNAME           "user1"
-#define USERNAME_FORMATTED "prefix/user1@suffix"
+#define USERNAME_FORMATTED "prefix/user1|dev1@glewlwyd@suffix"
 #define PASSWORD           "password"
 
-#define HTTP_USER_FORMAT "prefix/httpuser1@suffix"
-
-#define USERNAME_FORMAT "prefix/{USERNAME}@suffix"
+#define USERNAME_FORMAT "prefix/{username}|{email}@suffix"
 
 #define MODULE_MODULE "http"
 #define MODULE_NAME "test_http"
