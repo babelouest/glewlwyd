@@ -95,9 +95,9 @@ json_t * user_module_init(struct config_module * config, int readonly, json_t * 
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter default-scope is mandatory must be an array of non empty strings");
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter default-scope is mandatory must be an array of non empty strings");
       ret = G_ERROR_PARAM;
-    } else if (json_string_length(json_object_get(j_params, "username-format")) && o_strstr(json_string_value(json_object_get(j_params, "username-format")), "{USERNAME}") == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter username-format is optional and must contain {USERNAME}");
-      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter username-format is optional and must contain {USERNAME}");
+    } else if (json_string_length(json_object_get(j_params, "username-format")) && o_strstr(json_string_value(json_object_get(j_params, "username-format")), "{username}") == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter username-format is optional and must contain {username}");
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter username-format is optional and must contain {username}");
       ret = G_ERROR_PARAM;
     } else {
       json_array_foreach(json_object_get(j_params, "default-scope"), index, j_element) {
@@ -213,7 +213,7 @@ int user_module_check_password(struct config_module * config, const char * usern
     request.check_server_certificate = 0;
   }
   if (json_string_length(json_object_get((json_t *)cls, "username-format"))) {
-    request.auth_basic_user = str_replace(json_string_value(json_object_get((json_t *)cls, "username-format")), "{USERNAME}", username);
+    request.auth_basic_user = str_replace(json_string_value(json_object_get((json_t *)cls, "username-format")), "{username}", username);
   } else {
     request.auth_basic_user = o_strdup(username);
   }
