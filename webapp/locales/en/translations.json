@@ -173,7 +173,7 @@
     "client-password-confirm-ph": "Confirm the password",
     "client-scope": "Scope",
     "client-redirect-uri": "Redirect URIs",
-    "client-redirect-uri-ph": "Ex: https://glewlwyd.tld/",
+    "client-redirect-uri-ph": "Ex: https://client.glewlwyd.tld/",
     "client-authorization-type": "Authorization types",
     "client-enabled": "Enabled",
     "client-client-id-mandatory": "Client ID is mandatory",
