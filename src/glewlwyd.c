@@ -996,7 +996,7 @@ int build_config_from_file(struct config_elements * config) {
         config_setting_lookup_string(database, "conninfo", &str_value_2);
         config->conn = h_connect_pgsql(str_value_2);
         if (config->conn == NULL) {
-          fprintf(stderr, "Error opening postgre database %s\n", str_value_5);
+          fprintf(stderr, "Error opening postgre database %s\n", str_value_2);
           config_destroy(&cfg);
           ret = G_ERROR_PARAM;
         }
