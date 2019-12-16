@@ -197,6 +197,10 @@ $ sudo make install
 The available options for cmake are:
 - `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support
 - `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
+- `-DWITH_SQLITE3=[on|off]` (default `on`): Enable/disabe SQLite3 database backend: This option is passed to Hoel library builder
+- `-DWITH_MARIADB=[on|off]` (default `on`): Enable/disabe MariaDB/Mysql database backend: This option is passed to Hoel library builder
+- `-DWITH_PGSQL=[on|off]` (default `on`): Enable/disabe PostgreSQL database backend: This option is passed to Hoel library builder
+- `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support for logging: This option is passed to Yder library builder
 - `-DBUILD_GLEWLWYD_TESTING=[on|off]` (default `off`): Build testing tree
 - `-DWITH_MOCK=[on|off]` (default `off`): Build mock modules, for development use only!
 - `-DWITH_USER_DATABASE=[on|off]` (default `on`): Build user database backend module
