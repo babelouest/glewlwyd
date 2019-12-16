@@ -32,8 +32,6 @@
 #include <signal.h>
 #include <dirent.h>
 #include <dlfcn.h>
-#include <gnutls/gnutls.h>
-#include <crypt.h>
 
 #include "glewlwyd.h"
 
