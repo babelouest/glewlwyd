@@ -32,7 +32,7 @@
       - [Step 3: Add scopes in Glewlwyd](#step-3-add-scopes-in-glewlwyd)
       - [Step 4: Add a Glewlwyd OAuth2 plugin instance](#step-4-add-a-glewlwyd-oauth2-plugin-instance)
       - [Step 5: Add the client Taliesin](#step-5-add-the-client-taliesin)
-      - [Step 6: Add a simple user abd setup admin user](#step-6-add-a-simple-user-and-setup-admin-user)
+      - [Step 6: Add a simple user and setup admin user](#step-6-add-a-simple-user-and-setup-admin-user)
       - [Step 7: Configure OTP and Webauthn for admin](#step-7-configure-otp-and-webauthn-for-admin)
       - [Step 8: Configure Taliesin's `config.json` file](#step-8-configure-taliesin-s-config-json-file)
       - [Step 9: Open Taliesin in your browser](#step-9-open-taliesin-in-your-browser)
