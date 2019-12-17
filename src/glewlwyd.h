@@ -100,6 +100,7 @@
 
 // Environment variables names
 #define GLEWLWYD_ENV_PORT                       "GLWD_PORT"
+#define GLEWLWYD_ENV_BIND_ADDRESS               "GLWD_BIND_ADDRESS"
 #define GLEWLWYD_ENV_API_PREFIX                 "GLWD_API_PREFIX"
 #define GLEWLWYD_ENV_EXTERNAL_URL               "GLWD_EXTERNAL_URL"
 #define GLEWLWYD_ENV_LOGIN_URL                  "GLWD_LOGIN_URL"

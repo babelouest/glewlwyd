@@ -32,6 +32,9 @@
 #include <signal.h>
 #include <dirent.h>
 #include <dlfcn.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "glewlwyd.h"
 
@@ -46,6 +49,7 @@
 int main (int argc, char ** argv) {
   struct config_elements * config = o_malloc(sizeof(struct config_elements));
   int res, use_config_file = 0, use_config_env = 0;
+  struct sockaddr_in bind_address;
 
   if (config == NULL) {
     fprintf(stderr, "Memory error - config\n");
@@ -101,6 +105,7 @@ int main (int argc, char ** argv) {
   config->config_m->glewlwyd_module_callback_check_user_session = &glewlwyd_module_callback_check_user_session;
   config->config_file = NULL;
   config->port = 0;
+  config->bind_address = NULL;
   config->api_prefix = o_strdup(GLEWLWYD_DEFAULT_API_PREFIX);
   config->external_url = NULL;
   config->cookie_domain = NULL;
@@ -209,7 +214,18 @@ int main (int argc, char ** argv) {
     return 0;
   }
   
-  ulfius_init_instance(config->instance, config->port, NULL, NULL);
+  if (config->bind_address != NULL) {
+    bind_address.sin_family = AF_INET;
+    bind_address.sin_port = htons(config->port);
+    inet_aton(config->bind_address, (struct in_addr *)&bind_address.sin_addr.s_addr);
+    if (ulfius_init_instance(config->instance, config->port, &bind_address, NULL) != U_OK) {
+      fprintf(stderr, "Error initializing webservice instance with bind address %s\n", config->bind_address);
+    }
+  } else {
+    if (ulfius_init_instance(config->instance, config->port, NULL, NULL) != U_OK) {
+      fprintf(stderr, "Error initializing webservice instance\n");
+    }
+  }
 
   // Initialize module config structure
   config->config_m->external_url = config->external_url;
@@ -375,7 +391,7 @@ int main (int argc, char ** argv) {
   u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
 
-  y_log_message(Y_LOG_LEVEL_INFO, "Start glewlwyd on port %d, prefix: %s, secure: %s", config->instance->port, config->api_prefix, config->use_secure_connection?"true":"false");
+  y_log_message(Y_LOG_LEVEL_INFO, "Start glewlwyd on port %d, prefix: %s, secure: %s, bind address: %s", config->instance->port, config->api_prefix, config->use_secure_connection?"true":"false", config->bind_address!=NULL?config->bind_address:"no");
 
   if (config->use_secure_connection) {
     char * key_file = get_file_content(config->secure_connection_key_file);
@@ -602,6 +618,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->client_module_path);
     o_free((*config)->user_auth_scheme_module_path);
     o_free((*config)->plugin_module_path);
+    o_free((*config)->bind_address);
     
     if ((*config)->static_file_config != NULL) {
       u_map_clean_full((*config)->static_file_config->mime_types);
@@ -775,6 +792,15 @@ int build_config_from_file(struct config_elements * config) {
   // Get Port number to listen to
   if (!config->port && config_lookup_int(&cfg, "port", &int_value) == CONFIG_TRUE) {
     config->port = (uint)int_value;
+  }
+
+  if (config_lookup_string(&cfg, "bind_address", &str_value) == CONFIG_TRUE) {
+    config->bind_address = o_strdup(str_value);
+    if (config->bind_address == NULL) {
+      fprintf(stderr, "Error allocating config->bind_address, exiting\n");
+      config_destroy(&cfg);
+      ret = G_ERROR_PARAM;
+    }
   }
   
   if (config_lookup_string(&cfg, "api_prefix", &str_value) == CONFIG_TRUE) {
@@ -1067,6 +1093,15 @@ int build_config_from_env(struct config_elements * config) {
       config->port = (uint)lvalue;
     } else {
       fprintf(stderr, "Error invalid port number, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_BIND_ADDRESS)) != NULL && o_strlen(value)) {
+    o_free(config->bind_address);
+    config->bind_address = o_strdup(value);
+    if (config->bind_address == NULL) {
+      fprintf(stderr, "Error allocating config->bind_address, exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
