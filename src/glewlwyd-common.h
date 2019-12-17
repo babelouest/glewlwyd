@@ -256,6 +256,7 @@ struct _plugin_module_instance {
 struct config_elements {
   char *                                      config_file;
   unsigned int                                port;
+  char *                                      bind_address;
   char *                                      external_url;
   char *                                      api_prefix;
   char *                                      cookie_domain;
