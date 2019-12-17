@@ -272,6 +272,13 @@ When you change the configuration file or the environment variables values, you 
 
 Optional, The TCP port the service will listen to incoming connexions. The port number must be available to the user running Glewlwd process. Default value is 4593.
 
+### Bind address
+
+- config file variable: `bind_address`
+- Environment variable: "GLWD_BIND_ADDRESS`
+
+Optional, use this address to bind incoming connexions, can be use to restrict glewlwyd service to listen to a specific network, or localhost. Must be an IPV4 address. If not set or empty, all addresses will be able to connect to Glewlwyd. Note: this is NOT a `listen` option, this setting means that Glewlyd will accept connection sent to this address only, not from it.
+
 ### External URL
 
 - Config file variable: `external_url`
