@@ -1,8 +1,8 @@
 {
-  "GlewlwydUrl": "http://localhost:4593/",
-  "ProfileUrl": "http://localhost:4593/profile.html",
-  "AdminUrl": "http://localhost:4593/index.html",
-  "LoginUrl": "http://localhost:4593/login.html",
+  "GlewlwydUrl": "./",
+  "ProfileUrl": "profile.html",
+  "AdminUrl": "index.html",
+  "LoginUrl": "login.html",
   "PasswordMinLength": 8,
   "lang": ["en","fr","nl"],
   "pattern": {
@@ -140,11 +140,6 @@
     }]
   },
   "sessionSchemes": [
-    {
-      "scheme_name": "pwd",
-      "scheme_display_name": "login.password-title",
-      "scheme_type": "retype-password"
-    }
   ],
   "profilePicture": {
     "property": "picture",
