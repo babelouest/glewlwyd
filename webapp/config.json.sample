@@ -139,6 +139,7 @@
       "label": "admin.client-enabled"
     }]
   },
+  "defaultScheme": "",
   "sessionSchemes": [
   ],
   "profilePicture": {
