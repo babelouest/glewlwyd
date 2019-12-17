@@ -8,6 +8,8 @@
 - Fix i18n errors and typos
 - Add Dutch translation in UI
 - Add HTTP Basic Authentication Scheme
+- Add `defaultScheme` option in UI config for passwordless authentication
+- Add `bind_address` option in the config file
 
 ## 2.0.0
 
