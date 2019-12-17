@@ -43,7 +43,7 @@ var initApp = () => {
           scope: getParameterByName("scope")||false, 
           client_id: getParameterByName("client_id")||false, 
           callback_url: getParameterByName("callback_url")||false,
-          scheme: getParameterByName("scheme")||false,
+          scheme: getParameterByName("scheme")||frontEndConfig.defaultScheme||false,
           prompt: getParameterByName("prompt")||false,
           refresh_login: !!getParameterByName("refresh_login"),
           login_hint: getParameterByName("login_hint")||false
