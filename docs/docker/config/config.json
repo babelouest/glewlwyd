@@ -138,12 +138,8 @@
       "label": "admin.client-enabled"
     }]
   },
+  "defaultScheme": "",
   "sessionSchemes": [
-    {
-      "scheme_name": "pwd",
-      "scheme_display_name": "login.password-title",
-      "scheme_type": "retype-password"
-    }
   ],
   "profilePicture": {
     "property": "picture",
