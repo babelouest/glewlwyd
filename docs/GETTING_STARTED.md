@@ -26,7 +26,7 @@
       - [Configure scopes](#configure-scopes)
       - [Setup the required scopes for a user](#setup-the-required-scopes-for-a-user)
 - [How-Tos](#how-tos)
-      - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
+    - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
       - [Step 1: Change admin password](#step-1-change-admin-password)
       - [Step 2: Add OTP and Webauthn schemes](#step-2-add-otp-and-webauthn-schemes)
       - [Step 3: Add scopes in Glewlwyd](#step-3-add-scopes-in-glewlwyd)
@@ -437,7 +437,7 @@ Then you should see the new property in the user edit modal:
 
 Glewlwyd allows non-password authentication. You can use any other scheme installed to authenticate a user. If a required scope has the option `Password` checked, the password will be mandatory to grant access to this scope.
 
-One or more schemes must be already installed: E-mail code, Webauthn, Client certificate or HOTP/TOTP. Then the scheme must be defined in the file `webapp/config.json` in the `sessionSchemes` array. The pattern is the following:
+One or more schemes must be already installed: E-mail code, Webauthn, Client certificate, HOTP/TOTP, etc. The scheme must be defined in the file `webapp/config.json` in the `sessionSchemes` array. The pattern is the following:
 
 ```javascript
 {
@@ -448,5 +448,11 @@ One or more schemes must be already installed: E-mail code, Webauthn, Client cer
 ```
 
 Then, in the login page for a new user, the dropdown `Scheme` will be available, allowing to authentify with the schemes specified.
+
+The option `defaultScheme` in the `config.json` file can be used to overwrite password as default scheme to authenticate users. Fill this option with a scheme name present in the `sessionSchemes` array. Exemple:
+
+```javascript
+  "defaultScheme": "webauthn",
+```
 
 ![login-nopassword](screenshots/login-nopassword.png)
