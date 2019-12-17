@@ -19,8 +19,8 @@
 # License along with this library.	If not, see <http://www.gnu.org/licenses/>.
 #
 
-LOCAL=/usr/local
-MODULES_TARGET=$(LOCAL)/lib/glewlwyd/user
+DESTDIR=/usr/local
+MODULES_TARGET=$(DESTDIR)/lib/glewlwyd/user
 CC=gcc
 CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(ADDITIONALFLAGS)
 LIBS=$(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs jansson) -ldl
