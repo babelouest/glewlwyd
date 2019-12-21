@@ -84,6 +84,7 @@ int main (int argc, char ** argv) {
   config->config_p->glewlwyd_plugin_callback_is_user_valid = &glewlwyd_plugin_callback_is_user_valid;
   config->config_p->glewlwyd_plugin_callback_add_user = &glewlwyd_plugin_callback_add_user;
   config->config_p->glewlwyd_plugin_callback_set_user = &glewlwyd_plugin_callback_set_user;
+  config->config_p->glewlwyd_plugin_callback_user_update_password = &glewlwyd_plugin_callback_user_update_password;
   config->config_p->glewlwyd_plugin_callback_delete_user = &glewlwyd_plugin_callback_delete_user;
   config->config_p->glewlwyd_plugin_callback_get_client_list = &glewlwyd_plugin_callback_get_client_list;
   config->config_p->glewlwyd_plugin_callback_get_client = &glewlwyd_plugin_callback_get_client;
@@ -91,6 +92,10 @@ int main (int argc, char ** argv) {
   config->config_p->glewlwyd_plugin_callback_add_client = &glewlwyd_plugin_callback_add_client;
   config->config_p->glewlwyd_plugin_callback_set_client = &glewlwyd_plugin_callback_set_client;
   config->config_p->glewlwyd_plugin_callback_delete_client = &glewlwyd_plugin_callback_delete_client;
+  config->config_p->glewlwyd_plugin_callback_scheme_register = &glewlwyd_plugin_callback_scheme_register;
+  config->config_p->glewlwyd_plugin_callback_scheme_register_get = &glewlwyd_plugin_callback_scheme_register_get;
+  config->config_p->glewlwyd_plugin_callback_scheme_deregister = &glewlwyd_plugin_callback_scheme_deregister;
+  config->config_p->glewlwyd_plugin_callback_scheme_can_use = &glewlwyd_plugin_callback_scheme_can_use;
 
   // Init config structure with default values
   config->config_m->external_url = NULL;
@@ -1820,6 +1825,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_close) = dlsym(file_handle, "user_auth_scheme_module_close");
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_register) = dlsym(file_handle, "user_auth_scheme_module_register");
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_register_get) = dlsym(file_handle, "user_auth_scheme_module_register_get");
+                *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_deregister) = dlsym(file_handle, "user_auth_scheme_module_deregister");
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_validate) = dlsym(file_handle, "user_auth_scheme_module_validate");
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_trigger) = dlsym(file_handle, "user_auth_scheme_module_trigger");
                 *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_can_use) = dlsym(file_handle, "user_auth_scheme_module_can_use");
@@ -1830,6 +1836,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                     cur_user_auth_scheme_module->user_auth_scheme_module_close != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_register != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_register_get != NULL &&
+                    cur_user_auth_scheme_module->user_auth_scheme_module_deregister != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL &&
                     cur_user_auth_scheme_module->user_auth_scheme_module_can_use != NULL) {
@@ -1879,6 +1886,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_close: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_close != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_register: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_register != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_register_get: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_register_get != NULL?"found":"not found"));
+                  y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_deregister: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_deregister != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_validate: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_trigger: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL?"found":"not found"));
                   y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_can_use: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_can_use != NULL?"found":"not found"));
