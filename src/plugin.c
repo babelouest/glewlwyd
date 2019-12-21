@@ -467,11 +467,51 @@ int glewlwyd_plugin_callback_add_user(struct config_plugin * config, json_t * j_
 }
 
 int glewlwyd_plugin_callback_set_user(struct config_plugin * config, const char * username, json_t * j_user) {
-  return set_user(config->glewlwyd_config, username, j_user, NULL);
+  json_t * j_cur_user = get_user(config->glewlwyd_config, username, NULL);
+  int ret;
+  
+  if (check_result_value(j_cur_user, G_OK)) {
+    ret = set_user(config->glewlwyd_config, username, j_user, json_string_value(json_object_get(json_object_get(j_cur_user, "user"), "source")));
+  } else if (check_result_value(j_cur_user, G_ERROR_NOT_FOUND)) {
+    ret = U_ERROR_NOT_FOUND;
+  } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "glewlwyd_plugin_callback_set_user - Error get_user");
+    ret = G_ERROR;
+  }
+  json_decref(j_cur_user);
+  return ret;
+}
+
+int glewlwyd_plugin_callback_user_update_password(struct config_plugin * config, const char * username, const char * password) {
+  json_t * j_user = get_user(config->glewlwyd_config, username, NULL);
+  int ret;
+  
+  if (check_result_value(j_user, G_OK)) {
+    ret = user_set_password(config->glewlwyd_config, username, password);
+  } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+    ret = U_ERROR_NOT_FOUND;
+  } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "glewlwyd_plugin_callback_user_update_password - Error get_user");
+    ret = G_ERROR;
+  }
+  json_decref(j_user);
+  return ret;
 }
 
 int glewlwyd_plugin_callback_delete_user(struct config_plugin * config, const char * username) {
-  return delete_user(config->glewlwyd_config, username, NULL);
+  json_t * j_user = get_user(config->glewlwyd_config, username, NULL);
+  int ret;
+  
+  if (check_result_value(j_user, G_OK)) {
+    ret = delete_user(config->glewlwyd_config, username, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
+  } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+    ret = U_ERROR_NOT_FOUND;
+  } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "glewlwyd_plugin_callback_set_user - Error get_user");
+    ret = G_ERROR;
+  }
+  json_decref(j_user);
+  return ret;
 }
 
 json_t * glewlwyd_plugin_callback_get_client_list(struct config_plugin * config, const char * pattern, size_t offset, size_t limit) {
@@ -498,3 +538,46 @@ int glewlwyd_plugin_callback_delete_client(struct config_plugin * config, const 
   return delete_client(config->glewlwyd_config, client_id, NULL);
 }
 
+json_t * glewlwyd_plugin_callback_scheme_register(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username, json_t * j_scheme_data) {
+  json_t * j_return;
+  struct _user_auth_scheme_module_instance * scheme_instance = get_user_auth_scheme_module_instance(config->glewlwyd_config, mod_name);
+  if (scheme_instance != NULL && scheme_instance->enabled) {
+    j_return = scheme_instance->module->user_auth_scheme_module_register(config->glewlwyd_config->config_m, http_request, username, j_scheme_data, scheme_instance->cls);
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  }
+  return j_return;
+}
+
+json_t * glewlwyd_plugin_callback_scheme_register_get(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username) {
+  json_t * j_return;
+  struct _user_auth_scheme_module_instance * scheme_instance = get_user_auth_scheme_module_instance(config->glewlwyd_config, mod_name);
+  if (scheme_instance != NULL && scheme_instance->enabled) {
+    j_return = scheme_instance->module->user_auth_scheme_module_register_get(config->glewlwyd_config->config_m, http_request, username, scheme_instance->cls);
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  }
+  return j_return;
+}
+
+int glewlwyd_plugin_callback_scheme_can_use(struct config_plugin * config, const char * mod_name, const char * username) {
+  int ret;
+  struct _user_auth_scheme_module_instance * scheme_instance = get_user_auth_scheme_module_instance(config->glewlwyd_config, mod_name);
+  if (scheme_instance != NULL && scheme_instance->enabled) {
+    ret = scheme_instance->module->user_auth_scheme_module_can_use(config->glewlwyd_config->config_m, username, scheme_instance->cls);
+  } else {
+    ret = G_ERROR_PARAM;
+  }
+  return ret;
+}
+
+int glewlwyd_plugin_callback_scheme_deregister(struct config_plugin * config, const char * mod_name, const char * username) {
+  int ret;
+  struct _user_auth_scheme_module_instance * scheme_instance = get_user_auth_scheme_module_instance(config->glewlwyd_config, mod_name);
+  if (scheme_instance != NULL && scheme_instance->enabled) {
+    ret = scheme_instance->module->user_auth_scheme_module_deregister(config->glewlwyd_config->config_m, username, scheme_instance->cls);
+  } else {
+    ret = G_ERROR_PARAM;
+  }
+  return ret;
+}
