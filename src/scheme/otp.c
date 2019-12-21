@@ -674,6 +674,30 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
 
 /**
  * 
+ * user_auth_scheme_module_deregister
+ * 
+ * Deregister the scheme for a user
+ * Ex: remove certificates, TOTP values, etc.
+ * 
+ * @return value: G_OK on success
+ *                G_ERROR on another error
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter username: username to identify the user
+ * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
+ * 
+ */
+int user_auth_scheme_module_deregister(struct config_module * config, const char * username, void * cls) {
+  json_t * j_scheme_data = json_pack("{ss}", "type", "NONE");
+  int ret = set_otp(config, (json_t *)cls, username, j_scheme_data);
+  json_decref(j_scheme_data);
+  
+  return ret;
+}
+
+/**
+ * 
  * user_auth_scheme_module_trigger
  * 
  * Trigger the scheme for a user

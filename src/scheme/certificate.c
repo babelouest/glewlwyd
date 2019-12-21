@@ -1948,6 +1948,48 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
 
 /**
  * 
+ * user_auth_scheme_module_deregister
+ * 
+ * Deregister the scheme for a user
+ * Ex: remove certificates, TOTP values, etc.
+ * 
+ * @return value: G_OK on success
+ *                G_ERROR on another error
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter username: username to identify the user
+ * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
+ * 
+ */
+int user_auth_scheme_module_deregister(struct config_module * config, const char * username, void * cls) {
+  json_t * j_result, * j_element = NULL;
+  int ret;
+  size_t index = 0;
+  
+  if (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage") == json_true()) {
+    j_result = get_user_certificate_list_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, 0);
+    if (check_result_value(j_result, G_OK)) {
+      json_array_foreach(json_object_get(j_result, "certificate"), index, j_element) {
+        if (delete_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, json_string_value(json_object_get(j_element, "certificate_id"))) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register certificate - Error delete_user_certificate_scheme_storage");
+        }
+      }
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_deregister certificate - Error get_user_certificate_list_scheme_storage");
+      ret = G_ERROR;
+    }
+    json_decref(j_result);
+  } else {
+    ret = G_OK;
+  }
+  
+  return ret;
+}
+
+/**
+ * 
  * user_auth_scheme_module_trigger
  * 
  * Trigger the scheme for a user
