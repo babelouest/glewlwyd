@@ -649,6 +649,31 @@ int user_update_password(struct config_elements * config, const char * username,
   return ret;
 }
 
+int user_set_password(struct config_elements * config, const char * username, const char * new_password) {
+  json_t * j_user = get_user(config, username, NULL);
+  struct _user_module_instance * user_module;
+  int ret;
+
+  if (check_result_value(j_user, G_OK)) {
+    user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
+    if (user_module != NULL && user_module->enabled && !user_module->readonly) {
+      ret = user_module->module->user_module_update_password(config->config_m, username, new_password, user_module->cls);
+    } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
+      ret = G_ERROR_PARAM;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_set_profile - Error get_user_module_instance");
+      ret = G_ERROR;
+    }
+  } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+    ret = G_ERROR_NOT_FOUND;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_set_profile - Error get_user");
+    ret = G_ERROR;
+  }
+  json_decref(j_user);
+  return ret;
+}
+
 json_t * glewlwyd_module_callback_get_user(struct config_module * config, const char * username) {
   return get_user(config->glewlwyd_config, username, NULL);
 }
