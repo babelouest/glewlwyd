@@ -282,6 +282,31 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
 
 /**
  * 
+ * user_auth_scheme_module_deregister
+ * 
+ * Deregister all the scheme data for a user
+ * Ex: remove certificates, TOTP values, etc.
+ * 
+ * @return value: G_OK on success
+ *                G_ERROR on another error
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter username: username to identify the user
+ * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
+ * 
+ */
+int user_auth_scheme_module_deregister(struct config_module * config, const char * username, void * cls) {
+  
+  if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
+    json_object_del(((struct mock_config *)cls)->j_users, username);
+  }
+  
+  return G_OK;
+}
+
+/**
+ * 
  * user_auth_scheme_module_register_get
  * 
  * Get the registration value(s) of the scheme for a user
