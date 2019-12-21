@@ -205,6 +205,7 @@ struct _user_auth_scheme_module {
   int       (* user_auth_scheme_module_can_use)(struct config_module * config, const char * username, void * cls);
   json_t  * (* user_auth_scheme_module_register)(struct config_module * config, const void * http_request, const char * username, json_t * j_scheme_data, void * cls);
   json_t  * (* user_auth_scheme_module_register_get)(struct config_module * config, const void * http_request, const char * username, void * cls);
+  int       (* user_auth_scheme_module_deregister)(struct config_module * config, const char * username, void * cls);
   json_t  * (* user_auth_scheme_module_trigger)(struct config_module * config, const void * http_request, const char * username, json_t * j_scheme_trigger, void * cls);
   int       (* user_auth_scheme_module_validate)(struct config_module * config, const void * http_request, const char * username, json_t * j_scheme_data, void * cls);
 };
@@ -323,6 +324,7 @@ struct config_plugin {
   json_t * (* glewlwyd_plugin_callback_is_user_valid)(struct config_plugin * config, const char * username, json_t * j_user, int add);
   int      (* glewlwyd_plugin_callback_add_user)(struct config_plugin * config, json_t * j_user);
   int      (* glewlwyd_plugin_callback_set_user)(struct config_plugin * config, const char * username, json_t * j_user);
+  int      (* glewlwyd_plugin_callback_user_update_password)(struct config_plugin * config, const char * username, const char * password);
   int      (* glewlwyd_plugin_callback_delete_user)(struct config_plugin * config, const char * username);
   
   // Client CRUD
@@ -332,6 +334,12 @@ struct config_plugin {
   int      (* glewlwyd_plugin_callback_add_client)(struct config_plugin * config, json_t * j_client);
   int      (* glewlwyd_plugin_callback_set_client)(struct config_plugin * config, const char * client_id, json_t * j_client);
   int      (* glewlwyd_plugin_callback_delete_client)(struct config_plugin * config, const char * client_id);
+
+  // Register scheme functions
+  json_t * (* glewlwyd_plugin_callback_scheme_register)(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username, json_t * j_scheme_data);
+  json_t * (* glewlwyd_plugin_callback_scheme_register_get)(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username);
+  int      (* glewlwyd_plugin_callback_scheme_deregister)(struct config_plugin * config, const char * mod_name, const char * username);
+  int      (* glewlwyd_plugin_callback_scheme_can_use)(struct config_plugin * config, const char * mod_name, const char * username);
   
   // Misc functions
   char   * (* glewlwyd_callback_get_plugin_external_url)(struct config_plugin * config, const char * name);
@@ -427,6 +435,7 @@ int      user_auth_scheme_module_close(struct config_module * config, void * cls
 int      user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls);
 json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls);
 json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, const char * username, void * cls);
+int      user_auth_scheme_module_deregister(struct config_module * config, const char * username, void * cls);
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls);
 int      user_auth_scheme_module_validate(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls);
 
