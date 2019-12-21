@@ -189,6 +189,7 @@ int delete_user_session_from_hash(struct config_elements * config, const char * 
 json_t * user_set_profile(struct config_elements * config, const char * username, json_t * j_profile);
 json_t * user_get_profile(struct config_elements * config, const char * username);
 int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char * new_password);
+int user_set_password(struct config_elements * config, const char * username, const char * new_password);
 json_t * get_scheme_list_for_user(struct config_elements * config, const char * username);
 
 // User
@@ -265,6 +266,7 @@ json_t * glewlwyd_plugin_callback_get_user_profile(struct config_plugin * config
 json_t * glewlwyd_plugin_callback_is_user_valid(struct config_plugin * config, const char * username, json_t * j_user, int add);
 int glewlwyd_plugin_callback_add_user(struct config_plugin * config, json_t * j_user);
 int glewlwyd_plugin_callback_set_user(struct config_plugin * config, const char * username, json_t * j_user);
+int glewlwyd_plugin_callback_user_update_password(struct config_plugin * config, const char * username, const char * password);
 int glewlwyd_plugin_callback_delete_user(struct config_plugin * config, const char * username);
 json_t * glewlwyd_plugin_callback_get_client_list(struct config_plugin * config, const char * pattern, size_t offset, size_t limit);
 json_t * glewlwyd_plugin_callback_get_client(struct config_plugin * config, const char * client_id);
@@ -272,6 +274,10 @@ json_t * glewlwyd_plugin_callback_is_client_valid(struct config_plugin * config,
 int glewlwyd_plugin_callback_add_client(struct config_plugin * config, json_t * j_client);
 int glewlwyd_plugin_callback_set_client(struct config_plugin * config, const char * client_id, json_t * j_client);
 int glewlwyd_plugin_callback_delete_client(struct config_plugin * config, const char * client_id);
+json_t * glewlwyd_plugin_callback_scheme_register(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username, json_t * j_scheme_data);
+json_t * glewlwyd_plugin_callback_scheme_register_get(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username);
+int glewlwyd_plugin_callback_scheme_can_use(struct config_plugin * config, const char * mod_name, const char * username);
+int glewlwyd_plugin_callback_scheme_deregister(struct config_plugin * config, const char * mod_name, const char * username);
 
 // User CRUD functions
 json_t * get_user_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source);
