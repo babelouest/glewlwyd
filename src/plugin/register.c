@@ -768,7 +768,7 @@ static int callback_register_clean_session(const struct _u_request * request, st
 */
 json_t * is_plugin_parameters_valid(json_t * j_params) {
   json_t * j_return, * j_errors = json_array(), * j_element = NULL;
-  size_t index = 0;
+  size_t index = 0, has_mandatory = 0;
 
   if (j_errors != NULL) {
     if (!json_is_object(j_params)) {
@@ -788,6 +788,8 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
       }
       if (0 != o_strcmp(json_string_value(json_object_get(j_params, "set-password")), "always") && 0 != o_strcmp(json_string_value(json_object_get(j_params, "set-password")), "yes") && 0 != o_strcmp(json_string_value(json_object_get(j_params, "set-password")), "no")) {
         json_array_append_new(j_errors, json_string("set-password is mandatory and must have one of the following string values: 'always', 'yes', 'no'"));
+      } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "set-password")), "always")) {
+        has_mandatory = 1;
       }
       if (!json_is_array(json_object_get(j_params, "scope")) || !json_array_size(json_object_get(j_params, "scope"))) {
         json_array_append_new(j_errors, json_string("scope is mandatory and must be a non empty array of non empty strings"));
@@ -811,7 +813,13 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
           if (0 != o_strcmp("always", json_string_value(json_object_get(j_element, "register"))) && 0 != o_strcmp("yes", json_string_value(json_object_get(j_element, "register")))) {
             json_array_append_new(j_errors, json_string("scheme object must have a attribute 'register' with one of the following values: 'yes', 'always'"));
           }
+          if (0 == o_strcmp("always", json_string_value(json_object_get(j_element, "register")))) {
+            has_mandatory = 1;
+          }
         }
+      }
+      if (!has_mandatory) {
+        json_array_append_new(j_errors, json_string("At least one authentication method must be mandatory"));
       }
       if (json_object_get(j_params, "verify-email") == json_true()) {
         if (json_integer_value(json_object_get(j_params, "verification-code-duration")) <= 0) {
