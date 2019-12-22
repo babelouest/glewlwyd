@@ -659,18 +659,23 @@
     "mod-certificate-request-certificate-issuer-key-error": "La clé privée est obligatoire",
     "mod-certificate-request-certificate-issuer-cert-error": "Le certificat est obligatoire",
     "mod-register-session-key": "Identifiant de session",
-    "mod-register-session-duration": "Durée de session",
+    "mod-register-session-key-error": "L'identifiant de session est obligatoire",
+    "mod-register-session-duration": "Durée de session en secondes",
+    "mod-register-session-duration-ph": "Ex: 3600",
+    "mod-register-session-duration-error": "La durée de session est obligatoire et doit être strictement positive",
     "mod-register-set-password": "Mot de passe",
     "mod-register-always": "Obligatoire",
     "mod-register-yes": "Oui",
     "mod-register-no": "Non",
     "mod-register-scope-add": "Scopes à ajouter",
     "mod-register-scope": "Scopes",
+    "mod-register-scope-error": "Vous devez sélectionner au moins un scope",
     "mod-register-add-scheme": "Ajouter un schéma",
     "mod-register-scheme-name": "Schéma",
-    "mod-register-scheme-register": "Enregistrer",
+    "mod-register-scheme-register": "Obligatoire",
     "mod-register-verify-email": "Vérifier l'adresse courriel",
-    "mod-register-email-is-username": "Le nom d'utilisateur est l'adresse courriel"
+    "mod-register-email-is-username": "Le nom d'utilisateur est l'adresse courriel",
+    "mod-register-has-mandatory-error": "Vous devez avoir au moins une méthode d'authentification obligatoire"
     
   },
   "profile": {
