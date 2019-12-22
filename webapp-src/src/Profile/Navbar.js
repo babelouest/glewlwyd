@@ -101,7 +101,8 @@ class Navbar extends Component {
 
 	render() {
     var langList = [], schemeList = [], profileList = [];
-    var profileDropdown;
+    var profileDropdown, logoutButton;
+    var passwordJsx, sessionJsx, profileJsx;
     this.state.config.lang.forEach((lang, i) => {
       if (lang === i18next.language) {
         langList.push(<a className="dropdown-item active" href="#" key={i}>{lang}</a>);
@@ -118,13 +119,12 @@ class Navbar extends Component {
         );
       }
     });
-    var passwordJsx, sessionJsx;
-    if (!this.state.config.params.delegate && this.state.profileList) {
+    if (!this.state.config.params.delegate && !this.state.config.params.register) {
       passwordJsx = <li className={"nav-item" + (this.state.curNav==="password"?" active":"")}>
         <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "password", null)}>{i18next.t("profile.menu-password")}</a>
       </li>
     }
-    if (this.state.profileList) {
+    if (this.state.profileList && !this.state.config.params.register) {
       sessionJsx = <li className={"nav-item" + (this.state.curNav==="session"?" active":"")}>
         <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "session", null)}>{i18next.t("profile.menu-session")}</a>
       </li>
@@ -136,15 +136,21 @@ class Navbar extends Component {
     }
     profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
     profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeProfile(e, null)} key={profileList.length}>{i18next.t("profile.menu-session-new")}</a>);
-    profileDropdown = 
-    <div className="btn-group" role="group">
-      <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <i className="fas fa-user"></i>
-      </button>
-      <div className="dropdown-menu" aria-labelledby="dropdownProfile">
-        {profileList}
-      </div>
-    </div>
+    if (!this.state.config.params.register) {
+      profileDropdown = 
+      <div className="btn-group" role="group">
+        <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i className="fas fa-user"></i>
+        </button>
+        <div className="dropdown-menu" aria-labelledby="dropdownProfile">
+          {profileList}
+        </div>
+      </div>;
+      logoutButton = 
+        <button type="button" className="btn btn-secondary" onClick={this.toggleLogin}>
+          <i className="fas fa-sign-in-alt btn-icon"></i>
+        </button>;
+    }
 		return (
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
         <a className="navbar-brand" href="#">Glewlwyd</a>
@@ -170,9 +176,7 @@ class Navbar extends Component {
               </div>
             </div>
             {profileDropdown}
-            <button type="button" className="btn btn-secondary" onClick={this.toggleLogin}>
-              <i className="fas fa-sign-in-alt btn-icon"></i>
-            </button>
+            {logoutButton}
           </div>
         </div>
       </nav>

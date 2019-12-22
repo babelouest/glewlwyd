@@ -253,7 +253,8 @@ class User extends Component {
             }
           } else {
             if (pattern["profile-write"]) {
-              inputJsx = <div className="input-group">
+              inputJsx = 
+              <div className="input-group">
                 <input type="text" 
                        className={"form-control" + validInput} 
                        id={"modal-edit-" + pattern.name} 

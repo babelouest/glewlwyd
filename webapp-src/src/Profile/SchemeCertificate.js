@@ -25,7 +25,8 @@ class SchemeCertificate extends Component {
       downloadCert: false,
       showPassword: false,
       canAddCert: false,
-      canRequestCert: false
+      canRequestCert: false,
+      registerUrl: (props.config.params.register?"/" + props.config.params.register + "/profile":"/profile")
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -58,13 +59,14 @@ class SchemeCertificate extends Component {
       downloadCert: false,
       showPassword: false,
       canAddCert: false,
-      canRequestCert: false
+      canRequestCert: false,
+      registerUrl: (nextProps.config.params.register?"/" + nextProps.config.params.register + "/profile":"/profile")
     });
   }
   
   getRegister() {
     if (this.state.profile) {
-      return apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
+      return apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
       .then((res) => {
         this.setState({certificateList: res.certificate, canAddCert: res["add-certificate"], certFile: false, canRequestCert: res["request-certificate"], fileName: false, activeCert: false, downloadCert: false});
       })
@@ -90,7 +92,7 @@ class SchemeCertificate extends Component {
   
   addCertificateFile() {
     if (this.state.certFile) {
-      apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "upload-certificate", x509: this.state.certFile}})
+      apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "upload-certificate", x509: this.state.certFile}})
       .then((res) => {
         this.getRegister();
       })
@@ -105,7 +107,7 @@ class SchemeCertificate extends Component {
   }
   
   addCertificateFromRequest() {
-    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "use-certificate"}})
+    apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "use-certificate"}})
     .then((res) => {
       this.getRegister();
     })
@@ -119,7 +121,7 @@ class SchemeCertificate extends Component {
   }
   
   requestNewCertificate() {
-    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "request-certificate"}})
+    apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "request-certificate"}})
     .then((res) => {
       this.getRegister()
       .then(() => {
@@ -136,7 +138,7 @@ class SchemeCertificate extends Component {
   }
   
   switchCertStatus(cert) {
-    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "toggle-certificate", certificate_id: cert.certificate_id, enabled: !cert.enabled}})
+    apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "toggle-certificate", certificate_id: cert.certificate_id, enabled: !cert.enabled}})
     .then((res) => {
       messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-certificate-" + (cert.enabled?"disabled":"enabled"))});
       this.getRegister();
@@ -160,7 +162,7 @@ class SchemeCertificate extends Component {
   
   confirmDeleteCert(result) {
     if (result) {
-      apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "delete-certificate", certificate_id: this.state.curCert.certificate_id}})
+      apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "delete-certificate", certificate_id: this.state.curCert.certificate_id}})
       .then((res) => {
         this.getRegister();
       })
@@ -176,7 +178,7 @@ class SchemeCertificate extends Component {
   }
   
   testCertificate() {
-    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "test-certificate"}})
+    apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "test-certificate"}})
     .then((res) => {
       this.setState({activeCert: res});
       messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-certificate-test-valid")});

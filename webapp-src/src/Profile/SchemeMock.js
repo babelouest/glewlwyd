@@ -15,7 +15,8 @@ class SchemeMock extends Component {
       name: props.name,
       profile: props.profile,
       registered: false,
-      registration: false
+      registration: false,
+      registerUrl: (props.config.params.register?"/" + props.config.params.register + "/profile":"/profile")
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -31,7 +32,8 @@ class SchemeMock extends Component {
       name: nextProps.name,
       profile: nextProps.profile,
       registered: false,
-      registration: false
+      registration: false,
+      registerUrl: (nextProps.config.params.register?"/" + nextProps.config.params.register + "/profile":"/profile")
     }, () => {
       this.getRegister();
     });
@@ -39,7 +41,7 @@ class SchemeMock extends Component {
   
   getRegister() {
     if (this.state.profile) {
-      apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name}, true)
+      apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name}, true)
       .then((res) => {
         this.setState({registration: i18next.t("profile.scheme-mock-register-status-registered"), registered: true});
       })
@@ -54,7 +56,7 @@ class SchemeMock extends Component {
   }
   
   register() {
-    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: !this.state.registered}})
+    apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: !this.state.registered}})
     .fail((err) => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
     })

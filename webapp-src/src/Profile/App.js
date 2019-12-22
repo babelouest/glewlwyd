@@ -7,8 +7,9 @@ import Notification from '../lib/Notification';
 
 import Navbar from './Navbar';
 import User from './User';
-import Session from './Session';
 import UserDelegate from './UserDelegate';
+import Register from './Register';
+import Session from './Session';
 import PasswordModal from './PasswordModal';
 import SchemePage from './SchemePage';
 import Confirm from '../Modal/Confirm';
@@ -21,6 +22,9 @@ class App extends Component {
     this.state = {
       lang: i18next.language,
       config: props.config,
+      registerConfig: false,
+      registerProfile: false,
+      registerSchemes: {},
       curNav: "profile",
       profileList: false,
       schemeList: [],
@@ -81,11 +85,17 @@ class App extends Component {
         });
       } else if (message.type === 'closeConfirm') {
         $("#confirmModal").modal("hide");
+      } else if (message.type === 'registration') {
+        this.fetchRegistration();
       }
     });
     
     if (this.state.config) {
-      this.fetchProfile();
+      if (!this.state.config.params.register) {
+        this.fetchProfile();
+      } else {
+        this.fetchRegistration();
+      }
     }
   }
   
@@ -146,6 +156,42 @@ class App extends Component {
         });
     }
   }
+  
+  fetchRegistration() {
+    apiManager.glewlwydRequest("/" + this.state.config.params.register + "/config")
+    .then((config) => {
+      apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
+      .then((profile) => {
+        this.setState({registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile]}, () => {
+          config.schemes.forEach(scheme => {
+            apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
+            .then(() => {
+              var registerSchemes = this.state.registerSchemes;
+              registerSchemes[scheme.name] = true;
+              this.setState({registerSchemes: registerSchemes});
+            })
+            .fail(() => {
+              var registerSchemes = this.state.registerSchemes;
+              registerSchemes[scheme.name] = false;
+              this.setState({registerSchemes: registerSchemes});
+            });
+          });
+        });
+      })
+      .fail((err) => {
+        if (err.status != 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        }
+        this.setState({registerProfile: false});
+      })
+      .always(() => {
+        this.setState({registerConfig: config});
+      });
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    });
+  }
 
   closePasswordModal(result, data) {
     $("#passwordModal").modal("hide");
@@ -164,6 +210,8 @@ class App extends Component {
       }
       if (this.state.config.params.delegate) {
         userJsx = <UserDelegate config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} />
+      } else if (this.state.config.params.register) {
+        userJsx = <Register config={this.state.config} registerConfig={this.state.registerConfig} registerProfile={this.state.registerProfile} registerSchemes={this.state.registerSchemes} />
       } else {
         userJsx = <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false}/>
       }
