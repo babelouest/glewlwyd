@@ -179,6 +179,9 @@ class SchemeOTP extends Component {
         .then((res) => {
           messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-otp-save-ok")});
           this.getRegister();
+          if (this.state.config.params.register) {
+            messageDispatcher.sendMessage('App', {type: "registration"});
+          }
         })
         .fail((err) => {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-otp-save-error")});

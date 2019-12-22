@@ -174,6 +174,9 @@ class SchemeWebauthn extends Component {
         .then(() => {
           messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-register-credential-success")});
           this.getCredentials();
+          if (this.state.config.params.register) {
+            messageDispatcher.sendMessage('App', {type: "registration"});
+          }
         })
         .fail((err, textStatus) => {
           if (err.status === 400) {
@@ -266,6 +269,9 @@ class SchemeWebauthn extends Component {
         },
         true)
         .then(() => {
+          if (this.state.config.params.register) {
+            messageDispatcher.sendMessage('App', {type: "registration"});
+          }
           messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-assertion-success")});
         })
         .fail((err) => {
@@ -338,6 +344,9 @@ class SchemeWebauthn extends Component {
         }
       })
     .then((res) => {
+      if (this.state.config.params.register) {
+        messageDispatcher.sendMessage('App', {type: "registration"});
+      }
       this.getCredentials();
     })
     .fail((err) => {
@@ -371,6 +380,9 @@ class SchemeWebauthn extends Component {
       .then((res) => {
         this.getCredentials();
         messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-removed")});
+        if (this.state.config.params.register) {
+          messageDispatcher.sendMessage('App', {type: "registration"});
+        }
       })
       .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});

@@ -95,6 +95,9 @@ class SchemeCertificate extends Component {
       apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "upload-certificate", x509: this.state.certFile}})
       .then((res) => {
         this.getRegister();
+        if (this.state.config.params.register) {
+          messageDispatcher.sendMessage('App', {type: "registration"});
+        }
       })
       .fail((err) => {
         if (err.status === 400) {
@@ -110,6 +113,9 @@ class SchemeCertificate extends Component {
     apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "use-certificate"}})
     .then((res) => {
       this.getRegister();
+      if (this.state.config.params.register) {
+        messageDispatcher.sendMessage('App', {type: "registration"});
+      }
     })
     .fail((err) => {
       if (err.status === 400) {
@@ -125,6 +131,9 @@ class SchemeCertificate extends Component {
     .then((res) => {
       this.getRegister()
       .then(() => {
+        if (this.state.config.params.register) {
+          messageDispatcher.sendMessage('App', {type: "registration"});
+        }
         this.setState({downloadCert: res, showPassword: false});
       });
     })
@@ -142,6 +151,9 @@ class SchemeCertificate extends Component {
     .then((res) => {
       messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-certificate-" + (cert.enabled?"disabled":"enabled"))});
       this.getRegister();
+      if (this.state.config.params.register) {
+        messageDispatcher.sendMessage('App', {type: "registration"});
+      }
     })
     .fail((err) => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
@@ -165,6 +177,9 @@ class SchemeCertificate extends Component {
       apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "delete-certificate", certificate_id: this.state.curCert.certificate_id}})
       .then((res) => {
         this.getRegister();
+        if (this.state.config.params.register) {
+          messageDispatcher.sendMessage('App', {type: "registration"});
+        }
       })
       .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
