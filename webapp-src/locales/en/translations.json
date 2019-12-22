@@ -790,7 +790,7 @@
     "register-title": "Register a new account",
     "register-username-label": "Enter username",
     "register-username-ph": "Ex: cornholio42",
-    "register-username-check": "Check if available",
+    "register-username-create": "Create account",
     "register-username-error": "Username unavailable",
     "register-profile-username-label": "Username",
     "register-name-label": "Full name",

@@ -791,7 +791,7 @@
     "register-title": "Créer un compte",
     "register-username-label": "Entrer un nom d'utilisateur",
     "register-username-ph": "Ex: cornholio42",
-    "register-username-check": "Vérifier la disponibilité",
+    "register-username-create": "Créer le compte",
     "register-username-error": "Nom d'utilisateur non disponible",
     "register-profile-username-label": "Nom d'utilisateur",
     "register-name-label": "Nom complet",
