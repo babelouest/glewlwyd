@@ -165,7 +165,7 @@ class Register extends Component {
   cancelRegistration() {
     apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile", "DELETE")
     .then(() => {
-      this.setState({username: ""}, () => {
+      this.setState({username: "", usernameValid: false}, () => {
         messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-profile-cancelled")});
         messageDispatcher.sendMessage('App', {type: "registration"});
       });
@@ -309,11 +309,11 @@ class Register extends Component {
                    onChange={(e) => this.changeUsername(e)} 
                    value={this.state.username}/>
             <div className="input-group-append">
-              <button className={"btn" + (this.state.usernameValid?" btn-outline-success":" btn-outline-danger")} 
+              <button className={"btn" + ((this.state.usernameValid&&!this.state.checkingUsername)?" btn-outline-success":" btn-outline-danger")} 
                       type="button" 
                       onClick={() => this.registerUsername()} 
                       disabled={!this.state.usernameValid}
-                      title={i18next.t("profile.register-username-check")}>
+                      title={i18next.t("profile.register-username-create")}>
                 <i className={(this.state.checkingUsername?"fas fa-compass fa-spin":"fas fa-plus")}></i>
               </button>
             </div>
