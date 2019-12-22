@@ -509,6 +509,20 @@ if (WITH_PLUGIN_OIDC)
 	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oidc)
 endif ()
 
+option(WITH_PLUGIN_REGISTER "Build register plugin module" on)
+if (WITH_PLUGIN_REGISTER)
+		
+	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/register.c)
+
+	set(MOD_LIBS ${MOD_LIBS} "-ldl")
+
+	add_library(register MODULE ${LIB_SRC})
+	set_target_properties(register PROPERTIES
+			COMPILE_OPTIONS -Wextra)
+	target_link_libraries(register ${MOD_LIBS})
+	set(PLUGIN_MODULES ${PLUGIN_MODULES} register)
+endif ()
+
 # tests
 
 option(BUILD_GLEWLWYD_TESTING "Build the testing tree" OFF)
@@ -829,5 +843,6 @@ message(STATUS "Build scheme module TLS Certificate:  ${WITH_SCHEME_CERTIFICATE}
 message(STATUS "Build scheme module HTTP:             ${WITH_SCHEME_HTTP}")
 message(STATUS "Build plugin module legacy oauth2:    ${WITH_PLUGIN_OAUTH2}")
 message(STATUS "Build plugin module OpenID Connect:   ${WITH_PLUGIN_OIDC}")
+message(STATUS "Build plugin register new account:    ${WITH_PLUGIN_REGISTER}")
 message(STATUS "Build the testing tree:               ${BUILD_GLEWLWYD_TESTING}")
 message(STATUS "Build RPM package:                    ${BUILD_RPM}")
