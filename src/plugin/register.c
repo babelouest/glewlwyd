@@ -767,8 +767,8 @@ static int callback_register_clean_session(const struct _u_request * request, st
 }
 */
 json_t * is_plugin_parameters_valid(json_t * j_params) {
-  json_t * j_return, * j_errors = json_array(), * j_element;
-  size_t index;
+  json_t * j_return, * j_errors = json_array(), * j_element = NULL;
+  size_t index = 0;
 
   if (j_errors != NULL) {
     if (!json_is_object(j_params)) {
