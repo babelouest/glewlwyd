@@ -27,6 +27,7 @@ class Buttons extends Component {
     this.newUser = this.newUser.bind(this);
     this.managerUsers = this.managerUsers.bind(this);
     this.changeSessionScheme = this.changeSessionScheme.bind(this);
+    this.registerNewUser = this.registerNewUser.bind(this);
     
   }
 
@@ -82,6 +83,11 @@ class Buttons extends Component {
     }
   }
   
+  registerNewUser(e, plugin) {
+    e.preventDefault();
+    document.location.href = this.state.config.ProfileUrl + "?register=" + encodeURIComponent(plugin);
+  }
+  
   managerUsers(e) {
     e.preventDefault();
     messageDispatcher.sendMessage('App', {type: 'SelectAccount'});
@@ -93,7 +99,7 @@ class Buttons extends Component {
   }
 
 	render() {
-    var bAnother = "", asterisk = "", bContinue = "";
+    var bAnother = "", asterisk = "", bContinue = "", registerTable = [];
     if (this.state.canContinue) {
       bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")}>
         <i className="fas fa-play btn-icon"></i>{i18next.t("login.continue")}
@@ -106,6 +112,11 @@ class Buttons extends Component {
       asterisk = <small><i className="fas fa-asterisk btn-icon-right"></i></small>;
     }
     if (this.state.currentUser) {
+      if (this.state.config.register) {
+        this.state.config.register.forEach((register, index) => {
+          registerTable.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.registerNewUser(e, register.name)}>{i18next.t(register.message)}</a>);
+        });
+      }
       var userList = [];
       if (this.state.userList) {
         this.state.userList.forEach((user, index) => {
@@ -123,6 +134,7 @@ class Buttons extends Component {
         <div className="dropdown-menu" aria-labelledby="selectNewUser">
           <a className="dropdown-item" href="#" onClick={(e) => this.newUser(e, false)}>{i18next.t("login.login-another-new")}</a>
           <a className="dropdown-item" href="#" onClick={(e) => this.managerUsers(e)}>{i18next.t("login.manage-users")}</a>
+          {registerTable}
           <div className="dropdown-divider"></div>
           {userList}
         </div>
@@ -155,6 +167,15 @@ class Buttons extends Component {
         </div>
   		);
     } else if (this.state.newUser) {
+      if (this.state.config.register) {
+        this.state.config.register.forEach((register, index) => {
+          registerTable.push(
+            <button key={index} type="button" className="btn btn-primary" onClick={(e) => this.registerNewUser(e, register.name)}>
+              {i18next.t(register.message)}
+            </button>
+          );
+        });
+      }
       var schemeList = [];
       if (this.state.config.sessionSchemes && this.state.config.sessionSchemes.length) {
         if (!this.state.newUserScheme) {
@@ -198,9 +219,7 @@ class Buttons extends Component {
                 {schemeList}
               </div>
             </div>
-            <button type="button" className="btn btn-primary" onClick={(e) => this.newUser(e, false)}>
-              <i className="fas fa-sign-out-alt btn-icon"></i>{i18next.t("login.logout")}
-            </button>
+            {registerTable}
           </div>
         );
       } else {
