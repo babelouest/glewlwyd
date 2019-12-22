@@ -204,7 +204,7 @@ class RegisterParams extends Component {
   }
   
   checkParameters() {
-    var errorList = {}, hasError = false;
+    var errorList = {}, hasError = false, hasMandatory = false;
     if (!this.state.mod.parameters["session-key"]) {
       hasError = true;
       errorList["session-key"] = i18next.t("admin.mod-register-session-key-error");
@@ -212,6 +212,45 @@ class RegisterParams extends Component {
     if (!this.state.mod.parameters["session-duration"]) {
       hasError = true;
       errorList["session-duration"] = i18next.t("admin.mod-register-session-duration-error");
+    }
+    if (!this.state.mod.parameters.scope.length) {
+      hasError = true;
+      errorList["scope"] = i18next.t("admin.mod-register-scope-error");
+    }
+    this.state.mod.parameters["schemes"].forEach((scheme) => {
+      if (scheme.register === "always") {
+        hasMandatory = true;
+      }
+    });
+    if (this.state.mod.parameters["verify-email"]) {
+      if (!this.state.mod.parameters["code-length"]) {
+        hasError = true;
+        errorList["code-length"] = i18next.t("admin.mod-email-code-length-error")
+      }
+      if (!this.state.mod.parameters["code-duration"]) {
+        hasError = true;
+        errorList["code-duration"] = i18next.t("admin.mod-email-code-duration-error")
+      }
+      if (!this.state.mod.parameters["host"]) {
+        hasError = true;
+        errorList["host"] = i18next.t("admin.mod-email-host-error")
+      }
+      if (!this.state.mod.parameters["from"]) {
+        hasError = true;
+        errorList["from"] = i18next.t("admin.mod-email-from-error")
+      }
+      if (!this.state.mod.parameters["subject"]) {
+        hasError = true;
+        errorList["subject"] = i18next.t("admin.mod-email-subject-error")
+      }
+      if (!this.state.mod.parameters["body-pattern"] || !this.state.mod.parameters["body-pattern"].search("{CODE}")) {
+        hasError = true;
+        errorList["body-pattern"] = i18next.t("admin.mod-email-body-pattern-error")
+      }
+    }
+    if (this.state.mod.parameters["set-password"] !== "always" && !hasMandatory) {
+      hasError = true;
+      errorList["has-mandatory"] = i18next.t("admin.mod-register-has-mandatory-error")
     }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
@@ -278,11 +317,11 @@ class RegisterParams extends Component {
             </div>
             <div className="dropdown">
               <button className="btn btn-secondary dropdown-toggle" type="button" id={"mod-register-scheme-register-"+index} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                {i18next.t("admin.mod-register-"+scheme["register"])}
+                {i18next.t("admin.mod-register-"+(scheme["register"]==="always"?"yes":"no"))}
               </button>
               <div className="dropdown-menu" aria-labelledby="mod-register-scheme-register">
-                <a className={"dropdown-item"+(scheme["register"]==="always"?" active":"")} href="#" onClick={(e) => this.setSchemeRegister(e, index, "always")}>{i18next.t("admin.mod-register-always")}</a>
-                <a className={"dropdown-item"+(scheme["register"]==="yes"?" active":"")} href="#" onClick={(e) => this.setSchemeRegister(e, index, "yes")}>{i18next.t("admin.mod-register-yes")}</a>
+                <a className={"dropdown-item"+(scheme["register"]==="always"?" active":"")} href="#" onClick={(e) => this.setSchemeRegister(e, index, "always")}>{i18next.t("admin.mod-register-yes")}</a>
+                <a className={"dropdown-item"+(scheme["register"]==="yes"?" active":"")} href="#" onClick={(e) => this.setSchemeRegister(e, index, "yes")}>{i18next.t("admin.mod-register-no")}</a>
               </div>
             </div>
             <button className="btn btn-secondary" type="button" onClick={() => this.deleteScheme(index)}>
@@ -302,14 +341,14 @@ class RegisterParams extends Component {
             </div>
             <input type="text" className={this.state.errorList["session-key"]?"form-control is-invalid":"form-control"} id="mod-register-session-key" onChange={(e) => this.changeParam(e, "session-key")} value={this.state.mod.parameters["session-key"]} placeholder={i18next.t("admin.mod-register-session-key")} />
           </div>
-          {this.state.errorList["host"]?<span className="error-input">{this.state.errorList["host"]}</span>:""}
+          {this.state.errorList["session-key"]?<span className="error-input">{this.state.errorList["session-key"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-register-session-duration">{i18next.t("admin.mod-register-session-duration")}</label>
             </div>
-            <input type="number" min="1" step="1" className={this.state.errorList["session-duration"]?"form-control is-invalid":"form-control"} id="mod-register-session-duration" onChange={(e) => this.changeParam(e, "session-duration")} value={this.state.mod.parameters["session-duration"]} placeholder={i18next.t("admin.mod-register-session-duration-ph")} />
+            <input type="number" min="1" step="1" className={this.state.errorList["session-duration"]?"form-control is-invalid":"form-control"} id="mod-register-session-duration" onChange={(e) => this.changeParam(e, "session-duration", true)} value={this.state.mod.parameters["session-duration"]} placeholder={i18next.t("admin.mod-register-session-duration-ph")} />
           </div>
           {this.state.errorList["session-duration"]?<span className="error-input">{this.state.errorList["session-duration"]}</span>:""}
         </div>
@@ -337,7 +376,7 @@ class RegisterParams extends Component {
             </div>
             {scopeJsx}
           </div>
-          {this.state.errorList["default-scope"]?<span className="error-input">{this.state.errorList["default-scope"]}</span>:""}
+          {this.state.errorList["scope"]?<span className="error-input">{this.state.errorList["scope"]}</span>:""}
         </div>
         <hr/>
         <div className="form-group">
@@ -357,11 +396,11 @@ class RegisterParams extends Component {
               <label className="input-group-text" htmlFor="mod-register-verify-email">{i18next.t("admin.mod-register-verify-email")}</label>
             </div>
             <div className="input-group-text">
-              <input type="checkbox" className="form-control" data-toggle="collapse" href="#verifyEmailCollapse" aria-expanded="false" aria-controls="verifyEmailCollapse" id="mod-register-verify-email" onChange={(e) => this.toggleParam(e, "verify-email")} checked={this.state.mod.parameters["verify-email"]} />
+              <input type="checkbox" className="form-control" id="mod-register-verify-email" onChange={(e) => this.toggleParam(e, "verify-email")} checked={this.state.mod.parameters["verify-email"]} />
             </div>
           </div>
         </div>
-        <div className="collapse" id="verifyEmailCollapse">
+        <div className={"collapse"+(this.state.mod.parameters["verify-email"]?" show":"")} id="verifyEmailCollapse">
           <div className="form-group">
             <div className="input-group mb-3">
               <div className="input-group-prepend">
@@ -483,6 +522,7 @@ class RegisterParams extends Component {
             {this.state.errorList["body-pattern"]?<span className="error-input">{this.state.errorList["body-pattern"]}</span>:""}
           </div>
         </div>
+        {this.state.errorList["has-mandatory"]?<span className="error-input">{this.state.errorList["has-mandatory"]}</span>:""}
       </div>
     );
   }
