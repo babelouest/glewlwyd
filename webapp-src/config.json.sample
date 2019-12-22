@@ -145,5 +145,7 @@
   "profilePicture": {
     "property": "picture",
     "type": "image/jpeg"
-  }
+  },
+  "register": [
+  ]
 }
