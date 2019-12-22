@@ -20,7 +20,8 @@ class SchemeOTP extends Component {
       otpUrl: false,
       qrcode: "",
       allowHotp: false,
-      allowTotp: false
+      allowTotp: false,
+      registerUrl: (props.config.params.register?"/" + props.config.params.register + "/profile":"/profile")
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -38,7 +39,8 @@ class SchemeOTP extends Component {
       config: nextProps.config,
       module: nextProps.module,
       name: nextProps.name,
-      profile: nextProps.profile
+      profile: nextProps.profile,
+      registerUrl: (nextProps.config.params.register?"/" + nextProps.config.params.register + "/profile":"/profile")
     }, () => {
       this.getRegister();
     });
@@ -46,7 +48,7 @@ class SchemeOTP extends Component {
   
   getRegister() {
     if (this.state.profile) {
-      apiManager.glewlwydRequest("/profile/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
+      apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
       .then((res) => {
         var myOtp;
         if (res.type === "NONE" || !res.type) {
@@ -121,7 +123,7 @@ class SchemeOTP extends Component {
   }
   
   generateSecret() {
-    apiManager.glewlwydRequest("/profile/scheme/register/", "POST", 
+    apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", 
       {
         username: this.state.profile.username, 
         scheme_type: this.state.module, 
@@ -167,7 +169,7 @@ class SchemeOTP extends Component {
     }
     this.setState({errorList: errorList}, () => {
       if (!hasError) {
-        apiManager.glewlwydRequest("/profile/scheme/register/", "POST", 
+        apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", 
           {
             username: this.state.profile.username, 
             scheme_type: this.state.module, 
