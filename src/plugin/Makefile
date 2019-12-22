@@ -24,6 +24,8 @@ MODULES_TARGET=$(DESTDIR)/lib/glewlwyd/plugin
 CC=gcc
 CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(shell pkg-config --cflags libjwt) $(shell pkg-config --cflags gnutls) $(ADDITIONALFLAGS)
 LIBS=$(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs libulfius) $(shell pkg-config --libs libhoel) $(shell pkg-config --libs jansson) -ldl
+TARGET_RELEASE=libprotocol_oauth2.so libprotocol_oidc.so libprotocol_register.so
+TARGET_DEBUG=libprotocol_mock.so
 
 all: release
 
@@ -48,16 +50,19 @@ libprotocol_oidc.so: protocol_oidc.o misc.o oidc_resource.o ../glewlwyd-common.h
 libprotocol_mock.so: mock.o misc.o ../glewlwyd-common.h
 	$(CC) -shared -Wl,-soname,libprotocol_mock.so -o libprotocol_mock.so mock.o misc.o $(LIBS)
 
+libprotocol_register.so: register.o misc.o ../glewlwyd-common.h
+	$(CC) -shared -Wl,-soname,libprotocol_register.so -o libprotocol_register.so register.o misc.o $(LIBS)
+
 clean:
 	rm -f *.o *.so
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: libprotocol_mock.so libprotocol_oauth2.so libprotocol_oidc.so
+debug: $(TARGET_RELEASE)
 
 release: ADDITIONALFLAGS=-O3
 
-release: libprotocol_oauth2.so libprotocol_oidc.so
+release: $(TARGET_RELEASE)
 
 install:
 	mkdir -p $(MODULES_TARGET)
