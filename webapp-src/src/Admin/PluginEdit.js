@@ -11,6 +11,7 @@ class PluginEdit extends Component {
 
     this.state = {
       config: props.config,
+      modSchemes: props.modSchemes,
       title: props.title,
       mod: props.mod,
       role: props.role,
@@ -64,6 +65,7 @@ class PluginEdit extends Component {
   componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
+      modSchemes: nextProps.modSchemes,
       title: nextProps.title,
       mod: nextProps.mod,
       role: nextProps.role,
@@ -193,7 +195,7 @@ class PluginEdit extends Component {
                     <input type="text" className="form-control" id="mod-display-name" placeholder={i18next.t("admin.mod-display-name-ph")} maxLength="256" value={this.state.mod.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
                   </div>
                 </div>
-                <PluginEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
+                <PluginEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} modSchemes={this.state.modSchemes} />
               </form>
             </div>
             <div className="modal-footer">
