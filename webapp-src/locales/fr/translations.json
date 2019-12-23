@@ -675,7 +675,8 @@
     "mod-register-scheme-register": "Obligatoire",
     "mod-register-verify-email": "Vérifier l'adresse courriel",
     "mod-register-email-is-username": "Le nom d'utilisateur est l'adresse courriel",
-    "mod-register-has-mandatory-error": "Vous devez avoir au moins une méthode d'authentification obligatoire"
+    "mod-register-has-mandatory-error": "Vous devez avoir au moins une méthode d'authentification obligatoire",
+    "mod-register-subject-ph": "Ex: Terminer votre enregistrement sur Glewlwyd"
     
   },
   "profile": {
@@ -819,7 +820,14 @@
     "register-profile-complete-step-password": "Enregistrer un mot de passe",
     "register-profile-complete-step-scheme": "Enregistrer le schéma {{scheme}}",
     "register-profile-incomplete": "Impossible de terminer l'enregistrement, vous devez compléter toutes les étapes obligatoire",
-    "register-profile-cancelled": "Enregistrement annulé"
+    "register-profile-cancelled": "Enregistrement annulé",
+    "register-profile-verify-email": "Vérifier l'adresse courriel",
+    "register-email-error": "L'addresse courriel est obligatoire",
+    "register-profile-verify-code": "Vérifier le code",
+    "register-code-label": "Entrer le code reçu",
+    "register-code-ph": "Ex: 12345678",
+    "register-code-error": "Code invalide",
+    "register-profile-created": "Profil créé"
   },
   "modal": {
     "close": "Fermer",
