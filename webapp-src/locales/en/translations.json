@@ -675,7 +675,8 @@
     "mod-register-scheme-register": "Mandatory",
     "mod-register-verify-email": "Verify e-mail",
     "mod-register-email-is-username": "Username is e-mail",
-    "mod-register-has-mandatory-error": "You must have at least one mandatory authentication method"
+    "mod-register-has-mandatory-error": "You must have at least one mandatory authentication method",
+    "mod-register-subject-ph": "Ex: Complete your Glewlwyd reistration"
   },
   "profile": {
     "error-credential-message": "Please connect to the application",
@@ -818,7 +819,14 @@
     "register-profile-complete-step-password": "Enter password",
     "register-profile-complete-step-scheme": "Register scheme {{scheme}}",
     "register-profile-incomplete": "Unable to complete registration, you must complete all mandatory steps",
-    "register-profile-cancelled": "Registration cancelled"
+    "register-profile-cancelled": "Registration cancelled",
+    "register-profile-verify-email": "Verify e-mail address",
+    "register-email-error": "E-mail address is mandatory",
+    "register-profile-verify-code": "Cerify code",
+    "register-code-label": "Enter received code",
+    "register-code-ph": "Ex: 12345678",
+    "register-code-error": "Invalid code",
+    "register-profile-created": "Profile created"
   },
   "modal": {
     "close": "Close",

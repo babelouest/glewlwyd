@@ -87,6 +87,9 @@ class App extends Component {
         $("#confirmModal").modal("hide");
       } else if (message.type === 'registration') {
         this.fetchRegistration();
+      } else if (message.type === 'registrationComplete') {
+        this.setState({registerProfile: false, schemeList: [],profileList: false})
+        this.fetchRegistration();
       }
     });
     
