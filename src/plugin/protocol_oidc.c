@@ -3883,29 +3883,37 @@ static int callback_oidc_get_userinfo(const struct _u_request * request, struct 
   UNUSED(request);
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   char * username = get_username_from_sub(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")));
-  json_t * j_user, * j_userinfo;
+  json_t * j_db_user, * j_userinfo, * j_user, * j_claims_request;
+  const char * sub, * scopes, * aud;
+  json_t * shared = (json_t *)response->shared_data;
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
 
   if (username != NULL) {
-    j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
-    if (check_result_value(j_user, G_OK)) {
-      j_userinfo = get_userinfo(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")), json_object_get(j_user, "user"), json_object_get((json_t *)response->shared_data, "claims"), json_string_value(json_object_get((json_t *)response->shared_data, "scope")));
+    j_db_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
+    if (check_result_value(j_db_user, G_OK)) {
+      sub = json_string_value(json_object_get(shared, "sub"));
+      j_user = json_object_get(j_db_user, "user");
+      j_claims_request = json_object_get(shared, "claims");
+      scopes = json_string_value(json_object_get(shared, "scope"));
+      aud = json_string_value(json_object_get(shared, "aud"));
+      j_userinfo = get_userinfo(config, sub, j_user, j_claims_request, scopes);
       if (j_userinfo != NULL) {
         ulfius_set_json_body_response(response, 200, j_userinfo);
+        y_log_message(Y_LOG_LEVEL_INFO, "/userinfo response to %s: %s", aud, json_dumps(j_userinfo, 0));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_userinfo oidc - Error get_userinfo");
         response->status = 500;
       }
       json_decref(j_userinfo);
-    } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+    } else if (check_result_value(j_db_user, G_ERROR_NOT_FOUND)) {
       response->status = 404;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_userinfo oidc - Error glewlwyd_plugin_callback_get_user_profile");
       response->status = 500;
     }
-    json_decref(j_user);
+    json_decref(j_db_user);
   } else {
     response->status = 404;
   }
