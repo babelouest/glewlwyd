@@ -2,11 +2,11 @@ DROP TABLE IF EXISTS gpr_session;
 
 CREATE TABLE gpr_session (
   gprs_id SERIAL PRIMARY KEY,
+  gprs_plugin_name VARCHAR(256) NOT NULL,
   gprs_username VARCHAR(256) NOT NULL,
   gprs_name VARCHAR(512),
   gprs_email VARCHAR(512),
   gprs_code_hash VARCHAR(512),
-  gprs_code_verified SMALLINT DEFAULT 0,
   gprs_password_set SMALLINT DEFAULT 0,
   gprs_session_hash VARCHAR(512) NOT NULL,
   gprs_expires_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

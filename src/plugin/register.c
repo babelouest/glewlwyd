@@ -33,6 +33,8 @@
 #define GLEWLWYD_PLUGIN_REGSITER_DEFAULT_CODE_LENGTH 8
 #define GLEWLWYD_PLUGIN_REGSITER_DEFAULT_CODE_DURATION 600
 #define GLEWLWYD_PLUGIN_REGSITER_DEFAULT_CONTENT_TYPE "text/plain; charset=utf-8"
+#define GLEWLWYD_DATE_BUFFER 128
+#define GLEWLWYD_SESSION_ID_LENGTH 32
 
 #define GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION "gpr_session"
 
@@ -57,6 +59,240 @@ static int can_register_scheme(struct _register_config * config, const char * sc
   return 0;
 }
 
+static json_t * register_generate_email_verification_code(struct _register_config * config, const char * username, const char * email, const char * issued_for, const char * user_agent, const char * ip_source) {
+  char * code, * code_hash, * expires_at_clause, * body;
+  json_t * j_return, * j_query;
+  int res;
+  size_t code_len;
+  time_t now;
+  
+  if (pthread_mutex_lock(&config->insert_lock)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "register_generate_email_verification_code - Error pthread_mutex_lock");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  } else {
+    // Disable existing sessions for the specified e-mail address
+    time(&now);
+    if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
+      expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+    } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
+      expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+    } else { // HOEL_DB_TYPE_SQLITE
+      expires_at_clause = msprintf("> %u", (now));
+    }
+    j_query = json_pack("{sss{si}s{sssss{ssss}si}}",
+                        "table",
+                        GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION,
+                        "set",
+                          "gprs_enabled",
+                          0,
+                        "where",
+                          "gprs_plugin_name",
+                          config->name,
+                          "gprs_email",
+                          email,
+                          "gprs_expires_at",
+                            "operator",
+                            "raw",
+                            "value",
+                            expires_at_clause,
+                          "gprs_enabled",
+                          1);
+    o_free(expires_at_clause);
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      code_len = json_integer_value(json_object_get(config->j_parameters, "verification-code-length"));
+      if ((code = o_malloc((code_len+1)*sizeof(char))) != NULL) {
+        if (rand_code(code, code_len)) {
+          if ((code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code)) != NULL) {
+            if ((body = str_replace(json_string_value(json_object_get(config->j_parameters, "body-pattern")), "{CODE}", code)) != NULL) {
+              if (ulfius_send_smtp_email(json_string_value(json_object_get(config->j_parameters, "host")),
+                                         json_integer_value(json_object_get(config->j_parameters, "port")),
+                                         json_object_get(config->j_parameters, "use-tls")==json_true()?1:0,
+                                         json_object_get(config->j_parameters, "verify-certificate")==json_false()?0:1,
+                                         json_string_length(json_object_get(config->j_parameters, "user"))?json_string_value(json_object_get(config->j_parameters, "user")):NULL,
+                                         json_string_length(json_object_get(config->j_parameters, "password"))?json_string_value(json_object_get(config->j_parameters, "password")):NULL,
+                                         json_string_value(json_object_get(config->j_parameters, "from")),
+                                         email,
+                                         NULL,
+                                         NULL,
+                                         json_string_value(json_object_get(config->j_parameters, "subject")),
+                                         body) == G_OK) {
+                y_log_message(Y_LOG_LEVEL_WARNING, "Security - register new user - code sent for email %s at IP Address %s", email, ip_source);
+                if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
+                  expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)json_integer_value(json_object_get(config->j_parameters, "verification-code-duration"))));
+                } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
+                  expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)json_integer_value(json_object_get(config->j_parameters, "verification-code-duration"))));
+                } else { // HOEL_DB_TYPE_SQLITE
+                  expires_at_clause = msprintf("%u", (now + (unsigned int)json_integer_value(json_object_get(config->j_parameters, "verification-code-duration"))));
+                }
+                j_query = json_pack("{sss{sssssssss{ss}ssss}}",
+                                    "table",
+                                    GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION,
+                                    "values",
+                                      "gprs_plugin_name",
+                                      config->name,
+                                      "gprs_username",
+                                      username,
+                                      "gprs_email",
+                                      email,
+                                      "gprs_code_hash",
+                                      code_hash,
+                                      "gprs_expires_at",
+                                        "raw",
+                                        expires_at_clause,
+                                      "gprs_issued_for",
+                                      issued_for,
+                                      "gprs_user_agent",
+                                      user_agent);
+                o_free(expires_at_clause);
+                res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+                json_decref(j_query);
+                if (res == H_OK) {
+                  j_return = json_pack("{siss}", "result", G_OK, "code", code);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "register_generate_email_verification_code - Error executing j_query");
+                  j_return = json_pack("{si}", "result", G_ERROR_DB);
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "register_generate_email_verification_code - Error ulfius_send_smtp_email");
+                j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+              }
+              o_free(body);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "register_generate_email_verification_code - Error str_replace");
+              j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+            }
+            o_free(code_hash);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "register_generate_email_verification_code - Error rand_code");
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_generate_email_verification_code - Error rand_code");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+        o_free(code);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "register_generate_email_verification_code - Error allocating resources for code");
+        j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "register_generate_email_verification_code - Error executing j_query");
+      j_return = json_pack("{si}", "result", G_ERROR_DB);
+    }
+    pthread_mutex_unlock(&config->insert_lock);
+  }
+  return j_return;
+}
+
+static json_t * register_verify_email_code(struct _register_config * config, const char * username, const char * email, const char * code, const char * ip_source) {
+  json_t * j_query, * j_result = NULL, * j_return, * j_new_user;
+  int res;
+  char * code_hash = NULL, * expires_at_clause = NULL, session[GLEWLWYD_SESSION_ID_LENGTH+1] = {}, * session_hash = NULL;
+  time_t now;
+  
+  if ((code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code)) != NULL) {
+    time(&now);
+    if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
+      expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+    } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
+      expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+    } else { // HOEL_DB_TYPE_SQLITE
+      expires_at_clause = msprintf("> %u", (now));
+    }
+    j_query = json_pack("{sss[s]s{sssssssss{ssss}si}}",
+                        "table",
+                        GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION,
+                        "columns",
+                          "gprs_id",
+                        "where",
+                          "gprs_plugin_name",
+                          config->name,
+                          "gprs_code_hash",
+                          code_hash,
+                          "gprs_username",
+                          username,
+                          "gprs_email",
+                          email,
+                          "gprs_expires_at",
+                            "operator",
+                            "raw",
+                            "value",
+                            expires_at_clause,
+                          "gprs_enabled",
+                          1);
+    o_free(expires_at_clause);
+    res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      if (json_array_size(j_result)) {
+        j_new_user = json_pack("{sssssosO}", "username", username, "email", email, "enabled", json_false(), "scope", json_object_get(config->j_parameters, "scope"));
+        if (config->glewlwyd_config->glewlwyd_plugin_callback_add_user(config->glewlwyd_config, j_new_user) == G_OK) {
+          if (rand_string_nonce(session, GLEWLWYD_SESSION_ID_LENGTH) != NULL) {
+            if ((session_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, session)) != NULL) {
+              time(&now);
+              if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
+                expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)json_integer_value(json_object_get(config->j_parameters, "session-duration"))));
+              } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
+                expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)json_integer_value(json_object_get(config->j_parameters, "session-duration"))));
+              } else { // HOEL_DB_TYPE_SQLITE
+                expires_at_clause = msprintf("%u", (now + (unsigned int)json_integer_value(json_object_get(config->j_parameters, "session-duration"))));
+              }
+              j_query = json_pack("{sss{sss{ss}}s{sssO}}",
+                                  "table",
+                                  GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION,
+                                  "set",
+                                    "gprs_session_hash",
+                                    session_hash,
+                                    "gprs_expires_at",
+                                      "raw",
+                                      expires_at_clause,
+                                  "where",
+                                    "gprs_plugin_name",
+                                    config->name,
+                                    "gprs_id",
+                                    json_object_get(json_array_get(j_result, 0), "gprs_id"));
+              o_free(expires_at_clause);
+              res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+              json_decref(j_query);
+              if (res == H_OK) {
+                j_return = json_pack("{siss}", "result", G_OK, "session", session);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "register_verify_email_code - Error executing j_query");
+                j_return = json_pack("{si}", "result", G_ERROR_DB);
+              }
+              o_free(session_hash);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "register_verify_email_code - Error glewlwyd_callback_generate_hash");
+              j_return = json_pack("{si}", "result", G_ERROR);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "register_verify_email_code - Error rand_string_nonce");
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "register_verify_email_code - Error glewlwyd_plugin_callback_add_user");
+          j_return = json_pack("{si}", "result", G_ERROR_DB);
+        }
+        json_decref(j_new_user);
+      } else {
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - verify e-mail code - code invalid for email %s at IP Address %s", email, ip_source);
+        j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+      }
+      json_decref(j_result);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "register_verify_email_code - Error executing j_query");
+      j_return = json_pack("{si}", "result", G_ERROR_DB);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "register_verify_email_code - Error generate hash for session");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  o_free(code_hash);
+  return j_return;
+}
+
 static json_t * register_check_session(struct _register_config * config, const char * session) {
   json_t * j_query, * j_result = NULL, * j_return;
   int res;
@@ -74,7 +310,7 @@ static json_t * register_check_session(struct _register_config * config, const c
       } else { // HOEL_DB_TYPE_SQLITE
         expires_at_clause = msprintf("> %u", (now));
       }
-      j_query = json_pack("{sss[ssss]s{sss{ssss}si}}",
+      j_query = json_pack("{sss[ssss]s{sssss{ssss}si}}",
                           "table",
                           GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION,
                           "columns",
@@ -83,6 +319,8 @@ static json_t * register_check_session(struct _register_config * config, const c
                             "gprs_email AS email",
                             "gprs_password_set",
                           "where",
+                            "gprs_plugin_name",
+                            config->name,
                             "gprs_session_hash",
                             session_hash,
                             "gprs_expires_at",
@@ -138,12 +376,14 @@ static json_t * register_check_username(struct _register_config * config, const 
     } else { // HOEL_DB_TYPE_SQLITE
       expires_at_clause = msprintf("> %u", (now));
     }
-    j_query = json_pack("{sss[s]s{sss{ssss}si}}",
+    j_query = json_pack("{sss[s]s{sssss{ssss}si}}",
                         "table",
                         GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION,
                         "columns",
                           "gprs_username",
                         "where",
+                          "gprs_plugin_name",
+                          config->name,
                           "gprs_username",
                           username,
                           "gprs_expires_at",
@@ -176,18 +416,18 @@ static json_t * register_check_username(struct _register_config * config, const 
 static json_t * register_new_user(struct _register_config * config, const char * username, const char * issued_for, const char * user_agent) {
   json_t * j_query, * j_return, * j_user, * j_new_user;
   int res;
-  char * expires_at_clause, session[33] = {}, * session_hash = NULL;
+  char * expires_at_clause, session[GLEWLWYD_SESSION_ID_LENGTH+1] = {}, * session_hash = NULL;
   time_t now;
   
   if (pthread_mutex_lock(&config->insert_lock)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 register_new_user - Error pthread_mutex_lock");
+    y_log_message(Y_LOG_LEVEL_ERROR, "register_new_user - Error pthread_mutex_lock");
     j_return = json_pack("{si}", "result", G_ERROR);
   } else {
     j_user = register_check_username(config, username);
     if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
       j_new_user = json_pack("{sssosO}", "username", username, "enabled", json_false(), "scope", json_object_get(config->j_parameters, "scope"));
       if (config->glewlwyd_config->glewlwyd_plugin_callback_add_user(config->glewlwyd_config, j_new_user) == G_OK) {
-        if (rand_string_nonce(session, 32) != NULL) {
+        if (rand_string_nonce(session, GLEWLWYD_SESSION_ID_LENGTH) != NULL) {
           if ((session_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, session)) != NULL) {
             time(&now);
             if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
@@ -197,10 +437,12 @@ static json_t * register_new_user(struct _register_config * config, const char *
             } else { // HOEL_DB_TYPE_SQLITE
               expires_at_clause = msprintf("%u", (now + (unsigned int)json_integer_value(json_object_get(config->j_parameters, "session-duration"))));
             }
-            j_query = json_pack("{sss{sssss{ss}ssss}}",
+            j_query = json_pack("{sss{sssssss{ss}ssss}}",
                                 "table",
                                 GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION,
                                 "values",
+                                  "gprs_plugin_name",
+                                  config->name,
                                   "gprs_username",
                                   username,
                                   "gprs_session_hash",
@@ -261,15 +503,15 @@ static int register_user_set(struct _register_config * config, const char * user
   } else { // HOEL_DB_TYPE_SQLITE
     expires_at_clause = msprintf("> %u", (now));
   }
-  j_query = json_pack("{sss{sOsO}s{sss{ssss}si}}",
+  j_query = json_pack("{sss{sO}s{sssss{ssss}si}}",
                       "table",
                       GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION,
                       "set",
                         "gprs_name",
                         json_object_get(j_user, "name"),
-                        "gprs_email",
-                        json_object_get(j_user, "email"),
                       "where",
+                        "gprs_plugin_name",
+                        config->name,
                         "gprs_username",
                         username,
                         "gprs_expires_at",
@@ -305,13 +547,15 @@ static int register_user_password_set(struct _register_config * config, const ch
   } else { // HOEL_DB_TYPE_SQLITE
     expires_at_clause = msprintf("> %u", (now));
   }
-  j_query = json_pack("{sss{si}s{sss{ssss}si}}",
+  j_query = json_pack("{sss{si}s{sssss{ssss}si}}",
                       "table",
                       GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION,
                       "set",
                         "gprs_password_set",
                         1,
                       "where",
+                        "gprs_plugin_name",
+                        config->name,
                         "gprs_username",
                         username,
                         "gprs_expires_at",
@@ -347,13 +591,15 @@ static int register_user_complete(struct _register_config * config, const char *
   } else { // HOEL_DB_TYPE_SQLITE
     expires_at_clause = msprintf("> %u", (now));
   }
-  j_query = json_pack("{sss{si}s{sss{ssss}si}}",
+  j_query = json_pack("{sss{si}s{sssss{ssss}si}}",
                       "table",
                       GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION,
                       "set",
                         "gprs_enabled",
                         0,
                       "where",
+                        "gprs_plugin_name",
+                        config->name,
                         "gprs_username",
                         username,
                         "gprs_expires_at",
@@ -375,29 +621,27 @@ static int register_user_complete(struct _register_config * config, const char *
   return ret;
 }
 
-static int delete_new_user(struct _register_config * config, const char * username) {
+static int register_delete_new_user(struct _register_config * config, const char * username) {
   json_t * j_element = NULL;
   size_t index = 0;
-  int ret;
+  int ret = G_OK;
 
   if (register_user_complete(config, username) == G_OK) {
     if (config->glewlwyd_config->glewlwyd_plugin_callback_delete_user(config->glewlwyd_config, username) == G_OK) {
       if (json_object_get(config->j_parameters, "schemes") != NULL) {
         json_array_foreach(json_object_get(config->j_parameters, "schemes"), index, j_element) {
           if (config->glewlwyd_config->glewlwyd_plugin_callback_scheme_deregister(config->glewlwyd_config, json_string_value(json_object_get(j_element, "name")), username) != G_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "delete_new_user - Error glewlwyd_plugin_callback_scheme_deregister for user %s on scheme %s/%s", username, json_string_value(json_object_get(j_element, "module")), json_string_value(json_object_get(j_element, "name")));
+            y_log_message(Y_LOG_LEVEL_ERROR, "register_delete_new_user - Error glewlwyd_plugin_callback_scheme_deregister for user %s on scheme %s/%s", username, json_string_value(json_object_get(j_element, "module")), json_string_value(json_object_get(j_element, "name")));
             ret = G_ERROR;
           }
         }
-      } else {
-        ret = G_OK;
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "delete_new_user - Error glewlwyd_plugin_callback_delete_user");
+      y_log_message(Y_LOG_LEVEL_ERROR, "register_delete_new_user - Error glewlwyd_plugin_callback_delete_user");
       ret = G_ERROR;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "delete_new_user - Error register_user_complete");
+    y_log_message(Y_LOG_LEVEL_ERROR, "register_delete_new_user - Error register_user_complete");
     ret = G_ERROR;
   }
   return ret;
@@ -483,33 +727,37 @@ static int callback_register_check_username(const struct _u_request * request, s
 static int callback_register_register_user(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _register_config * config = (struct _register_config *)user_data;
   json_t * j_result, * j_parameters = ulfius_get_json_body_request(request, NULL);
-  char * issued_for, expires[129];
+  char * issued_for, expires[GLEWLWYD_DATE_BUFFER+1];
   time_t now;
   struct tm ts;
   
   time(&now);
   now += json_integer_value(json_object_get(config->j_parameters, "session-duration"));
   ts = *gmtime(&now);
-  strftime(expires, 128, "%a, %d %b %Y %T %Z", &ts);
+  strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
   
   if (json_object_get(config->j_parameters, "verify-email") != json_true()) {
-    issued_for = get_client_hostname(request);
-    if (issued_for != NULL) {
-      j_result = register_new_user(config, json_string_value(json_object_get(j_parameters, "username")), issued_for, u_map_get_case(request->map_header, "user-agent"));
-      if (check_result_value(j_result, G_OK)) {
-        ulfius_add_cookie_to_response(response, json_string_value(json_object_get(config->j_parameters, "session-key")), json_string_value(json_object_get(j_result, "session")), expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", config->glewlwyd_config->glewlwyd_config->cookie_secure, 0);
-      } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-        response->status = 400;
+    if (json_string_length(json_object_get(j_parameters, "username"))) {
+      issued_for = get_client_hostname(request);
+      if (issued_for != NULL) {
+        j_result = register_new_user(config, json_string_value(json_object_get(j_parameters, "username")), issued_for, u_map_get_case(request->map_header, "user-agent"));
+        if (check_result_value(j_result, G_OK)) {
+          ulfius_add_cookie_to_response(response, json_string_value(json_object_get(config->j_parameters, "session-key")), json_string_value(json_object_get(j_result, "session")), expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", config->glewlwyd_config->glewlwyd_config->cookie_secure, 0);
+        } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+          response->status = 400;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_register_user - Error register_new_user");
+          response->status = 500;
+        }
+        json_decref(j_result);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_register_user - Error register_new_user");
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_register_user - Error get_client_hostname");
         response->status = 500;
       }
-      json_decref(j_result);
+      o_free(issued_for);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_register_user - Error get_client_hostname");
-      response->status = 500;
+      response->status = 400;
     }
-    o_free(issued_for);
   } else {
     response->status = 403;
   }
@@ -517,20 +765,96 @@ static int callback_register_register_user(const struct _u_request * request, st
   return U_CALLBACK_CONTINUE;
 }
 
-// TODO
 static int callback_register_send_email_verification(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  UNUSED(request);
-  UNUSED(response);
-  UNUSED(user_data);
-  return U_CALLBACK_ERROR;
+  struct _register_config * config = (struct _register_config *)user_data;
+  json_t * j_result, * j_parameters = ulfius_get_json_body_request(request, NULL);
+  const char * username, * email;
+  char * issued_for;
+  
+  if (json_object_get(config->j_parameters, "verify-email") == json_true()) {
+    email = json_string_value(json_object_get(j_parameters, "email"));
+    if (json_object_get(config->j_parameters, "email-is-username") == json_true()) {
+      username = json_string_value(json_object_get(j_parameters, "email"));
+    } else {
+      username = json_string_value(json_object_get(j_parameters, "username"));
+    }
+    if (o_strlen(email) && o_strlen(username)) {
+      issued_for = get_client_hostname(request);
+      if (issued_for != NULL) {
+        j_result = register_generate_email_verification_code(config, username, email, issued_for, u_map_get_case(request->map_header, "user-agent"), get_ip_source(request));
+        if (check_result_value(j_result, G_ERROR_PARAM)) {
+          response->status = 400;
+        } else if(!check_result_value(j_result, G_OK)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_register_user - Error register_new_user");
+          response->status = 500;
+        }
+        json_decref(j_result);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_register_user - Error get_client_hostname");
+        response->status = 500;
+      }
+      o_free(issued_for);
+    } else {
+      response->status = 400;
+    }
+  } else {
+    response->status = 403;
+  }
+  json_decref(j_parameters);
+  return U_CALLBACK_CONTINUE;
 }
 
-// TODO
 static int callback_register_verify_email(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  UNUSED(request);
-  UNUSED(response);
-  UNUSED(user_data);
-  return U_CALLBACK_ERROR;
+  struct _register_config * config = (struct _register_config *)user_data;
+  json_t * j_parameters = ulfius_get_json_body_request(request, NULL), * j_result;
+  const char * username, * email;
+  char expires[GLEWLWYD_DATE_BUFFER+1];
+  time_t now;
+  struct tm ts;
+
+  if (json_object_get(config->j_parameters, "verify-email") == json_true()) {
+    email = json_string_value(json_object_get(j_parameters, "email"));
+    if (json_object_get(config->j_parameters, "email-is-username") == json_true()) {
+      username = json_string_value(json_object_get(j_parameters, "email"));
+    } else {
+      username = json_string_value(json_object_get(j_parameters, "username"));
+    }
+    if (o_strlen(email) && o_strlen(username) && (json_int_t)json_string_length(json_object_get(j_parameters, "code")) == json_integer_value(json_object_get(config->j_parameters, "verification-code-length"))) {
+      j_result = register_verify_email_code(config,
+                                             username,
+                                             email,
+                                             json_string_value(json_object_get(j_parameters, "code")),
+                                             get_ip_source(request));
+      if (check_result_value(j_result, G_OK)) {
+        time(&now);
+        now += json_integer_value(json_object_get(config->j_parameters, "session-duration"));
+        ts = *gmtime(&now);
+        strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
+        ulfius_add_cookie_to_response(response, 
+                                      json_string_value(json_object_get(config->j_parameters, "session-key")),
+                                      json_string_value(json_object_get(j_result, "session")),
+                                      expires,
+                                      0,
+                                      config->glewlwyd_config->glewlwyd_config->cookie_domain,
+                                      "/",
+                                      config->glewlwyd_config->glewlwyd_config->cookie_secure,
+                                      0);
+      } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+        response->status = 400;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_verify_email - Error register_verify_email_code");
+        response->status = 500;
+      }
+      json_decref(j_result);
+    } else {
+      response->status = 400;
+    }
+  } else {
+    response->status = 403;
+  }
+
+  json_decref(j_parameters);
+  return U_CALLBACK_CONTINUE;
 }
 
 static int callback_register_update_password(const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -562,10 +886,8 @@ static int callback_register_update_data(const struct _u_request * request, stru
   struct _register_config * config = (struct _register_config *)user_data;
   json_t * j_parameters = ulfius_get_json_body_request(request, NULL), * j_user;
   
-  if ((json_object_get(j_parameters, "name") == NULL || json_is_string(json_object_get(j_parameters, "name")) || json_object_get(j_parameters, "name") == json_null()) && (json_object_get(j_parameters, "email") == NULL || json_is_string(json_object_get(j_parameters, "email")) || json_object_get(j_parameters, "email") == json_null())) {
-    j_user = json_pack("{ssss}",
-                       "name", json_is_string(json_object_get(j_parameters, "name"))?json_string_value(json_object_get(j_parameters, "name")):"",
-                       "email", json_is_string(json_object_get(j_parameters, "email"))?json_string_value(json_object_get(j_parameters, "email")):"");
+  if ((json_object_get(j_parameters, "name") == NULL || json_is_string(json_object_get(j_parameters, "name")) || json_object_get(j_parameters, "name") == json_null())) {
+    j_user = json_pack("{ss}", "name", json_is_string(json_object_get(j_parameters, "name"))?json_string_value(json_object_get(j_parameters, "name")):"");
     if (config->glewlwyd_config->glewlwyd_plugin_callback_set_user(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), j_user) == G_OK) {
       if (register_user_set(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), j_user) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_update_data - Error register_user_set");
@@ -588,8 +910,8 @@ static int callback_register_cancel(const struct _u_request * request, struct _u
   UNUSED(request);
   struct _register_config * config = (struct _register_config *)user_data;
   
-  if (delete_new_user(config, json_string_value(json_object_get((json_t *)response->shared_data, "username"))) != G_OK) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_cancel - Error delete_new_user");
+  if (register_delete_new_user(config, json_string_value(json_object_get((json_t *)response->shared_data, "username"))) != G_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_cancel - Error register_delete_new_user");
     response->status = 500;
   } else {
     ulfius_add_cookie_to_response(response, json_string_value(json_object_get(config->j_parameters, "session-key")), "", 0, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", config->glewlwyd_config->glewlwyd_config->cookie_secure, 0);
@@ -743,29 +1065,6 @@ static int callback_register_clean_session(const struct _u_request * request, st
   return U_CALLBACK_COMPLETE;
 }
 
-// parameters structure
-/*
-{
-  session-key: string
-  session-duration: number
-  verify-email: boolean
-  email-is-username: boolean
-  smtp: {
-    host: string
-    port: number
-    ... (cf scheme/email.c)
-  }
-  scope: array of strings
-  set-password: string (always, yes, no)
-  schemes: [
-    {
-      module: string
-      name: string
-      register: string (always, yes)
-    }
-  ]
-}
-*/
 json_t * is_plugin_parameters_valid(json_t * j_params) {
   json_t * j_return, * j_errors = json_array(), * j_element = NULL;
   size_t index = 0, has_mandatory = 0;
