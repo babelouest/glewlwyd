@@ -510,3 +510,18 @@ int check_result_value(json_t * result, const int value) {
   return (json_is_integer(json_object_get(result, "result")) && 
           json_integer_value(json_object_get(result, "result")) == value);
 }
+
+/**
+ * CHeck if the json array is either empty or only contains elements
+ * of type.
+ */
+ int check_uniform_json_array(json_t * j_array, json_type t) {
+  json_t * j_element = NULL;
+  size_t index = 0;
+  json_array_foreach(j_array, index, j_element) {
+    if (j_element->type != t) {
+      return G_ERROR;
+    }
+  }
+  return G_OK;
+ }

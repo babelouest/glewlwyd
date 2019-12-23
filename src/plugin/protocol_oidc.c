@@ -692,22 +692,32 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
       if (json_object_get(j_userinfo, json_string_value(json_object_get(j_claim, "name"))) == NULL) {
         json_array_foreach(json_object_get(j_claim, "scope"), index_scope, j_scope) {
           if (string_array_has_value((const char **)scopes_array, json_string_value(j_scope))) {
+            const char * key = json_string_value(json_object_get(j_claim, "user-property"));
             j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_claim, "user-property")));
-            if (j_user_property != NULL && json_is_string(j_user_property)) {
+            if (j_user_property != NULL) {
+              if (json_is_string(j_user_property)) {
               if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_claim, "type")))) {
-                if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-true")))) {
+                  if (0 == o_strcmp(json_string_value(j_user_property),
+                                    json_string_value(json_object_get(j_claim, "boolean-value-true")))) {
                   json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_true());
-                } else if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-false")))) {
+                  } else if (0 == o_strcmp(json_string_value(j_user_property),
+                                           json_string_value(json_object_get(j_claim, "boolean-value-false")))) {
                   json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_false());
                 }
               } else if (0 == o_strcmp("number", json_string_value(json_object_get(j_claim, "type")))) {
                 endptr = NULL;
                 lvalue = strtol(json_string_value(j_user_property), &endptr, 10);
                 if (!(*endptr)) {
-                  json_object_set_new(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_integer(lvalue));
+                    json_object_set_new(j_userinfo,
+                                        json_string_value(json_object_get(j_claim, "name")),
+                                        json_integer(lvalue));
                 }
               } else {
                 json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), j_user_property);
+              }
+              } else if (json_is_array(j_user_property) && check_uniform_json_array(j_user_property, JSON_STRING == G_OK)) {
+                json_object_set(j_userinfo, key, j_user_property);
+                json_incref(j_user_property);
               }
             }
           }
@@ -721,22 +731,32 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
   // Append mandatory claims
   json_array_foreach(json_object_get(config->j_params, "claims"), index, j_claim) {
     if (json_object_get(j_claim, "mandatory") == json_true()) {
-      j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_claim, "user-property")));
-      if (j_user_property != NULL && json_is_string(j_user_property)) {
+      const char * key = json_string_value(json_object_get(j_claim, "user-property"));
+      j_user_property = json_object_get(j_user, key);
+      if (j_user_property != NULL) {
+        if (json_is_string(j_user_property)) {
         if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_claim, "type")))) {
-          if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-true")))) {
+            if (0 == o_strcmp(json_string_value(j_user_property),
+                              json_string_value(json_object_get(j_claim, "boolean-value-true")))) {
             json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_true());
-          } else if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-false")))) {
+            } else if (0 == o_strcmp(json_string_value(j_user_property),
+                                     json_string_value(json_object_get(j_claim, "boolean-value-false")))) {
             json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_false());
           }
         } else if (0 == o_strcmp("number", json_string_value(json_object_get(j_claim, "type")))) {
           endptr = NULL;
           lvalue = strtol(json_string_value(j_user_property), &endptr, 10);
           if (!(*endptr)) {
-            json_object_set_new(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_integer(lvalue));
+              json_object_set_new(j_userinfo,
+                                  json_string_value(json_object_get(j_claim, "name")),
+                                  json_integer(lvalue));
           }
         } else {
           json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), j_user_property);
+        }
+        } else if (json_is_array(j_user_property) && check_uniform_json_array(j_user_property, JSON_STRING) == G_OK) {
+          json_object_set(j_userinfo, key, j_user_property);
+          json_incref(j_user_property);
         }
       }
     }

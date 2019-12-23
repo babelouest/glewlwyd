@@ -395,6 +395,12 @@ int generate_digest_pbkdf2(const char * data, const char * salt, char * out_dige
 int check_result_value(json_t * result, const int value);
 
 /**
+ * CHeck if the json array is either empty or only contains elements
+ * of type.
+ */
+int check_uniform_json_array(json_t * j_array, json_type t);
+
+/**
  * Modules functions prototypes
  */
 
