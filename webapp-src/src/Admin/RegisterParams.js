@@ -11,12 +11,12 @@ class RegisterParams extends Component {
       props.mod = {parameters: {}};
     }
     
-    if (!props.mod.parameters["code-length"]) {
-      props.mod.parameters["code-length"] = 8;
+    if (!props.mod.parameters["verification-code-length"]) {
+      props.mod.parameters["verification-code-length"] = 8;
     }
 
-    if (!props.mod.parameters["code-duration"]) {
-      props.mod.parameters["code-duration"] = 600;
+    if (!props.mod.parameters["verification-code-duration"]) {
+      props.mod.parameters["verification-code-duration"] = 600;
     }
 
     if (!props.mod.parameters["port"]) {
@@ -76,12 +76,12 @@ class RegisterParams extends Component {
       nextProps.mod = {parameters: {}};
     }
     
-    if (!nextProps.mod.parameters["code-length"]) {
-      nextProps.mod.parameters["code-length"] = 8;
+    if (!nextProps.mod.parameters["verification-code-length"]) {
+      nextProps.mod.parameters["verification-code-length"] = 8;
     }
 
-    if (!nextProps.mod.parameters["code-duration"]) {
-      nextProps.mod.parameters["code-duration"] = 600;
+    if (!nextProps.mod.parameters["verification-code-duration"]) {
+      nextProps.mod.parameters["verification-code-duration"] = 600;
     }
 
     if (!nextProps.mod.parameters["port"]) {
@@ -223,13 +223,13 @@ class RegisterParams extends Component {
       }
     });
     if (this.state.mod.parameters["verify-email"]) {
-      if (!this.state.mod.parameters["code-length"]) {
+      if (!this.state.mod.parameters["verification-code-length"]) {
         hasError = true;
-        errorList["code-length"] = i18next.t("admin.mod-email-code-length-error")
+        errorList["verification-code-length"] = i18next.t("admin.mod-email-verification-code-length-error")
       }
-      if (!this.state.mod.parameters["code-duration"]) {
+      if (!this.state.mod.parameters["verification-code-duration"]) {
         hasError = true;
-        errorList["code-duration"] = i18next.t("admin.mod-email-code-duration-error")
+        errorList["verification-code-duration"] = i18next.t("admin.mod-email-verification-code-duration-error")
       }
       if (!this.state.mod.parameters["host"]) {
         hasError = true;
@@ -414,20 +414,20 @@ class RegisterParams extends Component {
           <div className="form-group">
             <div className="input-group mb-3">
               <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor="mod-register-code-length">{i18next.t("admin.mod-email-code-length")}</label>
+                <label className="input-group-text" htmlFor="mod-register-verification-code-length">{i18next.t("admin.mod-email-verification-code-length")}</label>
               </div>
-              <input type="number" min="0" max="65536" step="1" className={this.state.errorList["code-length"]?"form-control is-invalid":"form-control"} id="mod-register-code-length" onChange={(e) => this.changeParam(e, "code-length")} value={this.state.mod.parameters["code-length"]} placeholder={i18next.t("admin.mod-email-code-length-ph")} />
+              <input type="number" min="0" max="65536" step="1" className={this.state.errorList["verification-code-length"]?"form-control is-invalid":"form-control"} id="mod-register-verification-code-length" onChange={(e) => this.changeParam(e, "verification-code-length")} value={this.state.mod.parameters["verification-code-length"]} placeholder={i18next.t("admin.mod-email-verification-code-length-ph")} />
             </div>
-            {this.state.errorList["code-length"]?<span className="error-input">{this.state.errorList["code-length"]}</span>:""}
+            {this.state.errorList["verification-code-length"]?<span className="error-input">{this.state.errorList["verification-code-length"]}</span>:""}
           </div>
           <div className="form-group">
             <div className="input-group mb-3">
               <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor="mod-register-code-duration">{i18next.t("admin.mod-email-code-duration")}</label>
+                <label className="input-group-text" htmlFor="mod-register-verification-code-duration">{i18next.t("admin.mod-email-verification-code-duration")}</label>
               </div>
-              <input type="number" min="0" max="65536" step="1" className={this.state.errorList["code-duration"]?"form-control is-invalid":"form-control"} id="mod-register-code-duration" onChange={(e) => this.changeParam(e, "code-duration")} value={this.state.mod.parameters["code-duration"]} placeholder={i18next.t("admin.mod-email-code-duration-ph")} />
+              <input type="number" min="0" max="65536" step="1" className={this.state.errorList["verification-code-duration"]?"form-control is-invalid":"form-control"} id="mod-register-verification-code-duration" onChange={(e) => this.changeParam(e, "verification-code-duration")} value={this.state.mod.parameters["verification-code-duration"]} placeholder={i18next.t("admin.mod-email-verification-code-duration-ph")} />
             </div>
-            {this.state.errorList["code-duration"]?<span className="error-input">{this.state.errorList["code-duration"]}</span>:""}
+            {this.state.errorList["verification-code-duration"]?<span className="error-input">{this.state.errorList["verification-code-duration"]}</span>:""}
           </div>
           <div className="form-group">
             <div className="input-group mb-3">
