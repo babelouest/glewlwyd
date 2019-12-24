@@ -39,7 +39,8 @@ class App extends Component {
         message: ""
       },
       invalidCredentialMessage: false,
-      invalidDelegateMessage: false
+      invalidDelegateMessage: false,
+      tokenParsed: false
     };
     
     this.fetchProfile = this.fetchProfile.bind(this);
@@ -163,33 +164,77 @@ class App extends Component {
   fetchRegistration() {
     apiManager.glewlwydRequest("/" + this.state.config.params.register + "/config")
     .then((config) => {
-      apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
-      .then((profile) => {
-        this.setState({registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile]}, () => {
-          config.schemes.forEach(scheme => {
-            apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
-            .then(() => {
-              var registerSchemes = this.state.registerSchemes;
-              registerSchemes[scheme.name] = true;
-              this.setState({registerSchemes: registerSchemes});
-            })
-            .fail(() => {
-              var registerSchemes = this.state.registerSchemes;
-              registerSchemes[scheme.name] = false;
-              this.setState({registerSchemes: registerSchemes});
+      if (!this.state.config.params.token || this.state.tokenParsed) {
+        apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
+        .then((profile) => {
+          this.setState({registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile]}, () => {
+            config.schemes.forEach(scheme => {
+              apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
+              .then(() => {
+                var registerSchemes = this.state.registerSchemes;
+                registerSchemes[scheme.name] = true;
+                this.setState({registerSchemes: registerSchemes});
+              })
+              .fail(() => {
+                var registerSchemes = this.state.registerSchemes;
+                registerSchemes[scheme.name] = false;
+                this.setState({registerSchemes: registerSchemes});
+              });
             });
           });
+        })
+        .fail((err) => {
+          if (err.status != 401) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          }
+          this.setState({registerProfile: false});
+        })
+        .always(() => {
+          this.setState({registerConfig: config});
         });
-      })
-      .fail((err) => {
-        if (err.status != 401) {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-        }
-        this.setState({registerProfile: false});
-      })
-      .always(() => {
-        this.setState({registerConfig: config});
-      });
+      } else {
+        apiManager.glewlwydRequest("/" + this.state.config.params.register + "/verify", "POST", {token: this.state.config.params.token})
+        .then(() => {
+          apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
+          .then((profile) => {
+            this.setState({tokenParsed: true, registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile]}, () => {
+              config.schemes.forEach(scheme => {
+                apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
+                .then(() => {
+                  var registerSchemes = this.state.registerSchemes;
+                  registerSchemes[scheme.name] = true;
+                  this.setState({registerSchemes: registerSchemes});
+                })
+                .fail(() => {
+                  var registerSchemes = this.state.registerSchemes;
+                  registerSchemes[scheme.name] = false;
+                  this.setState({registerSchemes: registerSchemes});
+                });
+              });
+            });
+          })
+          .fail((err) => {
+            if (err.status != 401) {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+            }
+            this.setState({registerProfile: false});
+          })
+          .always(() => {
+            this.setState({registerConfig: config});
+          });
+        })
+        .fail((err) => {
+          if (err.status != 401) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          } else {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-token-invalid")});
+          }
+          this.setState({registerProfile: false});
+        })
+        .always(() => {
+          this.setState({registerConfig: config});
+        });
+      }
     })
     .fail(() => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});

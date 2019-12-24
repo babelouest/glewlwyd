@@ -61,6 +61,7 @@ class SchemeMock extends Component {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
     })
     .always(() => {
+      messageDispatcher.sendMessage('App', {type: "registration"});
       this.getRegister();
     });
   }
