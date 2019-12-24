@@ -27,9 +27,9 @@ set(PROGRAM_VERSION_MINOR "0")
 set(PROGRAM_VERSION_PATCH "1")
 set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, multiple factor authentication with, HOTP/TOTP, Webauthn, etc. extensible via plugins")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
-set(ORCANIA_VERSION_REQUIRED "2.0.1")
+set(ORCANIA_VERSION_REQUIRED "2.1.0")
 set(YDER_VERSION_REQUIRED "1.4.8")
-set(ULFIUS_VERSION_REQUIRED "2.6.4")
+set(ULFIUS_VERSION_REQUIRED "2.6.5")
 set(HOEL_VERSION_REQUIRED "1.4.12")
 set(LIBJWT_VERSION_REQUIRED "1.10.0")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
@@ -516,11 +516,11 @@ if (WITH_PLUGIN_REGISTER)
 
 	set(MOD_LIBS ${MOD_LIBS} "-ldl")
 
-	add_library(register MODULE ${LIB_SRC})
-	set_target_properties(register PROPERTIES
+	add_library(protocol_register MODULE ${LIB_SRC})
+	set_target_properties(protocol_register PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(register ${MOD_LIBS})
-	set(PLUGIN_MODULES ${PLUGIN_MODULES} register)
+	target_link_libraries(protocol_register ${MOD_LIBS})
+	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_register)
 endif ()
 
 # tests
@@ -630,6 +630,12 @@ if (BUILD_GLEWLWYD_TESTING)
 							)
 		endif ()
 
+		if (WITH_PLUGIN_REGISTER)
+			set (TESTS ${TESTS}
+							glewlwyd_register
+							)
+		endif ()
+		
 		if (WITH_SCHEME_OTP)
 			set (TST_LIBS ${TST_LIBS} ${LIBOATH_LIBRARIES})
 			set (TESTS ${TESTS} glewlwyd_scheme_otp)
