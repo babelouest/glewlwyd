@@ -8,7 +8,8 @@ CREATE TABLE gpr_session (
   gprs_email TEXT,
   gprs_code TEXT,
   gprs_password_set INTEGER DEFAULT 0,
-  gprs_session_hash TEXT NOT NULL,
+  gprs_session_hash TEXT,
+  gprs_token_hash TEXT,
   gprs_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gprs_issued_for TEXT, -- IP address or hostname
   gprs_user_agent TEXT,
