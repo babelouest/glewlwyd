@@ -44,6 +44,7 @@ DROP TABLE IF EXISTS gs_webauthn_user;
 DROP TABLE IF EXISTS gs_otp;
 DROP TABLE IF EXISTS gs_user_certificate;
 DROP TABLE IF EXISTS gs_user_pkcs12;
+DROP TABLE IF EXISTS gpr_session;
 
 CREATE TABLE g_user_module_instance (
   gumi_id SERIAL PRIMARY KEY,
@@ -480,6 +481,23 @@ CREATE TABLE gs_user_pkcs12 (
   gsup_user_agent VARCHAR(512) DEFAULT NULL
 );
 CREATE INDEX i_gsup_username ON gs_user_pkcs12(gsup_username);
+
+CREATE TABLE gpr_session (
+  gprs_id SERIAL PRIMARY KEY,
+  gprs_plugin_name VARCHAR(256) NOT NULL,
+  gprs_username VARCHAR(256) NOT NULL,
+  gprs_name VARCHAR(512),
+  gprs_email VARCHAR(512),
+  gprs_code_hash VARCHAR(512),
+  gprs_password_set SMALLINT DEFAULT 0,
+  gprs_session_hash VARCHAR(512),
+  gprs_token_hash VARCHAR(512),
+  gprs_expires_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gprs_issued_for VARCHAR(256), -- IP address or hostname
+  gprs_user_agent VARCHAR(256),
+  gprs_enabled SMALLINT DEFAULT 1
+);
+CREATE INDEX i_gprs_session_hash ON gpr_session(gprs_session_hash);
 
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 1, 600);
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1, 600);
