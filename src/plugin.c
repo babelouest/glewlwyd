@@ -36,11 +36,11 @@ int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const c
   if (config != NULL && config->glewlwyd_config != NULL && config->glewlwyd_config->instance != NULL && method != NULL && name != NULL && url != NULL && callback != NULL && 0 != o_strncasecmp(name, "auth", o_strlen("auth"))) {
     p_url = msprintf("%s/%s", name, url);
     if (p_url != NULL) {
-      y_log_message(Y_LOG_LEVEL_INFO, "add url %s %s/%s", method, config->glewlwyd_config->api_prefix, p_url);
-      if (ulfius_add_endpoint_by_val(config->glewlwyd_config->instance, method, config->glewlwyd_config->api_prefix, p_url, GLEWLWYD_CALLBACK_PRIORITY_PLUGIN + priority, callback, user_data) != U_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_add_plugin_endpoint - Error ulfius_add_endpoint_by_val %s - %s/%s", method, config->glewlwyd_config->api_prefix, p_url);
+      if ((ret = ulfius_add_endpoint_by_val(config->glewlwyd_config->instance, method, config->glewlwyd_config->api_prefix, p_url, GLEWLWYD_CALLBACK_PRIORITY_PLUGIN + priority, callback, user_data)) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_add_plugin_endpoint - Error %d ulfius_add_endpoint_by_val %s - %s/%s",ret, method, config->glewlwyd_config->api_prefix, p_url);
         ret = G_ERROR;
       } else {
+        y_log_message(Y_LOG_LEVEL_INFO, "Add endpoint %s %s/%s", method, config->glewlwyd_config->api_prefix, p_url);
         ret = G_OK;
       }
       o_free(p_url);
@@ -62,7 +62,13 @@ int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, cons
   if (config != NULL && config->glewlwyd_config != NULL && config->glewlwyd_config->instance != NULL && method != NULL && name != NULL && url != NULL) {
     p_url = msprintf("%s/%s", name, url);
     if (p_url != NULL) {
-      ret = ulfius_remove_endpoint_by_val(config->glewlwyd_config->instance, method, config->glewlwyd_config->api_prefix, p_url);
+      if ((ret = ulfius_remove_endpoint_by_val(config->glewlwyd_config->instance, method, config->glewlwyd_config->api_prefix, p_url)) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_remove_plugin_endpoint - Error %d ulfius_remove_endpoint_by_val %s - %s/%s", ret, method, config->glewlwyd_config->api_prefix, p_url);
+        ret = G_ERROR;
+      } else {
+        y_log_message(Y_LOG_LEVEL_INFO, "Remove endpoint %s %s/%s", method, config->glewlwyd_config->api_prefix, p_url);
+        ret = G_OK;
+      }
       o_free(p_url);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_remove_plugin_endpoint - Error allocating resources for p_url");
