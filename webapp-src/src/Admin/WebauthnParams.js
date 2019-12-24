@@ -217,29 +217,17 @@ class WebauthnParams extends Component {
     });
     return (
       <div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-webauthn-session-mandatory-check">
-                {i18next.t("admin.mod-webauthn-session-mandatory")}
-              </label>
-            </div>
-            <div className="input-group-text">
-              <input className="form-control" type="checkbox" value="" id="mod-webauthn-session-mandatory-check" checked={this.state.mod.parameters["session-mandatory"]} onChange={(e) => this.toggleSessionMandatory(e)}/>
-            </div>
-          </div>
+        <div className="form-group form-check">
+          <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-session-mandatory-check" checked={this.state.mod.parameters["session-mandatory"]} onChange={(e) => this.toggleSessionMandatory(e)}/>
+          <label className="form-check-label" htmlFor="mod-webauthn-session-mandatory-check">
+            {i18next.t("admin.mod-webauthn-session-mandatory")}
+          </label>
         </div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-webauthn-force-fmt-none">
-                {i18next.t("admin.mod-webauthn-force-fmt-none")}
-              </label>
-            </div>
-            <div className="input-group-text">
-              <input className="form-control" type="checkbox" value="" id="mod-webauthn-force-fmt-none" checked={this.state.mod.parameters["force-fmt-none"]} onChange={(e) => this.toggleForceFmtNone(e)}/>
-            </div>
-          </div>
+        <div className="form-group form-check">
+          <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-force-fmt-none" checked={this.state.mod.parameters["force-fmt-none"]} onChange={(e) => this.toggleForceFmtNone(e)}/>
+          <label className="form-check-label" htmlFor="mod-webauthn-force-fmt-none">
+            {i18next.t("admin.mod-webauthn-force-fmt-none")}
+          </label>
         </div>
         <div className="form-group">
           <label htmlFor="mod-webauthn-seed">{i18next.t("admin.mod-webauthn-seed")}</label>

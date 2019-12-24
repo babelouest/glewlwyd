@@ -142,15 +142,9 @@ class HTTPParams extends Component {
           </div>
           {this.state.errorList["url"]?<span className="error-input">{this.state.errorList["url"]}</span>:""}
         </div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-check-server-certificate">{i18next.t("admin.mod-check-server-certificate")}</label>
-            </div>
-            <div className="input-group-text">
-              <input type="checkbox" className="form-control" id="mod-check-server-certificate" onChange={(e) => this.toggleCheckServerCertificate()} checked={this.state.mod.parameters["check-server-certificate"]||false} />
-            </div>
-          </div>
+        <div className="form-group form-check">
+          <input type="checkbox" className="form-check-input" id="mod-check-server-certificate" onChange={(e) => this.toggleCheckServerCertificate()} checked={this.state.mod.parameters["check-server-certificate"]||false} />
+          <label className="form-check-label" htmlFor="mod-check-server-certificate">{i18next.t("admin.mod-check-server-certificate")}</label>
         </div>
         {defaultScopeJsx}
         <div className="form-group">

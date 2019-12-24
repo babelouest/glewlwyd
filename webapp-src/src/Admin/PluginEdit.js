@@ -144,13 +144,10 @@ class PluginEdit extends Component {
     }
     var readonly = "";
     if (this.state.role !== "scheme") {
-      readonly = <div className="form-group">
-        <div className="input-group mb-3">
-          <div className="input-group-prepend">
-            <label className="input-group-text" htmlFor="mod-readonly">{i18next.t("admin.mod-readonly")}</label>
-          </div>
-          <input type="checkbox" className="form-control" id="mod-readonly" onChange={(e) => this.toggleReadonly(e)} checked={this.state.mod.readonly||false} />
-        </div>
+      readonly = 
+      <div className="form-group form-check">
+        <input type="checkbox" className="form-check-input" id="mod-readonly" onChange={(e) => this.toggleReadonly(e)} checked={this.state.mod.readonly||false} />
+        <label className="form-check-label" htmlFor="mod-readonly">{i18next.t("admin.mod-readonly")}</label>
       </div>;
     }
     var hasError;

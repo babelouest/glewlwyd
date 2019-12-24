@@ -193,15 +193,9 @@ class OTPParams extends Component {
           </div>
           {this.state.errorList["otp-length"]?<span className="error-input">{this.state.errorList["otp-length"]}</span>:""}
         </div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-otp-hotp-allow">{i18next.t("admin.mod-otp-hotp-allow")}</label>
-            </div>
-            <div className="input-group-text">
-              <input type="checkbox" className="form-control" id="mod-otp-hotp-allow" onChange={(e) => this.toggleParam("hotp-allow")} checked={this.state.mod.parameters["hotp-allow"]} />
-            </div>
-          </div>
+        <div className="form-group form-check">
+          <input type="checkbox" className="form-check-input" id="mod-otp-hotp-allow" onChange={(e) => this.toggleParam("hotp-allow")} checked={this.state.mod.parameters["hotp-allow"]} />
+          <label className="form-check-label" htmlFor="mod-otp-hotp-allow">{i18next.t("admin.mod-otp-hotp-allow")}</label>
         </div>
         <div className="form-group">
           <div className="input-group mb-3">
@@ -212,15 +206,9 @@ class OTPParams extends Component {
           </div>
           {this.state.errorList["hotp-window"]?<span className="error-input">{this.state.errorList["hotp-window"]}</span>:""}
         </div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-otp-totp-allow">{i18next.t("admin.mod-otp-totp-allow")}</label>
-            </div>
-            <div className="input-group-text">
-              <input type="checkbox" className="form-control" id="mod-otp-totp-allow" onChange={(e) => this.toggleParam("totp-allow")} checked={this.state.mod.parameters["totp-allow"]} />
-            </div>
-          </div>
+        <div className="form-group form-check">
+          <input type="checkbox" className="form-check-input" id="mod-otp-totp-allow" onChange={(e) => this.toggleParam("totp-allow")} checked={this.state.mod.parameters["totp-allow"]} />
+          <label className="form-check-label" htmlFor="mod-otp-totp-allow">{i18next.t("admin.mod-otp-totp-allow")}</label>
         </div>
         <div className="form-group">
           <div className="input-group mb-3">

@@ -390,26 +390,14 @@ class RegisterParams extends Component {
         </div>
         {schemeList}
         <hr/>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-register-verify-email">{i18next.t("admin.mod-register-verify-email")}</label>
-            </div>
-            <div className="input-group-text">
-              <input type="checkbox" className="form-control" id="mod-register-verify-email" onChange={(e) => this.toggleParam(e, "verify-email")} checked={this.state.mod.parameters["verify-email"]} />
-            </div>
-          </div>
+        <div className="form-group form-check">
+          <input type="checkbox" className="form-check-input" id="mod-register-verify-email" onChange={(e) => this.toggleParam(e, "verify-email")} checked={this.state.mod.parameters["verify-email"]} />
+          <label className="form-check-label" htmlFor="mod-register-verify-email">{i18next.t("admin.mod-register-verify-email")}</label>
         </div>
         <div className={"collapse"+(this.state.mod.parameters["verify-email"]?" show":"")} id="verifyEmailCollapse">
-          <div className="form-group">
-            <div className="input-group mb-3">
-              <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor="mod-register-email-is-username">{i18next.t("admin.mod-register-email-is-username")}</label>
-              </div>
-              <div className="input-group-text">
-                <input type="checkbox" disabled={!this.state.mod.parameters["verify-email"]} className="form-control" id="mod-register-email-is-username" onChange={(e) => this.toggleParam(e, "email-is-username")} checked={this.state.mod.parameters["email-is-username"]} />
-              </div>
-            </div>
+          <div className="form-group form-check">
+            <input type="checkbox" disabled={!this.state.mod.parameters["verify-email"]} className="form-check-input" id="mod-register-email-is-username" onChange={(e) => this.toggleParam(e, "email-is-username")} checked={this.state.mod.parameters["email-is-username"]} />
+            <label className="form-check-label" htmlFor="mod-register-email-is-username">{i18next.t("admin.mod-register-email-is-username")}</label>
           </div>
           <div className="form-group">
             <div className="input-group mb-3">
@@ -447,25 +435,13 @@ class RegisterParams extends Component {
             </div>
             {this.state.errorList["port"]?<span className="error-input">{this.state.errorList["port"]}</span>:""}
           </div>
-          <div className="form-group">
-            <div className="input-group mb-3">
-              <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor="mod-register-use-tls">{i18next.t("admin.mod-email-use-tls")}</label>
-              </div>
-              <div className="input-group-text">
-                <input type="checkbox" className="form-control" id="mod-register-use-tls" onChange={(e) => this.toggleParam(e, "use-tls")} checked={this.state.mod.parameters["use-tls"]||false} />
-              </div>
-            </div>
+          <div className="form-group form-check">
+            <input type="checkbox" className="form-check-input" id="mod-register-use-tls" onChange={(e) => this.toggleParam(e, "use-tls")} checked={this.state.mod.parameters["use-tls"]||false} />
+            <label className="form-check-label" htmlFor="mod-register-use-tls">{i18next.t("admin.mod-email-use-tls")}</label>
           </div>
-          <div className="form-group">
-            <div className="input-group mb-3">
-              <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor="mod-register-check-certificate">{i18next.t("admin.mod-email-check-certificate")}</label>
-              </div>
-              <div className="input-group-text">
-                <input type="checkbox" className="form-control" disabled={!this.state.mod.parameters["use-tls"]} className="form-control" id="mod-register-check-certificate" onChange={(e) => this.toggleParam(e, "check-certificate")} checked={this.state.mod.parameters["check-certificate"]||false} />
-              </div>
-            </div>
+          <div className="form-group form-check">
+            <input type="checkbox" className="form-check-input" disabled={!this.state.mod.parameters["use-tls"]} id="mod-register-check-certificate" onChange={(e) => this.toggleParam(e, "check-certificate")} checked={this.state.mod.parameters["check-certificate"]||false} />
+            <label className="form-check-label" htmlFor="mod-register-check-certificate">{i18next.t("admin.mod-email-check-certificate")}</label>
           </div>
           <div className="form-group">
             <div className="input-group mb-3">

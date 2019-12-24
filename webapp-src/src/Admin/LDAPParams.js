@@ -306,45 +306,21 @@ class LDAPParams extends Component {
       if (this.state.role === "user") {
         rwAccess = 
         <div>
-          <div className="form-group">
-            <div className="input-group mb-3">
-              <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-read")}</label>
-              </div>
-              <div className="input-group-text">
-                <input type="checkbox" className="form-control" id={"mod-database-data-format-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "read")} checked={this.state.mod.parameters["data-format"][property]["read"]} />
-              </div>
-            </div>
+          <div className="form-group form-check">
+            <input type="checkbox" className="form-check-input" id={"mod-database-data-format-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "read")} checked={this.state.mod.parameters["data-format"][property]["read"]} />
+            <label className="form-check-label" htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-read")}</label>
           </div>
-          <div className="form-group">
-            <div className="input-group mb-3">
-              <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor={"mod-database-data-format-write-"+property}>{i18next.t("admin.mod-database-data-format-write")}</label>
-              </div>
-              <div className="input-group-text">
-                <input type="checkbox" className="form-control" id={"mod-database-data-format-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "write")} checked={this.state.mod.parameters["data-format"][property]["write"]} />
-              </div>
-            </div>
+          <div className="form-group form-check">
+            <input type="checkbox" className="form-check-input" id={"mod-database-data-format-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "write")} checked={this.state.mod.parameters["data-format"][property]["write"]} />
+            <label className="form-check-label" htmlFor={"mod-database-data-format-write-"+property}>{i18next.t("admin.mod-database-data-format-write")}</label>
           </div>
-          <div className="form-group">
-            <div className="input-group mb-3">
-              <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor={"mod-database-data-format-profile-read-"+property}>{i18next.t("admin.mod-database-data-format-profile-read")}</label>
-              </div>
-              <div className="input-group-text">
-                <input type="checkbox" className="form-control" id={"mod-database-data-format-profile-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-read")} checked={this.state.mod.parameters["data-format"][property]["profile-read"]} />
-              </div>
-            </div>
+          <div className="form-group form-check">
+            <input type="checkbox" className="form-check-input" id={"mod-database-data-format-profile-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-read")} checked={this.state.mod.parameters["data-format"][property]["profile-read"]} />
+            <label className="form-check-label" htmlFor={"mod-database-data-format-profile-read-"+property}>{i18next.t("admin.mod-database-data-format-profile-read")}</label>
           </div>
-          <div className="form-group">
-            <div className="input-group mb-3">
-              <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor={"mod-database-data-format-profile-write-"+property}>{i18next.t("admin.mod-database-data-format-profile-write")}</label>
-              </div>
-              <div className="input-group-text">
-                <input type="checkbox" className="form-control" id={"mod-database-data-format-profile-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-write")} checked={this.state.mod.parameters["data-format"][property]["profile-write"]} />
-              </div>
-            </div>
+          <div className="form-group form-check">
+            <input type="checkbox" className="form-check-input" id={"mod-database-data-format-profile-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-write")} checked={this.state.mod.parameters["data-format"][property]["profile-write"]} />
+            <label className="form-check-label" htmlFor={"mod-database-data-format-profile-write-"+property}>{i18next.t("admin.mod-database-data-format-profile-write")}</label>
           </div>
         </div>
       }
@@ -368,15 +344,9 @@ class LDAPParams extends Component {
           </div>
           {this.state.errorList["data-format"]&&this.state.errorList["data-format"][property]?<span className="error-input">{this.state.errorList["data-format"][property]}</span>:""}
         </div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor={"mod-database-data-format-multiple-"+property}>{i18next.t("admin.mod-database-data-format-multiple")}</label>
-            </div>
-            <div className="input-group-text">
-              <input type="checkbox" className="form-control" id={"mod-database-data-format-multiple-"+property} onChange={(e) => this.toggleDataFormatMultiple(e, property)} checked={this.state.mod.parameters["data-format"][property]["multiple"]} />
-            </div>
-          </div>
+        <div className="form-group form-check">
+          <input type="checkbox" className="form-check-input" id={"mod-database-data-format-multiple-"+property} onChange={(e) => this.toggleDataFormatMultiple(e, property)} checked={this.state.mod.parameters["data-format"][property]["multiple"]} />
+          <label className="form-check-label" htmlFor={"mod-database-data-format-multiple-"+property}>{i18next.t("admin.mod-database-data-format-multiple")}</label>
         </div>
         <div className="form-group">
           <div className="btn-group" role="group">
