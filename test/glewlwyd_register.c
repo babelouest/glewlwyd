@@ -46,6 +46,7 @@
 #define MAIL_HOST "localhost"
 #define MAIL_PORT_WITH_USERNAME 2526
 #define MAIL_PORT_WITHOUT_USERNAME 2527
+#define MAIL_PORT_CODE_EXPIRED 2528
 #define MAIL_FROM "glewlwyd"
 #define MAIL_SUBJECT "Authorization Code"
 #define MAIL_CONTENT_TYPE "plain/text"
@@ -387,6 +388,65 @@ START_TEST(test_glwd_register_add_mod_verify_without_username)
                                 "verification-code-duration", MAIL_CODE_DURATION,
                                 "host", MAIL_HOST,
                                 "port", MAIL_PORT_WITHOUT_USERNAME,
+                                "from", MAIL_FROM,
+                                "subject", MAIL_SUBJECT,
+                                "content-type", MAIL_CONTENT_TYPE,
+                                "body-pattern", MAIL_BODY_PATTERN MAIL_BODY_CODE,
+                              "enabled", json_true());
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+}
+END_TEST
+
+START_TEST(test_glwd_register_add_mod_noverify_session_expired)
+{
+  json_t * j_body = json_pack("{ss ss ss s{ss si s[s] ss s[{ss ss ss ss}] so} so}",
+                              "module", MOD_TYPE,
+                              "name", MOD_NAME,
+                              "display_name", MOD_DISPLAY_NAME,
+                              "parameters",
+                                "session-key", SESSION_KEY,
+                                "session-duration", 1,
+                                "scope",
+                                  SCOPE,
+                                "set-password", "always",
+                                "schemes",
+                                  "module", SCHEME_TYPE,
+                                  "name", SCHEME_NAME,
+                                  "register", "always",
+                                  "display_name", SCHEME_DISPLAY_NAME,
+                                "verify-email", json_false(),
+                              "enabled", json_true());
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+}
+END_TEST
+
+START_TEST(test_glwd_register_add_mod_verify_without_username_code_expired)
+{
+  json_t * j_body = json_pack("{ss ss ss s{ss si s[s] ss s[{ss ss ss ss}] so so si si ss si ss ss ss ss} so}",
+                              "module", MOD_TYPE,
+                              "name", MOD_NAME,
+                              "display_name", MOD_DISPLAY_NAME,
+                              "parameters",
+                                "session-key", SESSION_KEY,
+                                "session-duration", SESSION_DURATION,
+                                "scope",
+                                  SCOPE,
+                                "set-password", "always",
+                                "schemes",
+                                  "module", SCHEME_TYPE,
+                                  "name", SCHEME_NAME,
+                                  "register", "always",
+                                  "display_name", SCHEME_DISPLAY_NAME,
+                                "verify-email", json_true(),
+                                "email-is-username", json_true(),
+                                "verification-code-length", MAIL_CODE_LEGTH,
+                                "verification-code-duration", 1,
+                                "host", MAIL_HOST,
+                                "port", MAIL_PORT_CODE_EXPIRED,
                                 "from", MAIL_FROM,
                                 "subject", MAIL_SUBJECT,
                                 "content-type", MAIL_CONTENT_TYPE,
@@ -958,6 +1018,104 @@ START_TEST(test_glwd_register_verify_without_username_cancel_registration)
 }
 END_TEST
 
+START_TEST(test_glwd_register_noverify_session_expired)
+{
+  json_t * j_body;
+  struct _u_request req;
+  struct _u_response resp;
+  char * cookie;
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+
+  j_body = json_pack("{ss}", "username", NEW_USERNAME);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  
+  // Registration with the new username
+  req.http_url = o_strdup(SERVER_URI "/" MOD_NAME "/register");
+  req.http_verb = o_strdup("POST");
+  ck_assert_int_eq(ulfius_set_json_body_request(&req, j_body), U_OK);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.nb_cookies, 1);
+  cookie = msprintf("%s=%s", resp.map_cookie[0].key, resp.map_cookie[0].value);
+  ck_assert_ptr_ne(cookie, NULL);
+  u_map_put(req.map_header, "Cookie", cookie);
+  o_free(cookie);
+  ulfius_clean_response(&resp);
+  
+  // Set password
+  j_body = json_pack("{ss}", "password", NEW_PASSWORD);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" MOD_NAME "/profile/password", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  sleep(2);
+  
+  // Set password after session expiration
+  j_body = json_pack("{ss}", "password", NEW_PASSWORD);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" MOD_NAME "/profile/password", NULL, NULL, j_body, NULL, 401, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Verify session is disabled
+  ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" MOD_NAME "/profile", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
+
+  ulfius_clean_request(&req);
+  
+  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/user/" NEW_USERNAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+}
+END_TEST
+
+START_TEST(test_glwd_register_verify_without_username_code_expired)
+{
+  struct smtp_manager manager;
+  json_t * j_body;
+  struct _u_request req;
+  struct _u_response resp;
+  pthread_t thread;
+
+  manager.mail_data = NULL;
+  manager.port = MAIL_PORT_CODE_EXPIRED;
+  manager.sockfd = 0;
+  pthread_create(&thread, NULL, simple_smtp, &manager);
+
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+
+  j_body = json_pack("{ss}", "username", NEW_EMAIL);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Verification with the new username
+  j_body = json_pack("{ss}", "email", NEW_EMAIL);
+  ck_assert_int_eq(run_simple_test(NULL, "PUT", SERVER_URI "/" MOD_NAME "/verify", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  sleep(2);
+  
+  // Send verification code after code expiration
+  j_body = json_pack("{ssss}", "email", NEW_EMAIL, "code", manager.mail_data);
+  req.http_url = o_strdup(SERVER_URI "/" MOD_NAME "/verify");
+  req.http_verb = o_strdup("POST");
+  ck_assert_int_eq(ulfius_set_json_body_request(&req, j_body), U_OK);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.nb_cookies, 0);
+  ulfius_clean_response(&resp);
+  
+  pthread_join(thread, NULL);
+  
+  o_free(manager.mail_data);
+
+  ulfius_clean_request(&req);
+}
+END_TEST
+
 START_TEST(test_glwd_register_delete_mod)
 {
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/plugin/" MOD_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
@@ -997,6 +1155,12 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_register_delete_mod);
   tcase_add_test(tc_core, test_glwd_register_add_mod_verify_without_username);
   tcase_add_test(tc_core, test_glwd_register_verify_without_username_cancel_registration);
+  tcase_add_test(tc_core, test_glwd_register_delete_mod);
+  tcase_add_test(tc_core, test_glwd_register_add_mod_noverify_session_expired);
+  tcase_add_test(tc_core, test_glwd_register_noverify_session_expired);
+  tcase_add_test(tc_core, test_glwd_register_delete_mod);
+  tcase_add_test(tc_core, test_glwd_register_add_mod_verify_without_username_code_expired);
+  tcase_add_test(tc_core, test_glwd_register_verify_without_username_code_expired);
   tcase_add_test(tc_core, test_glwd_register_delete_mod);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
