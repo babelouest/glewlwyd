@@ -2498,7 +2498,6 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     y_log_message(Y_LOG_LEVEL_INFO, "Close plugin Glewlwyd Oauth2 '%s'", name);
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "auth/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "token/");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "profile/*");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "profile/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "profile/token/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "profile/token/:token_hash");
