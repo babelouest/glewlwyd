@@ -488,7 +488,7 @@ CREATE TABLE gpr_session (
   gprs_username TEXT NOT NULL,
   gprs_name TEXT,
   gprs_email TEXT,
-  gprs_code TEXT,
+  gprs_code_hash TEXT,
   gprs_password_set INTEGER DEFAULT 0,
   gprs_session_hash TEXT,
   gprs_token_hash TEXT,
