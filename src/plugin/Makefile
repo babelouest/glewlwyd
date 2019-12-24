@@ -58,7 +58,7 @@ clean:
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: $(TARGET_RELEASE)
+debug: $(TARGET_RELEASE) $(TARGET_DEBUG)
 
 release: ADDITIONALFLAGS=-O3
 
