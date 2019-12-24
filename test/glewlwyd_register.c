@@ -44,7 +44,8 @@
 #define MAIL_CODE_DURATION 600
 #define MAIL_CODE_LEGTH 6
 #define MAIL_HOST "localhost"
-#define MAIL_PORT 2525
+#define MAIL_PORT_WITH_USERNAME 2526
+#define MAIL_PORT_WITHOUT_USERNAME 2527
 #define MAIL_FROM "glewlwyd"
 #define MAIL_SUBJECT "Authorization Code"
 #define MAIL_CONTENT_TYPE "plain/text"
@@ -351,7 +352,7 @@ START_TEST(test_glwd_register_add_mod_verify_with_username)
                                 "verification-code-length", MAIL_CODE_LEGTH,
                                 "verification-code-duration", MAIL_CODE_DURATION,
                                 "host", MAIL_HOST,
-                                "port", MAIL_PORT,
+                                "port", MAIL_PORT_WITH_USERNAME,
                                 "from", MAIL_FROM,
                                 "subject", MAIL_SUBJECT,
                                 "content-type", MAIL_CONTENT_TYPE,
@@ -385,7 +386,7 @@ START_TEST(test_glwd_register_add_mod_verify_without_username)
                                 "verification-code-length", MAIL_CODE_LEGTH,
                                 "verification-code-duration", MAIL_CODE_DURATION,
                                 "host", MAIL_HOST,
-                                "port", MAIL_PORT,
+                                "port", MAIL_PORT_WITHOUT_USERNAME,
                                 "from", MAIL_FROM,
                                 "subject", MAIL_SUBJECT,
                                 "content-type", MAIL_CONTENT_TYPE,
@@ -786,7 +787,7 @@ START_TEST(test_glwd_register_verify_with_username_cancel_registration)
   pthread_t thread;
 
   manager.mail_data = NULL;
-  manager.port = MAIL_PORT;
+  manager.port = MAIL_PORT_WITH_USERNAME;
   manager.sockfd = 0;
   pthread_create(&thread, NULL, simple_smtp, &manager);
 
@@ -886,7 +887,7 @@ START_TEST(test_glwd_register_verify_without_username_cancel_registration)
   pthread_t thread;
 
   manager.mail_data = NULL;
-  manager.port = MAIL_PORT;
+  manager.port = MAIL_PORT_WITHOUT_USERNAME;
   manager.sockfd = 0;
   pthread_create(&thread, NULL, simple_smtp, &manager);
 
