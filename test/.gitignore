@@ -48,6 +48,8 @@ glewlwyd_oidc_address_claim
 glewlwyd_oidc_claims_scopes
 glewlwyd_oidc_claim_request
 
+glewlwyd_register
+
 glewlwyd_admin_mod_type
 glewlwyd_admin_mod_user
 glewlwyd_admin_mod_user_auth_scheme
