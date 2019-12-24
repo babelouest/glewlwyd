@@ -169,25 +169,13 @@ class EmailParams extends Component {
           </div>
           {this.state.errorList["port"]?<span className="error-input">{this.state.errorList["port"]}</span>:""}
         </div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-email-use-tls">{i18next.t("admin.mod-email-use-tls")}</label>
-            </div>
-            <div className="input-group-text">
-              <input type="checkbox" className="form-control" id="mod-email-use-tls" onChange={(e) => this.toggleUseTls()} checked={this.state.mod.parameters["use-tls"]||false} />
-            </div>
-          </div>
+        <div className="form-group form-check">
+          <input type="checkbox" className="form-check-input" id="mod-email-use-tls" onChange={(e) => this.toggleUseTls()} checked={this.state.mod.parameters["use-tls"]||false} />
+          <label className="form-check-label" htmlFor="mod-email-use-tls">{i18next.t("admin.mod-email-use-tls")}</label>
         </div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-email-check-certificate">{i18next.t("admin.mod-email-check-certificate")}</label>
-            </div>
-            <div className="input-group-text">
-              <input type="checkbox" className="form-control" disabled={!this.state.mod.parameters["use-tls"]} className="form-control" id="mod-email-check-certificate" onChange={(e) => this.toggleCheckServerCertificate()} checked={this.state.mod.parameters["check-certificate"]||false} />
-            </div>
-          </div>
+        <div className="form-group form-check">
+          <input type="checkbox" className="form-check-input" disabled={!this.state.mod.parameters["use-tls"]} id="mod-email-check-certificate" onChange={(e) => this.toggleCheckServerCertificate()} checked={this.state.mod.parameters["check-certificate"]||false} />
+          <label className="form-check-label" htmlFor="mod-email-check-certificate">{i18next.t("admin.mod-email-check-certificate")}</label>
         </div>
         <div className="form-group">
           <div className="input-group mb-3">

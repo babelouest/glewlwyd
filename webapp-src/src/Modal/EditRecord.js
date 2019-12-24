@@ -109,7 +109,7 @@ class EditRecord extends Component {
   }
   
   editElt(pattern, elt, key) {
-    var labelJsx, inputJsx, listJsx = [];
+    var labelJsx, inputJsx, listJsx = [], checkboxJsx = false;
     if (elt !== undefined || pattern.type === "password" || pattern.forceShow) {
       if (!this.state.profile || pattern.profile) {
         var validInput = "";
@@ -198,13 +198,17 @@ class EditRecord extends Component {
           }
         } else if (pattern.type === "boolean") {
           if (pattern.edit === false && !this.state.add) {
-            inputJsx = <div className="input-group-text">
-              <input disabled={true} type="checkbox" className="form-control" id={"modal-edit-" + pattern.name} checked={elt} />
-            </div>
+            checkboxJsx = 
+              <div className="form-group form-check">
+                <input disabled={true} type="checkbox" className="form-check-input" id={"modal-edit-" + pattern.name} checked={elt} />
+                <label className="form-check-label" htmlFor={"modal-edit-" + pattern.name}>{i18next.t(pattern.label)}</label>
+              </div>
           } else {
-            inputJsx = <div className="input-group-text">
-              <input type="checkbox" className={"form-control" + validInput} id={"modal-edit-" + pattern.name} onChange={(e) => this.toggleBooleanElt(e, pattern.name)} checked={elt} />
-            </div>
+            checkboxJsx = 
+              <div className="form-group form-check">
+                <input type="checkbox" className={"form-check-input" + validInput} id={"modal-edit-" + pattern.name} onChange={(e) => this.toggleBooleanElt(e, pattern.name)} checked={elt} />
+                <label className="form-check-label" htmlFor={"modal-edit-" + pattern.name}>{i18next.t(pattern.label)}</label>
+              </div>
           }
         } else if (pattern.type === "textarea") {
           if (pattern.edit === false && !this.state.add) {
@@ -272,17 +276,21 @@ class EditRecord extends Component {
         }
       }
     }
-    return (
-    <div className="form-group" key={key}>
-      <div className="input-group mb-3">
-        <div className="input-group-prepend">
-          {labelJsx}
+    if (checkboxJsx) {
+      return checkboxJsx;
+    } else {
+      return (
+      <div className="form-group" key={key}>
+        <div className="input-group mb-3">
+          <div className="input-group-prepend">
+            {labelJsx}
+          </div>
+          {inputJsx}
+          <div className="btn-icon-right">{listJsx}</div>
         </div>
-        {inputJsx}
-        <div className="btn-icon-right">{listJsx}</div>
-      </div>
-      {errorJsx}
-    </div>);
+        {errorJsx}
+      </div>);
+    }
   }
 
   deleteListElt(e, name, index) {

@@ -66,15 +66,9 @@ class GrantScope extends Component {
     this.state.scope.forEach((scope, index) => {
       scopeList.push(
         <li className="list-group-item" key={index}>
-          <div className="form-check">
-            <div className="input-group mb-3">
-              <div className="input-group-prepend input-group-text">
-                <input type="checkbox" className="form-control" onChange={() => this.handleToggleGrantScope(scope)} id={"grant-" + scope.name} checked={scope.granted}/>
-              </div>
-              <div className="input-group-text">
-                <label className="form-check-label" htmlFor={"grant-" + scope.name}>{scope.name}</label>
-              </div>
-            </div>
+          <div className="form-group form-check">
+            <input type="checkbox" className="form-check-input" onChange={() => this.handleToggleGrantScope(scope)} id={"grant-" + scope.name} checked={scope.granted}/>
+            <label className="form-check-label" htmlFor={"grant-" + scope.name}>{scope.name}</label>
           </div>
         </li>
       );

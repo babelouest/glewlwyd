@@ -229,15 +229,9 @@ class ModEdit extends Component {
     var schemeParams = "";
     if (this.state.role !== "scheme") {
       readonly = 
-      <div className="form-group">
-        <div className="input-group mb-3">
-          <div className="input-group-prepend">
-            <label className="input-group-text" htmlFor="mod-readonly">{i18next.t("admin.mod-readonly")}</label>
-          </div>
-          <div className="input-group-text">
-            <input type="checkbox" className="form-control" id="mod-readonly" onChange={(e) => this.toggleReadonly(e)} checked={this.state.mod.readonly||this.state.mod.module==="http"||false} />
-          </div>
-        </div>
+      <div className="form-group form-check">
+        <input type="checkbox" className="form-check-input" id="mod-readonly" onChange={(e) => this.toggleReadonly(e)} checked={this.state.mod.readonly||this.state.mod.module==="http"||false} />
+        <label className="form-check-label" htmlFor="mod-readonly">{i18next.t("admin.mod-readonly")}</label>
       </div>;
     } else {
       schemeParams = <div>
@@ -257,15 +251,9 @@ class ModEdit extends Component {
             <input type="number" min="0" step="1" className="form-control" id="mod-max-use" placeholder={i18next.t("admin.mod-max-use-ph")} value={this.state.mod.max_use} onChange={(e) => this.changeMaxUse(e)}/>
           </div>
         </div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-allow-user-register">{i18next.t("admin.mod-allow-user-register")}</label>
-            </div>
-            <div className="input-group-text">
-              <input type="checkbox" className="form-control" id="mod-allow-user-register" onChange={(e) => this.toggleAllowUserRegister(e)} checked={this.state.mod.allow_user_register} />
-            </div>
-          </div>
+        <div className="form-group form-check">
+          <input type="checkbox" className="form-check-input" id="mod-allow-user-register" onChange={(e) => this.toggleAllowUserRegister(e)} checked={this.state.mod.allow_user_register} />
+          <label className="form-check-label" htmlFor="mod-allow-user-register">{i18next.t("admin.mod-allow-user-register")}</label>
         </div>
       </div>
     }

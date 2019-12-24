@@ -202,7 +202,7 @@ class User extends Component {
   }
   
   editElt(pattern, elt, key) {
-    var labelJsx, inputJsx, listJsx = [];
+    var labelJsx, inputJsx, listJsx = [], checkboxJsx = false;
     if ((elt !== undefined || pattern.type === "password" || pattern.forceShow) && pattern["profile-read"]) {
       var validInput = "";
       var errorJsx = "";
@@ -309,9 +309,17 @@ class User extends Component {
         });
       } else if (pattern.type === "boolean") {
         if (pattern["profile-write"] !== true && !this.state.add) {
-          inputJsx = <input disabled={true} type="checkbox" className="form-control" id={"modal-edit-" + pattern.name} checked={elt} />
+          checkboxJsx = 
+            <div className="form-group form-check">
+              <input disabled={true} type="checkbox" className="form-check-input" id={"modal-edit-" + pattern.name} checked={elt} />
+              <label className="form-check-label" htmlFor={"modal-edit-" + pattern.name}>{i18next.t(pattern.label)}</label>
+            </div>
         } else {
-          inputJsx = <input type="checkbox" className={"form-control" + validInput} id={"modal-edit-" + pattern.name} onChange={(e) => this.toggleBooleanElt(e, pattern.name)} checked={elt} />
+          checkboxJsx = 
+            <div className="form-group form-check">
+              <input type="checkbox" className={"form-check-input" + validInput} id={"modal-edit-" + pattern.name} onChange={(e) => this.toggleBooleanElt(e, pattern.name)} checked={elt} />
+              <label className="form-check-label" htmlFor={"modal-edit-" + pattern.name}>{i18next.t(pattern.label)}</label>
+            </div>
         }
       } else if (pattern.type === "textarea") {
         if (pattern["profile-write"] !== true && !this.state.add) {
@@ -393,13 +401,17 @@ class User extends Component {
         }
       }
     }
-    return (
-    <div className="form-group" key={key}>
-      {labelJsx}
-      {inputJsx}
-      <div>{listJsx}</div>
-      {errorJsx}
-    </div>);
+    if (checkboxJsx) {
+      return checkboxJsx;
+    } else {
+      return (
+        <div className="form-group" key={key}>
+          {labelJsx}
+          {inputJsx}
+          <div>{listJsx}</div>
+          {errorJsx}
+        </div>);
+    }
   }
 
   render() {

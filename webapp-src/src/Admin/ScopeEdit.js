@@ -252,15 +252,9 @@ class ScopeEdit extends Component {
               <div className="form-group">
                 <h4>{i18next.t("admin.scope-auth-title")}</h4>
               </div>
-              <div className="form-group">
-                <div className="input-group mb-3">
-                  <div className="input-group-prepend">
-                    <label className="input-group-text" htmlFor="scope-scheme-password">{i18next.t("admin.scope-scheme-password")}</label>
-                  </div>
-                  <div className="input-group-text">
-                    <input type="checkbox" className="form-control" id="scope-scheme-password" onChange={(e) => this.togglePasswordRequired(e)} checked={this.state.scope.password_required} />
-                  </div>
-                </div>
+              <div className="form-group form-check">
+                <input type="checkbox" className="form-check-input" id="scope-scheme-password" onChange={(e) => this.togglePasswordRequired(e)} checked={this.state.scope.password_required} />
+                <label className="form-check-label" htmlFor="scope-scheme-password">{i18next.t("admin.scope-scheme-password")}</label>
               </div>
               <div className="form-group">
                 <div className="input-group mb-3">
