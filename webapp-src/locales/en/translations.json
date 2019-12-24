@@ -676,7 +676,9 @@
     "mod-register-verify-email": "Verify e-mail",
     "mod-register-email-is-username": "Username is e-mail",
     "mod-register-has-mandatory-error": "You must have at least one mandatory authentication method",
-    "mod-register-subject-ph": "Ex: Complete your Glewlwyd reistration"
+    "mod-register-subject-ph": "Ex: Complete your Glewlwyd reistration",
+    "mod-register-body-pattern": "E-mail body",
+    "mod-register-body-pattern-doc": "The patterns {CODE} and {TOKEN} will be replaced by the code and the token"
   },
   "profile": {
     "error-credential-message": "Please connect to the application",
@@ -798,6 +800,7 @@
     "register-username-ph": "Ex: cornholio42",
     "register-username-create": "Create account",
     "register-username-error": "Username unavailable",
+    "register-username-valid": "Username available",
     "register-profile-username-label": "Username",
     "register-name-label": "Full name",
     "register-name-ph": "Ex: Semias from Murias",
@@ -821,12 +824,15 @@
     "register-profile-incomplete": "Unable to complete registration, you must complete all mandatory steps",
     "register-profile-cancelled": "Registration cancelled",
     "register-profile-verify-email": "Verify e-mail address",
+    "register-profile-reverify-email": "Resend the e-mail",
+    "register-profile-email-sent": "E-mail sent to the address {{email}}",
     "register-email-error": "E-mail address is mandatory",
     "register-profile-verify-code": "Cerify code",
     "register-code-label": "Enter received code",
     "register-code-ph": "Ex: 12345678",
     "register-code-error": "Invalid code",
-    "register-profile-created": "Profile created"
+    "register-profile-created": "Profile created",
+    "register-token-invalid": "Invalid token"
   },
   "modal": {
     "close": "Close",

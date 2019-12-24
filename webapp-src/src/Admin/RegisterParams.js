@@ -51,6 +51,18 @@ class RegisterParams extends Component {
       props.mod.parameters["session-duration"] = 3600;
     }
     
+    if (!props.mod.parameters["subject"]) {
+      props.mod.parameters["subject"] = "Confirm registration";
+    }
+
+    if (!props.mod.parameters["content-type"]) {
+      props.mod.parameters["content-type"] = "text/plain; charset=utf-8";
+    }
+
+    if (!props.mod.parameters["body-pattern"]) {
+      props.mod.parameters["body-pattern"] = "The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"?registration=<your_registration_plugin_name>&token={TOKEN}";
+    }
+
     this.state = {
       config: props.config,
       modSchemes: props.modSchemes,
@@ -114,6 +126,18 @@ class RegisterParams extends Component {
 
     if (!nextProps.mod.parameters["session-duration"]) {
       nextProps.mod.parameters["session-duration"] = 3600;
+    }
+
+    if (!nextProps.mod.parameters["content-type"]) {
+      nextProps.mod.parameters["content-type"] = "text/plain; charset=utf-8";
+    }
+
+    if (!nextProps.mod.parameters["subject"]) {
+      nextProps.mod.parameters["subject"] = "Confirm registration";
+    }
+
+    if (!nextProps.mod.parameters["body-pattern"]) {
+      nextProps.mod.parameters["body-pattern"] = "The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"?registration=<your_registration_plugin_name>&token={TOKEN}";
     }
 
     this.setState({
@@ -473,15 +497,6 @@ class RegisterParams extends Component {
           <div className="form-group">
             <div className="input-group mb-3">
               <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor="mod-register-subject">{i18next.t("admin.mod-email-subject")}</label>
-              </div>
-              <input type="text" className={this.state.errorList["subject"]?"form-control is-invalid":"form-control"} id="mod-register-subject" onChange={(e) => this.changeParam(e, "subject")} value={this.state.mod.parameters["subject"]||""} placeholder={i18next.t("admin.mod-register-subject-ph")} />
-            </div>
-            {this.state.errorList["subject"]?<span className="error-input">{this.state.errorList["subject"]}</span>:""}
-          </div>
-          <div className="form-group">
-            <div className="input-group mb-3">
-              <div className="input-group-prepend">
                 <label className="input-group-text" htmlFor="mod-register-content-type">{i18next.t("admin.mod-email-content-type")}</label>
               </div>
               <input type="text" className={this.state.errorList["content-type"]?"form-control is-invalid":"form-control"} id="mod-register-content-type" onChange={(e) => this.changeParam(e, "content-type")} value={this.state.mod.parameters["content-type"]||""} placeholder={i18next.t("admin.mod-email-content-type-ph")} />
@@ -491,11 +506,21 @@ class RegisterParams extends Component {
           <div className="form-group">
             <div className="input-group mb-3">
               <div className="input-group-prepend">
-                <span className="input-group-text" >{i18next.t("admin.mod-email-body-pattern")}</span>
+                <label className="input-group-text" htmlFor="mod-register-subject">{i18next.t("admin.mod-email-subject")}</label>
               </div>
-              <textarea className={this.state.errorList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-register-body-pattern" onChange={(e) => this.changeParam(e, "body-pattern")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} defaultValue={this.state.mod.parameters["body-pattern"]||""}></textarea>
+              <input type="text" className={this.state.errorList["subject"]?"form-control is-invalid":"form-control"} id="mod-register-subject" onChange={(e) => this.changeParam(e, "subject")} value={this.state.mod.parameters["subject"]||""} placeholder={i18next.t("admin.mod-register-subject-ph")} />
+            </div>
+            {this.state.errorList["subject"]?<span className="error-input">{this.state.errorList["subject"]}</span>:""}
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <span className="input-group-text" >{i18next.t("admin.mod-register-body-pattern")}</span>
+              </div>
+              <textarea rows="5" className={this.state.errorList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-register-body-pattern" onChange={(e) => this.changeParam(e, "body-pattern")} placeholder={i18next.t("admin.mod-register-body-pattern-ph")} defaultValue={this.state.mod.parameters["body-pattern"]||""}></textarea>
             </div>
             {this.state.errorList["body-pattern"]?<span className="error-input">{this.state.errorList["body-pattern"]}</span>:""}
+            <span className="badge badge-info">{i18next.t("admin.mod-register-body-pattern-doc")}</span>
           </div>
         </div>
         {this.state.errorList["has-mandatory"]?<span className="error-input">{this.state.errorList["has-mandatory"]}</span>:""}

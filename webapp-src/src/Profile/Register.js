@@ -13,8 +13,10 @@ class Register extends Component {
       registerConfig: props.registerConfig,
       registerProfile: props.registerProfile,
       registerSchemes: props.registerSchemes,
+      token: props.token,
       username: "",
       usernameValid: false,
+      usernameInvalid: false,
       verificationSent: false,
       email: "",
       code: "",
@@ -22,21 +24,23 @@ class Register extends Component {
       showCode: false,
       timeout: false,
       checkingUsername: false,
+      checkingEmail: false,
       invalidMessage: false,
+      validMessage: false,
       invalidEmailMessage: true,
       password: "",
       passwordConfirm: "",
       invalidPassword: false,
       registerComplete: false
     };
-    
   }
   
   componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       registerConfig: nextProps.registerConfig,
-      registerProfile: nextProps.registerProfile
+      registerProfile: nextProps.registerProfile,
+      token: nextProps.token
     });
   }
   
@@ -47,15 +51,35 @@ class Register extends Component {
     if (this.state.username) {
       apiManager.glewlwydRequest("/" + this.state.config.params.register + "/username", "POST", {username: this.state.username})
       .then(() => {
-        this.setState({timeout: false, usernameValid: true, checkingUsername: false, invalidMessage: false});
+        this.setState({timeout: false, usernameValid: true, usernameInvalid: false, checkingUsername: false, invalidMessage: false, validMessage: true});
       })
       .fail((err) => {
-        this.setState({timeout: false, usernameValid: false, checkingUsername: false, invalidMessage: true}, () => {
-          if (err.status !== 400) {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-            this.setState({invalidMessage: true});
-          }
-        });
+        if (err.status !== 400) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          this.setState({timeout: false, usernameValid: false, usernameInvalid: true, checkingUsername: false, invalidMessage: true, validMessage: false});
+        } else {
+          this.setState({timeout: false, usernameValid: false, usernameInvalid: true, checkingUsername: false, invalidMessage: false, validMessage: false});
+        }
+      });
+    }
+  }
+  
+  checkEmailAsUsername() {
+    if (this.state.timeout) {
+      clearTimeout(this.state.timeout);
+    }
+    if (this.state.email) {
+      apiManager.glewlwydRequest("/" + this.state.config.params.register + "/username", "POST", {username: this.state.email})
+      .then(() => {
+        this.setState({timeout: false, usernameValid: true, usernameInvalid: false, checkingEmail: false, invalidMessage: false, validMessage: true});
+      })
+      .fail((err) => {
+        if (err.status !== 400) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          this.setState({timeout: false, usernameValid: false, usernameInvalid: true, checkingEmail: false, invalidMessage: true, validMessage: false});
+        } else {
+          this.setState({timeout: false, usernameValid: false, usernameInvalid: true, checkingEmail: false, invalidMessage: false, validMessage: false});
+        }
       });
     }
   }
@@ -81,6 +105,20 @@ class Register extends Component {
       usernameValid = true;
     }
     this.setState({email: e.target.value, invalidEmailMessage: !e.target.value, usernameValid: usernameValid});
+  }
+  
+  changeEmailAsUsername(e) {
+    this.setState({email: e.target.value, invalidEmailMessage: !e.target.value, usernameValid: true}, () => {
+      if (this.state.timeout) {
+        clearTimeout(this.state.timeout);
+      }
+      this.setState({
+        checkingEmail: true,
+        timeout: setTimeout(() => {
+          this.checkEmailAsUsername();
+        }, 1000)
+      });
+    });
   }
   
   changeCode(e) {
@@ -160,6 +198,7 @@ class Register extends Component {
   sendVerificationEmail() {
     apiManager.glewlwydRequest("/" + this.state.config.params.register + "/verify", "PUT", {username: this.state.username, email: this.state.email})
     .then(() => {
+      messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-profile-email-sent", {email: this.state.email})});
       this.setState({verificationSent: true});
     })
     .fail((err) => {
@@ -204,7 +243,7 @@ class Register extends Component {
   cancelRegistration() {
     apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile", "DELETE")
     .then(() => {
-      this.setState({username: "", usernameValid: false, email: "", verificationSent: false, code: ""}, () => {
+      this.setState({username: "", usernameValid: false, email: "", verificationSent: false, code: "", validMessage: false, invalidMessage: false}, () => {
         messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-profile-cancelled")});
         messageDispatcher.sendMessage('App', {type: "registration"});
       });
@@ -360,12 +399,20 @@ class Register extends Component {
               </div>
             </div>
           buttonVerifyJsx = 
-            <button className="btn btn-success" 
-                    type="button" 
-                    onClick={() => this.verifyCode()} 
-                    title={i18next.t("profile.register-profile-verify-code")}>
-              {i18next.t("profile.register-profile-verify-code")}
-            </button>
+            <div>
+              <button className="btn btn-success btn-icon" 
+                      type="button" 
+                      onClick={() => this.verifyCode()} 
+                      title={i18next.t("profile.register-profile-verify-code")}>
+                {i18next.t("profile.register-profile-verify-code")}
+              </button>
+              <button className="btn btn-success" 
+                      type="button" 
+                      onClick={() => this.sendVerificationEmail()} 
+                      title={i18next.t("profile.register-profile-reverify-email")}>
+                {i18next.t("profile.register-profile-reverify-email")}
+              </button>
+            </div>
         } else {
           buttonVerifyJsx = 
             <button className="btn btn-success" 
@@ -385,11 +432,13 @@ class Register extends Component {
                        className={"form-control"} 
                        id="email-input"
                        placeholder={i18next.t("profile.register-email-ph")} 
-                       onChange={(e) => this.changeEmailVerification(e)} 
+                       onChange={(e) => this.changeEmailAsUsername(e)} 
                        disabled={this.state.verificationSent}
                        value={this.state.email}/>
-                {this.state.invalidEmailMessage?<span className="error-input">{i18next.t("profile.register-email-error")}</span>:""}
+                {!this.state.email?<span className="error-input">{i18next.t("profile.register-email-error")}</span>:""}
+                {!this.state.usernameValid&&this.state.email?<span className="error-input">{i18next.t("profile.register-username-error")}</span>:""}
               </div>
+              {this.state.validMessage?<span className="badge badge-success">{i18next.t("profile.register-username-valid")}</span>:""}
               {codeInputJsx}
               <hr/>
               <div className="input-group-append">
@@ -409,7 +458,9 @@ class Register extends Component {
                        disabled={this.state.verificationSent}
                        value={this.state.username}/>
                 {this.state.invalidMessage?<span className="error-input">{i18next.t("profile.register-username-error")}</span>:""}
+                {!this.state.usernameValid&&this.state.email?<span className="error-input">{i18next.t("profile.register-username-error")}</span>:""}
               </div>
+              {this.state.validMessage?<span className="badge badge-success">{i18next.t("profile.register-username-valid")}</span>:""}
               <hr/>
               <label htmlFor="email-input">{i18next.t("profile.register-email-label")}</label>
               <div className="input-group">
@@ -451,6 +502,7 @@ class Register extends Component {
               </div>
               {this.state.invalidMessage?<span className="error-input">{i18next.t("profile.register-username-error")}</span>:""}
             </div>
+            {this.state.validMessage?<span className="badge badge-success">{i18next.t("profile.register-username-valid")}</span>:""}
           </form>
       }
     }
