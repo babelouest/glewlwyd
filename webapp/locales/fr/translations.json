@@ -676,7 +676,9 @@
     "mod-register-verify-email": "Vérifier l'adresse courriel",
     "mod-register-email-is-username": "Le nom d'utilisateur est l'adresse courriel",
     "mod-register-has-mandatory-error": "Vous devez avoir au moins une méthode d'authentification obligatoire",
-    "mod-register-subject-ph": "Ex: Terminer votre enregistrement sur Glewlwyd"
+    "mod-register-subject-ph": "Ex: Terminer votre enregistrement sur Glewlwyd",
+    "mod-register-body-pattern": "Corps du courriel",
+    "mod-register-body-pattern-doc": "Les chaînes {CODE} et {TOKEN} seront remplacées par le code et le token"
     
   },
   "profile": {
@@ -799,6 +801,7 @@
     "register-username-ph": "Ex: cornholio42",
     "register-username-create": "Créer le compte",
     "register-username-error": "Nom d'utilisateur non disponible",
+    "register-username-valid": "Nom d'utilisateur disponible",
     "register-profile-username-label": "Nom d'utilisateur",
     "register-name-label": "Nom complet",
     "register-name-ph": "Ex: Semias de Murias",
@@ -822,12 +825,15 @@
     "register-profile-incomplete": "Impossible de terminer l'enregistrement, vous devez compléter toutes les étapes obligatoire",
     "register-profile-cancelled": "Enregistrement annulé",
     "register-profile-verify-email": "Vérifier l'adresse courriel",
+    "register-profile-reverify-email": "Envoyer à nouveau le courriel",
+    "register-profile-email-sent": "E-mail envoyé à l'adresse {{email}}",
     "register-email-error": "L'addresse courriel est obligatoire",
     "register-profile-verify-code": "Vérifier le code",
     "register-code-label": "Entrer le code reçu",
     "register-code-ph": "Ex: 12345678",
     "register-code-error": "Code invalide",
-    "register-profile-created": "Profil créé"
+    "register-profile-created": "Profil créé",
+    "register-token-invalid": "Jeton invalide"
   },
   "modal": {
     "close": "Fermer",
