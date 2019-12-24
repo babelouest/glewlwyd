@@ -4490,7 +4490,7 @@ json_t * plugin_module_load(struct config_plugin * config) {
                    "oidc",
                    
                    "display_name",
-                   "Glewlwyd OpenID Connect Plugin",
+                   "Glewlwyd OpenID Connect plugin",
                    
                    "description",
                    "Plugin for Glewlwyd OpenID Connect workflow",
@@ -4805,11 +4805,7 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "userinfo/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "userinfo/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "userinfo/");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "userinfo/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "token/");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "token/");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "token/");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/*");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/:token_hash");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/*");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration");
