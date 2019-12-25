@@ -175,6 +175,7 @@ static json_t * register_generate_email_verification_code(struct _register_confi
                   y_log_message(Y_LOG_LEVEL_ERROR, "register_generate_email_verification_code - Error str_replace tmp_body");
                   j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
                 }
+                o_free(token_hash);
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "register_generate_email_verification_code - Error glewlwyd_callback_generate_hash rand_string_nonce token");
                 j_return = json_pack("{si}", "result", G_ERROR);
