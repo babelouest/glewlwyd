@@ -72,7 +72,7 @@ For more information on keys generation, see [OpenSSL Documentation](https://www
 ![plugin-oidc](screenshots/plugin-oidc.png)
 
 In the administration page, go to `Parameters/Plugins` and add a new plugin by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all user backend instances).
-Select the type `Glewlwyd OpenID Connect Plugin` in the Type dropdown button.
+Select the type `Glewlwyd OpenID Connect plugin` in the Type dropdown button.
 
 Below is the definition of all parameters.
 
