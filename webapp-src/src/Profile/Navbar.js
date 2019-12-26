@@ -16,9 +16,6 @@ class Navbar extends Component {
       profileList: props.profileList
     }
 
-    messageDispatcher.subscribe('Navbar', (message) => {
-    });
-    
     this.navigate = this.navigate.bind(this);
     this.toggleLogin = this.toggleLogin.bind(this);
     this.changeLang = this.changeLang.bind(this);

@@ -14,12 +14,17 @@ class Register extends Component {
       registerProfile: props.registerProfile,
       registerSchemes: props.registerSchemes,
       token: props.token,
+      registerValid: props.registerValid,
+      
       username: "",
+      email: "",
+      code: "",
+      password: "",
+      passwordConfirm: "",
+      
       usernameValid: false,
       usernameInvalid: false,
       verificationSent: false,
-      email: "",
-      code: "",
       invalidCode: false,
       showCode: false,
       timeout: false,
@@ -28,11 +33,13 @@ class Register extends Component {
       invalidMessage: false,
       validMessage: false,
       invalidEmailMessage: true,
-      password: "",
-      passwordConfirm: "",
       invalidPassword: false,
       registerComplete: false
     };
+    
+    this.confirmCancelRegistration = this.confirmCancelRegistration.bind(this);
+    
+    document.title = i18next.t("profile.register-title");
   }
   
   componentWillReceiveProps(nextProps) {
@@ -40,7 +47,8 @@ class Register extends Component {
       config: nextProps.config,
       registerConfig: nextProps.registerConfig,
       registerProfile: nextProps.registerProfile,
-      token: nextProps.token
+      token: nextProps.token,
+      registerValid: nextProps.registerValid
     });
   }
   
@@ -58,9 +66,11 @@ class Register extends Component {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           this.setState({timeout: false, usernameValid: false, usernameInvalid: true, checkingUsername: false, invalidMessage: true, validMessage: false});
         } else {
-          this.setState({timeout: false, usernameValid: false, usernameInvalid: true, checkingUsername: false, invalidMessage: false, validMessage: false});
+          this.setState({timeout: false, usernameValid: false, usernameInvalid: true, checkingUsername: false, invalidMessage: true, validMessage: false});
         }
       });
+    } else {
+      this.setState({timeout: false, usernameValid: false, usernameInvalid: false, checkingUsername: false, invalidMessage: false, validMessage: false});
     }
   }
   
@@ -81,12 +91,14 @@ class Register extends Component {
           this.setState({timeout: false, usernameValid: false, usernameInvalid: true, checkingEmail: false, invalidMessage: false, validMessage: false});
         }
       });
+    } else {
+      this.setState({timeout: false, usernameValid: false, usernameInvalid: false, checkingEmail: false, invalidMessage: false, validMessage: false});
     }
   }
   
   changeUsername(e) {
     e.preventDefault();
-    this.setState({username: e.target.value}, () => {
+    this.setState({username: e.target.value, usernameValid: false}, () => {
       if (this.state.timeout) {
         clearTimeout(this.state.timeout);
       }
@@ -183,6 +195,9 @@ class Register extends Component {
           if (err.status !== 400) {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           }
+        })
+        .always(() => {
+          this.setState({password: "", passwordConfirm: ""});
         });
       } else {
         messageDispatcher.sendMessage('App', {type: "registration"});
@@ -241,16 +256,23 @@ class Register extends Component {
   }
   
   cancelRegistration() {
-    apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile", "DELETE")
-    .then(() => {
-      this.setState({username: "", usernameValid: false, email: "", verificationSent: false, code: "", validMessage: false, invalidMessage: false}, () => {
-        messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-profile-cancelled")});
-        messageDispatcher.sendMessage('App', {type: "registration"});
+    messageDispatcher.sendMessage('App', {type: "confirm", title: i18next.t("profile.register-profile-cancel-title"), message: i18next.t("profile.register-profile-cancel-message"), callback: this.confirmCancelRegistration});
+  }
+  
+  confirmCancelRegistration(result) {
+    if (result) {
+      apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile", "DELETE")
+      .then(() => {
+        this.setState({username: "", usernameValid: false, email: "", verificationSent: false, code: "", validMessage: false, invalidMessage: false}, () => {
+          messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-profile-cancelled")});
+          messageDispatcher.sendMessage('App', {type: "registration"});
+        });
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
       });
-    })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-    });
+    }
+    messageDispatcher.sendMessage('App', {type: "closeConfirm"});
   }
   
   render() {
@@ -286,9 +308,18 @@ class Register extends Component {
         });
       }
       if (completeSteps.length) {
-        completeMessage = i18next.t("profile.register-profile-complete-steps");
+        completeMessage =
+          <div className="alert alert-info" role="alert">
+            {i18next.t("profile.register-profile-complete-steps")}
+            <ul>
+              {completeSteps}
+            </ul>
+          </div>
       } else {
-        completeMessage = i18next.t("profile.register-profile-complete-possible");
+        completeMessage = 
+          <div className="alert alert-info" role="alert">
+            {i18next.t("profile.register-profile-complete-possible")}
+          </div>
       }
       if (this.state.registerConfig["set-password"] !== "no") {
         passwordJsx =
@@ -312,7 +343,7 @@ class Register extends Component {
                    onChange={(e) => this.changeConfirmPassword(e)} 
                    value={this.state.passwordConfirm}/>
           </div>
-          {this.state.invalidPassword?<span className="error-input">{this.state.invalidPassword}</span>:""}
+          {this.state.invalidPassword?<span className="badge badge-danger">{this.state.invalidPassword}</span>:""}
         </div>
       }
       if (this.state.registerConfig["verify-email"]) {
@@ -351,12 +382,7 @@ class Register extends Component {
           </div>
           {passwordJsx}
           <hr/>
-          <div className="alert alert-info" role="alert">
-            {completeMessage}
-            <ul>
-              {completeSteps}
-            </ul>
-          </div>
+          {completeMessage}
         </form>
         buttonJsx =
           <div>
@@ -395,8 +421,8 @@ class Register extends Component {
                        placeholder={i18next.t("profile.register-code-ph")} 
                        onChange={(e) => this.changeCode(e)} 
                        value={this.state.code}/>
-                {this.state.invalidCode?<span className="error-input">{i18next.t("profile.register-code-error")}</span>:""}
               </div>
+              {this.state.invalidCode?<span className="badge badge-danger">{i18next.t("profile.register-code-error")}</span>:""}
             </div>
           buttonVerifyJsx = 
             <div>
@@ -418,7 +444,7 @@ class Register extends Component {
             <button className="btn btn-success" 
                     type="button" 
                     onClick={() => this.sendVerificationEmail()} 
-                    disabled={!this.state.usernameValid || !this.state.email}
+                    disabled={!this.state.usernameValid || !this.state.email || !this.state.registerValid}
                     title={i18next.t("profile.register-profile-verify-email")}>
               {i18next.t("profile.register-profile-verify-email")}
             </button>
@@ -427,17 +453,22 @@ class Register extends Component {
           formJsx = 
             <form className="needs-validation" noValidate>
               <label htmlFor="email-input">{i18next.t("profile.register-email-label")}</label>
-              <div className="input-group">
+              <div className="input-group mb-3">
                 <input type="text" 
                        className={"form-control"} 
                        id="email-input"
                        placeholder={i18next.t("profile.register-email-ph")} 
                        onChange={(e) => this.changeEmailAsUsername(e)} 
-                       disabled={this.state.verificationSent}
+                       disabled={this.state.verificationSent || !this.state.registerValid}
                        value={this.state.email}/>
-                {!this.state.email?<span className="error-input">{i18next.t("profile.register-email-error")}</span>:""}
-                {!this.state.usernameValid&&this.state.email?<span className="error-input">{i18next.t("profile.register-username-error")}</span>:""}
+                <div className="input-group-append">
+                  <span className="input-group-text">
+                    <i className={(this.state.checkingEmail?"fas fa-compass fa-spin":this.state.usernameValid?"fas fa-check":"fas fa-exclamation")}></i>
+                  </span>
+                </div>
               </div>
+              {!this.state.email?<span className="badge badge-danger">{i18next.t("profile.register-email-error")}</span>:""}
+              {!this.state.usernameValid&&this.state.email?<span className="badge badge-danger">{i18next.t("profile.register-username-error")}</span>:""}
               {this.state.validMessage?<span className="badge badge-success">{i18next.t("profile.register-username-valid")}</span>:""}
               {codeInputJsx}
               <hr/>
@@ -449,17 +480,21 @@ class Register extends Component {
           formJsx = 
             <form className="needs-validation" noValidate>
               <label htmlFor="username-input">{i18next.t("profile.register-username-label")}</label>
-              <div className="input-group">
+              <div className="input-group mb-3">
                 <input type="text" 
                        className={"form-control"} 
                        id="username-input"
                        placeholder={i18next.t("profile.register-username-ph")} 
                        onChange={(e) => this.changeUsername(e)} 
-                       disabled={this.state.verificationSent}
+                       disabled={!this.state.registerValid}
                        value={this.state.username}/>
-                {this.state.invalidMessage?<span className="error-input">{i18next.t("profile.register-username-error")}</span>:""}
-                {!this.state.usernameValid&&this.state.email?<span className="error-input">{i18next.t("profile.register-username-error")}</span>:""}
+                <div className="input-group-append">
+                  <span className="input-group-text">
+                    <i className={(this.state.checkingUsername?"fas fa-compass fa-spin":this.state.invalidMessage?"fas fa-exclamation":"fas fa-check")}></i>
+                  </span>
+                </div>
               </div>
+              {this.state.invalidMessage?<span className="badge badge-danger">{i18next.t("profile.register-username-error")}</span>:""}
               {this.state.validMessage?<span className="badge badge-success">{i18next.t("profile.register-username-valid")}</span>:""}
               <hr/>
               <label htmlFor="email-input">{i18next.t("profile.register-email-label")}</label>
@@ -469,10 +504,10 @@ class Register extends Component {
                        id="email-input"
                        placeholder={i18next.t("profile.register-email-ph")} 
                        onChange={(e) => this.changeEmailVerification(e)} 
-                       disabled={this.state.verificationSent}
+                       disabled={this.state.verificationSent || !this.state.registerValid}
                        value={this.state.email}/>
-                {this.state.invalidEmailMessage?<span className="error-input">{i18next.t("profile.register-email-error")}</span>:""}
               </div>
+              {this.state.invalidEmailMessage?<span className="badge badge-danger">{i18next.t("profile.register-email-error")}</span>:""}
               {codeInputJsx}
               <hr/>
               <div className="input-group-append">
@@ -484,25 +519,32 @@ class Register extends Component {
         formJsx = 
           <form className="needs-validation" noValidate>
             <label htmlFor="username-input">{i18next.t("profile.register-username-label")}</label>
-            <div className="input-group">
+            <div className="input-group mb-3">
               <input type="text" 
                      className={"form-control"} 
                      id="username-input"
                      placeholder={i18next.t("profile.register-username-ph")} 
                      onChange={(e) => this.changeUsername(e)} 
+                     disabled={!this.state.registerValid}
                      value={this.state.username}/>
               <div className="input-group-append">
-                <button className={"btn" + ((this.state.usernameValid&&!this.state.checkingUsername)?" btn-outline-success":" btn-outline-danger")} 
-                        type="button" 
-                        onClick={() => this.registerUsername()} 
-                        disabled={!this.state.usernameValid}
-                        title={i18next.t("profile.register-username-create")}>
-                  <i className={(this.state.checkingUsername?"fas fa-compass fa-spin":"fas fa-plus")}></i>
-                </button>
+                <span className="input-group-text">
+                  <i className={(this.state.checkingUsername?"fas fa-compass fa-spin":this.state.invalidMessage?"fas fa-exclamation":"fas fa-check")}></i>
+                </span>
               </div>
-              {this.state.invalidMessage?<span className="error-input">{i18next.t("profile.register-username-error")}</span>:""}
             </div>
+            {this.state.invalidMessage?<span className="badge badge-danger">{i18next.t("profile.register-username-error")}</span>:""}
             {this.state.validMessage?<span className="badge badge-success">{i18next.t("profile.register-username-valid")}</span>:""}
+            <hr/>
+            <div className="input-group-append">
+              <button className="btn btn-success"
+                      type="button" 
+                      onClick={() => this.registerUsername()} 
+                      disabled={!this.state.usernameValid || !this.state.registerValid}
+                      title={i18next.t("profile.register-username-create")}>
+                {i18next.t("profile.register-profile-create")}
+              </button>
+            </div>
           </form>
       }
     }
