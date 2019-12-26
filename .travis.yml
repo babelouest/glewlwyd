@@ -55,16 +55,16 @@ script:
   - ln -s ../test/cert/ .
   - ln -s ../test/ .
   - make test || (cat Testing/Temporary/LastTest.log && cat /tmp/glewlwyd.log && false)
-  - kill $G_PID
+  - kill $G_PID && sleep 3
   - make glewlwyd_scheme_certificate
   - glewlwyd --config-file=cert/glewlwyd-cert-ci.conf &
   - export G_PID=$!
   - ./glewlwyd_scheme_certificate || (cat /tmp/glewlwyd-https.log && false)
-  - kill $G_PID
+  - kill $G_PID && sleep 3
   - glewlwyd --config-file=test/glewlwyd-profile-delete-disable.conf &
   - export G_PID=$!
   - ./glewlwyd_profile_delete disable || (cat /tmp/glewlwyd-disable.log && false)
-  - kill $G_PID
+  - kill $G_PID && sleep 3
   - glewlwyd --config-file=test/glewlwyd-profile-delete-delete.conf &
   - export G_PID=$!
   - ./glewlwyd_profile_delete delete || (cat /tmp/glewlwyd-delete.log && false)
