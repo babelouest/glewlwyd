@@ -300,6 +300,16 @@ Optional, the url prefix where Glewlwyd's APIs will be available. Default value 
 
 Optional, name of the login page. Default value is `login.html`
 
+### Delete profile
+
+- Config file variable: `delete_profile`
+- Environment variable: `GLWD_PROFILE_DELETE`
+
+Optional, wether the user can remove its own account or not. Values available are:
+- `no`: The user can't remove its own account
+- `disable`: If the user removes its own account, the account will be disabled but not removed
+- `delete`: If the user removes its own account, the account and the schemes registration will be completely removed
+
 ### Static files path
 
 - Config file variable: `static_files_path`
