@@ -185,8 +185,8 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
               if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
                 json_object_set(json_object_get(j_user, "user"), "last_login", json_object_get(j_element, "gus_last_login"));
                 json_array_append(j_session_array, json_object_get(j_user, "user"));
-              } else if (!check_result_value(j_user, G_ERROR_NOT_FOUND)) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_users_for_session - Error get_user");
+              } else if (!check_result_value(j_user, G_ERROR_NOT_FOUND) && !check_result_value(j_user, G_OK)) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_users_for_session - Error get_user_profile");
               }
               json_decref(j_user);
             }
