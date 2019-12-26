@@ -568,6 +568,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_mod_user_http
 							glewlwyd_mod_user_irl
 							glewlwyd_mod_client_irl
+							glewlwyd_profile_delete
 							)
 
 		if (WITH_PLUGIN_OAUTH2)
