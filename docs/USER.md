@@ -14,6 +14,7 @@ This documentation is intended to help Glewlwyd Users to manage their profile an
   - [Grant access](#grant-access)
   - [Multiple sessions](#multiple-sessions)
   - [Authentication complete](#authentication-complete)
+- [Delete account](#delete-account)
 
 ## Profile page
 
@@ -131,3 +132,7 @@ If you have multiple logins available on the Glewlwyd server, you can switch fro
 ![logged-in](screenshots/logged-in.png)
 
 If the authentication process is complete, you'll have a `Continue` butotn available. By clicking on this button, you'll be redirected to the client with credentials available to the client.
+
+## Delete account
+
+If available, you can delete your own account on Glewlwyd. You need to be connected to the profile page. In the `Personal data` tab, you have a `Delete account` button on the bottom left of the screen. By clicking on this button, you will delete your account and all the schemes registration attached to your account.
