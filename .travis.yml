@@ -60,4 +60,12 @@ script:
   - export G_PID=$!
   - ./glewlwyd_scheme_certificate || (cat /tmp/glewlwyd-https.log && false)
   - kill $G_PID
+  - glewlwyd --config-file=../test/glewlwyd-profile-delete-disable.conf &
+  - export G_PID=$!
+  - ./glewlwyd_profile_delete disable || (cat /tmp/glewlwyd-https.log && false)
+  - kill $G_PID
+  - glewlwyd --config-file=../test/glewlwyd-profile-delete-delete.conf &
+  - export G_PID=$!
+  - ./glewlwyd_profile_delete delete || (cat /tmp/glewlwyd-https.log && false)
+  - kill $G_PID
   - popd
