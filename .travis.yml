@@ -52,11 +52,12 @@ script:
   - glewlwyd --config-file=../test/glewlwyd-travis.conf &
   - export G_PID=$!
   - ../test/cert/create-cert.sh || (cat ../test/cert/certtool.log && false)
+  - ln -s ../test/cert/ .
   - ln -s ../test/ .
   - make test || (cat Testing/Temporary/LastTest.log && cat /tmp/glewlwyd.log && false)
   - kill $G_PID
   - make glewlwyd_scheme_certificate
-  - glewlwyd --config-file=test/cert/glewlwyd-cert-ci.conf &
+  - glewlwyd --config-file=cert/glewlwyd-cert-ci.conf &
   - export G_PID=$!
   - ./glewlwyd_scheme_certificate || (cat /tmp/glewlwyd-https.log && false)
   - kill $G_PID
