@@ -30,6 +30,7 @@ TARGET_OIDC=glewlwyd_oidc_auth_code glewlwyd_oidc_code glewlwyd_oidc_code_client
 TARGET_REGISTER=glewlwyd_register
 TARGET_IRL=glewlwyd_mod_user_irl glewlwyd_mod_client_irl glewlwyd_mod_user_http glewlwyd_oauth2_irl glewlwyd_oidc_irl glewlwyd_scheme_mail glewlwyd_scheme_otp glewlwyd_scheme_webauthn glewlwyd_scheme_retype_password glewlwyd_scheme_http
 TARGET_CERTIFICATE=glewlwyd_scheme_certificate
+TARGET_PROFILE_DELETE=glewlwyd_profile_delete
 VERBOSE=0
 MEMCHECK=0
 RUN=1
@@ -39,9 +40,9 @@ VALGRIND_COMMAND=valgrind --tool=memcheck --leak-check=full --show-leak-kinds=al
 all: test
 
 clean:
-	rm -f *.o *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER)
+	rm -f *.o *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE)
 
-build: $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER)
+build: $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE)
 
 unit-tests.o: unit-tests.c unit-tests.h
 	$(CC) $(CFLAGS) -c unit-tests.c
@@ -49,7 +50,7 @@ unit-tests.o: unit-tests.c unit-tests.h
 %: %.c unit-tests.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-test: build test-admin test-auth test-crud test-oauth2 test-oidc test-irl test-register
+test: build test-admin test-auth test-crud test-oauth2 test-oidc test-irl test-register test-profile-delete
 
 test-auth: $(TARGET_AUTH) test_glewlwyd_auth_password test_glewlwyd_auth_scheme test_glewlwyd_auth_grant test_glewlwyd_auth_check_scheme test_glewlwyd_auth_scheme_trigger test_glewlwyd_auth_scheme_register test_glewlwyd_auth_profile test_glewlwyd_auth_session_manage test_glewlwyd_auth_profile_get_scheme_available test_glewlwyd_auth_profile_impersonate
 
@@ -61,9 +62,11 @@ test-oauth2: $(TARGET_OAUTH2) test_glewlwyd_oauth2_auth_code test_glewlwyd_oauth
 
 test-oidc: $(TARGET_OIDC) test_glewlwyd_oidc_auth_code test_glewlwyd_oidc_code test_glewlwyd_oidc_code_client_confidential test_glewlwyd_oidc_token test_glewlwyd_oidc_resource_owner_pwd_cred test_glewlwyd_oidc_resource_owner_pwd_cred_client_confidential test_glewlwyd_oidc_client_cred test_glewlwyd_oidc_code_idtoken test_glewlwyd_oidc_implicit_id_token_token test_glewlwyd_oidc_implicit_id_token test_glewlwyd_oidc_implicit_none test_glewlwyd_oidc_hybrid_id_token_token_code test_glewlwyd_oidc_hybrid_token_code test_glewlwyd_oidc_hybrid_id_token_code test_glewlwyd_oidc_optional_request_parameters test_glewlwyd_oidc_refresh_token test_glewlwyd_oidc_refresh_token_client_confidential test_glewlwyd_oidc_delete_token test_glewlwyd_oidc_delete_token_client_confidential test_glewlwyd_oidc_refresh_manage test_glewlwyd_oidc_refresh_manage test_glewlwyd_oidc_refresh_manage_session test_glewlwyd_oidc_userinfo test_glewlwyd_oidc_additional_parameters test_glewlwyd_oidc_only_no_refresh test_glewlwyd_oidc_discovery test_glewlwyd_oidc_client_secret test_glewlwyd_oidc_request_jwt test_glewlwyd_oidc_subject_type test_glewlwyd_oidc_address_claim test_glewlwyd_oidc_claims_scopes test_glewlwyd_oidc_claim_request
 
+test-certificate: $(TARGET_CERTIFICATE) test_glewlwyd_scheme_certificate
+
 test-register: $(TARGET_REGISTER) test_glewlwyd_register
 
-test-certificate: $(TARGET_CERTIFICATE) test_glewlwyd_scheme_certificate
+test-profile-delete: $(TARGET_PROFILE_DELETE) test_glewlwyd_profile_delete
 
 test-irl: $(TARGET_IRL) test_glewlwyd_mod_user_http test_glewlwyd_scheme_mail test_glewlwyd_scheme_otp test_glewlwyd_scheme_webauthn test_glewlwyd_scheme_retype_password
 	@for JSON_FILE in mod_user_*.json; \
@@ -92,9 +95,9 @@ test_%_irl: %_irl
 
 test_%: %
 	@if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
-		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(HOST); \
+		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM); \
 	elif [ "$(MEMCHECK)" = "0" ]; then \
-	  LD_LIBRARY_PATH=. ./$^ $(HOST); \
+	  LD_LIBRARY_PATH=. ./$^ $(PARAM); \
 	else \
-	  CK_FORK=no LD_LIBRARY_PATH=. $(VALGRIND_COMMAND) ./$^ $(HOST) 2>valgrind-$@.txt; \
+	  CK_FORK=no LD_LIBRARY_PATH=. $(VALGRIND_COMMAND) ./$^ $(PARAM) 2>valgrind-$@.txt; \
 	fi
