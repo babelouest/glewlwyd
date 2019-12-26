@@ -678,7 +678,13 @@
     "mod-register-has-mandatory-error": "Vous devez avoir au moins une méthode d'authentification obligatoire",
     "mod-register-subject-ph": "Ex: Terminer votre enregistrement sur Glewlwyd",
     "mod-register-body-pattern": "Corps du courriel",
-    "mod-register-body-pattern-doc": "Les chaînes {CODE} et {TOKEN} seront remplacées par le code et le token"
+    "mod-register-body-pattern-doc": "Les chaînes {CODE} et {TOKEN} seront remplacées par le code et le token",
+    "mod-register-verification-code-length": "Longueur du code de vérification",
+    "mod-register-verification-code-length-ph": "Ex: 8",
+    "mod-register-verification-code-length-error": "La longueur est obligatoire et doit être supérieure à 0",
+    "mod-register-verification-code-duration": "Durée de validité du code (secondes)",
+    "mod-register-verification-code-duration-ph": "Ex: 600",
+    "mod-register-verification-code-duration-error": "La durée de validité est obligatoire et doit être supérieure à 0"
     
   },
   "profile": {
@@ -692,8 +698,13 @@
     "hello": "Bienvenue {{name}}",
     "hello-delegate": "Délégation pour {{name}}",
     "save": "Sauvegarder",
+    "delete": "Supprimer le compte",
     "save-profile-success": "Profil sauvegardé",
     "save-profile-error": "Erreur lors de la sauvegarde du profil",
+    "delete-profile-title": "Supprimer le compte",
+    "delete-profile-message": "Êtes-vous sûr de vouloir supprimer ce compte? Cette opération est irréversible.",
+    "delete-profile-success": "Le compte a été supprimé",
+    "delete-profile-error": "Erreur lors de la suppression du compte",
     "password-modal-title": "Changer de mot de passe",
     "password-modal-old-password": "Mot de passe actuel",
     "password-modal-old-password-ph": "Ex: 12345678",
@@ -832,8 +843,12 @@
     "register-code-label": "Entrer le code reçu",
     "register-code-ph": "Ex: 12345678",
     "register-code-error": "Code invalide",
+    "register-profile-create": "Créer le profil",
     "register-profile-created": "Profil créé",
-    "register-token-invalid": "Jeton invalide"
+    "register-token-invalid": "Jeton invalide",
+    "register-profile-cancel-title": "Annulation d'un nouveau compte",
+    "register-profile-cancel-message": "Êtes-vous sûr de vouloir annuler ce compte? L'annulation est irréversible.",
+    "register-invaid-url": "Erreur de connexion, URL invalide"
   },
   "modal": {
     "close": "Fermer",

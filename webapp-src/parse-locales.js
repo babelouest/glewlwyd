@@ -47,7 +47,7 @@ var hasError = false;
 Object.keys(translation).forEach(key => {
   if (translation[key].length !== translationSize) {
     hasError = true;
-    console.log("Error key", key, translation[key]);
+    console.log("Error key", translation[key], key);
   }
 });
 

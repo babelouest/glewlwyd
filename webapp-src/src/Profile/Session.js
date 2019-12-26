@@ -104,21 +104,23 @@ class Session extends Component {
     });
   }
   
-  disableSessionConfirm() {
-    if (this.state.disableObject) {
-      apiManager.glewlwydRequest("/profile/session/" + this.state.disableObject.session_hash, "DELETE")
-      .then((res) => {
-        messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.session-disabled")});
-      })
-      .fail(() => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-      })
-      .always(() => {
-        this.fetchLists();
-        this.setState({disableObject: false});
-        messageDispatcher.sendMessage('App', {type: "closeConfirm"});
-      });
+  disableSessionConfirm(result) {
+    if (result) {
+      if (this.state.disableObject) {
+        apiManager.glewlwydRequest("/profile/session/" + this.state.disableObject.session_hash, "DELETE")
+        .then((res) => {
+          messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.session-disabled")});
+        })
+        .fail(() => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        })
+        .always(() => {
+          this.fetchLists();
+          this.setState({disableObject: false});
+        });
+      }
     }
+    messageDispatcher.sendMessage('App', {type: "closeConfirm"});
   }
   
   disableToken(type, key, token) {
@@ -127,36 +129,38 @@ class Session extends Component {
     });
   }
   
-  disableTokenConfirm() {
-    if (this.state.disableObject) {
-      if (this.state.disableObject.type === "oauth2") {
-        apiManager.glewlwydRequestSub("/" + this.state.disableObject.key + "/profile/token/" + this.state.disableObject.token.token_hash + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""), "DELETE")
-        .then((res) => {
-          messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.token-disabled")});
-        })
-        .fail(() => {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-        })
-        .always(() => {
-          this.fetchLists();
-          this.setState({disableObject: false});
-          messageDispatcher.sendMessage('App', {type: "closeConfirm"});
-        });
-      } else if (this.state.disableObject.type === "oidc") {
-        apiManager.glewlwydRequestSub("/" + this.state.disableObject.key + "/token/" + this.state.disableObject.token.token_hash + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""), "DELETE")
-        .then((res) => {
-          messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.token-disabled")});
-        })
-        .fail(() => {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-        })
-        .always(() => {
-          this.fetchLists();
-          this.setState({disableObject: false});
-          messageDispatcher.sendMessage('App', {type: "closeConfirm"});
-        });
+  disableTokenConfirm(result) {
+    if (result) {
+      if (this.state.disableObject) {
+        if (this.state.disableObject.type === "oauth2") {
+          apiManager.glewlwydRequestSub("/" + this.state.disableObject.key + "/profile/token/" + this.state.disableObject.token.token_hash + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""), "DELETE")
+          .then((res) => {
+            messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.token-disabled")});
+          })
+          .fail(() => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          })
+          .always(() => {
+            this.fetchLists();
+            this.setState({disableObject: false});
+            messageDispatcher.sendMessage('App', {type: "closeConfirm"});
+          });
+        } else if (this.state.disableObject.type === "oidc") {
+          apiManager.glewlwydRequestSub("/" + this.state.disableObject.key + "/token/" + this.state.disableObject.token.token_hash + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""), "DELETE")
+          .then((res) => {
+            messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.token-disabled")});
+          })
+          .fail(() => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          })
+          .always(() => {
+            this.fetchLists();
+            this.setState({disableObject: false});
+          });
+        }
       }
     }
+    messageDispatcher.sendMessage('App', {type: "closeConfirm"});
   }
   
   render() {

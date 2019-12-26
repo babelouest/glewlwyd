@@ -25,8 +25,10 @@ class App extends Component {
       registerConfig: false,
       registerProfile: false,
       registerSchemes: {},
+      registerValid: true,
       curNav: "profile",
       profileList: false,
+      profileUpdate: false,
       schemeList: [],
       loggedIn: false,
       confirmModal: {
@@ -89,8 +91,10 @@ class App extends Component {
       } else if (message.type === 'registration') {
         this.fetchRegistration();
       } else if (message.type === 'registrationComplete') {
-        this.setState({registerProfile: false, schemeList: [],profileList: false})
-        this.fetchRegistration();
+        if (!this.state.config.params.register) {
+          this.setState({registerProfile: false, schemeList: [],profileList: false})
+          this.fetchRegistration();
+        }
       }
     });
     
@@ -114,17 +118,17 @@ class App extends Component {
       apiManager.glewlwydRequest("/profile_list")
       .then((res) => {
         if (!res[0] || res[0].scope.indexOf(this.state.config.profile_scope) < 0) {
-          this.setState({invalidDelegateMessage: true}, () => {
+          this.setState({loggedIn: false, profileList: false, schemeList: [], invalidDelegateMessage: true, profileUpdate: false}, () => {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
           });
         } else {
           this.setState({profileList: res}, () => {
             apiManager.glewlwydRequest("/profile/scheme")
             .then((res) => {
-              this.setState({loggedIn: true, schemeList: res, invalidDelegateMessage: false, invalidCredentialMessage: false});
+              this.setState({loggedIn: true, schemeList: res, invalidDelegateMessage: false, invalidCredentialMessage: false, profileUpdate: true});
             })
             .fail((error) => {
-              this.setState({invalidDelegateMessage: false, invalidCredentialMessage: true}, () => {
+              this.setState({loggedIn: false, profileList: false, schemeList: [], invalidDelegateMessage: false, invalidCredentialMessage: true, profileUpdate: false}, () => {
                 if (error.status === 401) {
                   messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
                 } else {
@@ -136,7 +140,7 @@ class App extends Component {
         }
       })
       .fail((error) => {
-        this.setState({invalidDelegateMessage: false, invalidCredentialMessage: true}, () => {
+        this.setState({loggedIn: false, profileList: false, schemeList: [], invalidDelegateMessage: false, invalidCredentialMessage: true}, () => {
           if (error.status === 401) {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
           } else {
@@ -164,40 +168,11 @@ class App extends Component {
   fetchRegistration() {
     apiManager.glewlwydRequest("/" + this.state.config.params.register + "/config")
     .then((config) => {
-      if (!this.state.config.params.token || this.state.tokenParsed) {
-        apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
-        .then((profile) => {
-          this.setState({registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile]}, () => {
-            config.schemes.forEach(scheme => {
-              apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
-              .then(() => {
-                var registerSchemes = this.state.registerSchemes;
-                registerSchemes[scheme.name] = true;
-                this.setState({registerSchemes: registerSchemes});
-              })
-              .fail(() => {
-                var registerSchemes = this.state.registerSchemes;
-                registerSchemes[scheme.name] = false;
-                this.setState({registerSchemes: registerSchemes});
-              });
-            });
-          });
-        })
-        .fail((err) => {
-          if (err.status != 401) {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-          }
-          this.setState({registerProfile: false});
-        })
-        .always(() => {
-          this.setState({registerConfig: config});
-        });
-      } else {
-        apiManager.glewlwydRequest("/" + this.state.config.params.register + "/verify", "POST", {token: this.state.config.params.token})
-        .then(() => {
+      this.setState({registerValid: true}, () => {
+        if (!this.state.config.params.token || this.state.tokenParsed) {
           apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
           .then((profile) => {
-            this.setState({tokenParsed: true, registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile]}, () => {
+            this.setState({registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile]}, () => {
               config.schemes.forEach(scheme => {
                 apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
                 .then(() => {
@@ -222,22 +197,59 @@ class App extends Component {
           .always(() => {
             this.setState({registerConfig: config});
           });
-        })
-        .fail((err) => {
-          if (err.status != 401) {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-          } else {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-token-invalid")});
-          }
-          this.setState({registerProfile: false});
-        })
-        .always(() => {
-          this.setState({registerConfig: config});
-        });
-      }
+        } else {
+          apiManager.glewlwydRequest("/" + this.state.config.params.register + "/verify", "POST", {token: this.state.config.params.token})
+          .then(() => {
+            apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
+            .then((profile) => {
+              this.setState({tokenParsed: true, registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile]}, () => {
+                config.schemes.forEach(scheme => {
+                  apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
+                  .then(() => {
+                    var registerSchemes = this.state.registerSchemes;
+                    registerSchemes[scheme.name] = true;
+                    this.setState({registerSchemes: registerSchemes});
+                  })
+                  .fail(() => {
+                    var registerSchemes = this.state.registerSchemes;
+                    registerSchemes[scheme.name] = false;
+                    this.setState({registerSchemes: registerSchemes});
+                  });
+                });
+              });
+            })
+            .fail((err) => {
+              if (err.status != 401) {
+                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+              }
+              this.setState({registerProfile: false});
+            })
+            .always(() => {
+              this.setState({registerConfig: config});
+            });
+          })
+          .fail((err) => {
+            if (err.status != 401) {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+            } else {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-token-invalid")});
+            }
+            this.setState({registerProfile: false});
+          })
+          .always(() => {
+            this.setState({registerConfig: config});
+          });
+        }
+      });
     })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    .fail((err) => {
+      this.setState({registerValid: false}, () => {
+        if (err.status === 404) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-invaid-url")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        }
+      });
     });
   }
 
@@ -259,9 +271,9 @@ class App extends Component {
       if (this.state.config.params.delegate) {
         userJsx = <UserDelegate config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} />
       } else if (this.state.config.params.register) {
-        userJsx = <Register config={this.state.config} registerConfig={this.state.registerConfig} registerProfile={this.state.registerProfile} registerSchemes={this.state.registerSchemes} />
+        userJsx = <Register config={this.state.config} registerConfig={this.state.registerConfig} registerProfile={this.state.registerProfile} registerSchemes={this.state.registerSchemes} registerValid={this.state.registerValid} />
       } else {
-        userJsx = <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false}/>
+        userJsx = <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false} profileUpdate={this.state.profileUpdate}/>
       }
       return (
         <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>

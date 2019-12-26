@@ -10,8 +10,10 @@ class User extends Component {
     super(props);
     
     this.state = {
+      config: props.config,
       pattern: props.pattern,
       profile: props.profile,
+      profileUpdate: props.profileUpdate,
       listAddValue: this.initListAdd(props.pattern),
       listEltConfirm: this.initListConfirm(props.pattern),
       listError: {}
@@ -33,12 +35,15 @@ class User extends Component {
     this.removeImage = this.removeImage.bind(this);
     this.editElt = this.editElt.bind(this);
     this.saveProfile = this.saveProfile.bind(this);
+    this.confirmDeleteProfile = this.confirmDeleteProfile.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
     this.setState({
+      config: nextProps.config,
       pattern: nextProps.pattern,
       profile: nextProps.profile,
+      profileUpdate: nextProps.profileUpdate,
       listAddValue: this.initListAdd(nextProps.pattern),
       listEltConfirm: this.initListConfirm(nextProps.pattern),
       listError: {}
@@ -199,6 +204,24 @@ class User extends Component {
     .fail((error) => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.save-profile-error")});
     });
+  }
+  
+  deleteProfile(e) {
+    messageDispatcher.sendMessage('App', {type: "confirm", title: i18next.t("profile.delete-profile-title"), message: i18next.t("profile.delete-profile-message"), callback: this.confirmDeleteProfile});
+  }
+  
+  confirmDeleteProfile(result) {
+    if (result) {
+      apiManager.glewlwydRequest("/profile", "DELETE", this.state.profile)
+      .then((res) => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("profile.delete-profile-success")});
+        messageDispatcher.sendMessage('App', {type: "profile"});
+      })
+      .fail((error) => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.delete-profile-error")});
+      });
+    }
+    messageDispatcher.sendMessage('App', {type: "closeConfirm"});
   }
   
   editElt(pattern, elt, key) {
@@ -424,6 +447,10 @@ class User extends Component {
         }
       });
     }
+    var deleteButtonJsx;
+    if (this.state.config.delete_profile !== "no") {
+      deleteButtonJsx = <button type="button" className="btn btn-danger btn-icon" onClick={(e) => this.deleteProfile(e)} disabled={!this.state.profile || !this.state.profileUpdate}>{i18next.t("profile.delete")}</button>
+    }
     return (
       <div>
         <div className="row">
@@ -439,8 +466,11 @@ class User extends Component {
           </div>
         </div>
         <div className="row">
-          <div className="col-md-12 text-right">
-            <button type="button" className="btn btn-primary" onClick={(e) => this.saveProfile(e)} disabled={!this.state.profile}>{i18next.t("profile.save")}</button>
+          <div className="col-md-6">
+            {deleteButtonJsx}
+          </div>
+          <div className="col-md-6 text-right">
+            <button type="button" className="btn btn-primary" onClick={(e) => this.saveProfile(e)} disabled={!this.state.profile || !this.state.profileUpdate}>{i18next.t("profile.save")}</button>
           </div>
         </div>
       </div>

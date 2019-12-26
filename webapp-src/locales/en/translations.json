@@ -95,7 +95,7 @@
     "certificate-scheme-auth-invalid": "Invalid certificate",
     "certificate-login-authenticate": "Authenticate",
     "http-title": "HTTP",
-    "register-link": "Register account"
+    "register-link": "Register new account"
   },
   "admin": {
     "error-credential-message": "Please connect with a user that has admin credentials",
@@ -678,7 +678,13 @@
     "mod-register-has-mandatory-error": "You must have at least one mandatory authentication method",
     "mod-register-subject-ph": "Ex: Complete your Glewlwyd reistration",
     "mod-register-body-pattern": "E-mail body",
-    "mod-register-body-pattern-doc": "The patterns {CODE} and {TOKEN} will be replaced by the code and the token"
+    "mod-register-body-pattern-doc": "The patterns {CODE} and {TOKEN} will be replaced by the code and the token",
+    "mod-register-verification-code-length": "Verificiation code length",
+    "mod-register-verification-code-length-ph": "Ex: 8",
+    "mod-register-verification-code-length-error": "Verificiation code length is mandatory and must be above 0",
+    "mod-register-verification-code-duration": "Verificiation code duration (seconds)",
+    "mod-register-verification-code-duration-ph": "Ex: 600",
+    "mod-register-verification-code-duration-error": "Verificiation code duration is mandatory and must be above 0"
   },
   "profile": {
     "error-credential-message": "Please connect to the application",
@@ -691,8 +697,13 @@
     "hello": "Welcome {{name}}",
     "hello-delegate": "Delegate {{name}}",
     "save": "Save",
+    "delete": "Delete account",
     "save-profile-success": "Profile saved",
     "save-profile-error": "Error while saving profile",
+    "delete-profile-title": "Delete account",
+    "delete-profile-message": "Are you sure you want to delete the account? This operation is irreversible.",
+    "delete-profile-success": "The account has been deleted",
+    "delete-profile-error": "Error while deleting the account",
     "password-modal-title": "Change password",
     "password-modal-old-password": "Current password",
     "password-modal-old-password-ph": "Ex: 12345678",
@@ -827,12 +838,16 @@
     "register-profile-reverify-email": "Resend the e-mail",
     "register-profile-email-sent": "E-mail sent to the address {{email}}",
     "register-email-error": "E-mail address is mandatory",
-    "register-profile-verify-code": "Cerify code",
+    "register-profile-verify-code": "Verify code",
     "register-code-label": "Enter received code",
     "register-code-ph": "Ex: 12345678",
     "register-code-error": "Invalid code",
+    "register-profile-create": "Create profile",
     "register-profile-created": "Profile created",
-    "register-token-invalid": "Invalid token"
+    "register-token-invalid": "Invalid token",
+    "register-profile-cancel-title": "Cancel a new account",
+    "register-profile-cancel-message": "Are you sure you want to cancel this new account? The operation is irreversible",
+    "register-invaid-url": "Connection error, invalid URL"
   },
   "modal": {
     "close": "Close",
