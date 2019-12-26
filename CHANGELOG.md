@@ -1,6 +1,6 @@
 # Glewlwyd Changelog
 
-## 2.0.1
+## 2.1.0
 
 - Add custom css files so users can safely adapt css to their own identity
 - Add packed format support in webauthn scheme
@@ -10,6 +10,8 @@
 - Add HTTP Basic Authentication Scheme
 - Add `defaultScheme` option in UI config for passwordless authentication
 - Add `bind_address` option in the config file
+- Add possibility for users to remove their own account
+- Add plugin `Register` to allow users to create new accounts
 
 ## 2.0.0
 
