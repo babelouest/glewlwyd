@@ -131,6 +131,7 @@ int main (int argc, char ** argv) {
   config->salt_length = GLEWLWYD_DEFAULT_SALT_LENGTH;
   config->hash_algorithm = digest_SHA256;
   config->login_url = o_strdup(GLEWLWYD_DEFAULT_LOGIN_URL);
+  config->delete_profile = GLEWLWYD_PROFILE_DELETE_UNAUTHORIZED;
   config->user_module_path = NULL;
   config->user_module_list = NULL;
   config->user_module_instance_list = NULL;
@@ -293,6 +294,7 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_profile_valid, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_profile, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_delete_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/password", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_password, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile/plugin", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_plugin_list, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_session_list, (void*)config);
@@ -919,6 +921,20 @@ int build_config_from_file(struct config_elements * config) {
     }
   }
   
+  if (config_lookup_string(&cfg, "delete_profile", &str_value) == CONFIG_TRUE) {
+    if (0 == o_strcmp("no", str_value)) {
+      config->delete_profile = GLEWLWYD_PROFILE_DELETE_UNAUTHORIZED;
+    } else if (0 == o_strcmp("delete", str_value)) {
+      config->delete_profile = GLEWLWYD_PROFILE_DELETE_AUTHORIZED;
+    } else if (0 == o_strcmp("disable", str_value)) {
+      config->delete_profile = GLEWLWYD_PROFILE_DELETE_AUTHORIZED | GLEWLWYD_PROFILE_DELETE_DISABLE_PROFILE;
+    } else {
+      fprintf(stderr, "Invalid value for delete_profile, expected 'no', 'delete' or 'disable', exiting\n");
+      config_destroy(&cfg);
+      ret = G_ERROR_PARAM;
+    }
+  }
+
   // Get path that serve static files
   if (config_lookup_string(&cfg, "static_files_path", &str_value) == CONFIG_TRUE) {
     o_free(config->static_file_config->files_path);
@@ -1134,6 +1150,19 @@ int build_config_from_env(struct config_elements * config) {
     config->login_url = o_strdup(value);
     if (config->login_url == NULL) {
       fprintf(stderr, "Error allocating config->login_url, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  
+  if ((value = getenv(GLEWLWYD_ENV_PROFILE_DELETE)) != NULL && o_strlen(value)) {
+    if (0 == o_strcmp("no", value)) {
+      config->delete_profile = GLEWLWYD_PROFILE_DELETE_UNAUTHORIZED;
+    } else if (0 == o_strcmp("delete", value)) {
+      config->delete_profile = GLEWLWYD_PROFILE_DELETE_AUTHORIZED;
+    } else if (0 == o_strcmp("disable", value)) {
+      config->delete_profile = GLEWLWYD_PROFILE_DELETE_AUTHORIZED | GLEWLWYD_PROFILE_DELETE_DISABLE_PROFILE;
+    } else {
+      fprintf(stderr, "Invalid value for " GLEWLWYD_ENV_PROFILE_DELETE ", expected 'no', 'delete' or 'disable', exiting\n");
       ret = G_ERROR_PARAM;
     }
   }

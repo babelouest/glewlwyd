@@ -39,13 +39,16 @@ int callback_glewlwyd_options (const struct _u_request * request, struct _u_resp
 
 int callback_glewlwyd_server_configuration (const struct _u_request * request, struct _u_response * response, void * user_data) {
   UNUSED(request);
-  json_t * json_body = json_pack("{ssssss}", 
+  
+  json_t * json_body = json_pack("{ssssssss}", 
                         "api_prefix", 
                         ((struct config_elements *)user_data)->api_prefix,
                         "admin_scope",
                         ((struct config_elements *)user_data)->admin_scope,
                         "profile_scope",
-                        ((struct config_elements *)user_data)->profile_scope);
+                        ((struct config_elements *)user_data)->profile_scope,
+                        "delete_profile",
+                        ((struct config_elements *)user_data)->delete_profile==GLEWLWYD_PROFILE_DELETE_UNAUTHORIZED?"no":"yes");
   ulfius_set_json_body_response(response, 200, json_body);
   json_decref(json_body);
   return U_CALLBACK_CONTINUE;
@@ -1805,6 +1808,46 @@ int callback_glewlwyd_user_update_profile (const struct _u_request * request, st
     response->status = 400;
   }
   json_decref(j_profile);
+  
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_user_delete_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  int ret = G_OK;
+  const char * username = json_string_value(json_object_get((json_t *)response->shared_data, "username"));
+  json_t * j_session, * j_cur_session;
+  char * session_uid = get_session_id(config, request);
+  size_t index;
+
+  j_session = get_current_user_for_session(config, session_uid);
+  if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else if (!check_result_value(j_session, G_OK)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_profile - Error get_current_user_for_session");
+    response->status = 500;
+  } else {
+    json_array_foreach(json_object_get(j_session, "session"), index, j_cur_session) {
+      if (0 == o_strcasecmp(username, json_string_value(json_object_get(j_cur_session, "username")))) {
+        if (user_session_delete(config, session_uid, json_string_value(json_object_get(j_cur_session, "username"))) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_profile - Error user_session_delete");
+          response->status = 500;
+          ret = G_ERROR;
+        }
+      }
+    }
+    json_decref(j_session);
+    if (ret == G_OK) {
+      ret = user_delete_profile(config, username);
+      if (ret == G_ERROR_UNAUTHORIZED) {
+        response->status = 403;
+      } else if (ret != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_profile - Error user_delete_profile");
+        response->status = 500;
+      }
+    }
+  }
+  o_free(session_uid);
   
   return U_CALLBACK_CONTINUE;
 }

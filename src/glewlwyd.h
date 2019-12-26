@@ -104,6 +104,7 @@
 #define GLEWLWYD_ENV_API_PREFIX                 "GLWD_API_PREFIX"
 #define GLEWLWYD_ENV_EXTERNAL_URL               "GLWD_EXTERNAL_URL"
 #define GLEWLWYD_ENV_LOGIN_URL                  "GLWD_LOGIN_URL"
+#define GLEWLWYD_ENV_PROFILE_DELETE             "GLWD_PROFILE_DELETE"
 #define GLEWLWYD_ENV_STATIC_FILES_PATH          "GLWD_STATIC_FILES_PATH"
 #define GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES    "GLWD_STATIC_FILES_MIME_TYPES"
 #define GLEWLWYD_ENV_ALLOW_ORIGIN               "GLWD_ALLOW_ORIGIN"
@@ -187,6 +188,7 @@ int delete_user_session_from_hash(struct config_elements * config, const char * 
 
 // Profile
 json_t * user_set_profile(struct config_elements * config, const char * username, json_t * j_profile);
+int user_delete_profile(struct config_elements * config, const char * username);
 json_t * user_get_profile(struct config_elements * config, const char * username);
 int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char * new_password);
 int user_set_password(struct config_elements * config, const char * username, const char * new_password);
@@ -323,6 +325,7 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
 
 int callback_glewlwyd_user_get_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_update_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_delete_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_update_password (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_plugin_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_session_list (const struct _u_request * request, struct _u_response * response, void * user_data);

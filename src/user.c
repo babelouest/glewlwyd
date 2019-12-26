@@ -39,7 +39,7 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
         if (user_module != NULL) {
           if (user_module->enabled) {
             j_user = user_module->module->user_module_get(config->config_m, username, user_module->cls);
-            if (check_result_value(j_user, G_OK)) {
+            if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
               res = user_module->module->user_module_check_password(config->config_m, username, password, user_module->cls);
               if (res == G_OK) {
                 j_return = json_pack("{si}", "result", G_OK);
@@ -71,21 +71,27 @@ json_t * auth_check_user_credentials(struct config_elements * config, const char
 
 json_t * auth_check_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * j_scheme_value, const struct _u_request * request) {
   struct _user_auth_scheme_module_instance * scheme_instance;
-  json_t * j_return = NULL;
+  json_t * j_return = NULL, * j_user;
   int res;
   
-  scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
-  if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
-    res = scheme_instance->module->user_auth_scheme_module_validate(config->config_m, request, username, j_scheme_value, scheme_instance->cls);
-    if (res == G_OK || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM || res == G_ERROR_NOT_FOUND || res == G_ERROR) {
-      j_return = json_pack("{si}", "result", res);
+  j_user = get_user(config, username, NULL);
+  if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
+    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+    if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
+      res = scheme_instance->module->user_auth_scheme_module_validate(config->config_m, request, username, j_scheme_value, scheme_instance->cls);
+      if (res == G_OK || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM || res == G_ERROR_NOT_FOUND || res == G_ERROR) {
+        j_return = json_pack("{si}", "result", res);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_scheme - Error unrecognize return value for user_auth_scheme_module_validate: %d", res);
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_scheme - Error unrecognize return value for user_auth_scheme_module_validate: %d", res);
-      j_return = json_pack("{si}", "result", G_ERROR);
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
+  json_decref(j_user);
   return j_return;
 }
 
@@ -530,8 +536,10 @@ int set_user(struct config_elements * config, const char * username, json_t * j_
 int delete_user(struct config_elements * config, const char * username, const char * source) {
   int ret;
   struct _user_module_instance * user_module;
+  struct _user_auth_scheme_module_instance * scheme_module;
   json_t * j_cur_user;
   int result;
+  size_t i;
   
   if (source != NULL) {
     user_module = get_user_module_instance(config, source);
@@ -548,8 +556,19 @@ int delete_user(struct config_elements * config, const char * username, const ch
       } else if (check_result_value(j_cur_user, G_ERROR_NOT_FOUND)) {
         ret = G_ERROR_NOT_FOUND;
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_module_get");
+        y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error user_module_get");
         ret = G_ERROR;
+      }
+      if (ret == G_OK) {
+        for (i = 0; i < pointer_list_size(config->user_auth_scheme_module_instance_list); i++) {
+          scheme_module = pointer_list_get_at(config->user_auth_scheme_module_instance_list, i);
+          if (scheme_module != NULL && scheme_module->enabled) {
+            if ((ret = scheme_module->module->user_auth_scheme_module_deregister(config->config_m, username, scheme_module->cls)) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error user_auth_scheme_module_deregister for scheme %s", scheme_module->name);
+              break;
+            }
+          }
+        }
       }
       json_decref(j_cur_user);
     } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
@@ -615,6 +634,53 @@ json_t * user_set_profile(struct config_elements * config, const char * username
   }
   json_decref(j_user);
   return j_return;
+}
+
+int user_delete_profile(struct config_elements * config, const char * username) {
+  json_t * j_user = get_user(config, username, NULL);
+  struct _user_module_instance * user_module;
+  struct _user_auth_scheme_module_instance * scheme_module;
+  int ret;
+  size_t i;
+
+  if (check_result_value(j_user, G_OK)) {
+    user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
+    if (config->delete_profile & GLEWLWYD_PROFILE_DELETE_AUTHORIZED && user_module != NULL && user_module->enabled && !user_module->readonly) {
+      ret = G_OK;
+      if (config->delete_profile & GLEWLWYD_PROFILE_DELETE_DISABLE_PROFILE) {
+        json_object_set(json_object_get(j_user, "user"), "enabled", json_false());
+        if ((ret = user_module->module->user_module_update(config->config_m, username, json_object_get(j_user, "user"), user_module->cls)) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_delete_profile - Error user_module_update_profile");
+        }
+      } else {
+        if ((ret = user_module->module->user_module_delete(config->config_m, username, user_module->cls)) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_delete_profile - Error user_module_delete");
+        }
+      }
+      if (ret == G_OK && !(config->delete_profile & GLEWLWYD_PROFILE_DELETE_DISABLE_PROFILE)) {
+        for (i = 0; i < pointer_list_size(config->user_auth_scheme_module_instance_list); i++) {
+          scheme_module = pointer_list_get_at(config->user_auth_scheme_module_instance_list, i);
+          if (scheme_module != NULL && scheme_module->enabled) {
+            if ((ret = scheme_module->module->user_auth_scheme_module_deregister(config->config_m, username, scheme_module->cls)) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_delete_profile - Error user_auth_scheme_module_deregister for scheme %s", scheme_module->name);
+              break;
+            }
+          }
+        }
+      }
+    } else if (!(config->delete_profile & GLEWLWYD_PROFILE_DELETE_AUTHORIZED) || (user_module != NULL && user_module->readonly)) {
+      ret = G_ERROR_UNAUTHORIZED;
+    } else {
+      ret = G_ERROR;
+    }
+  } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+    ret = G_ERROR_NOT_FOUND;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_delete_profile - Error get_user");
+    ret = G_ERROR;
+  }
+  json_decref(j_user);
+  return ret;
 }
 
 int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char * new_password) {

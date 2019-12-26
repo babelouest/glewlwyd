@@ -74,6 +74,13 @@
 #define GLEWLWYD_IS_AVAILABLE     1
 #define GLEWLWYD_IS_REGISTERED    2
 
+/**
+ * Modes available to delete a profile
+ */
+#define GLEWLWYD_PROFILE_DELETE_UNAUTHORIZED    0x0000
+#define GLEWLWYD_PROFILE_DELETE_AUTHORIZED      0x0001
+#define GLEWLWYD_PROFILE_DELETE_DISABLE_PROFILE 0x0010
+
 #define GLEWLWYD_DEFAULT_LIMIT_SIZE 100
 
 #define GLEWLWYD_DEFAULT_SALT_LENGTH 16
@@ -282,6 +289,7 @@ struct config_elements {
   unsigned int                                salt_length;
   digest_algorithm                            hash_algorithm;
   char *                                      login_url;
+  unsigned int                                delete_profile;
   char *                                      user_module_path;
   struct _pointer_list *                      user_module_list;
   struct _pointer_list *                      user_module_instance_list;
