@@ -208,3 +208,426 @@ If all the mandatory steps are achieved, the new user can complete its registrat
 ![register-complete](screenshots/register-complete.png)
 
 Then it should be able to connect to Glewlwyd and the applications using Glewlwyd authentication.
+
+## Register endpoints specifications
+
+This documentation is intended to describe all the plugin endpoints behaviour.
+
+### Prefix
+
+All URIs are based on the plugin name you will setup. In this document, all API endpoints will assume they use the prefix `/api/register`.
+
+### Get plugin configuration
+
+#### URL
+
+`/api/register/config`
+
+#### Method
+
+`GET`
+
+#### Success response
+
+Code 200
+
+```javascript
+{
+  set-password: string, values possible are 'no', 'yes' or 'always' 
+  schemes: [ // Array of schemes available for registration
+    {
+      module: string, module type
+      name: string, module name
+      register: string, values possible are 'yes' or 'always' 
+      display_name: string, display name for the module
+    }
+  ],
+  verify-email: boolean
+  email-is-username:boolean
+}
+```
+
+### Check username
+
+#### URL
+
+`/api/register/username`
+
+#### Method
+
+`POST`
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+}
+```
+
+#### Success response
+
+Code 200
+
+The username is available
+
+Code 400
+
+Username unavailable
+
+### Register a new user without e-mail validation
+
+#### URL
+
+`/api/register/register`
+
+#### Method
+
+`POST`
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory
+}
+```
+
+#### Success response
+
+Code 200
+
+The registration process has started.
+
+A session cookie has been sent to the browser
+
+Code 400
+
+Username invalid or unavailable
+
+Code 403
+
+The new user must verify its e-mail address.
+
+### Send e-mail verficiation code
+
+#### URL
+
+`/api/register/verify`
+
+#### Method
+
+`PUT`
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory if the username is different from the e-mail in the plugin configuration
+  email: string, mandatory
+}
+```
+
+#### Success response
+
+Code 200
+
+The e-mail has been sent
+
+Code 400
+
+Error input parameters format
+
+Code 403
+
+The new user can't verify its e-mail address.
+
+### Verify e-mail address
+
+#### URL
+
+`/api/register/verify`
+
+#### Method
+
+`POST`
+
+#### Body Parameters
+
+```javascript
+{
+  username: string, mandatory if the username is different from the e-mail in the plugin configuration and if token is missing or empty
+  email: string, mandatory if token is missing or empty
+  code: string, code verification, mandatory if token is missing or empty
+  token:: string, token verification
+}
+```
+
+#### Success response
+
+Code 200
+
+The e-mail is verified.
+
+The registration process has started.
+
+A session cookie has been sent to the browser
+
+Code 400
+
+Error input parameters
+
+Code 403
+
+The new user can't verify its e-mail address.
+
+### Get current profile data
+
+#### URL
+
+`/api/register/profile`
+
+#### Method
+
+`GET`
+
+#### Success response
+
+Code 200
+
+```javascript
+{
+  username: string, the username used to register
+  name: string or null
+  email: string or null
+  password_set: boolean
+}
+```
+
+Code 401
+
+Invalid registration session
+
+### Update password
+
+#### URL
+
+`/api/register/profile/password`
+
+#### Method
+
+`POST`
+
+#### Body Parameters
+
+```javascript
+{
+  password: string, mandatory
+}
+```
+
+#### Success response
+
+Code 200
+
+Password updated
+
+Code 400
+
+Error input parameters
+
+Code 401
+
+Session invalid
+
+Code 403
+
+User is not allowed to change its password
+
+### Update user full name
+
+#### URL
+
+`/api/register/profile`
+
+#### Method
+
+`PUT`
+
+#### Body Parameters
+
+```javascript
+{
+  name: string or null, mandatory
+}
+```
+
+#### Success response
+
+Code 200
+
+Name updated
+
+Code 400
+
+Error input parameters
+
+Code 401
+
+Session invalid
+
+### Can the user use the specified authentication scheme
+
+#### URL
+
+`/api/register/profile/scheme/register/canuse`
+
+#### Method
+
+`PUT`
+
+#### Body Parameters
+
+```javascript
+{
+  scheme_name: name of the scheme to check, mandatory
+  username: string, mandatory
+}
+```
+
+#### Success response
+
+Code 200
+
+Scheme is registered for this user
+
+Code 400
+
+Error input parameters
+
+Code 401
+
+Session invalid
+
+Code 402
+
+Scheme is available but not registered for this user
+
+Code 403
+
+Scheme is unavailable for this user
+
+### Get scheme registration
+
+#### URL
+
+`/api/register/profile/scheme/register`
+
+#### Method
+
+`PUT`
+
+#### Body Parameters
+
+```javascript
+{
+  scheme_name: name of the scheme to check, mandatory
+  username: string, mandatory
+}
+```
+
+#### Success response
+
+Code 200
+
+Get the scheme registration data. The response depends on the scheme.
+
+See [Authentication Scheme APIs](API.md#authentication-scheme-apis)
+
+Code 400
+
+Error input parameters
+
+Code 401
+
+Session invalid
+
+### Update scheme registration
+
+#### URL
+
+`/api/register/profile/scheme/register`
+
+#### Method
+
+`POST`
+
+#### Body Parameters
+
+```javascript
+{
+  scheme_name: name of the scheme to check, mandatory
+  username: string, mandatory
+  data: object, mandatory
+}
+```
+
+#### Success response
+
+Code 200
+
+Scheme registration updated.
+
+Depending on the scheme and the command, the response may also contain JSON data.
+
+Code 400
+
+Error input parameters
+
+Code 401
+
+Session invalid
+
+### Cancel current registration
+
+#### URL
+
+`/api/register/profile`
+
+#### Method
+
+`DELETE`
+
+#### Success response
+
+Code 200
+
+Registration has been canceled
+
+Code 401
+
+Session invalid
+
+### Complete registration
+
+#### URL
+
+`/api/register/profile/complete`
+
+#### Method
+
+`POST`
+
+#### Success response
+
+Code 200
+
+User has been succesfully created
+
+Code 400
+
+Some authentication schemes must be registered to complete the registration
+
+Code 401
+
+Session invalid
