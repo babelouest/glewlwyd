@@ -4,6 +4,8 @@
 
 Single-Sign-On (SSO) server with multiple factor authentication.
 
+![logged in](docs/screenshots/login-nopassword.png)
+
 Authentication processus supported:
 - OAuth2
 - OpenID Connect
@@ -20,6 +22,13 @@ Users and clients can be stored and managed from various backends:
 - LDAP service
 - HTTP Backend service providing Basic Authentication
 
+Allows users to register a new account with the possibility to confirm their e-mail address or not. During the registration process, the new user may be expected to register their passwords, as well as other authentication factors:
+- One-time password (TOTP/HOTP)
+- Webauthn (Yubikey, Android devices)
+- TLS Certificate
+
+See the [register documentation](docs/REGISTER.md) for more information on the registration features.
+
 Based on a plugin architecture to make it easier to add or update storing backends, authentication schemes or processus.
 
 Allows passwordless authentication.
@@ -29,8 +38,6 @@ Adding new authentication schemes or backend storage for users and clients is po
 The backend API server is fully written in C and uses a small amount of resources.
 
 Its plugin architecture makes it easy to add new modules or plugins, or modify existing ones with less risks to have unmaintainable code.
-
-![logged in](docs/screenshots/login-nopassword.png)
 
 Glewlwyd 2.0 [is released](https://github.com/babelouest/glewlwyd/releases/tag/v2.0.0). Feel free to [install](docs/INSTALL.md), test it, and [send feedbacks](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
 
