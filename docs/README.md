@@ -28,6 +28,7 @@ Tis folder contains full documentation for Glewlwyd and additional resources.
 
 - [Install Plugin OAuth2](OAUTH2.md)
 - [Install Plugin OpenID Connect](OIDC.md)
+- [Install Plugin Register new user](REGISTER.md)
 
 ### Screenshots
 
