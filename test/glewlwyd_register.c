@@ -586,7 +586,7 @@ START_TEST(test_glwd_register_noverify_cancel_registration)
   // Verify canuse response is 401 for scheme mock
   j_body = json_pack("{ssssss}", "scheme_name", SCHEME_NAME, "scheme_type", SCHEME_TYPE, "username", NEW_USERNAME_CANCELLED);
   ck_assert_ptr_ne(j_body, NULL);
-  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 402, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
   // Register scheme mock
@@ -829,7 +829,7 @@ START_TEST(test_glwd_register_noverify_full_registration)
   // Verify canuse response is 401 for scheme mock
   j_body = json_pack("{ssssss}", "scheme_name", SCHEME_NAME, "scheme_type", SCHEME_TYPE, "username", NEW_USERNAME);
   ck_assert_ptr_ne(j_body, NULL);
-  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 402, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
   // Register scheme mock with input errors
@@ -947,7 +947,7 @@ START_TEST(test_glwd_register_verify_with_username_cancel_registration)
   // Verify canuse response is 401 for scheme mock
   j_body = json_pack("{ssssss}", "scheme_name", SCHEME_NAME, "scheme_type", SCHEME_TYPE, "username", NEW_USERNAME_CANCELLED);
   ck_assert_ptr_ne(j_body, NULL);
-  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 402, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
   // Register scheme mock
@@ -1029,7 +1029,7 @@ START_TEST(test_glwd_register_verify_without_username_cancel_registration)
   // Verify canuse response is 401 for scheme mock
   j_body = json_pack("{ssssss}", "scheme_name", SCHEME_NAME, "scheme_type", SCHEME_TYPE, "username", NEW_EMAIL);
   ck_assert_ptr_ne(j_body, NULL);
-  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 402, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
   // Register scheme mock
@@ -1129,7 +1129,7 @@ START_TEST(test_glwd_register_verify_with_username_token_cancel_registration)
   // Verify canuse response is 401 for scheme mock
   j_body = json_pack("{ssssss}", "scheme_name", SCHEME_NAME, "scheme_type", SCHEME_TYPE, "username", NEW_USERNAME_CANCELLED);
   ck_assert_ptr_ne(j_body, NULL);
-  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 402, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
   // Register scheme mock
