@@ -2364,7 +2364,9 @@ Scope not found
 
 Code 200
 
-User authenticated
+User authenticated.
+
+A session cookie is sent to the browser. This cookie will be used by all endpoints that require authentication.
 
 Code 400
 
@@ -2400,6 +2402,8 @@ Authentication failure
 Code 200
 
 User authenticated
+
+A session cookie is sent to the browser. This cookie will be used by all endpoints that require authentication.
 
 Code 400
 
