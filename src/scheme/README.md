@@ -15,7 +15,7 @@ Currently, the following schemes are available:
 
 A Glewlwyd module requires the library [Jansson](https://github.com/akheron/Jansson).
 
-You can check out the existing modules for inspiration. You can start from the fake module [mock.c](mock.c) to build your own.
+You can check out the existing modules for inspiration. You can also start from the fake module [mock.c](mock.c) to build your own.
 
 A pointer of `struct config_module` is passed to all the mandatory functions. This pointer gives access to some Glewlwyd data and some callback functions used to achieve specific actions.
 
@@ -200,6 +200,27 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
  */
 json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls);
 ```
+
+```C
+/**
+ * 
+ * user_auth_scheme_module_deregister
+ * 
+ * Deregister the scheme for a user
+ * Ex: remove certificates, TOTP values, etc.
+ * 
+ * @return value: G_OK on success, even if no data has been removed
+ *                G_ERROR on another error
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter username: username to identify the user
+ * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
+ * 
+ */
+int user_auth_scheme_module_deregister(struct config_module * config, const char * username, void * cls);
+```
+
 
 ```C
 /**

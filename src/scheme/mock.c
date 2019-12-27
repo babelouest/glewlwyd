@@ -287,7 +287,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
  * Deregister all the scheme data for a user
  * Ex: remove certificates, TOTP values, etc.
  * 
- * @return value: G_OK on success
+ * @return value: G_OK on success, even if no data has been removed
  *                G_ERROR on another error
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
