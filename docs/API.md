@@ -65,6 +65,7 @@ This document is intended to describe Glewlwyd's core API endpoints. Glewlwyd's 
   - [Get list of connected profiles](#get-list-of-connected-profiles)
   - [Update current profile](#update-current-profile)
   - [Change user password for current profile](#change-user-password-for-current-profile)
+  - [Delete current profile](#delete-current-profile)
   - [Get list of plugins available](#get-list-of-plugins-available)
   - [Get sessions for current profile](#get-sessions-for-current-profile)
   - [Disable a session for current profile](#disable-a-session-for-current-profile)
@@ -2732,6 +2733,30 @@ Error input parameters
 Content
 
 A JSON array with the error messages
+
+### Delete current profile
+
+#### URL
+
+`/api/profile/`
+
+#### Method
+
+`DELETE`
+
+#### Security
+
+User with scope `g_profile` authorized.
+
+#### Success response
+
+Code 200
+
+Profile succesfully removed
+
+Code 403
+
+The user is not allowed to remove its own profile.
 
 ### Get list of plugins available
 
