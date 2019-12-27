@@ -1031,7 +1031,7 @@ static int callback_register_update_password(const struct _u_request * request, 
       response->status = 400;
     }
   } else {
-    response->status = 400;
+    response->status = 403;
   }
   json_decref(j_parameters);
   return U_CALLBACK_CONTINUE;
@@ -1147,7 +1147,7 @@ static int callback_register_canuse_scheme_registration(const struct _u_request 
     if (ret == GLEWLWYD_IS_NOT_AVAILABLE) {
       response->status = 403;
     } else if (ret == GLEWLWYD_IS_AVAILABLE) {
-      response->status = 401;
+      response->status = 402;
     } else if (ret != GLEWLWYD_IS_REGISTERED) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_canuse_scheme_registration - Error glewlwyd_plugin_callback_scheme_can_use");
       response->status = 500;
