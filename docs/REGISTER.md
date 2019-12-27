@@ -11,6 +11,10 @@ During the registration process, the new user can register schemes and/or set a 
 
 You also need to set at least one scope to the new users, `g_profile` is recommended for the users to be able to connect to their profile page, you can also add any other scheme you may find relevant for your self-registered users.
 
+- [Installation](#installation)
+- [Registration URL](#registration-url)
+- [Registration process for new users](#registration-process-for-new-users)
+
 ## Installation
 
 ![plugin-register](screenshots/plugin-register.png)
@@ -116,18 +120,18 @@ Example, by using the following e-mail pattern:
 ```
 The code is {CODE}
 
-https://hunbaut.babelouest.org/glewlwyd2app/?registration=<your_registration_plugin_name>&token={TOKEN}```
+https://hunbaut.babelouest.org/glewlwyd2app/?registration=<your_registration_plugin_name>&token={TOKEN}
+```
 
 Users will receive the following message:
 
 ```
 The code is: 123456
 
-https://hunbaut.babelouest.org/glewlwyd2app/?registration=<your_registration_plugin_name>&token=abcxyz123[...]```
-
+https://hunbaut.babelouest.org/glewlwyd2app/?registration=<your_registration_plugin_name>&token=abcxyz123[...]
 ```
 
-## Registration
+## Registration URL
 
 The url to access to the registration page has the following format:
 
@@ -138,6 +142,9 @@ https://<your_glewlwyd_url>/profile.html?register=<your_registration_instance_na
 Example, if your registration [name](#name) is `registration`: [http://localhost:4593/profile.html?register=registration](http://localhost:4593/profile.html?register=registration)
 
 You can directly use this link in your network.
+
+The parameter `name` corresponds to the register instance name, the parameter `message` will be replaced by an internationalization message in the `webapp/locales/*/translation.json` files.
+The `register` parameter is a JSON array containing one or multiple JSON objects, each one with a property `name` and a property `message` in it.
 
 ### Add a link in the login page
 
@@ -152,14 +159,11 @@ You can add a link to the registration page from the login page. You need to add
 ]
 ```
 
-The parameter `name` corresponds to the register instance name, the parameter `message` will be replaced by an internationalization message in the `webapp/locales/*/translation.json` files.
-The `register` parameter is a JSON array containing one or multiple JSON objects, each one with a property `name` and a property `message` in it.
-
-### Registration process for new users
+## Registration process for new users
 
 When a new user will register to your Glewlwyd service, depending on the configuration, the 3 following screens will appear.
 
-#### No e-mail verification
+### No e-mail verification
 
 `Verify e-mail` is unchecked in the admin page of the plugin.
 
@@ -169,7 +173,7 @@ The new user doesn't have to verify its e-mail address, it must only choose a va
 
 Note: by using this method, the user can't enter an e-mail address, so the e-mail scheme won't be available for this user.
 
-#### E-mail verification and valid username
+### E-mail verification and valid username
 
 `Verify e-mail` is checked and `Username is e-mail` is unchecked in the admin page of the plugin.
 
@@ -177,7 +181,7 @@ The new user must enter a valid username, but also an e-mail address.
 
 ![register-verification-username](screenshots/register-verification-username.png)
 
-#### Use e-mail as username
+### Use e-mail as username
 
 `Verify e-mail` is checked and `Username is e-mail` is checked in the admin page of the plugin.
 
@@ -185,7 +189,7 @@ The new must verify its e-mail address to register, the e-mail will be used as t
 
 ![register-verification-no-username](screenshots/register-verification-no-username.png)
 
-#### Enter personal data and register schemes if necessary
+### Enter personal data and register schemes if necessary
 
 When the first step is complete, the new user must register one or more authentication method, such as choosing a password, registering an OTP, a TLS certificate, or a Webauthn device.
 
@@ -193,11 +197,11 @@ A message below the screen will explain to the user the mandatory schemes the us
 
 ![register-enter-data](screenshots/register-enter-data.png)
 
-#### Cancel registration
+### Cancel registration
 
 The new user is allowed to cancel its registration before its completion. The user's data and scheme registrations will be removed.
 
-#### Complete registration
+### Complete registration
 
 If all the mandatory steps are achieved, the new user can complete its registration. 
 
