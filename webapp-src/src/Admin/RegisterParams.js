@@ -60,7 +60,7 @@ class RegisterParams extends Component {
     }
 
     if (!props.mod.parameters["body-pattern"]) {
-      props.mod.parameters["body-pattern"] = "The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"?registration=<your_registration_plugin_name>&token={TOKEN}";
+      props.mod.parameters["body-pattern"] = "The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?registration=<your_registration_plugin_name>&token={TOKEN}";
     }
 
     this.state = {
@@ -137,7 +137,7 @@ class RegisterParams extends Component {
     }
 
     if (!nextProps.mod.parameters["body-pattern"]) {
-      nextProps.mod.parameters["body-pattern"] = "The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"?registration=<your_registration_plugin_name>&token={TOKEN}";
+      nextProps.mod.parameters["body-pattern"] = "The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?registration=<your_registration_plugin_name>&token={TOKEN}";
     }
 
     this.setState({
