@@ -813,6 +813,8 @@
     "register-title": "Créer un compte",
     "register-username-label": "Entrer un nom d'utilisateur",
     "register-username-ph": "Ex: cornholio42",
+    "register-username-empty": "Nom d'utilisateur requis",
+    "register-username-checking": "Vérification",
     "register-username-create": "Créer le compte",
     "register-username-error": "Nom d'utilisateur non disponible",
     "register-username-valid": "Nom d'utilisateur disponible",
