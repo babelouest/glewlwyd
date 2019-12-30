@@ -812,6 +812,8 @@
     "register-title": "Register a new account",
     "register-username-label": "Enter username",
     "register-username-ph": "Ex: cornholio42",
+    "register-username-checking": "Checking",
+    "register-username-empty": "Username required",
     "register-username-create": "Create account",
     "register-username-error": "Username unavailable",
     "register-username-valid": "Username available",
