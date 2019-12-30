@@ -16,3 +16,5 @@ CREATE TABLE gpr_session (
   gprs_enabled SMALLINT DEFAULT 1
 );
 CREATE INDEX i_gprs_session_hash ON gpr_session(gprs_session_hash);
+CREATE INDEX i_gprs_gprs_token_hash ON gpr_session(gprs_token_hash);
+CREATE INDEX i_gprs_gprs_gprs_code_hash ON gpr_session(gprs_code_hash);
