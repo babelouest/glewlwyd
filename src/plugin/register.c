@@ -1039,18 +1039,22 @@ static int callback_register_update_password(const struct _u_request * request, 
 
 static int callback_register_update_data(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _register_config * config = (struct _register_config *)user_data;
-  json_t * j_parameters = ulfius_get_json_body_request(request, NULL), * j_user;
+  json_t * j_parameters = ulfius_get_json_body_request(request, NULL), * j_user = NULL;
   
   if (json_is_string(json_object_get(j_parameters, "name")) || json_object_get(j_parameters, "name") == json_null()) {
-    j_user = json_pack("{ss}", "name", json_is_string(json_object_get(j_parameters, "name"))?json_string_value(json_object_get(j_parameters, "name")):"");
-    if (config->glewlwyd_config->glewlwyd_plugin_callback_set_user(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), j_user) == G_OK) {
-      if (register_user_set(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), j_user) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_update_data - Error register_user_set");
+    j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")));
+    if (check_result_value(j_user, G_OK)) {
+      json_object_set_new(json_object_get(j_user, "user"), "name", json_is_string(json_object_get(j_parameters, "name"))?json_incref(json_object_get(j_parameters, "name")):json_string(""));
+    } else {
+      if (config->glewlwyd_config->glewlwyd_plugin_callback_set_user(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_object_get(j_user, "user")) == G_OK) {
+        if (register_user_set(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), j_user) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_update_data - Error register_user_set");
+          response->status = 500;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_update_data - Error glewlwyd_plugin_callback_set_user");
         response->status = 500;
       }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_update_data - Error glewlwyd_plugin_callback_set_user");
-      response->status = 500;
     }
     json_decref(j_user);
   } else {
@@ -1187,17 +1191,19 @@ static int callback_register_complete_registration(const struct _u_request * req
     }
     
     if (!json_array_size(j_error)) {
-      j_user = json_pack("{so}", "enabled", json_true());
-      if (config->glewlwyd_config->glewlwyd_plugin_callback_set_user(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), j_user) == G_OK) {
-        if (register_user_complete(config, json_string_value(json_object_get((json_t *)response->shared_data, "username"))) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_complete_registration - Error register_user_complete");
-          response->status = 500;
-        } else {
-          ulfius_add_cookie_to_response(response, json_string_value(json_object_get(config->j_parameters, "session-key")), "", 0, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", config->glewlwyd_config->glewlwyd_config->cookie_secure, 0);
-        }
+      j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")));
+      if (check_result_value(j_user, G_OK)) {
+        json_object_set(json_object_get(j_user, "user"), "enabled", json_true());
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_complete_registration - Error glewlwyd_plugin_callback_set_user");
-        response->status = 500;
+        if (config->glewlwyd_config->glewlwyd_plugin_callback_set_user(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_object_get(j_user, "user")) == G_OK) {
+          if (register_user_set(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), j_user) != G_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_update_data - Error register_user_set");
+            response->status = 500;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_update_data - Error glewlwyd_plugin_callback_set_user");
+          response->status = 500;
+        }
       }
       json_decref(j_user);
     } else {
