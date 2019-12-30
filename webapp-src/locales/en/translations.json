@@ -100,6 +100,7 @@
   "admin": {
     "error-credential-message": "Please connect with a user that has admin credentials",
     "error-input": "Errors are present in the form",
+    "menu-title": "Glewlwyd",
     "menu-users": "Users",
     "menu-clients": "Clients",
     "menu-scopes": "Scopes",
@@ -673,6 +674,7 @@
     "mod-register-add-scheme": "Add a scheme",
     "mod-register-scheme-name": "Scheme",
     "mod-register-scheme-register": "Mandatory",
+    "mod-register-scheme-error": "You must select a scheme",
     "mod-register-verify-email": "Verify e-mail",
     "mod-register-email-is-username": "Username is e-mail",
     "mod-register-has-mandatory-error": "You must have at least one mandatory authentication method",
@@ -690,6 +692,7 @@
     "error-credential-message": "Please connect to the application",
     "requires-profile-scope": "Profile scope required",
     "requires-admin-scope": "Admin scope required",
+    "menu-title": "Glewlwyd",
     "menu-user": "Personal data",
     "menu-password": "Password",
     "menu-session": "Sessions",

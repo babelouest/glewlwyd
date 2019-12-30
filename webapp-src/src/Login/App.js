@@ -275,7 +275,10 @@ class App extends Component {
                   </div>
                 </div>
               </div>
-              <h2>{i18next.t("glewlwyd-sso-title")}</h2>
+              <h2>
+                <img className="mr-3" src="img/logo-login.png" alt="logo"/>
+                {i18next.t("glewlwyd-sso-title")}
+              </h2>
             </div>
             {message}
             <div className="card-body">

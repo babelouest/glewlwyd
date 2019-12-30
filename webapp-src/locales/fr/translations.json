@@ -100,6 +100,7 @@
   "admin": {
     "error-credential-message": "Veuillez vous conncecter avec un utilisateur ayant les droits d'administration",
     "error-input": "Des erreurs sont présentes dans le formulaire",
+    "menu-title": "Glewlwyd",
     "menu-users": "Utilisateurs",
     "menu-clients": "Clients",
     "menu-scopes": "Droits d'accès (scope)",
@@ -673,6 +674,7 @@
     "mod-register-add-scheme": "Ajouter un schéma",
     "mod-register-scheme-name": "Schéma",
     "mod-register-scheme-register": "Obligatoire",
+    "mod-register-scheme-error": "Vous devez sélectionner un schéma",
     "mod-register-verify-email": "Vérifier l'adresse courriel",
     "mod-register-email-is-username": "Le nom d'utilisateur est l'adresse courriel",
     "mod-register-has-mandatory-error": "Vous devez avoir au moins une méthode d'authentification obligatoire",
@@ -691,6 +693,7 @@
     "error-credential-message": "Veuillez vous connecter à l'application",
     "requires-profile-scope": "Droits de profil requis",
     "requires-admin-scope": "Droits d'administrateur requis",
+    "menu-title": "Glewlwyd",
     "menu-user": "Données personnelles",
     "menu-password": "Mot de passe",
     "menu-session": "Sessions",
