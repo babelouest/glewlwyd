@@ -470,6 +470,7 @@ class Register extends Component {
               {!this.state.email?<span className="badge badge-danger">{i18next.t("profile.register-email-error")}</span>:""}
               {!this.state.usernameValid&&this.state.email?<span className="badge badge-danger">{i18next.t("profile.register-username-error")}</span>:""}
               {this.state.validMessage?<span className="badge badge-success">{i18next.t("profile.register-username-valid")}</span>:""}
+              {this.state.checkingEmail?<span className="badge badge-info">{i18next.t("profile.register-username-checking")}</span>:""}
               {codeInputJsx}
               <hr/>
               <div className="input-group-append">
@@ -496,6 +497,7 @@ class Register extends Component {
               </div>
               {this.state.invalidMessage?<span className="badge badge-danger">{i18next.t("profile.register-username-error")}</span>:""}
               {this.state.validMessage?<span className="badge badge-success">{i18next.t("profile.register-username-valid")}</span>:""}
+              {!this.state.validMessage&&!this.state.invalidMessage?<span className="badge badge-info">{i18next.t("profile.register-username-empty")}</span>:""}
               <hr/>
               <label htmlFor="email-input">{i18next.t("profile.register-email-label")}</label>
               <div className="input-group">
@@ -535,6 +537,7 @@ class Register extends Component {
             </div>
             {this.state.invalidMessage?<span className="badge badge-danger">{i18next.t("profile.register-username-error")}</span>:""}
             {this.state.validMessage?<span className="badge badge-success">{i18next.t("profile.register-username-valid")}</span>:""}
+            {!this.state.validMessage&&!this.state.invalidMessage?<span className="badge badge-info">{i18next.t("profile.register-username-empty")}</span>:""}
             <hr/>
             <div className="input-group-append">
               <button className="btn btn-success"
