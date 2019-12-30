@@ -681,12 +681,12 @@
     "mod-register-subject-ph": "Ex: Complete your Glewlwyd reistration",
     "mod-register-body-pattern": "E-mail body",
     "mod-register-body-pattern-doc": "The patterns {CODE} and {TOKEN} will be replaced by the code and the token",
-    "mod-register-verification-code-length": "Verificiation code length",
+    "mod-register-verification-code-length": "Verification code length",
     "mod-register-verification-code-length-ph": "Ex: 8",
-    "mod-register-verification-code-length-error": "Verificiation code length is mandatory and must be above 0",
-    "mod-register-verification-code-duration": "Verificiation code duration (seconds)",
+    "mod-register-verification-code-length-error": "Verification code length is mandatory and must be above 0",
+    "mod-register-verification-code-duration": "Verification code duration (seconds)",
     "mod-register-verification-code-duration-ph": "Ex: 600",
-    "mod-register-verification-code-duration-error": "Verificiation code duration is mandatory and must be above 0"
+    "mod-register-verification-code-duration-error": "Verification code duration is mandatory and must be above 0"
   },
   "profile": {
     "error-credential-message": "Please connect to the application",
