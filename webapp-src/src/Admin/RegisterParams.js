@@ -60,7 +60,7 @@ class RegisterParams extends Component {
     }
 
     if (!props.mod.parameters["body-pattern"]) {
-      props.mod.parameters["body-pattern"] = "The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?registration=<your_registration_plugin_name>&token={TOKEN}";
+      props.mod.parameters["body-pattern"] = "The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?register=<your_registration_plugin_name>&token={TOKEN}";
     }
 
     this.state = {
@@ -137,7 +137,7 @@ class RegisterParams extends Component {
     }
 
     if (!nextProps.mod.parameters["body-pattern"]) {
-      nextProps.mod.parameters["body-pattern"] = "The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?registration=<your_registration_plugin_name>&token={TOKEN}";
+      nextProps.mod.parameters["body-pattern"] = "The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?register=<your_registration_plugin_name>&token={TOKEN}";
     }
 
     this.setState({
@@ -242,6 +242,10 @@ class RegisterParams extends Component {
       errorList["scope"] = i18next.t("admin.mod-register-scope-error");
     }
     this.state.mod.parameters["schemes"].forEach((scheme) => {
+      if (!scheme.name) {
+        hasError = true;
+        errorList["schemes"] = i18next.t("admin.mod-register-scheme-error");
+      }
       if (scheme.register === "always") {
         hasMandatory = true;
       }
@@ -413,6 +417,7 @@ class RegisterParams extends Component {
           </div>
         </div>
         {schemeList}
+        {this.state.errorList["schemes"]?<span className="error-input">{this.state.errorList["schemes"]}</span>:""}
         <hr/>
         <div className="form-group form-check">
           <input type="checkbox" className="form-check-input" id="mod-register-verify-email" onChange={(e) => this.toggleParam(e, "verify-email")} checked={this.state.mod.parameters["verify-email"]} />
