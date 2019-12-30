@@ -498,6 +498,8 @@ CREATE TABLE gpr_session (
   gprs_enabled INTEGER DEFAULT 1
 );
 CREATE INDEX i_gprs_session_hash ON gpr_session(gprs_session_hash);
+CREATE INDEX i_gprs_gprs_token_hash ON gpr_session(gprs_token_hash);
+CREATE INDEX i_gprs_gprs_gprs_code_hash ON gpr_session(gprs_code_hash);
 
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 1, 600);
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1, 600);
