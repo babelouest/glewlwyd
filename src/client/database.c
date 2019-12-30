@@ -1035,7 +1035,7 @@ int client_module_add(struct config_module * config, json_t * j_client, void * c
     if (save_client_properties(param, j_client, json_integer_value(j_gc_id), 0) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_properties");
       ret = G_ERROR_DB;
-    } else if (save_client_scope(param, json_object_get(j_client, "scope"), json_integer_value(j_gc_id)) != G_OK) {
+    } else if (json_object_get(j_client, "scope") != NULL && save_client_scope(param, json_object_get(j_client, "scope"), json_integer_value(j_gc_id)) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_scope");
       ret = G_ERROR_DB;
     } else {
@@ -1100,7 +1100,7 @@ int client_module_update(struct config_module * config, const char * client_id, 
       if (save_client_properties(param, j_client, json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id")), 0) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_properties");
         ret = G_ERROR_DB;
-      } else if (save_client_scope(param, json_object_get(j_client, "scope"), json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id"))) != G_OK) {
+      } else if (json_object_get(j_client, "scope") != NULL && save_client_scope(param, json_object_get(j_client, "scope"), json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id"))) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_scope");
         ret = G_ERROR_DB;
       } else {

@@ -1023,7 +1023,7 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
     if (save_user_properties(param, j_user, json_integer_value(j_gu_id), 0) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_properties");
       ret = G_ERROR_DB;
-    } else if (save_user_scope(param, json_object_get(j_user, "scope"), json_integer_value(j_gu_id)) != G_OK) {
+    } else if (json_object_get(j_user, "scope") != NULL && save_user_scope(param, json_object_get(j_user, "scope"), json_integer_value(j_gu_id)) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_scope");
       ret = G_ERROR_DB;
     } else {
@@ -1085,7 +1085,7 @@ int user_module_update(struct config_module * config, const char * username, jso
       if (save_user_properties(param, j_user, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), 0) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_properties");
         ret = G_ERROR_DB;
-      } else if (save_user_scope(param, json_object_get(j_user, "scope"), json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id"))) != G_OK) {
+      } else if (json_object_get(j_user, "scope") != NULL && save_user_scope(param, json_object_get(j_user, "scope"), json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id"))) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_scope");
         ret = G_ERROR_DB;
       } else {
