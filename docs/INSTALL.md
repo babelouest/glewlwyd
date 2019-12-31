@@ -128,7 +128,7 @@ The docker page is available at the following address: [https://hub.docker.com/r
 
 ### Quickstart for tests only
 
-Run the docker image `babelouest/glewlwyd` hosted on docker cloud, example:
+Run the official docker image `babelouest/glewlwyd` hosted on docker cloud, example:
 
 ```shell
 docker run --rm -it -p 4593:4593 babelouest/glewlwyd
@@ -150,12 +150,19 @@ You can overwrite the configuration files `glewlwyd.conf` and `config.json` by m
 You can use the files [docker/config/glewlwyd.conf](docker/config/glewlwyd.conf) and [docker/config/config.json](docker/config/config.json) as a starting point to build your config files for docker.
 
 ```shell
-docker run --rm -it -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd babelouest/glewlwyd
+$ docker run --rm -it -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd babelouest/glewlwyd
 ```
 
 ### Docker image builder
 
-The directory [docker](docker) contains a Docker file to rebuild the docker image.
+The root directory contains a Docker file to build the docker image from the source. To build your own docker image, go to Glewlwyd source root directory and run `make docker`. This will build a docker image called `babelouest/glewlwyd:src`.
+
+```shell
+$ make docker
+$ docker run --rm -it -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd babelouest/glewlwyd:src
+```
+
+You can use the same options and configuration than in the official docker image, including customized configuration files.
 
 ## Manual install from source
 
