@@ -43,3 +43,6 @@ check:
 clean:
 	cd $(GLEWLWYD_SOURCE) && $(MAKE) clean
 	cd $(GLEWLWYD_TESTS) && $(MAKE) clean
+
+docker:
+	docker build -t babelouest/glewlwyd:src .
