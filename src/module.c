@@ -279,7 +279,7 @@ json_t * add_user_module(struct config_elements * config, json_t * j_module) {
   json_t * j_return, * j_result;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOsOsOsOss}}",
+  j_query = json_pack("{sss{sOsOsOsiss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "values",
@@ -290,7 +290,7 @@ json_t * add_user_module(struct config_elements * config, json_t * j_module) {
                         "gumi_display_name",
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
                         "gumi_readonly",
-                        json_object_get(j_module, "readonly")!=NULL?json_object_get(j_module, "readonly"):json_false(),
+                        json_object_get(j_module, "readonly")==json_true()?1:0,
                         "gumi_parameters",
                         parameters);
   if (json_object_get(j_module, "order_rank") != NULL) {
@@ -357,14 +357,14 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _user_module_instance * cur_instance;
   
-  j_query = json_pack("{sss{sOsOss}s{ss}}",
+  j_query = json_pack("{sss{sOsiss}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "set",
                         "gumi_display_name",
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
                         "gumi_readonly",
-                        json_object_get(j_module, "readonly")!=NULL?json_object_get(j_module, "readonly"):json_false(),
+                        json_object_get(j_module, "readonly")==json_true()?1:0,
                         "gumi_parameters",
                         parameters,
                       "where",
@@ -1065,7 +1065,7 @@ json_t * add_client_module(struct config_elements * config, json_t * j_module) {
   size_t i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOsOsOsOss}}",
+  j_query = json_pack("{sss{sOsOsOsiss}}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
                       "values",
@@ -1076,7 +1076,7 @@ json_t * add_client_module(struct config_elements * config, json_t * j_module) {
                         "gcmi_display_name",
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
                         "gcmi_readonly",
-                        json_object_get(j_module, "readonly")!=NULL?json_object_get(j_module, "readonly"):json_false(),
+                        json_object_get(j_module, "readonly")==json_true()?1:0,
                         "gcmi_parameters",
                         parameters);
   if (json_object_get(j_module, "order_rank") != NULL) {
@@ -1144,14 +1144,12 @@ int set_client_module(struct config_elements * config, const char * name, json_t
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _client_module_instance * cur_instance;
   
-  j_query = json_pack("{sss{sOsOss}s{ss}}",
+  j_query = json_pack("{sss{sOss}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
                       "set",
                         "gcmi_display_name",
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
-                        "gcmi_readonly",
-                        json_object_get(j_module, "readonly")!=NULL?json_object_get(j_module, "readonly"):json_false(),
                         "gcmi_parameters",
                         parameters,
                       "where",
@@ -1173,11 +1171,11 @@ int set_client_module(struct config_elements * config, const char * name, json_t
       cur_instance->readonly = json_object_get(j_module, "readonly")==json_true()?1:0;
       ret = G_OK;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error get_user_module_instance");
+      y_log_message(Y_LOG_LEVEL_ERROR, "set_client_module - Error get_user_module_instance");
       ret = G_ERROR;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "add_client_module - Error executing j_query");
+    y_log_message(Y_LOG_LEVEL_ERROR, "set_client_module - Error executing j_query");
     ret = G_ERROR_DB;
   }
   return ret;
