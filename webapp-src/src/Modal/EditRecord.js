@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import i18next from 'i18next';
 
+import messageDispatcher from '../lib/MessageDispatcher';
+
 class EditRecord extends Component {
   constructor(props) {
     super(props);
@@ -19,6 +21,10 @@ class EditRecord extends Component {
       listError: {},
       hasError: false,
       listPwd: this.initListPwd(props.pattern, props.add),
+      confirmModal: {
+        elt: "",
+        value: ""
+      }
     }
 
     this.closeModal = this.closeModal.bind(this);
@@ -86,13 +92,24 @@ class EditRecord extends Component {
               }
             }
           }
-          this.state.validateCb(this.state.data, this.state.listEltConfirm, this.state.add, (res, data) => {
-            if (res) {
-              this.state.cb(result, this.state.data);
-            } else {
-              this.setState({listError: data, hasError: true});
+          var hasError = false, listError = [];
+          for (var key in this.state.listAddValue) {
+            if (this.state.listAddValue[key] !== "") {
+              hasError = true;
+              listError[key] = i18next.t("admin.add-elt-mandatory");
             }
-          });
+          }
+          if (!hasError) {
+            this.state.validateCb(this.state.data, this.state.listEltConfirm, this.state.add, (res, data) => {
+              if (res) {
+                this.state.cb(result, this.state.data);
+              } else {
+                this.setState({listError: data, hasError: true});
+              }
+            });
+          } else {
+            this.setState({listError: listError, hasError: true});
+          }
         } else {
           this.state.cb(result, this.state.data);
         }
@@ -136,7 +153,7 @@ class EditRecord extends Component {
               var img = [];
               elt.forEach((curElt, index) => {
                 img.push(
-                  <a href="#" onClick={(e) => this.removeImage(e, pattern.name, index)} title={i18next.t("remove")} ><img key={index} className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+curElt} alt={pattern.name+"-"+index} /></a>
+                  <a key={index} href="#" onClick={(e) => this.removeImage(e, pattern.name, index)} title={i18next.t("remove")} ><img className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+curElt} alt={pattern.name+"-"+index} /></a>
                 );
               });
               if (pattern.edit || this.state.add) {
@@ -161,7 +178,7 @@ class EditRecord extends Component {
               }
             } else {
               inputJsx = <div className="input-group">
-                <input type="text" className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} onChange={(e) => this.changeListAddElt(e, pattern.name)} value={this.state.listAddValue[pattern.name]}/>
+                <input type="text" className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} onChange={(e) => this.changeListAddElt(e, pattern.name)} value={this.state.listAddValue[pattern.name]||""} />
                 <div className="input-group-append">
                   <button className="btn btn-outline-secondary" type="button" onClick={(e) => this.AddListElt(e, pattern.name)} title={i18next.t("modal.list-add-title")}>
                     <i className="fas fa-plus"></i>
@@ -199,13 +216,13 @@ class EditRecord extends Component {
         } else if (pattern.type === "boolean") {
           if (pattern.edit === false && !this.state.add) {
             checkboxJsx = 
-              <div className="form-group form-check">
+              <div className="form-group form-check" key={key}>
                 <input disabled={true} type="checkbox" className="form-check-input" id={"modal-edit-" + pattern.name} checked={elt} />
                 <label className="form-check-label" htmlFor={"modal-edit-" + pattern.name}>{i18next.t(pattern.label)}</label>
               </div>
           } else {
             checkboxJsx = 
-              <div className="form-group form-check">
+              <div className="form-group form-check" key={key}>
                 <input type="checkbox" className={"form-check-input" + validInput} id={"modal-edit-" + pattern.name} onChange={(e) => this.toggleBooleanElt(e, pattern.name)} checked={elt} />
                 <label className="form-check-label" htmlFor={"modal-edit-" + pattern.name}>{i18next.t(pattern.label)}</label>
               </div>
@@ -246,7 +263,7 @@ class EditRecord extends Component {
           }
         } else {
           if (pattern.edit === false && !this.state.add) {
-            inputJsx = <input disabled={true} type={(pattern.type||"text")} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={elt}/>
+            inputJsx = <input disabled={true} type={(pattern.type||"text")} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={elt||""}/>
           } else {
             if (pattern.type === "password") {
               var keepOption = "";
@@ -270,7 +287,7 @@ class EditRecord extends Component {
                 <input type="password" autoComplete="new-password" disabled={this.state.listPwd[pattern.name]==="disabled"||this.state.listPwd[pattern.name]==="keep"} className={"form-control" + validInput} id={"modal-edit-confirm" + pattern.name} placeholder={i18next.t(pattern.placeholderConfirm)} value={this.state.listEltConfirm[pattern.name]||""} onChange={(e) => this.changeEltConfirm(e, pattern.name)} />
               </div>
             } else {
-              inputJsx = <input type={(pattern.type||"text")} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={elt} onChange={(e) => this.changeElt(e, pattern.name)} />
+              inputJsx = <input type={(pattern.type||"text")} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={elt||""} onChange={(e) => this.changeElt(e, pattern.name)} />
             }
           }
         }
@@ -334,7 +351,9 @@ class EditRecord extends Component {
   }
 
   AddListElt(e, name, value = false) {
-    e.preventDefault();
+    if (e) {
+      e.preventDefault();
+    }
     if (value) {
       var data = this.state.data;
       if (!data[name]) {
@@ -346,13 +365,16 @@ class EditRecord extends Component {
       if (this.state.listAddValue[name]) {
         var data = this.state.data;
         var listAddValue = this.state.listAddValue;
+        if (!data[name]) {
+          data[name] = [];
+        }
         data[name].push(this.state.listAddValue[name]);
         this.state.listAddValue[name] = "";
         this.setState({data: data, listAddValue: listAddValue});
       }
     }
   }
-
+  
   initListAdd(patternList) {
     var listAddValue = {};
     patternList.forEach((pat) => {
