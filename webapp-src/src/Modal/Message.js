@@ -32,7 +32,7 @@ class Message extends Component {
       });
     }
 		return (
-    <div className="modal fade" id="messageModal" tabIndex="-1" role="dialog" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div className="modal fade on-top" id="messageModal" tabIndex="-1" role="dialog" aria-labelledby="messageModalLabel" aria-hidden="true">
       <div className="modal-dialog" role="document">
         <div className="modal-content">
           <div className="modal-header">
