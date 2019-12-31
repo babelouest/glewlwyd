@@ -1626,7 +1626,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
  */
 static int check_auth_type_client_credentials_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
-  json_t * j_client, * j_element, * json_body;
+  json_t * j_client, * j_element = NULL, * json_body;
   char ** scope_array, ** scope_allowed = NULL, * scope_joined, * access_token, * issued_for = get_client_hostname(request);
   size_t index = 0;
   int i, i_scope_allowed = 0, auth_type_allowed = 0;
