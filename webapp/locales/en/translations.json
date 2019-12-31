@@ -1,6 +1,5 @@
 {
-  "glewlwyd-sso-title": "Glewlwyd Single Sign-On service",
-  "error-api-connect": "Error connecting to Glewlwyd API",
+  "error-api-connect": "Error in Glewlwyd API",
   "title-login": "Log in",
   "title-logout": "Log out",
   "add": "Add",
@@ -9,6 +8,7 @@
   "browse": "Browse",
   "save": "Save",
   "login": {
+    "menu-title": "Glewlwyd",
     "error-scope-unavailable": "Error, no required scope is available",
     "info-some-scope-unavailable": "Some scopes aren't available",
     "warning-no-callback-url": "Warning, callback_url parameter is missing in the URL",
