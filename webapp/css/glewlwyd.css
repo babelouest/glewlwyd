@@ -46,3 +46,6 @@
   left:50%;
   transform: translate(-50%,-50%);
 }
+.on-top {
+  z-index: 9999;
+}
