@@ -216,7 +216,9 @@ json_t * is_client_valid(struct config_elements * config, const char * client_id
         j_return = json_pack("{si}", "result", G_ERROR);
       }
       json_decref(j_error_list);
-    } else if (client_module != NULL && (client_module->readonly || !client_module->enabled)) {
+    } else if (client_module != NULL && client_module->readonly) {
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "module is read-only");
+    } else if (client_module != NULL && !client_module->enabled) {
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "module is unavailable");
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "is_client_valid - Error get_client_module_instance");
