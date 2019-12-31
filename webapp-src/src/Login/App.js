@@ -277,7 +277,7 @@ class App extends Component {
               </div>
               <h2>
                 <img className="mr-3" src="img/logo-login.png" alt="logo"/>
-                {i18next.t("glewlwyd-sso-title")}
+                {i18next.t("login.menu-title")}
               </h2>
             </div>
             {message}
