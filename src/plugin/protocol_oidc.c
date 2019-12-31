@@ -2995,8 +2995,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
  */
 static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_user, * j_client, * j_refresh_token, * j_body, * j_user_only, * j_client_for_sub = NULL;
-  int ret = G_OK;
+  json_t * j_user, * j_client, * j_refresh_token, * j_body, * j_user_only, * j_client_for_sub = NULL, * j_element = NULL;
+  int ret = G_OK, auth_type_allowed = 0;
   const char * username = u_map_get(request->map_post_body, "username"),
              * password = u_map_get(request->map_post_body, "password"),
              * scope = u_map_get(request->map_post_body, "scope"),
@@ -3005,6 +3005,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
        * refresh_token,
        * access_token;
   time_t now;
+  size_t index = 0;
   
   if (scope == NULL || username == NULL || password == NULL || issued_for == NULL) {
     ret = G_ERROR_PARAM;
@@ -3013,7 +3014,16 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
     if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "confidential") != json_true()) {
       ret = G_ERROR_PARAM;
     } else if (check_result_value(j_client, G_OK)) {
-      client_id = request->auth_basic_user;
+      json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
+        if (0 == o_strcmp(json_string_value(j_element), "password")) {
+          auth_type_allowed = 1;
+        }
+      }
+      if (!auth_type_allowed) {
+        ret = G_ERROR_PARAM;
+      } else {
+        client_id = request->auth_basic_user;
+      }
     } else if (check_result_value(j_client, G_ERROR_NOT_FOUND) || check_result_value(j_client, G_ERROR_UNAUTHORIZED)) {
       ret = G_ERROR_PARAM;
     } else {
@@ -3143,10 +3153,10 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
  */
 static int check_auth_type_client_credentials_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_client, * j_scope, * json_body;
+  json_t * j_client, * j_element = NULL, * json_body;
   char ** scope_array, ** scope_allowed = NULL, * scope_joined, * access_token, * issued_for = get_client_hostname(request);
   size_t index = 0;
-  int i, i_scope_allowed = 0;
+  int i, i_scope_allowed = 0, auth_type_allowed = 0;
   time_t now;
 
   if (issued_for == NULL) {
@@ -3155,10 +3165,15 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
   } else if (request->auth_basic_user != NULL && request->auth_basic_password != NULL && o_strlen(u_map_get(request->map_post_body, "scope")) > 0) {
     j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password);
     if (check_result_value(j_client, G_OK)) {
+      json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
+        if (0 == o_strcmp(json_string_value(j_element), "client_credentials")) {
+          auth_type_allowed = 1;
+        }
+      }
       if (split_string(u_map_get(request->map_post_body, "scope"), " ", &scope_array) > 0) {
         for (i=0; scope_array[i]!=NULL; i++) {
-          json_array_foreach(json_object_get(json_object_get(j_client, "client"), "scope"), index, j_scope) {
-            if (0 == o_strcmp(json_string_value(j_scope), scope_array[i])) {
+          json_array_foreach(json_object_get(json_object_get(j_client, "client"), "scope"), index, j_element) {
+            if (0 == o_strcmp(json_string_value(j_element), scope_array[i])) {
               if (scope_allowed == NULL) {
                 scope_allowed = o_malloc(2 * sizeof(char*));
               } else {
@@ -3172,6 +3187,10 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
         }
         if (!i_scope_allowed) {
           json_body = json_pack("{ss}", "error", "scope_invalid");
+          ulfius_set_json_body_response(response, 400, json_body);
+          json_decref(json_body);
+        } else if (!auth_type_allowed) {
+          json_body = json_pack("{ss}", "error", "authorization_type_invalid");
           ulfius_set_json_body_response(response, 400, json_body);
           json_decref(json_body);
         } else {
