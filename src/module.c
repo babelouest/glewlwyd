@@ -357,12 +357,14 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _user_module_instance * cur_instance;
   
-  j_query = json_pack("{sss{sOss}s{ss}}",
+  j_query = json_pack("{sss{sOsOss}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "set",
                         "gumi_display_name",
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
+                        "gumi_readonly",
+                        json_object_get(j_module, "readonly")!=NULL?json_object_get(j_module, "readonly"):json_false(),
                         "gumi_parameters",
                         parameters,
                       "where",
@@ -893,7 +895,7 @@ json_t * get_client_module_list(struct config_elements * config) {
                         "gcmi_display_name AS display_name",
                         "gcmi_parameters",
                         "gcmi_order AS order_rank",
-                        "gcmi_order AS order_rank",
+                        "gcmi_readonly",
                       "order_by",
                       "gcmi_order");
   res = h_select(config->conn, j_query, &j_result, NULL);
@@ -943,7 +945,7 @@ json_t * get_client_module(struct config_elements * config, const char * name) {
                         "gcmi_display_name AS display_name",
                         "gcmi_parameters",
                         "gcmi_order AS order_rank",
-                        "gcmi_order AS order_rank",
+                        "gcmi_readonly",
                       "where",
                         "gcmi_name",
                         name);
@@ -1142,12 +1144,14 @@ int set_client_module(struct config_elements * config, const char * name, json_t
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _client_module_instance * cur_instance;
   
-  j_query = json_pack("{sss{sOss}s{ss}}",
+  j_query = json_pack("{sss{sOsOss}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
                       "set",
                         "gcmi_display_name",
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
+                        "gcmi_readonly",
+                        json_object_get(j_module, "readonly")!=NULL?json_object_get(j_module, "readonly"):json_false(),
                         "gcmi_parameters",
                         parameters,
                       "where",
