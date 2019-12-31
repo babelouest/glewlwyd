@@ -22,6 +22,11 @@
 7. [Install as a service](#install-as-a-service)
 8. [Fail2ban filter](#fail2ban-filter)
 9. [Front-end application](#front-end-application)
+   * [webapp/config.json](#webappconfigjson)
+   * [Internationalization](#internationalization)
+   * [Login, Admin and Profile pages](#login-admin-and-profile-pages)
+   * [Customize css](#customize-css)
+   * [Customize titles and logos](#customize-titles-and-logos)
 10. [Run Glewlwyd](#run-glewlwyd)
 11. [Getting started with the application](#getting-started-with-the-application)
 
@@ -704,7 +709,7 @@ The front-end application is written in Javascript using mostly ReactJS and JQue
 
 By choice, Glewlwyd isn't available for Internet Explorer or browser with a poor javascript engine. If you really need it you can build the front-end application with `babel-polyfill`. Check out the [webapp-src documentation](../webapp-src/README.md).
 
-### UI Language
+### Internationalization
 
 The languages available in the front-end are English, French and Dutch. If you make a language file for another lang, you can add it in your Glewlwyd installation by adding the file in  `webapp/{lang}/translation.json` where `{lang}` is the translation language in ISO 639-1 format (2 letters). Then, add your new language 2-letters code in the `webapp/config.json` file in the `lang` key, example for adding korean language:
 
@@ -721,10 +726,69 @@ These pages are used when a user requires some access to Glewlwyd. They are simp
 ### Customize css
 
 If you need to customize the css only, you can update the following files:
-- [webapp/css/glewlwyd-custom.css](webapp/css/glewlwyd-custom.css): update the css for the 3 applications (admin, login, profile)
-- [webapp/css/profile-custom.css](webapp/css/profile-custom.css) : update the css for the profile application only
-- [webapp/css/admin-custom.css](webapp/css/admin-custom.css) : update the css for the admin application only
-- [webapp/css/login-custom.css](webapp/css/login-custom.css) : update the css for the login application only
+- [webapp/css/glewlwyd-custom.css](../webapp/css/glewlwyd-custom.css): update the css for the 3 applications (admin, login, profile)
+- [webapp/css/profile-custom.css](../webapp/css/profile-custom.css) : update the css for the profile application only
+- [webapp/css/admin-custom.css](../webapp/css/admin-custom.css) : update the css for the admin application only
+- [webapp/css/login-custom.css](../webapp/css/login-custom.css) : update the css for the login application only
+
+### Customize titles and logos
+
+In all pages, the navigation bar has the Glewlwyd logo and the title `Glewlwyd`. You can change them in each pages individually.
+
+#### Change logo
+
+Replace the files in `webapp/img/` with your own. Each file is used in each page of the applications. Feel free to use your own organization logo or event.
+
+- [webapp/img/logo-admin.png](../webapp/img/logo-admin.png) : Logo in the admin application
+- [webapp/img/logo-login.png](../webapp/img/logo-login.png) : Logo in the login application
+- [webapp/img/logo-profile.png](../webapp/img/logo-profile.png) : Logo in the profile application
+
+#### Change navigation menu title
+
+Change values in the internationalization files located in `webapp/locales/*/translations.json`:
+
+Each title is identified by the key `menu-title` in each block specific to a page of the applications, you can change the value with your own title.
+
+- Admin page:
+
+```javascript
+{
+  "admin": {
+    [...]
+    "menu-title": "Glewlwyd",
+    [...]
+}
+```
+
+- Login page:
+
+```javascript
+{
+  "login": {
+    [...]
+    "menu-title": "Glewlwyd",
+    [...]
+}
+```
+
+- Profile page:
+
+```javascript
+{
+  "profile": {
+    [...]
+    "menu-title": "Glewlwyd",
+    [...]
+}
+```
+
+#### Change HTML page title
+
+Change the tag content value `<title>` in the following HTML pages:
+
+- [webapp/index.html](../webapp/index.html): Admin page
+- [webapp/login.html](../webapp/login.html): Login page
+- [webapp/profile.html](../webapp/profile.html): Profile page
 
 ## Run Glewlwyd
 
