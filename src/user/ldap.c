@@ -782,7 +782,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
               } else if (json_is_string(j_property) && json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true()) {
                 mods[i] = o_malloc(sizeof(LDAPMod));
                 if (mods[i] != NULL) {
-                  mods[i]->mod_values = o_malloc((json_array_size(json_object_get(j_user, "scope")) + 1) * sizeof(char *));
+                  mods[i]->mod_values = o_malloc(2 * sizeof(char *));
                   if (mods[i]->mod_values != NULL) {
                     mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
                     mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
