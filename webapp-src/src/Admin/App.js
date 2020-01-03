@@ -720,7 +720,7 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-client")});
       })
       .always(() => {
-        this.fetchUsers()
+        this.fetchClients()
         .always(() => {
           this.setState({confirmModal: {title: "", message: ""}}, () => {
             $("#confirmModal").modal("hide");
@@ -792,7 +792,7 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-set-client")});
       })
       .always(() => {
-        this.fetchUsers()
+        this.fetchClients()
         .always(() => {
           this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
             $("#editRecordModal").modal("hide");
