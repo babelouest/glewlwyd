@@ -38,6 +38,9 @@ class ModEdit extends Component {
       if (props.mod.parameters["data-format"]["sector_identifier_uri"] === undefined) {
         props.mod.parameters["data-format"]["sector_identifier_uri"] = {multiple: false, read: true, write: true};
       }
+      if (props.mod.parameters["data-format"]["client_secret"] === undefined) {
+        props.mod.parameters["data-format"]["client_secret"] = {multiple: false, read: true, write: true};
+      }
     }
 
     this.state = {
@@ -122,6 +125,9 @@ class ModEdit extends Component {
       }
       if (nextProps.mod.parameters["data-format"]["sector_identifier_uri"] === undefined) {
         nextProps.mod.parameters["data-format"]["sector_identifier_uri"] = {multiple: false, read: true, write: true};
+      }
+      if (nextProps.mod.parameters["data-format"]["client_secret"] === undefined) {
+        nextProps.mod.parameters["data-format"]["client_secret"] = {multiple: false, read: true, write: true};
       }
     }
 
