@@ -223,7 +223,11 @@ class Buttons extends Component {
           </div>
         );
       } else {
-        return ("");
+        return (
+        <div>
+          {registerTable}
+        </div>
+        );
       }
     } else {
       return ("");
