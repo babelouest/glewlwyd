@@ -913,7 +913,7 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
   if (j_result != NULL) {
     if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
       if (!json_is_string(json_object_get(j_user, "username")) || json_string_length(json_object_get(j_user, "username")) > 128) {
-        json_array_append_new(j_result, json_string("username is mandatory and must be a string of at least 128 characters"));
+        json_array_append_new(j_result, json_string("username is mandatory and must be a string (maximum 128 characters)"));
       } else {
         j_cur_user = user_module_get(config, json_string_value(json_object_get(j_user, "username")), cls);
         if (check_result_value(j_cur_user, G_OK)) {
@@ -943,10 +943,10 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
       json_array_append_new(j_result, json_string("password must be a string"));
     }
     if (json_object_get(j_user, "name") != NULL && (!json_is_string(json_object_get(j_user, "name")) || json_string_length(json_object_get(j_user, "name")) > 256)) {
-      json_array_append_new(j_result, json_string("name must be a string of at least 256 characters"));
+      json_array_append_new(j_result, json_string("name must be a string (maximum 256 characters)"));
     }
     if (json_object_get(j_user, "email") != NULL && (!json_is_string(json_object_get(j_user, "email")) || json_string_length(json_object_get(j_user, "email")) > 512)) {
-      json_array_append_new(j_result, json_string("email must be a string of at least 512 characters"));
+      json_array_append_new(j_result, json_string("email must be a string (maximum 512 characters)"));
     }
     if (json_object_get(j_user, "enabled") != NULL && !json_is_boolean(json_object_get(j_user, "enabled"))) {
       json_array_append_new(j_result, json_string("enabled must be a boolean"));
@@ -962,7 +962,7 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
           } else {
             json_array_foreach(j_element, index, j_value) {
               if (!json_is_string(j_value) || json_string_length(j_value) > 16*1024*1024) {
-                message = msprintf("property '%s' must contain a string value of at least 16M characters", property);
+                message = msprintf("property '%s' must contain a string value (maximum 16M characters)", property);
                 json_array_append_new(j_result, json_string(message));
                 o_free(message);
               }
@@ -970,7 +970,7 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
           }
         } else {
           if (!json_is_string(j_element) || json_string_length(j_element) > 16*1024*1024) {
-            message = msprintf("property '%s' must be a string value of at least 16M characters", property);
+            message = msprintf("property '%s' must be a string value (maximum 16M characters)", property);
             json_array_append_new(j_result, json_string(message));
             o_free(message);
           }
