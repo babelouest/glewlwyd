@@ -486,7 +486,9 @@ static int save_client_properties(struct mod_parameters * param, json_t * j_clie
             json_array_append_new(j_array, get_property_value_db(param, name, j_property, gc_id));
           } else {
             json_array_foreach(j_property, index, j_property_value) {
-              json_array_append_new(j_array, get_property_value_db(param, name, j_property_value, gc_id));
+              if (j_property_value != json_null()) {
+                json_array_append_new(j_array, get_property_value_db(param, name, j_property_value, gc_id));
+              }
             }
           }
         }
@@ -946,10 +948,10 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
     if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE && json_object_get(j_client, "password") != NULL && !json_is_string(json_object_get(j_client, "password"))) {
       json_array_append_new(j_result, json_string("password must be a string"));
     }
-    if (json_object_get(j_client, "name") != NULL && (!json_is_string(json_object_get(j_client, "name")) || json_string_length(json_object_get(j_client, "name")) > 256)) {
+    if (json_object_get(j_client, "name") != NULL && json_object_get(j_client, "name") != json_null() && (!json_is_string(json_object_get(j_client, "name")) || json_string_length(json_object_get(j_client, "name")) > 256)) {
       json_array_append_new(j_result, json_string("name must be a string of at least 256 characters"));
     }
-    if (json_object_get(j_client, "description") != NULL && (!json_is_string(json_object_get(j_client, "description")) || json_string_length(json_object_get(j_client, "description")) > 512)) {
+    if (json_object_get(j_client, "description") != NULL && json_object_get(j_client, "description") != json_null() && (!json_is_string(json_object_get(j_client, "description")) || json_string_length(json_object_get(j_client, "description")) > 512)) {
       json_array_append_new(j_result, json_string("description must be a string of at least 512 characters"));
     }
     if (json_object_get(j_client, "enabled") != NULL && !json_is_boolean(json_object_get(j_client, "enabled"))) {
@@ -976,7 +978,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
             }
           }
         } else {
-          if (!json_is_string(j_element) || json_string_length(j_element) > 16*1024*1024) {
+          if ((!json_is_string(j_element) && json_object_get(j_client, "description") != json_null()) || json_string_length(j_element) > 16*1024*1024) {
             message = msprintf("property '%s' must be a string value of at least 16M characters", property);
             json_array_append_new(j_result, json_string(message));
             o_free(message);
@@ -1016,10 +1018,10 @@ int client_module_add(struct config_module * config, json_t * j_client, void * c
     json_object_set_new(json_object_get(j_query, "values"), "gc_password", json_pack("{ss}", "raw", password_clause));
     o_free(password_clause);
   }
-  if (json_object_get(j_client, "name") != NULL) {
+  if (json_object_get(j_client, "name") != NULL && json_object_get(j_client, "name") != json_null()) {
     json_object_set(json_object_get(j_query, "values"), "gc_name", json_object_get(j_client, "name"));
   }
-  if (json_object_get(j_client, "description") != NULL) {
+  if (json_object_get(j_client, "description") != NULL && json_object_get(j_client, "description") != json_null()) {
     json_object_set(json_object_get(j_query, "values"), "gc_description", json_object_get(j_client, "description"));
   }
   if (json_object_get(j_client, "enabled") != NULL) {
@@ -1078,10 +1080,10 @@ int client_module_update(struct config_module * config, const char * client_id, 
     json_object_set_new(json_object_get(j_query, "set"), "gc_password", json_pack("{ss}", "raw", password_clause));
       o_free(password_clause);
     }
-    if (json_object_get(j_client, "name") != NULL) {
+    if (json_object_get(j_client, "name") != NULL && json_object_get(j_client, "name") != json_null()) {
       json_object_set(json_object_get(j_query, "set"), "gc_name", json_object_get(j_client, "name"));
     }
-    if (json_object_get(j_client, "description") != NULL) {
+    if (json_object_get(j_client, "description") != NULL && json_object_get(j_client, "description") != json_null()) {
       json_object_set(json_object_get(j_query, "set"), "gc_description", json_object_get(j_client, "description"));
     }
     if (json_object_get(j_client, "enabled") != NULL) {

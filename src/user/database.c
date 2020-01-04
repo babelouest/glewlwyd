@@ -484,7 +484,9 @@ static int save_user_properties(struct mod_parameters * param, json_t * j_user, 
             json_array_append_new(j_array, get_property_value_db(param, name, j_property, gu_id));
           } else {
             json_array_foreach(j_property, index, j_property_value) {
-              json_array_append_new(j_array, get_property_value_db(param, name, j_property_value, gu_id));
+              if (j_property_value != json_null()) {
+                json_array_append_new(j_array, get_property_value_db(param, name, j_property_value, gu_id));
+              }
             }
           }
         }
