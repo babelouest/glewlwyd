@@ -38,7 +38,7 @@
     "success-delete-session": "Sessie afgemeld",
     "error-delete-session": "Fout bij het afmelden",
     "error-value-expected": "Waarde vereist",
-    "grant-title": "De client {{client}} vraagt de volgende toegangsrechten",
+    "grant-title": "{{client}} vraagt de volgende toegangsrechten",
     "grant": "Toegang toestaan",
     "grant-change-title": "Verander toegangsrechten voor de client",
     "grant-change": "Toestaan",
