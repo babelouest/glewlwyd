@@ -278,6 +278,15 @@ class Register extends Component {
   render() {
     var formJsx, completeMessageJsx, buttonJsx, passwordJsx, emailJsx;
     if (this.state.registerComplete) {
+      var completeLink = [];
+      if (this.state.config["register-complete"]) {
+        for (var i=0; i<this.state.config["register-complete"].length; i++) {
+          if (this.state.config["register-complete"][i]["complete-link"] && this.state.config["register-complete"][i].name === this.state.config.params.register) {
+            completeLink.push(<a key={i} className="btn btn-primary btn-icon-right" href={this.state.config["register-complete"][i]["complete-link"]}>{i18next.t(this.state.config["register-complete"][i]["complete-link-label"])}</a>);
+          }
+        }
+      }
+      
       completeMessageJsx = 
       <div>
         <div className="alert alert-info" role="alert">
@@ -285,6 +294,7 @@ class Register extends Component {
         </div>
         <div>
           <a className="btn btn-primary" href={this.state.config.ProfileUrl}>{i18next.t("profile.register-profile-complete-link")}</a>
+          {completeLink}
         </div>
       </div>
     } else if (this.state.registerProfile) {
