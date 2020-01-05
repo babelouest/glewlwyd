@@ -49,3 +49,7 @@
 .on-top {
   z-index: 9999;
 }
+.v-center {
+  display: flex;
+  align-items: center;
+}
