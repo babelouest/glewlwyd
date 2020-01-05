@@ -13,6 +13,7 @@
     "info-some-scope-unavailable": "Some scopes aren't available",
     "warning-no-callback-url": "Warning, callback_url parameter is missing in the URL",
     "warning-error-scheme": "Scheme error",
+    "warning-not-registered-scheme": "You must register a scheme in your profile before using it for connection",
     "hello": "Hello {{name}}",
     "btn-ok": "OK",
     "btn-reload": "Reload",
