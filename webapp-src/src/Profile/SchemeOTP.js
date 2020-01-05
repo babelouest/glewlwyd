@@ -252,6 +252,11 @@ class SchemeOTP extends Component {
               <div dangerouslySetInnerHTML={{__html: this.state.qrcode}} />
             </a>
           </div>
+          <div className="col-md-8 v-center">
+            <h4>
+              {i18next.t("profile.scheme-otp-scan-qrcode-message")}
+            </h4>
+          </div>
         </div>
     }
 
