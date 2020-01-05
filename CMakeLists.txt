@@ -408,7 +408,7 @@ if (WITH_SCHEME_WEBAUTHN)
 	include(FindLdap)
 	find_package(Ldap REQUIRED)
 	if (LDAP_FOUND)
-		set(MOD_LIBS ${LDAP_LIBRARIES} "-llber -ldl")
+		set(MOD_LIBS ${MOD_LIBS} ${LDAP_LIBRARIES} "-llber -ldl")
 		include_directories(${LDAP_INCLUDE_DIRS})
 	endif ()
 	
