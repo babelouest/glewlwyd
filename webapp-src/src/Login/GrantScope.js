@@ -68,7 +68,7 @@ class GrantScope extends Component {
         <li className="list-group-item" key={index}>
           <div className="form-group form-check">
             <input type="checkbox" className="form-check-input" onChange={() => this.handleToggleGrantScope(scope)} id={"grant-" + scope.name} checked={scope.granted}/>
-            <label className="form-check-label" htmlFor={"grant-" + scope.name}>{scope.name}</label>
+            <label className="form-check-label" htmlFor={"grant-" + scope.name}>{scope.display_name}</label>
           </div>
         </li>
       );
@@ -101,9 +101,12 @@ class GrantScope extends Component {
           <button type="button" className="btn btn-primary" onClick={this.handleGrantScope}>{i18next.t("login.grant")}</button>
         </div>
       </div>
+      <hr/>
       <div className="row">
         <div className="col-md-12">
-          <hr/>
+          <h5>
+            {i18next.t("login.grant-info-message")}
+          </h5>
         </div>
       </div>
     </div>);
