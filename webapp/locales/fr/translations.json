@@ -13,6 +13,7 @@
     "info-some-scope-unavailable": "Certains scopes ne sont pas accessibles",
     "warning-no-callback-url": "Attention, le paramètre callback_url est manquant dans l'URL",
     "warning-error-scheme": "Erreur de schéma",
+    "warning-not-registered-scheme": "Vous devez enregistrer un schéma dans votre profil pour pouvoir vous connecter avec",
     "hello": "Bonjour {{name}}",
     "btn-ok": "Valider",
     "btn-reload": "Recharger",
