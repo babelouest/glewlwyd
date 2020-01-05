@@ -21,6 +21,7 @@ class App extends Component {
       loaded: false,
       lang: i18next.language,
       scope: [],
+      mustRegisterScheme: false,
       scheme: props.config.params.scheme,
       schemeListRequired: false,
       passwordRequired: false,
@@ -137,7 +138,7 @@ class App extends Component {
         if (scopeGranted.length) {
           apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURIComponent(scopeGranted.join(" ")))
           .then((schemeRes) => {
-            this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk, infoSomeScopeUnavailable: infoSomeScopeUnavailable}, () => {
+            this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk, infoSomeScopeUnavailable: infoSomeScopeUnavailable, errorScopesUnavailable: false}, () => {
               this.parseSchemes();
             });
           })
@@ -181,6 +182,7 @@ class App extends Component {
     var passwordRequired = false;
     var schemeListRequired = false;
     var scheme = false;
+    var mustRegisterScheme = false;
     for (var scopeName in this.state.scheme) {
       if (canContinue) {
         var scope = this.state.scheme[scopeName];
@@ -196,12 +198,15 @@ class App extends Component {
             var groupAuthenticated = false;
             schemeListRequired = group;
             group.forEach((curScheme) => {
+              mustRegisterScheme = false;
               if (curScheme.scheme_authenticated) {
                 groupAuthenticated = true;
                 schemeListRequired = false;
                 scheme = false;
               } else if ((!scheme || scheme.scheme_last_login < curScheme.scheme_last_login) && curScheme.scheme_registered) {
                 scheme = curScheme;
+              } else if (!curScheme.scheme_registered && !scheme) {
+                mustRegisterScheme = true;
               }
             });
             if (!groupAuthenticated) {
@@ -218,7 +223,7 @@ class App extends Component {
     if (canContinue) {
       scheme = false;
     }
-    this.setState({canContinue: canContinue, passwordRequired: passwordRequired, schemeListRequired: schemeListRequired, scheme: scheme, errorScheme: (!scheme && !canContinue)});
+    this.setState({canContinue: canContinue, passwordRequired: passwordRequired, schemeListRequired: schemeListRequired, scheme: scheme, errorScheme: (!scheme && !canContinue), mustRegisterScheme: mustRegisterScheme});
   }
 
   changeLang(e, lang) {
@@ -232,7 +237,9 @@ class App extends Component {
     if (this.state.config) {
       var body = "", message;
       if (this.state.loaded) {
-        if (this.state.errorScheme) {
+        if (this.state.mustRegisterScheme && !this.state.errorScopesUnavailable) {
+          message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-not-registered-scheme")}</div>
+        } else if (this.state.errorScheme && !this.state.errorScopesUnavailable) {
           message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-error-scheme")}</div>
         } else if (!this.state.config.params.callback_url) {
           message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-no-callback-url")}</div>
@@ -240,7 +247,7 @@ class App extends Component {
         if (this.state.errorScopesUnavailable) {
           body = <div className="alert alert-danger" role="alert">{i18next.t("login.error-scope-unavailable")}</div>
         } else {
-          if (this.state.newUser || this.state.passwordRequired) {
+          if ((this.state.newUser || this.state.passwordRequired)) {
             if (!this.state.scheme) {
               body = <PasswordForm config={this.state.config} username={this.state.login_hint} currentUser={this.state.currentUser} callbackInitProfile={this.initProfile}/>;
             } else {
