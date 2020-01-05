@@ -279,11 +279,14 @@ class Register extends Component {
     var formJsx, completeMessageJsx, buttonJsx, passwordJsx, emailJsx;
     if (this.state.registerComplete) {
       var completeLink = [];
-      for (var i=0; i<this.state.config.register.length; i++) {
-        if (this.state.config.register[i]["complete-link"] && this.state.config.register[i].name === this.state.config.params.register) {
-          completeLink.push(<a key={i} className="btn btn-primary btn-icon-right" href={this.state.config.register[i]["complete-link"]}>{i18next.t(this.state.config.register[i]["complete-link-label"])}</a>);
+      if (this.state.config["register-complete"]) {
+        for (var i=0; i<this.state.config["register-complete"].length; i++) {
+          if (this.state.config["register-complete"][i]["complete-link"] && this.state.config["register-complete"][i].name === this.state.config.params.register) {
+            completeLink.push(<a key={i} className="btn btn-primary btn-icon-right" href={this.state.config["register-complete"][i]["complete-link"]}>{i18next.t(this.state.config["register-complete"][i]["complete-link-label"])}</a>);
+          }
         }
       }
+      
       completeMessageJsx = 
       <div>
         <div className="alert alert-info" role="alert">
