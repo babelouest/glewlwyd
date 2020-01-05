@@ -159,6 +159,24 @@ You can add a link to the registration page from the login page. You need to add
 ]
 ```
 
+### Add a link at the end of the registration process
+
+When the registration process is complete, the new user can connect to its profile page. If you want to add one ore more links on this page to your applications, you must add an entry in the "register-complete" array. The entry has he following format:
+
+```json
+"register-complete": [
+  {
+    "name": "register",
+    "complete-link": "https://www.example.com/login/",
+    "complete-link-label": "profile.register-complete-link"
+  }
+]
+```
+
+- The `name` entry must correspond to your register plugin name.
+- The `complete-link` entry must correspond to your landing page.
+- The `complete-link-label` is a locales entry in the `webapp/locales/*/translation.json` files.
+
 ## Registration process for new users
 
 When a new user will register to your Glewlwyd service, depending on the configuration, the 3 following screens will appear.
