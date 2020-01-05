@@ -40,7 +40,7 @@
     "success-delete-session": "Session disabled",
     "error-delete-session": "Error disconnecting",
     "error-value-expected": "Value required",
-    "grant-title": "The client {{client}} requires acces to the following scopes",
+    "grant-title": "The client {{client}} requires access to the following scopes",
     "grant": "Grant access",
     "grant-change-title": "Change grant scope for client",
     "grant-change": "Grant",
