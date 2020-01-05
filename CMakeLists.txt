@@ -404,6 +404,13 @@ if (WITH_SCHEME_WEBAUTHN)
 			set(MOD_LIBS ${MOD_LIBS} ${LIBCBOR_LIBRARIES})
 			include_directories(${LIBCBOR_INCLUDE_DIRS})
 	endif ()
+
+	include(FindLdap)
+	find_package(Ldap REQUIRED)
+	if (LDAP_FOUND)
+		set(MOD_LIBS ${LDAP_LIBRARIES} "-llber -ldl")
+		include_directories(${LDAP_INCLUDE_DIRS})
+	endif ()
 	
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/webauthn.c)
 
