@@ -147,5 +147,7 @@
     "type": "image/jpeg"
   },
   "register": [
+  ],
+  "register-complete": [
   ]
 }
