@@ -161,7 +161,7 @@ You can add a link to the registration page from the login page. You need to add
 
 ### Add a link at the end of the registration process
 
-When the registration process is complete, the new user can connect to its profile page. If you want to add one ore more links on this page to your applications, you must add an entry in the "register-complete" array. The entry has he following format:
+When the registration process is complete, the new user can connect to its profile page. If you want to add one or more links on this page to your applications, you must add an entry in the "register-complete" array. The entry has the following format:
 
 ```json
 "register-complete": [
