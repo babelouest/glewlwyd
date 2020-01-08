@@ -20,3 +20,5 @@ webapp-src/output
 webapp-src/yarn.lock
 webapp-src/package-lock.json
 webapp-src/config.json
+.git
+.github
