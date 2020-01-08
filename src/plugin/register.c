@@ -1595,11 +1595,14 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "profile");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "profile/*");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "profile/scheme/register");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "profile/scheme/register");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "profile/scheme/register/canuse");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "profile/complete");
     o_free(((struct _register_config *)cls)->name);
     pthread_mutex_destroy(&((struct _register_config *)cls)->insert_lock);
     json_decref(((struct _register_config *)cls)->j_parameters);
+    ((struct _register_config *)cls)->j_parameters = NULL;
+    ((struct _register_config *)cls)->name = NULL;
     o_free(cls);
   }
   return G_OK;
