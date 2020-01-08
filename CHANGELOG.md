@@ -12,6 +12,8 @@
 - Add `bind_address` option in the config file
 - Add possibility for users to remove their own account
 - Add plugin `Register` to allow users to create new accounts
+- Add HTTP Basic Auth scheme
+- Multiple bugfixes and UI improvements
 
 ## 2.0.0
 
