@@ -86,7 +86,7 @@ class UserMod extends Component {
       }
       if (mod.enabled) {
         switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-off")}>
-          <i className="fas fa-toggle-off"></i>
+          <i className="fas fa-toggle-on"></i>
         </button>;
         switchButtonSmall = <a className="dropdown-item" href="#" onClick={(e) => this.switchModStatus(mod)} alt={i18next.t("admin.switch-off")}>
           <i className="fas fa-toggle-on btn-icon"></i>
@@ -94,10 +94,10 @@ class UserMod extends Component {
         </a>
       } else {
         switchButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.switchModStatus(mod)} title={i18next.t("admin.switch-on")}>
-          <i className="fas fa-toggle-on"></i>
+          <i className="fas fa-toggle-off"></i>
         </button>;
         switchButtonSmall = <a className="dropdown-item" href="#" onClick={(e) => this.switchModStatus(mod)} alt={i18next.t("admin.switch-on")}>
-          <i className="fas fa-toggle-on btn-icon"></i>
+          <i className="fas fa-toggle-off btn-icon"></i>
           {i18next.t("admin.switch-on")}
         </a>
       }
