@@ -324,11 +324,37 @@ class Register extends Component {
             <ul>
               {completeSteps}
             </ul>
+            <button className="btn btn-primary btn-icon"
+                    type="button" 
+                    disabled={true}
+                    title={i18next.t("profile.register-profile-complete")}>
+              {i18next.t("profile.register-profile-complete")}
+            </button>
+            <button className="btn btn-primary"
+                    type="button" 
+                    onClick={() => this.cancelRegistration()} 
+                    title={i18next.t("profile.register-profile-cancel")}>
+              {i18next.t("profile.register-profile-cancel")}
+            </button>
           </div>
       } else {
         completeMessage = 
           <div className="alert alert-info" role="alert">
             {i18next.t("profile.register-profile-complete-possible")}
+            <div>
+              <button className="btn btn-primary btn-icon"
+                      type="button" 
+                      onClick={() => this.completeRegistration()} 
+                      title={i18next.t("profile.register-profile-complete")}>
+                {i18next.t("profile.register-profile-complete")}
+              </button>
+              <button className="btn btn-primary"
+                      type="button" 
+                      onClick={() => this.cancelRegistration()} 
+                      title={i18next.t("profile.register-profile-cancel")}>
+                {i18next.t("profile.register-profile-cancel")}
+              </button>
+            </div>
           </div>
       }
       if (this.state.registerConfig["set-password"] !== "no") {
@@ -391,8 +417,6 @@ class Register extends Component {
                    value={this.state.registerProfile.name||""}/>
           </div>
           {passwordJsx}
-          <hr/>
-          {completeMessage}
         </form>
         buttonJsx =
           <div>
@@ -402,18 +426,6 @@ class Register extends Component {
                     disabled={this.state.invalidPassword}
                     title={i18next.t("save")}>
               {i18next.t("save")}
-            </button>
-            <button className="btn btn-primary btn-icon"
-                    type="button" 
-                    onClick={() => this.completeRegistration()} 
-                    title={i18next.t("profile.register-profile-complete")}>
-              {i18next.t("profile.register-profile-complete")}
-            </button>
-            <button className="btn btn-primary"
-                    type="button" 
-                    onClick={() => this.cancelRegistration()} 
-                    title={i18next.t("profile.register-profile-cancel")}>
-              {i18next.t("profile.register-profile-cancel")}
             </button>
           </div>
     } else if (!this.state.registerProfile) {
@@ -563,6 +575,7 @@ class Register extends Component {
     }
     return (
       <div>
+        {completeMessage}
         <div className="row">
           <div className="col-md-12">
             <h4>{i18next.t("profile.register-title")}</h4>
@@ -574,6 +587,7 @@ class Register extends Component {
             {formJsx}
           </div>
         </div>
+        <hr/>
         <div className="row">
           <div className="col-md-12">
             {buttonJsx}
