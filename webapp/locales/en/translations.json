@@ -831,6 +831,7 @@
     "register-password-ph": "Password must have at least {{car}} characters",
     "register-confirm-password-label": "Confirm password",
     "register-confirm-password-ph": "Both passwords must be identical",
+    "register-password-set-ph": "Password saved",
     "register-password-error-not-match": "Passwords don't match",
     "register-profile-complete": "Complete registration",
     "register-profile-cancel": "Cancel registration",
