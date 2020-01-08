@@ -13,7 +13,9 @@ class Navbar extends Component {
       curNav: "profile",
       loggedIn: props.loggedIn,
       schemeList: props.schemeList,
-      profileList: props.profileList
+      profileList: props.profileList,
+      dataHighlight: props.dataHighlight,
+      schemeHighlight: props.schemeHighlight
     }
 
     this.navigate = this.navigate.bind(this);
@@ -26,7 +28,9 @@ class Navbar extends Component {
     this.setState({
       loggedIn: nextProps.loggedIn, 
       schemeList: nextProps.schemeList,
-      profileList: nextProps.profileList
+      profileList: nextProps.profileList,
+      dataHighlight: nextProps.dataHighlight,
+      schemeHighlight: nextProps.schemeHighlight
     });
   }
   
@@ -97,7 +101,7 @@ class Navbar extends Component {
   }
 
 	render() {
-    var langList = [], schemeList = [], profileList = [];
+    var langList = [], schemeList = [], profileList = [], dataHighlight;
     var profileDropdown, logoutButton;
     var passwordJsx, sessionJsx, profileJsx;
     this.state.config.lang.forEach((lang, i) => {
@@ -108,10 +112,14 @@ class Navbar extends Component {
       }
     });
     this.state.schemeList.forEach((scheme, index) => {
+      var highlight = "";
+      if (this.state.schemeHighlight[scheme.name]) {
+        highlight = " required-field";;
+      }
       if (scheme.module !== "retype-password" && scheme.module !== "email") { // Because schemes retype-password and e-mail code have no user configuration
         schemeList.push(
           <li className={"nav-item" + (this.state.curNav===scheme.name?" active":"")} key={index}>
-            <a className="nav-link" href="#" onClick={(e) => this.navigate(e, scheme.name, scheme.module)}>{scheme.display_name||scheme.name}</a>
+            <a className={"nav-link"+highlight} href="#" onClick={(e) => this.navigate(e, scheme.name, scheme.module)}>{scheme.display_name||scheme.name}</a>
           </li>
         );
       }
@@ -144,9 +152,11 @@ class Navbar extends Component {
         </div>
       </div>;
       logoutButton = 
-        <button type="button" className="btn btn-secondary" onClick={this.toggleLogin}>
+        <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t((this.state.loggedIn?"title-logout":"title-login"))}>
           <i className="fas fa-sign-in-alt btn-icon"></i>
         </button>;
+    } else if (this.state.dataHighlight) {
+      dataHighlight = " required-field";
     }
 		return (
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
@@ -160,7 +170,7 @@ class Navbar extends Component {
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav mr-auto">
             <li className={"nav-item" + (this.state.curNav==="profile"?" active":"")}>
-              <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "profile", null)}>{i18next.t("profile.menu-user")}</a>
+              <a className={"nav-link"+dataHighlight} href="#" onClick={(e) => this.navigate(e, "profile", null)}>{i18next.t("profile.menu-user")}</a>
             </li>
             {sessionJsx}
             {passwordJsx}
