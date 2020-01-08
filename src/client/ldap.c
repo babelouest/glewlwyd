@@ -844,7 +844,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
                   y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (%s)", json_string_value(json_object_get(j_format, "property")), i);
                   has_error = 1;
                 }
-              } else if (json_is_string(j_property) && json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true()) {
+              } else if (json_string_length(j_property) && json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true()) {
                 mods[i] = o_malloc(sizeof(LDAPMod));
                 if (mods[i] != NULL) {
                   mods[i]->mod_values = o_malloc(2 * sizeof(char *));
@@ -963,14 +963,14 @@ static json_t * get_client_from_result(json_t * j_params, json_t * j_properties_
                   value_enc[value_enc_len] = '\0';
                   json_object_set_new(j_client, field, json_stringn((const char *)value_enc, value_enc_len));
                 } else {
-                  y_log_message(Y_LOG_LEVEL_WARNING, "get_user_from_result - Error o_base64_encode for LDAP property '%s' (2)", json_string_value(j_property));
+                  y_log_message(Y_LOG_LEVEL_WARNING, "get_client_from_result - Error o_base64_encode for LDAP property '%s' (2)", json_string_value(j_property));
                 }
                 o_free(value_enc);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_user_from_result - Error allocating resources for value_enc");
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_client_from_result - Error allocating resources for value_enc");
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_WARNING, "get_user_from_result - Error o_base64_encode for LDAP property '%s' (1)", json_string_value(j_property));
+              y_log_message(Y_LOG_LEVEL_WARNING, "get_client_from_result - Error o_base64_encode for LDAP property '%s' (1)", json_string_value(j_property));
             }
           } else {
             json_object_set_new(j_client, field, json_stringn(result_values[0]->bv_val, result_values[0]->bv_len));
@@ -987,14 +987,14 @@ static json_t * get_client_from_result(json_t * j_params, json_t * j_properties_
                     value_enc[value_enc_len] = '\0';
                     json_array_append_new(json_object_get(j_client, field), json_stringn((const char *)value_enc, value_enc_len));
                   } else {
-                    y_log_message(Y_LOG_LEVEL_WARNING, "get_user_from_result - Error o_base64_encode for LDAP property '%s' (2)", json_string_value(j_property));
+                    y_log_message(Y_LOG_LEVEL_WARNING, "get_client_from_result - Error o_base64_encode for LDAP property '%s' (2)", json_string_value(j_property));
                   }
                   o_free(value_enc);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_user_from_result - Error allocating resources for value_enc");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_client_from_result - Error allocating resources for value_enc");
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_WARNING, "get_user_from_result - Error o_base64_encode for LDAP property '%s' (1)", json_string_value(j_property));
+                y_log_message(Y_LOG_LEVEL_WARNING, "get_client_from_result - Error o_base64_encode for LDAP property '%s' (1)", json_string_value(j_property));
               }
             } else {
               json_array_append_new(json_object_get(j_client, field), json_stringn(result_values[i]->bv_val, result_values[i]->bv_len));
@@ -1235,12 +1235,12 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
     j_return = json_pack("{si}", "result", G_OK);
   } else if (check_result_value(j_properties, G_ERROR_PARAM)) {
     error_message = json_dumps(json_object_get(j_properties, "error"), JSON_COMPACT);
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error parsing parameters");
+    y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error parsing parameters");
     y_log_message(Y_LOG_LEVEL_ERROR, error_message);
     o_free(error_message);
     j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_properties, "error"));
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error is_user_database_parameters_valid");
+    y_log_message(Y_LOG_LEVEL_ERROR, "client_module_init database - Error is_client_database_parameters_valid");
     j_return = json_pack("{sis[s]}", "result", G_ERROR, "error", "internal error");
   }
   json_decref(j_properties);
@@ -1484,7 +1484,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
     } else if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && client_id == NULL) {
       json_array_append_new(j_result, json_string("client_id is mandatory on update mode"));
     }
-    if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) {
+    if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE && json_object_get(j_client, "scope") != NULL) {
       if (!json_is_array(json_object_get(j_client, "scope"))) {
         json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
       } else {
@@ -1542,11 +1542,11 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
             }
           }
         } else {
-          if (!json_is_string(j_element) || !json_string_length(j_element)) {
+          if (!json_is_string(j_element)) {
             message = msprintf("%s must contain a non empty string value", property);
             json_array_append_new(j_result, json_string(message));
             o_free(message);
-          } else if (0 == o_strcmp("base64", json_string_value(json_object_get(j_format, "convert")))) {
+          } else if (0 == o_strcmp("base64", json_string_value(json_object_get(j_format, "convert"))) && json_string_length(j_element)) {
             if (!o_base64_decode((const unsigned char *)json_string_value(j_element), json_string_length(j_element), NULL, &len)) {
               message = msprintf("%s must contain a base64 encoded string value", property);
               json_array_append_new(j_result, json_string(message));
