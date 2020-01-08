@@ -438,7 +438,7 @@ static int is_authorization_type_enabled(struct _oauth2_config * config, uint au
   return (authorization_type <= 4)?config->auth_type_enabled[authorization_type]:0;
 }
 
-static json_t * check_client_valid(struct _oauth2_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * redirect_uri, unsigned short authorization_type) {
+static json_t * check_client_valid(struct _oauth2_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * redirect_uri, unsigned short authorization_type, int implicit_flow) {
   json_t * j_client, * j_element = NULL, * j_return;
   int uri_found, authorization_type_enabled;
   size_t index = 0;
@@ -452,7 +452,7 @@ static json_t * check_client_valid(struct _oauth2_config * config, const char * 
   }
   j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, client_id, client_header_password);
   if (check_result_value(j_client, G_OK)) {
-    if (client_header_password != NULL && json_object_get(json_object_get(j_client, "client"), "confidential") != json_true()) {
+    if (!implicit_flow && client_header_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, confidential client must be authentified with its password");
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     } else {
@@ -1169,7 +1169,7 @@ static int update_refresh_token(struct _oauth2_config * config, json_int_t gpgr_
 static int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
   char * authorization_code = NULL, * redirect_url, * issued_for, * state_param = NULL, * state_encoded;
-  json_t * j_session, * j_client = check_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE);
+  json_t * j_session, * j_client = check_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, 1);
   
   if (u_map_get(request->map_url, "state") != NULL) {
     state_encoded = url_encode(u_map_get(request->map_url, "state"));
@@ -1291,7 +1291,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
   if (code == NULL || client_id == NULL || redirect_uri == NULL) {
     response->status = 400;
   } else {
-    j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, redirect_uri, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE);
+    j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, redirect_uri, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, 0);
     if (check_result_value(j_client, G_OK)) {
       j_code = validate_authorization_code(config, code, client_id, redirect_uri);
       if (check_result_value(j_code, G_OK)) {
@@ -1385,7 +1385,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
 static int check_auth_type_implicit_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
   char * redirect_url, * issued_for, * state_encoded = NULL, * state_param = NULL;
-  json_t * j_session, * j_client = check_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT);
+  json_t * j_session, * j_client = check_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT, 1);
   char * access_token;
   time_t now;
   
@@ -1723,7 +1723,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
     j_refresh = validate_refresh_token(config, refresh_token);
     if (check_result_value(j_refresh, G_OK)) {
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
-        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN);
+        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN, 0);
         if (!check_result_value(j_client, G_OK)) {
           has_issues = 1;
         } else if (request->auth_basic_user == NULL && request->auth_basic_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
@@ -1807,7 +1807,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
     j_refresh = validate_refresh_token(config, refresh_token);
     if (check_result_value(j_refresh, G_OK)) {
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
-        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN);
+        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN, 0);
         if (!check_result_value(j_client, G_OK)) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 delete_refresh_token - client '%s' is invalid", request->auth_basic_user);
           has_issues = 1;
