@@ -82,6 +82,44 @@ START_TEST(test_oauth2_code_client_confidential_redirect_uri_invalid)
 }
 END_TEST
 
+START_TEST(test_oauth2_code_client_confidential_credentials_invalid)
+{
+  char * url = msprintf("%s/glwd/token/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "authorization_code");
+  u_map_put(&body, "client_id", CLIENT);
+  u_map_put(&body, "redirect_uri", REDIRECT_URI);
+  u_map_put(&body, "code", code);
+  
+  o_free(user_req.http_verb);
+  user_req.http_verb = NULL;
+  int res = run_simple_test(&user_req, "POST", url, CLIENT, "error", NULL, &body, 403, NULL, NULL, NULL);
+  o_free(url);
+  u_map_clean(&body);
+  ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(test_oauth2_code_client_confidential_client_id_inconsistent)
+{
+  char * url = msprintf("%s/glwd/token/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "authorization_code");
+  u_map_put(&body, "client_id", CLIENT);
+  u_map_put(&body, "redirect_uri", REDIRECT_URI);
+  u_map_put(&body, "code", code);
+  
+  o_free(user_req.http_verb);
+  user_req.http_verb = NULL;
+  int res = run_simple_test(&user_req, "POST", url, "error", CLIENT_PASSWORD, NULL, &body, 403, NULL, NULL, NULL);
+  o_free(url);
+  u_map_clean(&body);
+  ck_assert_int_eq(res, 1);
+}
+END_TEST
+
 START_TEST(test_oauth2_code_client_confidential_ok)
 {
   char * url = msprintf("%s/glwd/token/", SERVER_URI);
@@ -111,6 +149,8 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oauth2_code_client_confidential_code_invalid);
   tcase_add_test(tc_core, test_oauth2_code_client_confidential_client_invalid);
   tcase_add_test(tc_core, test_oauth2_code_client_confidential_redirect_uri_invalid);
+  tcase_add_test(tc_core, test_oauth2_code_client_confidential_credentials_invalid);
+  tcase_add_test(tc_core, test_oauth2_code_client_confidential_client_id_inconsistent);
   tcase_add_test(tc_core, test_oauth2_code_client_confidential_ok);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
