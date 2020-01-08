@@ -419,7 +419,7 @@ class LDAPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-ldap-username-property">{i18next.t("admin.mod-ldap-username-property")}</label>
             </div>
-            <input type="text" className={this.state.errorList["username-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-username-property" onChange={(e) => this.changeParam(e, "username-property", true)} value={this.state.mod.parameters["username-property"]||""} placeholder={i18next.t("admin.mod-ldap-username-property-ph")} />
+            <input type="text" className={this.state.errorList["username-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-username-property" onChange={(e) => this.changeParam(e, "username-property", !this.state.mod.readonly)} value={this.state.mod.parameters["username-property"]||""} placeholder={i18next.t("admin.mod-ldap-username-property-ph")} />
           </div>
           {this.state.errorList["username-property"]?<span className="error-input">{this.state.errorList["username-property"]}</span>:""}
         </div>;
@@ -429,7 +429,7 @@ class LDAPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-ldap-email-property">{i18next.t("admin.mod-ldap-email-property")}</label>
             </div>
-            <input type="text" className="form-control" id="mod-ldap-email-property" onChange={(e) => this.changeParam(e, "email-property", true)} value={this.state.mod.parameters["email-property"]||""} placeholder={i18next.t("admin.mod-ldap-email-property-ph")} />
+            <input type="text" className="form-control" id="mod-ldap-email-property" onChange={(e) => this.changeParam(e, "email-property", !this.state.mod.readonly)} value={this.state.mod.parameters["email-property"]||""} placeholder={i18next.t("admin.mod-ldap-email-property-ph")} />
           </div>
         </div>;
     } else {
@@ -439,7 +439,7 @@ class LDAPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-ldap-client_id-property">{i18next.t("admin.mod-ldap-client_id-property")}</label>
             </div>
-            <input type="text" className={this.state.errorList["client_id-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-username-property" onChange={(e) => this.changeParam(e, "client_id-property", true)} value={this.state.mod.parameters["client_id-property"]||""} placeholder={i18next.t("admin.mod-ldap-client_id-property-ph")} />
+            <input type="text" className={this.state.errorList["client_id-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-username-property" onChange={(e) => this.changeParam(e, "client_id-property", !this.state.mod.readonly)} value={this.state.mod.parameters["client_id-property"]||""} placeholder={i18next.t("admin.mod-ldap-client_id-property-ph")} />
           </div>
           {this.state.errorList["client_id-property"]?<span className="error-input">{this.state.errorList["client_id-property"]}</span>:""}
         </div>;
@@ -449,7 +449,7 @@ class LDAPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-ldap-description-property">{i18next.t("admin.mod-ldap-description-property")}</label>
             </div>
-            <input type="text" className="form-control" id="mod-ldap-description-property" onChange={(e) => this.changeParam(e, "description-property", true)} value={this.state.mod.parameters["description-property"]||""} placeholder={i18next.t("admin.mod-ldap-description-property-ph")} />
+            <input type="text" className="form-control" id="mod-ldap-description-property" onChange={(e) => this.changeParam(e, "description-property", !this.state.mod.readonly)} value={this.state.mod.parameters["description-property"]||""} placeholder={i18next.t("admin.mod-ldap-description-property-ph")} />
           </div>
         </div>;
       confidentialJsx = 
@@ -458,7 +458,7 @@ class LDAPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-ldap-confidential-property">{i18next.t("admin.mod-ldap-confidential-property")}</label>
             </div>
-            <input type="text" className="form-control" id="mod-ldap-confidential-property" onChange={(e) => this.changeParam(e, "confidential-property", true)} value={this.state.mod.parameters["confidential-property"]||""} placeholder={i18next.t("admin.mod-ldap-confidential-property-ph")} />
+            <input type="text" className="form-control" id="mod-ldap-confidential-property" onChange={(e) => this.changeParam(e, "confidential-property", !this.state.mod.readonly)} value={this.state.mod.parameters["confidential-property"]||""} placeholder={i18next.t("admin.mod-ldap-confidential-property-ph")} />
           </div>
         </div>;
     }
@@ -541,7 +541,7 @@ class LDAPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-ldap-name-property">{i18next.t("admin.mod-ldap-name-property")}</label>
             </div>
-            <input type="text" className="form-control" id="mod-ldap-name-property" onChange={(e) => this.changeParam(e, "name-property", true)} value={this.state.mod.parameters["name-property"]||""} placeholder={i18next.t("admin.mod-ldap-name-property-ph")} />
+            <input type="text" className="form-control" id="mod-ldap-name-property" onChange={(e) => this.changeParam(e, "name-property", !this.state.mod.readonly)} value={this.state.mod.parameters["name-property"]||""} placeholder={i18next.t("admin.mod-ldap-name-property-ph")} />
           </div>
         </div>
         <div className="form-group">
@@ -549,7 +549,7 @@ class LDAPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-ldap-scope-property">{i18next.t("admin.mod-ldap-scope-property")}</label>
             </div>
-            <input type="text" className={this.state.errorList["scope-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-scope-property" onChange={(e) => this.changeParam(e, "scope-property", true)} value={this.state.mod.parameters["scope-property"]||""} placeholder={i18next.t("admin.mod-ldap-scope-property-ph")} />
+            <input type="text" className={this.state.errorList["scope-property"]?"form-control is-invalid":"form-control"} id="mod-ldap-scope-property" onChange={(e) => this.changeParam(e, "scope-property", !this.state.mod.readonly)} value={this.state.mod.parameters["scope-property"]||""} placeholder={i18next.t("admin.mod-ldap-scope-property-ph")} />
           </div>
           {this.state.errorList["scope-property"]?<span className="error-input">{this.state.errorList["scope-property"]}</span>:""}
         </div>
