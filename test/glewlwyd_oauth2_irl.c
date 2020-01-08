@@ -155,6 +155,8 @@ START_TEST(test_oauth2_irl_run_workflow)
   u_map_put(&body, "redirect_uri", json_string_value(json_array_get(json_object_get(json_object_get(j_params, "client"), "redirect_uri"), 0)));
   u_map_put(&body, "code", code);
 
+  ck_assert_int_eq(run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", url, client_id, "error", NULL, &body, 403, NULL, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(NULL, "POST", url, client_id, client_password, NULL, &body, 200, NULL, "refresh_token", NULL), 1);
   u_map_clean(&body);
   ulfius_clean_response(&resp);
