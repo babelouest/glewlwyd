@@ -34,10 +34,12 @@ class Register extends Component {
       validMessage: false,
       invalidEmailMessage: true,
       invalidPassword: false,
-      registerComplete: false
+      registerComplete: false,
+      modifyPassword: false
     };
     
     this.confirmCancelRegistration = this.confirmCancelRegistration.bind(this);
+    this.updatePassword = this.updatePassword.bind(this);
     
     document.title = i18next.t("profile.register-title");
   }
@@ -197,7 +199,7 @@ class Register extends Component {
           }
         })
         .always(() => {
-          this.setState({password: "", passwordConfirm: ""});
+          this.setState({password: "", passwordConfirm: "", modifyPassword: false});
         });
       } else {
         messageDispatcher.sendMessage('App', {type: "registration"});
@@ -208,6 +210,43 @@ class Register extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
       }
     });
+  }
+  
+  saveName(e) {
+    e.preventDefault();
+    
+    apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile", "PUT", this.state.registerProfile)
+    .then(() => {
+      messageDispatcher.sendMessage('App', {type: "registration"});
+      messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-profile-saved")});
+    })
+    .fail((err) => {
+      if (err.status !== 400) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
+    });
+  }
+  
+  savePassword(e) {
+    e.preventDefault();
+    
+    if (!this.state.invalidPassword && this.state.password.length >= (this.state.config.PasswordMinLength||8)) {
+      apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/password", "POST", {password: this.state.password})
+      .then(() => {
+        messageDispatcher.sendMessage('App', {type: "registration"});
+        messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-profile-saved")});
+      })
+      .fail(() => {
+        if (err.status !== 400) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        }
+      })
+      .always(() => {
+        this.setState({password: "", passwordConfirm: "", modifyPassword: false});
+      });
+    } else {
+      messageDispatcher.sendMessage('App', {type: "registration"});
+    }
   }
   
   sendVerificationEmail() {
@@ -275,8 +314,12 @@ class Register extends Component {
     messageDispatcher.sendMessage('App', {type: "closeConfirm"});
   }
   
+  updatePassword() {
+    this.setState({modifyPassword: true});
+  }
+  
   render() {
-    var formJsx, completeMessageJsx, buttonJsx, passwordJsx, emailJsx;
+    var formJsx, completeMessageJsx, passwordJsx, emailJsx;
     if (this.state.registerComplete) {
       var completeLink = [];
       if (this.state.config["register-complete"]) {
@@ -319,7 +362,7 @@ class Register extends Component {
       }
       if (completeSteps.length) {
         completeMessage =
-          <div className="alert alert-info" role="alert">
+          <div className="alert alert-danger" role="alert">
             {i18next.t("profile.register-profile-complete-steps")}
             <ul>
               {completeSteps}
@@ -358,26 +401,47 @@ class Register extends Component {
           </div>
       }
       if (this.state.registerConfig["set-password"] !== "no") {
+        var editButton = "";
+        if (!this.state.modifyPassword && this.state.registerProfile.password_set) {
+          editButton = 
+            <button type="button" className="btn btn-outline-secondary btn-sm btn-icon-right" onClick={this.updatePassword}>
+              <i className="fas fa-edit"></i>
+            </button>
+        }
         passwordJsx =
         <div>
           <hr/>
-          <label htmlFor="password-input">{i18next.t("profile.register-password-label")}</label>
+          <label htmlFor="password-input">
+            {i18next.t("profile.register-password-label")}
+            {editButton}
+          </label>
           <div className="input-group">
             <input type="password" 
                    className={"form-control"} 
                    id="password-input"
-                   placeholder={i18next.t("profile.register-password-ph", {car: this.state.config.PasswordMinLength||8})} 
+                   placeholder={((!this.state.modifyPassword && this.state.registerProfile.password_set)?i18next.t("profile.register-password-set-ph"):i18next.t("profile.register-password-ph", {car: this.state.config.PasswordMinLength||8}))} 
+                   disabled={!this.state.modifyPassword && this.state.registerProfile.password_set}
                    onChange={(e) => this.changePassword(e)} 
                    value={this.state.password}/>
           </div>
           <label htmlFor="confirm-password-input">{i18next.t("profile.register-confirm-password-label")}</label>
-          <div className="input-group">
+          <div className="input-group mb-3">
             <input type="password" 
                    className={"form-control"} 
                    id="confirm-password-input"
-                   placeholder={i18next.t("profile.register-confirm-password-ph")} 
+                   disabled={!this.state.modifyPassword && this.state.registerProfile.password_set}
+                   placeholder={i18next.t((!this.state.modifyPassword && this.state.registerProfile.password_set?"profile.register-password-set-ph":"profile.register-confirm-password-ph"))} 
                    onChange={(e) => this.changeConfirmPassword(e)} 
                    value={this.state.passwordConfirm}/>
+            <div className="input-group-append">
+              <button className="btn btn-secondary btn-icon" 
+                      type="submit" 
+                      onClick={(e) => this.savePassword(e)}
+                      disabled={this.state.invalidPassword}
+                      title={i18next.t("save")}>
+                {i18next.t("save")}
+              </button>
+            </div>
           </div>
           {this.state.invalidPassword?<span className="badge badge-danger">{this.state.invalidPassword}</span>:""}
         </div>
@@ -408,26 +472,24 @@ class Register extends Component {
           {emailJsx}
           <hr/>
           <label htmlFor="name-input">{i18next.t("profile.register-name-label")}</label>
-          <div className="input-group">
+          <div className="input-group mb-3">
             <input type="text" 
                    className={"form-control"} 
                    id="name-input"
                    placeholder={i18next.t("profile.register-name-ph")} 
                    onChange={(e) => this.changeName(e)} 
                    value={this.state.registerProfile.name||""}/>
+            <div className="input-group-append">
+              <button className="btn btn-secondary btn-icon" 
+                      type="submit" 
+                      onClick={(e) => this.saveName(e)}
+                      title={i18next.t("save")}>
+                {i18next.t("save")}
+              </button>
+            </div>
           </div>
           {passwordJsx}
         </form>
-        buttonJsx =
-          <div>
-            <button className="btn btn-secondary btn-icon" 
-                    type="submit" 
-                    onClick={(e) => this.saveProfile(e)}
-                    disabled={this.state.invalidPassword}
-                    title={i18next.t("save")}>
-              {i18next.t("save")}
-            </button>
-          </div>
     } else if (!this.state.registerProfile) {
       if (this.state.registerConfig["verify-email"]) {
         var buttonVerifyJsx, codeInputJsx;
@@ -575,7 +637,6 @@ class Register extends Component {
     }
     return (
       <div>
-        {completeMessage}
         <div className="row">
           <div className="col-md-12">
             <h4>{i18next.t("profile.register-title")}</h4>
@@ -588,11 +649,7 @@ class Register extends Component {
           </div>
         </div>
         <hr/>
-        <div className="row">
-          <div className="col-md-12">
-            {buttonJsx}
-          </div>
-        </div>
+        {completeMessage}
       </div>
     );
   }
