@@ -192,11 +192,23 @@ class RegisterParams extends Component {
   }
   
   addScheme() {
+    var added = false;
     var mod = this.state.mod;
-    mod.parameters["schemes"].push({
-      "module": "",
-      "name": "",
-      "register": "yes"
+    this.state.modSchemes.forEach((schemeMod, indexMod) => {
+      var used = false;
+      this.state.mod.parameters["schemes"].forEach(curScheme => {
+        if (schemeMod.name === curScheme["name"]) {
+          used = true;
+        }
+      });
+      if (!used && !added) {
+        mod.parameters["schemes"].push({
+          "module": schemeMod.module,
+          "name": schemeMod.name,
+          "register": "yes"
+        });
+        added = true;
+      }
     });
     this.setState({mod: mod});
   }
@@ -329,30 +341,30 @@ class RegisterParams extends Component {
       schemeList.push(
         <div className="form-group" key={index}>
           <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor={"mod-register-name-"+index}>{i18next.t("admin.mod-register-scheme-name")}</label>
-            </div>
-            <div className="dropdown">
-              <button className="btn btn-secondary dropdown-toggle" type="button" id={"mod-register-name-"+index} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                {scheme["name"]}
-              </button>
-              <div className="dropdown-menu" aria-labelledby="mod-register-name">
-                {schemeModList}
+            <label className="input-group-text" htmlFor={"mod-register-name-"+index}>{i18next.t("admin.mod-register-scheme-name")}</label>
+            <div className="input-group-append">
+              <div className="dropdown">
+                <button className="btn btn-secondary dropdown-toggle" type="button" id={"mod-register-name-"+index} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  {scheme["name"]}
+                </button>
+                <div className="dropdown-menu" aria-labelledby="mod-register-name">
+                  {schemeModList}
+                </div>
               </div>
             </div>
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor={"mod-register-scheme-register-"+index}>{i18next.t("admin.mod-register-scheme-register")}</label>
-            </div>
-            <div className="dropdown">
-              <button className="btn btn-secondary dropdown-toggle" type="button" id={"mod-register-scheme-register-"+index} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                {i18next.t("admin.mod-register-"+(scheme["register"]==="always"?"yes":"no"))}
-              </button>
-              <div className="dropdown-menu" aria-labelledby="mod-register-scheme-register">
-                <a className={"dropdown-item"+(scheme["register"]==="always"?" active":"")} href="#" onClick={(e) => this.setSchemeRegister(e, index, "always")}>{i18next.t("admin.mod-register-yes")}</a>
-                <a className={"dropdown-item"+(scheme["register"]==="yes"?" active":"")} href="#" onClick={(e) => this.setSchemeRegister(e, index, "yes")}>{i18next.t("admin.mod-register-no")}</a>
+            <label className="input-group-text btn-icon-left" htmlFor={"mod-register-scheme-register-"+index}>{i18next.t("admin.mod-register-scheme-register")}</label>
+            <div className="input-group-append">
+              <div className="dropdown">
+                <button className="btn btn-secondary dropdown-toggle" type="button" id={"mod-register-scheme-register-"+index} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  {i18next.t("admin.mod-register-"+(scheme["register"]==="always"?"yes":"no"))}
+                </button>
+                <div className="dropdown-menu" aria-labelledby="mod-register-scheme-register">
+                  <a className={"dropdown-item"+(scheme["register"]==="always"?" active":"")} href="#" onClick={(e) => this.setSchemeRegister(e, index, "always")}>{i18next.t("admin.mod-register-yes")}</a>
+                  <a className={"dropdown-item"+(scheme["register"]==="yes"?" active":"")} href="#" onClick={(e) => this.setSchemeRegister(e, index, "yes")}>{i18next.t("admin.mod-register-no")}</a>
+                </div>
               </div>
             </div>
-            <button className="btn btn-secondary" type="button" onClick={() => this.deleteScheme(index)}>
+            <button className="btn btn-secondary btn-icon-right" type="button" onClick={() => this.deleteScheme(index)}>
               <i className="fas fa-trash"></i>
             </button>
           </div>
