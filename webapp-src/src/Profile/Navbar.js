@@ -101,7 +101,7 @@ class Navbar extends Component {
   }
 
 	render() {
-    var langList = [], schemeList = [], profileList = [], dataHighlight;
+    var langList = [], schemeList = [], profileList = [], dataHighlight = "";
     var profileDropdown, logoutButton;
     var passwordJsx, sessionJsx, profileJsx;
     this.state.config.lang.forEach((lang, i) => {
