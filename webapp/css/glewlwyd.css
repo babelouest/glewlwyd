@@ -53,3 +53,8 @@
   display: flex;
   align-items: center;
 }
+.required-field::before {
+  margin-right: 5px;
+  content: "*";
+  color: red;
+}
