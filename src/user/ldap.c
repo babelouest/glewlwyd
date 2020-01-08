@@ -134,7 +134,7 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params, int readonly) {
         json_array_append_new(j_error, json_string("filter is mandatory and must be a string"));
       }
       if (readonly) {
-        if (json_is_string(json_object_get(j_params, "username-property")) && !json_string_length(json_object_get(j_params, "username-property"))) {
+        if (json_object_get(j_params, "username-property") == NULL || !json_string_length(json_object_get(j_params, "username-property"))) {
           json_array_append_new(j_error, json_string("username-property is mandatory and must be a non empty string"));
         }
       } else {
@@ -151,7 +151,7 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params, int readonly) {
         }
       }
       if (readonly) {
-        if (json_is_string(json_object_get(j_params, "scope-property")) && !json_string_length(json_object_get(j_params, "scope-property"))) {
+        if (json_object_get(j_params, "scope-property") != NULL || !json_string_length(json_object_get(j_params, "scope-property"))) {
           json_array_append_new(j_error, json_string("scope-property is mandatory and must be a non empty string"));
         }
       } else {
@@ -183,7 +183,7 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params, int readonly) {
         }
       }
       if (readonly) {
-        if (json_is_string(json_object_get(j_params, "name-property")) && !json_string_length(json_object_get(j_params, "name-property"))) {
+        if (json_object_get(j_params, "name-property") == NULL ||  !json_string_length(json_object_get(j_params, "name-property"))) {
           json_array_append_new(j_error, json_string("name-property is mandatory and must be a non empty string"));
         }
       } else {
@@ -200,7 +200,7 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params, int readonly) {
         }
       }
       if (readonly) {
-        if (json_is_string(json_object_get(j_params, "email-property")) && !json_string_length(json_object_get(j_params, "email-property"))) {
+        if (json_object_get(j_params, "email-property") == NULL || !json_string_length(json_object_get(j_params, "email-property"))) {
           json_array_append_new(j_error, json_string("email-property is optional and must be a non empty string"));
         }
       } else {
