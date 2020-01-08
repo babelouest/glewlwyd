@@ -28,7 +28,7 @@
 
 json_t * auth_check_client_credentials(struct config_elements * config, const char * client_id, const char * password) {
   int res;
-  json_t * j_return = NULL, * j_module_list = get_client_module_list(config), * j_module;
+  json_t * j_return = NULL, * j_module_list = get_client_module_list(config), * j_module, * j_client;
   struct _client_module_instance * client_module;
   size_t index;
   
@@ -38,14 +38,20 @@ json_t * auth_check_client_credentials(struct config_elements * config, const ch
         client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
         if (client_module != NULL) {
           if (client_module->enabled) {
-            res = client_module->module->client_module_check_password(config->config_m, client_id, password, client_module->cls);
-            if (res == G_OK) {
-              j_return = json_pack("{si}", "result", G_OK);
-            } else if (res == G_ERROR_UNAUTHORIZED) {
-              j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-            } else if (res != G_ERROR_NOT_FOUND) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_client_credentials - Error, client_module_check_password for module '%s', skip", client_module->name);
+            j_client = client_module->module->client_module_get(config->config_m, client_id, client_module->cls);
+            if (check_result_value(j_client, G_OK)) {
+              res = client_module->module->client_module_check_password(config->config_m, client_id, password, client_module->cls);
+              if (res == G_OK) {
+                j_return = json_pack("{si}", "result", G_OK);
+              } else if (res == G_ERROR_UNAUTHORIZED) {
+                j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+              } else if (res != G_ERROR_NOT_FOUND) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_client_credentials - Error, client_module_check_password for module '%s', skip", client_module->name);
+	      }
+            } else if (!check_result_value(j_client, G_ERROR_NOT_FOUND)) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_client_credentials - Error, client_module_get for module '%s', skip", client_module->name);
             }
+	    json_decref(j_client);
           }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_client_credentials - Error, client_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
