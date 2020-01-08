@@ -88,16 +88,16 @@ test_%_irl: %_irl
 		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM_FILE); \
 		mv $^.log $^-$(PARAM_FILE).log; \
 	elif [ "$(MEMCHECK)" = "0" ]; then \
-	  LD_LIBRARY_PATH=. ./$^ $(PARAM_FILE); \
+		LD_LIBRARY_PATH=. ./$^ $(PARAM_FILE); \
 	else \
-	  CK_FORK=no LD_LIBRARY_PATH=. $(VALGRIND_COMMAND) ./$^ $(PARAM_FILE) 2>valgrind-$@.txt; \
+		CK_FORK=no LD_LIBRARY_PATH=. $(VALGRIND_COMMAND) ./$^ $(PARAM_FILE) 2>valgrind-$@.txt; \
 	fi
 
 test_%: %
 	@if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
 		LD_LIBRARY_PATH=. ./run_test.sh ./$^ $(PARAM); \
 	elif [ "$(MEMCHECK)" = "0" ]; then \
-	  LD_LIBRARY_PATH=. ./$^ $(PARAM); \
+		LD_LIBRARY_PATH=. ./$^ $(PARAM); \
 	else \
-	  CK_FORK=no LD_LIBRARY_PATH=. $(VALGRIND_COMMAND) ./$^ $(PARAM) 2>valgrind-$@.txt; \
+		CK_FORK=no LD_LIBRARY_PATH=. $(VALGRIND_COMMAND) ./$^ $(PARAM) 2>valgrind-$@.txt; \
 	fi
