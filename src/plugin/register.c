@@ -377,7 +377,7 @@ static json_t * register_verify_email_code(struct _register_config * config, con
                                       "raw",
                                       expires_at_clause,
                                     "gprs_code_hash",
-                                    "VERIFIED"
+                                    "VERIFIED",
                                   "where",
                                     "gprs_plugin_name",
                                     config->name,
