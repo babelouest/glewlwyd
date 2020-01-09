@@ -258,7 +258,7 @@ static json_t * register_verify_email_token(struct _register_config * config, co
               } else { // HOEL_DB_TYPE_SQLITE
                 expires_at_clause = msprintf("%u", (now + (unsigned int)json_integer_value(json_object_get(config->j_parameters, "session-duration"))));
               }
-              j_query = json_pack("{sss{sss{ss}}s{sssO}}",
+              j_query = json_pack("{sss{sss{ss}ss}s{sssO}}",
                                   "table",
                                   GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION,
                                   "set",
@@ -267,6 +267,8 @@ static json_t * register_verify_email_token(struct _register_config * config, co
                                     "gprs_expires_at",
                                       "raw",
                                       expires_at_clause,
+                                    "gprs_token_hash",
+                                    "VERIFIED",
                                   "where",
                                     "gprs_plugin_name",
                                     config->name,
@@ -365,7 +367,7 @@ static json_t * register_verify_email_code(struct _register_config * config, con
               } else { // HOEL_DB_TYPE_SQLITE
                 expires_at_clause = msprintf("%u", (now + (unsigned int)json_integer_value(json_object_get(config->j_parameters, "session-duration"))));
               }
-              j_query = json_pack("{sss{sss{ss}}s{sssO}}",
+              j_query = json_pack("{sss{sss{ss}ss}s{sssO}}",
                                   "table",
                                   GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION,
                                   "set",
@@ -374,6 +376,8 @@ static json_t * register_verify_email_code(struct _register_config * config, con
                                     "gprs_expires_at",
                                       "raw",
                                       expires_at_clause,
+                                    "gprs_code_hash",
+                                    "VERIFIED"
                                   "where",
                                     "gprs_plugin_name",
                                     config->name,
