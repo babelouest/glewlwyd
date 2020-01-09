@@ -122,7 +122,7 @@
       "edit": true,
       "forceShow": true,
       "label": "admin.client-authorization-type",
-      "listElements": ["code","token","id_token","password","none","client","refresh_token","delete_token"]
+      "listElements": ["code","token","id_token","password","none","client_credentials","refresh_token","delete_token"]
     },{
       "name": "sector_identifier_uri",
       "edit": true,
