@@ -205,6 +205,7 @@ class RegisterParams extends Component {
         mod.parameters["schemes"].push({
           "module": schemeMod.module,
           "name": schemeMod.name,
+          "display_name": schemeMod.display_name,
           "register": "yes"
         });
         added = true;
@@ -335,7 +336,7 @@ class RegisterParams extends Component {
           }
         });
         if (!used) {
-          schemeModList.push(<a key={indexMod} className="dropdown-item" href="#" onClick={(e) => this.setSchemeName(e, index, schemeMod.name)}>{schemeMod.name}</a>);
+          schemeModList.push(<a key={indexMod} className="dropdown-item" href="#" onClick={(e) => this.setSchemeName(e, index, schemeMod.name)}>{schemeMod.display_name}</a>);
         }
       });
       schemeList.push(
@@ -345,7 +346,7 @@ class RegisterParams extends Component {
             <div className="input-group-append">
               <div className="dropdown">
                 <button className="btn btn-secondary dropdown-toggle" type="button" id={"mod-register-name-"+index} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  {scheme["name"]}
+                  {scheme["display_name"]}
                 </button>
                 <div className="dropdown-menu" aria-labelledby="mod-register-name">
                   {schemeModList}
