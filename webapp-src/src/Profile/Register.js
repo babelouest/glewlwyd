@@ -182,34 +182,9 @@ class Register extends Component {
     });
   }
   
-  saveProfile(e) {
+  noSubmit(e) {
     e.preventDefault();
-    
-    apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile", "PUT", this.state.registerProfile)
-    .then(() => {
-      if (!this.state.invalidPassword && this.state.password.length >= (this.state.config.PasswordMinLength||8)) {
-        apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/password", "POST", {password: this.state.password})
-        .then(() => {
-          messageDispatcher.sendMessage('App', {type: "registration"});
-          messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-profile-saved")});
-        })
-        .fail(() => {
-          if (err.status !== 400) {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-          }
-        })
-        .always(() => {
-          this.setState({password: "", passwordConfirm: "", modifyPassword: false});
-        });
-      } else {
-        messageDispatcher.sendMessage('App', {type: "registration"});
-      }
-    })
-    .fail((err) => {
-      if (err.status !== 400) {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-      }
-    });
+    return false;
   }
   
   saveName(e) {
@@ -234,7 +209,7 @@ class Register extends Component {
       apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/password", "POST", {password: this.state.password})
       .then(() => {
         messageDispatcher.sendMessage('App', {type: "registration"});
-        messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-profile-saved")});
+        messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-password-saved")});
       })
       .fail(() => {
         if (err.status !== 400) {
@@ -354,7 +329,7 @@ class Register extends Component {
           if (scheme.register == "always" && !this.state.registerSchemes[scheme.name]) {
             completeSteps.push(
             <li key={index+1}>
-              {i18next.t("profile.register-profile-complete-step-scheme", {scheme: scheme.display_name})}
+              {i18next.t("profile.register-profile-complete-step-scheme", {scheme: scheme.display_name||scheme.name})}
             </li>
             );
           }
@@ -435,7 +410,7 @@ class Register extends Component {
                    value={this.state.passwordConfirm}/>
             <div className="input-group-append">
               <button className="btn btn-secondary btn-icon" 
-                      type="submit" 
+                      type="button" 
                       onClick={(e) => this.savePassword(e)}
                       disabled={this.state.invalidPassword}
                       title={i18next.t("save")}>
@@ -461,7 +436,7 @@ class Register extends Component {
         </div>
       }
       formJsx =
-        <form className="needs-validation" noValidate onSubmit={(e) => this.saveProfile(e)}>
+        <form className="needs-validation" noValidate onSubmit={(e) => this.noSubmit(e)}>
           <label htmlFor="username-input">{i18next.t("profile.register-profile-username-label")}</label>
           <div className="input-group">
             <input type="text" 
@@ -481,7 +456,7 @@ class Register extends Component {
                    value={this.state.registerProfile.name||""}/>
             <div className="input-group-append">
               <button className="btn btn-secondary btn-icon" 
-                      type="submit" 
+                      type="button" 
                       onClick={(e) => this.saveName(e)}
                       title={i18next.t("save")}>
                 {i18next.t("save")}
