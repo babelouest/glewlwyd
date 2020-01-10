@@ -3164,7 +3164,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
     response->status = 500;
   } else if (request->auth_basic_user != NULL && request->auth_basic_password != NULL && o_strlen(u_map_get(request->map_post_body, "scope")) > 0) {
     j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password);
-    if (check_result_value(j_client, G_OK)) {
+    if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
       json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
         if (0 == o_strcmp(json_string_value(j_element), "client_credentials")) {
           auth_type_allowed = 1;
