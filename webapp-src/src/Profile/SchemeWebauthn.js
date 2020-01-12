@@ -173,11 +173,9 @@ class SchemeWebauthn extends Component {
         })
         .then(() => {
           messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-webauthn-register-credential-success")});
+          this.getCredentials();
           if (this.state.config.params.register) {
             messageDispatcher.sendMessage('App', {type: "registration"});
-            messageDispatcher.sendMessage('Nav', {type: "profile"});
-          } else {
-            this.getCredentials();
           }
         })
         .fail((err, textStatus) => {
