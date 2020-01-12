@@ -421,13 +421,9 @@ class RegisterParams extends Component {
         </div>
         <hr/>
         <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <button type="button" className="btn btn-secondary" onClick={this.addScheme} disabled={this.state.mod.parameters["schemes"].length===this.state.modSchemes.length}>
-                {i18next.t("admin.mod-register-add-scheme")}
-              </button>
-            </div>
-          </div>
+          <button type="button" className="btn btn-secondary" onClick={this.addScheme} disabled={this.state.mod.parameters["schemes"].length===this.state.modSchemes.length}>
+            {i18next.t("admin.mod-register-add-scheme")}
+          </button>
         </div>
         {schemeList}
         {this.state.errorList["schemes"]?<span className="error-input">{this.state.errorList["schemes"]}</span>:""}
