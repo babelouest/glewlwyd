@@ -62,6 +62,7 @@ class SchemeMock extends Component {
     })
     .always(() => {
       messageDispatcher.sendMessage('App', {type: "registration"});
+      messageDispatcher.sendMessage('Nav', {type: "profile"});
       this.getRegister();
     });
   }
