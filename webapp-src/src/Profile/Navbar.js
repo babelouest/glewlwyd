@@ -22,6 +22,12 @@ class Navbar extends Component {
     this.toggleLogin = this.toggleLogin.bind(this);
     this.changeLang = this.changeLang.bind(this);
     this.changeProfile = this.changeProfile.bind(this);
+    
+    messageDispatcher.subscribe('Nav', (message) => {
+      if (message.type === "profile") {
+        this.navigate(false, "profile", null);
+      }
+    });
   }
 
   componentWillReceiveProps(nextProps) {
@@ -35,7 +41,9 @@ class Navbar extends Component {
   }
   
   navigate(e, page, type) {
-    e.preventDefault();
+    if (e) {
+      e.preventDefault();
+    }
     messageDispatcher.sendMessage('App', {type: "nav", page: page, module: type});
     this.setState({curNav: page});
   }
