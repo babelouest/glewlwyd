@@ -109,7 +109,7 @@ class Navbar extends Component {
   }
 
 	render() {
-    var langList = [], schemeList = [], profileList = [], dataHighlight = "";
+    var langList = [], schemeList = [], profileList = [], dataHighlight = "", completeAlert = "", complete = true;
     var profileDropdown, logoutButton;
     var passwordJsx, sessionJsx, profileJsx;
     this.state.config.lang.forEach((lang, i) => {
@@ -122,6 +122,7 @@ class Navbar extends Component {
     this.state.schemeList.forEach((scheme, index) => {
       var highlight = "";
       if (this.state.schemeHighlight[scheme.name]) {
+        complete = false;
         highlight = " required-field";;
       }
       if (scheme.module !== "retype-password" && scheme.module !== "email") { // Because schemes retype-password and e-mail code have no user configuration
@@ -164,7 +165,25 @@ class Navbar extends Component {
           <i className="fas fa-sign-in-alt btn-icon"></i>
         </button>;
     } else if (this.state.dataHighlight) {
+      complete = true;
       dataHighlight = " required-field";
+    }
+    if (this.state.config.params.register) {
+      if (complete) {
+        completeAlert =
+          <li className="nav-item" >
+            <a className="btn btn-success" href="#" onClick={(e) => this.navigate(e, "profile", null)}>
+              {i18next.t("profile.register-profile-nav-complete")}
+            </a>
+          </li>
+      } else {
+        completeAlert =
+          <li className="nav-item" >
+            <a className="btn btn-danger" href="#" onClick={(e) => this.navigate(e, "profile", null)}>
+              {i18next.t("profile.register-profile-nav-incomplete")}
+            </a>
+          </li>
+      }
     }
 		return (
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
@@ -183,6 +202,7 @@ class Navbar extends Component {
             {sessionJsx}
             {passwordJsx}
             {schemeList}
+            {completeAlert}
           </ul>
           <div className="btn-group" role="group">
             <div className="btn-group" role="group">
