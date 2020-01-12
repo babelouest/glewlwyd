@@ -227,9 +227,6 @@ class App extends Component {
                 messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
               }
               this.setState({registerProfile: false});
-            })
-            .always(() => {
-              this.setState({registerConfig: config});
             });
           })
           .fail((err) => {
@@ -239,9 +236,6 @@ class App extends Component {
               messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-token-invalid")});
             }
             this.setState({registerProfile: false});
-          })
-          .always(() => {
-            this.setState({registerConfig: config});
           });
         }
       });
