@@ -26,6 +26,7 @@ class App extends Component {
       registerProfile: false,
       registerSchemes: {},
       schemeHighlight: {},
+      registering: false,
       registerValid: true,
       curNav: "profile",
       profileList: false,
@@ -173,7 +174,7 @@ class App extends Component {
         if (!this.state.config.params.token || this.state.tokenParsed) {
           apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
           .then((profile) => {
-            this.setState({registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile]}, () => {
+            this.setState({registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile], registering: true}, () => {
               config.schemes.forEach(scheme => {
                 apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
                 .then(() => {
@@ -199,14 +200,14 @@ class App extends Component {
             if (err.status != 401) {
               messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
             }
-            this.setState({registerProfile: false});
+            this.setState({registerProfile: false, registering: false});
           });
         } else {
           apiManager.glewlwydRequest("/" + this.state.config.params.register + "/verify", "POST", {token: this.state.config.params.token})
           .then(() => {
             apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
             .then((profile) => {
-              this.setState({tokenParsed: true, registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile]}, () => {
+              this.setState({tokenParsed: true, registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile], registering: true}, () => {
                 config.schemes.forEach(scheme => {
                   apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
                   .then(() => {
@@ -226,7 +227,7 @@ class App extends Component {
               if (err.status != 401) {
                 messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
               }
-              this.setState({registerProfile: false});
+              this.setState({registerProfile: false, registering: false});
             });
           })
           .fail((err) => {
@@ -235,13 +236,13 @@ class App extends Component {
             } else {
               messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-token-invalid")});
             }
-            this.setState({registerProfile: false});
+            this.setState({registerProfile: false, registering: false});
           });
         }
       });
     })
     .fail((err) => {
-      this.setState({registerValid: false}, () => {
+      this.setState({registerValid: false, registering: false}, () => {
         if (err.status === 404) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-invaid-url")});
         } else {
@@ -283,7 +284,8 @@ class App extends Component {
                       schemeList={this.state.schemeList} 
                       profileList={this.state.profileList}
                       dataHighlight={!this.state.registerProfile.password_set}
-                      schemeHighlight={this.state.schemeHighlight}/>
+                      schemeHighlight={this.state.schemeHighlight}
+                      registering={this.state.registering}/>
             </div>
             {invalidMessage}
             <div className="card-body">
