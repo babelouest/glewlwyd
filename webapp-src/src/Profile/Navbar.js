@@ -15,7 +15,8 @@ class Navbar extends Component {
       schemeList: props.schemeList,
       profileList: props.profileList,
       dataHighlight: props.dataHighlight,
-      schemeHighlight: props.schemeHighlight
+      schemeHighlight: props.schemeHighlight,
+      registering: props.registering
     }
 
     this.navigate = this.navigate.bind(this);
@@ -36,7 +37,8 @@ class Navbar extends Component {
       schemeList: nextProps.schemeList,
       profileList: nextProps.profileList,
       dataHighlight: nextProps.dataHighlight,
-      schemeHighlight: nextProps.schemeHighlight
+      schemeHighlight: nextProps.schemeHighlight,
+      registering: nextProps.registering
     });
   }
   
@@ -165,10 +167,10 @@ class Navbar extends Component {
           <i className="fas fa-sign-in-alt btn-icon"></i>
         </button>;
     } else if (this.state.dataHighlight) {
-      complete = true;
+      complete = false;
       dataHighlight = " required-field";
     }
-    if (this.state.config.params.register) {
+    if (this.state.registering) {
       if (complete) {
         completeAlert =
           <li className="nav-item" >
