@@ -97,6 +97,7 @@ class SchemeCertificate extends Component {
         this.getRegister();
         if (this.state.config.params.register) {
           messageDispatcher.sendMessage('App', {type: "registration"});
+          messageDispatcher.sendMessage('App', {type: "nav", page: "profile"});
         }
       })
       .fail((err) => {
@@ -115,6 +116,7 @@ class SchemeCertificate extends Component {
       this.getRegister();
       if (this.state.config.params.register) {
         messageDispatcher.sendMessage('App', {type: "registration"});
+        messageDispatcher.sendMessage('Nav', {type: "profile"});
       }
     })
     .fail((err) => {
