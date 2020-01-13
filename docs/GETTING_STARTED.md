@@ -360,7 +360,7 @@ There, log in with your admin password. After that, use the second factor authen
 
 ### User profile delegation
 
-![plugin-list](screenshots/plugin-list.png)
+![user-list-delegate](screenshots/user-list-delegate.png)
 
 An connected administrator can update a user profile with the delegation functionality. A new window will open, allowing the administrator to update the user profile, register or de-register authentication schemes fot the user.
 
