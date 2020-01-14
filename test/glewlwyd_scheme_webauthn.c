@@ -17589,6 +17589,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_cn)
 }
 END_TEST
 
+// This test fails with old GnuTLS version becuase the generated certificate doesn't have the required extension
+#if GNUTLS_VERSION_NUMBER >= 0x030503
 START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_aaguid)
 {
   json_t * j_params = json_pack("{sssssss{ss}}", 
@@ -17827,6 +17829,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_aaguid)
   cbor_decref(&bs_obj);
 }
 END_TEST
+#endif
 
 START_TEST(test_glwd_scheme_webauthn_irl_disable_credential_error)
 {
@@ -18574,9 +18577,10 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_c);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_o);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_cn);
-  // Disabled since I don't know yet how to add the extension in the certificate with certtools
-  // I'll offer many thanks to whom will help me!
+  // This test requires GnuTLS 3.5.3 to work
+#if GNUTLS_VERSION_NUMBER >= 0x030503
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_aaguid);
+#endif
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add_with_ca_2);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_unregistered_ca);
