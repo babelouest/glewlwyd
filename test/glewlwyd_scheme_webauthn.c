@@ -17589,9 +17589,6 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_cn)
 }
 END_TEST
 
-/* This test is disabled
- * Since I don't know yet how to add the extension in the certificate with certtools
- * I'll offer many thanks to whom will help me!
 START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_aaguid)
 {
   json_t * j_params = json_pack("{sssssss{ss}}", 
@@ -17830,7 +17827,6 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_aaguid)
   cbor_decref(&bs_obj);
 }
 END_TEST
-*/
 
 START_TEST(test_glwd_scheme_webauthn_irl_disable_credential_error)
 {
@@ -18580,7 +18576,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_cn);
   // Disabled since I don't know yet how to add the extension in the certificate with certtools
   // I'll offer many thanks to whom will help me!
-  //tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_aaguid);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_aaguid);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add_with_ca_2);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_unregistered_ca);
