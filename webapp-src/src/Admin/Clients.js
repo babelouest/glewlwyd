@@ -70,7 +70,7 @@ class Clients extends Component {
 	render() {
     var clients = [];
     this.state.clients.list.forEach((client, index) => {
-      clients.push(<tr key={index}>
+      clients.push(<tr key={index} className={(!client.enabled?"table-danger":"")}>
         <td className="d-none d-lg-table-cell">{client.source}</td>
         <td>{client.client_id}</td>
         <td>{client.name||""}</td>

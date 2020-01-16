@@ -101,7 +101,7 @@ class UserMod extends Component {
           {i18next.t("admin.switch-on")}
         </a>
       }
-      mods.push(<tr key={index}>
+      mods.push(<tr key={index} className={(!mod.enabled?"table-danger":"")}>
         <td className="d-none d-lg-table-cell">{mod.order_rank}</td>
         <td>{module}</td>
         <td>{mod.name}</td>
