@@ -81,7 +81,7 @@ class Users extends Component {
 	render() {
     var users = [];
     this.state.users.list.forEach((user, index) => {
-      users.push(<tr key={index}>
+      users.push(<tr key={index} className={(!user.enabled?"table-danger":"")}>
         <td className="d-none d-lg-table-cell">{user.source}</td>
         <td>{user.username}</td>
         <td>{user.name||""}</td>
