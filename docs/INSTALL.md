@@ -190,6 +190,10 @@ $ sudo apt-get install libmicrohttpd-dev sqlite3 libsqlite3-dev default-libmysql
 
 With Libmicrohttpd 0.9.37 and older version, there is a bug when parsing `application/x-www-form-urlencoded` parameters. This is fixed in later version, from the 0.9.38, so if your Libmicrohttpd version is older than that, I suggest getting a newer version of [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/).
 
+#### Libmicrohttpd bug with empty parameters in token requests
+
+A bug has been fixed in libmicrohttpd master branch in the commit [f34781c8](https://git.gnunet.org/libmicrohttpd.git/commit/?id=f34781c87e48df6081eaf5defd1430f44013e8b6). The issue is happening when using [Jenkins OIDC plugin](https://wiki.jenkins.io/display/JENKINS/Openid+Connect+Authentication+Plugin). The fix will be in the next libmicrohttpd release. Read the [related issue](https://github.com/babelouest/glewlwyd/issues/89) for more details.
+
 ### Build Glewlwyd and its dependencies
 
 #### CMake
