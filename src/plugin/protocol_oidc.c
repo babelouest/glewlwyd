@@ -1345,7 +1345,7 @@ static json_t * check_client_valid(struct _oidc_config * config, const char * cl
   }
   j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, client_id, client_password);
   if (check_result_value(j_client, G_OK)) {
-    if (!implicit_flow && client_header_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
+    if (!implicit_flow && client_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, confidential client must be authentified with its password");
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     } else {
@@ -3754,7 +3754,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 u_map_put(&map_query, "id_token", id_token);
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_access_token_request - Error serialize_access_token");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_access_token_request - Error generate_id_token");
               response->status = 302;
               redirect_url = msprintf("%s%sserver_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
               ulfius_add_header_to_response(response, "Location", redirect_url);
