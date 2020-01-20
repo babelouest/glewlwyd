@@ -374,7 +374,7 @@ if (WITH_SCHEME_OTP)
 	find_package(LibOath REQUIRED)
 	if (LIBOATH_FOUND)
 			set(MOD_LIBS ${LIBOATH_LIBRARIES})
-			include_directories(${LIBOATH_INCLUDE_DIRS})
+			include_directories(${LIBOATH_INCLUDE_DIR})
 	endif ()
 	
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/otp.c)

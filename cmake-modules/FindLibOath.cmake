@@ -33,7 +33,7 @@ find_package(PkgConfig QUIET)
 pkg_check_modules(PC_LIBOATH QUIET liboath)
 
 find_path(LIBOATH_INCLUDE_DIR
-        NAMES oath.h
+        NAMES liboath/oath.h
         HINTS ${PC_LIBOATH_INCLUDEDIR} ${PC_LIBOATH_INCLUDE_DIRS})
 
 find_library(LIBOATH_LIBRARY
