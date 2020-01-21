@@ -211,6 +211,7 @@ $ sudo make install
 ```
 
 The available options for cmake are:
+- `-DDOWNLOAD_DEPENDENCIES=[on|off]` (default `on`): Download some dependencies if missing or using an old version: `Orcania`, `Yder`, `Ulfius` and `Hoel`
 - `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support
 - `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
 - `-DWITH_SQLITE3=[on|off]` (default `on`): Enable/disabe SQLite3 database backend: This option is passed to Hoel library builder
