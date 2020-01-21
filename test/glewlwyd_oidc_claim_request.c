@@ -29,8 +29,11 @@
 #define CLIENT_REDIRECT_URI "../../test-oidc.html?param=client1_cb1"
 #define RESPONSE_TYPE "id_token token"
 #define CLAIM_STR "the-str"
+#define CLAIM_STR_2 "the-other-str"
 #define CLAIM_NUMBER "42"
+#define CLAIM_NUMBER_2 "43"
 #define CLAIM_BOOL_TRUE "1"
+#define CLAIM_BOOL_FALSE "0"
 #define CLAIM_MANDATORY "I'm aliiiiive!"
 #define ADDR_FORMATTED "formatted value"
 #define ADDR_STREET_ADDRESS "street_address value"
@@ -44,7 +47,7 @@ struct _u_request user_req, user2_req;
 
 START_TEST(test_oidc_claim_request_add_plugin)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssisisisososososososososssss[{sssoss}{sssossss}{sssossssssss}{ssssso}]s{ssssssssssssss}}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssisisisososososososososssss[{sssoss}{sssossss}{sssossssssss}{ssssso}{sssoss}{sssossss}{sssossssssss}]s{ssssssssssssss}}}",
                                 "module",
                                 "oidc",
                                 "name",
@@ -119,6 +122,32 @@ START_TEST(test_oidc_claim_request_add_plugin)
                                     "claim-mandatory",
                                     "mandatory",
                                     json_true(),
+                                    "name",
+                                    "claim-array-str",
+                                    "on-demand",
+                                    json_true(),
+                                    "user-property",
+                                    "claim-array-str",
+                                    "name",
+                                    "claim-array-number",
+                                    "on-demand",
+                                    json_true(),
+                                    "type",
+                                    "number",
+                                    "user-property",
+                                    "claim-array-number",
+                                    "name",
+                                    "claim-array-bool",
+                                    "on-demand",
+                                    json_true(),
+                                    "type",
+                                    "boolean",
+                                    "user-property",
+                                    "claim-array-bool",
+                                    "boolean-value-true",
+                                    "1",
+                                    "boolean-value-false",
+                                    "0",
                                   "address-claim",
                                     "type",
                                     "mandatory",
@@ -137,7 +166,7 @@ START_TEST(test_oidc_claim_request_add_plugin)
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
   
-  j_param = json_pack("{ssssssssssssssssssss}", "claim-str", CLAIM_STR, "claim-number", CLAIM_NUMBER, "claim-bool", CLAIM_BOOL_TRUE, "claim-mandatory", CLAIM_MANDATORY, "add-formatted", ADDR_FORMATTED, "add-street_address", ADDR_STREET_ADDRESS, "add-locality", ADDR_LOCALITY, "add-region", ADDR_REGION, "add-postal_code", ADDR_POSTAL_CODE, "add-country", ADDR_COUNTRY);
+  j_param = json_pack("{sssssssssssssssssssss[ss]s[ss]s[ss]}", "claim-str", CLAIM_STR, "claim-number", CLAIM_NUMBER, "claim-bool", CLAIM_BOOL_TRUE, "claim-mandatory", CLAIM_MANDATORY, "add-formatted", ADDR_FORMATTED, "add-street_address", ADDR_STREET_ADDRESS, "add-locality", ADDR_LOCALITY, "add-region", ADDR_REGION, "add-postal_code", ADDR_POSTAL_CODE, "add-country", ADDR_COUNTRY, "claim-array-str", CLAIM_STR, CLAIM_STR_2, "claim-array-number", CLAIM_NUMBER, CLAIM_NUMBER_2, "claim-array-bool", CLAIM_BOOL_TRUE, CLAIM_BOOL_FALSE);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USER_USERNAME, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
 }
@@ -817,7 +846,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_full)
   size_t str_payload_len;
   json_t * j_result, * j_claims;
   
-  ck_assert_ptr_ne((j_claims = json_pack("{s{sososososo}}", "id_token", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "name", json_null(), "email", json_null())), NULL);
+  ck_assert_ptr_ne((j_claims = json_pack("{s{sosososososo}}", "id_token", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "claim-array-str", json_null(), "claim-array-number", json_null(), "claim-array-bool", json_null(), "name", json_null(), "email", json_null())), NULL);
   ck_assert_ptr_ne((claims_str = json_dumps(j_claims, JSON_COMPACT)), NULL);
   ck_assert_ptr_ne((claims_str_enc = ulfius_url_encode(claims_str)), NULL);
   
@@ -842,6 +871,9 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_full)
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-str")), CLAIM_STR);
   ck_assert_int_eq(json_integer_value(json_object_get(j_result, "claim-number")), 42);
+  ck_assert_int_eq(json_array_size(json_object_get(j_result, "claim-array-str")), 2);
+  ck_assert_int_eq(json_array_size(json_object_get(j_result, "claim-array-number")), 2);
+  ck_assert_int_eq(json_array_size(json_object_get(j_result, "claim-array-bool")), 2);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), json_true());
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "formatted")), ADDR_FORMATTED);
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "street_address")), ADDR_STREET_ADDRESS);
