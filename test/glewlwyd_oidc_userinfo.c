@@ -25,12 +25,20 @@
 #define CLIENT "client1_id"
 #define RESPONSE_TYPE "id_token token"
 
+#define CLAIM_STR "the-str"
+#define CLAIM_STR_2 "the-other-str"
+#define CLAIM_NUMBER "42"
+#define CLAIM_NUMBER_2 "43"
+#define CLAIM_BOOL_TRUE "1"
+#define CLAIM_BOOL_FALSE "0"
+#define CLAIM_MANDATORY "I'm aliiiiive!"
+
 struct _u_request admin_req;
 struct _u_request user_req;
 
 START_TEST(test_oidc_userinfo_add_plugin)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssisisisososososososososssss[{sssoss}{sssossss}{sssossssssss}{ssssso}]}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssisisisososososososososssss[{sssoss}{sssossss}{sssossssssss}{sssoss}{sssossss}{sssossssssss}{ssssso}]}}",
                                 "module",
                                 "oidc",
                                 "name",
@@ -75,13 +83,13 @@ START_TEST(test_oidc_userinfo_add_plugin)
                                   "claims",
                                     "name",
                                     "claim-str",
-                                    "on-demand",
+                                    "mandatory",
                                     json_true(),
                                     "user-property",
                                     "claim-str",
                                     "name",
                                     "claim-number",
-                                    "on-demand",
+                                    "mandatory",
                                     json_true(),
                                     "type",
                                     "number",
@@ -89,12 +97,38 @@ START_TEST(test_oidc_userinfo_add_plugin)
                                     "claim-number",
                                     "name",
                                     "claim-bool",
-                                    "on-demand",
+                                    "mandatory",
                                     json_true(),
                                     "type",
                                     "boolean",
                                     "user-property",
                                     "claim-bool",
+                                    "boolean-value-true",
+                                    "1",
+                                    "boolean-value-false",
+                                    "0",
+                                    "name",
+                                    "claim-array-str",
+                                    "mandatory",
+                                    json_true(),
+                                    "user-property",
+                                    "claim-array-str",
+                                    "name",
+                                    "claim-array-number",
+                                    "mandatory",
+                                    json_true(),
+                                    "type",
+                                    "number",
+                                    "user-property",
+                                    "claim-array-number",
+                                    "name",
+                                    "claim-array-bool",
+                                    "mandatory",
+                                    json_true(),
+                                    "type",
+                                    "boolean",
+                                    "user-property",
+                                    "claim-array-bool",
                                     "boolean-value-true",
                                     "1",
                                     "boolean-value-false",
@@ -108,7 +142,7 @@ START_TEST(test_oidc_userinfo_add_plugin)
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
   
-  j_param = json_pack("{ssssssss}", "claim-str", "the-str", "claim-number", "42", "claim-bool", "1", "claim-mandatory", "I'M aliiiiiive!");
+  j_param = json_pack("{sssssssss[ss]s[ss]s[ss]}", "claim-str", CLAIM_STR, "claim-number", CLAIM_NUMBER, "claim-bool", CLAIM_BOOL_TRUE, "claim-mandatory", CLAIM_MANDATORY, "claim-array-str", CLAIM_STR, CLAIM_STR_2, "claim-array-number", CLAIM_NUMBER, CLAIM_NUMBER_2, "claim-array-bool", CLAIM_BOOL_TRUE, CLAIM_BOOL_FALSE);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USER_USERNAME, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
 }
@@ -145,11 +179,8 @@ START_TEST(test_oidc_userinfo)
   bearer = msprintf("Bearer %s", access_token);
   u_map_put(req.map_header, "Authorization", bearer);
 
-  j_result = json_pack("{ssssss}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-mandatory", "I'M aliiiiiive!");
+  j_result = json_pack("{sssssssisosss[ss]s[ii]s[oo]}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", CLAIM_STR, "claim-number", 42, "claim-bool", json_true(), "claim-mandatory", CLAIM_MANDATORY, "claim-array-str", CLAIM_STR, CLAIM_STR_2, "claim-array-number", 42, 43, "claim-array-bool", json_true(), json_false());
   ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
-  json_decref(j_result);
-  
-  j_result = json_pack("{ssssss}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-mandatory", "I'M aliiiiiive!");
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
