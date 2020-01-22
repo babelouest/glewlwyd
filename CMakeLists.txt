@@ -80,14 +80,6 @@ if (JANSSON_FOUND)
 	include_directories(${JANSSON_INCLUDE_DIRS})
 endif ()
 
-include(FindMHD)
-set(MHD_MIN_VERSION 0.9.38)
-find_package(MHD ${MHD_MIN_VERSION} REQUIRED)
-if (MHD_FOUND)
-	set(GLWD_LIBS ${GLWD_LIBS} ${MHD_LIBRARIES})
-	include_directories(${MHD_INCLUDE_DIRS})
-endif ()
-
 include(FindGnuTLS)
 find_package(GnuTLS REQUIRED)
 if (GNUTLS_FOUND)
@@ -248,12 +240,10 @@ option(WITH_MOCK "Build Mock modules" off)
 if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 	set(MOCK_LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${USER_MODULES_SRC_PATH}/mock.c)
 
-	set(MOCK_LIBS "-ldl")
-
 	add_library(usermodmock MODULE ${MOCK_LIB_SRC})
 	set_target_properties(usermodmock PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(usermodmock ${MOCK_LIBS})
+	target_link_libraries(usermodmock ${GLWD_LIBS})
 	set(USER_MODULES ${USER_MODULES} usermodmock)
 endif ()
 
@@ -261,12 +251,10 @@ option(WITH_USER_DATABASE "Build Database backend user module" on)
 if (WITH_USER_DATABASE)
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${USER_MODULES_SRC_PATH}/database.c)
 
-	set(MOD_LIBS "-ldl")
-
 	add_library(usermoddatabase MODULE ${LIB_SRC})
 	set_target_properties(usermoddatabase PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(usermoddatabase ${MOD_LIBS})
+	target_link_libraries(usermoddatabase ${GLWD_LIBS})
 	set(USER_MODULES ${USER_MODULES} usermoddatabase)
 endif ()
 
@@ -275,7 +263,6 @@ if (WITH_USER_LDAP)
 	include(FindLdap)
 	find_package(Ldap REQUIRED)
 	if (LDAP_FOUND)
-		set(MOD_LIBS ${LDAP_LIBRARIES} "-llber -ldl")
 		include_directories(${LDAP_INCLUDE_DIRS})
 	endif ()
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${USER_MODULES_SRC_PATH}/ldap.c)
@@ -284,7 +271,7 @@ if (WITH_USER_LDAP)
 	add_library(usermodldap MODULE ${LIB_SRC})
 	set_target_properties(usermodldap PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(usermodldap ${MOD_LIBS})
+	target_link_libraries(usermodldap ${GLWD_LIBS} ${LDAP_LIBRARIES} "-llber")
 	set(USER_MODULES ${USER_MODULES} usermodldap)
 endif ()
 
@@ -292,12 +279,10 @@ option(WITH_USER_HTTP "Build HTTP backend user module" on)
 if (WITH_USER_HTTP)
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${USER_MODULES_SRC_PATH}/http.c)
 
-	set(MOD_LIBS "-ldl")
-
 	add_library(usermodhttp MODULE ${LIB_SRC})
 	set_target_properties(usermodhttp PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(usermodhttp ${MOD_LIBS})
+	target_link_libraries(usermodhttp ${GLWD_LIBS})
 	set(USER_MODULES ${USER_MODULES} usermodhttp)
 endif ()
 
@@ -306,12 +291,10 @@ endif ()
 if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 	set(MOCK_LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${CLIENT_MODULES_SRC_PATH}/mock.c)
 
-	set(MOCK_LIBS "-ldl")
-
 	add_library(clientmodmock MODULE ${MOCK_LIB_SRC})
 	set_target_properties(clientmodmock PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(clientmodmock ${MOCK_LIBS})
+	target_link_libraries(clientmodmock ${GLWD_LIBS})
 	set(CLIENT_MODULES ${CLIENT_MODULES} clientmodmock)
 endif ()
 
@@ -319,12 +302,10 @@ option(WITH_CLIENT_DATABASE "Build Database backend client module" on)
 if (WITH_CLIENT_DATABASE)
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${CLIENT_MODULES_SRC_PATH}/database.c)
 
-	set(MOD_LIBS "-ldl")
-
 	add_library(clientmoddatabase MODULE ${LIB_SRC})
 	set_target_properties(clientmoddatabase PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(clientmoddatabase ${MOD_LIBS})
+	target_link_libraries(clientmoddatabase ${GLWD_LIBS})
 	set(CLIENT_MODULES ${CLIENT_MODULES} clientmoddatabase)
 endif ()
 
@@ -333,7 +314,6 @@ if (WITH_CLIENT_LDAP)
 	include(FindLdap)
 	find_package(Ldap REQUIRED)
 	if (LDAP_FOUND)
-		set(MOD_LIBS ${LDAP_LIBRARIES} "-llber -ldl")
 		include_directories(${LDAP_INCLUDE_DIRS})
 	endif ()
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${CLIENT_MODULES_SRC_PATH}/ldap.c)
@@ -342,7 +322,7 @@ if (WITH_CLIENT_LDAP)
 	add_library(clientmodldap MODULE ${LIB_SRC})
 	set_target_properties(clientmodldap PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(clientmodldap ${MOD_LIBS})
+	target_link_libraries(clientmodldap ${GLWD_LIBS} ${LDAP_LIBRARIES} "-llber")
 	set(CLIENT_MODULES ${CLIENT_MODULES} clientmodldap)
 endif ()
 
@@ -356,7 +336,7 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 	add_library(schememodmock MODULE ${MOCK_LIB_SRC})
 	set_target_properties(schememodmock PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(schememodmock ${MOCK_LIBS})
+	target_link_libraries(schememodmock ${GLWD_LIBS})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodmock)
 endif ()
 
@@ -364,12 +344,10 @@ option(WITH_SCHEME_RETYPE_PASSWORD "Build retype password scheme module" on)
 if (WITH_SCHEME_RETYPE_PASSWORD)
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/password.c)
 
-	set(MOD_LIBS ${ULFIUS_LIBRARIES} "-ldl")
-
 	add_library(schememodpassword MODULE ${LIB_SRC})
 	set_target_properties(schememodpassword PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(schememodpassword ${MOD_LIBS})
+	target_link_libraries(schememodpassword ${GLWD_LIBS})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodpassword)
 endif ()
 
@@ -377,12 +355,10 @@ option(WITH_SCHEME_EMAIL "Build e-mail scheme module" on)
 if (WITH_SCHEME_EMAIL)
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/email.c)
 
-	set(MOD_LIBS ${ULFIUS_LIBRARIES} "-ldl")
-
 	add_library(schememodemail MODULE ${LIB_SRC})
 	set_target_properties(schememodemail PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(schememodemail ${MOD_LIBS})
+	target_link_libraries(schememodemail ${GLWD_LIBS})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodemail)
 endif ()
 
@@ -391,19 +367,16 @@ if (WITH_SCHEME_OTP)
 	include(FindLibOath)
 	find_package(LibOath REQUIRED)
 	if (LIBOATH_FOUND)
-			set(MOD_LIBS ${LIBOATH_LIBRARIES})
 			include_directories(${LIBOATH_INCLUDE_DIR})
 	endif ()
 	
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/otp.c)
 	set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, liboath0 (>= 2.6.0)")
 
-	set(MOD_LIBS ${ULFIUS_LIBRARIES} ${MOD_LIBS} "-ldl")
-
 	add_library(schememodotp MODULE ${LIB_SRC})
 	set_target_properties(schememodotp PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(schememodotp ${MOD_LIBS})
+	target_link_libraries(schememodotp ${GLWD_LIBS} ${LIBOATH_LIBRARIES})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodotp)
 endif ()
 
@@ -412,21 +385,18 @@ if (WITH_SCHEME_WEBAUTHN)
 	include(FindLibJWT)
 	find_package(LibJWT ${LIBJWT_VERSION_REQUIRED} REQUIRED)
 	if (LIBJWT_FOUND)
-			set(MOD_LIBS ${LIBJWT_LIBRARIES})
 			include_directories(${LIBJWT_INCLUDE_DIRS})
 	endif ()
 	
 	include(FindLibCBOR)
 	find_package(LibCBOR REQUIRED)
 	if (LIBCBOR_FOUND)
-			set(MOD_LIBS ${MOD_LIBS} ${LIBCBOR_LIBRARIES})
 			include_directories(${LIBCBOR_INCLUDE_DIRS})
 	endif ()
 
 	include(FindLdap)
 	find_package(Ldap REQUIRED)
 	if (LDAP_FOUND)
-		set(MOD_LIBS ${MOD_LIBS} ${LDAP_LIBRARIES} "-llber -ldl")
 		include_directories(${LDAP_INCLUDE_DIRS})
 	endif ()
 	
@@ -439,12 +409,10 @@ if (WITH_SCHEME_WEBAUTHN)
 		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcbor0")
 	endif ()
 
-	set(MOD_LIBS ${ULFIUS_LIBRARIES} ${MOD_LIBS} "-ldl")
-
 	add_library(schememodwebauthn MODULE ${LIB_SRC})
 	set_target_properties(schememodwebauthn PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(schememodwebauthn ${MOD_LIBS})
+	target_link_libraries(schememodwebauthn ${GLWD_LIBS} ${LIBJWT_LIBRARIES} ${LIBCBOR_LIBRARIES} ${LDAP_LIBRARIES})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodwebauthn)
 endif ()
 
@@ -452,12 +420,10 @@ option(WITH_SCHEME_CERTIFICATE "Build certificate scheme module" on)
 if (WITH_SCHEME_CERTIFICATE)
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/certificate.c)
 
-	set(MOD_LIBS ${ULFIUS_LIBRARIES} ${GNUTLS_LIBRARIES} "-ldl")
-
 	add_library(schememodcertificate MODULE ${LIB_SRC})
 	set_target_properties(schememodcertificate PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(schememodcertificate ${MOD_LIBS})
+	target_link_libraries(schememodcertificate ${GLWD_LIBS})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodcertificate)
 endif ()
 
@@ -465,12 +431,10 @@ option(WITH_SCHEME_HTTP "Build HTTP Basic Auth scheme module" on)
 if (WITH_SCHEME_HTTP)
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/http.c)
 
-	set(MOD_LIBS ${ULFIUS_LIBRARIES} ${GNUTLS_LIBRARIES} "-ldl")
-
 	add_library(schememodhttp MODULE ${LIB_SRC})
 	set_target_properties(schememodhttp PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(schememodhttp ${MOD_LIBS})
+	target_link_libraries(schememodhttp ${GLWD_LIBS})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodhttp)
 endif ()
 
@@ -493,7 +457,6 @@ if (WITH_PLUGIN_OAUTH2)
 		include(FindLibJWT)
 		find_package(LibJWT ${LIBJWT_VERSION_REQUIRED} REQUIRED)
 		if (LIBJWT_FOUND)
-				set(MOD_LIBS ${LIBJWT_LIBRARIES})
 				include_directories(${LIBJWT_INCLUDE_DIRS})
 		endif ()
 		
@@ -502,12 +465,10 @@ if (WITH_PLUGIN_OAUTH2)
 		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
 	endif ()
 
-	set(MOD_LIBS ${MOD_LIBS} "-ldl")
-
 	add_library(protocol_oauth2 MODULE ${LIB_SRC})
 	set_target_properties(protocol_oauth2 PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(protocol_oauth2 ${MOD_LIBS})
+	target_link_libraries(protocol_oauth2 ${GLWD_LIBS} ${LIBJWT_LIBRARIES})
 	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oauth2)
 endif ()
 
@@ -516,7 +477,6 @@ if (WITH_PLUGIN_OIDC)
 		include(FindLibJWT)
 		find_package(LibJWT ${LIBJWT_VERSION_REQUIRED} REQUIRED)
 		if (LIBJWT_FOUND)
-				set(MOD_LIBS ${LIBJWT_LIBRARIES})
 				include_directories(${LIBJWT_INCLUDE_DIRS})
 		endif ()
 		
@@ -525,12 +485,10 @@ if (WITH_PLUGIN_OIDC)
 		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
 	endif ()
 
-	set(MOD_LIBS ${MOD_LIBS} "-ldl")
-
 	add_library(protocol_oidc MODULE ${LIB_SRC})
 	set_target_properties(protocol_oidc PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(protocol_oidc ${MOD_LIBS})
+	target_link_libraries(protocol_oidc ${GLWD_LIBS} ${LIBJWT_LIBRARIES})
 	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oidc)
 endif ()
 
@@ -539,12 +497,10 @@ if (WITH_PLUGIN_REGISTER)
 		
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/register.c)
 
-	set(MOD_LIBS ${MOD_LIBS} "-ldl")
-
 	add_library(protocol_register MODULE ${LIB_SRC})
 	set_target_properties(protocol_register PROPERTIES
 			COMPILE_OPTIONS -Wextra)
-	target_link_libraries(protocol_register ${MOD_LIBS})
+	target_link_libraries(protocol_register ${GLWD_LIBS})
 	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_register)
 endif ()
 
