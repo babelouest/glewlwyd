@@ -247,7 +247,8 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 
 	add_library(usermodmock MODULE ${MOCK_LIB_SRC})
 	set_target_properties(usermodmock PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user")
 	target_link_libraries(usermodmock ${GLWD_LIBS})
 	set(USER_MODULES ${USER_MODULES} usermodmock)
 endif ()
@@ -258,7 +259,8 @@ if (WITH_USER_DATABASE)
 
 	add_library(usermoddatabase MODULE ${LIB_SRC})
 	set_target_properties(usermoddatabase PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user")
 	target_link_libraries(usermoddatabase ${GLWD_LIBS})
 	set(USER_MODULES ${USER_MODULES} usermoddatabase)
 endif ()
@@ -275,7 +277,8 @@ if (WITH_USER_LDAP)
 
 	add_library(usermodldap MODULE ${LIB_SRC})
 	set_target_properties(usermodldap PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user")
 	target_link_libraries(usermodldap ${GLWD_LIBS} ${LDAP_LIBRARIES} "-llber")
 	set(USER_MODULES ${USER_MODULES} usermodldap)
 endif ()
@@ -286,7 +289,8 @@ if (WITH_USER_HTTP)
 
 	add_library(usermodhttp MODULE ${LIB_SRC})
 	set_target_properties(usermodhttp PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user")
 	target_link_libraries(usermodhttp ${GLWD_LIBS})
 	set(USER_MODULES ${USER_MODULES} usermodhttp)
 endif ()
@@ -298,7 +302,8 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 
 	add_library(clientmodmock MODULE ${MOCK_LIB_SRC})
 	set_target_properties(clientmodmock PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/client")
 	target_link_libraries(clientmodmock ${GLWD_LIBS})
 	set(CLIENT_MODULES ${CLIENT_MODULES} clientmodmock)
 endif ()
@@ -309,7 +314,8 @@ if (WITH_CLIENT_DATABASE)
 
 	add_library(clientmoddatabase MODULE ${LIB_SRC})
 	set_target_properties(clientmoddatabase PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/client")
 	target_link_libraries(clientmoddatabase ${GLWD_LIBS})
 	set(CLIENT_MODULES ${CLIENT_MODULES} clientmoddatabase)
 endif ()
@@ -326,7 +332,8 @@ if (WITH_CLIENT_LDAP)
 
 	add_library(clientmodldap MODULE ${LIB_SRC})
 	set_target_properties(clientmodldap PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/client")
 	target_link_libraries(clientmodldap ${GLWD_LIBS} ${LDAP_LIBRARIES} "-llber")
 	set(CLIENT_MODULES ${CLIENT_MODULES} clientmodldap)
 endif ()
@@ -340,7 +347,8 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 
 	add_library(schememodmock MODULE ${MOCK_LIB_SRC})
 	set_target_properties(schememodmock PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
 	target_link_libraries(schememodmock ${GLWD_LIBS})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodmock)
 endif ()
@@ -351,7 +359,8 @@ if (WITH_SCHEME_RETYPE_PASSWORD)
 
 	add_library(schememodpassword MODULE ${LIB_SRC})
 	set_target_properties(schememodpassword PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
 	target_link_libraries(schememodpassword ${GLWD_LIBS})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodpassword)
 endif ()
@@ -362,7 +371,8 @@ if (WITH_SCHEME_EMAIL)
 
 	add_library(schememodemail MODULE ${LIB_SRC})
 	set_target_properties(schememodemail PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
 	target_link_libraries(schememodemail ${GLWD_LIBS})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodemail)
 endif ()
@@ -380,7 +390,8 @@ if (WITH_SCHEME_OTP)
 
 	add_library(schememodotp MODULE ${LIB_SRC})
 	set_target_properties(schememodotp PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
 	target_link_libraries(schememodotp ${GLWD_LIBS} ${LIBOATH_LIBRARIES})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodotp)
 endif ()
@@ -416,7 +427,8 @@ if (WITH_SCHEME_WEBAUTHN)
 
 	add_library(schememodwebauthn MODULE ${LIB_SRC})
 	set_target_properties(schememodwebauthn PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
 	target_link_libraries(schememodwebauthn ${GLWD_LIBS} ${LIBJWT_LIBRARIES} ${LIBCBOR_LIBRARIES} ${LDAP_LIBRARIES})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodwebauthn)
 endif ()
@@ -427,7 +439,8 @@ if (WITH_SCHEME_CERTIFICATE)
 
 	add_library(schememodcertificate MODULE ${LIB_SRC})
 	set_target_properties(schememodcertificate PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
 	target_link_libraries(schememodcertificate ${GLWD_LIBS})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodcertificate)
 endif ()
@@ -452,7 +465,8 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 
 	add_library(pluginmodmock MODULE ${MOCK_LIB_SRC})
 	set_target_properties(pluginmodmock PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
 	target_link_libraries(pluginmodmock ${MOCK_LIBS})
 	set(PLUGIN_MODULES ${PLUGIN_MODULES} pluginmodmock)
 endif ()
@@ -472,7 +486,8 @@ if (WITH_PLUGIN_OAUTH2)
 
 	add_library(protocol_oauth2 MODULE ${LIB_SRC})
 	set_target_properties(protocol_oauth2 PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
 	target_link_libraries(protocol_oauth2 ${GLWD_LIBS} ${LIBJWT_LIBRARIES})
 	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oauth2)
 endif ()
@@ -492,7 +507,8 @@ if (WITH_PLUGIN_OIDC)
 
 	add_library(protocol_oidc MODULE ${LIB_SRC})
 	set_target_properties(protocol_oidc PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
 	target_link_libraries(protocol_oidc ${GLWD_LIBS} ${LIBJWT_LIBRARIES})
 	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oidc)
 endif ()
