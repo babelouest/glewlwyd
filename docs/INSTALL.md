@@ -2,10 +2,10 @@
 
 1. [Distribution packages](#distribution-packages)
 2. [Pre-compiled packages](#pre-compiled-packages)
-   * [Install Glewlwyd on Raspbian Stretch for Raspberry Pi](#install-glewlwyd-on-raspbian-buster-for-raspberry-pi)
    * [Install Glewlwyd on Debian Buster](#install-glewlwyd-on-debian-buster)
-   * [Install Glewlwyd on Ubuntu 18.04 LTS Bionic](#install-glewlwyd-on-ubuntu-18-04-lts-bionic)
-   * [Install Glewlwyd on Ubuntu 19.10 Eoan](#install-glewlwyd-on-ubuntu-19-10-eoan)
+   * [Install Glewlwyd on Raspbian Buster for Raspberry Pi](#install-glewlwyd-on-raspbian-buster-for-raspberry-pi)
+   * [Install Glewlwyd on Ubuntu 18.04 LTS Bionic](#install-glewlwyd-on-ubuntu-1804-lts-bionic)
+   * [Install Glewlwyd on Ubuntu 19.10 Eoan](#install-glewlwyd-on-ubuntu-1910-eoan)
 3. [Docker](#docker)
 4. [Manual install from source](#manual-install-from-source)
    * [Dependencies](#dependencies)
@@ -90,12 +90,12 @@ $ sudo dpkg -i glewlwyd_2.0.0_raspbian_buster_x86_64.deb
 
 ```shell
 $ # Note: libjwt provided with Ubuntu 18.04 LTS Bionic is too old to work with Glewlwyd module Webauthn
-$ sudo apt install -y autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libjwt0 libcbor0
+$ sudo apt install -y pkg-config autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libcbor0 libssl-dev libmicrohttpd12 default-mysql-client wget
 $ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz -O libjwt.tar.gz
 $ tar -zxvf libjwt.tar.gz
 $ cd libjwt-1.10.2
 $ autoreconf -i
-$ ./configure --without-openssl
+$ ./configure
 $ make && sudo make install
 $ cd ..
 $ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.0.0_ubuntu_bionic_x86_64.tar.gz
