@@ -1,6 +1,7 @@
 # Glewlwyd SSO server
 
 [![Build Status](https://travis-ci.com/babelouest/glewlwyd.svg?branch=master)](https://travis-ci.com/babelouest/glewlwyd)
+![C/C++ CI](https://github.com/babelouest/glewlwyd/workflows/C/C++%20CI/badge.svg)
 
 Single-Sign-On (SSO) server with multiple factor authentication.
 
