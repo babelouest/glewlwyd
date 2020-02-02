@@ -859,7 +859,7 @@
     "register-token-invalid": "Invalid token",
     "register-profile-cancel-title": "Cancel a new account",
     "register-profile-cancel-message": "Are you sure you want to cancel this new account? The operation is irreversible",
-    "register-invaid-url": "Connection error, invalid URL",
+    "register-invalid-url": "Connection error, invalid URL",
     "register-complete-link": "Connection to your application",
     "register-profile-nav-complete": "Complete",
     "register-profile-nav-incomplete": "Incomplete"

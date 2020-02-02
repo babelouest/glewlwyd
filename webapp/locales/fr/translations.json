@@ -859,7 +859,7 @@
     "register-token-invalid": "Jeton invalide",
     "register-profile-cancel-title": "Annulation d'un nouveau compte",
     "register-profile-cancel-message": "Êtes-vous sûr de vouloir annuler ce compte? L'annulation est irréversible.",
-    "register-invaid-url": "Erreur de connexion, URL invalide",
+    "register-invalid-url": "Erreur de connexion, URL invalide",
     "register-complete-link": "Connexion à votre application",
     "register-profile-nav-complete": "Complet",
     "register-profile-nav-incomplete": "Incomplet"
