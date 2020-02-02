@@ -244,7 +244,7 @@ class App extends Component {
     .fail((err) => {
       this.setState({registerValid: false, registering: false}, () => {
         if (err.status === 404) {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-invaid-url")});
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-invalid-url")});
         } else {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }
