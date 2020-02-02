@@ -682,7 +682,7 @@
     "mod-register-verify-email": "Verify e-mail",
     "mod-register-email-is-username": "Username is e-mail",
     "mod-register-has-mandatory-error": "You must have at least one mandatory authentication method",
-    "mod-register-subject-ph": "Ex: Complete your Glewlwyd reistration",
+    "mod-register-subject-ph": "Ex: Complete your Glewlwyd registration",
     "mod-register-body-pattern": "E-mail body",
     "mod-register-body-pattern-doc": "The patterns {CODE} and {TOKEN} will be replaced by the code and the token",
     "mod-register-verification-code-length": "Verification code length",
