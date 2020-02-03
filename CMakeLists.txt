@@ -520,7 +520,8 @@ if (WITH_PLUGIN_REGISTER)
 
 	add_library(protocol_register MODULE ${LIB_SRC})
 	set_target_properties(protocol_register PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
 	target_link_libraries(protocol_register ${GLWD_LIBS})
 	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_register)
 endif ()
