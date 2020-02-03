@@ -231,7 +231,7 @@ When the plugin instance is enabled, its endpoints available are:
 
 #### Register new user plugin
 
-This plugin allows new users to register to the Glewlwyd service and create a new account. New users may need to use a password to register and/or authentication schemes such as OTP, Webauthn or TLS Certificate, depending on the configuration.
+This plugin allows new users to register to the Glewlwyd service and create a new account. New users may need to confirm their e-mail used, set a password to register and/or authentication schemes such as OTP, Webauthn or TLS Certificate, depending on the configuration.
 
 Read the full [documentation](REGISTER.md).
 
