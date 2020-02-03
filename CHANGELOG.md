@@ -1,5 +1,10 @@
 # Glewlwyd Changelog
 
+## 2.1.1
+
+- Add claims `exp` and `nbf` in access tokens (see #99)
+- Fix libjwt version required to help Debian Buster users
+
 ## 2.1.0
 
 - Add custom css files so users can safely adapt css to their own identity
