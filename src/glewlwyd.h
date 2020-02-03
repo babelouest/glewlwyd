@@ -8,7 +8,7 @@
  * 
  * Declarations for constants and prototypes
  *
- * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2020 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -28,7 +28,7 @@
 #ifndef __GLEWLWYD_H_
 #define __GLEWLWYD_H_
 
-#define _GLEWLWYD_VERSION_ "2.1.0"
+#define _GLEWLWYD_VERSION_ "2.1.1"
 
 #include <jansson.h>
 
