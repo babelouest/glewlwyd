@@ -484,6 +484,8 @@ static char * generate_client_access_token(struct _oidc_config * config, const c
     jwt_add_grant_int(jwt, "exp", (now + config->access_token_duration));
     jwt_add_grant(jwt, "salt", salt);
     jwt_add_grant_int(jwt, "iat", now);
+    jwt_add_grant_int(jwt, "exp", (now+config->access_token_duration));
+    jwt_add_grant_int(jwt, "nbf", now);
     rand_string_nonce(salt, OIDC_SALT_LENGTH);
     jwt_add_grant(jwt, "salt", salt);
     jwt_add_grant(jwt, "type", "client_token");
@@ -1118,6 +1120,8 @@ static char * generate_access_token(struct _oidc_config * config, const char * u
       jwt_add_grant(jwt, "salt", salt);
       jwt_add_grant(jwt, "type", "access_token");
       jwt_add_grant_int(jwt, "iat", now);
+      jwt_add_grant_int(jwt, "exp", (now+config->access_token_duration));
+      jwt_add_grant_int(jwt, "nbf", now);
       if (scope_list != NULL) {
         jwt_add_grant(jwt, "scope", scope_list);
       }
