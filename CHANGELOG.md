@@ -14,6 +14,7 @@
 - Add plugin `Register` to allow users to create new accounts
 - Add HTTP Basic Auth scheme
 - Multiple bugfixes and UI improvements
+- Many thanks to all helpers who send feedbacks and bugfixes! Keep running :-)
 
 ## 2.0.0
 
