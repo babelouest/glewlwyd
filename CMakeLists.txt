@@ -3,7 +3,7 @@
 #
 # CMake file used to build program
 #
-# Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
+# Copyright 2016-2020 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License
@@ -24,14 +24,14 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 set(PROGRAM_VERSION_MAJOR "2")
 set(PROGRAM_VERSION_MINOR "1")
-set(PROGRAM_VERSION_PATCH "0")
+set(PROGRAM_VERSION_PATCH "1")
 set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, multiple factor authentication with, HOTP/TOTP, Webauthn, etc. extensible via plugins")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_REQUIRED "2.1.0")
 set(YDER_VERSION_REQUIRED "1.4.9")
 set(ULFIUS_VERSION_REQUIRED "2.6.5")
 set(HOEL_VERSION_REQUIRED "1.4.13")
-set(LIBJWT_VERSION_REQUIRED "1.10.2")
+set(LIBJWT_VERSION_REQUIRED "1.10.0")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
 
 set(USER_MODULES_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/user/")
