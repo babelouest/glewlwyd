@@ -21,6 +21,7 @@
     - [Plugins](#plugins)
       - [Glewlwyd Oauth2 plugin](#glewlwyd-oauth2-plugin)
       - [OpenID Connect Core Plugin](#openid-connect-core-plugin)
+      - [Register new user plugin](#register-new-user-plugin)
     - [Configure environment to use Glewlwyd Oauth2](#configure-environment-to-use-glewlwyd-oauth2)
       - [Create the client](#create-the-client)
       - [Configure scopes](#configure-scopes)
@@ -227,6 +228,12 @@ When the plugin instance is enabled, its endpoints available are:
 - `/api/<instance_name>/auth`
 - `/api/<instance_name>/token`
 - `/api/<instance_name>/userinfo`
+
+#### Register new user plugin
+
+This plugin allows new users to register to the Glewlwyd service and create a new account. New users may need to use a password to register and/or authentication schemes such as OTP, Webauthn or TLS Certificate, depending on the configuration.
+
+Read the full [documentation](REGISTER.md).
 
 ### Configure environment to use Glewlwyd Oauth2
 
