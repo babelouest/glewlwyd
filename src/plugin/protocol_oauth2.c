@@ -230,6 +230,8 @@ static char * generate_client_access_token(struct _oauth2_config * config, const
     jwt_add_grant(jwt, "scope", scope_list);
     jwt_add_grant_int(jwt, "iat", now);
     jwt_add_grant_int(jwt, "expires_in", config->access_token_duration);
+    jwt_add_grant_int(jwt, "exp", (now+config->access_token_duration));
+    jwt_add_grant_int(jwt, "nbf", now);
     token = jwt_encode_str(jwt);
     if (token == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_client_access_token - Error generating token");
@@ -255,6 +257,8 @@ static char * generate_access_token(struct _oauth2_config * config, const char *
     jwt_add_grant(jwt, "type", "access_token");
     jwt_add_grant_int(jwt, "iat", now);
     jwt_add_grant_int(jwt, "expires_in", config->access_token_duration);
+    jwt_add_grant_int(jwt, "exp", (now+config->access_token_duration));
+    jwt_add_grant_int(jwt, "nbf", now);
     if (scope_list != NULL) {
       jwt_add_grant(jwt, "scope", scope_list);
     }
