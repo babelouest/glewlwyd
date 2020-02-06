@@ -31,6 +31,9 @@ set(ORCANIA_VERSION_REQUIRED "2.1.0")
 set(YDER_VERSION_REQUIRED "1.4.9")
 set(ULFIUS_VERSION_REQUIRED "2.6.5")
 set(HOEL_VERSION_REQUIRED "1.4.13")
+set(RHONABWY_VERSION_REQUIRED "0.9.2")
+set(IDDAWC_VERSION_REQUIRED "0.9.2")
+set(HOEL_VERSION_REQUIRED "1.4.13")
 set(LIBJWT_VERSION_REQUIRED "1.10.0")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
 
@@ -494,12 +497,32 @@ endif ()
 
 option(WITH_PLUGIN_OIDC "Build OpenID Connect plugin module" on)
 if (WITH_PLUGIN_OIDC)
-		include(FindLibJWT)
-		find_package(LibJWT ${LIBJWT_VERSION_REQUIRED} REQUIRED)
-		if (LIBJWT_FOUND)
-				include_directories(${LIBJWT_INCLUDE_DIRS})
-		endif ()
-		
+	include(FindLibJWT)
+	find_package(LibJWT ${LIBJWT_VERSION_REQUIRED} REQUIRED)
+	if (LIBJWT_FOUND)
+			include_directories(${LIBJWT_INCLUDE_DIRS})
+	endif ()
+
+	set(Rhonabwy_FIND_QUIETLY ON) # force to find Rhonabwy quietly
+	include(FindRhonabwy)
+	find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} QUIET) # try to find rhonabwy
+	if (RHONABWY_FOUND)
+		include_directories(${rhonabwy_SOURCE_DIR}/include)
+	elseif (NOT RHONABWY_FOUND AND DOWNLOAD_DEPENDENCIES)
+		include(DownloadProject)
+		message(STATUS "Download Rhonabwy ${RHONABWY_VERSION_REQUIRED}")
+		download_project(PROJ rhonabwy # ... otherwise, download archive
+				URL "https://github.com/babelouest/rhonabwy/archive/v${RHONABWY_VERSION_REQUIRED}.tar.gz"
+				QUIET)
+		add_subdirectory(${rhonabwy_SOURCE_DIR} ${rhonabwy_BINARY_DIR})
+		include_directories(${rhonabwy_SOURCE_DIR}/include)
+		add_dependencies(glewlwyd rhonabwy)
+		set(RHONABWY_LIBRARIES rhonabwy)
+		include_directories(${rhonabwy_BINARY_DIR})
+	else ()
+		message( FATAL_ERROR "Rhonabwy not found")
+	endif ()
+
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oidc.c ${RESOURCES_SRC_PATH}/oidc_resource.c ${RESOURCES_SRC_PATH}/oidc_resource.h)
 	if (NOT ${RELEASE_CODENAME} STREQUAL "stretch" AND NOT ${RELEASE_CODENAME} STREQUAL "bionic")
 		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
@@ -509,7 +532,7 @@ if (WITH_PLUGIN_OIDC)
 	set_target_properties(protocol_oidc PROPERTIES
 			COMPILE_OPTIONS -Wextra
 			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
-	target_link_libraries(protocol_oidc ${GLWD_LIBS} ${LIBJWT_LIBRARIES})
+	target_link_libraries(protocol_oidc ${GLWD_LIBS} ${LIBJWT_LIBRARIES} ${RHONABWY_LIBRARIES})
 	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oidc)
 endif ()
 
