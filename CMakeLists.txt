@@ -130,6 +130,7 @@ set(SEARCH_ORCANIA_H OFF CACHE BOOL "Force to false") # Avoid to search and down
 set(SEARCH_ORCANIA_R OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during hoel search and download
 set(SEARCH_YDER_R OFF CACHE BOOL "Force to false") # Avoid to search and download yder during ulfius and hoel search and download
 set(SEARCH_ULFIUS_R OFF CACHE BOOL "Force to false") # Avoid to search and download ulfius during rhonabwy search and download
+set(RHONABWY_FOUND OFF)
 
 option(DOWNLOAD_DEPENDENCIES "Download required dependencies" ON)
 
@@ -529,24 +530,26 @@ if (WITH_PLUGIN_OIDC)
 			include_directories(${LIBJWT_INCLUDE_DIRS})
 	endif ()
 
-	set(Rhonabwy_FIND_QUIETLY ON) # force to find Rhonabwy quietly
-	include(FindRhonabwy)
-	find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} QUIET) # try to find rhonabwy
-	if (RHONABWY_FOUND)
-		include_directories(${rhonabwy_SOURCE_DIR}/include)
-	elseif (NOT RHONABWY_FOUND AND DOWNLOAD_DEPENDENCIES)
-		include(DownloadProject)
-		message(STATUS "Download Rhonabwy ${RHONABWY_VERSION_REQUIRED}")
-		download_project(PROJ rhonabwy # ... otherwise, download archive
-				URL "https://github.com/babelouest/rhonabwy/archive/v${RHONABWY_VERSION_REQUIRED}.tar.gz"
-				QUIET)
-		add_subdirectory(${rhonabwy_SOURCE_DIR} ${rhonabwy_BINARY_DIR})
-		include_directories(${rhonabwy_SOURCE_DIR}/include)
-		add_dependencies(glewlwyd rhonabwy)
-		set(RHONABWY_LIBRARIES rhonabwy)
-		include_directories(${rhonabwy_BINARY_DIR})
-	else ()
-		message( FATAL_ERROR "Rhonabwy not found")
+	if (NOT RHONABWY_FOUND)
+		set(Rhonabwy_FIND_QUIETLY ON) # force to find Rhonabwy quietly
+		include(FindRhonabwy)
+		find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} QUIET) # try to find rhonabwy
+		if (RHONABWY_FOUND)
+			include_directories(${rhonabwy_SOURCE_DIR}/include)
+		elseif (NOT RHONABWY_FOUND AND DOWNLOAD_DEPENDENCIES)
+			include(DownloadProject)
+			message(STATUS "Download Rhonabwy ${RHONABWY_VERSION_REQUIRED}")
+			download_project(PROJ rhonabwy # ... otherwise, download archive
+					URL "https://github.com/babelouest/rhonabwy/archive/v${RHONABWY_VERSION_REQUIRED}.tar.gz"
+					QUIET)
+			add_subdirectory(${rhonabwy_SOURCE_DIR} ${rhonabwy_BINARY_DIR})
+			include_directories(${rhonabwy_SOURCE_DIR}/include)
+			add_dependencies(glewlwyd rhonabwy)
+			set(RHONABWY_LIBRARIES rhonabwy)
+			include_directories(${rhonabwy_BINARY_DIR})
+		else ()
+			message( FATAL_ERROR "Rhonabwy not found")
+		endif ()
 	endif ()
 
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oidc.c ${RESOURCES_SRC_PATH}/oidc_resource.c ${RESOURCES_SRC_PATH}/oidc_resource.h)
