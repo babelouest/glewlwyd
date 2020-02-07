@@ -130,7 +130,6 @@ set(SEARCH_ORCANIA_H OFF CACHE BOOL "Force to false") # Avoid to search and down
 set(SEARCH_ORCANIA_R OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during hoel search and download
 set(SEARCH_YDER_R OFF CACHE BOOL "Force to false") # Avoid to search and download yder during ulfius and hoel search and download
 set(SEARCH_ULFIUS_R OFF CACHE BOOL "Force to false") # Avoid to search and download ulfius during rhonabwy search and download
-set(RHONABWY_FOUND OFF)
 
 option(DOWNLOAD_DEPENDENCIES "Download required dependencies" ON)
 
@@ -448,9 +447,9 @@ if (WITH_SCHEME_WEBAUTHN)
 				QUIET)
 		add_subdirectory(${rhonabwy_SOURCE_DIR} ${rhonabwy_BINARY_DIR})
 		include_directories(${rhonabwy_SOURCE_DIR}/include)
-		add_dependencies(glewlwyd rhonabwy)
 		set(RHONABWY_LIBRARIES rhonabwy)
 		include_directories(${rhonabwy_BINARY_DIR})
+		set (RHONABWY_FOUND ON)
 	else ()
 		message( FATAL_ERROR "Rhonabwy not found")
 	endif ()
@@ -544,9 +543,9 @@ if (WITH_PLUGIN_OIDC)
 					QUIET)
 			add_subdirectory(${rhonabwy_SOURCE_DIR} ${rhonabwy_BINARY_DIR})
 			include_directories(${rhonabwy_SOURCE_DIR}/include)
-			add_dependencies(glewlwyd rhonabwy)
 			set(RHONABWY_LIBRARIES rhonabwy)
 			include_directories(${rhonabwy_BINARY_DIR})
+			set (RHONABWY_FOUND ON)
 		else ()
 			message( FATAL_ERROR "Rhonabwy not found")
 		endif ()
