@@ -98,9 +98,8 @@ json_t * get_user_module_list(struct config_elements * config) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters, * j_element;
   size_t index;
-  struct _user_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[ssssss]ss}",
+  j_query = json_pack("{sss[sssssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "columns",
@@ -110,6 +109,7 @@ json_t * get_user_module_list(struct config_elements * config) {
                         "gumi_parameters",
                         "gumi_order AS order_rank",
                         "gumi_readonly",
+                        "gumi_enabled",
                       "order_by",
                       "gumi_order");
   res = h_select(config->conn, j_query, &j_result, NULL);
@@ -125,16 +125,11 @@ json_t * get_user_module_list(struct config_elements * config) {
       }
       json_object_del(j_element, "gumi_parameters");
       
+      json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "gumi_enabled"))?json_true():json_false());
+      json_object_del(j_element, "gumi_enabled");
+      
       json_object_set_new(j_element, "readonly", json_integer_value(json_object_get(j_element, "gumi_readonly"))?json_true():json_false());
       json_object_del(j_element, "gumi_readonly");
-      
-      cur_instance = get_user_module_instance(config, json_string_value(json_object_get(j_element, "name")));
-      if (cur_instance != NULL) {
-        json_object_set(j_element, "enabled", cur_instance->enabled?json_true():json_false());
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_module_list - Error instance %s not found in app config", json_string_value(json_object_get(j_element, "name")));
-        json_object_set(j_element, "enabled", json_false());
-      }
     }
     j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
   } else {
@@ -148,9 +143,8 @@ json_t * get_user_module_list(struct config_elements * config) {
 json_t * get_user_module(struct config_elements * config, const char * name) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
-  struct _user_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[sssss]s{ss}}",
+  j_query = json_pack("{sss[sssssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "columns",
@@ -159,6 +153,8 @@ json_t * get_user_module(struct config_elements * config, const char * name) {
                         "gumi_display_name AS display_name",
                         "gumi_parameters",
                         "gumi_order AS order_rank",
+                        "gumi_enabled",
+                        "gumi_readonly",
                       "where",
                         "gumi_name",
                         name);
@@ -175,16 +171,12 @@ json_t * get_user_module(struct config_elements * config, const char * name) {
       }
       json_object_del(json_array_get(j_result, 0), "gumi_parameters");
       
+      json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "gumi_enabled"))?json_true():json_false());
+      json_object_del(json_array_get(j_result, 0), "gumi_enabled");
+      
       json_object_set_new(json_array_get(j_result, 0), "readonly", json_integer_value(json_object_get(json_array_get(j_result, 0), "gumi_readonly"))?json_true():json_false());
       json_object_del(json_array_get(j_result, 0), "gumi_readonly");
-      
-      cur_instance = get_user_module_instance(config, name);
-      if (cur_instance != NULL) {
-        json_object_set(json_array_get(j_result, 0), "enabled", cur_instance->enabled?json_true():json_false());
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_module - Error instance %s not found in app config", name);
-        json_object_set(json_array_get(j_result, 0), "enabled", json_false());
-      }
+
       j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
@@ -235,6 +227,10 @@ json_t * is_user_module_valid(struct config_elements * config, json_t * j_module
         } else {
           json_array_append_new(j_error_list, json_string("Module is mandatory and must be a non empty string of at most 128 characters"));
         }
+      } else {
+        if (json_object_get(j_module, "enabled") != NULL && !json_is_boolean(json_object_get(j_module, "enabled"))) {
+          json_array_append_new(j_error_list, json_string("enabled is optional and must be a boolean"));
+        }
       }
       if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
         json_array_append_new(j_error_list, json_string("display_name is optional and must be a non empty string of at most 256 characters"));
@@ -279,7 +275,7 @@ json_t * add_user_module(struct config_elements * config, json_t * j_module) {
   json_t * j_return, * j_result;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOsOsOsiss}}",
+  j_query = json_pack("{sss{sOsOsOsisiss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "values",
@@ -291,6 +287,8 @@ json_t * add_user_module(struct config_elements * config, json_t * j_module) {
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
                         "gumi_readonly",
                         json_object_get(j_module, "readonly")==json_true()?1:0,
+                        "gumi_enabled",
+                        1,
                         "gumi_parameters",
                         parameters);
   if (json_object_get(j_module, "order_rank") != NULL) {
@@ -357,7 +355,7 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _user_module_instance * cur_instance;
   
-  j_query = json_pack("{sss{sOsiss}s{ss}}",
+  j_query = json_pack("{sss{sOsisiss}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "set",
@@ -365,6 +363,8 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
                         "gumi_readonly",
                         json_object_get(j_module, "readonly")==json_true()?1:0,
+                        "gumi_enabled",
+                        json_object_get(j_module, "enabled")==json_false()?0:1,
                         "gumi_parameters",
                         parameters,
                       "where",
@@ -451,7 +451,13 @@ json_t * manage_user_module(struct config_elements * config, const char * name, 
         j_result = instance->module->user_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
         if (check_result_value(j_result, G_OK)) {
           instance->enabled = 1;
-          j_return = json_pack("{si}", "result", G_OK);
+          json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
+          if (set_user_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error set_user_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
         } else if (check_result_value(j_result, G_ERROR_PARAM)) {
           j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
         } else {
@@ -466,7 +472,13 @@ json_t * manage_user_module(struct config_elements * config, const char * name, 
       if (instance->enabled) {
         if (instance->module->user_module_close(config->config_m, instance->cls) == G_OK) {
           instance->enabled = 0;
-          j_return = json_pack("{si}", "result", G_OK);
+          json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
+          if (set_user_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error set_user_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           j_return = json_pack("{si}", "result", G_ERROR);
@@ -490,9 +502,8 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters, * j_element;
   size_t index;
-  struct _user_auth_scheme_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[sssssss]ss}",
+  j_query = json_pack("{sss[ssssssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "columns",
@@ -503,6 +514,7 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
                         "guasmi_expiration AS expiration",
                         "guasmi_max_use AS max_use",
                         "guasmi_allow_user_register",
+                        "guasmi_enabled",
                       "order_by",
                       "guasmi_module");
   res = h_select(config->conn, j_query, &j_result, NULL);
@@ -520,13 +532,8 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
       json_object_del(j_element, "guasmi_parameters");
       json_object_del(j_element, "guasmi_allow_user_register");
       
-      cur_instance = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_element, "name")));
-      if (cur_instance != NULL) {
-        json_object_set(j_element, "enabled", cur_instance->enabled?json_true():json_false());
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module_list - Error instance %s not found in app config", json_string_value(json_object_get(j_element, "name")));
-        json_object_set(j_element, "enabled", json_false());
-      }
+      json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "guasmi_enabled"))?json_true():json_false());
+      json_object_del(j_element, "guasmi_enabled");
     }
     j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
   } else {
@@ -540,9 +547,8 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
 json_t * get_user_auth_scheme_module(struct config_elements * config, const char * name) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
-  struct _user_auth_scheme_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[sssssss]s{ss}}",
+  j_query = json_pack("{sss[ssssssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "columns",
@@ -553,6 +559,7 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
                         "guasmi_expiration AS expiration",
                         "guasmi_max_use AS max_use",
                         "guasmi_allow_user_register",
+                        "guasmi_enabled",
                       "where",
                         "guasmi_name",
                         name);
@@ -571,13 +578,9 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
       json_object_del(json_array_get(j_result, 0), "guasmi_parameters");
       json_object_del(json_array_get(j_result, 0), "guasmi_allow_user_register");
       
-      cur_instance = get_user_auth_scheme_module_instance(config, name);
-      if (cur_instance != NULL) {
-        json_object_set(json_array_get(j_result, 0), "enabled", cur_instance->enabled?json_true():json_false());
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module_list - Error instance %s not found in app config", name);
-        json_object_set(json_array_get(j_result, 0), "enabled", json_false());
-      }
+      json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_enabled"))?json_true():json_false());
+      json_object_del(json_array_get(j_result, 0), "guasmi_enabled");
+
       j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
@@ -628,6 +631,10 @@ json_t * is_user_auth_scheme_module_valid(struct config_elements * config, json_
         } else {
           json_array_append_new(j_error_list, json_string("Module is mandatory and must be a non empty string of at most 128 characters"));
         }
+      } else {
+        if (json_object_get(j_module, "enabled") != NULL && !json_is_boolean(json_object_get(j_module, "enabled"))) {
+          json_array_append_new(j_error_list, json_string("enabled is optional and must be a boolean"));
+        }
       }
       if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
         json_array_append_new(j_error_list, json_string("display_name is optional and must be a non empty string of at most 256 characters"));
@@ -674,7 +681,7 @@ json_t * add_user_auth_scheme_module(struct config_elements * config, json_t * j
   size_t i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOsOsOsssOsOsi}}",
+  j_query = json_pack("{sss{sOsOsOsssOsOsisi}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "values",
@@ -691,7 +698,9 @@ json_t * add_user_auth_scheme_module(struct config_elements * config, json_t * j
                         "guasmi_max_use",
                         json_object_get(j_module, "max_use"),
                         "guasmi_allow_user_register",
-                        json_object_get(j_module, "allow_user_register")==json_false()?0:1);
+                        json_object_get(j_module, "allow_user_register")==json_false()?0:1,
+                        "guasmi_enabled",
+                        1);
   res = h_insert(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -761,7 +770,7 @@ int set_user_auth_scheme_module(struct config_elements * config, const char * na
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _user_auth_scheme_module_instance * scheme_instance = NULL;
   
-  j_query = json_pack("{sss{sOsssOsOsi}s{ss}}",
+  j_query = json_pack("{sss{sOsssOsOsisi}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "set",
@@ -775,6 +784,8 @@ int set_user_auth_scheme_module(struct config_elements * config, const char * na
                         json_object_get(j_module, "max_use"),
                         "guasmi_allow_user_register",
                         json_object_get(j_module, "allow_user_register")==json_false()?0:1,
+                        "guasmi_enabled",
+                        json_object_get(j_module, "enabled")==json_false()?0:1,
                       "where",
                         "guasmi_name",
                         name);
@@ -845,7 +856,13 @@ json_t * manage_user_auth_scheme_module(struct config_elements * config, const c
         j_result = instance->module->user_auth_scheme_module_init(config->config_m, json_object_get(json_object_get(j_module, "module"), "parameters"), instance->name, &instance->cls);
         if (check_result_value(j_result, G_OK)) {
           instance->enabled = 1;
-          j_return = json_pack("{si}", "result", G_OK);
+          json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
+          if (set_user_auth_scheme_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error set_user_auth_scheme_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
         } else if (check_result_value(j_result, G_ERROR_PARAM)) {
           j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
         } else {
@@ -860,7 +877,13 @@ json_t * manage_user_auth_scheme_module(struct config_elements * config, const c
       if (instance->enabled) {
         if (instance->module->user_auth_scheme_module_close(config->config_m, instance->cls) == G_OK) {
           instance->enabled = 0;
-          j_return = json_pack("{si}", "result", G_OK);
+          json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
+          if (set_user_auth_scheme_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error set_user_auth_scheme_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           j_return = json_pack("{si}", "result", G_ERROR);
@@ -884,9 +907,8 @@ json_t * get_client_module_list(struct config_elements * config) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters, * j_element;
   size_t index;
-  struct _client_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[ssssss]ss}",
+  j_query = json_pack("{sss[sssssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
                       "columns",
@@ -896,6 +918,7 @@ json_t * get_client_module_list(struct config_elements * config) {
                         "gcmi_parameters",
                         "gcmi_order AS order_rank",
                         "gcmi_readonly",
+                        "gcmi_enabled",
                       "order_by",
                       "gcmi_order");
   res = h_select(config->conn, j_query, &j_result, NULL);
@@ -914,13 +937,8 @@ json_t * get_client_module_list(struct config_elements * config) {
       json_object_set_new(j_element, "readonly", json_integer_value(json_object_get(j_element, "gcmi_readonly"))?json_true():json_false());
       json_object_del(j_element, "gcmi_readonly");
       
-      cur_instance = get_client_module_instance(config, json_string_value(json_object_get(j_element, "name")));
-      if (cur_instance != NULL) {
-        json_object_set(j_element, "enabled", cur_instance->enabled?json_true():json_false());
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_client_module_list - Error instance %s not found in app config", json_string_value(json_object_get(j_element, "name")));
-        json_object_set(j_element, "enabled", json_false());
-      }
+      json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "gcmi_enabled"))?json_true():json_false());
+      json_object_del(j_element, "gcmi_enabled");
     }
     j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
   } else {
@@ -934,9 +952,8 @@ json_t * get_client_module_list(struct config_elements * config) {
 json_t * get_client_module(struct config_elements * config, const char * name) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
-  struct _client_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[ssssss]s{ss}}",
+  j_query = json_pack("{sss[sssssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
                       "columns",
@@ -946,6 +963,7 @@ json_t * get_client_module(struct config_elements * config, const char * name) {
                         "gcmi_parameters",
                         "gcmi_order AS order_rank",
                         "gcmi_readonly",
+                        "gcmi_enabled",
                       "where",
                         "gcmi_name",
                         name);
@@ -965,13 +983,9 @@ json_t * get_client_module(struct config_elements * config, const char * name) {
       json_object_set_new(json_array_get(j_result, 0), "readonly", json_integer_value(json_object_get(json_array_get(j_result, 0), "gcmi_readonly"))?json_true():json_false());
       json_object_del(json_array_get(j_result, 0), "gcmi_readonly");
       
-      cur_instance = get_client_module_instance(config, name);
-      if (cur_instance != NULL) {
-        json_object_set(json_array_get(j_result, 0), "enabled", cur_instance->enabled?json_true():json_false());
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_client_module_list - Error instance %s not found in app config", name);
-        json_object_set(json_array_get(j_result, 0), "enabled", json_false());
-      }
+      json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "gcmi_enabled"))?json_true():json_false());
+      json_object_del(json_array_get(j_result, 0), "gcmi_enabled");
+      
       j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
@@ -1022,6 +1036,10 @@ json_t * is_client_module_valid(struct config_elements * config, json_t * j_modu
         } else {
           json_array_append_new(j_error_list, json_string("Module is mandatory and must be a non empty string of at most 128 characters"));
         }
+      } else {
+        if (json_object_get(j_module, "enabled") != NULL && !json_is_boolean(json_object_get(j_module, "enabled"))) {
+          json_array_append_new(j_error_list, json_string("enabled is optional and must be a boolean"));
+        }
       }
       if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
         json_array_append_new(j_error_list, json_string("display_name is optional and must be a non empty string of at most 256 characters"));
@@ -1065,7 +1083,7 @@ json_t * add_client_module(struct config_elements * config, json_t * j_module) {
   size_t i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOsOsOsiss}}",
+  j_query = json_pack("{sss{sOsOsOsisiss}}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
                       "values",
@@ -1077,6 +1095,8 @@ json_t * add_client_module(struct config_elements * config, json_t * j_module) {
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
                         "gcmi_readonly",
                         json_object_get(j_module, "readonly")==json_true()?1:0,
+                        "gcmi_enabled",
+                        1,
                         "gcmi_parameters",
                         parameters);
   if (json_object_get(j_module, "order_rank") != NULL) {
@@ -1144,12 +1164,16 @@ int set_client_module(struct config_elements * config, const char * name, json_t
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _client_module_instance * cur_instance;
   
-  j_query = json_pack("{sss{sOss}s{ss}}",
+  j_query = json_pack("{sss{sOsisiss}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
                       "set",
                         "gcmi_display_name",
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
+                        "gcmi_readonly",
+                        json_object_get(j_module, "readonly")==json_true()?1:0,
+                        "gcmi_enabled",
+                        json_object_get(j_module, "enabled")==json_false()?0:1,
                         "gcmi_parameters",
                         parameters,
                       "where",
@@ -1236,7 +1260,13 @@ json_t * manage_client_module(struct config_elements * config, const char * name
         j_result = instance->module->client_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
         if (check_result_value(j_result, G_OK)) {
           instance->enabled = 1;
-          j_return = json_pack("{si}", "result", G_OK);
+          json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
+          if (set_client_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error set_client_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
         } else if (check_result_value(j_result, G_ERROR_PARAM)) {
           j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
         } else {
@@ -1251,7 +1281,13 @@ json_t * manage_client_module(struct config_elements * config, const char * name
       if (instance->enabled) {
         if (instance->module->client_module_close(config->config_m, instance->cls) == G_OK) {
           instance->enabled = 0;
-          j_return = json_pack("{si}", "result", G_OK);
+          json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
+          if (set_client_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error set_client_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           j_return = json_pack("{si}", "result", G_ERROR);
@@ -1275,9 +1311,8 @@ json_t * get_plugin_module_list(struct config_elements * config) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters, * j_element;
   size_t index;
-  struct _plugin_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[ssss]ss}",
+  j_query = json_pack("{sss[sssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
                       "columns",
@@ -1285,6 +1320,7 @@ json_t * get_plugin_module_list(struct config_elements * config) {
                         "gpmi_name AS name",
                         "gpmi_display_name AS display_name",
                         "gpmi_parameters",
+                        "gpmi_enabled",
                       "order_by",
                       "gpmi_module,gpmi_name");
   res = h_select(config->conn, j_query, &j_result, NULL);
@@ -1300,13 +1336,8 @@ json_t * get_plugin_module_list(struct config_elements * config) {
       }
       json_object_del(j_element, "gpmi_parameters");
       
-      cur_instance = get_plugin_module_instance(config, json_string_value(json_object_get(j_element, "name")));
-      if (cur_instance != NULL) {
-        json_object_set(j_element, "enabled", cur_instance->enabled?json_true():json_false());
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module_list - Error instance %s not found in app config", json_string_value(json_object_get(j_element, "name")));
-        json_object_set(j_element, "enabled", json_false());
-      }
+      json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "gpmi_enabled"))?json_true():json_false());
+      json_object_del(j_element, "gpmi_enabled");
     }
     j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
   } else {
@@ -1346,9 +1377,8 @@ json_t * get_plugin_module_list_for_user(struct config_elements * config) {
 json_t * get_plugin_module(struct config_elements * config, const char * name) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
-  struct _plugin_module_instance * cur_instance;
   
-  j_query = json_pack("{sss[ssss]s{ss}}",
+  j_query = json_pack("{sss[sssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
                       "columns",
@@ -1356,6 +1386,7 @@ json_t * get_plugin_module(struct config_elements * config, const char * name) {
                         "gpmi_name AS name",
                         "gpmi_display_name AS display_name",
                         "gpmi_parameters",
+                        "gpmi_enabled",
                       "where",
                         "gpmi_name",
                         name);
@@ -1372,13 +1403,9 @@ json_t * get_plugin_module(struct config_elements * config, const char * name) {
       }
       json_object_del(json_array_get(j_result, 0), "gpmi_parameters");
       
-      cur_instance = get_plugin_module_instance(config, name);
-      if (cur_instance != NULL) {
-        json_object_set(json_array_get(j_result, 0), "enabled", cur_instance->enabled?json_true():json_false());
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module_list - Error instance %s not found in app config", name);
-        json_object_set(json_array_get(j_result, 0), "enabled", json_false());
-      }
+      json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "gpmi_enabled"))?json_true():json_false());
+      json_object_del(json_array_get(j_result, 0), "gpmi_enabled");
+
       j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
@@ -1429,6 +1456,10 @@ json_t * is_plugin_module_valid(struct config_elements * config, json_t * j_modu
         } else {
           json_array_append_new(j_error_list, json_string("Module is mandatory and must be a non empty string of at most 128 characters"));
         }
+      } else {
+        if (json_object_get(j_module, "enabled") != NULL && !json_is_boolean(json_object_get(j_module, "enabled"))) {
+          json_array_append_new(j_error_list, json_string("enabled is optional and must be a boolean"));
+        }
       }
       if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
         json_array_append_new(j_error_list, json_string("display_name is optional and must be a non empty string of at most 256 characters"));
@@ -1466,7 +1497,7 @@ json_t * add_plugin_module(struct config_elements * config, json_t * j_module) {
   size_t i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOsOsOss}}",
+  j_query = json_pack("{sss{sOsOsOsiss}}",
                       "table",
                       GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
                       "values",
@@ -1476,6 +1507,8 @@ json_t * add_plugin_module(struct config_elements * config, json_t * j_module) {
                         json_object_get(j_module, "name"),
                         "gpmi_display_name",
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
+                        "gpmi_enabled",
+                        1,
                         "gpmi_parameters",
                         parameters);
   res = h_insert(config->conn, j_query, NULL);
@@ -1535,12 +1568,14 @@ int set_plugin_module(struct config_elements * config, const char * name, json_t
   int res, ret;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOss}s{ss}}",
+  j_query = json_pack("{sss{sOsiss}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
                       "set",
                         "gpmi_display_name",
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
+                        "gpmi_enabled",
+                        json_object_get(j_module, "enabled")==json_false()?0:1,
                         "gpmi_parameters",
                         parameters,
                       "where",
@@ -1604,7 +1639,13 @@ json_t * manage_plugin_module(struct config_elements * config, const char * name
         j_result = instance->module->plugin_module_init(config->config_p, instance->name, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
         if (check_result_value(j_result, G_OK)) {
           instance->enabled = 1;
-          j_return = json_pack("{si}", "result", G_OK);
+          json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
+          if (set_plugin_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error set_client_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
         } else if (check_result_value(j_result, G_ERROR_PARAM)) {
           j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
         } else {
@@ -1620,7 +1661,13 @@ json_t * manage_plugin_module(struct config_elements * config, const char * name
         if (instance->module->plugin_module_close(config->config_p, instance->name, instance->cls) == G_OK) {
           instance->enabled = 0;
           instance->cls = NULL;
-          j_return = json_pack("{si}", "result", G_OK);
+          json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
+          if (set_plugin_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error set_client_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           j_return = json_pack("{si}", "result", G_ERROR);

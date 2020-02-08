@@ -1716,7 +1716,7 @@ int load_user_module_instance_list(struct config_elements * config) {
   config->user_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_module_instance_list != NULL) {
     pointer_list_init(config->user_module_instance_list);
-    j_query = json_pack("{sss[sssss]ss}",
+    j_query = json_pack("{sss[ssssss]ss}",
                         "table",
                         GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                         "columns",
@@ -1725,6 +1725,7 @@ int load_user_module_instance_list(struct config_elements * config) {
                           "gumi_order AS order_by",
                           "gumi_parameters AS parameters",
                           "gumi_readonly AS readonly",
+                          "gumi_enabled AS enabled",
                         "order_by",
                         "gumi_order");
     res = h_select(config->conn, j_query, &j_result, NULL);
@@ -1748,24 +1749,28 @@ int load_user_module_instance_list(struct config_elements * config) {
             cur_instance->module = module;
             cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
             if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
-              j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
-              if (j_parameters != NULL) {
-                j_init = module->user_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls);
-                if (check_result_value(j_init, G_OK)) {
-                  cur_instance->enabled = 1;
+              if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                if (j_parameters != NULL) {
+                  j_init = module->user_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls);
+                  if (check_result_value(j_init, G_OK)) {
+                    cur_instance->enabled = 1;
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                    message = json_dumps(j_init, JSON_INDENT(2));
+                    y_log_message(Y_LOG_LEVEL_DEBUG, message);
+                    o_free(message);
+                    cur_instance->enabled = 0;
+                  }
+                  json_decref(j_init);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
-                  message = json_dumps(j_init, JSON_INDENT(2));
-                  y_log_message(Y_LOG_LEVEL_DEBUG, message);
-                  o_free(message);
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                   cur_instance->enabled = 0;
                 }
-                json_decref(j_init);
+                json_decref(j_parameters);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                 cur_instance->enabled = 0;
               }
-              json_decref(j_parameters);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error reallocating resources for user_module_instance_list");
               o_free(cur_instance->name);
@@ -1955,7 +1960,7 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
   config->user_auth_scheme_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_auth_scheme_module_instance_list != NULL) {
     pointer_list_init(config->user_auth_scheme_module_instance_list);
-    j_query = json_pack("{sss[sssssss]}",
+    j_query = json_pack("{sss[ssssssss]}",
                         "table",
                         GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                         "columns",
@@ -1965,7 +1970,8 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
                           "guasmi_expiration",
                           "guasmi_max_use",
                           "guasmi_allow_user_register",
-                          "guasmi_parameters AS parameters");
+                          "guasmi_parameters AS parameters",
+                          "guasmi_enabled AS enabled");
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
@@ -1990,26 +1996,30 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
             cur_instance->guasmi_max_use = json_integer_value(json_object_get(j_instance, "guasmi_max_use"));
             cur_instance->guasmi_allow_user_register = json_integer_value(json_object_get(j_instance, "guasmi_allow_user_register"));
             if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
-              j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
-              if (j_parameters != NULL) {
-                j_init = module->user_auth_scheme_module_init(config->config_m, j_parameters, cur_instance->name, &cur_instance->cls);
-                if (check_result_value(j_init, G_OK)) {
-                  cur_instance->enabled = 1;
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
-                  if (check_result_value(j_init, G_ERROR_PARAM)) {
-                    message = json_dumps(json_object_get(j_init, "error"), JSON_INDENT(2));
-                    y_log_message(Y_LOG_LEVEL_DEBUG, message);
-                    o_free(message);
+              if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                if (j_parameters != NULL) {
+                  j_init = module->user_auth_scheme_module_init(config->config_m, j_parameters, cur_instance->name, &cur_instance->cls);
+                  if (check_result_value(j_init, G_OK)) {
+                    cur_instance->enabled = 1;
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                    if (check_result_value(j_init, G_ERROR_PARAM)) {
+                      message = json_dumps(json_object_get(j_init, "error"), JSON_INDENT(2));
+                      y_log_message(Y_LOG_LEVEL_DEBUG, message);
+                      o_free(message);
+                    }
+                    cur_instance->enabled = 0;
                   }
-                  cur_instance->enabled = 0;
+                  json_decref(j_init);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error parsing parameters for module %s: '%s'", cur_instance->name, json_string_value(json_object_get(j_instance, "parameters")));
+                  o_free(cur_instance->name);
                 }
-                json_decref(j_init);
+                json_decref(j_parameters);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error parsing parameters for module %s: '%s'", cur_instance->name, json_string_value(json_object_get(j_instance, "parameters")));
-                o_free(cur_instance->name);
+                cur_instance->enabled = 0;
               }
-              json_decref(j_parameters);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error reallocating resources for user_auth_scheme_module_instance_list");
               o_free(cur_instance->name);
@@ -2204,7 +2214,7 @@ int load_client_module_instance_list(struct config_elements * config) {
   config->client_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->client_module_instance_list != NULL) {
     pointer_list_init(config->client_module_instance_list);
-    j_query = json_pack("{sss[sssss]ss}",
+    j_query = json_pack("{sss[ssssss]ss}",
                         "table",
                         GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
                         "columns",
@@ -2213,6 +2223,7 @@ int load_client_module_instance_list(struct config_elements * config) {
                           "gcmi_order AS order_by",
                           "gcmi_parameters AS parameters",
                           "gcmi_readonly AS readonly",
+                          "gcmi_enabled AS enabled",
                         "order_by",
                         "gcmi_order");
     res = h_select(config->conn, j_query, &j_result, NULL);
@@ -2236,21 +2247,25 @@ int load_client_module_instance_list(struct config_elements * config) {
             cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
             cur_instance->module = module;
             if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
-              j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
-              if (j_parameters != NULL) {
-                j_init = module->client_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls);
-                if (check_result_value(j_init, G_OK)) {
-                  cur_instance->enabled = 1;
+              if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                if (j_parameters != NULL) {
+                  j_init = module->client_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls);
+                  if (check_result_value(j_init, G_OK)) {
+                    cur_instance->enabled = 1;
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                    cur_instance->enabled = 0;
+                  }
+                  json_decref(j_init);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error parsing module parameters %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                   cur_instance->enabled = 0;
                 }
-                json_decref(j_init);
+                json_decref(j_parameters);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error parsing module parameters %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                 cur_instance->enabled = 0;
               }
-              json_decref(j_parameters);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error reallocating resources for client_module_instance_list");
               o_free(cur_instance->name);
@@ -2426,13 +2441,14 @@ int load_plugin_module_instance_list(struct config_elements * config) {
   config->plugin_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->plugin_module_instance_list != NULL) {
     pointer_list_init(config->plugin_module_instance_list);
-    j_query = json_pack("{sss[sss]}",
+    j_query = json_pack("{sss[ssss]}",
                         "table",
                         GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
                         "columns",
                           "gpmi_module AS module",
                           "gpmi_name AS name",
-                          "gpmi_parameters AS parameters");
+                          "gpmi_parameters AS parameters",
+                          "gpmi_enabled AS enabled");
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
@@ -2453,26 +2469,30 @@ int load_plugin_module_instance_list(struct config_elements * config) {
             cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
             cur_instance->module = module;
             if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
-              j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
-              if (j_parameters != NULL) {
-                j_init = module->plugin_module_init(config->config_p, cur_instance->name, j_parameters, &cur_instance->cls);
-                if (check_result_value(j_init, G_OK)) {
-                  cur_instance->enabled = 1;
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
-                  if (check_result_value(j_init, G_ERROR_PARAM)) {
-                    message = json_dumps(json_object_get(j_init, "error"), JSON_INDENT(2));
-                    y_log_message(Y_LOG_LEVEL_DEBUG, message);
-                    o_free(message);
+              if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                if (j_parameters != NULL) {
+                  j_init = module->plugin_module_init(config->config_p, cur_instance->name, j_parameters, &cur_instance->cls);
+                  if (check_result_value(j_init, G_OK)) {
+                    cur_instance->enabled = 1;
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                    if (check_result_value(j_init, G_ERROR_PARAM)) {
+                      message = json_dumps(json_object_get(j_init, "error"), JSON_INDENT(2));
+                      y_log_message(Y_LOG_LEVEL_DEBUG, message);
+                      o_free(message);
+                    }
+                    cur_instance->enabled = 0;
                   }
+                  json_decref(j_init);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error parsing parameters for module %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                   cur_instance->enabled = 0;
                 }
-                json_decref(j_init);
+                json_decref(j_parameters);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error parsing parameters for module %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                 cur_instance->enabled = 0;
               }
-              json_decref(j_parameters);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error reallocating resources for client_module_instance_list");
               o_free(cur_instance->name);
