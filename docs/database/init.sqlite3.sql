@@ -53,7 +53,8 @@ CREATE TABLE g_user_module_instance (
   gumi_name TEXT NOT NULL,
   gumi_display_name TEXT DEFAULT '',
   gumi_parameters TEXT,
-  gumi_readonly INTEGER DEFAULT 0
+  gumi_readonly INTEGER DEFAULT 0,
+  gumi_enbaled INTEGER DEFAULT 1
 );
 
 CREATE TABLE g_user_auth_scheme_module_instance (
@@ -64,7 +65,8 @@ CREATE TABLE g_user_auth_scheme_module_instance (
   guasmi_allow_user_register INTEGER DEFAULT 1,
   guasmi_name TEXT NOT NULL,
   guasmi_display_name TEXT DEFAULT '',
-  guasmi_parameters TEXT
+  guasmi_parameters TEXT,
+  guasmi_enbaled INTEGER DEFAULT 1
 );
 
 CREATE TABLE g_client_module_instance (
@@ -74,7 +76,8 @@ CREATE TABLE g_client_module_instance (
   gcmi_name TEXT NOT NULL,
   gcmi_display_name TEXT DEFAULT '',
   gcmi_parameters TEXT,
-  gcmi_readonly INTEGER DEFAULT 0
+  gcmi_readonly INTEGER DEFAULT 0,
+  gcmi_enbaled INTEGER DEFAULT 1
 );
 
 CREATE TABLE g_plugin_module_instance (
@@ -82,7 +85,8 @@ CREATE TABLE g_plugin_module_instance (
   gpmi_module TEXT NOT NULL,
   gpmi_name TEXT NOT NULL,
   gpmi_display_name TEXT DEFAULT '',
-  gpmi_parameters TEXT
+  gpmi_parameters TEXT,
+  gpmi_enbaled INTEGER DEFAULT 1
 );
 
 CREATE TABLE g_user_session (
