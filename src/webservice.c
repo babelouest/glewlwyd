@@ -715,6 +715,7 @@ int callback_glewlwyd_set_user_module (const struct _u_request * request, struct
   if (check_result_value(j_search_module, G_OK)) {
     j_module = ulfius_get_json_body_request(request, NULL);
     if (j_module != NULL) {
+      json_object_del(j_module, "enabled");
       j_module_valid = is_user_module_valid(config, j_module, 0);
       if (check_result_value(j_module_valid, G_OK)) {
         if (set_user_module(config, u_map_get(request->map_url, "name"), j_module) != G_OK) {
@@ -888,6 +889,7 @@ int callback_glewlwyd_set_user_auth_scheme_module (const struct _u_request * req
   if (check_result_value(j_search_module, G_OK)) {
     j_module = ulfius_get_json_body_request(request, NULL);
     if (j_module != NULL) {
+      json_object_del(j_module, "enabled");
       j_module_valid = is_user_auth_scheme_module_valid(config, j_module, 0);
       if (check_result_value(j_module_valid, G_OK)) {
         if (set_user_auth_scheme_module(config, u_map_get(request->map_url, "name"), j_module) != G_OK) {
@@ -1061,6 +1063,7 @@ int callback_glewlwyd_set_client_module (const struct _u_request * request, stru
   if (check_result_value(j_search_module, G_OK)) {
     j_module = ulfius_get_json_body_request(request, NULL);
     if (j_module != NULL) {
+      json_object_del(j_module, "enabled");
       j_module_valid = is_client_module_valid(config, j_module, 0);
       if (check_result_value(j_module_valid, G_OK)) {
         if (set_client_module(config, u_map_get(request->map_url, "name"), j_module) != G_OK) {
@@ -1234,6 +1237,7 @@ int callback_glewlwyd_set_plugin_module (const struct _u_request * request, stru
   if (check_result_value(j_search_module, G_OK)) {
     j_module = ulfius_get_json_body_request(request, NULL);
     if (j_module != NULL) {
+      json_object_del(j_module, "enabled");
       j_module_valid = is_plugin_module_valid(config, j_module, 0);
       if (check_result_value(j_module_valid, G_OK)) {
         if (set_plugin_module(config, u_map_get(request->map_url, "name"), j_module) != G_OK) {
