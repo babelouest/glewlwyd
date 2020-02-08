@@ -3294,7 +3294,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
       }
       free_string_array(scope_array);
     } else {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_client_credentials_grant - Error client_d '%s' invalid", request->auth_basic_user);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_client_credentials_grant - Error client_id '%s' invalid", request->auth_basic_user);
       response->status = 403;
     }
     json_decref(j_client);
