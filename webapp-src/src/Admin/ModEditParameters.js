@@ -10,6 +10,7 @@ import WebauthnParams from './WebauthnParams';
 import OTPParams from './OTPParams';
 import PasswordParams from './PasswordParams';
 import CertificateParams from './CertificateParams';
+import Oauth2Params from './Oauth2Params';
 
 class ModEditParameters extends Component {
   constructor(props) {
@@ -51,6 +52,8 @@ class ModEditParameters extends Component {
       return <PasswordParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
     } else if (this.state.mod.module === "certificate") {
       return <CertificateParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
+    } else if (this.state.mod.module === "oauth2") {
+      return <Oauth2Params mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
     } else {
       return ("");
     }
