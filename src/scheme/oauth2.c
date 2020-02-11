@@ -720,6 +720,9 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
         }
       }
       j_return = json_pack("{si}", "result", G_OK);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init oauth2 - Error allocating resources for *cls");
+      j_return = json_pack("{si}", "result", G_OK);
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init oauth2 - Error in parameters");
