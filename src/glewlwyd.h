@@ -135,8 +135,8 @@
 #define GLEWLWYD_ENV_DATABASE_SQLITE3_PATH      "GLWD_DATABASE_SQLITE3_PATH"
 #define GLEWLWYD_ENV_DATABASE_POSTGRE_CONNINFO  "GLWD_DATABASE_POSTGRE_CONNINFO"
 
-pthread_mutex_t global_handler_close_lock;
-pthread_cond_t  global_handler_close_cond;
+extern pthread_mutex_t global_handler_close_lock;
+extern pthread_cond_t  global_handler_close_cond;
 
 // Main functions and misc functions
 int build_config_from_env(struct config_elements * config);
