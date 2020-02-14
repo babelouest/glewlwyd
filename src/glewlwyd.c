@@ -38,8 +38,8 @@
 
 #include "glewlwyd.h"
 
-pthread_mutex_t global_handler_close_lock;
-pthread_cond_t  global_handler_close_cond;
+static pthread_mutex_t global_handler_close_lock;
+static pthread_cond_t  global_handler_close_cond;
 
 /**
  *
