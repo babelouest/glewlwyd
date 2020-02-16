@@ -3982,6 +3982,7 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
     json_object_set_new(j_discovery, "jwks_uri", json_pack("s+", plugin_url, "/jwks"));
     json_object_set_new(j_discovery, "token_endpoint_auth_methods_supported", json_pack("[s]", "client_secret_basic"));
     json_object_set_new(j_discovery, "token_endpoint_auth_signing_alg_values_supported", json_pack("[s]", jwt_alg_str(jwt_get_alg(config->jwt_key))));
+    json_object_set_new(j_discovery, "id_token_signing_alg_values_supported", json_pack("[s]", jwt_alg_str(jwt_get_alg(config->jwt_key))));
     if (json_object_get(config->j_params, "allowed-scope") != NULL && json_array_size(json_object_get(config->j_params, "allowed-scope"))) {
       json_object_set(j_discovery, "scopes_supported", json_object_get(config->j_params, "allowed-scope"));
     } else {
