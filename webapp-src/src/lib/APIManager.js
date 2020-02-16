@@ -1,15 +1,15 @@
 import messageDispatcher from '../lib/MessageDispatcher';
 
 class APIManager {
-	constructor() {
+  constructor() {
     this.GlewlwydApiPrefix = "";
     this.GlewlwydApiPrefixSub = "";
-	}
+  }
 
   setConfig(GlewlwydApiPrefix) {
     this.GlewlwydApiPrefix = GlewlwydApiPrefix;
   }
-	
+  
   getConfig(GlewlwydApiPrefix) {
     return this.GlewlwydApiPrefix;
   }
@@ -17,26 +17,26 @@ class APIManager {
   setConfigSub(GlewlwydApiPrefix) {
     this.GlewlwydApiPrefixSub = GlewlwydApiPrefix;
   }
-	
+  
   getConfigSub(GlewlwydApiPrefix) {
     return this.GlewlwydApiPrefixSub;
   }
 
-	request(url, method="GET", data=false) {
+  request(url, method="GET", data=false) {
     if (data && method !== "GET") {
-  		return $.ajax({
-	  		method: method,
-		  	url: url,
-			  data: JSON.stringify(data),
-  			contentType: "application/json; charset=utf-8"
-	  	});
+      return $.ajax({
+        method: method,
+        url: url,
+        data: JSON.stringify(data),
+        contentType: "application/json; charset=utf-8"
+      });
     } else {
       return $.ajax({
         method: method,
         url: url
       });
     }
-	}
+  }
 
   glewlwydRequest(url, method="GET", data=false, unsafe=false) {
     return this.request(this.GlewlwydApiPrefix + url, method, data)

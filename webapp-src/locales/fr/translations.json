@@ -738,7 +738,6 @@
     "mod-oauth2-additional_parameters-key-error": "La clé est obligatoire",
     "mod-oauth2-add-param-value-ph": "Valeur",
     "mod-oauth2-additional_parameters-value-error": "La valeur est obligatoire"
-    
   },
   "profile": {
     "error-credential-message": "Veuillez vous connecter à l'application",
@@ -910,7 +909,15 @@
     "register-invalid-url": "Erreur de connexion, URL invalide",
     "register-complete-link": "Connexion à votre application",
     "register-profile-nav-complete": "Complet",
-    "register-profile-nav-incomplete": "Incomplet"
+    "register-profile-nav-incomplete": "Incomplet",
+    "scheme-oauth2-title": "Authentification avec un compte externe",
+    "scheme-oauth2-table-name": "Nom",
+    "scheme-oauth2-table-created_at": "Créé le",
+    "scheme-oauth2-table-enabled": "Actif",
+    "scheme-oauth2-btn-remove": "Supprimer",
+    "scheme-oauth2-btn-add": "Ajouter",
+    "scheme-oauth2-confirm-title": "Supprimer un compte",
+    "scheme-oauth2-confirm-message": "Êtes-vous sûr de vouloir supprimer le compte {{provider}}?"
   },
   "modal": {
     "close": "Fermer",
