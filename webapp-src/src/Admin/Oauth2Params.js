@@ -305,6 +305,14 @@ class Oauth2Params extends Component {
                 <div className="form-group">
                   <div className="input-group mb-3">
                     <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-oauth2-scope">{i18next.t("admin.mod-oauth2-scope")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-oauth2-scope" onChange={(e) => this.changeProviderParam(e, index, "scope", 0)} value={provider.scope} placeholder={i18next.t("admin.mod-oauth2-scope-ph")}/>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-oauth2-response_type">{i18next.t("admin.mod-oauth2-response_type")}</label>
                     </div>
                     <div className="dropdown">
