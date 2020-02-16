@@ -92,12 +92,19 @@ const char * get_ip_source(const struct _u_request * request) {
 char * get_client_hostname(const struct _u_request * request) {
   const char * ip_source = get_ip_source(request);
   char * hostname = NULL;
-  struct hostent * lh;
   
   if (ip_source != NULL) {
-    lh = gethostbyname(ip_source);
-    if (lh) {
-      hostname = msprintf("%s - %s", ip_source, lh->h_name);
+    struct addrinfo hints = { .ai_family = AF_UNSPEC, .ai_flags = AI_CANONNAME };
+    struct addrinfo *lookup;
+    int rv = getaddrinfo(ip_source, NULL, &hints, &lookup);
+    if (rv == 0) {
+      if (lookup->ai_canonname) {
+        hostname = msprintf("%s - %s", ip_source, lookup->ai_canonname);
+      }
+      else {
+        hostname = o_strdup(ip_source);
+      }
+      freeaddrinfo(lookup);
     } else {
       hostname = o_strdup(ip_source);
     }
