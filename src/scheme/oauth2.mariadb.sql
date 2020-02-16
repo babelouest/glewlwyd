@@ -17,8 +17,8 @@ CREATE TABLE gs_oauth2_session (
   gsor_id INT(11),
   gsos_created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gsos_expires_at TIMESTAMP,
-  gsos_state VARCHAR(32) NOT NULL,
+  gsos_state TEXT NOT NULL,
   gsos_session_export TEXT,
   gsos_status TINYINT(1) DEFAULT 0, -- 0: disabled, 1: registration, 2: authentication
-  FOREIGN KEY(gsor_id) REFERENCES gs_oauth2_registration(gsor_id) ON DELETE CASCADE,
+  FOREIGN KEY(gsor_id) REFERENCES gs_oauth2_registration(gsor_id) ON DELETE CASCADE
 );
