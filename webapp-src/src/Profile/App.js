@@ -126,8 +126,16 @@ class App extends Component {
         } else {
           this.setState({profileList: res}, () => {
             apiManager.glewlwydRequest("/profile/scheme")
-            .then((res) => {
-              this.setState({loggedIn: true, schemeList: res, invalidDelegateMessage: false, invalidCredentialMessage: false, profileUpdate: true});
+            .then((schemeList) => {
+              this.setState({loggedIn: true, schemeList: schemeList, invalidDelegateMessage: false, invalidCredentialMessage: false, profileUpdate: true}, () => {
+                if (this.state.config.params.scheme_name) {
+                  schemeList.forEach((scheme) => {
+                    if (scheme.name === this.state.config.params.scheme_name) {
+                      messageDispatcher.sendMessage('Nav', {type: scheme.module, page: scheme.name});
+                    }
+                  });
+                }
+              });
             })
             .fail((error) => {
               this.setState({loggedIn: false, profileList: false, schemeList: [], invalidDelegateMessage: false, invalidCredentialMessage: true, profileUpdate: false}, () => {
@@ -151,19 +159,27 @@ class App extends Component {
         });
       });
     } else {
-        apiManager.glewlwydRequest("/profile/scheme")
-        .then((res) => {
-          this.setState({loggedIn: true, profileList: [{username: this.state.config.params.delegate}], schemeList: res, invalidCredentialMessage: false, invalidDelegateMessage: false});
-        })
-        .fail((error) => {
-          this.setState({invalidCredentialMessage: false, invalidDelegateMessage: true}, () => {
-            if (error.status === 401) {
-              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-admin-scope")});
-            } else {
-              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-            }
-          });
+      apiManager.glewlwydRequest("/profile/scheme")
+      .then((schemeList) => {
+        this.setState({loggedIn: true, profileList: [{username: this.state.config.params.delegate}], schemeList: schemeList, invalidCredentialMessage: false, invalidDelegateMessage: false}, () => {
+          if (this.state.config.params.scheme_name) {
+            schemeList.forEach((scheme) => {
+              if (scheme.name === this.state.config.params.scheme_name) {
+                messageDispatcher.sendMessage('Nav', {type: scheme.module, page: scheme.name});
+              }
+            });
+          }
         });
+      })
+      .fail((error) => {
+        this.setState({invalidCredentialMessage: false, invalidDelegateMessage: true}, () => {
+          if (error.status === 401) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-admin-scope")});
+          } else {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          }
+        });
+      });
     }
   }
   
