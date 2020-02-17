@@ -101,9 +101,15 @@ class SchemeOauth2 extends Component {
 	render() {
     var registerList = [];
     this.state.registerList.forEach((register, index) => {
-      var createdAt, regButton;
+      var logo, createdAt, lastSession, regButton;
+      if (register.logo_uri) {
+        logo = <img src={register.logo_uri} alt={register.provider} />
+      } else if (register.logo_fa) {
+        logo = <i className={"fab "+register.logo_fa}></i>
+      }
       if (register.created_at !== null) {
         createdAt = (new Date(register.created_at*1000)).toLocaleString();
+        lastSession = (new Date(register.last_session*1000)).toLocaleString();
         regButton = 
         <button type="button" className="btn btn-primary" onClick={(e) => this.removeRegistration(register.provider)} title={i18next.t("profile.scheme-oauth2-btn-remove")}>
           <i className="fas fa-trash"></i>
@@ -117,6 +123,9 @@ class SchemeOauth2 extends Component {
       registerList.push(
         <tr key={index}>
           <td>
+            {logo}
+          </td>
+          <td>
             <span className="badge badge-success">
               {register.provider}
             </span>
@@ -125,7 +134,7 @@ class SchemeOauth2 extends Component {
             {createdAt}
           </td>
           <td>
-            {(register.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}
+            {lastSession}
           </td>
           <td>
             {regButton}
@@ -146,13 +155,15 @@ class SchemeOauth2 extends Component {
               <thead>
                 <tr>
                   <th>
+                  </th>
+                  <th>
                     {i18next.t("profile.scheme-oauth2-table-name")}
                   </th>
                   <th>
                     {i18next.t("profile.scheme-oauth2-table-created_at")}
                   </th>
                   <th>
-                    {i18next.t("profile.scheme-oauth2-table-enabled")}
+                    {i18next.t("profile.scheme-oauth2-table-last_session")}
                   </th>
                   <th>
                   </th>
