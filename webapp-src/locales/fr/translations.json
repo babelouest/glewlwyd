@@ -913,7 +913,7 @@
     "scheme-oauth2-title": "Authentification avec un compte externe",
     "scheme-oauth2-table-name": "Nom",
     "scheme-oauth2-table-created_at": "Créé le",
-    "scheme-oauth2-table-enabled": "Actif",
+    "scheme-oauth2-table-last_session": "Dernière authentification",
     "scheme-oauth2-btn-remove": "Supprimer",
     "scheme-oauth2-btn-add": "Ajouter",
     "scheme-oauth2-confirm-title": "Supprimer un compte",
