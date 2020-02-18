@@ -39,7 +39,8 @@ class Oauth2Params extends Component {
       role: props.role,
       check: props.check,
       hasError: false,
-      errorList: {}
+      errorList: {},
+      curMainstream: -1
     };
     
     if (this.state.check) {
@@ -48,6 +49,8 @@ class Oauth2Params extends Component {
     
     this.checkParameters = this.checkParameters.bind(this);
     this.addProvider = this.addProvider.bind(this);
+    this.changeMainstreamProvider = this.changeMainstreamProvider.bind(this);
+    this.deleteProvider = this.deleteProvider.bind(this);
     this.changeProviderParam = this.changeProviderParam.bind(this);
   }
   
@@ -93,6 +96,11 @@ class Oauth2Params extends Component {
     });
   }
   
+  changeMainstreamProvider(e, index) {
+    e.preventDefault();
+    this.setState({curMainstream: index});
+  }
+  
   changeParam(e, param, number) {
     var mod = this.state.mod;
     if (number) {
@@ -111,28 +119,64 @@ class Oauth2Params extends Component {
   
   addProvider() {
     var mod = this.state.mod;
-    mod.parameters.provider_list.push({
-      name: "",
-      logo_uri: "",
-      logo_fa: "",
-      client_id: "",
-      client_secret: "",
-      response_type: "code",
-      userinfo_endpoint: "",
-      config_endpoint: "",
-      auth_endpoint: "",
-      token_endpoint: "",
-      userid_property: "",
-      scope: "",
-      additional_parameters: [],
-      enabled: true
-    });
+    if (this.state.curMainstream === -1) {
+      mod.parameters.provider_list.push({
+        name: "",
+        logo_uri: "",
+        logo_fa: "",
+        client_id: "",
+        client_secret: "",
+        provider_type: "oauth2",
+        response_type: "code",
+        userinfo_endpoint: "",
+        config_endpoint: "",
+        auth_endpoint: "",
+        token_endpoint: "",
+        userid_property: "",
+        scope: "",
+        additional_parameters: [],
+        enabled: true
+      });
+    } else {
+      mod.parameters.provider_list.push(Object.assign({
+        name: "",
+        logo_uri: "",
+        logo_fa: "",
+        client_id: "",
+        client_secret: "",
+        provider_type: "oauth2",
+        response_type: "code",
+        userinfo_endpoint: "",
+        config_endpoint: "",
+        auth_endpoint: "",
+        token_endpoint: "",
+        userid_property: "",
+        scope: "",
+        additional_parameters: [],
+        enabled: true
+      },
+      this.state.config.providerMainstreamList[this.state.curMainstream]));
+    }
+    this.setState({mod: mod});
+  }
+  
+  deleteProvider(e, index) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters.provider_list.splice(index, 1);
     this.setState({mod: mod});
   }
   
   changeProviderParam(e, index, param) {
     var mod = this.state.mod;
     mod.parameters.provider_list[index][param] = e.target.value;
+    this.setState({mod: mod});
+  }
+  
+  changeProviderType(e, index, value) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters.provider_list[index].provider_type = value;
     this.setState({mod: mod});
   }
   
@@ -197,7 +241,7 @@ class Oauth2Params extends Component {
         errorList["provider-"+index+"-client_id"] = i18next.t("admin.mod-oauth2-client_id-error");
         errorList["provider_list-"+index] = true;
       }
-      if (!provider.userid_property) {
+      if (!provider.config_endpoint && !provider.userid_property) {
         hasError = true;
         errorList["provider-"+index+"-userid_property"] = i18next.t("admin.mod-oauth2-userid_property-error");
         errorList["provider_list-"+index] = true;
@@ -228,7 +272,7 @@ class Oauth2Params extends Component {
   }
   
   render() {
-    var providerList = [];
+    var providerList = [], mainstreamProviders = [<a key={-1} className={"dropdown-item"+(this.state.curMainstream===-1?" active":"")} href="#" onClick={(e) => this.changeMainstreamProvider(e, -1)}>{i18next.t("admin.mod-oauth2-mainstream_provider-none")}</a>];
     this.state.mod.parameters.provider_list.forEach((provider, index) => {
       var addParam = [];
       provider.additional_parameters.forEach((curParam, iAddParam) => {
@@ -251,10 +295,29 @@ class Oauth2Params extends Component {
                   <i className="fas fa-chevron-circle-down"></i>
                   <span className="btn-icon-right">{provider.name||i18next.t("admin.mod-oauth2-new")}</span>
                 </button>
+                <button className="btn btn-secondary btn-sm float-right" onClick={(e) => this.deleteProvider(e, index)}>
+                  <i className="fas fa-trash"></i>
+                </button>
               </h2>
             </div>
             <div id={"collapseProviderList"+index} className="collapse show" aria-labelledby={"providerListCard"+index} data-parent={"#accordionParams"+index}>
               <div className="card-body">
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-oauth2-provider_type">{i18next.t("admin.mod-oauth2-provider_type")}</label>
+                    </div>
+                    <div className="dropdown">
+                      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-oauth2-provider_type" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {i18next.t("admin.mod-oauth2-provider_type-" + provider.provider_type)}
+                      </button>
+                      <div className="dropdown-menu" aria-labelledby="mod-glwd-jwt-key-size">
+                        <a className={"dropdown-item"+(provider.provider_type==="oauth2"?" active":"")} href="#" onClick={(e) => this.changeProviderType(e, index, 'oauth2')}>{i18next.t("admin.mod-oauth2-provider_type-oauth2")}</a>
+                        <a className={"dropdown-item"+(provider.provider_type==="oidc"?" active":"")} href="#" onClick={(e) => this.changeProviderType(e, index, 'oidc')}>{i18next.t("admin.mod-oauth2-provider_type-oidc")}</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div className="form-group">
                   <div className="input-group mb-3">
                     <div className="input-group-prepend">
@@ -321,8 +384,8 @@ class Oauth2Params extends Component {
                       </button>
                       <div className="dropdown-menu" aria-labelledby="mod-glwd-jwt-key-size">
                         <a className={"dropdown-item"+(provider.response_type==="code"?" active":"")} href="#" onClick={(e) => this.changeResponseType(e, index, 'code')}>{i18next.t("admin.mod-oauth2-response_type-code")}</a>
-                        <a className={"dropdown-item"+(provider.response_type==="token"?" active":"")} href="#" onClick={(e) => this.changeResponseType(e, index, 'token')}>{i18next.t("admin.mod-oauth2-response_type-token")}</a>
-                        <a className={"dropdown-item"+(provider.response_type==="id_token"?" active":"")} href="#" onClick={(e) => this.changeResponseType(e, index, 'id_token')}>{i18next.t("admin.mod-oauth2-response_type-id_token")}</a>
+                        {provider.provider_type==="oauth2"?<a className={"dropdown-item"+(provider.response_type==="token"?" active":"")} href="#" onClick={(e) => this.changeResponseType(e, index, 'token')}>{i18next.t("admin.mod-oauth2-response_type-token")}</a>:""}
+                        {provider.provider_type==="oidc"?<a className={"dropdown-item"+(provider.response_type==="id_token"?" active":"")} href="#" onClick={(e) => this.changeResponseType(e, index, 'id_token')}>{i18next.t("admin.mod-oauth2-response_type-id_token")}</a>:""}
                       </div>
                     </div>
                   </div>
@@ -332,7 +395,7 @@ class Oauth2Params extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-oauth2-userid_property">{i18next.t("admin.mod-oauth2-userid_property")}</label>
                     </div>
-                    <input type="text" className={this.state.errorList["provider-"+index+"-userid_property"]?"form-control is-invalid":"form-control"} id="mod-oauth2-userid_property" onChange={(e) => this.changeProviderParam(e, index, "userid_property", 0)} value={provider.userid_property} placeholder={i18next.t("admin.mod-oauth2-userid_property-ph")}/>
+                    <input type="text" className={this.state.errorList["provider-"+index+"-userid_property"]?"form-control is-invalid":"form-control"} id="mod-oauth2-userid_property" onChange={(e) => this.changeProviderParam(e, index, "userid_property", 0)} value={provider.userid_property} placeholder={i18next.t("admin.mod-oauth2-userid_property-ph")} disabled={provider.provider_type==="oidc"}/>
                   </div>
                   {this.state.errorList["provider-"+index+"-userid_property"]?<span className="error-input">{this.state.errorList["provider-"+index+"-userid_property"]}</span>:""}
                 </div>
@@ -341,7 +404,7 @@ class Oauth2Params extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-oauth2-config_endpoint">{i18next.t("admin.mod-oauth2-config_endpoint")}</label>
                     </div>
-                    <input type="text" className="form-control" id="mod-oauth2-config_endpoint" onChange={(e) => this.changeProviderParam(e, index, "config_endpoint", 0)} value={provider.config_endpoint} placeholder={i18next.t("admin.mod-oauth2-config_endpoint-ph")}/>
+                    <input type="text" className="form-control" id="mod-oauth2-config_endpoint" onChange={(e) => this.changeProviderParam(e, index, "config_endpoint", 0)} value={provider.config_endpoint} placeholder={i18next.t("admin.mod-oauth2-config_endpoint-ph")} disabled={provider.provider_type==="oauth2"}/>
                   </div>
                 </div>
                 <div className="form-group">
@@ -388,6 +451,11 @@ class Oauth2Params extends Component {
         </div>
       );
     });
+    this.state.config.providerMainstreamList.forEach((provider, index) => {
+      mainstreamProviders.push(
+        <a key={index} className={"dropdown-item"+(this.state.curMainstream===index?" active":"")} href="#" onClick={(e) => this.changeMainstreamProvider(e, index)}>{provider.name}</a>
+      );
+    });
     return (
       <div>
         <div className="form-group">
@@ -411,9 +479,19 @@ class Oauth2Params extends Component {
         <hr/>
         <div className="form-group">
           <p>{i18next.t("admin.mod-oauth2-provider_list-message")}</p>
-          <button type="button" className="btn btn-secondary" onClick={this.addProvider} title={i18next.t("admin.mod-oauth2-provider_list-add")}>
-            <i className="fas fa-plus"></i>
-          </button>
+          <div className="btn-group" role="group">
+            <div className="btn-group" role="group">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-oauth2-mainstream_provider" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {i18next.t("admin.mod-oauth2-mainstream_provider")}
+              </button>
+              <div className="dropdown-menu" aria-labelledby="mod-glwd-jwt-key-size">
+                {mainstreamProviders}
+              </div>
+            </div>
+            <button type="button" className="btn btn-secondary" onClick={this.addProvider} title={i18next.t("admin.mod-oauth2-provider_list-add")}>
+              <i className="fas fa-plus"></i>
+            </button>
+          </div>
         </div>
         {providerList}
       </div>
