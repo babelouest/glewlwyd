@@ -38,6 +38,8 @@
 
 #include "glewlwyd.h"
 
+void* signal_thread(void *arg);
+
 static pthread_mutex_t global_handler_close_lock;
 static pthread_cond_t  global_handler_close_cond;
 
@@ -53,6 +55,8 @@ int main (int argc, char ** argv) {
   struct config_elements * config = o_malloc(sizeof(struct config_elements));
   int res, use_config_file = 0, use_config_env = 0;
   struct sockaddr_in bind_address;
+  pthread_t signal_thread_id;
+  static sigset_t close_signals;
 
   if (config == NULL) {
     fprintf(stderr, "Memory error - config\n");
@@ -181,15 +185,24 @@ int main (int argc, char ** argv) {
       pthread_cond_init(&global_handler_close_cond, NULL)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "init - Error initializing global_handler_close_lock or global_handler_close_cond");
   }
-  // Catch end signals to make a clean exit
-  if (signal (SIGQUIT, exit_handler) == SIG_ERR ||
-      signal (SIGINT, exit_handler) == SIG_ERR ||
-      signal (SIGTERM, exit_handler) == SIG_ERR ||
-      signal (SIGHUP, exit_handler) == SIG_ERR ||
-      signal (SIGBUS, exit_handler) == SIG_ERR ||
-      signal (SIGSEGV, exit_handler) == SIG_ERR ||
-      signal (SIGILL, exit_handler) == SIG_ERR) {
-    fprintf(stderr, "init - Error initializing end signal\n");
+
+  // Process end signals on dedicated thread
+  sigemptyset(&close_signals);
+  sigaddset(&close_signals, SIGQUIT);
+  sigaddset(&close_signals, SIGINT);
+  sigaddset(&close_signals, SIGTERM);
+  sigaddset(&close_signals, SIGHUP);
+  sigaddset(&close_signals, SIGBUS);
+  sigaddset(&close_signals, SIGSEGV);
+  sigaddset(&close_signals, SIGILL);
+  if (pthread_sigmask(SIG_BLOCK, &close_signals, NULL)) {
+    fprintf(stderr, "init - Error setting signal mask\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+
+  if (pthread_create(&signal_thread_id, NULL, &signal_thread, &close_signals)) {
+    fprintf(stderr, "init - Error creating signal thread\n");
+    exit_server(&config, GLEWLWYD_ERROR);
     return 1;
   }
 
@@ -1518,22 +1531,33 @@ void print_help(FILE * output) {
  * handles signal catch to exit properly when ^C is used for example
  * I don't like global variables but it looks fine to people who designed this
  */
-void exit_handler(int signal) {
-  if (signal == SIGQUIT || signal == SIGINT || signal == SIGTERM || signal == SIGHUP) {
-    y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd - Received close signal");
-  } else if (signal == SIGBUS) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received bus error signal");
-    exit(1);
-  } else if (signal == SIGSEGV) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received segmentation fault signal");
-    exit(1);
-  } else if (signal == SIGILL) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received illegal instruction signal");
-    exit(1);
+void* signal_thread(void *arg) {
+  sigset_t *sigs = arg;
+  int res, signum;
+
+  while (1) {
+    res = sigwait(sigs, &signum);
+	 if (res) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Waiting for signals failed");
+		exit(1);
+	 }
+    if (signum == SIGQUIT || signum == SIGINT || signum == SIGTERM || signum == SIGHUP) {
+      y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd - Received close signal: %s", strsignal(signum));
+      pthread_mutex_lock(&global_handler_close_lock);
+      pthread_cond_signal(&global_handler_close_cond);
+      pthread_mutex_unlock(&global_handler_close_lock);
+      return NULL;
+    } else if (signum == SIGBUS) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received bus error signal");
+      exit(256-signum);
+    } else if (signum == SIGSEGV) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received segmentation fault signal");
+      exit(256-signum);
+    } else if (signum == SIGILL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received illegal instruction signal");
+      exit(256-signum);
+    }
   }
-  pthread_mutex_lock(&global_handler_close_lock);
-  pthread_cond_signal(&global_handler_close_cond);
-  pthread_mutex_unlock(&global_handler_close_lock);
 }
 
 int module_instance_parameters_check(const char * module_parameters, const char * instance_parameters) {
