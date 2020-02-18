@@ -3,6 +3,7 @@
   "ProfileUrl": "profile.html",
   "AdminUrl": "index.html",
   "LoginUrl": "login.html",
+  "CallbackPage": "callback.html",
   "PasswordMinLength": 8,
   "lang": ["en","fr","nl"],
   "pattern": {
