@@ -44,40 +44,63 @@ class Oauth2SchemeForm extends Component {
         this.setState({providerList: res});
       })
       .fail((err) => {
-        if (err.status === 401) {
-          messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.mock-trigger-must-register")});
-        } else {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-mock-trigger")});
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      });
+    }
+  }
+  
+  connectProvider(provider) {
+    if (this.state.scheme && this.state.currentUser) {
+      var scheme = {
+        scheme_type: this.state.scheme.scheme_type,
+        scheme_name: this.state.scheme.scheme_name,
+        username: this.state.currentUser.username,
+        value: {
+          provider: provider,
+          callback_url: window.location.href
         }
+      };
+      
+      apiManager.glewlwydRequest("/auth/scheme/trigger/", "POST", scheme, true)
+      .then((res) => {
+        document.location.href = res.redirect_to;
+      })
+      .fail((err) => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
       });
     }
   }
   
   render() {
+    var providerList = [];
+    this.state.providerList.forEach((provider, index) => {
+      var logo;
+      if (provider.logo_uri) {
+        logo = <img src={provider.logo_uri} alt={provider.provider} />
+      } else if (provider.logo_fa) {
+        logo = <i className={"fab "+provider.logo_fa}></i>
+      }
+      providerList.push(
+      <div key={index}>
+        <hr/>
+        <div className="row">
+          <button type="button" className="btn btn-secondary" onClick={() => this.connectProvider(provider.provider)}>
+            {logo}
+            <span className="btn-icon-right">{i18next.t("login.oauth2-connect", {provider: provider.provider})}</span>
+          </button>
+        </div>
+      </div>
+      );
+    });
     return (
-      <form action="#" id="mockSchemeForm">
+      <div>
         <div className="form-group">
-          <h5>{i18next.t("login.enter-mock-scheme-value")}</h5>
+          <h5>{i18next.t("login.oauth2-title")}</h5>
         </div>
         <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mockValue">{i18next.t("login.mock-value-label")}</label>
-            </div>
-            <input type="text" 
-                   className="form-control" 
-                   name="mockValue" 
-                   id="mockValue" 
-                   autoFocus={true} 
-                   required="" 
-                   placeholder={i18next.t("login.error-mock-expected", {value: (this.state.triggerResult)})} 
-                   value={this.state.mockValue||""} 
-                   onChange={this.handleChangeMockValue} 
-                   autoComplete="false"/>
-          </div>
+          {providerList}
         </div>
-        <button type="submit" name="mockbut" id="mockbut" className="btn btn-primary" onClick={(e) => this.validateMockValue(e)} title={i18next.t("login.mock-value-button-title")}>{i18next.t("login.btn-ok")}</button>
-      </form>
+      </div>
     );
   }
 }

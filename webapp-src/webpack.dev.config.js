@@ -16,7 +16,8 @@ module.exports = {
 	entry: {
 		admin: './src/admin.js',
 		login: './src/login.js',
-		profile: './src/profile.js'
+		profile: './src/profile.js',
+		callback: './src/callback.js'
 	},
 	devtool: 'inline-source-map',
 	output: {
