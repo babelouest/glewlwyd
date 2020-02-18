@@ -37,6 +37,7 @@
 #define GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE "gs_oauth2_session"
 
 #define GLEWLWYD_SCHEME_OAUTH2_STATE_ID_LENGTH    32
+#define GLEWLWYD_SCHEME_OAUTH2_NONCE_LENGTH       16
 #define GLEWLWYD_SCHEME_OAUTH2_STATE_REGISTRATION   "registration"
 #define GLEWLWYD_SCHEME_OAUTH2_STATE_AUTHENTICATION "authentication"
 
@@ -53,9 +54,9 @@ struct _oauth2_config {
 static int get_response_type(const char * str_type) {
   if (0 == o_strcmp("code", str_type)) {
     return I_RESPONSE_TYPE_CODE;
-  } else if (o_strcmp("token", str_type)) {
+  } else if (0 == o_strcmp("token", str_type)) {
     return I_RESPONSE_TYPE_TOKEN;
-  } else if (o_strcmp("id_token", str_type)) {
+  } else if (0 == o_strcmp("id_token", str_type)) {
     return I_RESPONSE_TYPE_ID_TOKEN;
   } else {
     return I_RESPONSE_TYPE_NONE;
@@ -67,6 +68,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
   size_t index = 0, indexParam = 0;
   char * message;
   const char * name;
+  int is_oidc = 0;
   
   if (j_errors != NULL) {
     if (json_is_object(j_params)) {
@@ -92,6 +94,12 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
           } else {
             name = json_string_value(json_object_get(j_element, "name"));
           }
+          if (0 != o_strcmp("oauth2", json_string_value(json_object_get(j_element, "provider_type"))) && 0 != o_strcmp("oidc", json_string_value(json_object_get(j_element, "provider_type")))) {
+            message = msprintf("provider_type string value for provider '%s' at index %zu is mandatory and must have one of the following values: 'oauth2' or 'oidc'", name, index);
+            json_array_append_new(j_errors, json_string(message));
+            o_free(message);
+          }
+          is_oidc = o_strcmp("oauth2", json_string_value(json_object_get(j_element, "provider_type")));
           if (json_object_get(j_element, "logo_uri") != NULL && !json_is_string(json_object_get(j_element, "logo_uri"))) {
             message = msprintf("logo_uri is optional and must be a string for provider '%s' at index %zu", name, index);
             json_array_append_new(j_errors, json_string(message));
@@ -112,7 +120,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
             json_array_append_new(j_errors, json_string(message));
             o_free(message);
           }
-          if (!json_string_length(json_object_get(j_element, "userinfo_endpoint")) && !json_string_length(json_object_get(j_element, "userid_property"))) {
+          if (!is_oidc && !json_string_length(json_object_get(j_element, "userid_property"))) {
             message = msprintf("userid_property string is missing for provider '%s' at index %zu", name, index);
             json_array_append_new(j_errors, json_string(message));
             o_free(message);
@@ -122,7 +130,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
             json_array_append_new(j_errors, json_string(message));
             o_free(message);
           }
-          if (json_object_get(j_element, "config_endpoint") != NULL && !json_is_string(json_object_get(j_element, "config_endpoint"))) {
+          if (is_oidc && json_object_get(j_element, "config_endpoint") != NULL && !json_is_string(json_object_get(j_element, "config_endpoint"))) {
             message = msprintf("config_endpoint is optional and must be a string for provider '%s' at index %zu", name, index);
             json_array_append_new(j_errors, json_string(message));
             o_free(message);
@@ -195,7 +203,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
   return j_return;
 }
 
-static json_t * add_session_for_user(struct config_module * config, struct _oauth2_config * oauth2_config, const char * username, json_t * j_provider, const char * register_url, const char * complete_url) {
+static json_t * add_session_for_user(struct config_module * config, struct _oauth2_config * oauth2_config, const char * username, json_t * j_registration, json_t * j_provider, const char * callback_url) {
   json_t * j_query, * j_state = NULL, * j_return;
   int res;
   time_t now;
@@ -219,7 +227,7 @@ static json_t * add_session_for_user(struct config_module * config, struct _oaut
                         GLEWLWYD_SCHEME_OAUTH2_SESSION_CANCELLED,
                       "where",
                         "gsor_id",
-                        json_object_get(j_provider, "gsor_id"),
+                        json_object_get(j_registration, "gsor_id"),
                         "gsos_status",
                         GLEWLWYD_SCHEME_OAUTH2_SESSION_AUTHENTICATION,
                         "gsos_expires_at",
@@ -233,8 +241,8 @@ static json_t * add_session_for_user(struct config_module * config, struct _oaut
   if (res == H_OK) {
     if (i_init_session(&i_session) == I_OK) {
       if (i_import_session_json_t(&i_session, json_object_get(j_provider, "export")) == I_OK) {
-        if (i_set_int_parameter(&i_session, I_OPT_STATE_GENERATE, GLEWLWYD_SCHEME_OAUTH2_STATE_ID_LENGTH) == I_OK) {
-          j_state = json_pack("{sssssOsOssss*ss*}", "id", i_get_str_parameter(&i_session, I_OPT_STATE), "type", GLEWLWYD_SCHEME_OAUTH2_STATE_AUTHENTICATION, "module", json_object_get(oauth2_config->j_parameters, "name"), "provider", json_object_get(j_provider, "name"), "username", username, "register_url", register_url, "complete_url", complete_url);
+        if (i_set_int_parameter(&i_session, I_OPT_STATE_GENERATE, GLEWLWYD_SCHEME_OAUTH2_STATE_ID_LENGTH) == I_OK && i_set_int_parameter(&i_session, I_OPT_NONCE_GENERATE, GLEWLWYD_SCHEME_OAUTH2_NONCE_LENGTH) == I_OK) {
+          j_state = json_pack("{sssssOsOssss*}", "id", i_get_str_parameter(&i_session, I_OPT_STATE), "type", GLEWLWYD_SCHEME_OAUTH2_STATE_AUTHENTICATION, "module", json_object_get(oauth2_config->j_parameters, "name"), "provider", json_object_get(j_provider, "name"), "username", username, "callback_url", callback_url);
           state_export = json_dumps(j_state, JSON_COMPACT);
           if ((state_export_b64 = o_malloc(2*o_strlen(state_export))) != NULL) {
             if (o_base64url_encode((const unsigned char *)state_export, o_strlen(state_export), (unsigned char *)state_export_b64, &state_export_b64_len)) {
@@ -254,7 +262,7 @@ static json_t * add_session_for_user(struct config_module * config, struct _oaut
                                     GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE,
                                     "values",
                                       "gsor_id",
-                                       json_object_get(j_provider, "gsor_id"),
+                                       json_object_get(j_registration, "gsor_id"),
                                       "gsos_expires_at",
                                         "raw",
                                         expires_at_clause,
@@ -407,7 +415,7 @@ static json_t * add_registration_for_user(struct config_module * config, struct 
   if (!pthread_mutex_lock(&oauth2_config->insert_lock)) {
     if (i_init_session(&i_session) == I_OK) {
       if (i_import_session_json_t(&i_session, json_object_get(j_provider, "export")) == I_OK) {
-        if (i_set_int_parameter(&i_session, I_OPT_STATE_GENERATE, GLEWLWYD_SCHEME_OAUTH2_STATE_ID_LENGTH) == I_OK) {
+        if (i_set_int_parameter(&i_session, I_OPT_STATE_GENERATE, GLEWLWYD_SCHEME_OAUTH2_STATE_ID_LENGTH) == I_OK && i_set_int_parameter(&i_session, I_OPT_NONCE_GENERATE, GLEWLWYD_SCHEME_OAUTH2_NONCE_LENGTH) == I_OK) {
           j_state = json_pack("{sssssOsOssss*ss*}", "id", i_get_str_parameter(&i_session, I_OPT_STATE), "type", GLEWLWYD_SCHEME_OAUTH2_STATE_REGISTRATION, "module", json_object_get(oauth2_config->j_parameters, "name"), "provider", json_object_get(j_provider, "name"), "username", username, "register_url", register_url, "complete_url", complete_url);
           state_export = json_dumps(j_state, JSON_COMPACT);
           if ((state_export_b64 = o_malloc(2*o_strlen(state_export))) != NULL) {
@@ -531,7 +539,7 @@ static int delete_registration_for_user(struct config_module * config, struct _o
   return ret;
 }
 
-static int complete_session_for_user(struct config_module * config, json_t * j_provider, const char * redirect_to, const char * state, int status) {
+static int complete_session_for_user(struct config_module * config, json_t * j_registration, json_t * j_provider, const char * redirect_to, const char * state, int status) {
   json_t * j_query, * j_result = NULL;
   int res, ret;
   time_t now;
@@ -564,7 +572,7 @@ static int complete_session_for_user(struct config_module * config, json_t * j_p
                         "gsos_status",
                         status,
                         "gsor_id",
-                        json_object_get(j_provider, "gsor_id"));
+                        json_object_get(j_registration, "gsor_id"));
   o_free(expires_at_clause);
   res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
@@ -580,40 +588,14 @@ static int complete_session_for_user(struct config_module * config, json_t * j_p
                   ret = G_OK;
                   if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
                     sub = json_string_value(json_object_get(i_session.id_token_payload, "sub"));
+                    ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
                   } else {
                     if (i_load_userinfo(&i_session) == I_OK) {
                       sub = json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))));
+                      ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
                     } else {
                       y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_load_userinfo (1)");
                       ret = G_ERROR;
-                    }
-                  }
-                  if (ret == G_OK) {
-                    if (sub != NULL) {
-                      if (state == GLEWLWYD_SCHEME_OAUTH2_SESSION_REGISTRATION) {
-                        j_query = json_pack("{sss{ss}s{sO}}",
-                                            "table",
-                                            GLEWLWYD_SCHEME_OAUTH2_REGISTRATION_TABLE,
-                                            "set",
-                                              "gsor_userinfo_sub",
-                                              sub,
-                                            "where",
-                                              "gsor_id",
-                                              json_object_get(j_provider, "gsor_id"));
-                        res = h_update(config->conn, j_query, NULL);
-                        json_decref(j_query);
-                        if (res != H_OK) {
-                          y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error executing j_query (2)");
-                          ret = G_ERROR_DB;
-                        }
-                      } else {
-                        if (0 != o_strcmp(sub, json_string_value(json_object_get(j_provider, "sub")))) {
-                          ret = G_ERROR_UNAUTHORIZED;
-                        }
-                      }
-                    } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error getting userid value");
-                      ret = G_ERROR_PARAM;
                     }
                   }
                 } else {
@@ -624,32 +606,7 @@ static int complete_session_for_user(struct config_module * config, json_t * j_p
               case I_RESPONSE_TYPE_TOKEN:
                 if (i_load_userinfo(&i_session) == I_OK) {
                   sub = json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))));
-                  if (sub != NULL) {
-                    if (state == GLEWLWYD_SCHEME_OAUTH2_SESSION_REGISTRATION) {
-                      j_query = json_pack("{sss{ss}s{sO}}",
-                                          "table",
-                                          GLEWLWYD_SCHEME_OAUTH2_REGISTRATION_TABLE,
-                                          "set",
-                                            "gsor_userinfo_sub",
-                                            sub,
-                                          "where",
-                                            "gsor_id",
-                                            json_object_get(j_provider, "gsor_id"));
-                      res = h_update(config->conn, j_query, NULL);
-                      json_decref(j_query);
-                      if (res != H_OK) {
-                        y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error executing j_query (2)");
-                        ret = G_ERROR_DB;
-                      }
-                    } else {
-                      if (0 != o_strcmp(sub, json_string_value(json_object_get(j_provider, "sub")))) {
-                        ret = G_ERROR_UNAUTHORIZED;
-                      }
-                    }
-                  } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error getting userid value");
-                    ret = G_ERROR_PARAM;
-                  }
+                  ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_load_userinfo (2)");
                   ret = G_ERROR;
@@ -657,27 +614,8 @@ static int complete_session_for_user(struct config_module * config, json_t * j_p
                 break;
               case I_RESPONSE_TYPE_ID_TOKEN:
                 if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
-                  if (state == GLEWLWYD_SCHEME_OAUTH2_SESSION_REGISTRATION) {
-                    j_query = json_pack("{sss{ss}s{sO}}",
-                                        "table",
-                                        GLEWLWYD_SCHEME_OAUTH2_REGISTRATION_TABLE,
-                                        "set",
-                                          "gsor_userinfo_sub",
-                                          json_string_value(json_object_get(i_session.id_token_payload, "sub")),
-                                        "where",
-                                          "gsor_id",
-                                          json_object_get(j_provider, "gsor_id"));
-                    res = h_update(config->conn, j_query, NULL);
-                    json_decref(j_query);
-                    if (res != H_OK) {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error executing j_query (2)");
-                      ret = G_ERROR_DB;
-                    }
-                  } else {
-                    if (0 != o_strcmp(sub, json_string_value(json_object_get(j_provider, "sub")))) {
-                      ret = G_ERROR_UNAUTHORIZED;
-                    }
-                  }
+                  sub = json_string_value(json_object_get(i_session.id_token_payload, "sub"));
+                  ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error getting userid value");
                   ret = G_ERROR_PARAM;
@@ -688,22 +626,59 @@ static int complete_session_for_user(struct config_module * config, json_t * j_p
                 ret = G_ERROR_PARAM;
                 break;
             }
-            j_query = json_pack("{sss{si}s{sO}}",
-                                "table",
-                                GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE,
-                                "set",
-                                  "gsos_status",
-                                  GLEWLWYD_SCHEME_OAUTH2_SESSION_VERIFIED,
-                                "where",
-                                  "gsos_id",
-                                  json_object_get(json_array_get(j_result, 0), "gsos_id"));
-            res = h_update(config->conn, j_query, NULL);
-            json_decref(j_query);
-            if (res == H_OK) {
-              ret = G_OK;
+            if (ret == G_OK && sub != NULL) {
+              if (status == GLEWLWYD_SCHEME_OAUTH2_SESSION_REGISTRATION) {
+                j_query = json_pack("{sss{ss}s{sO}}",
+                                    "table",
+                                    GLEWLWYD_SCHEME_OAUTH2_REGISTRATION_TABLE,
+                                    "set",
+                                      "gsor_userinfo_sub",
+                                      sub,
+                                    "where",
+                                      "gsor_id",
+                                      json_object_get(j_registration, "gsor_id"));
+                res = h_update(config->conn, j_query, NULL);
+                json_decref(j_query);
+                if (res != H_OK) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error executing j_query (2)");
+                  ret = G_ERROR_DB;
+                }
+              } else {
+                if (0 != o_strcmp(sub, json_string_value(json_object_get(j_registration, "sub")))) {
+                  ret = G_ERROR_UNAUTHORIZED;
+                }
+              }
+              j_query = json_pack("{sss{si}s{sO}}",
+                                  "table",
+                                  GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE,
+                                  "set",
+                                    "gsos_status",
+                                    GLEWLWYD_SCHEME_OAUTH2_SESSION_VERIFIED,
+                                  "where",
+                                    "gsos_id",
+                                    json_object_get(json_array_get(j_result, 0), "gsos_id"));
+              res = h_update(config->conn, j_query, NULL);
+              json_decref(j_query);
+              if (res != H_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error executing j_query (3)");
+                ret = G_ERROR_DB;
+              }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error executing j_query (3)");
-              ret = G_ERROR_DB;
+              j_query = json_pack("{sss{si}s{sO}}",
+                                  "table",
+                                  GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE,
+                                  "set",
+                                    "gsos_status",
+                                    GLEWLWYD_SCHEME_OAUTH2_SESSION_CANCELLED,
+                                  "where",
+                                    "gsos_id",
+                                    json_object_get(json_array_get(j_result, 0), "gsos_id"));
+              res = h_update(config->conn, j_query, NULL);
+              json_decref(j_query);
+              if (res != H_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error executing j_query (3)");
+                ret = G_ERROR_DB;
+              }
             }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_parse_redirect_to");
@@ -940,6 +915,16 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                 } else if ((j_export = i_export_session_json_t(&i_session)) == NULL) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init oauth2 - Error exporting session for provider %s", json_string_value(json_object_get(j_element, "name")));
                 } else {
+                  // Overwrite endpoints if specified
+                  if (json_object_get(j_element, "auth_endpoint") != NULL) {
+                    i_set_str_parameter(&i_session, I_OPT_AUTH_ENDPOINT, json_string_value(json_object_get(j_element, "auth_endpoint")));
+                  }
+                  if (json_object_get(j_element, "token_endpoint") != NULL) {
+                    i_set_str_parameter(&i_session, I_OPT_TOKEN_ENDPOINT, json_string_value(json_object_get(j_element, "token_endpoint")));
+                  }
+                  if (json_object_get(j_element, "userinfo_endpoint") != NULL) {
+                    i_set_str_parameter(&i_session, I_OPT_USERINFO_ENDPOINT, json_string_value(json_object_get(j_element, "userinfo_endpoint")));
+                  }
                   json_object_set(j_element, "export", j_export);
                   json_array_append(json_object_get(((struct _oauth2_config *)*cls)->j_parameters, "provider_list"), j_element);
                 }
@@ -1034,16 +1019,10 @@ int user_auth_scheme_module_close(struct config_module * config, void * cls) {
  */
 int user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls) {
   int ret;
-  json_t * j_registration = get_registration_for_user(config, (struct _oauth2_config *)cls, username, NULL), * j_element = NULL;
-  size_t index = 0;
+  json_t * j_registration = get_registration_for_user(config, (struct _oauth2_config *)cls, username, NULL);
   
   if (check_result_value(j_registration, G_OK)) {
-    ret = GLEWLWYD_IS_AVAILABLE;
-    json_array_foreach(json_object_get(j_registration, "registration"), index, j_element) {
-      if (json_object_get(j_element, "enabled") == json_true()) {
-        ret = GLEWLWYD_IS_REGISTERED;
-      }
-    }
+    ret = GLEWLWYD_IS_REGISTERED;
   } else if (check_result_value(j_registration, G_ERROR_NOT_FOUND)) {
     ret = GLEWLWYD_IS_AVAILABLE;
   } else {
@@ -1105,7 +1084,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "action")), "callback")) {
         j_result = get_registration_for_user(config, oauth2_config, username, json_string_value(json_object_get(j_scheme_data, "provider")));
         if (check_result_value(j_result, G_OK)) {
-          if ((res = complete_session_for_user(config, json_array_get(json_object_get(j_result, "registration"), 0), json_string_value(json_object_get(j_scheme_data, "redirect_to")), json_string_value(json_object_get(j_scheme_data, "state")), GLEWLWYD_SCHEME_OAUTH2_SESSION_REGISTRATION)) == G_OK) {
+          if ((res = complete_session_for_user(config, json_array_get(json_object_get(j_result, "registration"), 0), json_object_get(j_provider, "provider"), json_string_value(json_object_get(j_scheme_data, "redirect_to")), json_string_value(json_object_get(j_scheme_data, "state")), GLEWLWYD_SCHEME_OAUTH2_SESSION_REGISTRATION)) == G_OK) {
             j_return = json_pack("{si}", "result", G_OK);
           } else if (res == G_ERROR_PARAM || res == G_ERROR_UNAUTHORIZED) {
             j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "Registration completion invalid");
@@ -1290,22 +1269,29 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
       }
     }
   } else {
-    j_provider = get_provider(oauth2_config, json_string_value(json_object_get(j_scheme_trigger, "provider")));
-    if (check_result_value(j_provider, G_OK)) {
-      j_result = add_session_for_user(config, oauth2_config, username, json_object_get(j_provider, "provider"), json_string_value(json_object_get(j_scheme_trigger, "register_url")), json_string_value(json_object_get(j_scheme_trigger, "complete_url")));
-      if (check_result_value(j_register, G_OK)) {
-        j_return = json_pack("{sis{sO}}", "result", G_OK, "response", "redirect_to", json_object_get(j_register, "session"));
+    j_register = get_registration_for_user(config, oauth2_config, username, json_string_value(json_object_get(j_scheme_trigger, "provider")));
+    if (check_result_value(j_register, G_OK)) {
+      j_provider = get_provider(oauth2_config, json_string_value(json_object_get(j_scheme_trigger, "provider")));
+      if (check_result_value(j_provider, G_OK)) {
+        j_result = add_session_for_user(config, oauth2_config, username, json_array_get(json_object_get(j_register, "registration"), 0), json_object_get(j_provider, "provider"), json_string_value(json_object_get(j_scheme_trigger, "callback_url")));
+        if (check_result_value(j_result, G_OK)) {
+          j_return = json_pack("{sis{sO}}", "result", G_OK, "response", "redirect_to", json_object_get(j_result, "session"));
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger oauth2 - Error add_session_for_user");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+        json_decref(j_result);
+        
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger oauth2 - Error add_session_for_user");
-        j_return = json_pack("{si}", "result", G_ERROR);
+        j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "provider invalid");
       }
-      json_decref(j_result);
+      json_decref(j_provider);
     } else {
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "provider invalid");
     }
-    json_decref(j_provider);
+    json_decref(j_register);
   }
-  return json_pack("{si}", "result", G_ERROR);
+  return j_return;
 }
 
 /**
@@ -1331,20 +1317,26 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
  */
 int user_auth_scheme_module_validate(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
   UNUSED(http_request);
-  json_t * j_result;
+  json_t * j_result, * j_provider;
   int res, ret;
   struct _oauth2_config * oauth2_config = (struct _oauth2_config *)cls;
 
   j_result = get_registration_for_user(config, oauth2_config, username, json_string_value(json_object_get(j_scheme_data, "provider")));
   if (check_result_value(j_result, G_OK)) {
-    if ((res = complete_session_for_user(config, json_array_get(json_object_get(j_result, "registration"), 0), json_string_value(json_object_get(j_scheme_data, "redirect_to")), json_string_value(json_object_get(j_scheme_data, "state")), GLEWLWYD_SCHEME_OAUTH2_SESSION_AUTHENTICATION)) == G_OK) {
-      ret = G_OK;
-    } else if (res == G_ERROR_PARAM || res == G_ERROR_UNAUTHORIZED) {
-      ret = G_ERROR_UNAUTHORIZED;
+    j_provider = get_provider(oauth2_config, json_string_value(json_object_get(j_scheme_data, "provider")));
+    if (check_result_value(j_provider, G_OK)) {
+      if ((res = complete_session_for_user(config, json_array_get(json_object_get(j_result, "registration"), 0), json_object_get(j_provider, "provider"), json_string_value(json_object_get(j_scheme_data, "redirect_to")), json_string_value(json_object_get(j_scheme_data, "state")), GLEWLWYD_SCHEME_OAUTH2_SESSION_AUTHENTICATION)) == G_OK) {
+        ret = G_OK;
+      } else if (res == G_ERROR_PARAM || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_NOT_FOUND) {
+        ret = G_ERROR_UNAUTHORIZED;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate oauth2 - Error complete_session_for_user");
+        ret = G_ERROR;
+      }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate oauth2 - Error complete_session_for_user");
-      ret = G_ERROR;
+      ret = G_ERROR_UNAUTHORIZED;
     }
+    json_decref(j_provider);
   } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
     ret = G_ERROR_UNAUTHORIZED;
   } else {
