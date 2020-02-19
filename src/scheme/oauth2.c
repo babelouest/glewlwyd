@@ -330,7 +330,7 @@ static json_t * get_last_session_for_registration(struct config_module * config,
                         "gsor_id",
                         gsor_id,
                         "gsos_status",
-                        0,
+                        GLEWLWYD_SCHEME_OAUTH2_SESSION_VERIFIED,
                       "order_by",
                         "gsos_created_at DESC",
                       "limit",
@@ -345,7 +345,7 @@ static json_t * get_last_session_for_registration(struct config_module * config,
     }
     json_decref(j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_registration_for_user - Error executing j_query");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_last_session_for_registration - Error executing j_query");
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -543,9 +543,8 @@ static int complete_session_for_user(struct config_module * config, json_t * j_r
   json_t * j_query, * j_result = NULL;
   int res, ret;
   time_t now;
-  char * expires_at_clause;
+  char * expires_at_clause, * sub = NULL;
   struct _i_session i_session;
-  const char * sub = NULL;
   
   time(&now);
   if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
@@ -587,12 +586,20 @@ static int complete_session_for_user(struct config_module * config, json_t * j_r
                 if (i_run_token_request(&i_session) == I_OK) {
                   ret = G_OK;
                   if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
-                    sub = json_string_value(json_object_get(i_session.id_token_payload, "sub"));
+                    sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
+                    ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                  } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
+                    sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.id_token_payload, "sub")));
                     ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
                   } else {
                     if (i_load_userinfo(&i_session) == I_OK) {
-                      sub = json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))));
-                      ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                      if (json_string_length((json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))))) {
+                        sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
+                        ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                      } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
+                        sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
+                        ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                      }
                     } else {
                       y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_load_userinfo (1)");
                       ret = G_ERROR;
@@ -605,8 +612,13 @@ static int complete_session_for_user(struct config_module * config, json_t * j_r
                 break;
               case I_RESPONSE_TYPE_TOKEN:
                 if (i_load_userinfo(&i_session) == I_OK) {
-                  sub = json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))));
-                  ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                  if (json_string_length(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
+                    sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
+                    ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                  } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
+                    sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
+                    ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                  }
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_load_userinfo (2)");
                   ret = G_ERROR;
@@ -614,7 +626,10 @@ static int complete_session_for_user(struct config_module * config, json_t * j_r
                 break;
               case I_RESPONSE_TYPE_ID_TOKEN:
                 if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
-                  sub = json_string_value(json_object_get(i_session.id_token_payload, "sub"));
+                  sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
+                  ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
+                  sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.id_token_payload, "sub")));
                   ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error getting userid value");
@@ -680,6 +695,7 @@ static int complete_session_for_user(struct config_module * config, json_t * j_r
                 ret = G_ERROR_DB;
               }
             }
+            o_free(sub);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_parse_redirect_to");
             ret = G_ERROR;
