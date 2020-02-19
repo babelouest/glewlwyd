@@ -185,14 +185,17 @@ int main (int argc, char ** argv) {
   }
 
   // Process end signals on dedicated thread
-  sigemptyset(&close_signals);
-  sigaddset(&close_signals, SIGQUIT);
-  sigaddset(&close_signals, SIGINT);
-  sigaddset(&close_signals, SIGTERM);
-  sigaddset(&close_signals, SIGHUP);
-  sigaddset(&close_signals, SIGBUS);
-  sigaddset(&close_signals, SIGSEGV);
-  sigaddset(&close_signals, SIGILL);
+  if (sigemptyset(&close_signals) == -1 ||
+      sigaddset(&close_signals, SIGQUIT) == -1 ||
+      sigaddset(&close_signals, SIGINT) == -1 ||
+      sigaddset(&close_signals, SIGTERM) == -1 ||
+      sigaddset(&close_signals, SIGHUP) == -1 ||
+      sigaddset(&close_signals, SIGBUS) == -1 ||
+      sigaddset(&close_signals, SIGSEGV) == -1 ||
+      sigaddset(&close_signals, SIGILL) == -1) {
+    fprintf(stderr, "init - Error creating signal mask\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
   if (pthread_sigmask(SIG_BLOCK, &close_signals, NULL)) {
     fprintf(stderr, "init - Error setting signal mask\n");
     exit_server(&config, GLEWLWYD_ERROR);
