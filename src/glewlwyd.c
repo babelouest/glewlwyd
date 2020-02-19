@@ -1536,30 +1536,28 @@ void* signal_thread(void *arg) {
   sigset_t *sigs = arg;
   int res, signum;
 
-  while (1) {
-    res = sigwait(sigs, &signum);
-    if (res) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Waiting for signals failed");
-      exit(1);
-    }
-    if (signum == SIGQUIT || signum == SIGINT || signum == SIGTERM || signum == SIGHUP) {
-      y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd - Received close signal: %s", strsignal(signum));
-      pthread_mutex_lock(&global_handler_close_lock);
-      pthread_cond_signal(&global_handler_close_cond);
-      pthread_mutex_unlock(&global_handler_close_lock);
-      return NULL;
-    } else if (signum == SIGBUS) {
-      fprintf(stderr, "Glewlwyd - Received bus error signal\n");
-      exit(256-signum);
-    } else if (signum == SIGSEGV) {
-      fprintf(stderr, "Glewlwyd - Received segmentation fault signal\n");
-      exit(256-signum);
-    } else if (signum == SIGILL) {
-      fprintf(stderr, "Glewlwyd - Received illegal instruction signal\n");
-      exit(256-signum);
-    } else {
-      y_log_message(Y_LOG_LEVEL_WARNING, "Glewlwyd - Received unexpected signal: %s", strsignal(signum));
-    }
+  res = sigwait(sigs, &signum);
+  if (res) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Waiting for signals failed");
+    exit(1);
+  }
+  if (signum == SIGQUIT || signum == SIGINT || signum == SIGTERM || signum == SIGHUP) {
+    y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd - Received close signal: %s", strsignal(signum));
+    pthread_mutex_lock(&global_handler_close_lock);
+    pthread_cond_signal(&global_handler_close_cond);
+    pthread_mutex_unlock(&global_handler_close_lock);
+    return NULL;
+  } else if (signum == SIGBUS) {
+    fprintf(stderr, "Glewlwyd - Received bus error signal\n");
+    exit(256-signum);
+  } else if (signum == SIGSEGV) {
+    fprintf(stderr, "Glewlwyd - Received segmentation fault signal\n");
+    exit(256-signum);
+  } else if (signum == SIGILL) {
+    fprintf(stderr, "Glewlwyd - Received illegal instruction signal\n");
+    exit(256-signum);
+  } else {
+    y_log_message(Y_LOG_LEVEL_WARNING, "Glewlwyd - Received unexpected signal: %s", strsignal(signum));
   }
 }
 
