@@ -7,12 +7,17 @@ import Notification from '../lib/Notification';
 class App extends Component {
   constructor(props) {
     super(props);
+    
     this.state = {
       config: props.config,
-      stateDecoded: false
+      errorAuthentication: false,
+      unknownError: this.parseState(props.config.params.state, props.config),
+      gotoProfile: false,
+      gotoLogin: false
     };
     
-    this.parseState();
+    this.gotoLogin = this.gotoLogin.bind(this);
+    this.gotoProfile = this.gotoProfile.bind(this);
   }
   
   Base64DecodeUrl(str){
@@ -24,103 +29,147 @@ class App extends Component {
     return str.replace(/-/g, '+').replace(/_/g, '/');
   }
   
-  parseState() {
-    if (this.state.config.params.state) {
-      var stateDecoded = false, type = false;
+  parseState(state, config) {
+    var unknownError = false;
+    if (state) {
+      var stateDecoded = false, type = false, hasError = false;
       try {
-        var stateDecoded = JSON.parse(atob(this.Base64DecodeUrl(this.state.config.params.state)));
+        var stateDecoded = JSON.parse(atob(this.Base64DecodeUrl(state)));
       } catch(e) {
-        // TODO
-        console.log(e);
+        hasError = true;
       }
-      if (stateDecoded && stateDecoded.type === "registration") {
-        type = "registration";
-        var data = {
-          scheme_name: stateDecoded.module,
-          scheme_type: "oauth2",
-          username: stateDecoded.username,
-          value: {
-            action: "callback",
-            provider: stateDecoded.provider,
-            state: this.state.config.params.state,
-            redirect_to: window.location.href
-          }
-        }
-        $.ajax({
-          method: "POST",
-          url: stateDecoded.register_url + "/profile/scheme/register/",
-          data: JSON.stringify(data),
-          contentType: "application/json; charset=utf-8"
-        })
-        .then(() => {
-          var url = stateDecoded.complete_url;
-          if (url.indexOf('?') > -1) {
-            url += '&';
-          } else {
-            url += '?';
-          }
-          url += "scheme_name=" + stateDecoded.module + "&provider=" + stateDecoded.provider;
-          window.location.href = url;
-        })
-        .fail((err) => {
-          if (err.status === 401) {
-            $("#root").html('<div class="perfect-centering"><div class="alert alert-danger"><h3>Error authentication</h3></div><div class="row justify-content-md-center"><button type="button" class="btn btn-primary" id="buttonBack">Go to login page</button></div></div>');
-          } else {
-            $("#root").html('<div class="perfect-centering"><div class="alert alert-danger"><h3>Unknown error</h3></div><div class="row justify-content-md-center"><button type="button" class="btn btn-primary" id="buttonBack">Go to login page</button></div></div>');
-          }
-          $("#buttonBack").click(() => {
-            var url = stateDecoded.complete_url;
-            if (url.indexOf('?') > -1) {
-              url += '&';
-            } else {
-              url += '?';
+      if (!hasError) {
+        if (stateDecoded.type === "registration") {
+          type = "registration";
+          var data = {
+            scheme_name: stateDecoded.module,
+            scheme_type: "oauth2",
+            username: stateDecoded.username,
+            value: {
+              action: "callback",
+              provider: stateDecoded.provider,
+              state: state,
+              redirect_to: window.location.href
             }
-            url += "scheme_name=" + stateDecoded.module + "&provider=" + stateDecoded.provider;
-            window.location.href = url;
-          });
-        });
-      } else if (stateDecoded.type === "authentication") {
-        type = "authentication";
-        var data = {
-          scheme_name: stateDecoded.module,
-          scheme_type: "oauth2",
-          username: stateDecoded.username,
-          value: {
-            provider: stateDecoded.provider,
-            state: this.state.config.params.state,
-            redirect_to: window.location.href
           }
+          $.ajax({
+            method: "POST",
+            url: stateDecoded.register_url + "/profile/scheme/register/",
+            data: JSON.stringify(data),
+            contentType: "application/json; charset=utf-8"
+          })
+          .then(() => {
+            this.setState({stateDecoded: stateDecoded}, () => {
+              var url = stateDecoded.complete_url;
+              if (url.indexOf('?') > -1) {
+                url += '&';
+              } else {
+                url += '?';
+              }
+              url += "scheme_name=" + stateDecoded.module + "&provider=" + stateDecoded.provider;
+              window.location.href = url;
+            });
+          })
+          .fail((err) => {
+            if (err.status === 401) {
+              this.setState({stateDecoded: stateDecoded, errorAuthentication: true, gotoProfile: true});
+            } else {
+              this.setState({stateDecoded: stateDecoded, unknownError: true, gotoProfile: true});
+            }
+          });
+        } else if (stateDecoded.type === "authentication") {
+          type = "authentication";
+          var data = {
+            scheme_name: stateDecoded.module,
+            scheme_type: "oauth2",
+            username: stateDecoded.username,
+            value: {
+              provider: stateDecoded.provider,
+              state: state,
+              redirect_to: window.location.href
+            }
+          }
+          $.ajax({
+            method: "POST",
+            url: config.GlewlwydUrl + "/" + config.api_prefix + "/auth/",
+            data: JSON.stringify(data),
+            contentType: "application/json; charset=utf-8"
+          })
+          .then(() => {
+            this.setState({stateDecoded: stateDecoded}, () => {
+              window.location.href = stateDecoded.callback_url;
+            });
+          })
+          .fail((err) => {
+            if (err.status === 401) {
+              this.setState({stateDecoded: stateDecoded, errorAuthentication: true, gotoLogin: true});
+            } else {
+              this.setState({stateDecoded: stateDecoded, unknownError: true, gotoLogin: true});
+            }
+          });
+        } else {
+          unknownError = true;
         }
-        $.ajax({
-          method: "POST",
-          url: this.state.config.GlewlwydUrl + "/" + this.state.config.api_prefix + "/auth/",
-          data: JSON.stringify(data),
-          contentType: "application/json; charset=utf-8"
-        })
-        .then(() => {
-          window.location.href = stateDecoded.callback_url;
-        })
-        .fail((err) => {
-          if (err.status === 401) {
-            $("#root").html('<div class="perfect-centering"><div class="alert alert-danger"><h3>Error authentication</h3></div><div class="row justify-content-md-center"><button type="button" class="btn btn-primary" id="buttonBack">Go to login page</button></div></div>');
-          } else {
-            $("#root").html('<div class="perfect-centering"><div class="alert alert-danger"><h3>Unknown error</h3></div><div class="row justify-content-md-center"><button type="button" class="btn btn-primary" id="buttonBack">Go to login page</button></div></div>');
-          }
-          $("#buttonBack").click(() => {
-            window.location.href = stateDecoded.callback_url;
-          });
-        });
       } else {
-        console.log(stateDecoded);
+        unknownError = true;
       }
     } else {
-      console.log("no state");
+      unknownError = true;
+    }
+    return unknownError;
+  }
+  
+  gotoLogin() {
+    window.location.href = this.state.stateDecoded.callback_url;
+  }
+  
+  gotoProfile() {
+    if (this.state.stateDecoded && this.state.stateDecoded.complete_url) {
+      var url = this.state.stateDecoded.complete_url;
+      if (url.indexOf('?') > -1) {
+        url += '&';
+      } else {
+        url += '?';
+      }
+      url += "scheme_name=" + this.state.stateDecoded.module + "&provider=" + this.state.stateDecoded.provider;
+      window.location.href = url;
+    } else {
+      window.location.href = this.state.config.ProfileUrl;
     }
   }
 
 	render() {
     if (this.state.config) {
-      return ("");
+      if (this.state.errorAuthentication || this.state.unknownError) {
+        var button;
+        if (this.state.gotoLogin) {
+          button = <button type="button" className="btn btn-primary" id="buttonBack" onClick={this.gotoLogin}>{i18next.t("callback.button-login")}</button>
+        } else {
+          button = <button type="button" className="btn btn-primary" id="buttonBack" onClick={this.gotoProfile}>{i18next.t("callback.button-profile")}</button>
+        }
+        return (
+        <div className="perfect-centering">
+          <div className="alert alert-danger">
+            <h3>
+              {(this.state.errorAuthentication?i18next.t("callback.authentication-error"):i18next.t("callback.unknown-error"))}
+            </h3>
+          </div>
+          <div className="row justify-content-md-center">
+            {button}
+          </div>
+        </div>
+        );
+      } else {
+        return (
+        <div className="perfect-centering">
+          <div className="alert alert-info">
+            <h3>
+              {i18next.t("callback.authentication-success")}
+            </h3>
+          </div>
+        </div>
+        );
+      }
     } else {
       return (
         <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
