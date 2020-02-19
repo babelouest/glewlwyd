@@ -1538,10 +1538,10 @@ void* signal_thread(void *arg) {
 
   while (1) {
     res = sigwait(sigs, &signum);
-	 if (res) {
+    if (res) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Waiting for signals failed");
-		exit(1);
-	 }
+      exit(1);
+    }
     if (signum == SIGQUIT || signum == SIGINT || signum == SIGTERM || signum == SIGHUP) {
       y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd - Received close signal: %s", strsignal(signum));
       pthread_mutex_lock(&global_handler_close_lock);
