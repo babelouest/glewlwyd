@@ -1546,13 +1546,13 @@ void* signal_thread(void *arg) {
       pthread_mutex_unlock(&global_handler_close_lock);
       return NULL;
     } else if (signum == SIGBUS) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received bus error signal");
+      fprintf(stderr, "Glewlwyd - Received bus error signal\n");
       exit(256-signum);
     } else if (signum == SIGSEGV) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received segmentation fault signal");
+      fprintf(stderr, "Glewlwyd - Received segmentation fault signal\n");
       exit(256-signum);
     } else if (signum == SIGILL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received illegal instruction signal");
+      fprintf(stderr, "Glewlwyd - Received illegal instruction signal\n");
       exit(256-signum);
     } else {
       y_log_message(Y_LOG_LEVEL_WARNING, "Glewlwyd - Received unexpected signal: %s", strsignal(signum));
