@@ -38,8 +38,6 @@
 
 #include "glewlwyd.h"
 
-void* signal_thread(void *arg);
-
 static pthread_mutex_t global_handler_close_lock;
 static pthread_cond_t  global_handler_close_cond;
 

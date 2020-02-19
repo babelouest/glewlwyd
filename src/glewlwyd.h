@@ -140,7 +140,7 @@ int build_config_from_env(struct config_elements * config);
 int  build_config_from_file(struct config_elements * config);
 int build_config_from_args(int argc, char ** argv, struct config_elements * config, int * use_config_file, int * use_config_env);
 int  check_config(struct config_elements * config);
-void exit_handler(int handler);
+void* signal_thread(void *arg);
 void exit_server(struct config_elements ** config, int exit_value);
 void print_help(FILE * output);
 char * get_file_content(const char * file_path);
