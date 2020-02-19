@@ -703,6 +703,7 @@
     "mod-oauth2-new": "Nouveau fournisseur OAuth2/OIDC",
     "mod-oauth2-mainstream_provider-none": "Personnalisé",
     "mod-oauth2-mainstream_provider": "Type de fournisseur",
+    "mod-oauth2-help_url": "Aide en ligne pour utiliser le fournisseur",
     "mod-oauth2-name": "Nom",
     "mod-oauth2-name-ph": "Ex: oidcProvider",
     "mod-oauth2-name-error": "Le nom est obligatoire",
@@ -924,7 +925,15 @@
     "scheme-oauth2-btn-remove": "Supprimer",
     "scheme-oauth2-btn-add": "Ajouter",
     "scheme-oauth2-confirm-title": "Supprimer un compte",
-    "scheme-oauth2-confirm-message": "Êtes-vous sûr de vouloir supprimer le compte {{provider}}?"
+    "scheme-oauth2-confirm-message": "Êtes-vous sûr de vouloir supprimer le compte {{provider}}?",
+    "scheme-oauth2-registration-invalid": "Enregistrement invalide"
+  },
+  "callback": {
+    "button-login": "Retourner à la page de connexion",
+    "button-profile": "Retourner à la page de profil",
+    "authentication-success": "Authentification complétée",
+    "authentication-error": "Erreur d'authentification",
+    "unknown-error": "Erreur"
   },
   "modal": {
     "close": "Fermer",
