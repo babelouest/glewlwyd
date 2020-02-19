@@ -1554,6 +1554,8 @@ void* signal_thread(void *arg) {
     } else if (signum == SIGILL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received illegal instruction signal");
       exit(256-signum);
+    } else {
+      y_log_message(Y_LOG_LEVEL_WARNING, "Glewlwyd - Received unexpected signal: %s", strsignal(signum));
     }
   }
 }
