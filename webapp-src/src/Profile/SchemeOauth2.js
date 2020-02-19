@@ -109,7 +109,11 @@ class SchemeOauth2 extends Component {
       }
       if (register.created_at !== null) {
         createdAt = (new Date(register.created_at*1000)).toLocaleString();
-        lastSession = (new Date(register.last_session*1000)).toLocaleString();
+        if (register.last_session) {
+          lastSession = (new Date(register.last_session*1000)).toLocaleString();
+        } else {
+          lastSession = i18next.t("profile.scheme-oauth2-registration-invalid");
+        }
         regButton = 
         <button type="button" className="btn btn-primary" onClick={(e) => this.removeRegistration(register.provider)} title={i18next.t("profile.scheme-oauth2-btn-remove")}>
           <i className="fas fa-trash"></i>
