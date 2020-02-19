@@ -1538,7 +1538,7 @@ void* signal_thread(void *arg) {
 
   res = sigwait(sigs, &signum);
   if (res) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Waiting for signals failed");
+    fprintf(stderr, "Glewlwyd - Waiting for signals failed\n");
     exit(1);
   }
   if (signum == SIGQUIT || signum == SIGINT || signum == SIGTERM || signum == SIGHUP) {
