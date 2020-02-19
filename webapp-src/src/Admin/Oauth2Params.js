@@ -119,43 +119,29 @@ class Oauth2Params extends Component {
   
   addProvider() {
     var mod = this.state.mod;
+    var newProvider = {
+      name: "",
+      logo_uri: "",
+      logo_fa: "",
+      client_id: "",
+      client_secret: "",
+      provider_type: "oauth2",
+      response_type: "code",
+      userinfo_endpoint: "",
+      config_endpoint: "",
+      auth_endpoint: "",
+      token_endpoint: "",
+      userid_property: "",
+      scope: "",
+      additional_parameters: [],
+      enabled: true
+    }
     if (this.state.curMainstream === -1) {
-      mod.parameters.provider_list.push({
-        name: "",
-        logo_uri: "",
-        logo_fa: "",
-        client_id: "",
-        client_secret: "",
-        provider_type: "oauth2",
-        response_type: "code",
-        userinfo_endpoint: "",
-        config_endpoint: "",
-        auth_endpoint: "",
-        token_endpoint: "",
-        userid_property: "",
-        scope: "",
-        additional_parameters: [],
-        enabled: true
-      });
+      mod.parameters.provider_list.push(newProvider);
     } else {
-      mod.parameters.provider_list.push(Object.assign({
-        name: "",
-        logo_uri: "",
-        logo_fa: "",
-        client_id: "",
-        client_secret: "",
-        provider_type: "oauth2",
-        response_type: "code",
-        userinfo_endpoint: "",
-        config_endpoint: "",
-        auth_endpoint: "",
-        token_endpoint: "",
-        userid_property: "",
-        scope: "",
-        additional_parameters: [],
-        enabled: true
-      },
-      this.state.config.providerMainstreamList[this.state.curMainstream]));
+      var configProvider = this.state.config.providerMainstreamList[this.state.curMainstream];
+      delete configProvider.help_url;
+      mod.parameters.provider_list.push(Object.assign(newProvider, configProvider));
     }
     this.setState({mod: mod});
   }
@@ -177,6 +163,7 @@ class Oauth2Params extends Component {
     e.preventDefault();
     var mod = this.state.mod;
     mod.parameters.provider_list[index].provider_type = value;
+    mod.parameters.provider_list[index].scope = "openid";
     this.setState({mod: mod});
   }
   
@@ -370,7 +357,7 @@ class Oauth2Params extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-oauth2-scope">{i18next.t("admin.mod-oauth2-scope")}</label>
                     </div>
-                    <input type="text" className="form-control" id="mod-oauth2-scope" onChange={(e) => this.changeProviderParam(e, index, "scope", 0)} value={provider.scope} placeholder={i18next.t("admin.mod-oauth2-scope-ph")}/>
+                    <input type="text" className="form-control" id="mod-oauth2-scope" onChange={(e) => this.changeProviderParam(e, index, "scope", 0)} value={provider.scope} placeholder={i18next.t("admin.mod-oauth2-scope-ph")} disabled={provider.provider_type==="oidc"}/>
                   </div>
                 </div>
                 <div className="form-group">
@@ -451,7 +438,11 @@ class Oauth2Params extends Component {
         </div>
       );
     });
+    var helpUrl;
     this.state.config.providerMainstreamList.forEach((provider, index) => {
+      if (index === this.state.curMainstream && provider.help_url) {
+        helpUrl = <a href={provider.help_url} alt={provider.name} className="badge badge-primary" target="_blank">{i18next.t("admin.mod-oauth2-help_url")}</a>
+      }
       mainstreamProviders.push(
         <a key={index} className={"dropdown-item"+(this.state.curMainstream===index?" active":"")} href="#" onClick={(e) => this.changeMainstreamProvider(e, index)}>{provider.name}</a>
       );
@@ -482,7 +473,7 @@ class Oauth2Params extends Component {
           <div className="btn-group" role="group">
             <div className="btn-group" role="group">
               <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-oauth2-mainstream_provider" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                {i18next.t("admin.mod-oauth2-mainstream_provider")}
+                {(this.state.curMainstream===-1?i18next. t("admin.mod-oauth2-mainstream_provider-none"):this.state.config.providerMainstreamList[this.state.curMainstream].name)}
               </button>
               <div className="dropdown-menu" aria-labelledby="mod-glwd-jwt-key-size">
                 {mainstreamProviders}
@@ -491,6 +482,9 @@ class Oauth2Params extends Component {
             <button type="button" className="btn btn-secondary" onClick={this.addProvider} title={i18next.t("admin.mod-oauth2-provider_list-add")}>
               <i className="fas fa-plus"></i>
             </button>
+          </div>
+          <div>
+            {helpUrl}
           </div>
         </div>
         {providerList}
