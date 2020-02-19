@@ -1559,6 +1559,8 @@ void* signal_thread(void *arg) {
   } else {
     y_log_message(Y_LOG_LEVEL_WARNING, "Glewlwyd - Received unexpected signal: %s", strsignal(signum));
   }
+
+  return NULL;
 }
 
 int module_instance_parameters_check(const char * module_parameters, const char * instance_parameters) {
