@@ -539,7 +539,7 @@ static int delete_registration_for_user(struct config_module * config, struct _o
   return ret;
 }
 
-static int complete_session_for_user(struct config_module * config, json_t * j_registration, json_t * j_provider, const char * redirect_to, const char * state, int status) {
+static int complete_session_for_user(struct config_module * config, const char * redirect_uri, json_t * j_registration, json_t * j_provider, const char * redirect_to, const char * state, int status) {
   json_t * j_query, * j_result = NULL;
   int res, ret;
   time_t now;
@@ -580,19 +580,21 @@ static int complete_session_for_user(struct config_module * config, json_t * j_r
       if (i_init_session(&i_session) == I_OK) {
         if (i_import_session_str(&i_session, json_string_value(json_object_get(json_array_get(j_result, 0), "gsos_session_export"))) == I_OK) {
           i_set_str_parameter(&i_session, I_OPT_REDIRECT_TO, redirect_to);
-          if (i_parse_redirect_to(&i_session) == I_OK) {
+          if ((res = i_parse_redirect_to(&i_session) == I_OK)) {
             switch (i_get_response_type(&i_session)) {
               case I_RESPONSE_TYPE_CODE:
-                if (i_run_token_request(&i_session) == I_OK) {
+                if ((res = i_run_token_request(&i_session)) == I_OK) {
                   ret = G_OK;
-                  if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
-                    sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
-                    ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
-                  } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
-                    sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.id_token_payload, "sub")));
-                    ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                  if (0 == o_strcmp("oidc", json_string_value(json_object_get(j_provider, "provider_type")))) {
+                    if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
+                      sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
+                      ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                    } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
+                      sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.id_token_payload, "sub")));
+                      ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                    }                    
                   } else {
-                    if (i_load_userinfo(&i_session) == I_OK) {
+                    if ((res = i_load_userinfo(&i_session)) == I_OK && i_session.j_userinfo != NULL) {
                       if (json_string_length((json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))))) {
                         sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                         ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
@@ -600,18 +602,22 @@ static int complete_session_for_user(struct config_module * config, json_t * j_r
                         sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                         ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
                       }
+                    } else if (res == I_ERROR_PARAM || res == I_ERROR_SERVER || res == I_ERROR_UNAUTHORIZED || i_session.j_userinfo == NULL) {
+                      ret = G_ERROR_PARAM;
                     } else {
                       y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_load_userinfo (1)");
                       ret = G_ERROR;
                     }
                   }
+                } else if (res == I_ERROR_PARAM || I_ERROR_SERVER) {
+                  ret = G_ERROR_PARAM;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_run_token_request");
                   ret = G_ERROR;
                 }
                 break;
               case I_RESPONSE_TYPE_TOKEN:
-                if (i_load_userinfo(&i_session) == I_OK) {
+                if ((res = i_load_userinfo(&i_session)) == I_OK && i_session.j_userinfo != NULL) {
                   if (json_string_length(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
                     sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                     ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
@@ -619,6 +625,8 @@ static int complete_session_for_user(struct config_module * config, json_t * j_r
                     sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                     ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
                   }
+                } else if (res == I_ERROR_PARAM || res == I_ERROR_SERVER || res == I_ERROR_UNAUTHORIZED || i_session.j_userinfo == NULL) {
+                  ret = G_ERROR_PARAM;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_load_userinfo (2)");
                   ret = G_ERROR;
@@ -641,7 +649,7 @@ static int complete_session_for_user(struct config_module * config, json_t * j_r
                 ret = G_ERROR_PARAM;
                 break;
             }
-            if (ret == G_OK && sub != NULL) {
+            if (ret == G_OK && sub != NULL && 0 == o_strncmp(redirect_to, redirect_uri, o_strlen(redirect_uri))) {
               if (status == GLEWLWYD_SCHEME_OAUTH2_SESSION_REGISTRATION) {
                 j_query = json_pack("{sss{ss}s{sO}}",
                                     "table",
@@ -696,6 +704,8 @@ static int complete_session_for_user(struct config_module * config, json_t * j_r
               }
             }
             o_free(sub);
+          } else if (res == I_ERROR_PARAM || I_ERROR_SERVER) {
+            ret = G_ERROR_PARAM;
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_parse_redirect_to");
             ret = G_ERROR;
@@ -1100,9 +1110,9 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "action")), "callback")) {
         j_result = get_registration_for_user(config, oauth2_config, username, json_string_value(json_object_get(j_scheme_data, "provider")));
         if (check_result_value(j_result, G_OK)) {
-          if ((res = complete_session_for_user(config, json_array_get(json_object_get(j_result, "registration"), 0), json_object_get(j_provider, "provider"), json_string_value(json_object_get(j_scheme_data, "redirect_to")), json_string_value(json_object_get(j_scheme_data, "state")), GLEWLWYD_SCHEME_OAUTH2_SESSION_REGISTRATION)) == G_OK) {
+          if ((res = complete_session_for_user(config, json_string_value(json_object_get(oauth2_config->j_parameters, "redirect_uri")), json_array_get(json_object_get(j_result, "registration"), 0), json_object_get(j_provider, "provider"), json_string_value(json_object_get(j_scheme_data, "redirect_to")), json_string_value(json_object_get(j_scheme_data, "state")), GLEWLWYD_SCHEME_OAUTH2_SESSION_REGISTRATION)) == G_OK) {
             j_return = json_pack("{si}", "result", G_OK);
-          } else if (res == G_ERROR_PARAM || res == G_ERROR_UNAUTHORIZED) {
+          } else if (res == G_ERROR_PARAM || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_NOT_FOUND) {
             j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "Registration completion invalid");
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register oauth2 - Error complete_session_for_user");
@@ -1226,6 +1236,7 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
     y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register_get oauth2 - Error get_registration_for_user");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
+  json_decref(j_result);
   return j_return;
 }
 
@@ -1341,7 +1352,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
   if (check_result_value(j_result, G_OK)) {
     j_provider = get_provider(oauth2_config, json_string_value(json_object_get(j_scheme_data, "provider")));
     if (check_result_value(j_provider, G_OK)) {
-      if ((res = complete_session_for_user(config, json_array_get(json_object_get(j_result, "registration"), 0), json_object_get(j_provider, "provider"), json_string_value(json_object_get(j_scheme_data, "redirect_to")), json_string_value(json_object_get(j_scheme_data, "state")), GLEWLWYD_SCHEME_OAUTH2_SESSION_AUTHENTICATION)) == G_OK) {
+      if ((res = complete_session_for_user(config, json_string_value(json_object_get(oauth2_config->j_parameters, "redirect_uri")), json_array_get(json_object_get(j_result, "registration"), 0), json_object_get(j_provider, "provider"), json_string_value(json_object_get(j_scheme_data, "redirect_to")), json_string_value(json_object_get(j_scheme_data, "state")), GLEWLWYD_SCHEME_OAUTH2_SESSION_AUTHENTICATION)) == G_OK) {
         ret = G_OK;
       } else if (res == G_ERROR_PARAM || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_NOT_FOUND) {
         ret = G_ERROR_UNAUTHORIZED;
