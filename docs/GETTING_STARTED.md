@@ -17,7 +17,7 @@
       - [TLS Certificate scheme](#tls-certificate-scheme)
       - [Retype-password scheme](#retype-password-scheme)
       - [HTTP Basic Authentication scheme](#http-basic-authentication-scheme)
-	  - [OAuth2/OIDC Client Authentication scheme](#oauth2-oidc-client-authentication-scheme)
+      - [OAuth2/OIDC Client Authentication scheme](#oauth2oidc-client-authentication-scheme)
     - [Scopes](#scopes)
     - [Plugins](#plugins)
       - [Glewlwyd Oauth2 plugin](#glewlwyd-oauth2-plugin)
