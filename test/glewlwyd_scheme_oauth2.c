@@ -128,6 +128,14 @@ static int callback_userinfo_error_format (const struct _u_request * request, st
   return U_CALLBACK_CONTINUE;
 }
 
+static int callback_userinfo_invalid_userid (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  json_t * j_result = json_pack("{ss}", PROVIDER_USERID_PROPERTY, USERNAME2);
+  ulfius_set_json_body_response(response, 200, j_result);
+  json_decref(j_result);
+  
+  return U_CALLBACK_CONTINUE;
+}
+
 static int callback_userinfo_ok (const struct _u_request * request, struct _u_response * response, void * user_data) {
   json_t * j_result = json_pack("{ss}", PROVIDER_USERID_PROPERTY, USERNAME);
   ulfius_set_json_body_response(response, 200, j_result);
@@ -888,6 +896,22 @@ START_TEST(test_glwd_scheme_oauth2_irl_register_server_callback_userinfo_respons
 }
 END_TEST
 
+START_TEST(test_glwd_scheme_oauth2_irl_auth_trigger_provider_list_no_register)
+{
+  json_t * j_parameters = json_pack("{sssssss{so}}",
+                                   "username", USERNAME,
+                                   "scheme_type", MODULE_MODULE,
+                                   "scheme_name", MODULE_NAME,
+                                   "value",
+                                     "provider_list", json_true()),
+         * j_result_no_auth = json_pack("{ssssss}", "provider", PROVIDER_NAME, "logo_uri", PROVIDER_LOGO_URI, "logo_fa", PROVIDER_LOGO_FA);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_parameters, NULL, 200, j_result_no_auth, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_parameters, NULL, 401, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  json_decref(j_result_no_auth);
+}
+END_TEST
+
 START_TEST(test_glwd_scheme_oauth2_irl_register_ok)
 {
   struct _u_instance instance;
@@ -953,6 +977,258 @@ START_TEST(test_glwd_scheme_oauth2_irl_register_ok)
 }
 END_TEST
 
+START_TEST(test_glwd_scheme_oauth2_irl_auth_trigger_provider_list_register)
+{
+  json_t * j_parameters = json_pack("{sssssss{so}}",
+                                   "username", USERNAME,
+                                   "scheme_type", MODULE_MODULE,
+                                   "scheme_name", MODULE_NAME,
+                                   "value",
+                                     "provider_list", json_true()),
+         * j_result = json_pack("{ssssss}", "provider", PROVIDER_NAME, "logo_uri", PROVIDER_LOGO_URI, "logo_fa", PROVIDER_LOGO_FA);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_parameters, NULL, 200, j_result, NULL, NULL), 1);
+  json_decref(j_parameters);
+  json_decref(j_result);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_oauth2_irl_auth_invalid_userid)
+{
+  struct _u_instance instance;
+  ck_assert_int_eq(ulfius_init_instance(&instance, PROVIDER_PORT, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "POST", NULL, "/token", 0, &callback_token_ok, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", NULL, "/userinfo", 0, &callback_userinfo_invalid_userid, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_parameters, * j_response;
+  const char * redirect_to, * state = NULL;
+  char ** url_array = NULL, * tmp = NULL;
+  size_t i;
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  j_parameters = json_pack("{sssssss{ss}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                             "provider", PROVIDER_NAME);
+  req.http_verb = o_strdup("POST");
+  req.http_url = o_strdup(SERVER_URI "auth/scheme/trigger/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&req, j_parameters), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_response = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_ptr_ne(j_response, NULL);
+  redirect_to = json_string_value(json_object_get(j_response, "redirect_to"));
+  ck_assert_ptr_ne(redirect_to, NULL);
+  ck_assert_int_eq(split_string(redirect_to+o_strlen(REDIRECT_URI)+1, "&", &url_array), 6);
+  for (i=0; url_array[i]!=NULL; i++) {
+    if (o_strncmp(url_array[i], "state=", o_strlen("state=")) == 0) {
+      state = url_array[i] + o_strlen("state=");
+    }
+  }
+  ck_assert_ptr_ne(state, NULL);
+  json_decref(j_parameters);
+  json_decref(j_response);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  
+  tmp = msprintf(REDIRECT_URI "?code=" CODE "&state=%s", state);
+  j_parameters = json_pack("{sssssss{ssssssss}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                             "provider", PROVIDER_NAME,
+                             "action", "callback",
+                             "redirect_to", tmp,
+                             "state", state);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_parameters, NULL, 401, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  o_free(tmp);
+
+  ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
+  ulfius_clean_instance(&instance);
+  free_string_array(url_array);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_oauth2_irl_auth_error_state)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_parameters, * j_response;
+  const char * redirect_to, * state = NULL;
+  char ** url_array = NULL, * tmp = NULL;
+  size_t i;
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  j_parameters = json_pack("{sssssss{ss}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                             "provider", PROVIDER_NAME);
+  req.http_verb = o_strdup("POST");
+  req.http_url = o_strdup(SERVER_URI "auth/scheme/trigger/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&req, j_parameters), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_response = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_ptr_ne(j_response, NULL);
+  redirect_to = json_string_value(json_object_get(j_response, "redirect_to"));
+  ck_assert_ptr_ne(redirect_to, NULL);
+  ck_assert_int_eq(split_string(redirect_to+o_strlen(REDIRECT_URI)+1, "&", &url_array), 6);
+  for (i=0; url_array[i]!=NULL; i++) {
+    if (o_strncmp(url_array[i], "state=", o_strlen("state=")) == 0) {
+      state = url_array[i] + o_strlen("state=");
+    }
+  }
+  ck_assert_ptr_ne(state, NULL);
+  json_decref(j_parameters);
+  json_decref(j_response);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  
+  tmp = msprintf(REDIRECT_URI "?code=" CODE "&state=%s", state);
+  j_parameters = json_pack("{sssssss{ssssssss}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                             "provider", PROVIDER_NAME,
+                             "action", "callback",
+                             "redirect_to", tmp,
+                             "state", "error");
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_parameters, NULL, 401, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  o_free(tmp);
+
+  free_string_array(url_array);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_oauth2_irl_auth_error_redirect_to)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_parameters, * j_response;
+  const char * redirect_to, * state = NULL;
+  char ** url_array = NULL;
+  size_t i;
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  j_parameters = json_pack("{sssssss{ssss}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                             "provider", PROVIDER_NAME,
+                             "action", "new");
+  req.http_verb = o_strdup("POST");
+  req.http_url = o_strdup(SERVER_URI "auth/scheme/trigger/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&req, j_parameters), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_response = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_ptr_ne(j_response, NULL);
+  redirect_to = json_string_value(json_object_get(j_response, "redirect_to"));
+  ck_assert_ptr_ne(redirect_to, NULL);
+  ck_assert_int_eq(split_string(redirect_to+o_strlen(REDIRECT_URI)+1, "&", &url_array), 6);
+  for (i=0; url_array[i]!=NULL; i++) {
+    if (o_strncmp(url_array[i], "state=", o_strlen("state=")) == 0) {
+      state = url_array[i] + o_strlen("state=");
+    }
+  }
+  ck_assert_ptr_ne(state, NULL);
+  json_decref(j_parameters);
+  json_decref(j_response);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  
+  j_parameters = json_pack("{sssssss{ssssssss}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                             "provider", PROVIDER_NAME,
+                             "action", "callback",
+                             "redirect_to", "error",
+                             "state", state);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 401, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+
+  free_string_array(url_array);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_oauth2_irl_auth_ok)
+{
+  struct _u_instance instance;
+  ck_assert_int_eq(ulfius_init_instance(&instance, PROVIDER_PORT, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "POST", NULL, "/token", 0, &callback_token_ok, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", NULL, "/userinfo", 0, &callback_userinfo_ok, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_parameters, * j_response;
+  const char * redirect_to, * state = NULL;
+  char ** url_array = NULL, * tmp = NULL;
+  size_t i;
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  j_parameters = json_pack("{sssssss{ss}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                             "provider", PROVIDER_NAME);
+  req.http_verb = o_strdup("POST");
+  req.http_url = o_strdup(SERVER_URI "auth/scheme/trigger/");
+  ck_assert_int_eq(ulfius_set_json_body_request(&req, j_parameters), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_response = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_ptr_ne(j_response, NULL);
+  redirect_to = json_string_value(json_object_get(j_response, "redirect_to"));
+  ck_assert_ptr_ne(redirect_to, NULL);
+  ck_assert_int_eq(split_string(redirect_to+o_strlen(REDIRECT_URI)+1, "&", &url_array), 6);
+  for (i=0; url_array[i]!=NULL; i++) {
+    if (o_strncmp(url_array[i], "state=", o_strlen("state=")) == 0) {
+      state = url_array[i] + o_strlen("state=");
+    }
+  }
+  ck_assert_ptr_ne(state, NULL);
+  json_decref(j_parameters);
+  json_decref(j_response);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  
+  tmp = msprintf(REDIRECT_URI "?code=" CODE "&state=%s", state);
+  j_parameters = json_pack("{sssssss{ssssssss}}",
+                           "username", USERNAME,
+                           "scheme_type", MODULE_MODULE,
+                           "scheme_name", MODULE_NAME,
+                           "value",
+                             "provider", PROVIDER_NAME,
+                             "action", "callback",
+                             "redirect_to", tmp,
+                             "state", state);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  o_free(tmp);
+
+  ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
+  ulfius_clean_instance(&instance);
+  free_string_array(url_array);
+}
+END_TEST
+
 START_TEST(test_glwd_scheme_oauth2_irl_register_delete)
 {
   json_t * j_parameters = json_pack("{sssssss{ssss}}",
@@ -986,7 +1262,13 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_server_callback_token_response_error_client);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_server_callback_token_response_error_format);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_server_callback_userinfo_response_error_format);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_trigger_provider_list_no_register);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_ok);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_trigger_provider_list_register);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_invalid_userid);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_error_state);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_error_redirect_to);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_ok);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_delete);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_remove);
   tcase_set_timeout(tc_core, 30);
