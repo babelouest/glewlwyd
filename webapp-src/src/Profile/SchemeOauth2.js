@@ -103,9 +103,9 @@ class SchemeOauth2 extends Component {
     this.state.registerList.forEach((register, index) => {
       var logo, createdAt, lastSession, regButton;
       if (register.logo_uri) {
-        logo = <img src={register.logo_uri} alt={register.provider} />
+        logo = <img src={register.logo_uri} alt={register.provider} className="img-fluid logo-img" />
       } else if (register.logo_fa) {
-        logo = <i className={"fab "+register.logo_fa}></i>
+        logo = <i className={register.logo_fa}></i>
       }
       if (register.created_at !== null) {
         createdAt = (new Date(register.created_at*1000)).toLocaleString();
