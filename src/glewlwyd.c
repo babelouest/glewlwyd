@@ -53,6 +53,8 @@ int main (int argc, char ** argv) {
   struct config_elements * config = o_malloc(sizeof(struct config_elements));
   int res, use_config_file = 0, use_config_env = 0;
   struct sockaddr_in bind_address;
+  pthread_t signal_thread_id;
+  static sigset_t close_signals;
 
   if (config == NULL) {
     fprintf(stderr, "Memory error - config\n");
@@ -181,15 +183,27 @@ int main (int argc, char ** argv) {
       pthread_cond_init(&global_handler_close_cond, NULL)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "init - Error initializing global_handler_close_lock or global_handler_close_cond");
   }
-  // Catch end signals to make a clean exit
-  if (signal (SIGQUIT, exit_handler) == SIG_ERR ||
-      signal (SIGINT, exit_handler) == SIG_ERR ||
-      signal (SIGTERM, exit_handler) == SIG_ERR ||
-      signal (SIGHUP, exit_handler) == SIG_ERR ||
-      signal (SIGBUS, exit_handler) == SIG_ERR ||
-      signal (SIGSEGV, exit_handler) == SIG_ERR ||
-      signal (SIGILL, exit_handler) == SIG_ERR) {
-    fprintf(stderr, "init - Error initializing end signal\n");
+
+  // Process end signals on dedicated thread
+  if (sigemptyset(&close_signals) == -1 ||
+      sigaddset(&close_signals, SIGQUIT) == -1 ||
+      sigaddset(&close_signals, SIGINT) == -1 ||
+      sigaddset(&close_signals, SIGTERM) == -1 ||
+      sigaddset(&close_signals, SIGHUP) == -1 ||
+      sigaddset(&close_signals, SIGBUS) == -1 ||
+      sigaddset(&close_signals, SIGSEGV) == -1 ||
+      sigaddset(&close_signals, SIGILL) == -1) {
+    fprintf(stderr, "init - Error creating signal mask\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  if (pthread_sigmask(SIG_BLOCK, &close_signals, NULL)) {
+    fprintf(stderr, "init - Error setting signal mask\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+
+  if (pthread_create(&signal_thread_id, NULL, &signal_thread, &close_signals)) {
+    fprintf(stderr, "init - Error creating signal thread\n");
+    exit_server(&config, GLEWLWYD_ERROR);
     return 1;
   }
 
@@ -1518,22 +1532,35 @@ void print_help(FILE * output) {
  * handles signal catch to exit properly when ^C is used for example
  * I don't like global variables but it looks fine to people who designed this
  */
-void exit_handler(int signal) {
-  if (signal == SIGQUIT || signal == SIGINT || signal == SIGTERM || signal == SIGHUP) {
-    y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd - Received close signal");
-  } else if (signal == SIGBUS) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received bus error signal");
-    exit(1);
-  } else if (signal == SIGSEGV) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received segmentation fault signal");
-    exit(1);
-  } else if (signal == SIGILL) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Glewlwyd - Received illegal instruction signal");
+void* signal_thread(void *arg) {
+  sigset_t *sigs = arg;
+  int res, signum;
+
+  res = sigwait(sigs, &signum);
+  if (res) {
+    fprintf(stderr, "Glewlwyd - Waiting for signals failed\n");
     exit(1);
   }
-  pthread_mutex_lock(&global_handler_close_lock);
-  pthread_cond_signal(&global_handler_close_cond);
-  pthread_mutex_unlock(&global_handler_close_lock);
+  if (signum == SIGQUIT || signum == SIGINT || signum == SIGTERM || signum == SIGHUP) {
+    y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd - Received close signal: %s", strsignal(signum));
+    pthread_mutex_lock(&global_handler_close_lock);
+    pthread_cond_signal(&global_handler_close_cond);
+    pthread_mutex_unlock(&global_handler_close_lock);
+    return NULL;
+  } else if (signum == SIGBUS) {
+    fprintf(stderr, "Glewlwyd - Received bus error signal\n");
+    exit(256-signum);
+  } else if (signum == SIGSEGV) {
+    fprintf(stderr, "Glewlwyd - Received segmentation fault signal\n");
+    exit(256-signum);
+  } else if (signum == SIGILL) {
+    fprintf(stderr, "Glewlwyd - Received illegal instruction signal\n");
+    exit(256-signum);
+  } else {
+    y_log_message(Y_LOG_LEVEL_WARNING, "Glewlwyd - Received unexpected signal: %s", strsignal(signum));
+  }
+
+  return NULL;
 }
 
 int module_instance_parameters_check(const char * module_parameters, const char * instance_parameters) {
