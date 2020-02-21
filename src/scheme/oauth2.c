@@ -1263,22 +1263,20 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
  * 
  */
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls) {
-  json_t * j_return = NULL, * j_session = config->glewlwyd_module_callback_check_user_session(config, http_request, username), * j_result, * j_element = NULL, * j_register = NULL, * j_provider;
+  json_t * j_return = NULL, * j_session = NULL, * j_result, * j_element = NULL, * j_register = NULL, * j_provider;
   size_t index = 0, index_r = 0;
   struct _oauth2_config * oauth2_config = (struct _oauth2_config *)cls;
 
   if (json_object_get(j_scheme_trigger, "provider_list") == json_true()) {
     j_session = config->glewlwyd_module_callback_check_user_session(config, http_request, username);
     if (check_result_value(j_session, G_OK)) {
-      j_return = json_pack("{sis[]}", "result", G_OK, "response");
       j_result = get_registration_for_user(config, oauth2_config, username, NULL);
       if (check_result_value(j_result, G_OK)) {
+        j_return = json_pack("{sis[]}", "result", G_OK, "response");
         json_array_foreach(json_object_get(oauth2_config->j_parameters, "provider_list"), index, j_element) {
           json_array_foreach(json_object_get(j_result, "registration"), index_r, j_register) {
             if (0 == o_strcmp(json_string_value(json_object_get(j_element, "name")), json_string_value(json_object_get(j_register, "provider")))) {
-              json_object_set(j_register, "logo_uri", json_object_get(j_element, "logo_uri"));
-              json_object_set(j_register, "logo_fa", json_object_get(j_element, "logo_fa"));
-              json_array_append(json_object_get(j_return, "response"), j_register);
+              json_array_append_new(json_object_get(j_return, "response"), json_pack("{sOsOsOsO}", "provider", json_object_get(j_register, "provider"), "logo_uri", json_object_get(j_element, "logo_uri"), "logo_fa", json_object_get(j_element, "logo_fa"), "created_at", json_object_get(j_register, "created_at")));
             }
           }
         }
@@ -1292,9 +1290,10 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
     } else {
       j_return = json_pack("{sis[]}", "result", G_OK, "response");
       json_array_foreach(json_object_get(oauth2_config->j_parameters, "provider_list"), index, j_element) {
-        json_array_append_new(json_object_get(j_return, "response"), json_pack("{sOsOsOsoso}", "provider", json_object_get(j_element, "name"), "logo_uri", json_object_get(j_element, "logo_uri"), "logo_fa", json_object_get(j_element, "logo_fa"), "enabled", json_false(), "created_at", json_null()));
+        json_array_append_new(json_object_get(j_return, "response"), json_pack("{sOsOsOso}", "provider", json_object_get(j_element, "name"), "logo_uri", json_object_get(j_element, "logo_uri"), "logo_fa", json_object_get(j_element, "logo_fa"), "created_at", json_null()));
       }
     }
+    json_decref(j_session);
   } else {
     j_register = get_registration_for_user(config, oauth2_config, username, json_string_value(json_object_get(j_scheme_trigger, "provider")));
     if (check_result_value(j_register, G_OK)) {
