@@ -76,9 +76,9 @@ class Oauth2SchemeForm extends Component {
     this.state.providerList.forEach((provider, index) => {
       var logo;
       if (provider.logo_uri) {
-        logo = <img src={provider.logo_uri} alt={provider.provider} />
+        logo = <img src={provider.logo_uri} alt={provider.provider} className="img-fluid logo-img" />
       } else if (provider.logo_fa) {
-        logo = <i className={"fab "+provider.logo_fa}></i>
+        logo = <i className={provider.logo_fa}></i>
       }
       providerList.push(
       <div key={index}>
