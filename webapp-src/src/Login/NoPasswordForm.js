@@ -10,6 +10,7 @@ import WebauthnForm from './scheme/WebauthnForm';
 import OTPSchemeForm from './scheme/OTPSchemeForm';
 import PasswordSchemeForm from './scheme/PasswordSchemeForm';
 import CertificateSchemeForm from './scheme/CertificateSchemeForm';
+import Oauth2SchemeForm from './scheme/Oauth2SchemeForm';
 
 class NoPasswordForm extends Component {
   constructor(props) {
@@ -78,6 +79,8 @@ class NoPasswordForm extends Component {
             curScheme = <PasswordSchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
           } else if (scheme.scheme_type === "certificate") {
             curScheme = <CertificateSchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
+          } else if (scheme.scheme_type === "oauth2") {
+            curScheme = <Oauth2SchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
           } else {
             curScheme = <div>No can do</div>;
           }
