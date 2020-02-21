@@ -194,6 +194,13 @@ class Oauth2Params extends Component {
     mod.parameters.provider_list[index].additional_parameters[iAddParam].value = e.target.value;
     this.setState({mod: mod});
   }
+
+  removeAdditionalParameter(e, index, iAddParam) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters.provider_list[index].additional_parameters.splice(iAddParam, 1);
+    this.setState({mod: mod});
+  }
   
   checkParameters() {
     var errorList = {}, hasError = false;
@@ -267,6 +274,11 @@ class Oauth2Params extends Component {
         <div key={iAddParam} className="input-group mb-3">
           <input type="text" className={this.state.errorList["provider-"+index+"-additional_parameters-"+iAddParam+"-key"]?"form-control is-invalid":"form-control"} id={"mod-oauth2-add-param-key-"+index+"-"+iAddParam} onChange={(e) => this.changeAddParamKey(e, index, iAddParam)} value={curParam.key||""} placeholder={i18next.t("admin.mod-oauth2-add-param-key-ph")}/>
           <input type="text" className={this.state.errorList["provider-"+index+"-additional_parameters-"+iAddParam+"-value"]?"form-control is-invalid":"form-control"} id={"mod-oauth2-add-param-value-"+index+"-"+iAddParam} onChange={(e) => this.changeAddParamValue(e, index, iAddParam)} value={curParam.value||""} placeholder={i18next.t("admin.mod-oauth2-add-param-value-ph")}/>
+          <div className="input-group-append">
+            <button className="btn btn-outline-secondary" type="button" id="button-addon2" onClick={(e) => this.removeAdditionalParameter(e, index, iAddParam)}>
+              <i className="fas fa-trash"></i>
+            </button>
+          </div>
           {this.state.errorList["provider-"+index+"-"+iAddParam+"-key"]?<span className="error-input">{this.state.errorList["provider-"+index+"-"+iAddParam+"-key"]}</span>:""}
           {this.state.errorList["provider-"+index+"-"+iAddParam+"-value"]?<span className="error-input">{this.state.errorList["provider-"+index+"-"+iAddParam+"-value"]}</span>:""}
         </div>
@@ -439,7 +451,7 @@ class Oauth2Params extends Component {
       );
     });
     var helpUrl;
-    this.state.config.providerMainstreamList.forEach((provider, index) => {
+    this.state.config.providerMainstreamList && this.state.config.providerMainstreamList.forEach((provider, index) => {
       if (index === this.state.curMainstream && provider.help_url) {
         helpUrl = <a href={provider.help_url} alt={provider.name} className="badge badge-primary" target="_blank">{i18next.t("admin.mod-oauth2-help_url")}</a>
       }
