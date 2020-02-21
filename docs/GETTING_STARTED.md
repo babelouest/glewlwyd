@@ -17,6 +17,7 @@
       - [TLS Certificate scheme](#tls-certificate-scheme)
       - [Retype-password scheme](#retype-password-scheme)
       - [HTTP Basic Authentication scheme](#http-basic-authentication-scheme)
+	  - [OAuth2/OIDC Client Authentication scheme](#oauth2-oidc-client-authentication-scheme)
     - [Scopes](#scopes)
     - [Plugins](#plugins)
       - [Glewlwyd Oauth2 plugin](#glewlwyd-oauth2-plugin)
@@ -181,6 +182,12 @@ The Retype-password schema allows to mandatory retype the user password to authe
 The HTTP Basic Authentication performs a login/password authentication against a specified webservice that requires HTTP Basic Authentication. This scheme is similar to [HTTP authentication backend](#http-authentication) but requires users to be already added to any backend (Database or LDAP). The advantage is that you can specify different scopes for each users and add any other additional data for the users.
 
 Read the full [documentation](HTTP.md).
+
+#### OAuth2/OIDC Client Authentication scheme
+
+The OAuth2/OIDC Client Authentication scheme allows users to login to Glewlwyd via a trusted external OAuth2 or OpenID Connect provider where they have a valid account. The administrator must enter the trusted providers settings to allow users to use those providers. Mainstream providers such as Google, Microsoft, Facebook, GitHub, etc. are compatible with this scheme.
+
+Read the full [documentation](OAUTH2_SCHEME.md).
 
 ### Scopes
 
