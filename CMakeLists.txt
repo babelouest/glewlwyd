@@ -524,14 +524,14 @@ if (WITH_SCHEME_OAUTH2)
 
 	set(Iddawc_FIND_QUIETLY ON) # force to find Iddawc quietly
 	include(FindIddawc)
-	find_package(Iddawc ${IDDAWC_VERSION_REQUIRED} QUIET) # try to find iddawc_SOURCE_DIR
+	find_package(Iddawc ${IDDAWC_VERSION_REQUIRED} QUIET) # try to find iddawc
 	if (IDDAWC_FOUND)
 		include_directories(${iddawc_SOURCE_DIR}/include)
 	elseif (NOT IDDAWC_FOUND AND DOWNLOAD_DEPENDENCIES)
 		include(DownloadProject)
 		message(STATUS "Download Iddawc ${IDDAWC_VERSION_REQUIRED}")
 		download_project(PROJ iddawc # ... otherwise, download archive
-				URL "https://github.com/babelouest/iddawc_SOURCE_DIR/archive/v${IDDAWC_VERSION_REQUIRED}.tar.gz"
+				URL "https://github.com/babelouest/iddawc/archive/v${IDDAWC_VERSION_REQUIRED}.tar.gz"
 				QUIET)
 		add_subdirectory(${iddawc_SOURCE_DIR_SOURCE_DIR} ${iddawc_BINARY_DIR})
 		include_directories(${iddawc_SOURCE_DIR_SOURCE_DIR}/include)
