@@ -23,6 +23,7 @@ Tis folder contains full documentation for Glewlwyd and additional resources.
 - [Install Authentication Scheme E-mail code](EMAIL.md)
 - [Install Authentication Scheme TLS certificate](CERTIFICATE.md)
 - [Install Authentication Scheme HTTP Basic Authentification](HTTP.md)
+- [Install Authentication Scheme OAuth2/OIDC client](OAUTH2_SCHEME.md)
 
 ### Plugins
 

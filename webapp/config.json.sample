@@ -3,6 +3,7 @@
   "ProfileUrl": "profile.html",
   "AdminUrl": "index.html",
   "LoginUrl": "login.html",
+  "CallbackPage": "callback.html",
   "PasswordMinLength": 8,
   "lang": ["en","fr","nl"],
   "pattern": {
@@ -149,5 +150,58 @@
   "register": [
   ],
   "register-complete": [
+  ],
+  "providerMainstreamList": [
+    {
+      "help_url": "https://developers.facebook.com/docs/facebook-login/manually-build-a-login-flow/",
+      "name": "Facebook",
+      "logo_fa": "fab fa-facebook",
+      "provider_type": "oauth2",
+      "response_type": "code",
+      "userinfo_endpoint": "https://graph.facebook.com/v5.0/me",
+      "auth_endpoint": "https://www.facebook.com/v5.0/dialog/oauth",
+      "token_endpoint": "https://graph.facebook.com/v5.0/oauth/access_token",
+      "userid_property": "id"
+    },
+    {
+      "help_url": "https://developer.github.com/apps/building-oauth-apps/authorizing-oauth-apps/",
+      "name": "GitHub",
+      "logo_fa": "fab fa-github",
+      "provider_type": "oauth2",
+      "response_type": "code",
+      "userinfo_endpoint": "https://api.github.com/user",
+      "auth_endpoint": "https://github.com/login/oauth/authorize",
+      "token_endpoint": "https://github.com/login/oauth/access_token",
+      "scope": "read:user",
+      "userid_property": "id"
+    },
+    {
+      "help_url": "https://docs.gitlab.com/ee/integration/oauth_provider.html",
+      "name": "GitLab",
+      "logo_fa": "fab fa-gitlab",
+      "provider_type": "oauth2",
+      "response_type": "code",
+      "userinfo_endpoint": "https://gitlab.com/api/v4/user",
+      "auth_endpoint": "https://gitlab.com/oauth/authorize",
+      "token_endpoint": "https://gitlab.com/oauth/token",
+      "scope": "read_user profile",
+      "userid_property": "id"
+    },
+    {
+      "help_url": "https://developers.google.com/identity/protocols/OAuth2",
+      "name": "Google",
+      "logo_fa": "fab fa-google",
+      "provider_type": "oidc",
+      "response_type": "code",
+      "config_endpoint": "https://accounts.google.com/.well-known/openid-configuration"
+    },
+    {
+      "help_url": "https://docs.microsoft.com/en-us/azure/active-directory/develop/v1-protocols-oauth-code#register-your-application-with-your-ad-tenant",
+      "name": "Microsoft",
+      "logo_fa": "fab fa-microsoft",
+      "provider_type": "oidc",
+      "response_type": "code",
+      "config_endpoint": "https://login.microsoftonline.com/{tenantid}/.well-known/openid-configuration"
+    }
   ]
 }

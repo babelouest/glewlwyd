@@ -84,6 +84,7 @@ glewlwyd_scheme_webauthn
 glewlwyd_scheme_retype_password
 glewlwyd_scheme_certificate
 glewlwyd_scheme_http
+glewlwyd_scheme_oauth2
 
 valgrind-*.txt
 *.json

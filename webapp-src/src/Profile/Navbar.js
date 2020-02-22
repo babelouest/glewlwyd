@@ -27,6 +27,8 @@ class Navbar extends Component {
     messageDispatcher.subscribe('Nav', (message) => {
       if (message.type === "profile") {
         this.navigate(false, "profile", null);
+      } else {
+        this.navigate(false, message.page, message.type);
       }
     });
   }

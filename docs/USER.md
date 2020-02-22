@@ -10,6 +10,7 @@ This documentation is intended to help Glewlwyd Users to manage their profile an
   - [Webauthn](#webauthn)
   - [OTP](#otp)
   - [TLS Certificates](#tls-certificates)
+  - [External OAuth2/OIDC Login](#external-oauth2oidc-login)
 - [Login to Glewlwyd](#login-to-glewlwyd)
   - [Grant access](#grant-access)
   - [Multiple sessions](#multiple-sessions)
@@ -106,6 +107,18 @@ If you already have registered at least one certificate and want to test the aut
 #### Request a certificate to the server
 
 If this option is enabled, you can then request a valid certificate for your authentication. After clicking on the button, a PKCS#12 certificate will be available for download. You must save this file, then import it in your browser certificate list using the provided password.
+
+### External OAuth2/OIDC Login
+
+![profile-oauth2](screenshots/profile-oauth2.png)
+
+![login-oauth2](screenshots/login-oauth2.png)
+
+This scheme allow users to connect to Glewlwyd via an trusted external OAuth2/OIDC service. External OAuth2/OIDC services may include mainstream services such as Google, Facebook, GitHub, etc.
+
+#### Registration
+
+You need a valid login in one of the proposed external services. In the Profile page, click on the `+` button of one of the provider, then proceed to the login workflow in the provider service. You may be asked to accept Glewlwyd service to be authorized to access your personal data. You must accept this authorization to allow Glewlwyd to identify your login. Glewlwyd will never have access to secret data such as passwords in this process, and will only save the minimal data (i.e. an identifier) to be able to identify your connection during further login phases.
 
 ## Login to Glewlwyd
 

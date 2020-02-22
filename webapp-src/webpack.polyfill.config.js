@@ -18,7 +18,8 @@ module.exports = {
 	entry: {
 		admin: ["babel-polyfill", './src/admin.js'],
 		login: ["babel-polyfill", './src/login.js'],
-		profile: ["babel-polyfill", './src/profile.js']
+		profile: ["babel-polyfill", './src/profile.js'],
+		callback: ["babel-polyfill", './src/callback.js']
 	},
 	output: {
 		path: path.resolve(__dirname, 'output'),
