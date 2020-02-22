@@ -54,7 +54,7 @@ class SchemeOauth2 extends Component {
   
   addRegistration(provider) {
     if (this.state.profile) {
-      apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {provider: provider, action: "new", register_url: apiManager.getConfig(), complete_url: window.location.href}}, true)
+      apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {provider: provider, action: "new", register_url: (this.state.config.params.register?apiManager.getConfig()+"/"+this.state.config.params.register:apiManager.getConfig()), complete_url: window.location.href}}, true)
       .then((res) => {
         document.location = res.redirect_to;
       })
