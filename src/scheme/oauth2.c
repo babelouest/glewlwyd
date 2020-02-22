@@ -912,6 +912,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
   size_t index = 0, indexParam = 0;
   struct _i_session i_session;
   pthread_mutexattr_t mutexattr;
+  int is_oidc;
   
   j_result = is_scheme_parameters_valid(j_parameters);
   if (check_result_value(j_result, G_OK)) {
@@ -923,6 +924,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
       if (!pthread_mutex_init(&((struct _oauth2_config *)*cls)->insert_lock, &mutexattr) != 0) {
         json_array_foreach(json_object_get(j_parameters, "provider_list"), index, j_element) {
           if (json_object_get(j_element, "enabled") != json_false()) {
+            is_oidc = o_strcmp("oauth2", json_string_value(json_object_get(j_element, "provider_type")));
             if (i_init_session(&i_session) == I_OK) {
               json_array_foreach(json_object_get(j_element, "additional_parameters"), indexParam, j_param) {
                 i_set_additional_parameter(&i_session, json_string_value(json_object_get(j_param, "key")), json_string_value(json_object_get(j_param, "value")));
@@ -933,7 +935,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                                                                       I_OPT_CLIENT_ID, json_string_value(json_object_get(j_element, "client_id")),
                                                                       I_OPT_CLIENT_SECRET, json_string_value(json_object_get(j_element, "client_secret")),
                                                                       I_OPT_REDIRECT_URI, json_string_value(json_object_get(j_parameters, "redirect_uri")),
-                                                                      I_OPT_SCOPE, json_string_value(json_object_get(j_element, "scope")),
+                                                                      I_OPT_SCOPE, is_oidc?"openid":json_string_value(json_object_get(j_element, "scope")),
                                                                       I_OPT_NONE) != I_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init oauth2 - Error setting parameters for provider %s", json_string_value(json_object_get(j_element, "name")));
                 } else if (i_load_openid_config(&i_session) != I_OK) {
@@ -963,7 +965,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                                                                       I_OPT_CLIENT_ID, json_string_value(json_object_get(j_element, "client_id")),
                                                                       I_OPT_CLIENT_SECRET, json_string_value(json_object_get(j_element, "client_secret")),
                                                                       I_OPT_REDIRECT_URI, json_string_value(json_object_get(j_parameters, "redirect_uri")),
-                                                                      I_OPT_SCOPE, json_string_value(json_object_get(j_element, "scope")),
+                                                                      I_OPT_SCOPE, is_oidc?"openid":json_string_value(json_object_get(j_element, "scope")),
                                                                       I_OPT_NONE) != I_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init oauth2 - Error setting parameters for provider %s", json_string_value(json_object_get(j_element, "name")));
                 } else if ((j_export = i_export_session_json_t(&i_session)) == NULL) {
