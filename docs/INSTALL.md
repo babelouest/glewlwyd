@@ -30,6 +30,36 @@
 10. [Run Glewlwyd](#run-glewlwyd)
 11. [Getting started with the application](#getting-started-with-the-application)
 
+## Upgrade Glewlwyid from 2.0 or 2.1 to 2.2
+
+Glewlwyd upgrades come with database changes. It is highly recommended to backup your database before performing the upgrade.
+
+### Upgrade to Glewlwyd 2.2.x
+
+#### Mandatory core tables upgrade
+
+Small changes were added to the core tables. You must execute the script depending on your database backend:
+
+- Mariadb: [upgrade-2.2-core.mariadb.sql](database/upgrade-2.2-core.mariadb.sql)
+- SQlite3: [upgrade-2.2-core.sqlite3.sql](database/upgrade-2.2-core.sqlite3.sql)
+- PostgreSQL: [upgrade-2.2-core.postgresql.sql](database/upgrade-2.2-core.postgresql.sql)
+
+#### Scheme OAuth2/OIDC
+
+In Glewlwyd 2.2, the new scheme [OAuth2/OIDC external login](OAUTH2_SCHEME.md) was introduced. To use this module, you must create its required tables by executing the script depending on your database backend:
+
+- Mariadb: [oauth2.mariadb.sql](../src/scheme/oauth2.mariadb.sql)
+- SQlite3: [oauth2.sqlite3.sql](../src/scheme/oauth2.sqlite3.sql)
+- PostgreSQL: [oauth2.postgresql.sql](../src/scheme/oauth2.postgresql.sql)
+
+### Upgrade to Glewlwyd 2.1.x
+
+In Glewlwyd 2.1, the plugin module [register](REGITSER.md) has appear. In order to use this module, you must add its tables by executing the script depending on your database backend:
+
+- Mariadb: [register.mariadb.sql](../src/plugin/register.mariadb.sql)
+- SQlite3: [register.sqlite3.sql](../src/plugin/register.sqlite3.sql)
+- PostgreSQL: [register.postgresql.sql](../src/plugin/register.postgresql.sql)
+
 ## Distribution packages
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/glewlwyd.svg)](https://repology.org/metapackage/glewlwyd)

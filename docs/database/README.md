@@ -22,9 +22,9 @@ The initialized database will contain the user `admin` using the password `passw
 
 ### Upgrade core tables structure
 
-- [MariaDB/MySQL upgrade](upgrade-2.2.mariadb.sql)
-- [Postgre SQL upgrade](upgrade-2.2.postgre.sql)
-- [SQlite 3 upgrade](upgrade-2.2.sqlite3.sql)
+- [MariaDB/MySQL upgrade](upgrade-2.2-core.mariadb.sql)
+- [Postgre SQL upgrade](upgrade-2.2-core.postgre.sql)
+- [SQlite 3 upgrade](upgrade-2.2-core.sqlite3.sql)
 
 ### Install tables for OAuth2/OIDC scheme
 
