@@ -50,7 +50,9 @@ var initApp = () => {
           callback_url: getParameterByName("callback_url"),
           delegate: getParameterByName("delegate")||false,
           register: getParameterByName("register")||false,
-          token: getParameterByName("token")||false
+          token: getParameterByName("token")||false,
+          scheme_name: getParameterByName("scheme_name")||false,
+          provider: getParameterByName("provider")||false
         }
       }, frontEndConfig, serverConfig);
       ReactDOM.render(<App config={config} />, document.getElementById('root'));

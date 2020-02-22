@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.com/babelouest/glewlwyd.svg?branch=master)](https://travis-ci.com/babelouest/glewlwyd)
 ![C/C++ CI](https://github.com/babelouest/glewlwyd/workflows/C/C++%20CI/badge.svg)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3475/badge)](https://bestpractices.coreinfrastructure.org/projects/3475)
 
 Single-Sign-On (SSO) server with multiple factor authentication.
 
@@ -17,6 +18,7 @@ Allows users to authenticate via multiple factors:
 - Webauthn (Yubikey, Android devices)
 - One-time password sent via e-mail
 - TLS Certificate
+- External OAuth2/OIDC providers
 
 Users and clients can be stored and managed from various backends:
 - Database
@@ -27,6 +29,7 @@ Allows users to register a new account with the possibility to confirm their e-m
 - One-time password (TOTP/HOTP)
 - Webauthn (Yubikey, Android devices)
 - TLS Certificate
+- External OAuth2/OIDC providers
 
 See the [register documentation](docs/REGISTER.md) for more information on the registration features.
 

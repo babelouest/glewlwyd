@@ -35,6 +35,7 @@
 #include <ldap.h>
 #include <yder.h>
 #include <orcania.h>
+#include <rhonabwy.h>
 #include "../glewlwyd-common.h"
 
 const char * iso_3166_list[] = {"AF", "AX", "AL", "DZ", "AS", "AD", "AO", "AI", "AQ", "AG", "AR", "AM", "AW", "AU", "AT", "AZ", "BH", "BS", "BD", "BB", "BY", "BE", "BZ", "BJ", "BM", "BT", "BO", "BQ", "BA", "BW", "BV", "BR", "IO", "BN", "BG", "BF", "BI", "KH", "CM", "CA", "CV", "KY", "CF", "TD", "CL", "CN", "CX", "CC", "CO", "KM", "CG", "CD", "CK", "CR", "CI", "HR", "CU", "CW", "CY", "CZ", "DK", "DJ", "DM", "DO", "EC", "EG", "SV", "GQ", "ER", "EE", "ET", "FK", "FO", "FJ", "FI", "FR", "GF", "PF", "TF", "GA", "GM", "GE", "DE", "GH", "GI", "GR", "GL", "GD", "GP", "GU", "GT", "GG", "GN", "GW", "GY", "HT", "HM", "VA", "HN", "HK", "HU", "IS", "IN", "ID", "IR", "IQ", "IE", "IM", "IL", "IT", "JM", "JP", "JE", "JO", "KZ", "KE", "KI", "KP", "KR", "KW", "KG", "LA", "LV", "LB", "LS", "LR", "LY", "LI", "LT", "LU", "MO", "MK", "MG", "MW", "MY", "MV", "ML", "MT", "MH", "MQ", "MR", "MU", "YT", "MX", "FM", "MD", "MC", "MN", "ME", "MS", "MA", "MZ", "MM", "NA", "NR", "NP", "NL", "NC", "NZ", "NI", "NE", "NG", "NU", "NF", "MP", "NO", "OM", "PK", "PW", "PS", "PA", "PG", "PY", "PE", "PH", "PN", "PL", "PT", "PR", "QA", "RE", "RO", "RU", "RW", "BL", "SH", "KN", "LC", "MF", "PM", "VC", "WS", "SM", "ST", "SA", "SN", "RS", "SC", "SL", "SG", "SX", "SK", "SI", "SB", "SO", "ZA", "GS", "SS", "ES", "LK", "SD", "SR", "SJ", "SZ", "SE", "CH", "SY", "TW", "TJ", "TZ", "TH", "TL", "TG", "TK", "TO", "TT", "TN", "TR", "TM", "TC", "TV", "UG", "UA", "AE", "GB", "US", "UM", "UY", "UZ", "VU", "VE", "VN", "VG", "VI", "WF", "EH", "YE", "ZM", "ZW", NULL};
@@ -1276,16 +1277,17 @@ static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_d
 static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, const unsigned char * client_data) {
   json_t * j_error = json_array(), * j_return;
   unsigned char pubkey_export[1024] = {0}, cert_export[32] = {0}, cert_export_b64[64], client_data_hash[32], * nonce_base = NULL, nonce_base_hash[32], * nonce_base_hash_b64 = NULL, * header_cert_decoded = NULL;
-  char * message = NULL, * response_token = NULL, * header_x5c = NULL, issued_to[128];
+  char * message = NULL, * response_token = NULL, issued_to[128] = {0}, * jwt_header = NULL;
   size_t pubkey_export_len = 1024, cert_export_len = 32, cert_export_b64_len, issued_to_len = 128, client_data_hash_len = 32, nonce_base_hash_len = 32, nonce_base_hash_b64_len = 0, header_cert_decoded_len = 0;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
   cbor_item_t * key, * response = NULL;
   int i, ret;
   jwt_t * j_response = NULL, * j_response_signed = NULL;
-  json_t * j_header_x5c = NULL, * j_cert = NULL;
+  json_t * j_header_x5c = NULL, * j_cert = NULL, * j_header = NULL;
   gnutls_datum_t cert_dat;
   int has_ver = 0;
+  jwk_t * jwk = NULL;
   
   if (j_error != NULL) {
     do {
@@ -1389,13 +1391,31 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
         break;
       }
       
-      if ((header_x5c = jwt_get_headers_json(j_response, "x5c")) == NULL) {
+      if ((jwt_header = jwt_get_headers_json(j_response, NULL)) == NULL){
         json_array_append_new(j_error, json_string("response invalid"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error jwt_get_headers_json x5c");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error jwt_get_headers_json");
         break;
       }
       
-      if ((j_header_x5c = json_loads(header_x5c, JSON_DECODE_ANY, NULL)) == NULL) {
+      if (r_init_jwk(&jwk) != RHN_OK) {
+        json_array_append_new(j_error, json_string("internal error"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_init_jwk");
+        break;
+      }
+      
+      if (r_jwk_import_from_json_str(jwk, jwt_header) != RHN_OK) {
+        json_array_append_new(j_error, json_string("response invalid"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwk_import_from_json_str");
+        break;
+      }
+      
+      if ((j_header = r_jwk_export_to_json_t(jwk)) == NULL) {
+        json_array_append_new(j_error, json_string("internal error"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwk_export_to_json_t");
+        break;
+      }
+      
+      if ((j_header_x5c = json_object_get(j_header, "x5c")) == NULL) {
         json_array_append_new(j_error, json_string("response invalid"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error parsing x5c JSON");
         break;
@@ -1490,7 +1510,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
       j_return = json_pack("{sis{ss%}}", "result", G_OK, "data", "certificate", cert_export_b64, cert_export_b64_len);
     }
     json_decref(j_error);
-    json_decref(j_header_x5c);
+    json_decref(j_header);
     gnutls_pubkey_deinit(pubkey);
     gnutls_x509_crt_deinit(cert);
     jwt_free(j_response);
@@ -1499,7 +1519,8 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
     o_free(nonce_base_hash_b64);
     o_free(response_token);
     o_free(header_cert_decoded);
-    o_free(header_x5c);
+    o_free(jwt_header);
+    r_free_jwk(jwk);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error allocating resources for j_error");
     j_return = json_pack("{si}", "result", G_ERROR);

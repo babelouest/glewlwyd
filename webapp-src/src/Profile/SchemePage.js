@@ -5,6 +5,7 @@ import SchemeMock from './SchemeMock.js';
 import SchemeWebauthn from './SchemeWebauthn.js';
 import SchemeOTP from './SchemeOTP.js';
 import SchemeCertificate from './SchemeCertificate.js';
+import SchemeOauth2 from './SchemeOauth2.js';
 
 class SchemePage extends Component {
   constructor(props) {
@@ -43,6 +44,10 @@ class SchemePage extends Component {
     } else if (this.state.module === "certificate") {
       return (
         <SchemeCertificate config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} />
+      );
+    } else if (this.state.module === "oauth2") {
+      return (
+        <SchemeOauth2 config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} />
       );
     } else {
       return (

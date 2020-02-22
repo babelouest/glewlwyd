@@ -132,27 +132,27 @@ class OTPParams extends Component {
     var errorList = {}, hasError = false;
     if (!this.state.mod.parameters["issuer"]) {
       hasError = true;
-      errorList["issuer"] = i18next.t("admin.mod-otp-issuer-error")
+      errorList["issuer"] = i18next.t("admin.mod-otp-issuer-error");
     }
     if (!this.state.mod.parameters["secret-minimum-size"]) {
       hasError = true;
-      errorList["secret-minimum-size"] = i18next.t("admin.mod-otp-secret-minimum-size-error")
+      errorList["secret-minimum-size"] = i18next.t("admin.mod-otp-secret-minimum-size-error");
     }
     if (!this.state.mod.parameters["otp-length"]) {
       hasError = true;
-      errorList["otp-length"] = i18next.t("admin.mod-otp-otp-length-error")
+      errorList["otp-length"] = i18next.t("admin.mod-otp-otp-length-error");
     }
     if (this.state.mod.parameters["hotp-allow"] && this.state.mod.parameters["hotp-window"] === "") {
       hasError = true;
-      errorList["hotp-window"] = i18next.t("admin.mod-otp-hotp-window-error")
+      errorList["hotp-window"] = i18next.t("admin.mod-otp-hotp-window-error");
     }
     if (this.state.mod.parameters["totp-allow"] && this.state.mod.parameters["totp-window"] === "") {
       hasError = true;
-      errorList["totp-window"] = i18next.t("admin.mod-otp-totp-window-error")
+      errorList["totp-window"] = i18next.t("admin.mod-otp-totp-window-error");
     }
     if (this.state.mod.parameters["totp-allow"] && this.state.mod.parameters["totp-start-offset"] === "") {
       hasError = true;
-      errorList["totp-start-offset"] = i18next.t("admin.mod-otp-totp-start-offset-error")
+      errorList["totp-start-offset"] = i18next.t("admin.mod-otp-totp-start-offset-error");
     }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
