@@ -10,6 +10,7 @@ This documentation is intended to help Glewlwyd Users to manage their profile an
   - [Webauthn](#webauthn)
   - [OTP](#otp)
   - [TLS Certificates](#tls-certificates)
+  - [External OAuth2/OIDC Login](#external-oauth2oidc-login)
 - [Login to Glewlwyd](#login-to-glewlwyd)
   - [Grant access](#grant-access)
   - [Multiple sessions](#multiple-sessions)
