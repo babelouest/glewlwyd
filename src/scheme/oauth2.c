@@ -580,7 +580,7 @@ static int complete_session_for_user(struct config_module * config, const char *
       if (i_init_session(&i_session) == I_OK) {
         if (i_import_session_str(&i_session, json_string_value(json_object_get(json_array_get(j_result, 0), "gsos_session_export"))) == I_OK) {
           i_set_str_parameter(&i_session, I_OPT_REDIRECT_TO, redirect_to);
-          if ((res = i_parse_redirect_to(&i_session) == I_OK)) {
+          if ((res = i_parse_redirect_to(&i_session)) == I_OK) {
             switch (i_get_response_type(&i_session)) {
               case I_RESPONSE_TYPE_CODE:
                 if ((res = i_run_token_request(&i_session)) == I_OK) {
