@@ -75,7 +75,7 @@ endif ()
 set(GLWD_LIBS "-ldl")
 
 include(FindJansson)
-set(JANSSON_MIN_VERSION 2.4)
+set(JANSSON_MIN_VERSION 2.11)
 find_package(Jansson ${JANSSON_MIN_VERSION} REQUIRED)
 if (JANSSON_FOUND)
 	set(GLWD_LIBS ${GLWD_LIBS} ${JANSSON_LIBRARIES})
@@ -129,6 +129,8 @@ set(SEARCH_ORCANIA_H OFF CACHE BOOL "Force to false") # Avoid to search and down
 set(SEARCH_ORCANIA_R OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during hoel search and download
 set(SEARCH_YDER_R OFF CACHE BOOL "Force to false") # Avoid to search and download yder during ulfius and hoel search and download
 set(SEARCH_ULFIUS_R OFF CACHE BOOL "Force to false") # Avoid to search and download ulfius during rhonabwy search and download
+
+set(SEARCH_RHONABWY_I OFF CACHE BOOL "Force to false") # Avoid to search and download rhonabwy during iddawc search and download
 
 option(DOWNLOAD_DEPENDENCIES "Download required dependencies" ON)
 
@@ -484,6 +486,68 @@ if (WITH_SCHEME_HTTP)
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodhttp)
 endif ()
 
+option(WITH_SCHEME_OAUTH2 "Build Oauth2/OIDC scheme module" on)
+if (WITH_SCHEME_OAUTH2)
+	include(FindLibJWT)
+	find_package(LibJWT ${LIBJWT_VERSION_REQUIRED} REQUIRED)
+	if (LIBJWT_FOUND)
+			include_directories(${LIBJWT_INCLUDE_DIRS})
+	endif ()
+	
+	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/oauth2.c)
+
+	if (NOT ${RELEASE_CODENAME} STREQUAL "stretch" AND NOT ${RELEASE_CODENAME} STREQUAL "bionic")
+		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
+	endif ()
+
+	set(Rhonabwy_FIND_QUIETLY ON) # force to find Rhonabwy quietly
+	include(FindRhonabwy)
+	find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} QUIET) # try to find rhonabwy
+	if (RHONABWY_FOUND)
+		include_directories(${rhonabwy_SOURCE_DIR}/include)
+	elseif (NOT RHONABWY_FOUND AND DOWNLOAD_DEPENDENCIES)
+		include(DownloadProject)
+		message(STATUS "Download Rhonabwy ${RHONABWY_VERSION_REQUIRED}")
+		download_project(PROJ rhonabwy # ... otherwise, download archive
+				URL "https://github.com/babelouest/rhonabwy/archive/v${RHONABWY_VERSION_REQUIRED}.tar.gz"
+				QUIET)
+		add_subdirectory(${rhonabwy_SOURCE_DIR} ${rhonabwy_BINARY_DIR})
+		include_directories(${rhonabwy_SOURCE_DIR}/include)
+		set(RHONABWY_LIBRARIES rhonabwy)
+		include_directories(${rhonabwy_BINARY_DIR})
+		set (RHONABWY_FOUND ON)
+	else ()
+		message( FATAL_ERROR "Rhonabwy not found")
+	endif ()
+
+	set(Iddawc_FIND_QUIETLY ON) # force to find Iddawc quietly
+	include(FindIddawc)
+	find_package(Iddawc ${IDDAWC_VERSION_REQUIRED} QUIET) # try to find iddawc_SOURCE_DIR
+	if (IDDAWC_FOUND)
+		include_directories(${iddawc_SOURCE_DIR}/include)
+	elseif (NOT IDDAWC_FOUND AND DOWNLOAD_DEPENDENCIES)
+		include(DownloadProject)
+		message(STATUS "Download Iddawc ${IDDAWC_VERSION_REQUIRED}")
+		download_project(PROJ iddawc # ... otherwise, download archive
+				URL "https://github.com/babelouest/iddawc_SOURCE_DIR/archive/v${IDDAWC_VERSION_REQUIRED}.tar.gz"
+				QUIET)
+		add_subdirectory(${iddawc_SOURCE_DIR_SOURCE_DIR} ${iddawc_BINARY_DIR})
+		include_directories(${iddawc_SOURCE_DIR_SOURCE_DIR}/include)
+		set(IDDAWC_LIBRARIES iddawc)
+		include_directories(${iddawc_SOURCE_DIR_BINARY_DIR})
+		set (IDDAWC_FOUND ON)
+	else ()
+		message( FATAL_ERROR "Iddawc not found")
+	endif ()
+
+	add_library(schememodoauth2 MODULE ${LIB_SRC})
+	set_target_properties(schememodoauth2 PROPERTIES
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
+	target_link_libraries(schememodoauth2 ${GLWD_LIBS} ${LIBJWT_LIBRARIES} ${RHONABWY_LIBRARIES} ${IDDAWC_LIBRARIES})
+	set(SCHEME_MODULES ${SCHEME_MODULES} schememodoauth2)
+endif ()
+
 # plugins modules
 
 if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
@@ -598,7 +662,10 @@ if (BUILD_GLEWLWYD_TESTING)
 		set(TST_LIBS ${TST_LIBS} ${ORCANIA_LIBRARIES})
 		set(TST_LIBS ${TST_LIBS} ${YDER_LIBRARIES})
 		set(TST_LIBS ${TST_LIBS} ${ULFIUS_LIBRARIES})
+		set(TST_LIBS ${TST_LIBS} ${RHONABWY_LIBRARIES})
+		set(TST_LIBS ${TST_LIBS} ${IDDAWC_LIBRARIES})
 		set(TST_LIBS ${TST_LIBS} ${GNUTLS_LIBRARIES})
+		set(TST_LIBS ${TST_LIBS} ${LIBJWT_LIBRARIES})
 		set(TST_LIBS ${TST_LIBS} ${CHECK_LIBRARIES} ${SUBUNIT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} m rt)
 
 		set(TESTS glewlwyd_admin_mod_type 
@@ -710,6 +777,10 @@ if (BUILD_GLEWLWYD_TESTING)
 
 		if (WITH_SCHEME_HTTP)
 			set(TESTS ${TESTS} glewlwyd_scheme_http)
+		endif ()
+
+		if (WITH_SCHEME_OAUTH2)
+			set(TESTS ${TESTS} glewlwyd_scheme_oauth2)
 		endif ()
 
 		if (WITH_SCHEME_CERTIFICATE)
@@ -902,6 +973,7 @@ message(STATUS "Build scheme module OTP:              ${WITH_SCHEME_OTP}")
 message(STATUS "Build scheme module Webauthn:         ${WITH_SCHEME_WEBAUTHN}")
 message(STATUS "Build scheme module TLS Certificate:  ${WITH_SCHEME_CERTIFICATE}")
 message(STATUS "Build scheme module HTTP:             ${WITH_SCHEME_HTTP}")
+message(STATUS "Build scheme module OAuth2:           ${WITH_SCHEME_OAUTH2}")
 message(STATUS "Build plugin module legacy oauth2:    ${WITH_PLUGIN_OAUTH2}")
 message(STATUS "Build plugin module OpenID Connect:   ${WITH_PLUGIN_OIDC}")
 message(STATUS "Build plugin register new account:    ${WITH_PLUGIN_REGISTER}")
