@@ -1,5 +1,10 @@
 # Glewlwyd Changelog
 
+## 2.2.0
+
+- Add Authentication scheme OAuth2/OIDC to authenticate to Glewlwyd via an external provider
+- Catch close signal in another thread (Closes: #103)
+
 ## 2.1.1
 
 - Add claims `exp` and `nbf` in access tokens (see #99)
