@@ -533,10 +533,10 @@ if (WITH_SCHEME_OAUTH2)
 		download_project(PROJ iddawc # ... otherwise, download archive
 				URL "https://github.com/babelouest/iddawc/archive/v${IDDAWC_VERSION_REQUIRED}.tar.gz"
 				QUIET)
-		add_subdirectory(${iddawc_SOURCE_DIR_SOURCE_DIR} ${iddawc_BINARY_DIR})
-		include_directories(${iddawc_SOURCE_DIR_SOURCE_DIR}/include)
+		add_subdirectory(${iddawc_SOURCE_DIR} ${iddawc_BINARY_DIR})
+		include_directories(${iddawc_SOURCE_DIR}/include)
 		set(IDDAWC_LIBRARIES iddawc)
-		include_directories(${iddawc_SOURCE_DIR_BINARY_DIR})
+		include_directories(${iddawc_SOURCE_DIR})
 		set (IDDAWC_FOUND ON)
 	else ()
 		message( FATAL_ERROR "Iddawc not found")
