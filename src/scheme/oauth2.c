@@ -592,7 +592,10 @@ static int complete_session_for_user(struct config_module * config, const char *
                     } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
                       sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.id_token_payload, "sub")));
                       ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
-                    }                    
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Invalid userid_property format (1)");
+                      ret = G_ERROR_PARAM;
+                    }
                   } else {
                     if ((res = i_load_userinfo(&i_session)) == I_OK && i_session.j_userinfo != NULL) {
                       if (json_string_length((json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))))) {
@@ -601,6 +604,9 @@ static int complete_session_for_user(struct config_module * config, const char *
                       } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
                         sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                         ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                      } else {
+                        y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Invalid userid_property format (2)");
+                        ret = G_ERROR_PARAM;
                       }
                     } else if (res == I_ERROR_PARAM || res == I_ERROR_SERVER || res == I_ERROR_UNAUTHORIZED || i_session.j_userinfo == NULL) {
                       ret = G_ERROR_PARAM;
@@ -609,7 +615,7 @@ static int complete_session_for_user(struct config_module * config, const char *
                       ret = G_ERROR;
                     }
                   }
-                } else if (res == I_ERROR_PARAM || I_ERROR_SERVER) {
+                } else if (res == I_ERROR_PARAM || res ==  I_ERROR_SERVER) {
                   ret = G_ERROR_PARAM;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_run_token_request");
@@ -624,6 +630,9 @@ static int complete_session_for_user(struct config_module * config, const char *
                   } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
                     sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                     ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Invalid userid_property format (3)");
+                    ret = G_ERROR_PARAM;
                   }
                 } else if (res == I_ERROR_PARAM || res == I_ERROR_SERVER || res == I_ERROR_UNAUTHORIZED || i_session.j_userinfo == NULL) {
                   ret = G_ERROR_PARAM;
@@ -640,7 +649,7 @@ static int complete_session_for_user(struct config_module * config, const char *
                   sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.id_token_payload, "sub")));
                   ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error getting userid value");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Invalid userid_property format (4)");
                   ret = G_ERROR_PARAM;
                 }
                 break;
@@ -704,7 +713,7 @@ static int complete_session_for_user(struct config_module * config, const char *
               }
             }
             o_free(sub);
-          } else if (res == I_ERROR_PARAM || I_ERROR_SERVER) {
+          } else if (res == I_ERROR_PARAM || res == I_ERROR_SERVER) {
             ret = G_ERROR_PARAM;
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_parse_redirect_to");
@@ -921,7 +930,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
       ((struct _oauth2_config *)*cls)->j_parameters = json_pack("{sssOsOs[]}", "name", mod_name, "redirect_uri", json_object_get(j_parameters, "redirect_uri"), "session_expiration", json_object_get(j_parameters, "session_expiration"), "provider_list");
       pthread_mutexattr_init ( &mutexattr );
       pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
-      if (!pthread_mutex_init(&((struct _oauth2_config *)*cls)->insert_lock, &mutexattr) != 0) {
+      if (!pthread_mutex_init(&((struct _oauth2_config *)*cls)->insert_lock, &mutexattr)) {
         json_array_foreach(json_object_get(j_parameters, "provider_list"), index, j_element) {
           if (json_object_get(j_element, "enabled") != json_false()) {
             is_oidc = o_strcmp("oauth2", json_string_value(json_object_get(j_element, "provider_type")));
