@@ -500,24 +500,26 @@ if (WITH_SCHEME_OAUTH2)
 		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
 	endif ()
 
-	set(Rhonabwy_FIND_QUIETLY ON) # force to find Rhonabwy quietly
-	include(FindRhonabwy)
-	find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} QUIET) # try to find rhonabwy
-	if (RHONABWY_FOUND)
-		include_directories(${rhonabwy_SOURCE_DIR}/include)
-	elseif (NOT RHONABWY_FOUND AND DOWNLOAD_DEPENDENCIES)
-		include(DownloadProject)
-		message(STATUS "Download Rhonabwy ${RHONABWY_VERSION_REQUIRED}")
-		download_project(PROJ rhonabwy # ... otherwise, download archive
-				URL "https://github.com/babelouest/rhonabwy/archive/v${RHONABWY_VERSION_REQUIRED}.tar.gz"
-				QUIET)
-		add_subdirectory(${rhonabwy_SOURCE_DIR} ${rhonabwy_BINARY_DIR})
-		include_directories(${rhonabwy_SOURCE_DIR}/include)
-		set(RHONABWY_LIBRARIES rhonabwy)
-		include_directories(${rhonabwy_BINARY_DIR})
-		set (RHONABWY_FOUND ON)
-	else ()
-		message( FATAL_ERROR "Rhonabwy not found")
+	if (NOT RHONABWY_FOUND)
+		set(Rhonabwy_FIND_QUIETLY ON) # force to find Rhonabwy quietly
+		include(FindRhonabwy)
+		find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} QUIET) # try to find rhonabwy
+		if (RHONABWY_FOUND)
+			include_directories(${rhonabwy_SOURCE_DIR}/include)
+		elseif (NOT RHONABWY_FOUND AND DOWNLOAD_DEPENDENCIES)
+			include(DownloadProject)
+			message(STATUS "Download Rhonabwy ${RHONABWY_VERSION_REQUIRED}")
+			download_project(PROJ rhonabwy # ... otherwise, download archive
+					URL "https://github.com/babelouest/rhonabwy/archive/v${RHONABWY_VERSION_REQUIRED}.tar.gz"
+					QUIET)
+			add_subdirectory(${rhonabwy_SOURCE_DIR} ${rhonabwy_BINARY_DIR})
+			include_directories(${rhonabwy_SOURCE_DIR}/include)
+			set(RHONABWY_LIBRARIES rhonabwy)
+			include_directories(${rhonabwy_BINARY_DIR})
+			set (RHONABWY_FOUND ON)
+		else ()
+			message( FATAL_ERROR "Rhonabwy not found")
+		endif ()
 	endif ()
 
 	set(Iddawc_FIND_QUIETLY ON) # force to find Iddawc quietly
