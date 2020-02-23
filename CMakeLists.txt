@@ -74,6 +74,9 @@ endif ()
 
 set(GLWD_LIBS "-ldl")
 
+find_package(Threads REQUIRED)
+set(GLWD_LIBS ${GLWD_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+
 include(FindJansson)
 set(JANSSON_MIN_VERSION 2.11)
 find_package(Jansson ${JANSSON_MIN_VERSION} REQUIRED)
