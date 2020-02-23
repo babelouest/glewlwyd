@@ -1,34 +1,37 @@
 # Installation
 
-1. [Distribution packages](#distribution-packages)
-2. [Pre-compiled packages](#pre-compiled-packages)
-   * [Install Glewlwyd on Debian Buster](#install-glewlwyd-on-debian-buster)
-   * [Install Glewlwyd on Raspbian Buster for Raspberry Pi](#install-glewlwyd-on-raspbian-buster-for-raspberry-pi)
-   * [Install Glewlwyd on Ubuntu 18.04 LTS Bionic](#install-glewlwyd-on-ubuntu-1804-lts-bionic)
-   * [Install Glewlwyd on Ubuntu 19.10 Eoan](#install-glewlwyd-on-ubuntu-1910-eoan)
-3. [Docker](#docker)
-4. [Manual install from source](#manual-install-from-source)
-   * [Dependencies](#dependencies)
-   * [Build Glewlwyd and its dependencies](#build-glewlwyd-and-its-dependencies)
-5. [Configure glewlwyd.conf](#configure-glewlwyd)
-   * [Port number](#port-number)
-   * [External URL](#external-url)
-   * [SSL/TLS](#ssl-tls)
-   * [Digest algorithm](#digest-algorithm)
-   * [Database back-end initialisation](#database-back-end-initialisation)
-   * [Static files mime types](#static-files-mime-types)
-   * [Install as a service](#install-as-a-service)
-6. [Initialise database](#initialise-database)
-7. [Install as a service](#install-as-a-service)
-8. [Fail2ban filter](#fail2ban-filter)
-9. [Front-end application](#front-end-application)
-   * [webapp/config.json](#webappconfigjson)
-   * [Internationalization](#internationalization)
-   * [Login, Admin and Profile pages](#login-admin-and-profile-pages)
-   * [Customize css](#customize-css)
-   * [Customize titles and logos](#customize-titles-and-logos)
-10. [Run Glewlwyd](#run-glewlwyd)
-11. [Getting started with the application](#getting-started-with-the-application)
+1.  [Upgrade Glewlwyid from 2.0 or 2.1 to 2.2](#upgrade-glewlwyid-from-20-or-21-to-22)
+    * [Upgrade to Glewlwyd 2.2.x](#upgrade-to-glewlwyd-22x)
+    * [Upgrade to Glewlwyd 2.1.x](#upgrade-to-glewlwyd-21x)
+2.  [Distribution packages](#distribution-packages)
+3.  [Pre-compiled packages](#pre-compiled-packages)
+    * [Install Glewlwyd on Debian Buster](#install-glewlwyd-on-debian-buster)
+    * [Install Glewlwyd on Raspbian Buster for Raspberry Pi](#install-glewlwyd-on-raspbian-buster-for-raspberry-pi)
+    * [Install Glewlwyd on Ubuntu 18.04 LTS Bionic](#install-glewlwyd-on-ubuntu-1804-lts-bionic)
+    * [Install Glewlwyd on Ubuntu 19.10 Eoan](#install-glewlwyd-on-ubuntu-1910-eoan)
+4.  [Docker](#docker)
+5.  [Manual install from source](#manual-install-from-source)
+    * [Dependencies](#dependencies)
+    * [Build Glewlwyd and its dependencies](#build-glewlwyd-and-its-dependencies)
+6.  [Configure glewlwyd.conf](#configure-glewlwyd)
+    * [Port number](#port-number)
+    * [External URL](#external-url)
+    * [SSL/TLS](#ssl-tls)
+    * [Digest algorithm](#digest-algorithm)
+    * [Database back-end initialisation](#database-back-end-initialisation)
+    * [Static files mime types](#static-files-mime-types)
+    * [Install as a service](#install-as-a-service)
+7.  [Initialise database](#initialise-database)
+8.  [Install as a service](#install-as-a-service)
+9.  [Fail2ban filter](#fail2ban-filter)
+10. [Front-end application](#front-end-application)
+    * [webapp/config.json](#webappconfigjson)
+    * [Internationalization](#internationalization)
+    * [Login, Admin and Profile pages](#login-admin-and-profile-pages)
+    * [Customize css](#customize-css)
+    * [Customize titles and logos](#customize-titles-and-logos)
+11. [Run Glewlwyd](#run-glewlwyd)
+12. [Getting started with the application](#getting-started-with-the-application)
 
 ## Upgrade Glewlwyid from 2.0 or 2.1 to 2.2
 
@@ -41,24 +44,68 @@ Glewlwyd upgrades come with database changes. It is highly recommended to backup
 Small changes were added to the core tables. You must execute the script depending on your database backend:
 
 - Mariadb: [upgrade-2.2-core.mariadb.sql](database/upgrade-2.2-core.mariadb.sql)
+
+```shell
+$ mysql glewlwyd < docs/database/upgrade-2.2-core.mariadb.sql
+```
+
 - SQlite3: [upgrade-2.2-core.sqlite3.sql](database/upgrade-2.2-core.sqlite3.sql)
+
+```shell
+$ sqlite3 /path/to/glewlwyd.db < docs/database/upgrade-2.2-core.sqlite3.sql
+```
+
 - PostgreSQL: [upgrade-2.2-core.postgresql.sql](database/upgrade-2.2-core.postgresql.sql)
+
+```shell
+$ psql glewlwyd < docs/database/upgrade-2.2-core.postgresql.sql
+```
 
 #### Scheme OAuth2/OIDC
 
 In Glewlwyd 2.2, the new scheme [OAuth2/OIDC external login](OAUTH2_SCHEME.md) was introduced. To use this module, you must create its required tables by executing the script depending on your database backend:
 
 - Mariadb: [oauth2.mariadb.sql](../src/scheme/oauth2.mariadb.sql)
+
+```shell
+$ mysql glewlwyd < src/scheme/oauth2.mariadb.sql
+```
+
 - SQlite3: [oauth2.sqlite3.sql](../src/scheme/oauth2.sqlite3.sql)
+
+```shell
+$ sqlite3 /path/to/glewlwyd.db < src/scheme/oauth2.sqlite3.sql
+```
+
 - PostgreSQL: [oauth2.postgresql.sql](../src/scheme/oauth2.postgresql.sql)
+
+```shell
+$ psql glewlwyd < src/scheme/oauth2.postgresql.sql
+```
+
 
 ### Upgrade to Glewlwyd 2.1.x
 
 In Glewlwyd 2.1, the plugin module [register](REGITSER.md) has appear. In order to use this module, you must add its tables by executing the script depending on your database backend:
 
 - Mariadb: [register.mariadb.sql](../src/plugin/register.mariadb.sql)
+
+```shell
+$ mysql glewlwyd < src/plugin/register.mariadb.sql
+```
+
 - SQlite3: [register.sqlite3.sql](../src/plugin/register.sqlite3.sql)
+
+```shell
+$ sqlite3 /path/to/glewlwyd.db < src/plugin/register.sqlite3.sql
+```
+
 - PostgreSQL: [register.postgresql.sql](../src/plugin/register.postgresql.sql)
+
+```shell
+$ psql glewlwyd < src/plugin/register.postgresql.sql
+```
+
 
 ## Distribution packages
 
