@@ -46,3 +46,6 @@ clean:
 
 docker:
 	docker build -t babelouest/glewlwyd:src .
+
+docker-ci:
+	docker build --file=Dockerfile-ci -t babelouest/glewlwyd:ci .

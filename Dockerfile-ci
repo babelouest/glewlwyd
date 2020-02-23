@@ -1,0 +1,89 @@
+FROM alpine:latest AS builder
+
+COPY README.md /opt/glewlwyd/README.md
+COPY CHANGELOG.md /opt/glewlwyd/CHANGELOG.md
+COPY docs/ /opt/glewlwyd/docs/
+COPY src/ /opt/glewlwyd/src/
+COPY test/ /opt/glewlwyd/test/
+COPY CMakeLists.txt /opt/glewlwyd/
+COPY cmake-modules/ /opt/glewlwyd/cmake-modules/
+COPY webapp/ /opt/glewlwyd/webapp/
+
+# Install required packages
+RUN apk add --no-cache \
+    git \
+    make \
+    cmake \
+    wget \
+    gcc \
+    g++ \
+    jansson-dev \
+    gnutls-dev \
+    autoconf \
+    automake \
+    libcurl \
+    curl-dev \
+    libconfig-dev \
+    libgcrypt-dev \
+    sqlite-dev \
+    sqlite \
+    mariadb-dev \
+    postgresql-dev \
+    util-linux-dev \
+    openldap-dev \
+    bash \
+    oath-toolkit-dev \
+    libtool && \
+    (cd /opt && wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor.tar.gz && \
+    tar xf libcbor.tar.gz && cd libcbor-0.5.0 && mkdir build && cd build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib .. && make && make install) && \
+    (cd /opt && wget https://github.com/benmcollins/libjwt/archive/v1.12.0.tar.gz -O libjwt.tar.gz && \
+    tar xf libjwt.tar.gz && cd libjwt-1.12.0 && autoreconf -i && ./configure --without-openssl && make && make install) && \
+    (cd /opt && wget https://ftp.gnu.org/gnu/libmicrohttpd/libmicrohttpd-0.9.70.tar.gz -O libmicrohttpd.tar.gz && \
+    tar xf libmicrohttpd.tar.gz && cd libmicrohttpd-0.9.70 && ./configure && make && make install) && \
+    ls -l /opt/glewlwyd/ && \
+    mkdir /opt/glewlwyd/build && cd /opt/glewlwyd/build/ && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DWITH_JOURNALD=off -DWITH_MOCK=on .. && \
+    make && make install
+
+RUN sqlite3 /tmp/glewlwyd.db < /opt/glewlwyd/docs/database/init.sqlite3.sql
+RUN sqlite3 /tmp/glewlwyd.db < /opt/glewlwyd/test/glewlwyd-test.sql
+
+FROM alpine:latest AS runner
+RUN apk add --no-cache \
+    wget \
+    sqlite \
+    libconfig \
+    jansson \
+    gnutls \
+    libcurl \
+    libldap \
+    libmicrohttpd \
+    sqlite-libs \
+    libpq \
+    oath-toolkit-liboath \
+    mariadb-connector-c \
+    bash
+
+COPY --from=builder /usr/lib/libcbor.* /usr/lib/
+COPY --from=builder /usr/local/lib/libjwt.* /usr/lib/
+COPY --from=builder /usr/lib/liborcania* /usr/lib/
+COPY --from=builder /usr/lib/libyder* /usr/lib/
+COPY --from=builder /usr/lib/libhoel* /usr/lib/
+COPY --from=builder /usr/lib/libulfius* /usr/lib/
+COPY --from=builder /usr/lib/librhonabwy* /usr/lib/
+COPY --from=builder /usr/lib/libiddawc* /usr/lib/
+COPY --from=builder /usr/lib/glewlwyd/ /usr/lib/glewlwyd/
+COPY --from=builder /usr/bin/glewlwyd /usr/bin
+COPY --from=builder /usr/share/glewlwyd/ /usr/share/glewlwyd/
+COPY --from=builder /usr/share/glewlwyd/webapp/config.json /etc/glewlwyd/
+COPY --from=builder /usr/etc/glewlwyd/ /etc/glewlwyd/
+COPY --from=builder /opt/glewlwyd/test/glewlwyd-ci.conf /etc/glewlwyd/
+COPY --from=builder /tmp/glewlwyd.db /tmp/glewlwyd.db
+
+RUN rm /usr/share/glewlwyd/webapp/config.json
+RUN ln -s /etc/glewlwyd/config.json /usr/share/glewlwyd/webapp/config.json
+
+COPY ["docs/docker/entrypoint.sh", "/"]
+
+ENTRYPOINT ["/usr/bin/glewlwyd", "--config-file=/etc/glewlwyd/glewlwyd-ci.conf", "-mconsole"]

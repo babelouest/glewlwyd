@@ -32,6 +32,7 @@
     * [Customize titles and logos](#customize-titles-and-logos)
 11. [Run Glewlwyd](#run-glewlwyd)
 12. [Getting started with the application](#getting-started-with-the-application)
+13. [Running Glewlwyd in test mode for integration tests](#running-glewlwyd-in-test-mode-for-integration-tests)
 
 ## Upgrade Glewlwyid from 2.0 or 2.1 to 2.2
 
@@ -900,4 +901,152 @@ By default, Glewlwyd is available on TCP port 4593.
 
 ## Getting started with the application
 
-When your Glewlwyd instance is up and running, you can complete its configuration with the [getting started documentation](GETTING_STARTED.md).
+When your instance is up and running, you can complete its configuration with the [getting started documentation](GETTING_STARTED.md).
+
+## Running Glewlwyd in test mode for integration tests
+
+### Option 1 - Build your own Glewlwyd in test mode
+
+You can create a Glewlwyd instance suited for integration tests. You need to build Glewlwyd with Mock modules and use a database initialized with the script [glewlwyd-test.sql](../test/glewlwyd-test.sql) after the script [docs/database/init.*.sql](database/). You can use 
+
+```shell
+$ # example with sqlite3 database
+$ mkdir build && cd build
+$ cmake -DWITH_MOCK=on ..
+$ make && sudo make install
+$ cd ..
+$ sqlite3 /tmp/glewlwyd.db < docs/database/init.sqlite3.sql
+$ sqlite3 /tmp/glewlwyd.db < test/glewlwyd-test.sql
+$ glewlwyd --config-file=test/glewlwyd-ci.conf
+```
+
+### Option 2 - Glewlwyd in test mode on a Docker image
+
+The docker build file [Dockerfile-ci](../Dockerfile-ci) builds and generates a docker image called `babelouest/glewlwyd:ci`. This docker image will execute Glewlwyd in test mode.
+
+- Build the Docker image for test mode
+
+```shell
+$ make docker-ci
+```
+
+- Run the Docker image for test mode
+
+```shell
+$ docker run --rm -it -p 4593:4593 babelouest/glewlwyd:ci
+```
+
+### Glewlwyd in test mode configuration
+
+When you run Glewlwyd in test mode, the Glewlwyd instance uses the mdules mock for client and user backend. These backends come with built-in users and clients. The instance also comes with preconfigured OAuth2 and OIDC plugins installed.
+
+#### Mock users list
+
+All users use the password `password`. The password is common for all users, which means that if you change the password for a user, the change will apply for all users.
+
+- username: `admin`
+  - password: `password`
+  - name: `The Boss`
+  - e-mail: `boss@glewlwyd.domain`
+  - scopes: `g_admin`, `g_profile`, `openid`
+
+- username: `user1`
+  - password: `password`
+  - name: `Dave Lopper 1`
+  - e-mail: `dev1@glewlwyd.domain`
+  - scopes: `g_profile`, `openid`, `scope1`, `scope2`, `scope3`
+
+- username: `user2`
+  - password: `password`
+  - name: `Dave Lopper 2`
+  - e-mail: `dev2@glewlwyd.domain`
+  - scopes: `g_profile`, `openid`, `scope1`
+
+- username: `user3`
+  - password: `password`
+  - name: `Dave Lopper 3`
+  - e-mail: `dev3@glewlwyd.domain`
+  - scopes: `g_profile`, `scope1`, `scope2`, `scope3`
+
+#### Mock clients list
+
+All clients use the password `password`. The password is common for all clients, which means that if you change the password for a client, the change will apply for all clients.
+
+- client_id: `client1_id`
+  - name: `client1`
+  - description: `Client mock 1`
+  - confidential: `false`
+  - authorization_type: `code`, `token`, `id_token`, `none`, `refresh_token`, `delete_token`
+  - redirect_uri:
+    - `../../test-oauth2.html?param=client1_cb1`
+    - `../../test-oauth2.html?param=client1_cb2`
+    - `../../test-oidc.html?param=client1_cb1`
+  - sector_identifier_uri: `https://sector1.glewlwyd.tld`
+  - scope: <none>
+
+- client_id: `client2_id`
+  - name: `client2`
+  - description: `Client mock 2`
+  - confidential: `false`
+  - authorization_type: `code`
+  - redirect_uri:
+    - `../../test-oauth2.html?param=client2`
+  - sector_identifier_uri: <none>
+  - scope: <none>
+
+- client_id: `client3_id`
+  - name: `client3`
+  - description: `Client mock 3`
+  - confidential: `true`
+  - password: `password`
+  - authorization_type: `code`, `token`, `id_token`, `client_credentials`, `none`, `refresh_token`, `delete_token`
+  - redirect_uri:
+    - `../../test-oauth2.html?param=client3`
+    - `../../test-oidc.html?param=client3`
+  - sector_identifier_uri: `https://sector1.glewlwyd.tld`
+  - scope: `scope2`, `scope3`
+
+- client_id: `client4_id`
+  - name: `client4`
+  - description: `Client mock 4`
+  - confidential: `true`
+  - client_secret: `secret`
+  - authorization_type: `code`, `token`, `id_token`
+  - redirect_uri:
+    - `../../test-oidc.html?param=client4`
+  - sector_identifier_uri: `https://sector4.glewlwyd.tld`
+  - scope: `scope2`, `scope3`
+
+#### OAuth2 plugin instance
+
+The non specified configuration values are the default ones
+
+- name: `glwd`
+- Display Name: `OAuth2 Glewlwyd plugin`
+- URL API Auth for this instance: `http://localhost:4593/api/glwd/auth`
+- URL API Token for this instance: `http://localhost:4593/api/glwd/token`
+- URL API Profile for this instance: `http://localhost:4593/api/glwd/profile`
+- Tokens signature
+  - JWT Type: `SHA`
+  - Key size: `256 bits`
+  - Secret key: `secret`
+
+#### OIDC plugin instance
+
+The non specified configuration values are the default ones
+
+- name: `oidc`
+- Display Name: `OpenID Connect Glewlwyd plugin`
+- URL openid-configuration for this instance: `http://localhost:4593/api/oidc/.well-known/openid-configuration`
+- URL API Auth for this instance: `http://localhost:4593/api/oidc/auth`
+- URL API Token for this instance: `http://localhost:4593/api/oidc/token`
+- URL userinfo for this instance: `http://localhost:4593/api/oidc/userinfo`
+- Issuer: `https://glewlwyd.tld`
+- Allow passing request parameter as JWT: `true`
+- Supported scopes: `openid`
+- Tokens signature
+  - JWT Type: `SHA`
+  - Key size: `256 bits`
+  - Secret key: `secret`
+- Allow non OIDC but valid OAuth2 requests: `true`
+- Authentication types enabled: `code`, `token`, `id_token`, `password`, `client_credentials`, `none`, `refresh_token`, `delete_token`
