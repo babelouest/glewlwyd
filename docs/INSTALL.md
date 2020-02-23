@@ -940,6 +940,8 @@ $ docker run --rm -it -p 4593:4593 babelouest/glewlwyd:ci
 
 When you run Glewlwyd in test mode, the Glewlwyd instance uses the mdules mock for client and user backend. These backends come with built-in users and clients. The instance also comes with preconfigured OAuth2 and OIDC plugins installed.
 
+- The external url for this instance is: `http://localhost:4593`
+
 #### Mock users list
 
 All users use the password `password`. The password is common for all users, which means that if you change the password for a user, the change will apply for all users.
