@@ -955,7 +955,7 @@ When you run Glewlwyd in test mode, the Glewlwyd instance uses the mdules mock f
 
 #### Mock users list
 
-All users use the password `password`. The password is common for all users, which means that if you change the password for a user, the change will apply for all users.
+You can add, edit or remove any user from this backend instance, but there is no persistence, which means that if you restart Glewlwyd, the user list will be back to its original state. All users use the password `password`. The password is common for all users, which means that if you change the password for a user, the change will apply for all users.
 
 - username: `admin`
   - password: `password`
@@ -983,7 +983,7 @@ All users use the password `password`. The password is common for all users, whi
 
 #### Mock clients list
 
-All clients use the password `password`. The password is common for all clients, which means that if you change the password for a client, the change will apply for all clients.
+You can add, edit or remove any client from this backend instance, but there is no persistence, which means that if you restart Glewlwyd, the client list will be back to its original state.
 
 - client_id: `client1_id`
   - name: `client1`
