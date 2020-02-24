@@ -941,6 +941,17 @@ $ docker run --rm -it -p 4593:4593 babelouest/glewlwyd:ci
 When you run Glewlwyd in test mode, the Glewlwyd instance uses the mdules mock for client and user backend. These backends come with built-in users and clients. The instance also comes with preconfigured OAuth2 and OIDC plugins installed.
 
 - The external url for this instance is: `http://localhost:4593`
+- 3 mock schemes are instaciated:
+  - `mock_scheme_42`, expected value to authenticate: `42`
+  - `mock_scheme_88`, expected value to authenticate: `88`
+  - `mock_scheme_95`, expected value to authenticate: `95`
+- The scopes available are:
+  - `g_admin`: access to administraiton page, available using password only, session timeout 600 seconds
+  - `g_profile`: access to profile page, available using password only, session timeout 600 seconds
+  - `openid`: available using any authentication, no session timeout
+  - `scope1`: available using password and schemse (`mock_scheme_42` OR `mock_scheme_88`) AND `mock_scheme_95`, no session timeout
+  - `scope2`: available using password and scheme `mock_scheme_95`, no session timeout
+  - `scope3`: available using password and scheme `mock_scheme_88`, no session timeout
 
 #### Mock users list
 
