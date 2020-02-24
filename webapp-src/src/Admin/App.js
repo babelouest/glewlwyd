@@ -905,7 +905,7 @@ class App extends Component {
   validateUser(user, confirmData, add, cb) {
     var result = true, data = {};
     if (add) {
-      if (user.password != undefined || confirmData.password != undefined) {
+      if (user.password !== undefined || confirmData.password !== undefined) {
         if (user.password !== confirmData.password) {
           result = false;
           data["password"] = i18next.t("admin.user-password-error-match");
@@ -929,13 +929,15 @@ class App extends Component {
         });
       }
     } else {
-      if (user.password || confirmData.password) {
-        if (user.password !== confirmData.password) {
-          result = false;
-          data["password"] = i18next.t("admin.user-password-error-match");
-        } else if (user.password.length && user.password.length < this.state.passwordMinLength) {
-          result = false;
-          data["password"] = i18next.t("admin.user-password-error-invalid", {minLength: this.state.passwordMinLength});
+      if (user.password !== undefined || confirmData.password !== undefined) {
+        if (user.password || confirmData.password) {
+          if (user.password !== confirmData.password) {
+            result = false;
+            data["password"] = i18next.t("admin.user-password-error-match");
+          } else if (user.password.length && user.password.length < this.state.passwordMinLength) {
+            result = false;
+            data["password"] = i18next.t("admin.user-password-error-invalid", {minLength: this.state.passwordMinLength});
+          }
         }
       }
       cb(result, data);
@@ -946,16 +948,18 @@ class App extends Component {
     var result = true, data = {};
     if (client.confidential) {
       if (client.password || confirmData.password) {
-        if (client.password !== confirmData.password) {
+        if (client.password || confirmData.password) {
+          if (client.password !== confirmData.password) {
+            result = false;
+            data["password"] = i18next.t("admin.user-password-error-match");
+          } else if (client.password.length && client.password.length < this.state.passwordMinLength) {
+            result = false;
+            data["password"] = i18next.t("admin.user-password-error-invalid", {minLength: this.state.passwordMinLength});
+          }
+        } else if (!client.password && add) {
           result = false;
-          data["password"] = i18next.t("admin.user-password-error-match");
-        } else if (client.password.length && client.password.length < this.state.passwordMinLength) {
-          result = false;
-          data["password"] = i18next.t("admin.user-password-error-invalid", {minLength: this.state.passwordMinLength});
+          data["password"] = i18next.t("admin.user-password-mandatory");
         }
-      } else if (!client.password && add) {
-        result = false;
-        data["password"] = i18next.t("admin.user-password-mandatory");
       }
     }
     if (add) {
