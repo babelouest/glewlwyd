@@ -3274,7 +3274,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
                                                     now)) != NULL) {
             if (serialize_access_token(config, 
                                       GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN, 
-                                      0, 
+                                      json_integer_value(json_object_get(json_object_get(j_refresh, "token"), "gpor_id")), 
                                       json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")), 
                                       json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), 
                                       scope_joined, 
