@@ -725,6 +725,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oauth2_refresh_manage 
 							glewlwyd_oauth2_refresh_manage_session
 							glewlwyd_oauth2_irl
+							glewlwyd_oauth2_code_challenge
 							)
 		endif ()
 		
