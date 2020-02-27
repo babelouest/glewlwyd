@@ -18,12 +18,14 @@ CREATE TABLE gpo_code (
   gpoc_code_hash VARCHAR(512) NOT NULL,
   gpoc_nonce VARCHAR(512),
   gpoc_claims_request TEXT DEFAULT NULL,
-  gpoc_expires_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpoc_expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gpoc_issued_for VARCHAR(256), -- IP address or hostname
   gpoc_user_agent VARCHAR(256),
+  gpoc_code_challenge VARCHAR(128),
   gpoc_enabled SMALLINT DEFAULT 1
 );
 CREATE INDEX i_gpoc_code_hash ON gpo_code(gpoc_code_hash);
+CREATE INDEX i_gpoc_code_challenge ON gpo_code(gpoc_code_challenge);
 
 CREATE TABLE gpo_code_scope (
   gpocs_id SERIAL PRIMARY KEY,
@@ -47,9 +49,9 @@ CREATE TABLE gpo_refresh_token (
   gpor_username VARCHAR(256) NOT NULL,
   gpor_client_id VARCHAR(256),
   gpor_claims_request TEXT DEFAULT NULL,
-  gpor_issued_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  gpor_expires_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  gpor_last_seen TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpor_issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  gpor_expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  gpor_last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gpor_duration INTEGER,
   gpor_rolling_expiration SMALLINT DEFAULT 0,
   gpor_issued_for VARCHAR(256), -- IP address or hostname
@@ -75,11 +77,14 @@ CREATE TABLE gpo_access_token (
   gpor_id INTEGER DEFAULT NULL,
   gpoa_username VARCHAR(256),
   gpoa_client_id VARCHAR(256),
-  gpoa_issued_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  gpoa_issued_at TIMESTAMPTZ DEFAULT NOW(),
   gpoa_issued_for VARCHAR(256), -- IP address or hostname
   gpoa_user_agent VARCHAR(256),
+  gpoa_token_hash VARCHAR(512) NOT NULL,
+  gpoa_enabled TINYINT(1) DEFAULT 1,
   FOREIGN KEY(gpor_id) REFERENCES gpo_refresh_token(gpor_id) ON DELETE CASCADE
 );
+CREATE INDEX i_gpoa_token_hash ON gpo_access_token(gpoa_token_hash);
 
 CREATE TABLE gpo_access_token_scope (
   gpoas_id SERIAL PRIMARY KEY,
@@ -95,7 +100,7 @@ CREATE TABLE gpo_id_token (
   gpoi_authorization_type SMALLINT NOT NULL,
   gpoi_username VARCHAR(256),
   gpoi_client_id VARCHAR(256),
-  gpoi_issued_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  gpoi_issued_at TIMESTAMPTZ DEFAULT NOW(),
   gpoi_issued_for VARCHAR(256), -- IP address or hostname
   gpoi_user_agent VARCHAR(256),
   gpoi_hash VARCHAR(512)

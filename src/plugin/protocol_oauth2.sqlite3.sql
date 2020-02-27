@@ -15,9 +15,11 @@ CREATE TABLE gpg_code (
   gpgc_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpgc_issued_for TEXT, -- IP address or hostname
   gpgc_user_agent TEXT,
+  gpgc_code_challenge TEXT,
   gpgc_enabled INTEGER DEFAULT 1
 );
 CREATE INDEX i_gpgc_code_hash ON gpg_code(gpgc_code_hash);
+CREATE INDEX i_gpgc_code_challenge ON gpg_code(gpgc_code_challenge);
 
 CREATE TABLE gpg_code_scope (
   gpgcs_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,8 +66,11 @@ CREATE TABLE gpg_access_token (
   gpga_issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   gpga_issued_for TEXT, -- IP address or hostname
   gpga_user_agent TEXT,
+  gpga_token_hash TEXT NOT NULL,
+  gpga_enabled INTEGER DEFAULT 1,
   FOREIGN KEY(gpgr_id) REFERENCES gpg_refresh_token(gpgr_id) ON DELETE CASCADE
 );
+CREATE INDEX i_gpga_token_hash ON gpg_access_token(gpga_token_hash);
 
 CREATE TABLE gpg_access_token_scope (
   gpgas_id INTEGER PRIMARY KEY AUTOINCREMENT,
