@@ -396,10 +396,9 @@ static char * generate_client_access_token(struct _oidc_config * config, const c
     // Build jwt payload
     jwt_add_grant(jwt, "iss", json_string_value(json_object_get(config->j_params, "iss")));
     jwt_add_grant(jwt, "aud", client_id);
-    jwt_add_grant_int(jwt, "exp", (now + config->access_token_duration));
     jwt_add_grant(jwt, "salt", salt);
     jwt_add_grant_int(jwt, "iat", now);
-    jwt_add_grant_int(jwt, "exp", (now+config->access_token_duration));
+    jwt_add_grant_int(jwt, "exp", (now + config->access_token_duration));
     jwt_add_grant_int(jwt, "nbf", now);
     rand_string_nonce(salt, OIDC_SALT_LENGTH);
     jwt_add_grant(jwt, "salt", salt);
@@ -1030,12 +1029,11 @@ static char * generate_access_token(struct _oidc_config * config, const char * u
       if (j_client != NULL) {
         jwt_add_grant(jwt, "aud", json_string_value(json_object_get(j_client, "client_id")));
       }
-      jwt_add_grant_int(jwt, "exp", (now + config->access_token_duration));
       jwt_add_grant(jwt, "sub", sub);
       jwt_add_grant(jwt, "salt", salt);
       jwt_add_grant(jwt, "type", "access_token");
       jwt_add_grant_int(jwt, "iat", now);
-      jwt_add_grant_int(jwt, "exp", (now+config->access_token_duration));
+      jwt_add_grant_int(jwt, "exp", (now + config->access_token_duration));
       jwt_add_grant_int(jwt, "nbf", now);
       if (scope_list != NULL) {
         jwt_add_grant(jwt, "scope", scope_list);
