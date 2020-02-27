@@ -40,6 +40,8 @@
 #define GLEWLWYD_ACCESS_TOKEN_EXP_DEFAULT 3600
 #define GLEWLWYD_REFRESH_TOKEN_EXP_DEFAULT 1209600
 #define GLEWLWYD_CODE_EXP_DEFAULT 600
+#define GLEWLWYD_CODE_CHALLENGE_MAX_LENGTH 128
+#define GLEWLWYD_CODE_CHALLENGE_S256_PREFIX "{SHA256}"
 
 #define GLEWLWYD_CHECK_JWT_USERNAME "myrddin"
 #define GLEWLWYD_CHECK_JWT_SCOPE    "caledonia"
@@ -72,6 +74,153 @@ struct _oauth2_config {
   pthread_mutex_t                    insert_lock;
   struct _glewlwyd_resource_config * glewlwyd_resource_config;
 };
+
+static json_t * check_parameters (json_t * j_params) {
+  json_t * j_element = NULL, * j_return, * j_error = json_array();
+  size_t index = 0;
+  int ret = G_OK;
+  
+  if (j_error != NULL) {
+    if (j_params == NULL) {
+      json_array_append_new(j_error, json_string("parameters invalid"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "jwt-type") == NULL || !json_is_string(json_object_get(j_params, "jwt-type"))) {
+      json_array_append_new(j_error, json_string("jwt-type must be a string and have one of the following values: 'rsa', 'ecdsa', 'sha'"));
+      ret = G_ERROR_PARAM;
+    }
+    if (0 != o_strcmp("rsa", json_string_value(json_object_get(j_params, "jwt-type"))) &&
+               0 != o_strcmp("ecdsa", json_string_value(json_object_get(j_params, "jwt-type"))) &&
+               0 != o_strcmp("sha", json_string_value(json_object_get(j_params, "jwt-type")))) {
+      json_array_append_new(j_error, json_string("jwt-type must be a string and have one of the following values: 'rsa', 'ecdsa', 'sha'"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "jwt-key-size") == NULL || !json_is_string(json_object_get(j_params, "jwt-key-size"))) {
+      json_array_append_new(j_error, json_string("jwt-key-size must be a string and have one of the following values: '256', '384', '512'"));
+      ret = G_ERROR_PARAM;
+    }
+    if (0 != o_strcmp("256", json_string_value(json_object_get(j_params, "jwt-key-size"))) &&
+               0 != o_strcmp("384", json_string_value(json_object_get(j_params, "jwt-key-size"))) &&
+               0 != o_strcmp("512", json_string_value(json_object_get(j_params, "jwt-key-size")))) {
+      json_array_append_new(j_error, json_string("jwt-key-size must be a string and have one of the following values: '256', '384', '512'"));
+      ret = G_ERROR_PARAM;
+    }
+    if ((0 == o_strcmp("rsa", json_string_value(json_object_get(j_params, "jwt-type"))) ||
+                0 == o_strcmp("ecdsa", json_string_value(json_object_get(j_params, "jwt-type")))) && 
+               (json_object_get(j_params, "key") == NULL || json_object_get(j_params, "cert") == NULL ||
+               !json_is_string(json_object_get(j_params, "key")) || !json_is_string(json_object_get(j_params, "cert")) || !json_string_length(json_object_get(j_params, "key")) || !json_string_length(json_object_get(j_params, "cert")))) {
+      json_array_append_new(j_error, json_string("Properties 'cert' and 'key' are mandatory and must be strings"));
+      ret = G_ERROR_PARAM;
+    }
+    if (0 == o_strcmp("sha", json_string_value(json_object_get(j_params, "jwt-type"))) &&
+              (json_object_get(j_params, "key") == NULL || !json_is_string(json_object_get(j_params, "key")) || !json_string_length(json_object_get(j_params, "key")))) {
+      json_array_append_new(j_error, json_string("Property 'key' is mandatory and must be a string"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "access-token-duration") == NULL || !json_is_integer(json_object_get(j_params, "access-token-duration")) || json_integer_value(json_object_get(j_params, "access-token-duration")) <= 0) {
+      json_array_append_new(j_error, json_string("Property 'access-token-duration' is mandatory and must be a non null positive integer"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "refresh-token-duration") == NULL || !json_is_integer(json_object_get(j_params, "refresh-token-duration")) || json_integer_value(json_object_get(j_params, "refresh-token-duration")) <= 0) {
+      json_array_append_new(j_error, json_string("Property 'refresh-token-duration' is mandatory and must be a non null positive integer"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "refresh-token-rolling") != NULL && !json_is_boolean(json_object_get(j_params, "refresh-token-rolling"))) {
+      json_array_append_new(j_error, json_string("Property 'refresh-token-rolling' is optional and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "auth-type-code-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-code-enabled"))) {
+      json_array_append_new(j_error, json_string("Property 'auth-type-code-enabled' is mandatory and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "auth-type-implicit-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-implicit-enabled"))) {
+      json_array_append_new(j_error, json_string("Property 'auth-type-implicit-enabled' is mandatory and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "auth-type-password-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-password-enabled"))) {
+      json_array_append_new(j_error, json_string("Property 'auth-type-password-enabled' is mandatory and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "auth-type-client-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-client-enabled"))) {
+      json_array_append_new(j_error, json_string("Property 'auth-type-client-enabled' is mandatory and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "auth-type-refresh-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-refresh-enabled"))) {
+      json_array_append_new(j_error, json_string("Property 'auth-type-refresh-enabled' is mandatory and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "scope") != NULL) {
+      if (!json_is_array(json_object_get(j_params, "scope"))) {
+        json_array_append_new(j_error, json_string("Property 'scope' is optional and must be an array"));
+        ret = G_ERROR_PARAM;
+      } else {
+        json_array_foreach(json_object_get(j_params, "scope"), index, j_element) {
+          if (!json_is_object(j_element)) {
+            json_array_append_new(j_error, json_string("'scope' element must be a JSON object"));
+            ret = G_ERROR_PARAM;
+          } else {
+            if (json_object_get(j_element, "name") == NULL || !json_is_string(json_object_get(j_element, "name")) || !json_string_length(json_object_get(j_element, "name"))) {
+              json_array_append_new(j_error, json_string("'scope' element must have a property 'name' of type string and non empty"));
+              ret = G_ERROR_PARAM;
+            } else if (json_object_get(j_element, "refresh-token-rolling") != NULL && !json_is_boolean(json_object_get(j_element, "refresh-token-rolling"))) {
+              json_array_append_new(j_error, json_string("'scope' element can have a property 'refresh-token-rolling' of type boolean"));
+              ret = G_ERROR_PARAM;
+            } else if (json_object_get(j_element, "refresh-token-duration") != NULL && (!json_is_integer(json_object_get(j_element, "refresh-token-duration")) || json_integer_value(json_object_get(j_element, "refresh-token-duration")) <= 0)) {
+              json_array_append_new(j_error, json_string("'scope' element can have a property 'refresh-token-duration' of type integer and non null positive value"));
+              ret = G_ERROR_PARAM;
+            }
+          }
+        }
+      }
+    } else if (json_object_get(j_params, "additional-parameters") != NULL) {
+      if (!json_is_array(json_object_get(j_params, "additional-parameters"))) {
+        json_array_append_new(j_error, json_string("Property 'additional-parameters' is optional and must be an array"));
+        ret = G_ERROR_PARAM;
+      } else {
+        json_array_foreach(json_object_get(j_params, "additional-parameters"), index, j_element) {
+          if (!json_is_object(j_element)) {
+            json_array_append_new(j_error, json_string("'additional-parameters' element must be a JSON object"));
+            ret = G_ERROR_PARAM;
+          } else {
+            if (json_object_get(j_element, "user-parameter") == NULL || !json_is_string(json_object_get(j_element, "user-parameter")) || !json_string_length(json_object_get(j_element, "user-parameter"))) {
+              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'user-parameter' of type string and non empty"));
+              ret = G_ERROR_PARAM;
+            } else if (json_object_get(j_element, "token-parameter") == NULL || !json_is_string(json_object_get(j_element, "token-parameter")) || !json_string_length(json_object_get(j_element, "token-parameter"))) {
+              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'username', 'salt', 'type', 'iat', 'expires_in', 'scope'"));
+              ret = G_ERROR_PARAM;
+            } else if (0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "username") || 
+                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "salt") || 
+                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "type") || 
+                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "iat") || 
+                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "expires_in") || 
+                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "scope")) {
+              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'username', 'salt', 'type', 'iat', 'expires_in', 'scope'"));
+              ret = G_ERROR_PARAM;
+            }
+          }
+        }
+      }
+    }
+    if (json_object_get(j_params, "pkce-allowed") != NULL && !json_is_boolean(json_object_get(j_params, "pkce-allowed"))) {
+      json_array_append_new(j_error, json_string("Property 'pkce-allowed' is optional and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "pkce-method-plain-allowed") != NULL && json_object_get(j_params, "pkce-allowed") == json_true() && !json_is_boolean(json_object_get(j_params, "pkce-method-plain-allowed"))) {
+      json_array_append_new(j_error, json_string("Property 'pkce-method-plain-allowed' is optional and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_array_size(j_error) && ret == G_ERROR_PARAM) {
+      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
+    } else {
+      j_return = json_pack("{si}", "result", ret);
+    }
+    json_decref(j_error);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "check_parameters oauth2 - Error allocating resources for j_error");
+    j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+  }
+  return j_return;
+}
 
 /**
  *
@@ -508,7 +657,7 @@ static json_t * check_client_valid(struct _oauth2_config * config, const char * 
   return j_return;
 }
 
-static char * generate_authorization_code(struct _oauth2_config * config, const char * username, const char * client_id, const char * scope_list, const char * redirect_uri, const char * issued_for, const char * user_agent) {
+static char * generate_authorization_code(struct _oauth2_config * config, const char * username, const char * client_id, const char * scope_list, const char * redirect_uri, const char * issued_for, const char * user_agent, const char * code_challenge) {
   char * code = NULL, * code_hash = NULL, * expiration_clause, ** scope_array = NULL;
   json_t * j_query, * j_code_id;
   int res, i;
@@ -530,7 +679,7 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
           } else { // HOEL_DB_TYPE_SQLITE
             expiration_clause = msprintf("%u", (now + (unsigned int)config->code_duration ));
           }
-          j_query = json_pack("{sss{sssssssssssssss{ss}}}",
+          j_query = json_pack("{sss{sssssssssssssss{ss}ss}}",
                               "table",
                               GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE,
                               "values",
@@ -550,7 +699,9 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
                                 user_agent!=NULL?user_agent:"",
                                 "gpgc_expires_at",
                                   "raw",
-                                  expiration_clause);
+                                  expiration_clause,
+                                "gpgc_code_challenge",
+                                code_challenge);
           o_free(expiration_clause);
           res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
           json_decref(j_query);
@@ -659,7 +810,71 @@ static int disable_authorization_code(struct _oauth2_config * config, json_int_t
   }
 }
 
-static json_t * validate_authorization_code(struct _oauth2_config * config, const char * code, const char * client_id, const char * redirect_uri) {
+/**
+ * Characters allowed according to RFC 7636
+ * [A-Z] / [a-z] / [0-9] / "-" / "." / "_" / "~"
+ */
+static int is_pkce_char_valid(const char * code_challenge) {
+  size_t i;
+  
+  if (o_strlen(code_challenge) >= 43 && o_strlen(code_challenge) <= 128) {
+    for (i=0; code_challenge[i] != '\0'; i++) {
+      if (code_challenge[i] == 0x2d || code_challenge[i] == 0x2e || code_challenge[i] == 0x5f || code_challenge[i] == 0x7e || (code_challenge[i] >= 0x30 && code_challenge[i] <= 0x39) || (code_challenge[i] >= 0x41 && code_challenge[i] <= 0x5a) || (code_challenge[i] >= 0x61 && code_challenge[i] <= 0x7a)) {
+        continue;
+      } else {
+        return 0;
+      }
+    }
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+static int validate_code_challenge(json_t * j_result_code, const char * code_verifier) {
+  int ret;
+  unsigned char code_verifier_hash[32] = {0}, code_verifier_hash_b64[64] = {0};
+  size_t code_verifier_hash_len = 32, code_verifier_hash_b64_len = 0;
+  gnutls_datum_t key_data;
+  
+  if (json_string_length(json_object_get(j_result_code, "code_challenge"))) {
+    if (is_pkce_char_valid(code_verifier)) {
+      if (0 == o_strncmp(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX, json_string_value(json_object_get(j_result_code, "code_challenge")), o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX))) {
+        key_data.data = (unsigned char *)code_verifier;
+        key_data.size = o_strlen(code_verifier);
+        if (gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, code_verifier_hash, &code_verifier_hash_len) == GNUTLS_E_SUCCESS) {
+          if (o_base64url_encode(code_verifier_hash, code_verifier_hash_len, code_verifier_hash_b64, &code_verifier_hash_b64_len)) {
+            code_verifier_hash_b64[code_verifier_hash_b64_len] = '\0';
+            if (0 == o_strcmp(json_string_value(json_object_get(j_result_code, "code_challenge"))+o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX), (const char *)code_verifier_hash_b64)) {
+              ret = G_OK;
+            } else {
+              ret = G_ERROR_UNAUTHORIZED;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "validate_code_challenge - Error o_base64url_encode");
+            ret = G_ERROR;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "validate_code_challenge - Error gnutls_fingerprint");
+          ret = G_ERROR;
+        }
+      } else {
+        if (0 == o_strcmp(json_string_value(json_object_get(j_result_code, "code_challenge")), code_verifier)) {
+          ret = G_OK;
+        } else {
+          ret = G_ERROR_PARAM;
+        }
+      }
+    } else {
+      ret = G_ERROR_PARAM;
+    }
+  } else {
+    ret = G_OK;
+  }
+  return ret;
+}
+
+static json_t * validate_authorization_code(struct _oauth2_config * config, const char * code, const char * client_id, const char * redirect_uri, const char * code_verifier) {
   char * code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code), * expiration_clause = NULL, * scope_list = NULL, * tmp;
   json_t * j_query, * j_result = NULL, * j_result_scope = NULL, * j_return, * j_element = NULL, * j_scope_param;
   int res;
@@ -675,12 +890,13 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
     } else { // HOEL_DB_TYPE_SQLITE
       expiration_clause = o_strdup("> (strftime('%s','now'))");
     }
-    j_query = json_pack("{sss[ss]s{sssssssssis{ssss}}}",
+    j_query = json_pack("{sss[sss]s{sssssssssis{ssss}}}",
                         "table",
                         GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE,
                         "columns",
                           "gpgc_username AS username",
                           "gpgc_id",
+                          "gpgc_code_challenge AS code_challenge",
                         "where",
                           "gpgc_plugin_name",
                           config->name,
@@ -702,60 +918,69 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
     json_decref(j_query);
     if (res == H_OK) {
       if (json_array_size(j_result)) {
-        j_query = json_pack("{sss[s]s{sO}}",
-                            "table",
-                            GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE_SCOPE,
-                            "columns",
-                              "gpgcs_scope AS name",
-                            "where",
-                              "gpgc_id",
-                              json_object_get(json_array_get(j_result, 0), "gpgc_id"));
-        res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result_scope, NULL);
-        json_decref(j_query);
-        if (res == H_OK && json_array_size(j_result_scope) > 0) {
-          if (!json_object_set_new(json_array_get(j_result, 0), "scope", json_array())) {
-            json_array_foreach(j_result_scope, index, j_element) {
-              if (scope_list == NULL) {
-                scope_list = o_strdup(json_string_value(json_object_get(j_element, "name")));
-              } else {
-                tmp = msprintf("%s %s", scope_list, json_string_value(json_object_get(j_element, "name")));
-                o_free(scope_list);
-                scope_list = tmp;
+        if ((res = validate_code_challenge(json_array_get(j_result, 0), code_verifier)) == G_OK) {
+          j_query = json_pack("{sss[s]s{sO}}",
+                              "table",
+                              GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE_SCOPE,
+                              "columns",
+                                "gpgcs_scope AS name",
+                              "where",
+                                "gpgc_id",
+                                json_object_get(json_array_get(j_result, 0), "gpgc_id"));
+          res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result_scope, NULL);
+          json_decref(j_query);
+          if (res == H_OK && json_array_size(j_result_scope) > 0) {
+            if (!json_object_set_new(json_array_get(j_result, 0), "scope", json_array())) {
+              json_array_foreach(j_result_scope, index, j_element) {
+                if (scope_list == NULL) {
+                  scope_list = o_strdup(json_string_value(json_object_get(j_element, "name")));
+                } else {
+                  tmp = msprintf("%s %s", scope_list, json_string_value(json_object_get(j_element, "name")));
+                  o_free(scope_list);
+                  scope_list = tmp;
+                }
+                if ((j_scope_param = get_scope_parameters(config, json_string_value(json_object_get(j_element, "name")))) != NULL) {
+                  json_object_update(j_element, j_scope_param);
+                  json_decref(j_scope_param);
+                }
+                if (json_object_get(j_element, "refresh-token-rolling") != NULL && rolling_refresh_override != 0) {
+                  rolling_refresh_override = json_object_get(j_element, "refresh-token-rolling")==json_true();
+                }
+                if (json_integer_value(json_object_get(j_element, "refresh-token-duration")) && (json_integer_value(json_object_get(j_element, "refresh-token-duration")) < maximum_duration_override || maximum_duration_override == -1)) {
+                  maximum_duration_override = json_integer_value(json_object_get(j_element, "refresh-token-duration"));
+                }
+                json_array_append(json_object_get(json_array_get(j_result, 0), "scope"), j_element);
               }
-              if ((j_scope_param = get_scope_parameters(config, json_string_value(json_object_get(j_element, "name")))) != NULL) {
-                json_object_update(j_element, j_scope_param);
-                json_decref(j_scope_param);
+              if (rolling_refresh_override > -1) {
+                rolling_refresh = rolling_refresh_override;
               }
-              if (json_object_get(j_element, "refresh-token-rolling") != NULL && rolling_refresh_override != 0) {
-                rolling_refresh_override = json_object_get(j_element, "refresh-token-rolling")==json_true();
+              if (maximum_duration_override > -1) {
+                maximum_duration = maximum_duration_override;
               }
-              if (json_integer_value(json_object_get(j_element, "refresh-token-duration")) && (json_integer_value(json_object_get(j_element, "refresh-token-duration")) < maximum_duration_override || maximum_duration_override == -1)) {
-                maximum_duration_override = json_integer_value(json_object_get(j_element, "refresh-token-duration"));
-              }
-              json_array_append(json_object_get(json_array_get(j_result, 0), "scope"), j_element);
+              json_object_set_new(json_array_get(j_result, 0), "scope_list", json_string(scope_list));
+              json_object_set_new(json_array_get(j_result, 0), "refresh-token-rolling", rolling_refresh?json_true():json_false());
+              json_object_set_new(json_array_get(j_result, 0), "refresh-token-duration", json_integer(maximum_duration));
+              j_return = json_pack("{sisO}", "result", G_OK, "code", json_array_get(j_result, 0));
+              o_free(scope_list);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error allocating resources for json_array()");
+              j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
             }
-            if (rolling_refresh_override > -1) {
-              rolling_refresh = rolling_refresh_override;
-            }
-            if (maximum_duration_override > -1) {
-              maximum_duration = maximum_duration_override;
-            }
-            json_object_set_new(json_array_get(j_result, 0), "scope_list", json_string(scope_list));
-            json_object_set_new(json_array_get(j_result, 0), "refresh-token-rolling", rolling_refresh?json_true():json_false());
-            json_object_set_new(json_array_get(j_result, 0), "refresh-token-duration", json_integer(maximum_duration));
-            j_return = json_pack("{sisO}", "result", G_OK, "code", json_array_get(j_result, 0));
-            o_free(scope_list);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error allocating resources for json_array()");
-            j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error executing j_query (2)");
+            j_return = json_pack("{si}", "result", G_ERROR_DB);
           }
+          json_decref(j_result_scope);
+        } else if (res == G_ERROR_UNAUTHORIZED) {
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        } else if (res == G_ERROR_PARAM) {
+          j_return = json_pack("{si}", "result", G_ERROR_PARAM);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error executing j_query (2)");
-          j_return = json_pack("{si}", "result", G_ERROR_DB);
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error validate_code_challenge");
+          j_return = json_pack("{si}", "result", G_ERROR);
         }
-        json_decref(j_result_scope);
       } else {
-        j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error executing j_query (1)");
@@ -1165,6 +1390,42 @@ static int update_refresh_token(struct _oauth2_config * config, json_int_t gpgr_
   return ret;
 }
 
+static int is_code_challenge_valid(struct _oauth2_config * config, const char * code_challenge, const char * code_challenge_method, char * code_challenge_stored) {
+  int ret;
+  if (o_strlen(code_challenge)) {
+    if (json_object_get(config->j_params, "pkce-allowed") == json_true()) {
+      if (!o_strlen(code_challenge_method) || 0 == o_strcmp("plain", code_challenge_method)) {
+        if (json_object_get(config->j_params, "pkce-method-plain-allowed") == json_true()) {
+          if (is_pkce_char_valid(code_challenge)) {
+            o_strcpy(code_challenge_stored, code_challenge);
+            ret = G_OK;
+          } else {
+            ret = G_ERROR_PARAM;
+          }
+        } else {
+          ret = G_ERROR_PARAM;
+        }
+      } else if (0 == o_strcmp("S256", code_challenge_method)) {
+        if (o_strlen(code_challenge) == 43) {
+          o_strcpy(code_challenge_stored, GLEWLWYD_CODE_CHALLENGE_S256_PREFIX);
+          o_strcpy(code_challenge_stored + o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX), code_challenge);
+          ret = G_OK;
+        } else {
+          ret = G_ERROR_PARAM;
+        }
+      } else {
+        ret = G_ERROR_PARAM;
+      }
+    } else {
+      ret = G_ERROR_PARAM;
+    }
+  } else {
+    // No pkce
+    ret = G_OK;
+  }
+  return ret;
+}
+
 /**
  * The most used authorization type: if client is authorized and has been granted access to scope, 
  * glewlwyd redirects to redirect_uri with a code in the uri
@@ -1172,8 +1433,9 @@ static int update_refresh_token(struct _oauth2_config * config, json_int_t gpgr_
  */
 static int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
-  char * authorization_code = NULL, * redirect_url, * issued_for, * state_param = NULL, * state_encoded;
+  char * authorization_code = NULL, * redirect_url, * issued_for, * state_param = NULL, * state_encoded, code_challenge_stored[GLEWLWYD_CODE_CHALLENGE_MAX_LENGTH + 1] = {0};
   json_t * j_session, * j_client = check_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, 1);
+  int res;
   
   if (u_map_get(request->map_url, "state") != NULL) {
     state_encoded = url_encode(u_map_get(request->map_url, "state"));
@@ -1195,28 +1457,42 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
             issued_for = get_client_hostname(request);
             if (issued_for != NULL) {
               if (config->glewlwyd_config->glewlwyd_callback_trigger_session_used(config->glewlwyd_config, request, json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered"))) == G_OK) {
-                if ((authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), u_map_get(request->map_url, "redirect_uri"), issued_for, u_map_get_case(request->map_header, "user-agent"))) != NULL) {
-                  redirect_url = msprintf("%s%scode=%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), authorization_code, state_param);
+                if ((res = is_code_challenge_valid(config, u_map_get(request->map_url, "code_challenge"), u_map_get(request->map_url, "code_challenge_method"), code_challenge_stored)) == G_OK) {
+                  if ((authorization_code = generate_authorization_code(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), u_map_get(request->map_url, "redirect_uri"), issued_for, u_map_get_case(request->map_header, "user-agent"), code_challenge_stored)) != NULL) {
+                    redirect_url = msprintf("%s%scode=%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), authorization_code, state_param);
+                    ulfius_add_header_to_response(response, "Location", redirect_url);
+                    response->status = 302;
+                    o_free(redirect_url);
+                  } else {
+                    redirect_url = msprintf("%s%serror=server_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
+                    ulfius_add_header_to_response(response, "Location", redirect_url);
+                    o_free(redirect_url);
+                    y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_auth_code_grant - Error generate_authorization_code");
+                    response->status = 302;
+                  }
+                  o_free(authorization_code);
+                } else if (res == G_ERROR_PARAM) {
+                  redirect_url = msprintf("%s%serror=invalid_request", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
                   ulfius_add_header_to_response(response, "Location", redirect_url);
+                  o_free(redirect_url);
+                  y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_auth_type_auth_code_grant - Invalid code_challenge or code_challenge_method");
                   response->status = 302;
-                  o_free(redirect_url);
                 } else {
-                  redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
+                  redirect_url = msprintf("%s%serror=server_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
                   ulfius_add_header_to_response(response, "Location", redirect_url);
                   o_free(redirect_url);
-                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_auth_code_grant - Error generate_authorization_code");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_auth_code_grant - Error is_code_challenge_valid");
                   response->status = 302;
                 }
-                o_free(authorization_code);
               } else {
-                redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
+                redirect_url = msprintf("%s%serror=server_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
                 y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_auth_code_grant - Error glewlwyd_callback_trigger_session_used");
                 response->status = 302;
               }
             } else {
-              redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
+              redirect_url = msprintf("%s%serror=server_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
               ulfius_add_header_to_response(response, "Location", redirect_url);
               o_free(redirect_url);
               y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_auth_code_grant - Error get_client_hostname");
@@ -1244,7 +1520,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         } else {
-          redirect_url = msprintf("%s%sserver_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
+          redirect_url = msprintf("%s%serror=server_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
           y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_auth_code_grant - Error validate_session_client_scope");
@@ -1286,7 +1562,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
   const char * code = u_map_get(request->map_post_body, "code"), 
              * client_id = u_map_get(request->map_post_body, "client_id"),
-             * redirect_uri = u_map_get(request->map_post_body, "redirect_uri");
+             * redirect_uri = u_map_get(request->map_post_body, "redirect_uri"),
+             * code_verifier = u_map_get(request->map_post_body, "code_verifier");
   char * issued_for = get_client_hostname(request);
   json_t * j_code, * j_body, * j_refresh_token, * j_client, * j_user;
   time_t now;
@@ -1297,7 +1574,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
   } else {
     j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, redirect_uri, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, 0);
     if (check_result_value(j_client, G_OK)) {
-      j_code = validate_authorization_code(config, code, client_id, redirect_uri);
+      j_code = validate_authorization_code(config, code, client_id, redirect_uri, code_verifier);
       if (check_result_value(j_code, G_OK)) {
         j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")));
         if (check_result_value(j_user, G_OK)) {
@@ -1363,9 +1640,18 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
           json_decref(j_body);
         }
         json_decref(j_user);
-      } else {
+      } else if (check_result_value(j_code, G_ERROR_UNAUTHORIZED)) {
         y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request));
         j_body = json_pack("{ss}", "error", "invalid_code");
+        ulfius_set_json_body_response(response, 403, j_body);
+        json_decref(j_body);
+      } else if (check_result_value(j_code, G_ERROR_PARAM)) {
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request));
+        j_body = json_pack("{ss}", "error", "invalid_request");
+        ulfius_set_json_body_response(response, 403, j_body);
+        json_decref(j_body);
+      } else {
+        j_body = json_pack("{ss}", "error", "server_error");
         ulfius_set_json_body_response(response, 403, j_body);
         json_decref(j_body);
       }
@@ -2094,145 +2380,6 @@ static int jwt_autocheck(struct _oauth2_config * config) {
   }
   o_free(token);
   return ret;
-}
-
-static json_t * check_parameters (json_t * j_params) {
-  json_t * j_element = NULL, * j_return, * j_error = json_array();
-  size_t index = 0;
-  int ret = G_OK;
-  
-  if (j_error != NULL) {
-    if (j_params == NULL) {
-      json_array_append_new(j_error, json_string("parameters invalid"));
-      ret = G_ERROR_PARAM;
-    }
-    if (json_object_get(j_params, "jwt-type") == NULL || !json_is_string(json_object_get(j_params, "jwt-type"))) {
-      json_array_append_new(j_error, json_string("jwt-type must be a string and have one of the following values: 'rsa', 'ecdsa', 'sha'"));
-      ret = G_ERROR_PARAM;
-    }
-    if (0 != o_strcmp("rsa", json_string_value(json_object_get(j_params, "jwt-type"))) &&
-               0 != o_strcmp("ecdsa", json_string_value(json_object_get(j_params, "jwt-type"))) &&
-               0 != o_strcmp("sha", json_string_value(json_object_get(j_params, "jwt-type")))) {
-      json_array_append_new(j_error, json_string("jwt-type must be a string and have one of the following values: 'rsa', 'ecdsa', 'sha'"));
-      ret = G_ERROR_PARAM;
-    }
-    if (json_object_get(j_params, "jwt-key-size") == NULL || !json_is_string(json_object_get(j_params, "jwt-key-size"))) {
-      json_array_append_new(j_error, json_string("jwt-key-size must be a string and have one of the following values: '256', '384', '512'"));
-      ret = G_ERROR_PARAM;
-    }
-    if (0 != o_strcmp("256", json_string_value(json_object_get(j_params, "jwt-key-size"))) &&
-               0 != o_strcmp("384", json_string_value(json_object_get(j_params, "jwt-key-size"))) &&
-               0 != o_strcmp("512", json_string_value(json_object_get(j_params, "jwt-key-size")))) {
-      json_array_append_new(j_error, json_string("jwt-key-size must be a string and have one of the following values: '256', '384', '512'"));
-      ret = G_ERROR_PARAM;
-    }
-    if ((0 == o_strcmp("rsa", json_string_value(json_object_get(j_params, "jwt-type"))) ||
-                0 == o_strcmp("ecdsa", json_string_value(json_object_get(j_params, "jwt-type")))) && 
-               (json_object_get(j_params, "key") == NULL || json_object_get(j_params, "cert") == NULL ||
-               !json_is_string(json_object_get(j_params, "key")) || !json_is_string(json_object_get(j_params, "cert")) || !json_string_length(json_object_get(j_params, "key")) || !json_string_length(json_object_get(j_params, "cert")))) {
-      json_array_append_new(j_error, json_string("Properties 'cert' and 'key' are mandatory and must be strings"));
-      ret = G_ERROR_PARAM;
-    }
-    if (0 == o_strcmp("sha", json_string_value(json_object_get(j_params, "jwt-type"))) &&
-              (json_object_get(j_params, "key") == NULL || !json_is_string(json_object_get(j_params, "key")) || !json_string_length(json_object_get(j_params, "key")))) {
-      json_array_append_new(j_error, json_string("Property 'key' is mandatory and must be a string"));
-      ret = G_ERROR_PARAM;
-    }
-    if (json_object_get(j_params, "access-token-duration") == NULL || !json_is_integer(json_object_get(j_params, "access-token-duration")) || json_integer_value(json_object_get(j_params, "access-token-duration")) <= 0) {
-      json_array_append_new(j_error, json_string("Property 'access-token-duration' is optional and must be a non null positive integer"));
-      ret = G_ERROR_PARAM;
-    }
-    if (json_object_get(j_params, "refresh-token-duration") == NULL || !json_is_integer(json_object_get(j_params, "refresh-token-duration")) || json_integer_value(json_object_get(j_params, "refresh-token-duration")) <= 0) {
-      json_array_append_new(j_error, json_string("Property 'access-token-duration' is optional and must be a non null positive integer"));
-      ret = G_ERROR_PARAM;
-    }
-    if (json_object_get(j_params, "refresh-token-rolling") != NULL && !json_is_boolean(json_object_get(j_params, "refresh-token-rolling"))) {
-      json_array_append_new(j_error, json_string("Property 'refresh-token-rolling' is optional and must be a non null positive integer"));
-      ret = G_ERROR_PARAM;
-    }
-    if (json_object_get(j_params, "auth-type-code-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-code-enabled"))) {
-      json_array_append_new(j_error, json_string("Property 'auth-type-code-enabled' is optional and must be a boolean"));
-      ret = G_ERROR_PARAM;
-    }
-    if (json_object_get(j_params, "auth-type-implicit-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-implicit-enabled"))) {
-      json_array_append_new(j_error, json_string("Property 'auth-type-implicit-enabled' is optional and must be a boolean"));
-      ret = G_ERROR_PARAM;
-    }
-    if (json_object_get(j_params, "auth-type-password-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-password-enabled"))) {
-      json_array_append_new(j_error, json_string("Property 'auth-type-password-enabled' is optional and must be a boolean"));
-      ret = G_ERROR_PARAM;
-    }
-    if (json_object_get(j_params, "auth-type-client-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-client-enabled"))) {
-      json_array_append_new(j_error, json_string("Property 'auth-type-client-enabled' is optional and must be a boolean"));
-      ret = G_ERROR_PARAM;
-    }
-    if (json_object_get(j_params, "auth-type-refresh-enabled") == NULL || !json_is_boolean(json_object_get(j_params, "auth-type-refresh-enabled"))) {
-      json_array_append_new(j_error, json_string("Property 'auth-type-refresh-enabled' is optional and must be a boolean"));
-      ret = G_ERROR_PARAM;
-    }
-    if (json_object_get(j_params, "scope") != NULL) {
-      if (!json_is_array(json_object_get(j_params, "scope"))) {
-        json_array_append_new(j_error, json_string("Property 'scope' is optional and must be an array"));
-        ret = G_ERROR_PARAM;
-      } else {
-        json_array_foreach(json_object_get(j_params, "scope"), index, j_element) {
-          if (!json_is_object(j_element)) {
-            json_array_append_new(j_error, json_string("'scope' element must be a JSON object"));
-            ret = G_ERROR_PARAM;
-          } else {
-            if (json_object_get(j_element, "name") == NULL || !json_is_string(json_object_get(j_element, "name")) || !json_string_length(json_object_get(j_element, "name"))) {
-              json_array_append_new(j_error, json_string("'scope' element must have a property 'name' of type string and non empty"));
-              ret = G_ERROR_PARAM;
-            } else if (json_object_get(j_element, "refresh-token-rolling") != NULL && !json_is_boolean(json_object_get(j_element, "refresh-token-rolling"))) {
-              json_array_append_new(j_error, json_string("'scope' element can have a property 'refresh-token-rolling' of type boolean"));
-              ret = G_ERROR_PARAM;
-            } else if (json_object_get(j_element, "refresh-token-duration") != NULL && (!json_is_integer(json_object_get(j_element, "refresh-token-duration")) || json_integer_value(json_object_get(j_element, "refresh-token-duration")) <= 0)) {
-              json_array_append_new(j_error, json_string("'scope' element can have a property 'refresh-token-duration' of type integer and non null positive value"));
-              ret = G_ERROR_PARAM;
-            }
-          }
-        }
-      }
-    } else if (json_object_get(j_params, "additional-parameters") != NULL) {
-      if (!json_is_array(json_object_get(j_params, "additional-parameters"))) {
-        json_array_append_new(j_error, json_string("Property 'additional-parameters' is optional and must be an array"));
-        ret = G_ERROR_PARAM;
-      } else {
-        json_array_foreach(json_object_get(j_params, "additional-parameters"), index, j_element) {
-          if (!json_is_object(j_element)) {
-            json_array_append_new(j_error, json_string("'additional-parameters' element must be a JSON object"));
-            ret = G_ERROR_PARAM;
-          } else {
-            if (json_object_get(j_element, "user-parameter") == NULL || !json_is_string(json_object_get(j_element, "user-parameter")) || !json_string_length(json_object_get(j_element, "user-parameter"))) {
-              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'user-parameter' of type string and non empty"));
-              ret = G_ERROR_PARAM;
-            } else if (json_object_get(j_element, "token-parameter") == NULL || !json_is_string(json_object_get(j_element, "token-parameter")) || !json_string_length(json_object_get(j_element, "token-parameter"))) {
-              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'username', 'salt', 'type', 'iat', 'expires_in', 'scope'"));
-              ret = G_ERROR_PARAM;
-            } else if (0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "username") || 
-                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "salt") || 
-                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "type") || 
-                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "iat") || 
-                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "expires_in") || 
-                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "scope")) {
-              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'username', 'salt', 'type', 'iat', 'expires_in', 'scope'"));
-              ret = G_ERROR_PARAM;
-            }
-          }
-        }
-      }
-    }
-    if (json_array_size(j_error) && ret == G_ERROR_PARAM) {
-      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
-    } else {
-      j_return = json_pack("{si}", "result", ret);
-    }
-    json_decref(j_error);
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "check_parameters oauth2 - Error allocating resources for j_error");
-    j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
-  }
-  return j_return;
 }
 
 json_t * plugin_module_load(struct config_plugin * config) {
