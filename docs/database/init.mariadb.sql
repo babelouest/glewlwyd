@@ -234,9 +234,11 @@ CREATE TABLE gpg_code (
   gpgc_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpgc_issued_for VARCHAR(256), -- IP address or hostname
   gpgc_user_agent VARCHAR(256),
+  gpgc_code_challenge VARCHAR(128),
   gpgc_enabled TINYINT(1) DEFAULT 1
 );
 CREATE INDEX i_gpgc_code_hash ON gpg_code(gpgc_code_hash);
+CREATE INDEX i_gpgc_code_challenge ON gpg_code(gpgc_code_challenge);
 
 CREATE TABLE gpg_code_scope (
   gpgcs_id INT(11) PRIMARY KEY AUTO_INCREMENT,
@@ -283,8 +285,11 @@ CREATE TABLE gpg_access_token (
   gpga_issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   gpga_issued_for VARCHAR(256), -- IP address or hostname
   gpga_user_agent VARCHAR(256),
+  gpga_token_hash VARCHAR(512) NOT NULL,
+  gpga_enabled TINYINT(1) DEFAULT 1,
   FOREIGN KEY(gpgr_id) REFERENCES gpg_refresh_token(gpgr_id) ON DELETE CASCADE
 );
+CREATE INDEX i_gpga_token_hash ON gpg_access_token(gpga_token_hash);
 
 CREATE TABLE gpg_access_token_scope (
   gpgas_id INT(11) PRIMARY KEY AUTO_INCREMENT,
@@ -306,9 +311,11 @@ CREATE TABLE gpo_code (
   gpoc_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpoc_issued_for VARCHAR(256), -- IP address or hostname
   gpoc_user_agent VARCHAR(256),
+  gpoc_code_challenge VARCHAR(128),
   gpoc_enabled TINYINT(1) DEFAULT 1
 );
 CREATE INDEX i_gpoc_code_hash ON gpo_code(gpoc_code_hash);
+CREATE INDEX i_gpoc_code_challenge ON gpo_code(gpoc_code_challenge);
 
 CREATE TABLE gpo_code_scope (
   gpocs_id INT(11) PRIMARY KEY AUTO_INCREMENT,
@@ -363,8 +370,11 @@ CREATE TABLE gpo_access_token (
   gpoa_issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   gpoa_issued_for VARCHAR(256), -- IP address or hostname
   gpoa_user_agent VARCHAR(256),
+  gpoa_token_hash VARCHAR(512) NOT NULL,
+  gpoa_enabled TINYINT(1) DEFAULT 1,
   FOREIGN KEY(gpor_id) REFERENCES gpo_refresh_token(gpor_id) ON DELETE CASCADE
 );
+CREATE INDEX i_gpoa_token_hash ON gpo_access_token(gpoa_token_hash);
 
 CREATE TABLE gpo_access_token_scope (
   gpoas_id INT(11) PRIMARY KEY AUTO_INCREMENT,
