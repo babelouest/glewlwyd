@@ -18,6 +18,7 @@ The following OpenID Connect Core functionalities are currently supported:
 - [Client authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) using HTTP Basic Auth, POST Parameter or JWT
 - [Passing Request Parameters as JWTs](https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests)
 - [Subject Types public or pairwise](https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes)
+- [Proof Key for Code Exchange by OAuth Public Clients](https://tools.ietf.org/html/rfc7636)
 
 The following OpenID Connect Core functionalities are not supported yet:
 
@@ -271,6 +272,27 @@ For example:
 ```
 
 To have a claim available in the claim request, it must be set to `on-demand` in the plugin configuration.
+
+## PKCE - Code challenge (RFC 7636)
+
+This section is used to configure [Proof Key for Code Exchange by OAuth Public Clients](https://tools.ietf.org/html/rfc7636).
+
+### PKCE allowed
+
+Enable this feature if you want to support code challenge.
+
+### Method plain allowed
+
+Enable this feature if you want to allow method plain in th code challenge feature. It is not recommended to enable this feature unless you know what you do because this feature is slightly less secure than default method S256.
+
+According to [the specifications](https://tools.ietf.org/html/rfc7636#section-4.2):
+
+```
+Clients are
+permitted to use "plain" only if they cannot support "S256" for some
+technical reason and know via out-of-band configuration that the
+server supports "plain".
+```
 
 ## Client secret vs password
 
