@@ -1300,7 +1300,7 @@ static int serialize_access_token(struct _oidc_config * config, uint auth_type, 
         } else { // HOEL_DB_TYPE_SQLITE
           issued_at_clause = msprintf("%u", (now));
         }
-        j_query = json_pack("{sss{sssisososos{ss}ssss}}",
+        j_query = json_pack("{sss{sssisososos{ss}ssssss}}",
                             "table",
                             GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN,
                             "values",
@@ -1320,7 +1320,9 @@ static int serialize_access_token(struct _oidc_config * config, uint auth_type, 
                               "gpoa_issued_for",
                               issued_for,
                               "gpoa_user_agent",
-                              user_agent!=NULL?user_agent:"");
+                              user_agent!=NULL?user_agent:"",
+                              "gpoa_token_hash",
+                              access_token_hash);
         o_free(issued_at_clause);
         res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
         json_decref(j_query);
