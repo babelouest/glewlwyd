@@ -3277,6 +3277,9 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
   time_t now;
   char * refresh_token = NULL, * access_token = NULL;
   
+  if (client_id == NULL && request->auth_basic_user) {
+    client_id = request->auth_basic_user;
+  }
   if (code == NULL || client_id == NULL || redirect_uri == NULL) {
     response->status = 400;
   } else {
