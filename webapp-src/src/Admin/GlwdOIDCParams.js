@@ -42,6 +42,8 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["email-claim"]?"":(props.mod.parameters["email-claim"] = "no");
     props.mod.parameters["email-claim-scope"]?"":(props.mod.parameters["email-claim-scope"] = []);
     props.mod.parameters["allowed-scope"]?"":(props.mod.parameters["allowed-scope"] = ["openid"]);
+    props.mod.parameters["pkce-allowed"]!==undefined?"":(props.mod.parameters["pkce-allowed"] = false);
+    props.mod.parameters["pkce-method-plain-allowed"]!==undefined?"":(props.mod.parameters["pkce-method-plain-allowed"] = false);
 
     this.state = {
       config: props.config,
@@ -133,6 +135,8 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["email-claim"]?"":(nextProps.mod.parameters["email-claim"] = "no");
     nextProps.mod.parameters["email-claim-scope"]?"":(nextProps.mod.parameters["email-claim-scope"] = []);
     nextProps.mod.parameters["allowed-scope"]?"":(nextProps.mod.parameters["allowed-scope"] = ["openid"]);
+    nextProps.mod.parameters["pkce-allowed"]!==undefined?"":(nextProps.mod.parameters["pkce-allowed"] = false);
+    nextProps.mod.parameters["pkce-method-plain-allowed"]!==undefined?"":(nextProps.mod.parameters["pkce-method-plain-allowed"] = false);
     
     this.setState({
       config: nextProps.config,
@@ -1457,6 +1461,30 @@ class GlwdOIDCParams extends Component {
                   </div>
                 </div>
                 {addressClaim}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionPkce">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapsePkce" aria-expanded="true" aria-controls="collapsePkce">
+                  {this.state.errorList["pkce"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
+                  {i18next.t("admin.mod-glwd-pkce-title")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapsePkce" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionPkce">
+              <div className="card-body">
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-pkce-allowed" onChange={(e) => this.toggleParam(e, "pkce-allowed")} checked={this.state.mod.parameters["pkce-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-pkce-allowed">{i18next.t("admin.mod-glwd-pkce-allowed")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-pkce-method-plain-allowed" onChange={(e) => this.toggleParam(e, "pkce-method-plain-allowed")} checked={this.state.mod.parameters["pkce-method-plain-allowed"]} disabled={!this.state.mod.parameters["pkce-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-pkce-method-plain-allowed">{i18next.t("admin.mod-glwd-pkce-method-plain-allowed")}</label>
+                </div>
               </div>
             </div>
           </div>
