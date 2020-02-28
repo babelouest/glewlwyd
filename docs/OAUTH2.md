@@ -11,6 +11,7 @@ The following OAuth2 functionalities are supported:
 - [Resource Owner Password Credentials](https://tools.ietf.org/html/rfc6749#section-1.3.3)
 - [Client Credentials](https://tools.ietf.org/html/rfc6749#section-1.3.3)
 - [Refreshing an Access Token](https://tools.ietf.org/html/rfc6749#section-6)
+- [Proof Key for Code Exchange by OAuth Public Clients](https://tools.ietf.org/html/rfc7636)
 
 ## Access token format
 
@@ -144,6 +145,27 @@ When you add or edit a client in Glewlwyd, you can set a `client secret` or a `p
 The primary difference is that a client secret is a string stored 'as is' in the backend (database or LDAP), without hashing, where a client password is stored in a hashed form in the backend, so makes it more difficult for attackers to retrieve it.
 
 A client secret has priority over a client password, which means that if a client has set both client secret and client password, the authentication will be executed with client secret only.
+
+## PKCE - Code challenge (RFC 7636)
+
+This section is used to configure [Proof Key for Code Exchange by OAuth Public Clients](https://tools.ietf.org/html/rfc7636).
+
+### PKCE allowed
+
+Enable this feature if you want to support code challenge.
+
+### Method plain allowed
+
+Enable this feature if you want to allow method plain in th code challenge feature. It is not recommended to enable this feature unless you know what you do because this feature is slightly less secure than default method S256.
+
+According to [the specifications](https://tools.ietf.org/html/rfc7636#section-4.2):
+
+```
+Clients are
+permitted to use "plain" only if they cannot support "S256" for some
+technical reason and know via out-of-band configuration that the
+server supports "plain".
+```
 
 ## Glewlwyd OAuth 2 endpoints specifications
 
