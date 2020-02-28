@@ -5,6 +5,7 @@
 - Add Authentication scheme OAuth2/OIDC to authenticate to Glewlwyd via an external provider
 - Catch close signal in another thread (Closes: #103)
 - Add [Proof Key for Code Exchange by OAuth Public Clients](https://tools.ietf.org/html/rfc7636) for OAuth2 and OIDC plugins
+- Fix bug to make Glewlwyd compatible with Apache Module auth_openidc
 
 ## 2.1.1
 
