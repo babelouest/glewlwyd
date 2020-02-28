@@ -763,6 +763,7 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_oidc_address_claim
               glewlwyd_oidc_claims_scopes
               glewlwyd_oidc_claim_request
+              glewlwyd_oidc_code_challenge
 							)
 		endif ()
 
