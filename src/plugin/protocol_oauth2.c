@@ -73,6 +73,7 @@ struct _oauth2_config {
   unsigned short int                 auth_type_enabled[5];
   pthread_mutex_t                    insert_lock;
   struct _glewlwyd_resource_config * glewlwyd_resource_config;
+  struct _glewlwyd_resource_config * introspect_revoke_resource_config;
 };
 
 static json_t * check_parameters (json_t * j_params) {
@@ -208,6 +209,27 @@ static json_t * check_parameters (json_t * j_params) {
     if (json_object_get(j_params, "pkce-method-plain-allowed") != NULL && json_object_get(j_params, "pkce-allowed") == json_true() && !json_is_boolean(json_object_get(j_params, "pkce-method-plain-allowed"))) {
       json_array_append_new(j_error, json_string("Property 'pkce-method-plain-allowed' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "introspection-revocation-allowed") != NULL && !json_is_boolean(json_object_get(j_params, "introspection-revocation-allowed"))) {
+      json_array_append_new(j_error, json_string("Property 'introspection-revocation-allowed' is optional and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "introspection-revocation-allowed") == json_true()) {
+      if (json_object_get(j_params, "introspection-revocation-auth-scope") != NULL && !json_array_size(json_object_get(j_params, "introspection-revocation-auth-scope"))) {
+        json_array_append_new(j_error, json_string("Property 'introspection-revocation-auth-scope' is optional and must be a non empty JSON array of strings, maximum 128 characters"));
+        ret = G_ERROR_PARAM;
+      } else {
+        json_array_foreach(json_object_get(j_params, "introspection-revocation-auth-scope"), index, j_element) {
+          if (!json_string_length(j_element) || json_string_length(j_element) > 128) {
+            json_array_append_new(j_error, json_string("Property 'introspection-revocation-auth-scope' is optional and must be a non empty JSON array of strings, maximum 128 characters"));
+            ret = G_ERROR_PARAM;
+          }
+        }
+      }
+      if (json_object_get(j_params, "introspection-revocation-allow-target-client") != NULL && !json_is_boolean(json_object_get(j_params, "introspection-revocation-allow-target-client"))) {
+        json_array_append_new(j_error, json_string("Property 'introspection-revocation-allow-target-client' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
     }
     if (json_array_size(j_error) && ret == G_ERROR_PARAM) {
       j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
@@ -1163,6 +1185,7 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
                                 "gpgr_id",
                                 json_object_get(json_array_get(j_result, 0), "gpgr_id"));
           res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result_scope, NULL);
+          json_decref(j_query);
           if (res == H_OK) {
             if (!json_object_set_new(json_array_get(j_result, 0), "scope", json_array())) {
               json_array_foreach(j_result_scope, index, j_element) {
@@ -1178,7 +1201,6 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
             y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_refresh_token - Error executing j_query (2)");
             j_return = json_pack("{si}", "result", G_ERROR_DB);
           }
-          json_decref(j_query);
         } else {
           j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
         }
@@ -1430,6 +1452,303 @@ static int is_code_challenge_valid(struct _oauth2_config * config, const char * 
   } else {
     // No pkce
     ret = G_OK;
+  }
+  return ret;
+}
+
+static int revoke_refresh_token(struct _oauth2_config * config, const char * token) {
+  json_t * j_query;
+  int res, ret;
+  char * token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, token);
+  
+  j_query = json_pack("{sss{si}s{ssss}}",
+                      "table",
+                      GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
+                      "set",
+                        "gpgr_enabled",
+                        0,
+                      "where",
+                        "gpgr_plugin_name",
+                        config->name,
+                        "gpgr_token_hash",
+                        token_hash);
+  o_free(token_hash);
+  res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    ret = G_OK;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "revoke_refresh_token - Error executing j_query");
+    ret = G_ERROR_DB;
+  }
+  return ret;
+}
+
+static int revoke_access_token(struct _oauth2_config * config, const char * token) {
+  json_t * j_query;
+  int res, ret;
+  char * token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, token);
+  
+  j_query = json_pack("{sss{si}s{ssss}}",
+                      "table",
+                      GLEWLWYD_PLUGIN_OAUTH2_TABLE_ACCESS_TOKEN,
+                      "set",
+                        "gpga_enabled",
+                        0,
+                      "where",
+                        "gpga_plugin_name",
+                        config->name,
+                        "gpga_token_hash",
+                        token_hash);
+  o_free(token_hash);
+  res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    ret = G_OK;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "revoke_access_token - Error executing j_query");
+    ret = G_ERROR_DB;
+  }
+  return ret;
+}
+
+static json_t * get_token_metadata(struct _oauth2_config * config, const char * token, const char * token_type_hint, const char * client_id) {
+  json_t * j_query, * j_result, * j_result_scope, * j_return = NULL, * j_element = NULL;
+  int res, found_refresh = 0, found_access = 0;
+  size_t index = 0;
+  char * token_hash = NULL, * scope_list = NULL, * expires_at_clause;
+  time_t now;
+  
+  if (o_strlen(token)) {
+    token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, token);
+    time(&now);
+    if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
+      expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+    } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
+      expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+    } else { // HOEL_DB_TYPE_SQLITE
+      expires_at_clause = msprintf("> %u", (now));
+    }
+    if (token_type_hint == NULL || 0 == o_strcmp("refresh_token", token_type_hint)) {
+      j_query = json_pack("{sss[sssssss]s{sssss{ssss}}}",
+                          "table",
+                          GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
+                          "columns",
+                            "gpgr_id",
+                            "gpgr_username AS username",
+                            "gpgr_client_id AS client_id",
+                            SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpgr_issued_at) AS iat", "gpgr_issued_at AS iat", "EXTRACT(EPOCH FROM gpgr_issued_at)::integer AS iat"),
+                            SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpgr_issued_at) AS nbf", "gpgr_issued_at AS nbf", "EXTRACT(EPOCH FROM gpgr_issued_at)::integer AS nbf"),
+                            SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpgr_expires_at) AS exp", "gpgr_expires_at AS exp", "EXTRACT(EPOCH FROM gpgr_expires_at)::integer AS exp"),
+                            "gpgr_enabled",
+                          "where",
+                            "gpgr_plugin_name",
+                            config->name,
+                            "gpgr_token_hash",
+                            token_hash,
+                            "gpgr_expires_at",
+                              "operator",
+                              "raw",
+                              "value",
+                              expires_at_clause);
+      if (client_id != NULL) {
+        json_object_set_new(json_object_get(j_query, "where"), "gpgr_client_id", json_string(client_id));
+      }
+      res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        if (json_array_size(j_result)) {
+          found_refresh = 1;
+          if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpgr_enabled"))) {
+            json_object_set_new(json_array_get(j_result, 0), "active", json_true());
+            json_object_set_new(json_array_get(j_result, 0), "token_type", json_string("refresh_token"));
+            json_object_del(json_array_get(j_result, 0), "gpgr_enabled");
+            j_query = json_pack("{sss[s]s{sO}}",
+                                "table",
+                                GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN_SCOPE,
+                                "columns",
+                                  "gpgrs_scope AS scope",
+                                "where",
+                                  "gpgr_id",
+                                  json_object_get(json_array_get(j_result, 0), "gpgr_id"));
+            res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result_scope, NULL);
+            json_decref(j_query);
+            if (res == H_OK) {
+              json_array_foreach(j_result_scope, index, j_element) {
+                if (scope_list == NULL) {
+                  scope_list = o_strdup(json_string_value(json_object_get(j_element, "scope")));
+                } else {
+                  scope_list = mstrcatf(scope_list, " %s", json_string_value(json_object_get(j_element, "scope")));
+                }
+                json_object_set_new(json_array_get(j_result, 0), "scope", json_string(scope_list));
+                o_free(scope_list);
+              }
+              json_decref(j_result_scope);
+              json_object_del(json_array_get(j_result, 0), "gpgr_id");
+              j_return = json_pack("{sisO}", "result", G_OK, "token", json_array_get(j_result, 0));
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_refresh_token - Error executing j_query scope refresh_token");
+              j_return = json_pack("{si}", "result", G_ERROR_DB);
+            }
+          } else {
+            j_return = json_pack("{sis{so}}", "result", G_OK, "token", "active", json_false());
+          }
+        }
+        json_decref(j_result);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_token_metadata - Error executing j_query refresh_token");
+        j_return = json_pack("{si}", "result", G_ERROR_DB);
+      }
+    }
+    if ((token_type_hint == NULL && !found_refresh) || 0 == o_strcmp("access_token", token_type_hint)) {
+      j_query = json_pack("{sss[ssssss]s{ssss}}",
+                          "table",
+                          GLEWLWYD_PLUGIN_OAUTH2_TABLE_ACCESS_TOKEN,
+                          "columns",
+                            "gpga_id",
+                            "gpga_username AS username",
+                            "gpga_client_id AS client_id",
+                            SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpga_issued_at) AS iat", "gpga_issued_at AS iat", "EXTRACT(EPOCH FROM gpga_issued_at)::integer AS iat"),
+                            SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpga_issued_at) AS nbf", "gpga_issued_at AS nbf", "EXTRACT(EPOCH FROM gpga_issued_at)::integer AS nbf"),
+                            "gpga_enabled",
+                          "where",
+                            "gpga_plugin_name",
+                            config->name,
+                            "gpga_token_hash",
+                            token_hash);
+      if (client_id != NULL) {
+        json_object_set_new(json_object_get(j_query, "where"), "gpga_client_id", json_string(client_id));
+      }
+      res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        if (json_array_size(j_result)) {
+          found_access = 1;
+          if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpga_enabled")) && json_integer_value(json_object_get(json_array_get(j_result, 0), "iat")) + json_integer_value(json_object_get(config->j_params, "access-token-duration")) > now) {
+            json_object_set_new(json_array_get(j_result, 0), "active", json_true());
+            json_object_set_new(json_array_get(j_result, 0), "token_type", json_string("access_token"));
+            json_object_set_new(json_array_get(j_result, 0), "exp", json_integer(json_integer_value(json_object_get(json_array_get(j_result, 0), "iat")) + json_integer_value(json_object_get(config->j_params, "access-token-duration"))));
+            json_object_del(json_array_get(j_result, 0), "gpga_enabled");
+            j_query = json_pack("{sss[s]s{sO}}",
+                                "table",
+                                GLEWLWYD_PLUGIN_OAUTH2_TABLE_ACCESS_TOKEN_SCOPE,
+                                "columns",
+                                  "gpgas_scope AS scope",
+                                "where",
+                                  "gpga_id",
+                                  json_object_get(json_array_get(j_result, 0), "gpga_id"));
+            res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result_scope, NULL);
+            json_decref(j_query);
+            if (res == H_OK) {
+              json_array_foreach(j_result_scope, index, j_element) {
+                if (scope_list == NULL) {
+                  scope_list = o_strdup(json_string_value(json_object_get(j_element, "scope")));
+                } else {
+                  scope_list = mstrcatf(scope_list, " %s", json_string_value(json_object_get(j_element, "scope")));
+                }
+                json_object_set_new(json_array_get(j_result, 0), "scope", json_string(scope_list));
+                o_free(scope_list);
+              }
+              json_decref(j_result_scope);
+              json_object_del(json_array_get(j_result, 0), "gpga_id");
+              j_return = json_pack("{sisO}", "result", G_OK, "token", json_array_get(j_result, 0));
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_refresh_token - Error executing j_query scope access_token");
+              j_return = json_pack("{si}", "result", G_ERROR_DB);
+            }
+          } else {
+            j_return = json_pack("{sis{so}}", "result", G_OK, "token", "active", json_false());
+          }
+        }
+        json_decref(j_result);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_token_metadata - Error executing j_query access_token");
+        j_return = json_pack("{si}", "result", G_ERROR_DB);
+      }
+    }
+    if (!found_refresh && !found_access && j_return == NULL) {
+      j_return = json_pack("{sis{so}}", "result", G_OK, "token", "active", json_false());
+    }
+    o_free(token_hash);
+    o_free(expires_at_clause);
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  }
+  return j_return;
+}
+
+static const char * get_client_id_for_introspection(struct _oauth2_config * config, const struct _u_request * request) {
+  if (u_map_get_case(request->map_header, "Authorization") != NULL && config->introspect_revoke_resource_config->oauth_scope != NULL) {
+    return NULL;
+  } else if (json_object_get(config->j_params, "introspection-revocation-allow-target-client") == json_true()) {
+    return request->auth_basic_user;
+  } else {
+    return NULL;
+  }
+}
+
+static int callback_revocation(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _oauth2_config * config = (struct _oauth2_config *)user_data;
+  json_t * j_result = get_token_metadata(config, u_map_get(request->map_post_body, "token"), u_map_get(request->map_post_body, "token_type_hint"), get_client_id_for_introspection(config, request));
+  
+  if (check_result_value(j_result, G_OK)) {
+    if (json_object_get(json_object_get(j_result, "token"), "active") == json_true()) {
+      if (0 == o_strcmp("refresh_token", json_string_value(json_object_get(json_object_get(j_result, "token"), "token_type")))) {
+        if (revoke_refresh_token(config, u_map_get(request->map_post_body, "token")) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_refresh_token");
+          response->status = 500;
+        }
+      } else {
+        if (revoke_access_token(config, u_map_get(request->map_post_body, "token")) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_access_token");
+          response->status = 500;
+        }
+      }
+    }
+  } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+    response->status = 400;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_introspection - Error get_token_metadata");
+    response->status = 500;
+  }
+  json_decref(j_result);
+  return U_CALLBACK_CONTINUE;
+}
+
+static int callback_introspection(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _oauth2_config * config = (struct _oauth2_config *)user_data;
+  json_t * j_result = get_token_metadata(config, u_map_get(request->map_post_body, "token"), u_map_get(request->map_post_body, "token_type_hint"), get_client_id_for_introspection(config, request));
+  
+  if (check_result_value(j_result, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_result, "token"));
+  } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+    response->status = 400;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_introspection - Error get_token_metadata");
+    response->status = 500;
+  }
+  json_decref(j_result);
+  return U_CALLBACK_CONTINUE;
+}
+
+static int callback_check_intropect_revoke(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _oauth2_config * config = (struct _oauth2_config *)user_data;
+  json_t * j_client, * j_element = NULL;
+  size_t index = 0;
+  int ret = U_CALLBACK_UNAUTHORIZED;
+  
+  if (u_map_get_case(request->map_header, "Authorization") != NULL && config->introspect_revoke_resource_config->oauth_scope != NULL) {
+    return callback_check_glewlwyd_access_token(request, response, (void*)config->introspect_revoke_resource_config);
+  } else if (json_object_get(config->j_params, "introspection-revocation-allow-target-client") == json_true()) {
+    j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password);
+    if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
+      json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
+        if (0 == o_strcmp(json_string_value(j_element), "client_credentials")) {
+          ret = U_CALLBACK_CONTINUE;
+        }
+      }
+    }
+    json_decref(j_client);
   }
   return ret;
 }
@@ -1813,7 +2132,8 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
   const char * username = u_map_get(request->map_post_body, "username"),
              * password = u_map_get(request->map_post_body, "password"),
              * scope = u_map_get(request->map_post_body, "scope"),
-             * client_id = NULL;
+             * client_id = NULL,
+             * ip_source = get_ip_source(request);
   char * issued_for = get_client_hostname(request),
        * refresh_token,
        * access_token;
@@ -1907,6 +2227,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
       }
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND) || check_result_value(j_user, G_ERROR_UNAUTHORIZED)) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_resource_owner_pwd_cred - Error user '%s'", username);
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", username, ip_source);
       response->status = 403;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - glewlwyd_callback_check_user_valid");
@@ -1932,6 +2253,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
   size_t index = 0;
   int i, i_scope_allowed = 0, auth_type_allowed = 0;
   time_t now;
+  const char * ip_source = get_ip_source(request);
 
   if (issued_for == NULL) {
     y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_client_credentials_grant  - Error get_client_hostname");
@@ -1998,6 +2320,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
       free_string_array(scope_array);
     } else {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_client_credentials_grant - Error client_id '%s' invalid", request->auth_basic_user);
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", request->auth_basic_user, ip_source);
       response->status = 403;
     }
     json_decref(j_client);
@@ -2149,7 +2472,7 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
   json_t * j_session, * j_user;
   int ret = U_CALLBACK_UNAUTHORIZED;
   
-  if (u_map_get(request->map_header, "Authorization") != NULL) {
+  if (u_map_get_case(request->map_header, "Authorization") != NULL) {
     return callback_check_glewlwyd_access_token(request, response, (void*)config->glewlwyd_resource_config);
   } else {
     if (o_strlen(u_map_get(request->map_url, "impersonate"))) {
@@ -2521,7 +2844,8 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
   const unsigned char * key;
   jwt_alg_t alg = 0;
   pthread_mutexattr_t mutexattr;
-  json_t * j_return, * j_result;
+  json_t * j_return, * j_result, * j_element = NULL;
+  size_t index = 0;
   
   y_log_message(Y_LOG_LEVEL_INFO, "Init plugin Glewlwyd Oauth2 '%s'", name);
   *cls = o_malloc(sizeof(struct _oauth2_config));
@@ -2539,6 +2863,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       ((struct _oauth2_config *)*cls)->j_params = json_incref(j_parameters);
       json_object_set_new(((struct _oauth2_config *)*cls)->j_params, "name", json_string(name));
       ((struct _oauth2_config *)*cls)->glewlwyd_config = config;
+      ((struct _oauth2_config *)*cls)->introspect_revoke_resource_config = NULL;
       ((struct _oauth2_config *)*cls)->glewlwyd_resource_config = o_malloc(sizeof(struct _glewlwyd_resource_config));
       if (((struct _oauth2_config *)*cls)->glewlwyd_resource_config != NULL) {
         ((struct _oauth2_config *)*cls)->glewlwyd_resource_config->method = G_METHOD_HEADER;
@@ -2633,7 +2958,47 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                   y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error adding endpoints");
                   j_return = json_pack("{si}", "result", G_ERROR);
                 } else {
-                  j_return = json_pack("{si}", "result", G_OK);
+                  if (json_object_get(((struct _oauth2_config *)*cls)->j_params, "introspection-revocation-allowed") == json_true()) {
+                  ((struct _oauth2_config *)*cls)->introspect_revoke_resource_config = o_malloc(sizeof(struct _glewlwyd_resource_config));
+                    if (((struct _oauth2_config *)*cls)->introspect_revoke_resource_config != NULL) {
+                      ((struct _oauth2_config *)*cls)->introspect_revoke_resource_config->method = G_METHOD_HEADER;
+                      ((struct _oauth2_config *)*cls)->introspect_revoke_resource_config->oauth_scope = NULL;
+                      json_array_foreach(json_object_get(((struct _oauth2_config *)*cls)->j_params, "introspection-revocation-auth-scope"), index, j_element) {
+                        if (((struct _oauth2_config *)*cls)->introspect_revoke_resource_config->oauth_scope == NULL) {
+                          ((struct _oauth2_config *)*cls)->introspect_revoke_resource_config->oauth_scope = o_strdup(json_string_value(j_element));
+                        } else {
+                          ((struct _oauth2_config *)*cls)->introspect_revoke_resource_config->oauth_scope = mstrcatf(((struct _oauth2_config *)*cls)->introspect_revoke_resource_config->oauth_scope, " %s", json_string_value(j_element));
+                        }
+                      }
+                      ((struct _oauth2_config *)*cls)->introspect_revoke_resource_config->realm = NULL;
+                      ((struct _oauth2_config *)*cls)->introspect_revoke_resource_config->accept_access_token = 1;
+                      ((struct _oauth2_config *)*cls)->introspect_revoke_resource_config->accept_client_token = 1;
+                      if (0 == o_strcmp("sha", json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "jwt-type")))) {
+                        ((struct _oauth2_config *)*cls)->introspect_revoke_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "key")));
+                      } else {
+                        ((struct _oauth2_config *)*cls)->introspect_revoke_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oauth2_config *)*cls)->j_params, "cert")));
+                      }
+                      ((struct _oauth2_config *)*cls)->introspect_revoke_resource_config->jwt_alg = alg;
+                      if (
+                        config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "introspect/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_intropect_revoke, (void*)*cls) != G_OK || 
+                        config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "introspect/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_introspection, (void*)*cls) != G_OK || 
+                        config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "introspect/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oauth2_clean, NULL) != G_OK ||
+                        config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_intropect_revoke, (void*)*cls) != G_OK || 
+                        config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_revocation, (void*)*cls) != G_OK ||
+                        config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oauth2_clean, NULL) != G_OK
+                        ) {
+                        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error adding introspect/revoke endpoints");
+                        j_return = json_pack("{si}", "result", G_ERROR);
+                      } else {
+                        j_return = json_pack("{si}", "result", G_OK);
+                      }
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for introspect_revoke_resource_config");
+                      j_return = json_pack("{si}", "result", G_ERROR);
+                    }
+                  } else {
+                    j_return = json_pack("{si}", "result", G_OK);
+                  }
                 }
               }
             }
@@ -2685,9 +3050,17 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "profile/*");
     pthread_mutex_destroy(&((struct _oauth2_config *)cls)->insert_lock);
     jwt_free(((struct _oauth2_config *)cls)->jwt_key);
-    json_decref(((struct _oauth2_config *)cls)->j_params);
     o_free(((struct _oauth2_config *)cls)->glewlwyd_resource_config->jwt_decode_key);
+    o_free(((struct _oauth2_config *)cls)->glewlwyd_resource_config->oauth_scope);
     o_free(((struct _oauth2_config *)cls)->glewlwyd_resource_config);
+    if (json_object_get(((struct _oauth2_config *)cls)->j_params, "introspection-revocation-allowed") == json_true()) {
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "introspect/");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "revoke/");
+      o_free(((struct _oauth2_config *)cls)->introspect_revoke_resource_config->jwt_decode_key);
+      o_free(((struct _oauth2_config *)cls)->introspect_revoke_resource_config->oauth_scope);
+      o_free(((struct _oauth2_config *)cls)->introspect_revoke_resource_config);
+    }
+    json_decref(((struct _oauth2_config *)cls)->j_params);
     o_free(cls);
   }
   return G_OK;
