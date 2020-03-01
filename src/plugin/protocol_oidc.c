@@ -3485,7 +3485,8 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
   const char * username = u_map_get(request->map_post_body, "username"),
              * password = u_map_get(request->map_post_body, "password"),
              * scope = u_map_get(request->map_post_body, "scope"),
-             * client_id = NULL;
+             * client_id = NULL,
+             * ip_source = get_ip_source(request);
   char * issued_for = get_client_hostname(request),
        * refresh_token,
        * access_token;
@@ -3619,6 +3620,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
       json_decref(j_client_for_sub);
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND) || check_result_value(j_user, G_ERROR_UNAUTHORIZED)) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_resource_owner_pwd_cred - Error user '%s'", username);
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", username, ip_source);
       response->status = 403;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - glewlwyd_callback_check_user_valid");
@@ -3644,6 +3646,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
   size_t index = 0;
   int i, i_scope_allowed = 0, auth_type_allowed = 0;
   time_t now;
+  const char * ip_source = get_ip_source(request);
 
   if (issued_for == NULL) {
     y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_client_credentials_grant  - Error get_client_hostname");
@@ -3719,6 +3722,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
       free_string_array(scope_array);
     } else {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_client_credentials_grant - Error client_id '%s' invalid", request->auth_basic_user);
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", request->auth_basic_user, ip_source);
       response->status = 403;
     }
     json_decref(j_client);
@@ -3897,7 +3901,7 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
   int ret = U_CALLBACK_UNAUTHORIZED;
   char * username;
   
-  if (u_map_get(request->map_header, "Authorization") != NULL) {
+  if (u_map_get_case(request->map_header, "Authorization") != NULL) {
     ret = callback_check_glewlwyd_oidc_access_token(request, response, (void*)config->oidc_resource_config);
     if (ret == U_CALLBACK_CONTINUE) {
       username = get_username_from_sub(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")));
