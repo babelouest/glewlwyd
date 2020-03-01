@@ -20,6 +20,7 @@
 #define SCOPE_INTROSPECT "g_admin"
 #define CLIENT_CONFIDENTIAL_1 "client3_id"
 #define CLIENT_CONFIDENTIAL_1_SECRET "password"
+#define SCOPE_LIST_CLIENT_CONFIDENTIAL_1 "scope2 scope3"
 #define CLIENT_CONFIDENTIAL_2 "client4_id"
 #define CLIENT_CONFIDENTIAL_2_SECRET "secret"
 #define CLIENT_PUBLIC "client1_id"
@@ -383,6 +384,137 @@ START_TEST(test_oauth2_introspection_access_token_target_bearer)
 }
 END_TEST
 
+START_TEST(test_oauth2_introspection_access_token_target_bearer_no_client_id)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_body, * j_response, * j_body_introspect;
+  const char * token, * token_auth;
+  struct _u_map param;
+  char * tmp;
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  req.http_verb = o_strdup("POST");
+  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/token");
+  u_map_put(req.map_post_body, "grant_type", "password");
+  u_map_put(req.map_post_body, "scope", SCOPE_LIST);
+  u_map_put(req.map_post_body, "username", USERNAME);
+  u_map_put(req.map_post_body, "password", PASSWORD);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_body = ulfius_get_json_body_response(&resp, NULL);
+  token = json_string_value(json_object_get(j_body, "access_token"));
+  ck_assert_ptr_ne(token, NULL);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  u_map_put(req.map_post_body, "scope", SCOPE_INTROSPECT);
+  u_map_put(req.map_post_body, "username", ADMIN_USERNAME);
+  u_map_put(req.map_post_body, "password", ADMIN_PASSWORD);
+  o_free(req.auth_basic_user);
+  req.auth_basic_user = NULL;
+  o_free(req.auth_basic_password);
+  req.auth_basic_password = NULL;
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_body_introspect = ulfius_get_json_body_response(&resp, NULL);
+  token_auth = json_string_value(json_object_get(j_body_introspect, "access_token"));
+  ck_assert_ptr_ne(token_auth, NULL);
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+
+  ulfius_init_request(&req);
+  tmp = msprintf("Bearer %s", token_auth);
+  u_map_put(req.map_header, "Authorization", tmp);
+  o_free(tmp);
+  
+  j_response = json_pack("{sossssss}", "active", json_true(), "username", USERNAME, "token_type", TOKEN_TYPE_HINT_ACCESS, "scope", SCOPE_LIST);
+  ck_assert_int_eq(u_map_init(&param), U_OK);
+  ck_assert_int_eq(u_map_put(&param, "token", token), U_OK);
+  ck_assert_int_eq(u_map_put(&param, "token_type_hint", TOKEN_TYPE_HINT_ACCESS), U_OK);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, j_response, NULL, NULL), 1);
+  u_map_remove_from_key(&param, "token_type_hint");
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, j_response, NULL, NULL), 1);
+  json_decref(j_response);
+  j_response = json_pack("{so}", "active", json_false());
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(u_map_put(&param, "token", "error"), U_OK);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
+  json_decref(j_response);
+  u_map_clean(&param);
+  json_decref(j_body);
+  json_decref(j_body_introspect);
+  ulfius_clean_request(&req);
+}
+END_TEST
+
+START_TEST(test_oauth2_introspection_access_token_target_bearer_client_credentials)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_body, * j_response, * j_body_introspect;
+  const char * token, * token_auth;
+  struct _u_map param;
+  char * tmp;
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  req.http_verb = o_strdup("POST");
+  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/token");
+  u_map_put(req.map_post_body, "grant_type", "client_credentials");
+  u_map_put(req.map_post_body, "scope", SCOPE_LIST_CLIENT_CONFIDENTIAL_1);
+  req.auth_basic_user = o_strdup(CLIENT_CONFIDENTIAL_1);
+  req.auth_basic_password = o_strdup(CLIENT_CONFIDENTIAL_1_SECRET);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_body = ulfius_get_json_body_response(&resp, NULL);
+  token = json_string_value(json_object_get(j_body, "access_token"));
+  ck_assert_ptr_ne(token, NULL);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  u_map_put(req.map_post_body, "grant_type", "password");
+  u_map_put(req.map_post_body, "scope", SCOPE_INTROSPECT);
+  u_map_put(req.map_post_body, "username", ADMIN_USERNAME);
+  u_map_put(req.map_post_body, "password", ADMIN_PASSWORD);
+  o_free(req.auth_basic_user);
+  req.auth_basic_user = NULL;
+  o_free(req.auth_basic_password);
+  req.auth_basic_password = NULL;
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_body_introspect = ulfius_get_json_body_response(&resp, NULL);
+  token_auth = json_string_value(json_object_get(j_body_introspect, "access_token"));
+  ck_assert_ptr_ne(token_auth, NULL);
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+
+  ulfius_init_request(&req);
+  tmp = msprintf("Bearer %s", token_auth);
+  u_map_put(req.map_header, "Authorization", tmp);
+  o_free(tmp);
+  
+  j_response = json_pack("{sossssss}", "active", json_true(), "client_id", CLIENT_CONFIDENTIAL_1, "token_type", TOKEN_TYPE_HINT_ACCESS, "scope", SCOPE_LIST_CLIENT_CONFIDENTIAL_1);
+  ck_assert_int_eq(u_map_init(&param), U_OK);
+  ck_assert_int_eq(u_map_put(&param, "token", token), U_OK);
+  ck_assert_int_eq(u_map_put(&param, "token_type_hint", TOKEN_TYPE_HINT_ACCESS), U_OK);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, j_response, NULL, NULL), 1);
+  u_map_remove_from_key(&param, "token_type_hint");
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, j_response, NULL, NULL), 1);
+  json_decref(j_response);
+  j_response = json_pack("{so}", "active", json_false());
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(u_map_put(&param, "token", "error"), U_OK);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
+  json_decref(j_response);
+  u_map_clean(&param);
+  json_decref(j_body);
+  json_decref(j_body_introspect);
+  ulfius_clean_request(&req);
+}
+END_TEST
+
 START_TEST(test_oauth2_introspection_refresh_token_target_bearer)
 {
   struct _u_request req;
@@ -478,13 +610,7 @@ START_TEST(test_oauth2_introspection_token_target_client_check_expiration)
   ulfius_clean_response(&resp);
   ulfius_clean_request(&req);
   
-  j_response = json_pack("{sossssss}", "active", json_true(), "username", USERNAME, "client_id", CLIENT_CONFIDENTIAL_1, "scope", SCOPE_LIST);
   ck_assert_int_eq(u_map_init(&param), U_OK);
-  ck_assert_int_eq(u_map_put(&param, "token", access_token), U_OK);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", CLIENT_CONFIDENTIAL_1, CLIENT_CONFIDENTIAL_1_SECRET, NULL, &param, 200, j_response, NULL, NULL), 1);
-  ck_assert_int_eq(u_map_put(&param, "token", refresh_token), U_OK);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", CLIENT_CONFIDENTIAL_1, CLIENT_CONFIDENTIAL_1_SECRET, NULL, &param, 200, j_response, NULL, NULL), 1);
-  json_decref(j_response);
   sleep(2);
   j_response = json_pack("{so}", "active", json_false());
   ck_assert_int_eq(u_map_put(&param, "token", access_token), U_OK);
@@ -513,6 +639,8 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oauth2_introspection_invalid_format_bearer);
   tcase_add_test(tc_core, test_oauth2_introspection_access_token_target_bearer);
   tcase_add_test(tc_core, test_oauth2_introspection_refresh_token_target_bearer);
+  tcase_add_test(tc_core, test_oauth2_introspection_access_token_target_bearer_no_client_id);
+  tcase_add_test(tc_core, test_oauth2_introspection_access_token_target_bearer_client_credentials);
   tcase_add_test(tc_core, test_oauth2_introspection_plugin_remove);
   tcase_add_test(tc_core, test_oauth2_introspection_plugin_add_target_client_check_expiration);
   tcase_add_test(tc_core, test_oauth2_introspection_token_target_client_check_expiration);
