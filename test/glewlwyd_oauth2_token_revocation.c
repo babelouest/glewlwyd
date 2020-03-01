@@ -339,10 +339,27 @@ START_TEST(test_oauth2_revocation_access_token_target_bearer)
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, j_response, NULL, NULL), 1);
   u_map_remove_from_key(&param, "token_type_hint");
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/revoke", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/profile", NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_response);
+  
   j_response = json_pack("{so}", "active", json_false());
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, j_response, NULL, NULL), 1);
+  tmp = msprintf("Bearer %s", token);
+  u_map_put(req.map_header, "Authorization", tmp);
+  o_free(tmp);
+  ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/profile", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_response);
+  
+  j_response = json_pack("{so}", "active", json_true());
+  tmp = msprintf("Bearer %s", token_auth);
+  u_map_put(req.map_header, "Authorization", tmp);
+  o_free(tmp);
+  ck_assert_int_eq(u_map_put(&param, "token", token_auth), U_OK);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, j_response, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/revoke", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 401, NULL, NULL, NULL), 1);
+  json_decref(j_response);
+
   u_map_clean(&param);
   json_decref(j_body);
   json_decref(j_body_introspect);
