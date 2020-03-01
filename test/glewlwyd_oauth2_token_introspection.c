@@ -478,7 +478,7 @@ START_TEST(test_oauth2_introspection_token_target_client_check_expiration)
   ulfius_clean_response(&resp);
   ulfius_clean_request(&req);
   
-  j_response = json_pack("{sossssssss}", "active", json_true(), "username", USERNAME, "client_id", CLIENT_CONFIDENTIAL_1, "scope", SCOPE_LIST);
+  j_response = json_pack("{sossssss}", "active", json_true(), "username", USERNAME, "client_id", CLIENT_CONFIDENTIAL_1, "scope", SCOPE_LIST);
   ck_assert_int_eq(u_map_init(&param), U_OK);
   ck_assert_int_eq(u_map_put(&param, "token", access_token), U_OK);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", CLIENT_CONFIDENTIAL_1, CLIENT_CONFIDENTIAL_1_SECRET, NULL, &param, 200, j_response, NULL, NULL), 1);
