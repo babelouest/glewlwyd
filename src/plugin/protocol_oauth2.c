@@ -1563,6 +1563,12 @@ static json_t * get_token_metadata(struct _oauth2_config * config, const char * 
             json_object_set_new(json_array_get(j_result, 0), "active", json_true());
             json_object_set_new(json_array_get(j_result, 0), "token_type", json_string("refresh_token"));
             json_object_del(json_array_get(j_result, 0), "gpgr_enabled");
+            if (json_object_get(json_array_get(j_result, 0), "client_id") == json_null()) {
+              json_object_del(json_array_get(j_result, 0), "client_id");
+            }
+            if (json_object_get(json_array_get(j_result, 0), "username") == json_null()) {
+              json_object_del(json_array_get(j_result, 0), "username");
+            }
             j_query = json_pack("{sss[s]s{sO}}",
                                 "table",
                                 GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN_SCOPE,
@@ -1580,9 +1586,9 @@ static json_t * get_token_metadata(struct _oauth2_config * config, const char * 
                 } else {
                   scope_list = mstrcatf(scope_list, " %s", json_string_value(json_object_get(j_element, "scope")));
                 }
-                json_object_set_new(json_array_get(j_result, 0), "scope", json_string(scope_list));
-                o_free(scope_list);
               }
+              json_object_set_new(json_array_get(j_result, 0), "scope", json_string(scope_list));
+              o_free(scope_list);
               json_decref(j_result_scope);
               json_object_del(json_array_get(j_result, 0), "gpgr_id");
               j_return = json_pack("{sisO}", "result", G_OK, "token", json_array_get(j_result, 0));
@@ -1629,6 +1635,12 @@ static json_t * get_token_metadata(struct _oauth2_config * config, const char * 
             json_object_set_new(json_array_get(j_result, 0), "token_type", json_string("access_token"));
             json_object_set_new(json_array_get(j_result, 0), "exp", json_integer(json_integer_value(json_object_get(json_array_get(j_result, 0), "iat")) + json_integer_value(json_object_get(config->j_params, "access-token-duration"))));
             json_object_del(json_array_get(j_result, 0), "gpga_enabled");
+            if (json_object_get(json_array_get(j_result, 0), "client_id") == json_null()) {
+              json_object_del(json_array_get(j_result, 0), "client_id");
+            }
+            if (json_object_get(json_array_get(j_result, 0), "username") == json_null()) {
+              json_object_del(json_array_get(j_result, 0), "username");
+            }
             j_query = json_pack("{sss[s]s{sO}}",
                                 "table",
                                 GLEWLWYD_PLUGIN_OAUTH2_TABLE_ACCESS_TOKEN_SCOPE,
@@ -1646,9 +1658,9 @@ static json_t * get_token_metadata(struct _oauth2_config * config, const char * 
                 } else {
                   scope_list = mstrcatf(scope_list, " %s", json_string_value(json_object_get(j_element, "scope")));
                 }
-                json_object_set_new(json_array_get(j_result, 0), "scope", json_string(scope_list));
-                o_free(scope_list);
               }
+              json_object_set_new(json_array_get(j_result, 0), "scope", json_string(scope_list));
+              o_free(scope_list);
               json_decref(j_result_scope);
               json_object_del(json_array_get(j_result, 0), "gpga_id");
               j_return = json_pack("{sisO}", "result", G_OK, "token", json_array_get(j_result, 0));
@@ -1733,12 +1745,16 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
 
 static int callback_check_intropect_revoke(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
-  json_t * j_client, * j_element = NULL;
+  json_t * j_client, * j_element = NULL, * j_introspect;
   size_t index = 0;
   int ret = U_CALLBACK_UNAUTHORIZED;
   
   if (u_map_get_case(request->map_header, "Authorization") != NULL && config->introspect_revoke_resource_config->oauth_scope != NULL) {
-    return callback_check_glewlwyd_access_token(request, response, (void*)config->introspect_revoke_resource_config);
+    j_introspect = get_token_metadata(config, (u_map_get_case(request->map_header, "Authorization") + o_strlen(HEADER_PREFIX_BEARER)), "access_token", NULL);
+    if (check_result_value(j_introspect, G_OK) && json_object_get(json_object_get(j_introspect, "token"), "active") == json_true()) {
+      ret = callback_check_glewlwyd_access_token(request, response, (void*)config->glewlwyd_resource_config);
+    }
+    json_decref(j_introspect);
   } else if (json_object_get(config->j_params, "introspection-revocation-allow-target-client") == json_true()) {
     j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password);
     if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
@@ -2469,11 +2485,15 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
 
 static int callback_check_glewlwyd_session_or_token(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
-  json_t * j_session, * j_user;
+  json_t * j_session, * j_user, * j_introspect;
   int ret = U_CALLBACK_UNAUTHORIZED;
   
-  if (u_map_get_case(request->map_header, "Authorization") != NULL) {
-    return callback_check_glewlwyd_access_token(request, response, (void*)config->glewlwyd_resource_config);
+  if (u_map_get_case(request->map_header, "Authorization") != NULL && o_strlen(u_map_get_case(request->map_header, "Authorization")) >= o_strlen(HEADER_PREFIX_BEARER)) {
+    j_introspect = get_token_metadata(config, (u_map_get_case(request->map_header, "Authorization") + o_strlen(HEADER_PREFIX_BEARER)), "access_token", NULL);
+    if (check_result_value(j_introspect, G_OK) && json_object_get(json_object_get(j_introspect, "token"), "active") == json_true()) {
+      ret = callback_check_glewlwyd_access_token(request, response, (void*)config->glewlwyd_resource_config);
+    }
+    json_decref(j_introspect);
   } else {
     if (o_strlen(u_map_get(request->map_url, "impersonate"))) {
       j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, config->glewlwyd_config->glewlwyd_config->admin_scope);
@@ -2494,8 +2514,8 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
       }
       json_decref(j_session);
     }
-    return ret;
   }
+  return ret;
 }
 
 static int callback_oauth2_authorization(const struct _u_request * request, struct _u_response * response, void * user_data) {
