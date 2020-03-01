@@ -26,6 +26,9 @@ class GlwdOauth2Params extends Component {
     props.mod.parameters["additional-parameters"]?"":(props.mod.parameters["additional-parameters"] = []);
     props.mod.parameters["pkce-allowed"]!==undefined?"":(props.mod.parameters["pkce-allowed"] = false);
     props.mod.parameters["pkce-method-plain-allowed"]!==undefined?"":(props.mod.parameters["pkce-method-plain-allowed"] = false);
+    props.mod.parameters["introspection-revocation-allowed"]!==undefined?"":(props.mod.parameters["introspection-revocation-allowed"] = false);
+    props.mod.parameters["introspection-revocation-auth-scope"]!==undefined?"":(props.mod.parameters["introspection-revocation-auth-scope"] = []);
+    props.mod.parameters["introspection-revocation-allow-target-client"]!==undefined?"":(props.mod.parameters["introspection-revocation-allow-target-client"] = true);
 
     this.state = {
       config: props.config,
@@ -53,6 +56,8 @@ class GlwdOauth2Params extends Component {
     this.setAdditionalPropertyUserParameter = this.setAdditionalPropertyUserParameter.bind(this);
     this.setAdditionalPropertyTokenParameter = this.setAdditionalPropertyTokenParameter.bind(this);
     this.deleteAdditionalProperty = this.deleteAdditionalProperty.bind(this);
+    this.addScope = this.addScope.bind(this);
+    this.deleteScope = this.deleteScope.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -76,6 +81,9 @@ class GlwdOauth2Params extends Component {
     nextProps.mod.parameters["additional-parameters"]?"":(nextProps.mod.parameters["additional-parameters"] = []);
     nextProps.mod.parameters["pkce-allowed"]!==undefined?"":(nextProps.mod.parameters["pkce-allowed"] = false);
     nextProps.mod.parameters["pkce-method-plain-allowed"]!==undefined?"":(nextProps.mod.parameters["pkce-method-plain-allowed"] = false);
+    nextProps.mod.parameters["introspection-revocation-allowed"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-allowed"] = false);
+    nextProps.mod.parameters["introspection-revocation-auth-scope"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-auth-scope"] = []);
+    nextProps.mod.parameters["introspection-revocation-allow-target-client"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-allow-target-client"] = true);
 
     this.setState({
       config: nextProps.config,
@@ -218,6 +226,20 @@ class GlwdOauth2Params extends Component {
     this.setState({mod: mod, newScopeOverride: false});
   }
   
+  addScope(e, scope) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["introspection-revocation-auth-scope"].push(scope);
+    this.setState({mod: mod});
+  }
+
+  deleteScope(e, index) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["introspection-revocation-auth-scope"].splice(index, 1);
+    this.setState({mod: mod});
+  }
+  
   checkParameters() {
     var errorList = {}, hasError = false;
     if (!this.state.mod.parameters["key"]) {
@@ -281,6 +303,11 @@ class GlwdOauth2Params extends Component {
         errorList["additional-parameters"][index]["token"] = "admin.mod-glwd-additional-parameter-token-parameter-invalid-error";
       }
     });
+    if (this.state.mod.parameters["introspection-revocation-allowed"] && !this.state.mod.parameters["introspection-revocation-allow-target-client"] && !this.state.mod.parameters["introspection-revocation-auth-scope"].length) {
+      hasError = true;
+      errorList["introspection-revocation"] = "admin.mod-glwd-introspection-revocation-error";
+      errorList["token"] = true;
+    }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
         messageDispatcher.sendMessage('ModPlugin', {type: "modValid"});
@@ -428,6 +455,31 @@ class GlwdOauth2Params extends Component {
       </div>
       );
     });
+    var scopeList = [], defaultScopeList = [];
+    this.state.config.pattern.user.forEach((pattern) => {
+      if (pattern.name === "scope") {
+        pattern.listElements.forEach((scope, index) => {
+          scopeList.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.addScope(e, scope)} disabled={!this.state.mod.parameters["introspection-revocation-allowed"]}>{scope}</a>);
+        })
+      }
+    });
+    this.state.mod.parameters["introspection-revocation-auth-scope"].forEach((scope, index) => {
+      if (this.state.mod.parameters["introspection-revocation-allowed"]) {
+        defaultScopeList.push(<a className="btn-icon-right" href="#" onClick={(e) => this.deleteScope(e, index)} key={index} ><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
+      } else {
+        defaultScopeList.push(<span key={index} className="badge badge-primary btn-icon-right">{scope}</span>);
+      }
+    });
+    var scopeIntrospectJsx = 
+    <div className="dropdown">
+      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-register-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.mod.parameters["introspection-revocation-allowed"]}>{i18next.t("admin.mod-glwd-introspection-revocation-scope")}</button>
+      <div className="dropdown-menu" aria-labelledby="mod-register-scope">
+        {scopeList}
+      </div>
+      <div>
+        {defaultScopeList}
+      </div>
+    </div>;
     return (
       <div>
         <div className="form-group">
@@ -666,6 +718,40 @@ class GlwdOauth2Params extends Component {
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-pkce-method-plain-allowed" onChange={(e) => this.toggleParam(e, "pkce-method-plain-allowed")} checked={this.state.mod.parameters["pkce-method-plain-allowed"]} disabled={!this.state.mod.parameters["pkce-allowed"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-pkce-method-plain-allowed">{i18next.t("admin.mod-glwd-pkce-method-plain-allowed")}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionIntrospect">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseIntrospect" aria-expanded="true" aria-controls="collapseIntrospect">
+                  {this.state.errorList["introspection-revocation"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
+                  {i18next.t("admin.mod-glwd-introspection-revocation-title")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapseIntrospect" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionIntrospect">
+              <div className="card-body">
+                {this.state.errorList["introspection-revocation"]?<span className="error-input">{i18next.t(this.state.errorList["introspection-revocation"])}</span>:""}
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-introspection-revocation-allowed" onChange={(e) => this.toggleParam(e, "introspection-revocation-allowed")} checked={this.state.mod.parameters["introspection-revocation-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-introspection-revocation-allowed">{i18next.t("admin.mod-glwd-introspection-revocation-allowed")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-introspection-revocation-allow-target-client" onChange={(e) => this.toggleParam(e, "introspection-revocation-allow-target-client")} checked={this.state.mod.parameters["introspection-revocation-allow-target-client"]} disabled={!this.state.mod.parameters["introspection-revocation-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-introspection-revocation-allow-target-client">{i18next.t("admin.mod-glwd-introspection-revocation-allow-target-client")}</label>
+                </div>
+                <hr/>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-default-scope">{i18next.t("admin.mod-glwd-introspection-revocation-scope-required")}</label>
+                    </div>
+                    {scopeIntrospectJsx}
+                  </div>
                 </div>
               </div>
             </div>
