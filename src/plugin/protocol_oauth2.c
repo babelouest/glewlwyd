@@ -215,8 +215,8 @@ static json_t * check_parameters (json_t * j_params) {
       ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "introspection-revocation-allowed") == json_true()) {
-      if (json_object_get(j_params, "introspection-revocation-auth-scope") != NULL && !json_array_size(json_object_get(j_params, "introspection-revocation-auth-scope"))) {
-        json_array_append_new(j_error, json_string("Property 'introspection-revocation-auth-scope' is optional and must be a non empty JSON array of strings, maximum 128 characters"));
+      if (json_object_get(j_params, "introspection-revocation-auth-scope") != NULL && !json_is_array(json_object_get(j_params, "introspection-revocation-auth-scope"))) {
+        json_array_append_new(j_error, json_string("Property 'introspection-revocation-auth-scope' is optional and must be a JSON array of strings, maximum 128 characters"));
         ret = G_ERROR_PARAM;
       } else {
         json_array_foreach(json_object_get(j_params, "introspection-revocation-auth-scope"), index, j_element) {
