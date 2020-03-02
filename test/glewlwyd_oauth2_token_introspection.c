@@ -204,7 +204,7 @@ START_TEST(test_oauth2_introspection_access_token_target_client)
   j_response = json_pack("{so}", "active", json_false());
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", CLIENT_CONFIDENTIAL_2, CLIENT_CONFIDENTIAL_2_SECRET, NULL, &param, 200, NULL, NULL, NULL), 1);
   ck_assert_int_eq(u_map_put(&param, "token", "error"), U_OK);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", CLIENT_CONFIDENTIAL_1, CLIENT_CONFIDENTIAL_1_SECRET, NULL, &param, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", CLIENT_CONFIDENTIAL_1, CLIENT_CONFIDENTIAL_1_SECRET, NULL, &param, 200, j_response, NULL, NULL), 1);
   json_decref(j_response);
   u_map_clean(&param);
   json_decref(j_body);
@@ -248,7 +248,7 @@ START_TEST(test_oauth2_introspection_refresh_token_target_client)
   j_response = json_pack("{so}", "active", json_false());
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", CLIENT_CONFIDENTIAL_2, CLIENT_CONFIDENTIAL_2_SECRET, NULL, &param, 200, NULL, NULL, NULL), 1);
   ck_assert_int_eq(u_map_put(&param, "token", "error"), U_OK);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", CLIENT_CONFIDENTIAL_1, CLIENT_CONFIDENTIAL_1_SECRET, NULL, &param, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", CLIENT_CONFIDENTIAL_1, CLIENT_CONFIDENTIAL_1_SECRET, NULL, &param, 200, j_response, NULL, NULL), 1);
   json_decref(j_response);
   u_map_clean(&param);
   json_decref(j_body);
@@ -375,7 +375,7 @@ START_TEST(test_oauth2_introspection_access_token_target_bearer)
   j_response = json_pack("{so}", "active", json_false());
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
   ck_assert_int_eq(u_map_put(&param, "token", "error"), U_OK);
-  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, j_response, NULL, NULL), 1);
   json_decref(j_response);
   u_map_clean(&param);
   json_decref(j_body);
@@ -440,7 +440,7 @@ START_TEST(test_oauth2_introspection_access_token_target_bearer_no_client_id)
   j_response = json_pack("{so}", "active", json_false());
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
   ck_assert_int_eq(u_map_put(&param, "token", "error"), U_OK);
-  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, j_response, NULL, NULL), 1);
   json_decref(j_response);
   u_map_clean(&param);
   json_decref(j_body);
@@ -506,7 +506,7 @@ START_TEST(test_oauth2_introspection_access_token_target_bearer_client_credentia
   j_response = json_pack("{so}", "active", json_false());
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
   ck_assert_int_eq(u_map_put(&param, "token", "error"), U_OK);
-  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, j_response, NULL, NULL), 1);
   json_decref(j_response);
   u_map_clean(&param);
   json_decref(j_body);
@@ -573,7 +573,7 @@ START_TEST(test_oauth2_introspection_refresh_token_target_bearer)
   j_response = json_pack("{so}", "active", json_false());
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
   ck_assert_int_eq(u_map_put(&param, "token", "error"), U_OK);
-  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 200, j_response, NULL, NULL), 1);
   json_decref(j_response);
   u_map_clean(&param);
   json_decref(j_body);
