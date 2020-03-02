@@ -766,6 +766,8 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_oidc_claims_scopes
               glewlwyd_oidc_claim_request
               glewlwyd_oidc_code_challenge
+							glewlwyd_oidc_token_introspection
+							glewlwyd_oidc_token_revocation
 							)
 		endif ()
 
