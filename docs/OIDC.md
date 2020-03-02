@@ -19,6 +19,8 @@ The following OpenID Connect Core functionalities are currently supported:
 - [Passing Request Parameters as JWTs](https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests)
 - [Subject Types public or pairwise](https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes)
 - [Proof Key for Code Exchange by OAuth Public Clients](https://tools.ietf.org/html/rfc7636)
+- [Token introspection (RFC 7662)](https://tools.ietf.org/html/rfc7662)
+- [Token revocation (RFC 7009)](https://tools.ietf.org/html/rfc7009)
 
 The following OpenID Connect Core functionalities are not supported yet:
 
@@ -283,7 +285,7 @@ Enable this feature if you want to support code challenge.
 
 ### Method plain allowed
 
-Enable this feature if you want to allow method plain in th code challenge feature. It is not recommended to enable this feature unless you know what you do because this feature is slightly less secure than default method S256.
+Enable this feature if you want to allow method `plain` in the code challenge feature. It is not recommended to enable this feature unless you know what you do because this feature is slightly less secure than default method `S256`.
 
 According to [the specifications](https://tools.ietf.org/html/rfc7636#section-4.2):
 
@@ -298,7 +300,7 @@ server supports "plain".
 
 **IMPORTANT NOTICE!**
 
-Glewlwyd access tokens are [JWTs](https://tools.ietf.org/html/rfc7519), the original way for resource services to check if an access token is valid and reliable is to check its signature and its expiration date. Token introspection and revocation have been introduced in Glewlwyd, but if the resource service doesn't use the introspection endpoint, it will miss an inactive token and still consider it valid.
+Glewlwyd access tokens are [JWTs](https://tools.ietf.org/html/rfc7519), the original way for resource services to check if an access token or an id_token is valid and reliable is to check its signature and its expiration date. Token introspection and revocation have been introduced in Glewlwyd, but if the resource service doesn't use the introspection endpoint, it will miss an inactive token and still consider it valid.
 
 The endpoints `/userinfo`, `/introspect` and `/revoke` when they are given an access token to authenticate will check if the token is revoked or not.
 
@@ -1131,7 +1133,7 @@ Request body parameters must be encoded using the `application/x-www-form-urlenc
 
 ```
 token: text, the token to introspect, required
-token_type_hint: text, optional, values available are 'access_token' or 'refresh_token'
+token_type_hint: text, optional, values available are 'access_token', 'refresh_token' or 'id_token'
 ```
 
 ##### Result
@@ -1145,13 +1147,15 @@ Content
 Active token
 ```javascript
 {
+  "sub": text, identifier for the user associated to the token, if any
+  "aud": text, identifier for the client associated to the token, if any
   "username": text, username the token was issued for, if any
   "client_id": text, client the token was issued for, if any
   "iat": number, epoch time when the token was issued
   "nbf": number, epoch time when the token was issued
   "exp": number, epoch time when the token will be (or is supposed to be) expired
   "scope": text, scope list this token was emitted with, separated with spaces
-  "token_type": text, type of the token, values may be 'access_token' or 'refresh_token'
+  "token_type": text, type of the token, values may be 'access_token', 'refresh_token' or 'id_token'
 }
 ```
 
@@ -1181,7 +1185,7 @@ Request body parameters must be encoded using the `application/x-www-form-urlenc
 
 ```
 token: text, the token to introspect, required
-token_type_hint: text, optional, values available are 'access_token' or 'refresh_token'
+token_type_hint: text, optional, values available are 'access_token', 'refresh_token' or 'id_token'
 ```
 
 ##### Result
