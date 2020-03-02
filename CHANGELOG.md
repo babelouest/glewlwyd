@@ -6,7 +6,7 @@
 - Catch close signal in another thread (Closes: #103)
 - Add [Proof Key for Code Exchange by OAuth Public Clients](https://tools.ietf.org/html/rfc7636) for OAuth2 and OIDC plugins
 - Fix bug to make Glewlwyd compatible with Apache Module [auth_openidc](https://github.com/zmartzone/mod_auth_openidc)
-- Add token introspection (RFC 7662) and token revocation (RFC 7009) for plugin Oauth2
+- Add token introspection (RFC 7662) and token revocation (RFC 7009) for plugin Oauth2 and OIDC
 
 ## 2.1.1
 
