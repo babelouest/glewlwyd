@@ -59,10 +59,10 @@ A docker image is available for tests on localhost, run the following command:
 $ docker run --rm -it -p 4593:4593 babelouest/glewlwyd
 ```
 
+And open the address [http://localhost:4593/](http://localhost:4593/) on your browser.
+
 - User: `admin`
 - Password: `password`
-
-And open the address [http://localhost:4593/](http://localhost:4593/) on your browser.
 
 More information in the [install documentation](docs/INSTALL.md#docker).
 
@@ -84,7 +84,7 @@ You can update the existing plugins or add new ones depending on your needs, che
 - [User backend modules](src/user/)
 - [Client backend modules](src/client/)
 - [Authentication schemes modules](src/scheme/)
-- [Plugins](src/plugin/) (OAuth2 or OIDC plugins)
+- [Plugins](src/plugin/) (Register, OAuth2 or OIDC plugins)
 
 ## Screenshots
 
