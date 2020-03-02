@@ -140,14 +140,6 @@ This section allows to add specific values to the access_tokens that will be tak
 
 You can add as many additional values as you want. If the property isn't present in the user data, it will be ignored. If the value is mutiple, all values will be present, separated by a comma `,`.
 
-## Client secret vs password
-
-When you add or edit a client in Glewlwyd, you can set a `client secret` or a `password`. Both can be used to authenticate confidential clients.
-
-The primary difference is that a client secret is a string stored 'as is' in the backend (database or LDAP), without hashing, where a client password is stored in a hashed form in the backend, so makes it more difficult for attackers to retrieve it.
-
-A client secret has priority over a client password, which means that if a client has set both client secret and client password, the authentication will be executed with client secret only.
-
 ## PKCE - Code challenge (RFC 7636)
 
 This section is used to configure [Proof Key for Code Exchange by OAuth Public Clients](https://tools.ietf.org/html/rfc7636).
@@ -188,6 +180,14 @@ Enable this feature if your want to allow clients to use endpoints `/introspect`
 ### Required scopes in the access token
 
 Add on or more scopes if you want to allow to use endpoints `/introspect` and `/revoke` using valid access tokens to authenticate the requests. The access tokens must have the scopes required in their payload to be valid.
+
+## Client secret vs password
+
+When you add or edit a client in Glewlwyd, you can set a `client secret` or a `password`. Both can be used to authenticate confidential clients.
+
+The primary difference is that a client secret is a string stored 'as is' in the backend (database or LDAP), without hashing, where a client password is stored in a hashed form in the backend, so makes it more difficult for attackers to retrieve it.
+
+A client secret has priority over a client password, which means that if a client has set both client secret and client password, the authentication will be executed with client secret only.
 
 ## Glewlwyd OAuth 2 endpoints specifications
 
