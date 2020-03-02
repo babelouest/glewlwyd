@@ -103,7 +103,8 @@ CREATE TABLE gpo_id_token (
   gpoi_issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   gpoi_issued_for TEXT, -- IP address or hostname
   gpoi_user_agent TEXT,
-  gpoi_hash TEXT
+  gpoi_hash TEXT,
+  gpoi_enabled INTEGER DEFAULT 1
 );
 
 -- subject identifier table to store subs and their relations to usernames, client_id and sector_identifier
