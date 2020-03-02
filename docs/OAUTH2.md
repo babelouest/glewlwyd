@@ -150,7 +150,7 @@ Enable this feature if you want to support code challenge.
 
 ### Method plain allowed
 
-Enable this feature if you want to allow method plain in th code challenge feature. It is not recommended to enable this feature unless you know what you do because this feature is slightly less secure than default method S256.
+Enable this feature if you want to allow method `plain` in the code challenge feature. It is not recommended to enable this feature unless you know what you do because this feature is slightly less secure than default method `S256`.
 
 According to [the specifications](https://tools.ietf.org/html/rfc7636#section-4.2):
 
