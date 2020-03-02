@@ -5048,6 +5048,27 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
     } else {
       json_object_set_new(j_discovery, "subject_types_supported", json_pack("[s]", "public"));
     }
+    if (json_object_get(config->j_params, "pkce-allowed") == json_true()) {
+      json_object_set_new(j_discovery, "code_challenge_methods_supported", json_pack("[s]", "S256"));
+      if (json_object_get(config->j_params, "pkce-method-plain-allowed") == json_true()) {
+        json_array_append_new(json_object_get(j_discovery, "code_challenge_methods_supported"), json_string("plain"));
+      }
+    }
+    y_log_message(Y_LOG_LEVEL_DEBUG, "introspec %s", json_dumps(json_object_get(config->j_params, "introspection-revocation-allowed"), JSON_ENCODE_ANY));
+    if (json_object_get(config->j_params, "introspection-revocation-allowed") == json_true()) {
+      json_object_set_new(j_discovery, "revocation_endpoint", json_pack("s+", plugin_url, "/revoke"));
+      json_object_set_new(j_discovery, "introspection_endpoint", json_pack("s+", plugin_url, "/introspect"));
+      json_object_set_new(j_discovery, "revocation_endpoint_auth_methods_supported", json_array());
+      json_object_set_new(j_discovery, "introspection_endpoint_auth_methods_supported", json_array());
+      if (json_object_get(config->j_params, "introspection-revocation-allow-target-client") == json_true()) {
+        json_array_append_new(json_object_get(j_discovery, "revocation_endpoint_auth_methods_supported"), json_string("client_secret_basic"));
+        json_array_append_new(json_object_get(j_discovery, "introspection_endpoint_auth_methods_supported"), json_string("client_secret_basic"));
+      }
+      if (o_strlen(config->introspect_revoke_resource_config->oauth_scope)) {
+        json_array_append_new(json_object_get(j_discovery, "revocation_endpoint_auth_methods_supported"), json_string("bearer"));
+        json_array_append_new(json_object_get(j_discovery, "introspection_endpoint_auth_methods_supported"), json_string("bearer"));
+      }
+    }
     ulfius_set_json_body_response(response, 200, j_discovery);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_discovery - Error allocating resources for j_discovery");
