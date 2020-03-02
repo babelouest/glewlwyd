@@ -294,6 +294,26 @@ technical reason and know via out-of-band configuration that the
 server supports "plain".
 ```
 
+## Tokens Introspection (RFC 7662) and Revocation (RFC 7009)
+
+**IMPORTANT NOTICE!**
+
+Glewlwyd access tokens are [JWTs](https://tools.ietf.org/html/rfc7519), the original way for resource services to check if an access token is valid and reliable is to check its signature and its expiration date. Token introspection and revocation have been introduced in Glewlwyd, but if the resource service doesn't use the introspection endpoint, it will miss an inactive token and still consider it valid.
+
+The endpoints `/userinfo`, `/introspect` and `/revoke` when they are given an access token to authenticate will check if the token is revoked or not.
+
+### Allow tokens introspection and invocation
+
+Enable this feature if you want your oauth2 instance to enable endpoints `/introspect` and `/revoke`.
+
+### Allow for the token client
+
+Enable this feature if your want to allow clients to use endpoints `/introspect` and `/revoke` using their client_id and secret as HTTP Basic Auth. The clients will be allowed to introspect and revoke only the tokens that were issued for them.
+
+### Required scopes in the access token
+
+Add on or more scopes if you want to allow to use endpoints `/introspect` and `/revoke` using valid access tokens to authenticate the requests. The access tokens must have the scopes required in their payload to be valid.
+
 ## Client secret vs password
 
 When you add or edit a client in Glewlwyd, you can set a `client secret` or a `password`. Both can be used to authenticate confidential clients.
@@ -332,6 +352,9 @@ OpenID Connect endpoints are used to authenticate the user, and to send tokens, 
 - [Manage refresh tokens endpoints](#manage-refresh-tokens-endpoints)
   - [List refresh tokens](#list-refresh-tokens)
   - [Disable a refresh token by its signature](#disable-a-refresh-token-by-its-signature)
+- [Token introspection and revocation](#token-introspection-and-revocation)
+  - [Token introspection](#token-introspection)
+  - [Token revocation](#token-revocation)
 
 ### Endpoints authentication
 
@@ -1081,3 +1104,98 @@ Access denied
 Code 404
 
 Refresh token hash not found for this user
+
+### Token introspection and revocation
+
+The endpoints `POST` `/introspect` and `POST` `/revoke` are implentations of the corresponding RFCs [Token introspection and revocation](https://tools.ietf.org/html/rfc7662) and [OAuth 2.0 Token Revocation](https://tools.ietf.org/html/rfc7009).
+
+Both of them rely on 2 distinct ways to authenticate:
+- HTTP Basic Auth corresponding to the client credentials whose client the token was submitted
+- Authorized Access Token that includes the required scopes for those endpoints
+
+Both authentication methods are non eclusive and the administrator may enable or disable each of them.
+
+#### Token introspection
+
+##### URL
+
+`/api/glwd/introspect`
+
+##### Method
+
+`POST`
+
+##### Data Parameters
+
+Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
+
+```
+token: text, the token to introspect, required
+token_type_hint: text, optional, values available are 'access_token' or 'refresh_token'
+```
+
+##### Result
+
+##### Success response
+
+Code 200
+
+Content
+
+Active token
+```javascript
+{
+  "username": text, username the token was issued for, if any
+  "client_id": text, client the token was issued for, if any
+  "iat": number, epoch time when the token was issued
+  "nbf": number, epoch time when the token was issued
+  "exp": number, epoch time when the token will be (or is supposed to be) expired
+  "scope": text, scope list this token was emitted with, separated with spaces
+  "token_type": text, type of the token, values may be 'access_token' or 'refresh_token'
+}
+```
+
+##### Error Response
+
+Code 401
+
+Access denied
+
+Code 400
+
+Invalid parameters
+
+#### Token revocation
+
+##### URL
+
+`/api/glwd/revoke`
+
+##### Method
+
+`POST`
+
+##### Data Parameters
+
+Request body parameters must be encoded using the `application/x-www-form-urlencoded` format.
+
+```
+token: text, the token to introspect, required
+token_type_hint: text, optional, values available are 'access_token' or 'refresh_token'
+```
+
+##### Result
+
+##### Success response
+
+Code 200
+
+##### Error Response
+
+Code 401
+
+Access denied
+
+Code 400
+
+Invalid parameters
