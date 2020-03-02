@@ -28,6 +28,7 @@
 #define ADMIN_USERNAME "admin"
 #define ADMIN_PASSWORD "password"
 #define PLUGIN_NAME "oidc_claims"
+#define INTROSPECT_SCOPE "g_admin"
 
 struct _u_request admin_req;
 
@@ -45,7 +46,7 @@ END_TEST
 
 START_TEST(test_oidc_discovery_add_plugin)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssssisisisososososososososss[{ssssso}{ssssso}]sssss{ssss}s[ssss]s[s]}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssssisisisososososososososss[{ssssso}{ssssso}]sssss{ssss}s[ssss]s[s]sosososos[s]}}",
                                 "module",
                                 "oidc",
                                 "name",
@@ -158,7 +159,17 @@ START_TEST(test_oidc_discovery_add_plugin)
                                     "6swiIasEU3qNLKaJAZEzfywroVYr3BwM1IiVbQeKgIkyPS/85M4Y6Ss/T+OWi1Oe\n"
                                     "K49NdYBvFP+hNVEoeZzJz5K/nd6C35IX0t2bN5CVXchUFmaUMYk2iPdhXdsC720t\n"
                                     "BwIDAQAB\n"
-                                    "-----END PUBLIC KEY-----");
+                                    "-----END PUBLIC KEY-----",
+                                  "pkce-allowed",
+                                  json_true(),
+                                  "pkce-method-plain-allowed",
+                                  json_true(),
+                                  "introspection-revocation-allowed",
+                                  json_true(),
+                                  "introspection-revocation-allow-target-client",
+                                  json_true(),
+                                  "introspection-revocation-auth-scope",
+                                    INTROSPECT_SCOPE);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
 }
@@ -166,7 +177,7 @@ END_TEST
 
 START_TEST(test_oidc_discovery_new_plugin_test)
 {
-  json_t * j_result = json_loads("{\"issuer\":\"https://glewlwyd.tld\",\"authorization_endpoint\":\"http://localhost:4593/api/oidc_claims/auth\",\"token_endpoint\":\"http://localhost:4593/api/oidc_claims/token\",\"userinfo_endpoint\":\"http://localhost:4593/api/oidc_claims/userinfo\",\"jwks_uri\":\"http://localhost:4593/api/oidc_claims/jwks\",\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\"],\"id_token_signing_alg_values_supported\":[\"RS256\"],\"scopes_supported\":[\"openid\",\"g_profile\",\"scope1\",\"scope2\"],\"response_types_supported\":[\"code\",\"id_token\",\"token id_token\",\"code id_token\",\"code token id_token\",\"none\",\"refresh_token\"],\"response_modes_supported\":[\"query\",\"fragment\"],\"grant_types_supported\":[\"authorization_code\",\"implicit\"],\"display_values_supported\":[\"page\",\"popup\",\"touch\",\"wap\"],\"claim_types_supported\":[\"normal\"],\"claims_parameter_supported\":true,\"claims_supported\":[\"claim1\",\"claim2\",\"name\",\"email\",\"address\"],\"ui_locales_supported\":[\"en\",\"fr\"],\"request_parameter_supported\":false,\"request_uri_parameter_supported\":false,\"require_request_uri_registration\":false,\"subject_types_supported\":[\"pairwise\"]}", JSON_DECODE_ANY, NULL),
+  json_t * j_result = json_loads("{\"issuer\":\"https://glewlwyd.tld\",\"authorization_endpoint\":\"http://localhost:4593/api/oidc_claims/auth\",\"token_endpoint\":\"http://localhost:4593/api/oidc_claims/token\",\"userinfo_endpoint\":\"http://localhost:4593/api/oidc_claims/userinfo\",\"jwks_uri\":\"http://localhost:4593/api/oidc_claims/jwks\",\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\"],\"id_token_signing_alg_values_supported\":[\"RS256\"],\"scopes_supported\":[\"openid\",\"g_profile\",\"scope1\",\"scope2\"],\"response_types_supported\":[\"code\",\"id_token\",\"token id_token\",\"code id_token\",\"code token id_token\",\"none\",\"refresh_token\"],\"response_modes_supported\":[\"query\",\"fragment\"],\"grant_types_supported\":[\"authorization_code\",\"implicit\"],\"display_values_supported\":[\"page\",\"popup\",\"touch\",\"wap\"],\"claim_types_supported\":[\"normal\"],\"claims_parameter_supported\":true,\"claims_supported\":[\"claim1\",\"claim2\",\"name\",\"email\",\"address\"],\"ui_locales_supported\":[\"en\",\"fr\"],\"request_parameter_supported\":false,\"request_uri_parameter_supported\":false,\"require_request_uri_registration\":false,\"subject_types_supported\":[\"pairwise\"],\"revocation_endpoint\":\"http://localhost:4593/api/oidc_claims/revoke\",\"revocation_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"bearer\"],\"introspection_endpoint\":\"http://localhost:4593/api/oidc_claims/introspect\",\"introspection_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"bearer\"],\"code_challenge_methods_supported\":[\"S256\",\"plain\"]}", JSON_DECODE_ANY, NULL),
   * j_key = json_loads("{\"keys\":[{\"use\":\"sig\",\"alg\":\"RS256\",\"x5c\":[\"-----BEGIN PUBLIC KEY-----\\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwtpMAM4l1H995oqlqdMh\\nuqNuffp4+4aUCwuFE9B5s9MJr63gyf8jW0oDr7Mb1Xb8y9iGkWfhouZqNJbMFry+\\niBs+z2TtJF06vbHQZzajDsdux3XVfXv9v6dDIImyU24MsGNkpNt0GISaaiqv51NM\\nZQX0miOXXWdkQvWTZFXhmsFCmJLE67oQFSar4hzfAaCulaMD+b3Mcsjlh0yvSq7g\\n6swiIasEU3qNLKaJAZEzfywroVYr3BwM1IiVbQeKgIkyPS/85M4Y6Ss/T+OWi1Oe\\nK49NdYBvFP+hNVEoeZzJz5K/nd6C35IX0t2bN5CVXchUFmaUMYk2iPdhXdsC720t\\nBwIDAQAB\\n-----END PUBLIC KEY-----\"],\"kid\":\"h7uJEqXw_h4UXW_wCm3oBuboSGyuxf7XucGDKohPwxo\",\"kty\":\"RSA\",\"e\":\"AQAB\",\"n\":\"AMLaTADOJdR_feaKpanTIbqjbn36ePuGlAsLhRPQebPTCa-t4Mn_I1tKA6-zG9V2_MvYhpFn4aLmajSWzBa8vogbPs9k7SRdOr2x0Gc2ow7Hbsd11X17_b-nQyCJslNuDLBjZKTbdBiEmmoqr-dTTGUF9Jojl11nZEL1k2RV4ZrBQpiSxOu6EBUmq-Ic3wGgrpWjA_m9zHLI5YdMr0qu4OrMIiGrBFN6jSymiQGRM38sK6FWK9wcDNSIlW0HioCJMj0v_OTOGOkrP0_jlotTniuPTXWAbxT_oTVRKHmcyc-Sv53egt-SF9LdmzeQlV3IVBZmlDGJNoj3YV3bAu9tLQc\"}]}", JSON_DECODE_ANY, NULL);
   
   ck_assert_ptr_ne(j_result, NULL);
