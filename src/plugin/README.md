@@ -1,10 +1,10 @@
 # Glewlwyd Plugins
 
-A Glewlwyd plugin is built as a library and loaded at startup. It must contain a specific set of functions available to glewlwyd to work properly. A plugin is designed to build workflows of any kind concerning users or clients.
+A Glewlwyd plugin is built as a library and loaded at startup. It must contain a specific set of functions available to glewlwyd to work properly. A plugin is designed to build workflows of any kind.
 
 Currently, the workflows [OAuth 2](../../docs/OAUTH2.md) and [OpenID Connect](../../docs/OIDC.md) are available.
 
-Plugins can be use to have (but not only):
+Plugins can be use to perform (but not only):
 - Authentication workflows (OAuth, OAuth 2, SAML, etc.)
 - New user registration workflow
 - Forgot password workflow
@@ -14,10 +14,11 @@ A Glewlwyd plugin can access the entire data and functions available to Glewlwyd
 Currently, the following user backend plugins are available:
 - [OAuth 2](protocol_oauth2.c)
 - [OpenID Connect](protocol_oidc.c)
+- [Register new user](register.c)
 
-Technically, a plugin is a small web application that is loaded and instaciated by Glewlwyd service. Therefore a plugin has only 4 functions to implement. The plugin has access to Glewlwyd's callback function such as managing users and clients, or managing new API endpoints. The idea is to create a set of APIs, then the APIs will perform actions specific for the plugin.
+Technically, a plugin is a small web application that is loaded and instaciated by Glewlwyd service. Therefore a plugin has only 4 functions to implement. The plugin has access to Glewlwyd's callback function such as managing users and clients, or managing new API endpoints. The goal is to create a set of APIs, then the APIs will perform actions specific for the plugin.
 
-The endopoint must be added in the init function, and removed in the close function.
+The endpoints must be added in the init function, and removed in the close function.
 
 A Glewlwyd plugin requires the library [Jansson](https://github.com/akheron/Jansson).
 
@@ -46,7 +47,7 @@ struct config_plugin {
   /* Check if a password is valid for the user and if the scope list is available to the user */
   json_t * (* glewlwyd_callback_check_user_valid)(struct config_plugin * config, const char * username, const char * password, const char * scope_list);
   /* Check if a password is valid for the client and if the scope list is available to the client */
-  json_t * (* glewlwyd_callback_check_client_valid)(struct config_plugin * config, const char * client_id, const char * password, const char * scope_list);
+  json_t * (* glewlwyd_callback_check_client_valid)(struct config_plugin * config, const char * client_id, const char * password);
   /* Tell Glewlwyd that the current session has been triggered, to invalidate some scheme session if necessary */
   int      (* glewlwyd_callback_trigger_session_used)(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
   /* Return the last successful authentication with any scheme of the current session */
@@ -60,9 +61,25 @@ struct config_plugin {
   json_t * (* glewlwyd_plugin_callback_get_user_list)(struct config_plugin * config, const char * pattern, size_t offset, size_t limit);
   json_t * (* glewlwyd_plugin_callback_get_user)(struct config_plugin * config, const char * username);
   json_t * (* glewlwyd_plugin_callback_get_user_profile)(struct config_plugin * config, const char * username);
+  json_t * (* glewlwyd_plugin_callback_is_user_valid)(struct config_plugin * config, const char * username, json_t * j_user, int add);
   int      (* glewlwyd_plugin_callback_add_user)(struct config_plugin * config, json_t * j_user);
   int      (* glewlwyd_plugin_callback_set_user)(struct config_plugin * config, const char * username, json_t * j_user);
+  int      (* glewlwyd_plugin_callback_user_update_password)(struct config_plugin * config, const char * username, const char * password);
   int      (* glewlwyd_plugin_callback_delete_user)(struct config_plugin * config, const char * username);
+  
+  // Client CRUD
+  json_t * (* glewlwyd_plugin_callback_get_client_list)(struct config_plugin * config, const char * pattern, size_t offset, size_t limit);
+  json_t * (* glewlwyd_plugin_callback_get_client)(struct config_plugin * config, const char * client_id);
+  json_t * (* glewlwyd_plugin_callback_is_client_valid)(struct config_plugin * config, const char * client_id, json_t * j_client, int add);
+  int      (* glewlwyd_plugin_callback_add_client)(struct config_plugin * config, json_t * j_client);
+  int      (* glewlwyd_plugin_callback_set_client)(struct config_plugin * config, const char * client_id, json_t * j_client);
+  int      (* glewlwyd_plugin_callback_delete_client)(struct config_plugin * config, const char * client_id);
+
+  // Register scheme functions
+  json_t * (* glewlwyd_plugin_callback_scheme_register)(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username, json_t * j_scheme_data);
+  json_t * (* glewlwyd_plugin_callback_scheme_register_get)(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username);
+  int      (* glewlwyd_plugin_callback_scheme_deregister)(struct config_plugin * config, const char * mod_name, const char * username);
+  int      (* glewlwyd_plugin_callback_scheme_can_use)(struct config_plugin * config, const char * mod_name, const char * username);
   
   // Misc functions
   /* Return this plugin external url root */
