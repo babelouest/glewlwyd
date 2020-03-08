@@ -381,6 +381,7 @@ char * get_client_hostname(const struct _u_request * request);
 unsigned char random_at_most(unsigned char max, int nonce);
 char * rand_string(char * str, size_t str_size);
 char * rand_string_nonce(char * str, size_t str_size);
+char * rand_string_from_charset(char * str, size_t str_size, const char * charset);
 int rand_code(char * str, size_t str_size);
 char * join_json_string_array(json_t * j_array, const char * separator);
 char * url_encode(const char * str);

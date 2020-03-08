@@ -154,6 +154,23 @@ char * rand_string(char * str, size_t str_size) {
 }
 
 /**
+ * Generates a random string and store it in str
+ */
+char * rand_string_from_charset(char * str, size_t str_size, const char * charset) {
+  size_t n;
+  
+  if (str_size && str != NULL) {
+    for (n = 0; n < str_size; n++) {
+      str[n] = charset[random_at_most((o_strlen(charset)) - 2, 0)];
+    }
+    str[str_size] = '\0';
+    return str;
+  } else {
+    return NULL;
+  }
+}
+
+/**
  * Generates a random string used as nonce and store it in str
  */
 char * rand_string_nonce(char * str, size_t str_size) {
