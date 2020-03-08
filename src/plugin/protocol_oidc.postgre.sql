@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS gpo_client_registration;
 DROP TABLE IF EXISTS gpo_subject_identifier;
 DROP TABLE IF EXISTS gpo_id_token;
 DROP TABLE IF EXISTS gpo_access_token_scope;
@@ -117,3 +118,15 @@ CREATE TABLE gpo_subject_identifier (
   gposi_sub VARCHAR(256) NOT NULL
 );
 CREATE INDEX i_gposi_sub ON gpo_subject_identifier(gposi_sub);
+
+-- store meta information on client registration
+CREATE TABLE gpo_client_registration (
+  gpocr_id SERIAL PRIMARY KEY,
+  gpocr_plugin_name VARCHAR(256) NOT NULL,
+  gpocr_cient_id VARCHAR(256) NOT NULL,
+  gpocr_created_at TIMESTAMPTZ DEFAULT NOW(),
+  gpoa_id INTEGER,
+  gpocr_issued_for VARCHAR(256), -- IP address or hostname
+  gpocr_user_agent VARCHAR(256),
+  FOREIGN KEY(gpoa_id) REFERENCES gpo_access_token(gpoa_id) ON DELETE CASCADE
+);
