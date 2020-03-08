@@ -144,7 +144,7 @@ json_t * glewlwyd_callback_check_user_valid(struct config_plugin * config, const
               // Check if scope has no scheme but password
               j_scope = get_scope(config->glewlwyd_config, json_string_value(j_element));
               if (check_result_value(j_scope, G_OK)) {
-                if (json_object_size(json_object_get(json_object_get(j_scope, "scope"), "scheme")) == 0 && json_object_get(json_object_get(j_scope, "scope"), "password_required") == json_true()) {
+                if (json_object_size(json_object_get(json_object_get(j_scope, "scope"), "scheme")) == 0) {
                   if (scope_list == NULL) {
                     scope_list = o_strdup(json_string_value(j_element));
                   } else {

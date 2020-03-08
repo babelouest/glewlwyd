@@ -601,7 +601,7 @@ json_t * get_granted_scopes_for_client(struct config_elements * config, json_t *
             }
           }
         }
-        j_return = json_pack("{sis{s{sOsO}sO}}",
+        j_return = json_pack("{sis{s{sOsO*}sO}}",
                               "result",
                               G_OK,
                               "grant",
