@@ -21,6 +21,7 @@ The following OpenID Connect Core functionalities are currently supported:
 - [Proof Key for Code Exchange by OAuth Public Clients](https://tools.ietf.org/html/rfc7636)
 - [Token introspection (RFC 7662)](https://tools.ietf.org/html/rfc7662)
 - [Token revocation (RFC 7009)](https://tools.ietf.org/html/rfc7009)
+- [OpenID Connect Dynamic Registration](http://openid.net/specs/openid-connect-registration-1_0.html)
 
 The following OpenID Connect Core functionalities are not supported yet:
 
@@ -29,7 +30,6 @@ The following OpenID Connect Core functionalities are not supported yet:
 
 The following OpenID Connect specifications are not supported yet:
 
-- [OpenID Connect Dynamic Registration](http://openid.net/specs/openid-connect-registration-1_0.html)
 - [OAuth 2.0 Form Post Response Mode](http://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html)
 
 ## Access token format
@@ -316,6 +316,24 @@ Enable this feature if your want to allow clients to use endpoints `/introspect`
 
 Add on or more scopes if you want to allow to use endpoints `/introspect` and `/revoke` using valid access tokens to authenticate the requests. The access tokens must have the scopes required in their payload to be valid.
 
+## Clients registration
+
+This section is used to parameter client registration as defined in [OpenID Connect Dynamic Registration](http://openid.net/specs/openid-connect-registration-1_0.html). If enabled, the administrator can (should?) require an access token with the proper scope to be able to register a new client.
+
+How this `acces_token` is provided is out of scope of this documentation.
+
+### Allow client regisration via API /register
+
+Enable this feature if you want to enable client registration endpoint `/register`.
+
+### Required scopes in the access token
+
+Add on or more scopes if you want to allow to use endpoint `/register` using valid access tokens to authenticate the requests. The access tokens must have the scopes required in their payload to be valid.
+
+### Scopes to add to the new clients
+
+Default scopes that will be added to the registered clients, can be empty. This scope list is only used in `client_credentials` response type.
+
 ## Client secret vs password
 
 When you add or edit a client in Glewlwyd, you can set a `client secret` or a `password`. Both can be used to authenticate confidential clients.
@@ -357,6 +375,7 @@ OpenID Connect endpoints are used to authenticate the user, and to send tokens, 
 - [Token introspection and revocation](#token-introspection-and-revocation)
   - [Token introspection](#token-introspection)
   - [Token revocation](#token-revocation)
+- [Client registration](#client-registration)
 
 ### Endpoints authentication
 
@@ -1193,6 +1212,78 @@ token_type_hint: text, optional, values available are 'access_token', 'refresh_t
 ##### Success response
 
 Code 200
+
+##### Error Response
+
+Code 401
+
+Access denied
+
+Code 400
+
+Invalid parameters
+
+### Client registration
+
+##### URL
+
+`/api/glwd/introspect`
+
+##### Method
+
+`POST`
+
+##### Data Parameters
+
+Input data must be a JSON object.
+
+```javascript
+{
+  "client_name": text, name of the new client
+  "redirect_uris": array of strings, each string must be a 'https://' or http://localhot' url, at least one value is mandatory
+  "response_types": array of strings, values available are 'code', 'token', 'id_token', 'password', 'client_credentials', 'refresh_token' or 'delete_token', if empty the client will have the response types 'code' and 'refresh_token'
+  "application_type": text, values available are 'web' or 'native'
+  "contacts": array of strings
+  "client_confidential": boolean, if false then no client_secret will be provided
+  "logo_uri": string, url using the format 'https://' or 'http://'
+  "client_uri": string, url using the format 'https://' or 'http://'
+  "policy_uri": string, url using the format 'https://' or 'http://'
+  "tos_uri": string, url using the format 'https://' or 'http://'
+  "jwks_uri": string, url using the format 'https://'
+  "jwks": JWKS object
+}
+```
+
+Parameters `jwks_uri` and `jwks` can't coexist at the same time.
+
+##### Result
+
+##### Success response
+
+Code 200
+
+Content
+
+This is a non normative sample response.
+
+```javascript
+{
+  "client_name": "New Client",
+  "client_id": "i4bmq8izuc8c65p8", 
+  "client_secret": "EpurvxmR712c1WPfMUtiXWxsA6ReFw9B", 
+  "client_id_issued_at": 1583695374, 
+  "client_secret_expires_at": 0,
+  "redirect_uris": ["https://client.tld/callback"], 
+  "response_types": ["code", "token", "id_token", "password", "client_credentials", "refresh_token", "delete_token"], 
+  "application_type": "web", 
+  "contacts": ["contact@client.tld"], 
+  "logo_uri": "https://client.tld/logo.png", 
+  "client_uri": "https://client.tld/", 
+  "policy_uri": "https://client.tld/policy", 
+  "tos_uri": "https://client.tld/tos", 
+  "jwks": {"keys": [{"kty": "EC", "crv": "P-256", "x": "MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4", "y": "4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM", "use": "enc", "kid": "1"}]}
+}
+```
 
 ##### Error Response
 
