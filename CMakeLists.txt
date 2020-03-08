@@ -31,7 +31,7 @@ set(ORCANIA_VERSION_REQUIRED "2.1.0")
 set(YDER_VERSION_REQUIRED "1.4.9")
 set(ULFIUS_VERSION_REQUIRED "2.6.5")
 set(HOEL_VERSION_REQUIRED "1.4.14")
-set(RHONABWY_VERSION_REQUIRED "0.9.3")
+set(RHONABWY_VERSION_REQUIRED "0.9.4")
 set(IDDAWC_VERSION_REQUIRED "0.9.4")
 set(LIBJWT_VERSION_REQUIRED "1.10.0")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
@@ -768,6 +768,7 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_oidc_code_challenge
 							glewlwyd_oidc_token_introspection
 							glewlwyd_oidc_token_revocation
+							glewlwyd_oidc_client_registration
 							)
 		endif ()
 
