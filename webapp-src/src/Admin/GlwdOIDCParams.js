@@ -47,6 +47,9 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["introspection-revocation-allowed"]!==undefined?"":(props.mod.parameters["introspection-revocation-allowed"] = false);
     props.mod.parameters["introspection-revocation-auth-scope"]!==undefined?"":(props.mod.parameters["introspection-revocation-auth-scope"] = []);
     props.mod.parameters["introspection-revocation-allow-target-client"]!==undefined?"":(props.mod.parameters["introspection-revocation-allow-target-client"] = true);
+    props.mod.parameters["register-client-allowed"]!==undefined?"":(props.mod.parameters["register-client-allowed"] = false);
+    props.mod.parameters["register-client-auth-scope"]!==undefined?"":(props.mod.parameters["register-client-auth-scope"] = []);
+    props.mod.parameters["register-client-credentials-scope"]!==undefined?"":(props.mod.parameters["register-client-credentials-scope"] = []);
 
     this.state = {
       config: props.config,
@@ -145,6 +148,9 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["introspection-revocation-allowed"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-allowed"] = false);
     nextProps.mod.parameters["introspection-revocation-auth-scope"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-auth-scope"] = []);
     nextProps.mod.parameters["introspection-revocation-allow-target-client"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-allow-target-client"] = true);
+    nextProps.mod.parameters["register-client-allowed"]!==undefined?"":(nextProps.mod.parameters["register-client-allowed"] = false);
+    nextProps.mod.parameters["register-client-auth-scope"]!==undefined?"":(nextProps.mod.parameters["register-client-auth-scope"] = []);
+    nextProps.mod.parameters["register-client-credentials-scope"]!==undefined?"":(nextProps.mod.parameters["register-client-credentials-scope"] = []);
     
     this.setState({
       config: nextProps.config,
@@ -469,17 +475,17 @@ class GlwdOIDCParams extends Component {
     }
   }
   
-  addScope(e, scope) {
+  addScope(e, param, scope) {
     e.preventDefault();
     var mod = this.state.mod;
-    mod.parameters["introspection-revocation-auth-scope"].push(scope);
+    mod.parameters[param].push(scope);
     this.setState({mod: mod});
   }
 
-  deleteScope(e, index) {
+  deleteScope(e, param, index) {
     e.preventDefault();
     var mod = this.state.mod;
-    mod.parameters["introspection-revocation-auth-scope"].splice(index, 1);
+    mod.parameters[param].splice(index, 1);
     this.setState({mod: mod});
   }
   
@@ -985,29 +991,84 @@ class GlwdOIDCParams extends Component {
         </div>
     }
 
-    var scopeList = [], defaultScopeList = [];
+    var scopeIntrospectList = [], defaultScopeIntrospectList = [];
     this.state.config.pattern.user.forEach((pattern) => {
       if (pattern.name === "scope") {
         pattern.listElements.forEach((scope, index) => {
-          scopeList.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.addScope(e, scope)} disabled={!this.state.mod.parameters["introspection-revocation-allowed"]}>{scope}</a>);
+          scopeIntrospectList.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.addScope(e, "introspection-revocation-auth-scope", scope)} disabled={!this.state.mod.parameters["introspection-revocation-allowed"]}>{scope}</a>);
         })
       }
     });
     this.state.mod.parameters["introspection-revocation-auth-scope"].forEach((scope, index) => {
       if (this.state.mod.parameters["introspection-revocation-allowed"]) {
-        defaultScopeList.push(<a className="btn-icon-right" href="#" onClick={(e) => this.deleteScope(e, index)} key={index} ><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
+        defaultScopeIntrospectList.push(<a className="btn-icon-right" href="#" onClick={(e) => this.deleteScope(e, "introspection-revocation-auth-scope", index)} key={index} ><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
       } else {
-        defaultScopeList.push(<span key={index} className="badge badge-primary btn-icon-right">{scope}</span>);
+        defaultScopeIntrospectList.push(<span key={index} className="badge badge-primary btn-icon-right">{scope}</span>);
       }
     });
     var scopeIntrospectJsx = 
     <div className="dropdown">
-      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-register-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.mod.parameters["introspection-revocation-allowed"]}>{i18next.t("admin.mod-glwd-introspection-revocation-scope")}</button>
+      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-register-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.mod.parameters["introspection-revocation-allowed"]}>{i18next.t("admin.mod-glwd-scope")}</button>
       <div className="dropdown-menu" aria-labelledby="mod-register-scope">
-        {scopeList}
+        {scopeIntrospectList}
       </div>
       <div>
-        {defaultScopeList}
+        {defaultScopeIntrospectList}
+      </div>
+    </div>;
+
+    var scopeRegisterAuthList = [], defaultScopeRegisterAuthList = [];
+    this.state.config.pattern.user.forEach((pattern) => {
+      if (pattern.name === "scope") {
+        pattern.listElements.forEach((scope, index) => {
+          scopeRegisterAuthList.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.addScope(e, "register-client-auth-scope", scope)} disabled={!this.state.mod.parameters["register-client-allowed"]}>{scope}</a>);
+        })
+      }
+    });
+    if (!this.state.mod.parameters["register-client-auth-scope"].length) {
+      defaultScopeRegisterAuthList.push(<span key={0} className="badge badge-danger btn-icon-right">{i18next.t("admin.mod-glwd-register-client-auth-scope-open")}</span>);
+    }
+    this.state.mod.parameters["register-client-auth-scope"].forEach((scope, index) => {
+      if (this.state.mod.parameters["register-client-allowed"]) {
+        defaultScopeRegisterAuthList.push(<a className="btn-icon-right" href="#" onClick={(e) => this.deleteScope(e, "register-client-auth-scope", index)} key={index} ><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
+      } else {
+        defaultScopeRegisterAuthList.push(<span key={index} className="badge badge-primary btn-icon-right">{scope}</span>);
+      }
+    });
+    var scopeRegisterClientAllowedJsx = 
+    <div className="dropdown">
+      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-register-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.mod.parameters["register-client-allowed"]}>{i18next.t("admin.mod-glwd-scope")}</button>
+      <div className="dropdown-menu" aria-labelledby="mod-register-scope">
+        {scopeRegisterAuthList}
+      </div>
+      <div>
+        {defaultScopeRegisterAuthList}
+      </div>
+    </div>;
+
+    var scopeRegisterDefaultList = [], defaultScopeRegisterDefaultList = [];
+    this.state.config.pattern.user.forEach((pattern) => {
+      if (pattern.name === "scope") {
+        pattern.listElements.forEach((scope, index) => {
+          scopeRegisterDefaultList.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.addScope(e, "register-client-credentials-scope", scope)} disabled={!this.state.mod.parameters["register-client-allowed"]}>{scope}</a>);
+        })
+      }
+    });
+    this.state.mod.parameters["register-client-credentials-scope"].forEach((scope, index) => {
+      if (this.state.mod.parameters["register-client-allowed"]) {
+        defaultScopeRegisterDefaultList.push(<a className="btn-icon-right" href="#" onClick={(e) => this.deleteScope(e, "register-client-credentials-scope", index)} key={index} ><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
+      } else {
+        defaultScopeRegisterDefaultList.push(<span key={index} className="badge badge-primary btn-icon-right">{scope}</span>);
+      }
+    });
+    var scopeRegisterClientListJsx = 
+    <div className="dropdown">
+      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-register-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.mod.parameters["register-client-allowed"]}>{i18next.t("admin.mod-glwd-scope")}</button>
+      <div className="dropdown-menu" aria-labelledby="mod-register-scope">
+        {scopeRegisterDefaultList}
+      </div>
+      <div>
+        {defaultScopeRegisterDefaultList}
       </div>
     </div>;
 
@@ -1570,6 +1631,43 @@ class GlwdOIDCParams extends Component {
                       <label className="input-group-text" htmlFor="mod-default-scope">{i18next.t("admin.mod-glwd-introspection-revocation-scope-required")}</label>
                     </div>
                     {scopeIntrospectJsx}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionRegister">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseRegister" aria-expanded="true" aria-controls="collapseRegister">
+                  {this.state.errorList["registration"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
+                  {i18next.t("admin.mod-glwd-registration-title")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapseRegister" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionRegister">
+              <div className="card-body">
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-register-client-allowed" onChange={(e) => this.toggleParam(e, "register-client-allowed")} checked={this.state.mod.parameters["register-client-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-register-client-allowed">{i18next.t("admin.mod-glwd-register-client-allowed")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-default-scope">{i18next.t("admin.mod-glwd-register-client-auth-scope")}</label>
+                    </div>
+                    {scopeRegisterClientAllowedJsx}
+                  </div>
+                </div>
+                <hr/>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-default-scope">{i18next.t("admin.mod-glwd-register-client-credentials-scope")}</label>
+                    </div>
+                    {scopeRegisterClientListJsx}
                   </div>
                 </div>
               </div>
