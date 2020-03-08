@@ -53,6 +53,7 @@ glewlwyd_oidc_claim_request
 glewlwyd_oidc_code_challenge
 glewlwyd_oidc_token_introspection
 glewlwyd_oidc_token_revocation
+glewlwyd_oidc_client_registration
 
 glewlwyd_register
 
