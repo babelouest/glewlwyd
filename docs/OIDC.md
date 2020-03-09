@@ -4,7 +4,7 @@ This plugin is based on the [OpenID Connect Core 1.0 specification](https://open
 
 ## Functionalities summary
 
-The following OpenID Connect Core functionalities are currently supported:
+The following OpenID Connect functionalities are currently supported:
 
 - [Authorization Code Flow](https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth)
 - [Implicit flow](https://openid.net/specs/openid-connect-core-1_0.html#ImplicitFlowAuth)
@@ -22,15 +22,12 @@ The following OpenID Connect Core functionalities are currently supported:
 - [Token introspection (RFC 7662)](https://tools.ietf.org/html/rfc7662)
 - [Token revocation (RFC 7009)](https://tools.ietf.org/html/rfc7009)
 - [OpenID Connect Dynamic Registration](http://openid.net/specs/openid-connect-registration-1_0.html)
+- [OAuth 2.0 Form Post Response Mode](http://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html)
 
-The following OpenID Connect Core functionalities are not supported yet:
+The following OpenID Connect functionalities are not supported yet:
 
 - [Self-Issued OpenID Provider](https://openid.net/specs/openid-connect-core-1_0.html#SelfIssued)
 - [id_token encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
-
-The following OpenID Connect specifications are not supported yet:
-
-- [OAuth 2.0 Form Post Response Mode](http://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html)
 
 ## Access token format
 
@@ -40,7 +37,7 @@ An access token payload has the following JSON format:
 
 ```Javascript
 {
-  "sub": "user1",            // subject that was provided this access_token
+  "sub": "4321zyxdcba",      // subject that was provided this access_token
   "aud": "client1",          // client_id the access_token was provided to
   "salt": "abcdxyz1234",     // Random string to avoid collisions
   "type": "access_token",    // Hardcoded
