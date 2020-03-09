@@ -189,6 +189,17 @@
       </div>
       <div class="row">
         <div class="col-md-2">
+          <label for="display">response mode</label>
+        </div>
+        <div class="col-md-2">
+          <select id="response_mode" class="form-control">
+            <option value="">redirect</option>
+            <option value="form_post">form_post</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">
           <label for="display">display</label>
         </div>
         <div class="col-md-2">
@@ -455,7 +466,7 @@
           } else {
             promptParam = "&prompt=" + $("#prompt").val();
           }
-          var url = glewlwyd_api + "/auth?response_type=" + $("#response_type").val() + "&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&nonce=" + $("#nonce").val() + promptParam + "&display=" + $("#display").val() + "&scope=" + $("#scope").val().join(" ") + "&max_age=" + $("#max_age").val() + "&ui_locales=" + $("#ui_locales").val() + "&login_hint=" + $("#login_hint").val() + "&request=" + $("#request").val() + "&claims=" + encodeURI($("#claims").val());
+          var url = glewlwyd_api + "/auth?response_type=" + $("#response_type").val() + "&client_id=" + $("#client_id").val() + "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&nonce=" + $("#nonce").val() + promptParam + "&display=" + $("#display").val() + "&scope=" + $("#scope").val().join(" ") + "&max_age=" + $("#max_age").val() + "&ui_locales=" + $("#ui_locales").val() + "&login_hint=" + $("#login_hint").val() + "&request=" + $("#request").val() + "&claims=" + encodeURI($("#claims").val()) + "&response_mode=" + $("#response_mode").val();
           window.location = url;
         } else if ($("#send_method").val() == "POST") {
           var url = glewlwyd_api + "/auth";
@@ -480,6 +491,7 @@
           '<input type="text" name="login_hint" value="' + $("#login_hint").val() + '" />' +
           '<input type="text" name="request" value="' + $("#request").val() + '" />' +
           '<input type="text" name="claims" value="' + encodeURI($("#claims").val()) + '" />' +
+          '<input type="text" name="response_mode" value="' + encodeURI($("#response_mode").val()) + '" />' +
           promptParam +
           '</form>');
           $('body').append(form);
