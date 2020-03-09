@@ -107,6 +107,7 @@ CREATE TABLE gpo_id_token (
   gpoi_hash VARCHAR(512),
   gpoi_enabled TINYINT(1) DEFAULT 1
 );
+CREATE INDEX i_gpoi_hash ON gpo_id_token(gpoi_hash);
 
 -- subject identifier table to store subs and their relations to usernames, client_id and sector_identifier
 CREATE TABLE gpo_subject_identifier (
