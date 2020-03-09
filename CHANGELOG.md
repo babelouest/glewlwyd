@@ -5,7 +5,8 @@
 - Add [OAuth2/OIDC authentication scheme](https://github.com/babelouest/glewlwyd/blob/master/docs/OAUTH2_SCHEME.md) to authenticate to Glewlwyd via an external provider
 - Add [Proof Key for Code Exchange by OAuth Public Clients](https://tools.ietf.org/html/rfc7636) for OAuth2 and OIDC plugins
 - Add [token introspection](https://tools.ietf.org/html/rfc7662) and [token revocation](https://tools.ietf.org/html/rfc7009) for OAuth2 and OIDC plugins
-- Add [OpenID Connect Dynamic Registration](http://openid.net/specs/openid-connect-registration-1_0.html) for OIDC plugins
+- Add [OpenID Connect Dynamic Registration](http://openid.net/specs/openid-connect-registration-1_0.html) for OIDC plugin
+- Add [Form Post Response Mode](http://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html) for OIDC plugin
 - Catch close signal in another thread (Closes: #103)
 - Fix bug to make Glewlwyd compatible with Apache Module [auth_openidc](https://github.com/zmartzone/mod_auth_openidc)
 
