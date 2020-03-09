@@ -198,6 +198,20 @@ START_TEST(test_oidc_optional_request_parameters_max_age)
 }
 END_TEST
 
+START_TEST(test_oidc_optional_request_parameters_response_mode_form_post)
+{
+  char * url = msprintf("%s/oidc/auth?response_type=%s&response_mode=form_post&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s&g_continue", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, NULL, "<input type=\"hidden\" name=\"id_token\"", NULL);
+  o_free(url);
+  ck_assert_int_eq(res, 1);
+
+  url = msprintf("%s/oidc/auth?response_type=%s&response_mode=form_post&client_id=%s&redirect_uri=error&state=xyzabcd&nonce=nonce1234&scope=%s&g_continue", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 200, NULL, "<input type=\"hidden\" name=\"error\" value=\"unauthorized_client\"/>", NULL);
+  o_free(url);
+  ck_assert_int_eq(res, 1);
+}
+END_TEST
+
 START_TEST(test_oidc_optional_request_parameters_unknown)
 {
   struct _u_response resp;
@@ -229,6 +243,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_ui_locales);
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_login_hint);
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_max_age);
+  tcase_add_test(tc_core, test_oidc_optional_request_parameters_response_mode_form_post);
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_unknown);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
