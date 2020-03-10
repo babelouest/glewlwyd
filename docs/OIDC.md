@@ -27,7 +27,7 @@ The following OpenID Connect functionalities are currently supported:
 The following OpenID Connect functionalities are not supported yet:
 
 - [Self-Issued OpenID Provider](https://openid.net/specs/openid-connect-core-1_0.html#SelfIssued)
-- [id_token encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
+- [Messages encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
 
 ## Access token format
 
