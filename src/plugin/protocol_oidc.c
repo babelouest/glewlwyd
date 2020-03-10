@@ -5379,10 +5379,10 @@ static int callback_oidc_token(const struct _u_request * request, struct _u_resp
  * /userinfo callback
  */
 static int callback_oidc_get_userinfo(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  UNUSED(request);
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  char * username = get_username_from_sub(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")));
+  char * username = get_username_from_sub(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub"))), * user_info_str = NULL, * token = NULL;
   json_t * j_user, * j_userinfo;
+  jwt_t * jwt = NULL;
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
@@ -5392,7 +5392,38 @@ static int callback_oidc_get_userinfo(const struct _u_request * request, struct 
     if (check_result_value(j_user, G_OK)) {
       j_userinfo = get_userinfo(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")), json_object_get(j_user, "user"), json_object_get((json_t *)response->shared_data, "claims"), json_string_value(json_object_get((json_t *)response->shared_data, "scope")));
       if (j_userinfo != NULL) {
-        ulfius_set_json_body_response(response, 200, j_userinfo);
+        if (0 == o_strcmp("jwt", u_map_get(request->map_url, "format")) || 0 == o_strcmp("jwt", u_map_get(request->map_post_body, "format"))) {
+          if ((jwt = jwt_dup(config->jwt_key)) != NULL) {
+            json_object_set(j_userinfo, "iss", json_object_get(config->j_params, "iss"));
+            user_info_str = json_dumps(j_userinfo, JSON_COMPACT);
+            if (user_info_str != NULL) {
+              if (!jwt_add_grants_json(jwt, user_info_str)) {
+                token = jwt_encode_str(jwt);
+                if (token != NULL) {
+                  ulfius_set_string_body_response(response, 200, token);
+                  u_map_put(response->map_header, "Content-Type", "application/jwt");
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_userinfo oidc - Error jwt_encode_str");
+                  response->status = 500;
+                }
+                o_free(token);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_userinfo oidc - Error jwt_add_grants_json");
+                response->status = 500;
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_userinfo oidc - Error json_dumps");
+              response->status = 500;
+            }
+            o_free(user_info_str);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_userinfo oidc - Error jwt_dup");
+            response->status = 500;
+          }
+          jwt_free(jwt);
+        } else {
+          ulfius_set_json_body_response(response, 200, j_userinfo);
+        }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_userinfo oidc - Error get_userinfo");
         response->status = 500;
@@ -5501,7 +5532,7 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
     json_object_set_new(j_discovery, "token_endpoint", json_pack("s+", plugin_url, "/token"));
     json_object_set_new(j_discovery, "userinfo_endpoint", json_pack("s+", plugin_url, "/userinfo"));
     json_object_set_new(j_discovery, "jwks_uri", json_pack("s+", plugin_url, "/jwks"));
-    json_object_set_new(j_discovery, "token_endpoint_auth_methods_supported", json_pack("[s]", "client_secret_basic"));
+    json_object_set_new(j_discovery, "token_endpoint_auth_methods_supported", json_pack("[sss]", "client_secret_basic", "client_secret_post", "client_secret_jwt"));
     json_object_set_new(j_discovery, "id_token_signing_alg_values_supported", json_pack("[s]", jwt_alg_str(jwt_get_alg(config->jwt_key))));
     if (json_object_get(config->j_params, "allowed-scope") != NULL && json_array_size(json_object_get(config->j_params, "allowed-scope"))) {
       json_object_set(j_discovery, "scopes_supported", json_object_get(config->j_params, "allowed-scope"));
@@ -5539,9 +5570,8 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
     if (config->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN]) {
       json_array_append_new(json_object_get(j_discovery, "response_types_supported"), json_string("refresh_token"));
     }
-    json_object_set_new(j_discovery, "response_modes_supported", json_pack("[ss]", "query", "fragment"));
+    json_object_set_new(j_discovery, "response_modes_supported", json_pack("[sss]", "query", "fragment", "form_post"));
     json_object_set_new(j_discovery, "grant_types_supported", json_pack("[ss]", "authorization_code", "implicit"));
-    json_object_set_new(j_discovery, "token_endpoint_auth_methods_supported", json_pack("[s]", "client_secret_basic"));
     json_object_set_new(j_discovery, "display_values_supported", json_pack("[ssss]", "page", "popup", "touch", "wap"));
     json_object_set_new(j_discovery, "claim_types_supported", json_pack("[s]", "normal"));
     json_object_set_new(j_discovery, "claims_parameter_supported", json_true());
