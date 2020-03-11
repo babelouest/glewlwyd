@@ -5972,113 +5972,113 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                           ((struct _oidc_config *)*cls)->jwks_str = NULL;
                         }
                         ((struct _oidc_config *)*cls)->oidc_resource_config->jwt_alg = alg;
-                        if (generate_discovery_content((struct _oidc_config *)*cls) == G_OK) {
-                          // Add endpoints
-                          y_log_message(Y_LOG_LEVEL_INFO, "Add endpoints with plugin prefix %s", name);
-                          if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_authorization, (void*)*cls) != G_OK || 
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_authorization, (void*)*cls) != G_OK || 
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_token, (void*)*cls) != G_OK || 
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_userinfo, (void*)*cls) != G_OK || 
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) != G_OK || 
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) != G_OK || 
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK ||
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) != G_OK || 
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_refresh_token_list_get, (void*)*cls) != G_OK || 
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK ||
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) != G_OK || 
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_disable_refresh_token, (void*)*cls) != G_OK || 
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK || 
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_discovery, (void*)*cls) != G_OK ||
-                             config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "jwks", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_jwks, (void*)*cls) != G_OK) {
-                            json_decref(((struct _oidc_config *)*cls)->j_params);
-                            jwt_free(((struct _oidc_config *)*cls)->jwt_key);
-                            r_free_jwks(((struct _oidc_config *)*cls)->jwks);
-                            o_free(*cls);
-                            *cls = NULL;
-                            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding endpoints");
-                            j_return = json_pack("{si}", "result", G_ERROR);
-                          } else {
-                            if (json_object_get(((struct _oidc_config *)*cls)->j_params, "introspection-revocation-allowed") == json_true()) {
-                            ((struct _oidc_config *)*cls)->introspect_revoke_resource_config = o_malloc(sizeof(struct _oidc_resource_config));
-                              if (((struct _oidc_config *)*cls)->introspect_revoke_resource_config != NULL) {
-                                ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->method = G_METHOD_HEADER;
-                                ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->oauth_scope = NULL;
-                                json_array_foreach(json_object_get(((struct _oidc_config *)*cls)->j_params, "introspection-revocation-auth-scope"), index, j_element) {
-                                  if (((struct _oidc_config *)*cls)->introspect_revoke_resource_config->oauth_scope == NULL) {
-                                    ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->oauth_scope = o_strdup(json_string_value(j_element));
-                                  } else {
-                                    ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->oauth_scope = mstrcatf(((struct _oidc_config *)*cls)->introspect_revoke_resource_config->oauth_scope, " %s", json_string_value(j_element));
-                                  }
-                                }
-                                ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->realm = NULL;
-                                ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->accept_access_token = 1;
-                                ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->accept_client_token = 1;
-                                if (0 == o_strcmp("sha", json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "jwt-type")))) {
-                                  ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "key")));
-                                } else {
-                                  ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "cert")));
-                                }
-                                ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->jwt_alg = alg;
-                                if (
-                                  config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "introspect/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_intropect_revoke, (void*)*cls) != G_OK || 
-                                  config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "introspect/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_introspection, (void*)*cls) != G_OK || 
-                                  config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "introspect/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK ||
-                                  config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_intropect_revoke, (void*)*cls) != G_OK || 
-                                  config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_revocation, (void*)*cls) != G_OK ||
-                                  config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK
-                                  ) {
-                                  y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error adding introspect/revoke endpoints");
-                                  j_return = json_pack("{si}", "result", G_ERROR);
-                                }
-                              } else {
-                                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for introspect_revoke_resource_config");
-                                j_return = json_pack("{si}", "result", G_ERROR);
-                              }
-                            }
-                            if (json_object_get(((struct _oidc_config *)*cls)->j_params, "register-client-allowed") == json_true()) {
-                            ((struct _oidc_config *)*cls)->client_register_resource_config = o_malloc(sizeof(struct _oidc_resource_config));
-                              if (((struct _oidc_config *)*cls)->client_register_resource_config != NULL) {
-                                ((struct _oidc_config *)*cls)->client_register_resource_config->method = G_METHOD_HEADER;
-                                ((struct _oidc_config *)*cls)->client_register_resource_config->oauth_scope = NULL;
-                                json_array_foreach(json_object_get(((struct _oidc_config *)*cls)->j_params, "register-client-auth-scope"), index, j_element) {
-                                  if (((struct _oidc_config *)*cls)->client_register_resource_config->oauth_scope == NULL) {
-                                    ((struct _oidc_config *)*cls)->client_register_resource_config->oauth_scope = o_strdup(json_string_value(j_element));
-                                  } else {
-                                    ((struct _oidc_config *)*cls)->client_register_resource_config->oauth_scope = mstrcatf(((struct _oidc_config *)*cls)->client_register_resource_config->oauth_scope, " %s", json_string_value(j_element));
-                                  }
-                                }
-                                ((struct _oidc_config *)*cls)->client_register_resource_config->realm = NULL;
-                                ((struct _oidc_config *)*cls)->client_register_resource_config->accept_access_token = 1;
-                                ((struct _oidc_config *)*cls)->client_register_resource_config->accept_client_token = 1;
-                                if (0 == o_strcmp("sha", json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "jwt-type")))) {
-                                  ((struct _oidc_config *)*cls)->client_register_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "key")));
-                                } else {
-                                  ((struct _oidc_config *)*cls)->client_register_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "cert")));
-                                }
-                                ((struct _oidc_config *)*cls)->client_register_resource_config->jwt_alg = alg;
-                                if (
-                                  config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "register/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_registration, (void*)*cls) != G_OK || 
-                                  config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "register/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_client_registration, (void*)*cls) != G_OK || 
-                                  config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "register/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK
-                                  ) {
-                                  y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error adding register endpoints");
-                                  j_return = json_pack("{si}", "result", G_ERROR);
-                                }
-                              } else {
-                                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for client_register_resource_config");
-                                j_return = json_pack("{si}", "result", G_ERROR);
-                              }
-                            }
-                            if (j_return == NULL) {
-                              j_return = json_pack("{si}", "result", G_OK);
-                            }
-                          }
-                        } else {
-                          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error generate_discovery_content");
+                        // Add endpoints
+                        y_log_message(Y_LOG_LEVEL_INFO, "Add endpoints with plugin prefix %s", name);
+                        if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_authorization, (void*)*cls) != G_OK || 
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_authorization, (void*)*cls) != G_OK || 
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_token, (void*)*cls) != G_OK || 
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_userinfo, (void*)*cls) != G_OK || 
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) != G_OK || 
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) != G_OK || 
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK ||
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) != G_OK || 
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_refresh_token_list_get, (void*)*cls) != G_OK || 
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK ||
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) != G_OK || 
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_disable_refresh_token, (void*)*cls) != G_OK || 
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK || 
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_discovery, (void*)*cls) != G_OK ||
+                           config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "jwks", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_jwks, (void*)*cls) != G_OK) {
                           json_decref(((struct _oidc_config *)*cls)->j_params);
+                          jwt_free(((struct _oidc_config *)*cls)->jwt_key);
+                          r_free_jwks(((struct _oidc_config *)*cls)->jwks);
                           o_free(*cls);
                           *cls = NULL;
+                          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding endpoints");
                           j_return = json_pack("{si}", "result", G_ERROR);
+                        } else {
+                          if (json_object_get(((struct _oidc_config *)*cls)->j_params, "introspection-revocation-allowed") == json_true()) {
+                          ((struct _oidc_config *)*cls)->introspect_revoke_resource_config = o_malloc(sizeof(struct _oidc_resource_config));
+                            if (((struct _oidc_config *)*cls)->introspect_revoke_resource_config != NULL) {
+                              ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->method = G_METHOD_HEADER;
+                              ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->oauth_scope = NULL;
+                              json_array_foreach(json_object_get(((struct _oidc_config *)*cls)->j_params, "introspection-revocation-auth-scope"), index, j_element) {
+                                if (((struct _oidc_config *)*cls)->introspect_revoke_resource_config->oauth_scope == NULL) {
+                                  ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->oauth_scope = o_strdup(json_string_value(j_element));
+                                } else {
+                                  ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->oauth_scope = mstrcatf(((struct _oidc_config *)*cls)->introspect_revoke_resource_config->oauth_scope, " %s", json_string_value(j_element));
+                                }
+                              }
+                              ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->realm = NULL;
+                              ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->accept_access_token = 1;
+                              ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->accept_client_token = 1;
+                              if (0 == o_strcmp("sha", json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "jwt-type")))) {
+                                ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "key")));
+                              } else {
+                                ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "cert")));
+                              }
+                              ((struct _oidc_config *)*cls)->introspect_revoke_resource_config->jwt_alg = alg;
+                              if (
+                                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "introspect/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_intropect_revoke, (void*)*cls) != G_OK || 
+                                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "introspect/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_introspection, (void*)*cls) != G_OK || 
+                                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "introspect/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK ||
+                                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_intropect_revoke, (void*)*cls) != G_OK || 
+                                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_revocation, (void*)*cls) != G_OK ||
+                                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK
+                                ) {
+                                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error adding introspect/revoke endpoints");
+                                j_return = json_pack("{si}", "result", G_ERROR);
+                              }
+                            } else {
+                              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for introspect_revoke_resource_config");
+                              j_return = json_pack("{si}", "result", G_ERROR);
+                            }
+                          }
+                          if (json_object_get(((struct _oidc_config *)*cls)->j_params, "register-client-allowed") == json_true()) {
+                          ((struct _oidc_config *)*cls)->client_register_resource_config = o_malloc(sizeof(struct _oidc_resource_config));
+                            if (((struct _oidc_config *)*cls)->client_register_resource_config != NULL) {
+                              ((struct _oidc_config *)*cls)->client_register_resource_config->method = G_METHOD_HEADER;
+                              ((struct _oidc_config *)*cls)->client_register_resource_config->oauth_scope = NULL;
+                              json_array_foreach(json_object_get(((struct _oidc_config *)*cls)->j_params, "register-client-auth-scope"), index, j_element) {
+                                if (((struct _oidc_config *)*cls)->client_register_resource_config->oauth_scope == NULL) {
+                                  ((struct _oidc_config *)*cls)->client_register_resource_config->oauth_scope = o_strdup(json_string_value(j_element));
+                                } else {
+                                  ((struct _oidc_config *)*cls)->client_register_resource_config->oauth_scope = mstrcatf(((struct _oidc_config *)*cls)->client_register_resource_config->oauth_scope, " %s", json_string_value(j_element));
+                                }
+                              }
+                              ((struct _oidc_config *)*cls)->client_register_resource_config->realm = NULL;
+                              ((struct _oidc_config *)*cls)->client_register_resource_config->accept_access_token = 1;
+                              ((struct _oidc_config *)*cls)->client_register_resource_config->accept_client_token = 1;
+                              if (0 == o_strcmp("sha", json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "jwt-type")))) {
+                                ((struct _oidc_config *)*cls)->client_register_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "key")));
+                              } else {
+                                ((struct _oidc_config *)*cls)->client_register_resource_config->jwt_decode_key = o_strdup(json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "cert")));
+                              }
+                              ((struct _oidc_config *)*cls)->client_register_resource_config->jwt_alg = alg;
+                              if (
+                                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "register/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_registration, (void*)*cls) != G_OK || 
+                                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "register/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_client_registration, (void*)*cls) != G_OK || 
+                                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "register/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK
+                                ) {
+                                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error adding register endpoints");
+                                j_return = json_pack("{si}", "result", G_ERROR);
+                              }
+                            } else {
+                              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for client_register_resource_config");
+                              j_return = json_pack("{si}", "result", G_ERROR);
+                            }
+                          }
+                          if (j_return == NULL) {
+                            if (generate_discovery_content((struct _oidc_config *)*cls) == G_OK) {
+                              j_return = json_pack("{si}", "result", G_OK);
+                            } else {
+                              y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error generate_discovery_content");
+                              json_decref(((struct _oidc_config *)*cls)->j_params);
+                              o_free(*cls);
+                              *cls = NULL;
+                              j_return = json_pack("{si}", "result", G_ERROR);
+                            }
+                          }
                         }
                       } else {
                         json_decref(((struct _oidc_config *)*cls)->j_params);
