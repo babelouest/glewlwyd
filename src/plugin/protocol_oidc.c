@@ -823,10 +823,10 @@ static char * generate_client_access_token(struct _oidc_config * config, const c
     jwt_add_grant(jwt, "scope", scope_list);
     token = jwt_encode_str(jwt);
     if (token == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_client_access_token - Error generating token");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_client_access_token - Error generating token");
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_client_access_token - Error cloning jwt");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_client_access_token - Error cloning jwt");
   }
   jwt_free(jwt);
   return token;
@@ -3069,7 +3069,7 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
               json_object_del(json_array_get(j_result, 0), "gpor_id");
               j_return = json_pack("{sisO}", "result", G_OK, "token", json_array_get(j_result, 0));
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_refresh_token - Error executing j_query scope refresh_token");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_refresh_token - Error executing j_query scope refresh_token");
               j_return = json_pack("{si}", "result", G_ERROR_DB);
             }
           } else {
@@ -3155,7 +3155,7 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
               json_object_del(json_array_get(j_result, 0), "gpoa_id");
               j_return = json_pack("{sisO}", "result", G_OK, "token", json_array_get(j_result, 0));
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_refresh_token - Error executing j_query scope access_token");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_refresh_token - Error executing j_query scope access_token");
               j_return = json_pack("{si}", "result", G_ERROR_DB);
             }
           } else {
@@ -4548,7 +4548,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
     } else if (check_result_value(j_client, G_ERROR_NOT_FOUND) || check_result_value(j_client, G_ERROR_UNAUTHORIZED)) {
       ret = G_ERROR_PARAM;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - Error glewlwyd_callback_check_client_valid");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error glewlwyd_callback_check_client_valid");
       ret = G_ERROR;
     }
     json_decref(j_client);
@@ -4561,7 +4561,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
         if (check_result_value(j_client, G_OK)) {
           j_client_for_sub = json_incref(json_object_get(j_client, "client"));
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - Error glewlwyd_plugin_callback_get_client");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error glewlwyd_plugin_callback_get_client");
           ret = G_ERROR;
         }
         json_decref(j_client);
@@ -4618,27 +4618,27 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                   ulfius_set_json_body_response(response, 200, j_body);
                   json_decref(j_body);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - Error serialize_access_token");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_access_token");
                   j_body = json_pack("{ss}", "error", "server_error");
                   ulfius_set_json_body_response(response, 500, j_body);
                   json_decref(j_body);
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - Error generate_access_token");
+                y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_access_token");
                 j_body = json_pack("{ss}", "error", "server_error");
                 ulfius_set_json_body_response(response, 500, j_body);
                 json_decref(j_body);
               }
               o_free(access_token);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - Error glewlwyd_plugin_callback_get_user");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error glewlwyd_plugin_callback_get_user");
               j_body = json_pack("{ss}", "error", "server_error");
               ulfius_set_json_body_response(response, 500, j_body);
               json_decref(j_body);
             }
             json_decref(j_user_only);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - Error serialize_refresh_token");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_refresh_token");
             j_body = json_pack("{ss}", "error", "server_error");
             ulfius_set_json_body_response(response, 500, j_body);
             json_decref(j_body);
@@ -4646,7 +4646,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
           json_decref(j_refresh_token);
           o_free(refresh_token);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - Error generate_refresh_token");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_refresh_token");
           j_body = json_pack("{ss}", "error", "server_error");
           ulfius_set_json_body_response(response, 500, j_body);
           json_decref(j_body);
@@ -4658,7 +4658,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", username, ip_source);
       response->status = 403;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_resource_owner_pwd_cred - glewlwyd_callback_check_user_valid");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - glewlwyd_callback_check_user_valid");
       response->status = 403;
     }
     json_decref(j_user);
@@ -4684,7 +4684,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
   const char * ip_source = get_ip_source(request);
 
   if (issued_for == NULL) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_client_credentials_grant  - Error get_client_hostname");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_client_credentials_grant  - Error get_client_hostname");
     response->status = 500;
   } else if (request->auth_basic_user != NULL && request->auth_basic_password != NULL && o_strlen(u_map_get(request->map_post_body, "scope")) > 0) {
     j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password);
@@ -4739,11 +4739,11 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
               ulfius_set_json_body_response(response, 200, json_body);
               json_decref(json_body);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_client_credentials_grant - Error serialize_access_token");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_client_credentials_grant - Error serialize_access_token");
               response->status = 500;
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_client_credentials_grant - Error generate_client_access_token");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_client_credentials_grant - Error generate_client_access_token");
             response->status = 500;
           }
           o_free(access_token);
@@ -4751,7 +4751,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
           o_free(scope_allowed);
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_client_credentials_grant - Error split_string");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_client_credentials_grant - Error split_string");
         response->status = 500;
       }
       free_string_array(scope_array);
@@ -6026,11 +6026,11 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_revocation, (void*)*cls) != G_OK ||
                                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK
                                 ) {
-                                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error adding introspect/revoke endpoints");
+                                y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding introspect/revoke endpoints");
                                 j_return = json_pack("{si}", "result", G_ERROR);
                               }
                             } else {
-                              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for introspect_revoke_resource_config");
+                              y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error allocating resources for introspect_revoke_resource_config");
                               j_return = json_pack("{si}", "result", G_ERROR);
                             }
                           }
@@ -6060,11 +6060,11 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "register/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_client_registration, (void*)*cls) != G_OK || 
                                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "register/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK
                                 ) {
-                                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error adding register endpoints");
+                                y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding register endpoints");
                                 j_return = json_pack("{si}", "result", G_ERROR);
                               }
                             } else {
-                              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - oauth2 - Error allocating resources for client_register_resource_config");
+                              y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error allocating resources for client_register_resource_config");
                               j_return = json_pack("{si}", "result", G_ERROR);
                             }
                           }
