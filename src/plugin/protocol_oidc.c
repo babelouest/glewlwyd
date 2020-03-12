@@ -1659,7 +1659,7 @@ static int is_authorization_type_enabled(struct _oidc_config * config, uint auth
 /**
  * Verify if a client is valid without checking its secret
  */
-static json_t * check_client_valid_without_secret(struct _oidc_config * config, const char * client_id, const char * redirect_uri, unsigned short authorization_type) {
+static json_t * check_client_valid_without_secret(struct _oidc_config * config, const char * client_id, const char * redirect_uri, unsigned short authorization_type, const char * ip_source) {
   json_t * j_client, * j_element = NULL, * j_return;
   int uri_found = 0, authorization_type_enabled;
   size_t index = 0;
@@ -1702,10 +1702,10 @@ static json_t * check_client_valid_without_secret(struct _oidc_config * config, 
       }
     }
     if (!uri_found) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid_without_secret - Error, redirect_uri '%s' is invalid for the client '%s'", redirect_uri, client_id);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid_without_secret - Error, redirect_uri '%s' is invalid for the client '%s', origin: %s", redirect_uri, client_id, ip_source);
     }
     if (!authorization_type_enabled) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid_without_secret - Error, authorization type %d is not enabled for the client '%s'", authorization_type, client_id);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid_without_secret - Error, authorization type %d is not enabled for the client '%s', origin: %s", authorization_type, client_id, ip_source);
     }
     if (uri_found && authorization_type_enabled) {
       j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
@@ -1713,7 +1713,7 @@ static json_t * check_client_valid_without_secret(struct _oidc_config * config, 
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid_without_secret - Error, client '%s' is invalid", client_id);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid_without_secret - Error, client '%s' is invalid, origin: %s", client_id, ip_source);
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   json_decref(j_client);
@@ -1723,20 +1723,20 @@ static json_t * check_client_valid_without_secret(struct _oidc_config * config, 
 /**
  * Verify if a client is valid
  */
-static json_t * check_client_valid(struct _oidc_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * client_post_login, const char * client_post_password, const char * redirect_uri, unsigned short authorization_type, int implicit_flow) {
+static json_t * check_client_valid(struct _oidc_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * client_post_login, const char * client_post_password, const char * redirect_uri, unsigned short authorization_type, int implicit_flow, const char * ip_source) {
   json_t * j_client, * j_element = NULL, * j_return;
   int uri_found = 0, authorization_type_enabled;
   size_t index = 0;
   const char * client_password = NULL;
   
   if (client_id == NULL) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error client_id is NULL");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error client_id is NULL, origin: %s", ip_source);
     return json_pack("{si}", "result", G_ERROR_PARAM);
   } else if (client_header_login != NULL && 0 != o_strcmp(client_header_login, client_id)) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, client_id specified is different from client_id in the basic auth header");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, client_id specified is different from client_id in the basic auth header, origin: %s", ip_source);
     return json_pack("{si}", "result", G_ERROR_PARAM);
   } else if (client_post_login != NULL && 0 != o_strcmp(client_post_login, client_id)) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, client_id specified is different from client_id in the basic auth header");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, client_id specified is different from client_id in the basic auth header, origin: %s", ip_source);
     return json_pack("{si}", "result", G_ERROR_PARAM);
   }
   if (client_header_login != NULL) {
@@ -1747,7 +1747,7 @@ static json_t * check_client_valid(struct _oidc_config * config, const char * cl
   j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, client_id, client_password);
   if (check_result_value(j_client, G_OK)) {
     if (!implicit_flow && client_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, confidential client must be authentified with its password");
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, confidential client must be authentified with its password, origin: %s", ip_source);
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     } else {
       if (redirect_uri != NULL) {
@@ -1786,10 +1786,10 @@ static json_t * check_client_valid(struct _oidc_config * config, const char * cl
         }
       }
       if (!uri_found) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, redirect_uri '%s' is invalid for the client '%s'", redirect_uri, client_id);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, redirect_uri '%s' is invalid for the client '%s', origin: %s", redirect_uri, client_id, ip_source);
       }
       if (!authorization_type_enabled) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, authorization type %d is not enabled for the client '%s'", authorization_type, client_id);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, authorization type %d is not enabled for the client '%s', origin: %s", authorization_type, client_id, ip_source);
       }
       if (uri_found && authorization_type_enabled) {
         j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
@@ -1798,7 +1798,7 @@ static json_t * check_client_valid(struct _oidc_config * config, const char * cl
       }
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, client '%s' is invalid", client_id);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, client '%s' is invalid, origin: %s", client_id, ip_source);
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   json_decref(j_client);
@@ -2639,7 +2639,7 @@ static json_t * refresh_token_list_get(struct _oidc_config * config, const char 
 /**
  * disable a refresh token based on its signature
  */
-static int refresh_token_disable(struct _oidc_config * config, const char * username, const char * token_hash) {
+static int refresh_token_disable(struct _oidc_config * config, const char * username, const char * token_hash, const char * ip_source) {
   json_t * j_query, * j_result;
   int res, ret;
   unsigned char token_hash_dec[128];
@@ -2682,18 +2682,18 @@ static int refresh_token_disable(struct _oidc_config * config, const char * user
           res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
           json_decref(j_query);
           if (res == H_OK) {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - token '[...%s]' disabled", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))));
+            y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - token '[...%s]' disabled, origin: %s", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))), ip_source);
             ret = G_OK;
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (2)");
             ret = G_ERROR_DB;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token '[...%s]' already disabled", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))));
+          y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token '[...%s]' already disabled, origin: %s", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))), ip_source);
           ret = G_ERROR_PARAM;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token '[...%s]' not found", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token '[...%s]' not found, origin: %s", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))), ip_source);
         ret = G_ERROR_NOT_FOUND;
       }
       json_decref(j_result);
@@ -2779,7 +2779,7 @@ static char * get_request_from_uri(struct _oidc_config * config, const char * re
   }
   
   if (ulfius_send_http_request(&req, &resp) != U_OK) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "get_request_from_uri - Error ulfius_send_http_request");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error ulfius_send_http_request");
   } else if (resp.status == 200) {
     str_request = o_malloc(resp.binary_body_length +1);
     if (str_request != NULL) {
@@ -2789,7 +2789,7 @@ static char * get_request_from_uri(struct _oidc_config * config, const char * re
       y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error allocating resources for str_request");
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "get_request_from_uri - Error ulfius_send_http_request response status is %d", resp.status);
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error ulfius_send_http_request response status is %d", resp.status);
   }
   
   ulfius_clean_request(&req);
@@ -2800,7 +2800,7 @@ static char * get_request_from_uri(struct _oidc_config * config, const char * re
 /**
  * validate a request object in jwt format
  */
-static json_t * validate_jwt_request(struct _oidc_config * config, const char * jwt_request) {
+static json_t * validate_jwt_request(struct _oidc_config * config, const char * jwt_request, const char * ip_source) {
   json_t * j_return, * j_payload, * j_client = NULL;
   jwt_t * jwt_unverified = NULL, * jwt_verified = NULL;
   char * jwt_payload;
@@ -2824,16 +2824,16 @@ static json_t * validate_jwt_request(struct _oidc_config * config, const char * 
                   if (jwt_get_alg(jwt_verified) == JWT_ALG_HS256 || jwt_get_alg(jwt_verified) == JWT_ALG_HS384 || jwt_get_alg(jwt_verified) == JWT_ALG_HS512) {
                     j_return = json_pack("{sisOsO}", "result", G_OK, "request", j_payload, "client", j_client);
                   } else {
-                    y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt has unsupported algorithm: %s", jwt_alg_str(jwt_get_alg(jwt_verified)));
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt has unsupported algorithm: %s, origin: %s", jwt_alg_str(jwt_get_alg(jwt_verified)), ip_source);
                     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
                   }
                 } else {
-                  y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt has an invalid signature");
+                  y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt has an invalid signature", ip_source);
                   j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
                 }
                 jwt_free(jwt_verified);
               } else {
-                y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - client has no attribute 'client_secret'");
+                y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - client has no attribute 'client_secret', origin: %s", ip_source);
                 j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
               }
             } else {
@@ -2841,30 +2841,30 @@ static json_t * validate_jwt_request(struct _oidc_config * config, const char * 
               if (jwt_get_alg(jwt_unverified) == JWT_ALG_NONE) {
                 j_return = json_pack("{sisOsO}", "result", G_OK, "request", j_payload, "client", j_client);
               } else {
-                y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt alg is not none although the client is not confidential");
+                y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt alg is not none although the client is not confidential, origin: %s", ip_source);
                 j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
               }
             }
           } else if (check_result_value(j_client, G_ERROR_NOT_FOUND) || check_result_value(j_client, G_ERROR_PARAM)) {
             j_return = json_pack("{sO}", "result", json_object_get(j_client, "result"));
           } else {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - Error getting header or payload");
+            y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - Error getting header or payload, origin: %s", ip_source);
             j_return = json_pack("{si}", "result", G_ERROR);
           }
           json_decref(j_client);
         } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt has an invalid payload with attribute request or request_uri");
+          y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt has an invalid payload with attribute request or request_uri, origin: %s", ip_source);
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - Error getting header or payload");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - Error getting header or payload, origin: %s", ip_source);
         j_return = json_pack("{si}", "result", G_ERROR);
       }
       json_decref(j_payload);
       o_free(jwt_payload);
       jwt_free(jwt_unverified);
     } else {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - Error jwt_request is not a valid jwt");
+      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - Error jwt_request is not a valid jwt, origin: %s", ip_source);
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     }
   } else {
@@ -3772,7 +3772,7 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
 static json_t * validate_endpoint_auth(const struct _u_request * request, struct _u_response * response, void * user_data, int auth_type, json_t * j_request, json_t * j_client_validated) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   char * redirect_url = NULL, * issued_for = NULL, ** scope_list = NULL, * state_param, * endptr = NULL, * id_token_hash = NULL, code_challenge_stored[GLEWLWYD_CODE_CHALLENGE_MAX_LENGTH + 1] = {0};
-  const char * client_id = NULL, * redirect_uri = NULL, * scope = NULL, * display = NULL, * ui_locales = NULL, * login_hint = NULL, * prompt = NULL, * nonce = NULL, * max_age = NULL, * id_token_hint = NULL, * code_challenge = NULL, * code_challenge_method = NULL;
+  const char * client_id = NULL, * redirect_uri = NULL, * scope = NULL, * display = NULL, * ui_locales = NULL, * login_hint = NULL, * prompt = NULL, * nonce = NULL, * max_age = NULL, * id_token_hint = NULL, * code_challenge = NULL, * code_challenge_method = NULL, * ip_source = get_ip_source(request);
   json_t * j_session = NULL, * j_client = NULL, * j_last_token = NULL, * j_claims = NULL;
   json_t * j_return;
   struct _u_map additional_parameters;
@@ -3844,7 +3844,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     if (u_map_has_key(map, "claims") && o_strlen(u_map_get(map, "claims"))) {
       j_claims = json_loads(u_map_get(map, "claims"), JSON_DECODE_ANY, NULL);
       if (j_claims == NULL) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - error claims parameter not in JSON format");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - error claims parameter not in JSON format, origin: %s", ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "invalid_request", NULL);
         } else {
@@ -3880,7 +3880,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     }
     
     if (!o_strlen(redirect_uri)) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - redirect_uri missing");
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - redirect_uri missing, origin: %s", ip_source);
       response->status = 403;
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       break;
@@ -3888,7 +3888,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     
     // Check if client is allowed to perform this request
     if (j_client_validated == NULL) {
-      j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, client_id, u_map_get(map, "client_secret"), u_map_get(map, "redirect_uri"), auth_type, 1);
+      j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, client_id, u_map_get(map, "client_secret"), u_map_get(map, "redirect_uri"), auth_type, 1, ip_source);
       if (!check_result_value(j_client, G_OK)) {
         // client is not authorized
         if (form_post) {
@@ -3903,7 +3903,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
         break;
       }
     } else {
-      j_client = check_client_valid_without_secret(config, client_id, redirect_uri, auth_type);
+      j_client = check_client_valid_without_secret(config, client_id, redirect_uri, auth_type, ip_source);
       if (!check_result_value(j_client, G_OK)) {
         // client is not authorized
         if (form_post) {
@@ -3932,7 +3932,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     }
     
     if (j_claims != NULL && parse_claims_request(j_claims) != G_OK) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - error parsing claims parameter");
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - error parsing claims parameter, origin: %s", ip_source);
       if (form_post) {
         build_form_post_error_response(map, response, "error", "invalid_request", NULL);
       } else {
@@ -3996,7 +3996,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     // Check if at least one scope has been provided
     if (!o_strlen(scope)) {
       // Scope is not allowed for this user
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - scope list is missing or empty or scope 'openid' missing");
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - scope list is missing or empty or scope 'openid' missing, origin: %s", ip_source);
       if (form_post) {
         build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
       } else {
@@ -4027,7 +4027,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     // Check that the scope 'openid' is provided, otherwise return error
     if ((!string_array_has_value((const char **)scope_list, "openid") && !config->allow_non_oidc) || (auth_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG && !string_array_has_value((const char **)scope_list, "openid"))) {
       // Scope openid missing
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - scope 'openid' missing");
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - scope 'openid' missing, origin: %s", ip_source);
       if (form_post) {
         build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
       } else {
@@ -4045,7 +4045,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
       if (0 == o_strcmp("none", prompt)) {
         // Scope is not allowed for this user
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none', avoid login page");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none', avoid login page, origin: %s", ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "interaction_required", NULL);
         } else {
@@ -4067,7 +4067,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
       if (0 == o_strcmp("none", prompt)) {
         // Scope is not allowed for this user
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none', avoid login page");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none', avoid login page, origin: %s", ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "interaction_required", NULL);
         } else {
@@ -4079,7 +4079,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       } else {
         // Scope is not allowed for this user
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - scope list '%s' is invalid for user '%s'", scope, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - scope list '%s' is invalid for user '%s', origin: %s", scope, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
         } else {
@@ -4113,7 +4113,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
           if (check_result_value(j_last_token, G_OK)) {
             id_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, id_token_hint);
             if (0 != o_strcmp(id_token_hash, json_string_value(json_object_get(json_object_get(j_last_token, "id_token"), "token_hash")))) {
-              y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - id_token_hint was not the last one provided to client '%s' for user '%s'", client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
+              y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - id_token_hint was not the last one provided to client '%s' for user '%s', origin: %s", client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
               if (form_post) {
                 build_form_post_error_response(map, response, "error", "invalid_request", NULL);
               } else {
@@ -4126,7 +4126,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
               break;
             }
           } else if (check_result_value(j_last_token, G_ERROR_NOT_FOUND)) {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - no id_token was provided to client '%s' for user '%s'", client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
+            y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - no id_token was provided to client '%s' for user '%s', origin: %s", client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
             if (form_post) {
               build_form_post_error_response(map, response, "error", "invalid_request", NULL);
             } else {
@@ -4151,7 +4151,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
             break;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - id_token has invalid content or signature");
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - id_token has invalid content or signature, origin: %s", ip_source);
           if (form_post) {
             build_form_post_error_response(map, response, "error", "invalid_request", NULL);
           } else {
@@ -4164,7 +4164,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
           break;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - no id_token provided in the request");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - no id_token provided in the request, origin: %s", ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "invalid_request", NULL);
         } else {
@@ -4182,7 +4182,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_true()) {
       if (0 == o_strcmp("none", prompt)) {
         // Scope is not allowed for this user
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none', avoid login page");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none', avoid login page, origin: %s", ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "interaction_required", NULL);
         } else {
@@ -4235,7 +4235,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     
     // nonce parameter is required for some authorization types
     if ((auth_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG) && !o_strlen(nonce)) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - nonce required");
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - nonce required, origin: %s", ip_source);
       if (form_post) {
         build_form_post_error_response(map, response, "error", "invalid_request", NULL);
       } else {
@@ -4263,7 +4263,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
           break;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - nonce required");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - nonce required, origin: %s", ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "invalid_request", NULL);
         } else {
@@ -4306,7 +4306,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
   const char * code = u_map_get(request->map_post_body, "code"), 
              * client_id = u_map_get(request->map_post_body, "client_id"),
              * redirect_uri = u_map_get(request->map_post_body, "redirect_uri"),
-             * code_verifier = u_map_get(request->map_post_body, "code_verifier");
+             * code_verifier = u_map_get(request->map_post_body, "code_verifier"),
+             * ip_source = get_ip_source(request);
   char * issued_for = get_client_hostname(request), * id_token;
   json_t * j_code, * j_body, * j_refresh_token, * j_client = NULL, * j_user, * j_amr, * j_claims_request = NULL;
   time_t now;
@@ -4318,7 +4319,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
   if (code == NULL || client_id == NULL || redirect_uri == NULL) {
     response->status = 400;
   } else {
-    j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), redirect_uri, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG, 0);
+    j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), redirect_uri, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG, 0, ip_source);
     if (check_result_value(j_client, G_OK)) {
       j_code = validate_authorization_code(config, code, client_id, redirect_uri, code_verifier);
       if (check_result_value(j_code, G_OK)) {
@@ -4762,7 +4763,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
     }
     json_decref(j_client);
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_auth_type_client_credentials_grant - Error invalid input parameters. client_id: '%s', scope: '%s'", request->auth_basic_user, u_map_get(request->map_post_body, "scope"));
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_auth_type_client_credentials_grant - Error invalid input parameters. client_id: '%s', scope: '%s', origin: %s", request->auth_basic_user, u_map_get(request->map_post_body, "scope"), ip_source);
     response->status = 403;
   }
   o_free(issued_for);
@@ -4774,7 +4775,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
  */
 static int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  const char * refresh_token = u_map_get(request->map_post_body, "refresh_token");
+  const char * refresh_token = u_map_get(request->map_post_body, "refresh_token"), * ip_source = get_ip_source(request);
   json_t * j_refresh, * json_body, * j_client, * j_user, * j_client_for_sub = NULL, * j_claims_request = NULL;
   time_t now;
   char * access_token, * scope_joined = NULL, * issued_for;
@@ -4789,11 +4790,11 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
         }
       }
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
-        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_FLAG, 0);
+        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_FLAG, 0, ip_source);
         if (!check_result_value(j_client, G_OK)) {
           has_issues = 1;
         } else if (request->auth_basic_user == NULL && request->auth_basic_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc get_access_token_from_refresh - client '%s' is invalid or is not confidential", request->auth_basic_user);
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc get_access_token_from_refresh - client '%s' is invalid or is not confidential", request->auth_basic_user, ip_source);
           has_issues = 1;
         }
         j_client_for_sub = json_incref(json_object_get(j_client, "client"));
@@ -4848,7 +4849,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
           }
           o_free(access_token);
         } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc get_access_token_from_refresh - Error glewlwyd_plugin_callback_get_user");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oidc get_access_token_from_refresh - Error glewlwyd_plugin_callback_get_user");
           response->status = 500;
         }
         json_decref(j_user);
@@ -4869,7 +4870,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
     json_decref(j_refresh);
     o_free(scope_joined);
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc get_access_token_from_refresh - Error token empty or missing");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc get_access_token_from_refresh - Error token empty or missing, origin: %s", ip_source);
     response->status = 400;
   }
   json_decref(j_client_for_sub);
@@ -4881,7 +4882,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
  */
 static int delete_refresh_token (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  const char * refresh_token = u_map_get(request->map_post_body, "refresh_token");
+  const char * refresh_token = u_map_get(request->map_post_body, "refresh_token"), * ip_source = get_ip_source(request);
   json_t * j_refresh, * j_client;
   time_t now;
   char * issued_for;
@@ -4891,12 +4892,12 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
     j_refresh = validate_refresh_token(config, refresh_token);
     if (check_result_value(j_refresh, G_OK)) {
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
-        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), NULL, GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_FLAG, 0);
+        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_post_body, "client_id"), u_map_get(request->map_post_body, "client_secret"), NULL, GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_FLAG, 0, ip_source);
         if (!check_result_value(j_client, G_OK)) {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc delete_refresh_token - client '%s' is invalid", request->auth_basic_user);
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc delete_refresh_token - client '%s' is invalid, origin: %s", request->auth_basic_user, ip_source);
           has_issues = 1;
         } else if (request->auth_basic_user == NULL && request->auth_basic_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc delete_refresh_token - client '%s' is invalid or is not confidential", request->auth_basic_user);
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc delete_refresh_token - client '%s' is invalid or is not confidential, origin: %s", request->auth_basic_user, ip_source);
           has_issues = 1;
         }
         json_decref(j_client);
@@ -4921,7 +4922,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
     }
     json_decref(j_refresh);
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc delete_refresh_token - token missing or empty");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc delete_refresh_token - token missing or empty, origin: %s", ip_source);
     response->status = 400;
   }
   return U_CALLBACK_CONTINUE;
@@ -4966,7 +4967,7 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
         json_object_set_new((json_t *)response->shared_data, "username", json_string(username));
         o_free(username);
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_check_glewlwyd_session_or_token - Error get_username_from_sub");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_check_glewlwyd_session_or_token - Error get_username_from_sub, origin: %s", get_ip_source(request));
         ret = U_CALLBACK_UNAUTHORIZED;
       }
     }
@@ -5000,7 +5001,7 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
  */
 static int callback_oidc_authorization(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  const char * response_type = NULL, * redirect_uri = NULL, * client_id = NULL, * nonce = NULL, * state_value = NULL;
+  const char * response_type = NULL, * redirect_uri = NULL, * client_id = NULL, * nonce = NULL, * state_value = NULL, * ip_source = get_ip_source(request);
   int result = U_CALLBACK_CONTINUE;
   char * redirect_url, ** resp_type_array = NULL, * authorization_code = NULL, * access_token = NULL, * id_token = NULL, * expires_in_str = NULL, * iat_str = NULL, * query_parameters = NULL, * state = NULL, * str_request = NULL;
   json_t * j_auth_result = NULL, * j_request = NULL, * j_client = NULL;
@@ -5049,7 +5050,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       ret = G_ERROR_PARAM;
     } else if (ret == G_OK && o_strlen(u_map_get(map, "request_uri"))) {
       if ((str_request = get_request_from_uri(config, u_map_get(map, "request_uri"))) == NULL) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - Error getting request from uri %s", u_map_get(map, "request_uri"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - Error getting request from uri %s, origin: %s", u_map_get(map, "request_uri"), ip_source);
         if (u_map_get(map, "redirect_uri") != NULL) {
           if (form_post) {
             build_form_post_error_response(map, response, "error", "invalid_request", NULL);
@@ -5064,12 +5065,12 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         }
         ret = G_ERROR_PARAM;
       } else {
-        j_request = validate_jwt_request(config, str_request);
+        j_request = validate_jwt_request(config, str_request, ip_source);
         check_request = 1;
       }
       o_free(str_request);
     } else if (ret == G_OK && o_strlen(u_map_get(map, "request"))) {
-      j_request = validate_jwt_request(config, u_map_get(map, "request"));
+      j_request = validate_jwt_request(config, u_map_get(map, "request"), ip_source);
       check_request = 1;
     }
   }
@@ -5084,16 +5085,16 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
     } else {
       if (!json_string_length(json_object_get(json_object_get(j_request, "request"), "client_id")) || (u_map_has_key(map, "client_id") && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_request, "request"), "client_id")), u_map_get(map, "client_id")))) {
         // url parameter client_id can't differ from request parameter if set and must be present in request
-        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - client_id missing or invalid");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - client_id missing or invalid, origin: %s", ip_source);
         response->status = 403;
         ret = G_ERROR_PARAM;
       } else if (!json_string_length(json_object_get(json_object_get(j_request, "request"), "response_type")) || (u_map_has_key(map, "response_type") && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_request, "request"), "response_type")), u_map_get(map, "response_type")))) {
         // url parameter response_type can't differ from request parameter if set and must be present in request
-        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - response_type missing or invalid");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - response_type missing or invalid, origin: %s", ip_source);
         response->status = 403;
         ret = G_ERROR_PARAM;
       } else if (!json_string_length(json_object_get(json_object_get(j_request, "request"), "redirect_uri"))) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - redirect_uri missing");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - redirect_uri missing, origin: %s", ip_source);
         // redirect_uri is mandatory
         response->status = 403;
         ret = G_ERROR_PARAM;
@@ -5490,7 +5491,7 @@ static int callback_oidc_token(const struct _u_request * request, struct _u_resp
   } else if (0 == o_strcmp("delete_token", grant_type)) {
     result = delete_refresh_token(request, response, user_data);
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "Unknown grant_type '%s'", grant_type);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc callback_oidc_token - Unknown grant_type '%s', origin: %s", grant_type, get_ip_source(request));
     response->status = 400;
   }
   return result;
@@ -5614,7 +5615,7 @@ static int callback_oidc_disable_refresh_token(const struct _u_request * request
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
 
-  if ((res = refresh_token_disable(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "token_hash"))) == G_ERROR_NOT_FOUND) {
+  if ((res = refresh_token_disable(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "token_hash"), get_ip_source(request))) == G_ERROR_NOT_FOUND) {
     response->status = 404;
   } else if (res == G_ERROR_PARAM) {
     response->status = 400;

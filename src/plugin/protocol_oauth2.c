@@ -621,22 +621,22 @@ static int is_authorization_type_enabled(struct _oauth2_config * config, uint au
   return (authorization_type <= 4)?config->auth_type_enabled[authorization_type]:0;
 }
 
-static json_t * check_client_valid(struct _oauth2_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * redirect_uri, unsigned short authorization_type, int implicit_flow) {
+static json_t * check_client_valid(struct _oauth2_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * redirect_uri, unsigned short authorization_type, int implicit_flow, const char * ip_source) {
   json_t * j_client, * j_element = NULL, * j_return;
   int uri_found, authorization_type_enabled;
   size_t index = 0;
   
   if (client_id == NULL) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error client_id is NULL");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error client_id is NULL, origin: %s", ip_source);
     return json_pack("{si}", "result", G_ERROR_PARAM);
   } else if (client_header_login != NULL && 0 != o_strcmp(client_header_login, client_id)) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, client_id specified is different from client_id in the basic auth header");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, client_id specified is different from client_id in the basic auth header, origin: %s", ip_source);
     return json_pack("{si}", "result", G_ERROR_PARAM);
   }
   j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, client_id, client_header_password);
   if (check_result_value(j_client, G_OK)) {
     if (!implicit_flow && client_header_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, confidential client must be authentified with its password");
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, confidential client must be authentified with its password, origin: %s", ip_source);
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     } else {
       if (redirect_uri != NULL) {
@@ -668,10 +668,10 @@ static json_t * check_client_valid(struct _oauth2_config * config, const char * 
         }
       }
       if (!uri_found) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, redirect_uri '%s' is invalid for the client '%s'", redirect_uri, client_id);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, redirect_uri '%s' is invalid for the client '%s', origin: %s", redirect_uri, client_id, ip_source);
       }
       if (!authorization_type_enabled) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, authorization type is not enabled for the client '%s'", client_id);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, authorization type is not enabled for the client '%s', origin: %s", client_id, ip_source);
       }
       if (uri_found && authorization_type_enabled) {
         j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
@@ -680,7 +680,7 @@ static json_t * check_client_valid(struct _oauth2_config * config, const char * 
       }
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, client '%s' is invalid", client_id);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_client_valid - Error, client '%s' is invalid, origin: %s", client_id, ip_source);
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   json_decref(j_client);
@@ -1301,7 +1301,7 @@ static json_t * refresh_token_list_get(struct _oauth2_config * config, const cha
   return j_return;
 }
 
-static int refresh_token_disable(struct _oauth2_config * config, const char * username, const char * token_hash) {
+static int refresh_token_disable(struct _oauth2_config * config, const char * username, const char * token_hash, const char * ip_source) {
   json_t * j_query, * j_result;
   int res, ret;
   unsigned char token_hash_dec[128];
@@ -1344,27 +1344,27 @@ static int refresh_token_disable(struct _oauth2_config * config, const char * us
           res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
           json_decref(j_query);
           if (res == H_OK) {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - token '[...%s]' disabled", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))));
+            y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 refresh_token_disable - token '[...%s]' disabled, origin: %s", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))), ip_source);
             ret = G_OK;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (2)");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 refresh_token_disable - Error executing j_query (2)");
             ret = G_ERROR_DB;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token '[...%s]' already disabled", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))));
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 refresh_token_disable - Error token '[...%s]' already disabled, origin: %s", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))), ip_source);
           ret = G_ERROR_PARAM;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token '[...%s]' not found", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 refresh_token_disable - Error token '[...%s]' not found, origin: %s", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))), ip_source);
         ret = G_ERROR_NOT_FOUND;
       }
       json_decref(j_result);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (1)");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 refresh_token_disable - Error executing j_query (1)");
       ret = G_ERROR_DB;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error o_base64url_2_base64");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 refresh_token_disable - Error o_base64url_2_base64");
     ret = G_ERROR_PARAM;
   }
   return ret;
@@ -1777,7 +1777,8 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
 static int check_auth_type_auth_code_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
   char * authorization_code = NULL, * redirect_url, * issued_for, * state_param = NULL, * state_encoded, code_challenge_stored[GLEWLWYD_CODE_CHALLENGE_MAX_LENGTH + 1] = {0};
-  json_t * j_session, * j_client = check_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, 1);
+  const char * ip_source = get_ip_source(request);
+  json_t * j_session, * j_client = check_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, 1, ip_source);
   int res;
   
   if (u_map_get(request->map_url, "state") != NULL) {
@@ -1810,7 +1811,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
                     redirect_url = msprintf("%s%serror=server_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
                     ulfius_add_header_to_response(response, "Location", redirect_url);
                     o_free(redirect_url);
-                    y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_auth_code_grant - Error generate_authorization_code");
+                    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_auth_code_grant - Error generate_authorization_code");
                     response->status = 302;
                   }
                   o_free(authorization_code);
@@ -1818,13 +1819,13 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
                   redirect_url = msprintf("%s%serror=invalid_request", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
                   ulfius_add_header_to_response(response, "Location", redirect_url);
                   o_free(redirect_url);
-                  y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_auth_type_auth_code_grant - Invalid code_challenge or code_challenge_method");
+                  y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_auth_code_grant - Invalid code_challenge or code_challenge_method, origin: %s", get_ip_source(request));
                   response->status = 302;
                 } else {
                   redirect_url = msprintf("%s%serror=server_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
                   ulfius_add_header_to_response(response, "Location", redirect_url);
                   o_free(redirect_url);
-                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_auth_code_grant - Error is_code_challenge_valid");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 check_auth_type_auth_code_grant - Error is_code_challenge_valid");
                   response->status = 302;
                 }
               } else {
@@ -1858,7 +1859,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
         } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
           // Scope is not allowed for this user
           response->status = 302;
-          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_auth_code_grant - scope list '%s' is invalid for user '%s'", u_map_get(request->map_url, "scope"), json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_auth_code_grant - scope list '%s' is invalid for user '%s', origin: %s", u_map_get(request->map_url, "scope"), json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
           redirect_url = msprintf("%s%serror=invalid_scope%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
@@ -1872,7 +1873,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
         json_decref(j_session);
       } else {
         // Scope is not allowed for this user
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_auth_code_grant - scope list is missing or empty");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_auth_code_grant - scope list is missing or empty, origin: %s", ip_source);
         response->status = 302;
         redirect_url = msprintf("%s%serror=invalid_scope%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
         ulfius_add_header_to_response(response, "Location", redirect_url);
@@ -1906,7 +1907,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
   const char * code = u_map_get(request->map_post_body, "code"), 
              * client_id = u_map_get(request->map_post_body, "client_id"),
              * redirect_uri = u_map_get(request->map_post_body, "redirect_uri"),
-             * code_verifier = u_map_get(request->map_post_body, "code_verifier");
+             * code_verifier = u_map_get(request->map_post_body, "code_verifier"),
+             * ip_source = get_ip_source(request);
   char * issued_for = get_client_hostname(request);
   json_t * j_code, * j_body, * j_refresh_token, * j_client, * j_user;
   time_t now;
@@ -1918,7 +1920,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
   if (code == NULL || client_id == NULL || redirect_uri == NULL) {
     response->status = 400;
   } else {
-    j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, redirect_uri, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, 0);
+    j_client = check_client_valid(config, client_id, request->auth_basic_user, request->auth_basic_password, redirect_uri, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, 0, ip_source);
     if (check_result_value(j_client, G_OK)) {
       j_code = validate_authorization_code(config, code, client_id, redirect_uri, code_verifier);
       if (check_result_value(j_code, G_OK)) {
@@ -2020,8 +2022,9 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
  */
 static int check_auth_type_implicit_grant (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
+  const char * ip_source = get_ip_source(request);
   char * redirect_url, * issued_for, * state_encoded = NULL, * state_param = NULL;
-  json_t * j_session, * j_client = check_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT, 1);
+  json_t * j_session, * j_client = check_client_valid(config, u_map_get(request->map_url, "client_id"), request->auth_basic_user, request->auth_basic_password, u_map_get(request->map_url, "redirect_uri"), GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT, 1, ip_source);
   char * access_token;
   time_t now;
   
@@ -2097,7 +2100,7 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
           }
         } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
           // Scope is not allowed for this user
-          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_implicit_grant - Scope list '%s' is not allowed for user '%s'", u_map_get(request->map_url, "scope"), json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_implicit_grant - Scope list '%s' is not allowed for user '%s', origin: %s", u_map_get(request->map_url, "scope"), json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
           response->status = 302;
           redirect_url = msprintf("%s%serror=invalid_scope%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
           ulfius_add_header_to_response(response, "Location", redirect_url);
@@ -2341,7 +2344,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
     }
     json_decref(j_client);
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_client_credentials_grant - Error invalid input parameters. client_id: '%s', scope: '%s'", request->auth_basic_user, u_map_get(request->map_post_body, "scope"));
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 check_auth_type_client_credentials_grant - Error invalid input parameters. client_id: '%s', scope: '%s', origin: %s", request->auth_basic_user, u_map_get(request->map_post_body, "scope"), get_ip_source(request));
     response->status = 403;
   }
   o_free(issued_for);
@@ -2353,7 +2356,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
  */
 static int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
-  const char * refresh_token = u_map_get(request->map_post_body, "refresh_token");
+  const char * refresh_token = u_map_get(request->map_post_body, "refresh_token"), * ip_source = get_ip_source(request);
   json_t * j_refresh, * json_body, * j_client, * j_user;
   time_t now;
   char * access_token, * scope_joined = NULL, * issued_for;
@@ -2363,11 +2366,11 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
     j_refresh = validate_refresh_token(config, refresh_token);
     if (check_result_value(j_refresh, G_OK)) {
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
-        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN, 0);
+        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN, 0, ip_source);
         if (!check_result_value(j_client, G_OK)) {
           has_issues = 1;
         } else if (request->auth_basic_user == NULL && request->auth_basic_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 get_access_token_from_refresh - client '%s' is invalid or is not confidential", request->auth_basic_user);
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 get_access_token_from_refresh - client '%s' is invalid or is not confidential, origin: %s", request->auth_basic_user, ip_source);
           has_issues = 1;
         }
         json_decref(j_client);
@@ -2406,7 +2409,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
           }
           o_free(access_token);
         } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 get_access_token_from_refresh - Error glewlwyd_plugin_callback_get_user");
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 get_access_token_from_refresh - Error glewlwyd_plugin_callback_get_user, origin: %s", ip_source);
           response->status = 500;
         }
         json_decref(j_user);
@@ -2426,7 +2429,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
     json_decref(j_refresh);
     o_free(scope_joined);
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 get_access_token_from_refresh - Error token empty or missing");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 get_access_token_from_refresh - Error token empty or missing, origin: %s", ip_source);
     response->status = 400;
   }
   return U_CALLBACK_CONTINUE;
@@ -2437,7 +2440,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
  */
 static int delete_refresh_token (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
-  const char * refresh_token = u_map_get(request->map_post_body, "refresh_token");
+  const char * refresh_token = u_map_get(request->map_post_body, "refresh_token"), * ip_source = get_ip_source(request);
   json_t * j_refresh, * j_client;
   time_t now;
   char * issued_for;
@@ -2447,12 +2450,12 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
     j_refresh = validate_refresh_token(config, refresh_token);
     if (check_result_value(j_refresh, G_OK)) {
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
-        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN, 0);
+        j_client = check_client_valid(config, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), request->auth_basic_user, request->auth_basic_password, NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN, 0, ip_source);
         if (!check_result_value(j_client, G_OK)) {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 delete_refresh_token - client '%s' is invalid", request->auth_basic_user);
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 delete_refresh_token - client '%s' is invalid, origin: %s", request->auth_basic_user, ip_source);
           has_issues = 1;
         } else if (request->auth_basic_user == NULL && request->auth_basic_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 delete_refresh_token - client '%s' is invalid or is not confidential", request->auth_basic_user);
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 delete_refresh_token - client '%s' is invalid or is not confidential, origin: %s", request->auth_basic_user, ip_source);
           has_issues = 1;
         }
         json_decref(j_client);
@@ -2477,7 +2480,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
     }
     json_decref(j_refresh);
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 delete_refresh_token - token missing or empty");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 delete_refresh_token - token missing or empty, origin: %s", get_ip_source(request));
     response->status = 400;
   }
   return U_CALLBACK_CONTINUE;
@@ -2605,7 +2608,7 @@ static int callback_oauth2_token(const struct _u_request * request, struct _u_re
   } else if (0 == o_strcmp("delete_token", grant_type)) {
     result = delete_refresh_token(request, response, user_data);
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "Unknown grant_type '%s'", grant_type);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oauth2 callback_oauth2_token - Unknown grant_type '%s', origin: %s", grant_type, get_ip_source(request));
     response->status = 400;
   }
   return result;
@@ -2676,7 +2679,7 @@ static int callback_oauth2_disable_refresh_token(const struct _u_request * reque
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
 
-  if ((res = refresh_token_disable(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "token_hash"))) == G_ERROR_NOT_FOUND) {
+  if ((res = refresh_token_disable(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "token_hash"), get_ip_source(request))) == G_ERROR_NOT_FOUND) {
     response->status = 404;
   } else if (res == G_ERROR_PARAM) {
     response->status = 400;
