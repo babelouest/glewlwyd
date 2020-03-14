@@ -6,7 +6,8 @@
   "parameters":{
     "use-glewlwyd-connection":true,
     "data-format":{
-      "redirect-uri":{"multiple":true,"read":true,"write":true}
+      "redirect-uri":{"multiple":true,"read":true,"write":true},
+      "jwk":{"multiple":false,"read":true,"write":true,"convert":"jwk"}
     }
   },
   "readonly":false,
