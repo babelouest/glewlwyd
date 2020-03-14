@@ -33,69 +33,6 @@
 
 #define LDAP_DEFAULT_PAGE_SIZE 50
 
-/**
- * 
- * Escapes any special chars (RFC 4515) from a string representing a
- * a search filter assertion value.
- * 
- * You must o_free the returned value after use
- *
- */
-static char * escape_ldap(const char * input) {
-  char * tmp, * to_return = NULL;
-  size_t len, i;
-  
-  if (input != NULL) {
-    to_return = strdup("");
-    len = o_strlen(input);
-    for (i=0; i < len && to_return != NULL; i++) {
-      unsigned char c = input[i];
-      if (c == '*') {
-        // escape asterisk
-        tmp = msprintf("%s\\2a", to_return);
-        o_free(to_return);
-        to_return = tmp;
-      } else if (c == '(') {
-        // escape left parenthesis
-        tmp = msprintf("%s\\28", to_return);
-        o_free(to_return);
-        to_return = tmp;
-      } else if (c == ')') {
-        // escape right parenthesis
-        tmp = msprintf("%s\\29", to_return);
-        o_free(to_return);
-        to_return = tmp;
-      } else if (c == '\\') {
-        // escape backslash
-        tmp = msprintf("%s\\5c", to_return);
-        o_free(to_return);
-        to_return = tmp;
-      } else if ((c & 0x80) == 0) {
-        // regular 1-byte UTF-8 char
-        tmp = msprintf("%s%c", to_return, c);
-        o_free(to_return);
-        to_return = tmp;
-      } else if (((c & 0xE0) == 0xC0) && i < (len-2)) { 
-        // higher-order 2-byte UTF-8 chars
-        tmp = msprintf("%s\\%02x\\%02x", to_return, input[i], input[i+1]);
-        o_free(to_return);
-        to_return = tmp;
-      } else if (((c & 0xF0) == 0xE0) && i < (len-3)) { 
-        // higher-order 3-byte UTF-8 chars
-        tmp = msprintf("%s\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2]);
-        o_free(to_return);
-        to_return = tmp;
-      } else if (((c & 0xF8) == 0xF0) && i < (len-4)) { 
-        // higher-order 4-byte UTF-8 chars
-        tmp = msprintf("%s\\%02x\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2], input[i+3]);
-        o_free(to_return);
-        to_return = tmp;
-      }
-    }
-  }
-  return to_return;
-}
-
 static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly) {
   json_t * j_return, * j_error = json_array(), * j_element = NULL, * j_element_p;
   size_t index = 0;
@@ -299,8 +236,8 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly)
               if (json_object_get(j_element, "multiple") != NULL && !json_is_boolean(json_object_get(j_element, "multiple"))) {
                 json_array_append_new(j_error, json_string("multiple is optional and must be a boolean (default: false)"));
               }
-              if (json_object_get(j_element, "convert") != NULL && 0 != o_strcmp("base64", json_string_value(json_object_get(j_element, "convert")))) {
-                json_array_append_new(j_error, json_string("convert is optional and must have one of the following values: 'base64'"));
+              if (json_object_get(j_element, "convert") != NULL && 0 != o_strcmp("base64", json_string_value(json_object_get(j_element, "convert"))) && 0 != o_strcmp("jwk", json_string_value(json_object_get(j_element, "convert")))) {
+                json_array_append_new(j_error, json_string("convert is optional and must have one of the following values: 'base64', 'jwk'"));
               }
               if (json_object_get(j_element, "read") != NULL && !json_is_boolean(json_object_get(j_element, "read"))) {
                 json_array_append_new(j_error, json_string("read is optional and must be a boolean (default: true)"));
@@ -324,6 +261,69 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly)
     j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
   }
   return j_return;
+}
+
+/**
+ * 
+ * Escapes any special chars (RFC 4515) from a string representing a
+ * a search filter assertion value.
+ * 
+ * You must o_free the returned value after use
+ *
+ */
+static char * escape_ldap(const char * input) {
+  char * tmp, * to_return = NULL;
+  size_t len, i;
+  
+  if (input != NULL) {
+    to_return = strdup("");
+    len = o_strlen(input);
+    for (i=0; i < len && to_return != NULL; i++) {
+      unsigned char c = input[i];
+      if (c == '*') {
+        // escape asterisk
+        tmp = msprintf("%s\\2a", to_return);
+        o_free(to_return);
+        to_return = tmp;
+      } else if (c == '(') {
+        // escape left parenthesis
+        tmp = msprintf("%s\\28", to_return);
+        o_free(to_return);
+        to_return = tmp;
+      } else if (c == ')') {
+        // escape right parenthesis
+        tmp = msprintf("%s\\29", to_return);
+        o_free(to_return);
+        to_return = tmp;
+      } else if (c == '\\') {
+        // escape backslash
+        tmp = msprintf("%s\\5c", to_return);
+        o_free(to_return);
+        to_return = tmp;
+      } else if ((c & 0x80) == 0) {
+        // regular 1-byte UTF-8 char
+        tmp = msprintf("%s%c", to_return, c);
+        o_free(to_return);
+        to_return = tmp;
+      } else if (((c & 0xE0) == 0xC0) && i < (len-2)) { 
+        // higher-order 2-byte UTF-8 chars
+        tmp = msprintf("%s\\%02x\\%02x", to_return, input[i], input[i+1]);
+        o_free(to_return);
+        to_return = tmp;
+      } else if (((c & 0xF0) == 0xE0) && i < (len-3)) { 
+        // higher-order 3-byte UTF-8 chars
+        tmp = msprintf("%s\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2]);
+        o_free(to_return);
+        to_return = tmp;
+      } else if (((c & 0xF8) == 0xF0) && i < (len-4)) { 
+        // higher-order 4-byte UTF-8 chars
+        tmp = msprintf("%s\\%02x\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2], input[i+3]);
+        o_free(to_return);
+        to_return = tmp;
+      }
+    }
+  }
+  return to_return;
 }
 
 static LDAP * connect_ldap_server(json_t * j_params) {
@@ -828,12 +828,14 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
                           y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (1-1)", json_string_value(j_property_value));
                           has_error = 1;
                         }
+                      } else if (0 == o_strcmp("jwk", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+                        mods[i]->mod_values[index_scope] = json_dumps(j_property_value, JSON_COMPACT);
                       } else {
                         mods[i]->mod_values[index_scope] = (char *)json_string_value(j_property_value);
                       }
                     }
                     mods[i]->mod_values[json_array_size(j_property)] = NULL;
-                    if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+                    if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert"))) || 0 == o_strcmp("jwk", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
                       json_array_append_new(j_mod_value_free_array, json_integer(i));
                     }
                   } else {
@@ -844,7 +846,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
                   y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (%s)", json_string_value(json_object_get(j_format, "property")), i);
                   has_error = 1;
                 }
-              } else if (json_string_length(j_property) && json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true()) {
+              } else if (json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true()) {
                 mods[i] = o_malloc(sizeof(LDAPMod));
                 if (mods[i] != NULL) {
                   mods[i]->mod_values = o_malloc(2 * sizeof(char *));
@@ -869,6 +871,9 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
                         has_error = 1;
                       }
                       json_array_append_new(j_mod_value_free_array, json_integer(i));
+                    } else if (0 == o_strcmp("jwk", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+                      mods[i]->mod_values[0] = json_dumps(j_property, JSON_COMPACT);
+                      json_array_append_new(j_mod_value_free_array, json_integer(i));
                     } else {
                       mods[i]->mod_values[0] = (char *)json_string_value(j_property);
                     }
@@ -882,7 +887,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
                   has_error = 1;
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_WARNING, "get_ldap_write_mod - Error field '%s' has invaid format", field);
+                y_log_message(Y_LOG_LEVEL_WARNING, "get_ldap_write_mod - Error field '%s' has invalid format", field);
               }
               i++;
             }
@@ -972,6 +977,10 @@ static json_t * get_client_from_result(json_t * j_params, json_t * j_properties_
             } else {
               y_log_message(Y_LOG_LEVEL_WARNING, "get_client_from_result - Error o_base64_encode for LDAP property '%s' (1)", json_string_value(j_property));
             }
+          } else if (0 == o_strcmp("jwk", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+            if (json_object_set_new(j_client, field, json_loads(result_values[0]->bv_val, JSON_DECODE_ANY, NULL))) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_client_from_result - Error parsing value into JSON");
+            }
           } else {
             json_object_set_new(j_client, field, json_stringn(result_values[0]->bv_val, result_values[0]->bv_len));
           }
@@ -995,6 +1004,10 @@ static json_t * get_client_from_result(json_t * j_params, json_t * j_properties_
                 }
               } else {
                 y_log_message(Y_LOG_LEVEL_WARNING, "get_client_from_result - Error o_base64_encode for LDAP property '%s' (1)", json_string_value(j_property));
+              }
+            } else if (0 == o_strcmp("jwk", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+              if (json_array_append_new(json_object_get(j_client, field), json_loads(result_values[i]->bv_val, JSON_DECODE_ANY, NULL))) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_client_from_result - Error parsing value into JSON");
               }
             } else {
               json_array_append_new(json_object_get(j_client, field), json_stringn(result_values[i]->bv_val, result_values[i]->bv_len));
@@ -1528,7 +1541,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
             o_free(message);
           } else {
             json_array_foreach(j_element, index, j_value) {
-              if (!json_is_string(j_value) || !json_string_length(j_value)) {
+              if ((!json_is_string(j_value) || !json_string_length(j_value)) && 0 != o_strcmp("jwk", json_string_value(json_object_get(j_format, "convert")))) {
                 message = msprintf("%s must contain a non empty string value", property);
                 json_array_append_new(j_result, json_string(message));
                 o_free(message);
@@ -1542,8 +1555,8 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
             }
           }
         } else {
-          if (!json_is_string(j_element)) {
-            message = msprintf("%s must contain a non empty string value", property);
+          if (!json_is_string(j_element) && 0 != o_strcmp("jwk", json_string_value(json_object_get(j_format, "convert")))) {
+            message = msprintf("%s must contain a string value", property);
             json_array_append_new(j_result, json_string(message));
             o_free(message);
           } else if (0 == o_strcmp("base64", json_string_value(json_object_get(j_format, "convert"))) && json_string_length(j_element)) {
