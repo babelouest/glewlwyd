@@ -37,8 +37,8 @@
 struct _u_request admin_req;
 json_t * j_params;
 char * client_id = NULL, * client_id_case = NULL, * client_id_upper = NULL, * client_id_pattern = NULL;
-const char jwk_pubkey_ecdsa_str[] = "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4\","\
-                                    "\"y\":\"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM\",\"use\":\"enc\",\"kid\":\"1\"}";
+const char jwks_pubkey_ecdsa_str[] = "{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4\","\
+                                    "\"y\":\"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM\",\"use\":\"enc\",\"kid\":\"1\"}]}";
 
 START_TEST(test_glwd_mod_client_irl_module_add)
 {
@@ -69,7 +69,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_add)
 {
-  json_t * j_client = json_pack("{sssssssss[ss]sos[ss]so}", "client_id", client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwk", json_loads(jwk_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
+  json_t * j_client = json_pack("{sssssssss[ss]sos[ss]so}", "client_id", client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwks", json_loads(jwks_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
   char * url = SERVER_URI "/client?source=" MOD_NAME;
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
@@ -78,7 +78,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_add_case)
 {
-  json_t * j_client = json_pack("{sssssssss[ss]sos[ss]so}", "client_id", client_id_case, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwk", json_loads(jwk_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
+  json_t * j_client = json_pack("{sssssssss[ss]sos[ss]so}", "client_id", client_id_case, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwks", json_loads(jwks_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
   char * url = SERVER_URI "/client?source=" MOD_NAME;
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
@@ -88,7 +88,7 @@ END_TEST
 START_TEST(test_glwd_mod_client_irl_add_already_present)
 {
   char * url = msprintf("%s/client?source=" MOD_NAME, SERVER_URI);
-  json_t * j_parameters =json_pack("{sssssssss[ss]sos[ss]so}", "client_id", client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwk", json_loads(jwk_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
+  json_t * j_parameters =json_pack("{sssssssss[ss]sos[ss]so}", "client_id", client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwks", json_loads(jwks_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   o_free(url);
@@ -99,7 +99,7 @@ END_TEST
 START_TEST(test_glwd_mod_client_irl_add_case_already_present)
 {
   char * url = msprintf("%s/client?source=" MOD_NAME, SERVER_URI);
-  json_t * j_parameters = json_pack("{sssssssss[ss]sos[ss]so}", "client_id", client_id_upper, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwk", json_loads(jwk_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
+  json_t * j_parameters = json_pack("{sssssssss[ss]sos[ss]so}", "client_id", client_id_upper, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwks", json_loads(jwks_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   o_free(url);
@@ -118,7 +118,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_get_list)
 {
-  json_t * j_client = json_pack("{sssssss[ss]sos[ss]so}", "client_id", client_id, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwk", json_loads(jwk_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
+  json_t * j_client = json_pack("{sssssss[ss]sos[ss]so}", "client_id", client_id, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwks", json_loads(jwks_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
   char * url = SERVER_URI "/client?source=" MOD_NAME;
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_client, NULL, NULL), 1);
   json_decref(j_client);
@@ -127,7 +127,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_get)
 {
-  json_t * j_client = json_pack("{sssssss[ss]sos[ss]so}", "client_id", client_id, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwk", json_loads(jwk_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
+  json_t * j_client = json_pack("{sssssss[ss]sos[ss]so}", "client_id", client_id, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwks", json_loads(jwks_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
   char * url = msprintf(SERVER_URI "/client/%s?source=" MOD_NAME, client_id);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_client, NULL, NULL), 1);
   json_decref(j_client);
@@ -137,7 +137,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_get_case)
 {
-  json_t * j_client = json_pack("{sssssss[ss]sos[ss]so}", "client_id", client_id_case, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwk", json_loads(jwk_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
+  json_t * j_client = json_pack("{sssssss[ss]sos[ss]so}", "client_id", client_id_case, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "confidential", json_true(), "redirect-uri", "https://glewlwyd.local/", "https://glewlwyd.remote", "jwks", json_loads(jwks_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
   char * url = msprintf(SERVER_URI "/client/%s?source=" MOD_NAME, client_id_upper);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_client, NULL, NULL), 1);
   json_decref(j_client);
@@ -147,7 +147,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_update)
 {
-  json_t * j_client = json_pack("{sssss[ss]s[ss]so}", "name", CLIENT_NAME "-updated", "description", CLIENT_DESCRIPTION "-updated", "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "redirect-uri", "https://glewlwyd.local/updated", "https://glewlwyd.remote/updated", "jwk", json_loads(jwk_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
+  json_t * j_client = json_pack("{sssss[ss]s[ss]so}", "name", CLIENT_NAME "-updated", "description", CLIENT_DESCRIPTION "-updated", "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "redirect-uri", "https://glewlwyd.local/updated", "https://glewlwyd.remote/updated", "jwks", json_loads(jwks_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
   char * url = msprintf(SERVER_URI "/client/%s?source=" MOD_NAME, client_id);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
@@ -157,7 +157,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_update_case)
 {
-  json_t * j_client = json_pack("{sssss[ss]s[ss]so}", "name", CLIENT_NAME "-updated", "description", CLIENT_DESCRIPTION "-updated", "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "redirect-uri", "https://glewlwyd.local/updated", "https://glewlwyd.remote/updated", "jwk", json_loads(jwk_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
+  json_t * j_client = json_pack("{sssss[ss]s[ss]so}", "name", CLIENT_NAME "-updated", "description", CLIENT_DESCRIPTION "-updated", "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "redirect-uri", "https://glewlwyd.local/updated", "https://glewlwyd.remote/updated", "jwks", json_loads(jwks_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
   char * url = msprintf(SERVER_URI "/client/%s?source=" MOD_NAME, client_id_upper);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
@@ -167,7 +167,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_get_updated)
 {
-  json_t * j_client = json_pack("{sssssssss[ss]s[ss]so}", "client_id", client_id, "name", CLIENT_NAME "-updated", "description", CLIENT_DESCRIPTION "-updated", "source", MOD_NAME, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "redirect-uri", "https://glewlwyd.local/updated", "https://glewlwyd.remote/updated", "jwk", json_loads(jwk_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
+  json_t * j_client = json_pack("{sssssssss[ss]s[ss]so}", "client_id", client_id, "name", CLIENT_NAME "-updated", "description", CLIENT_DESCRIPTION "-updated", "source", MOD_NAME, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "redirect-uri", "https://glewlwyd.local/updated", "https://glewlwyd.remote/updated", "jwks", json_loads(jwks_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
   char * url = msprintf(SERVER_URI "/client/%s?source=" MOD_NAME, client_id);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_client, NULL, NULL), 1);
   json_decref(j_client);
@@ -177,7 +177,7 @@ END_TEST
 
 START_TEST(test_glwd_mod_client_irl_client_get_case_updated)
 {
-  json_t * j_client = json_pack("{sssssssss[ss]s[ss]so}", "client_id", client_id_case, "name", CLIENT_NAME "-updated", "description", CLIENT_DESCRIPTION "-updated", "source", MOD_NAME, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "redirect-uri", "https://glewlwyd.local/updated", "https://glewlwyd.remote/updated", "jwk", json_loads(jwk_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
+  json_t * j_client = json_pack("{sssssssss[ss]s[ss]so}", "client_id", client_id_case, "name", CLIENT_NAME "-updated", "description", CLIENT_DESCRIPTION "-updated", "source", MOD_NAME, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "redirect-uri", "https://glewlwyd.local/updated", "https://glewlwyd.remote/updated", "jwks", json_loads(jwks_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
   char * url = msprintf(SERVER_URI "/client/%s?source=" MOD_NAME, client_id_case);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_client, NULL, NULL), 1);
   json_decref(j_client);
@@ -209,7 +209,7 @@ START_TEST(test_glwd_mod_client_irl_client_large_list_add)
   
   for (i=0; i < 100; i++) {
     cur_client_id = msprintf("%s%d", client_id_pattern, i);
-    j_client = json_pack("{sssssssss[ss]so}", "client_id", cur_client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "jwk", json_loads(jwk_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
+    j_client = json_pack("{sssssssss[ss]so}", "client_id", cur_client_id, "password", CLIENT_PASSWORD, "name", CLIENT_NAME, "description", CLIENT_DESCRIPTION, "scope", CLIENT_SCOPE_1, CLIENT_SCOPE_2, "jwks", json_loads(jwks_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL));
     ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client?source=" MOD_NAME, NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
     json_decref(j_client);
     o_free(cur_client_id);
