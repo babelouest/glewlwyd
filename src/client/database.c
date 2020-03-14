@@ -100,8 +100,8 @@ static json_t * is_client_database_parameters_valid(json_t * j_params) {
               if (json_object_get(j_element, "write") != NULL && !json_is_boolean(json_object_get(j_element, "write"))) {
                 json_array_append_new(j_error, json_string("write is optional and must be a boolean (default: true)"));
               }
-              if (json_object_get(j_element, "covert") != NULL && 0 != o_strcmp("jwk", json_string_value(json_object_get(j_element, "covert")))) {
-                json_array_append_new(j_error, json_string("covert is optional and must be have the value 'jwk'"));
+              if (json_object_get(j_element, "covert") != NULL && 0 != o_strcmp("jwks", json_string_value(json_object_get(j_element, "covert")))) {
+                json_array_append_new(j_error, json_string("covert is optional and must be have the value 'jwks'"));
               }
             }
           }
@@ -155,7 +155,7 @@ static int append_client_properties(struct mod_parameters * param, json_t * j_cl
         j_param_config = json_object_get(json_object_get(param->j_params, "data-format"), json_string_value(json_object_get(j_element, "name")));
         if (!profile && json_object_get(j_param_config, "read") != json_false()) {
           if (json_object_get(j_element, "value_tiny") != json_null()) {
-            if (0 == o_strcmp("jwk", json_string_value(json_object_get(j_param_config, "convert")))) {
+            if (0 == o_strcmp("jwks", json_string_value(json_object_get(j_param_config, "convert")))) {
               j_value = json_loads(json_string_value(json_object_get(j_element, "value_tiny")), JSON_DECODE_ANY, NULL);
             } else {
               j_value = json_incref(json_object_get(j_element, "value_tiny"));
@@ -174,7 +174,7 @@ static int append_client_properties(struct mod_parameters * param, json_t * j_cl
               y_log_message(Y_LOG_LEVEL_ERROR, "append_client_properties - Error j_value is NULL (value_tiny)");
             }
           } else if (json_object_get(j_element, "value_small") != json_null()) {
-            if (0 == o_strcmp("jwk", json_string_value(json_object_get(j_param_config, "convert")))) {
+            if (0 == o_strcmp("jwks", json_string_value(json_object_get(j_param_config, "convert")))) {
               j_value = json_loads(json_string_value(json_object_get(j_element, "value_small")), JSON_DECODE_ANY, NULL);
             } else {
               j_value = json_incref(json_object_get(j_element, "value_small"));
@@ -193,7 +193,7 @@ static int append_client_properties(struct mod_parameters * param, json_t * j_cl
               y_log_message(Y_LOG_LEVEL_ERROR, "append_client_properties - Error j_value is NULL (value_small)");
             }
           } else if (json_object_get(j_element, "value_medium") != json_null()) {
-            if (0 == o_strcmp("jwk", json_string_value(json_object_get(j_param_config, "convert")))) {
+            if (0 == o_strcmp("jwks", json_string_value(json_object_get(j_param_config, "convert")))) {
               j_value = json_loads(json_string_value(json_object_get(j_element, "value_medium")), JSON_DECODE_ANY, NULL);
             } else {
               j_value = json_incref(json_object_get(j_element, "value_medium"));
@@ -246,7 +246,7 @@ static int append_client_properties(struct mod_parameters * param, json_t * j_cl
         j_param_config = json_object_get(json_object_get(param->j_params, "data-format"), json_string_value(json_object_get(j_element, "name")));
         if (!profile && json_object_get(j_param_config, "read") != json_false()) {
           if (json_object_get(j_element, "value") != json_null()) {
-            if (0 == o_strcmp("jwk", json_string_value(json_object_get(j_param_config, "convert")))) {
+            if (0 == o_strcmp("jwks", json_string_value(json_object_get(j_param_config, "convert")))) {
               j_value = json_loads(json_string_value(json_object_get(j_element, "value")), JSON_DECODE_ANY, NULL);
             } else {
               j_value = json_incref(json_object_get(j_element, "value"));
@@ -498,7 +498,7 @@ static json_t * get_property_value_db(struct mod_parameters * param, const char 
   json_t * j_value;
   char * tmp;
   
-  if (0 == o_strcmp("jwk", json_string_value(json_object_get(json_object_get(json_object_get(param->j_params, "data-format"), name), "convert")))) {
+  if (0 == o_strcmp("jwks", json_string_value(json_object_get(json_object_get(json_object_get(param->j_params, "data-format"), name), "convert")))) {
     tmp = json_dumps(j_property, JSON_COMPACT);
     j_value = json_string(tmp);
     o_free(tmp);
@@ -1003,7 +1003,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
             o_free(message);
           } else {
             json_array_foreach(j_element, index, j_value) {
-              if ((!json_is_string(j_value) || json_string_length(j_value) > 16*1024*1024) && 0 != o_strcmp("jwk", json_string_value(json_object_get(j_format, "convert")))) {
+              if ((!json_is_string(j_value) || json_string_length(j_value) > 16*1024*1024) && 0 != o_strcmp("jwks", json_string_value(json_object_get(j_format, "convert")))) {
                 message = msprintf("property '%s' must contain a string value (maximum 16M characters)", property);
                 json_array_append_new(j_result, json_string(message));
                 o_free(message);
@@ -1011,7 +1011,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
             }
           }
         } else {
-          if ((((!json_is_string(j_element) && json_object_get(j_client, "description") != json_null()) || json_string_length(j_element) > 16*1024*1024)) && 0 != o_strcmp("jwk", json_string_value(json_object_get(j_format, "convert")))) {
+          if ((((!json_is_string(j_element) && json_object_get(j_client, "description") != json_null()) || json_string_length(j_element) > 16*1024*1024)) && 0 != o_strcmp("jwks", json_string_value(json_object_get(j_format, "convert")))) {
             message = msprintf("property '%s' must be a string value (maximum 16M characters)", property);
             json_array_append_new(j_result, json_string(message));
             o_free(message);
