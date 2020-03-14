@@ -236,8 +236,8 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly)
               if (json_object_get(j_element, "multiple") != NULL && !json_is_boolean(json_object_get(j_element, "multiple"))) {
                 json_array_append_new(j_error, json_string("multiple is optional and must be a boolean (default: false)"));
               }
-              if (json_object_get(j_element, "convert") != NULL && 0 != o_strcmp("base64", json_string_value(json_object_get(j_element, "convert"))) && 0 != o_strcmp("jwk", json_string_value(json_object_get(j_element, "convert")))) {
-                json_array_append_new(j_error, json_string("convert is optional and must have one of the following values: 'base64', 'jwk'"));
+              if (json_object_get(j_element, "convert") != NULL && 0 != o_strcmp("base64", json_string_value(json_object_get(j_element, "convert"))) && 0 != o_strcmp("jwks", json_string_value(json_object_get(j_element, "convert")))) {
+                json_array_append_new(j_error, json_string("convert is optional and must have one of the following values: 'base64', 'jwks'"));
               }
               if (json_object_get(j_element, "read") != NULL && !json_is_boolean(json_object_get(j_element, "read"))) {
                 json_array_append_new(j_error, json_string("read is optional and must be a boolean (default: true)"));
@@ -828,14 +828,14 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
                           y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (1-1)", json_string_value(j_property_value));
                           has_error = 1;
                         }
-                      } else if (0 == o_strcmp("jwk", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+                      } else if (0 == o_strcmp("jwks", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
                         mods[i]->mod_values[index_scope] = json_dumps(j_property_value, JSON_COMPACT);
                       } else {
                         mods[i]->mod_values[index_scope] = (char *)json_string_value(j_property_value);
                       }
                     }
                     mods[i]->mod_values[json_array_size(j_property)] = NULL;
-                    if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert"))) || 0 == o_strcmp("jwk", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+                    if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert"))) || 0 == o_strcmp("jwks", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
                       json_array_append_new(j_mod_value_free_array, json_integer(i));
                     }
                   } else {
@@ -871,7 +871,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
                         has_error = 1;
                       }
                       json_array_append_new(j_mod_value_free_array, json_integer(i));
-                    } else if (0 == o_strcmp("jwk", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+                    } else if (0 == o_strcmp("jwks", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
                       mods[i]->mod_values[0] = json_dumps(j_property, JSON_COMPACT);
                       json_array_append_new(j_mod_value_free_array, json_integer(i));
                     } else {
@@ -977,7 +977,7 @@ static json_t * get_client_from_result(json_t * j_params, json_t * j_properties_
             } else {
               y_log_message(Y_LOG_LEVEL_WARNING, "get_client_from_result - Error o_base64_encode for LDAP property '%s' (1)", json_string_value(j_property));
             }
-          } else if (0 == o_strcmp("jwk", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+          } else if (0 == o_strcmp("jwks", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
             if (json_object_set_new(j_client, field, json_loads(result_values[0]->bv_val, JSON_DECODE_ANY, NULL))) {
               y_log_message(Y_LOG_LEVEL_ERROR, "get_client_from_result - Error parsing value into JSON");
             }
@@ -1005,7 +1005,7 @@ static json_t * get_client_from_result(json_t * j_params, json_t * j_properties_
               } else {
                 y_log_message(Y_LOG_LEVEL_WARNING, "get_client_from_result - Error o_base64_encode for LDAP property '%s' (1)", json_string_value(j_property));
               }
-            } else if (0 == o_strcmp("jwk", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+            } else if (0 == o_strcmp("jwks", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
               if (json_array_append_new(json_object_get(j_client, field), json_loads(result_values[i]->bv_val, JSON_DECODE_ANY, NULL))) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_client_from_result - Error parsing value into JSON");
               }
@@ -1541,7 +1541,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
             o_free(message);
           } else {
             json_array_foreach(j_element, index, j_value) {
-              if ((!json_is_string(j_value) || !json_string_length(j_value)) && 0 != o_strcmp("jwk", json_string_value(json_object_get(j_format, "convert")))) {
+              if ((!json_is_string(j_value) || !json_string_length(j_value)) && 0 != o_strcmp("jwks", json_string_value(json_object_get(j_format, "convert")))) {
                 message = msprintf("%s must contain a non empty string value", property);
                 json_array_append_new(j_result, json_string(message));
                 o_free(message);
@@ -1555,7 +1555,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
             }
           }
         } else {
-          if (!json_is_string(j_element) && 0 != o_strcmp("jwk", json_string_value(json_object_get(j_format, "convert")))) {
+          if (!json_is_string(j_element) && 0 != o_strcmp("jwks", json_string_value(json_object_get(j_format, "convert")))) {
             message = msprintf("%s must contain a string value", property);
             json_array_append_new(j_result, json_string(message));
             o_free(message);
