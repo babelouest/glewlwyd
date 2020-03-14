@@ -106,6 +106,25 @@
       "placeholder": "admin.client-password-ph",
       "placeholderConfirm": "admin.client-password-confirm-ph"
     },{
+      "name": "jwks",
+      "type": "jwks",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-jwks",
+      "placeholder": "admin.client-jwks-ph"
+    },{
+      "name": "jwks_uri",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-jwks_uri",
+      "placeholder": "admin.client-jwks_uri-ph"
+    },{
+      "name": "pubkey",
+      "type": "file",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-pubkey"
+    },{
       "name": "scope",
       "list": true,
       "edit": true,
