@@ -504,7 +504,7 @@
     "mod-glwd-jwks-show": "JWKS beschikbaar",
     "mod-glwd-jwks-x5c": "X5C certificaat keten (optioneel)",
     "mod-glwd-request-parameter-allow": "Aanvragen toestaan via JWT",
-    "mod-glwd-request-uri-allow-https-non-secure": "Sta een request_uri toe naar een onbeveiligde https:// uri",
+    "mod-glwd-request-uri-allow-https-non-secure": "Sta een request_uri en jwks_uri toe naar een onbeveiligde https:// uri",
     "mod-glwd-url-auth": "URL API Auth voor deze instance",
     "mod-glwd-url-token": "URL API Token voor deze instance",
     "mod-glwd-url-profile": "URL API Profiel voor deze instance",
