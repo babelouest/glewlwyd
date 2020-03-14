@@ -144,6 +144,8 @@ Go to `parameters/schemes` menu in the navigation tab. Click on the `+` button t
 - HOTP/TOTP scheme
 - TLS Certificate scheme
 - Retype-password scheme
+- HTTP Basic Authentication scheme
+- OAuth2/OIDC Client Authentication scheme
 
 You can add instances of the same scheme as many times as you want, if you need different configurations or to access different scopes in different contexts. A scheme instance is distinguished by its module name and its instance name, example `webauthn/AdminWebauthn`, `webauthn/UserWebauthn`.
 
