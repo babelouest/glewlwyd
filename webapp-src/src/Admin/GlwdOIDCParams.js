@@ -50,6 +50,9 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["register-client-allowed"]!==undefined?"":(props.mod.parameters["register-client-allowed"] = false);
     props.mod.parameters["register-client-auth-scope"]!==undefined?"":(props.mod.parameters["register-client-auth-scope"] = []);
     props.mod.parameters["register-client-credentials-scope"]!==undefined?"":(props.mod.parameters["register-client-credentials-scope"] = []);
+    props.mod.parameters["client-pubkey-parameter"]!==undefined?"":(props.mod.parameters["client-pubkey-parameter"] = "");
+    props.mod.parameters["client-jwks-parameter"]!==undefined?"":(props.mod.parameters["client-jwks-parameter"] = "jwks");
+    props.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(props.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
 
     this.state = {
       config: props.config,
@@ -151,6 +154,9 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["register-client-allowed"]!==undefined?"":(nextProps.mod.parameters["register-client-allowed"] = false);
     nextProps.mod.parameters["register-client-auth-scope"]!==undefined?"":(nextProps.mod.parameters["register-client-auth-scope"] = []);
     nextProps.mod.parameters["register-client-credentials-scope"]!==undefined?"":(nextProps.mod.parameters["register-client-credentials-scope"] = []);
+    nextProps.mod.parameters["client-pubkey-parameter"]!==undefined?"":(nextProps.mod.parameters["client-pubkey-parameter"] = "");
+    nextProps.mod.parameters["client-jwks-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks-parameter"] = "jwks");
+    nextProps.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
     
     this.setState({
       config: nextProps.config,
@@ -1136,14 +1142,6 @@ class GlwdOIDCParams extends Component {
                   </div>
                   {this.state.errorList["iss"]?<span className="error-input">{this.state.errorList["iss"]}</span>:""}
                 </div>
-                <div className="form-group form-check">
-                  <input type="checkbox" className="form-check-input" id="mod-glwd-request-parameter-allow" onChange={(e) => this.toggleParam(e, "request-parameter-allow")} checked={this.state.mod.parameters["request-parameter-allow"]} />
-                  <label className="form-check-label" htmlFor="mod-glwd-request-parameter-allow">{i18next.t("admin.mod-glwd-request-parameter-allow")}</label>
-                </div>
-                <div className="form-group form-check">
-                  <input type="checkbox" className="form-check-input" id="mod-glwd-request-uri-allow-https-non-secure" onChange={(e) => this.toggleParam(e, "request-uri-allow-https-non-secure")} checked={this.state.mod.parameters["request-uri-allow-https-non-secure"]} />
-                  <label className="form-check-label" htmlFor="mod-glwd-request-uri-allow-https-non-secure">{i18next.t("admin.mod-glwd-request-uri-allow-https-non-secure")}</label>
-                </div>
                 <div className="form-group">
                   <div className="input-group mb-3">
                     <div className="input-group-prepend">
@@ -1575,6 +1573,53 @@ class GlwdOIDCParams extends Component {
                   </div>
                 </div>
                 {addressClaim}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionJwtRequestPubkey">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseJwtRequestPubkey" aria-expanded="true" aria-controls="collapseJwtRequestPubkey">
+                  {i18next.t("admin.mod-glwd-jwt-request-pubkey")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapseJwtRequestPubkey" className="collapse" aria-labelledby="addressClaimCard" data-parent="#accordionJwtRequestPubkey">
+              <div className="card-body">
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-request-parameter-allow" onChange={(e) => this.toggleParam(e, "request-parameter-allow")} checked={this.state.mod.parameters["request-parameter-allow"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-request-parameter-allow">{i18next.t("admin.mod-glwd-request-parameter-allow")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-request-uri-allow-https-non-secure" onChange={(e) => this.toggleParam(e, "request-uri-allow-https-non-secure")} checked={this.state.mod.parameters["request-uri-allow-https-non-secure"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-request-uri-allow-https-non-secure">{i18next.t("admin.mod-glwd-request-uri-allow-https-non-secure")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwt-request-pubkey-client-pubkey-parameter">{i18next.t("admin.mod-glwd-jwt-request-pubkey-client-pubkey-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwt-request-pubkey-client-pubkey-parameter" onChange={(e) => this.changeParam(e, "client-pubkey-parameter")} value={this.state.mod.parameters["client-pubkey-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-pubkey-client-pubkey-parameter-ph")} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwt-request-pubkey-client-jwks-parameter">{i18next.t("admin.mod-glwd-jwt-request-pubkey-client-jwks-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwt-request-pubkey-client-jwks-parameter" onChange={(e) => this.changeParam(e, "client-jwks-parameter")} value={this.state.mod.parameters["client-jwks-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-pubkey-client-jwks-parameter-ph")} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwt-request-pubkey-client-jwks_uri-parameter">{i18next.t("admin.mod-glwd-jwt-request-pubkey-client-jwks_uri-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwt-request-pubkey-client-jwks_uri-parameter" onChange={(e) => this.changeParam(e, "client-jwks_uri-parameter")} value={this.state.mod.parameters["client-jwks_uri-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-pubkey-client-jwks_uri-parameter-ph")} />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
