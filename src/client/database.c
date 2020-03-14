@@ -43,6 +43,84 @@ struct mod_parameters {
   json_t * j_params;
 };
 
+static json_t * is_client_database_parameters_valid(json_t * j_params) {
+  json_t * j_return, * j_error = json_array(), * j_element = NULL;
+  const char * field = NULL;
+  
+  if (j_error != NULL) {
+    if (!json_is_object(j_params)) {
+      json_array_append_new(j_error, json_string("parameters must be a JSON object"));
+    } else {
+      if (json_object_get(j_params, "use-glewlwyd-connection") != NULL && !json_is_boolean(json_object_get(j_params, "use-glewlwyd-connection"))) {
+        json_array_append_new(j_error, json_string("use-glewlwyd-connection must be a boolean"));
+      }
+      if (json_object_get(j_params, "use-glewlwyd-connection") == json_false()) {
+        if (json_object_get(j_params, "connection-type") == NULL || !json_is_string(json_object_get(j_params, "connection-type")) || (0 != o_strcmp("sqlite", json_string_value(json_object_get(j_params, "connection-type"))) && 0 != o_strcmp("mariadb", json_string_value(json_object_get(j_params, "connection-type"))) && 0 != o_strcmp("postgre", json_string_value(json_object_get(j_params, "connection-type"))))) {
+          json_array_append_new(j_error, json_string("connection-type is mandatory and must be one of the following values: 'sqlite', 'mariadb', 'postgre'"));
+        } else if (0 == o_strcmp("sqlite", json_string_value(json_object_get(j_params, "connection-type")))) {
+          if (json_object_get(j_params, "sqlite-dbpath") == NULL || !json_is_string(json_object_get(j_params, "sqlite-dbpath"))) {
+            json_array_append_new(j_error, json_string("sqlite-dbpath is mandatory and must be a string"));
+          }
+        } else if (0 == o_strcmp("mariadb", json_string_value(json_object_get(j_params, "connection-type")))) {
+          if (json_object_get(j_params, "mariadb-host") == NULL || !json_is_string(json_object_get(j_params, "mariadb-host"))) {
+            json_array_append_new(j_error, json_string("mariadb-host is mandatory and must be a string"));
+          }
+          if (json_object_get(j_params, "mariadb-client") == NULL || !json_is_string(json_object_get(j_params, "mariadb-client"))) {
+            json_array_append_new(j_error, json_string("mariadb-client is mandatory and must be a string"));
+          }
+          if (json_object_get(j_params, "mariadb-password") == NULL || !json_is_string(json_object_get(j_params, "mariadb-password"))) {
+            json_array_append_new(j_error, json_string("mariadb-password is mandatory and must be a string"));
+          }
+          if (json_object_get(j_params, "mariadb-dbname") == NULL || !json_is_string(json_object_get(j_params, "mariadb-dbname"))) {
+            json_array_append_new(j_error, json_string("mariadb-dbname is mandatory and must be a string"));
+          }
+          if (json_object_get(j_params, "mariadb-port") != NULL && (!json_is_integer(json_object_get(j_params, "mariadb-dbname")) || json_integer_value(json_object_get(j_params, "mariadb-dbname")) < 0)) {
+            json_array_append_new(j_error, json_string("mariadb-port is optional and must be a positive integer (default: 0)"));
+          }
+        } else if (0 == o_strcmp("postgre", json_string_value(json_object_get(j_params, "connection-type")))) {
+          if (json_object_get(j_params, "postgre-conninfo") == NULL || !json_is_string(json_object_get(j_params, "postgre-conninfo"))) {
+            json_array_append_new(j_error, json_string("postgre-conninfo is mandatory and must be a string"));
+          }
+        }
+      }
+      if (json_object_get(j_params, "data-format") != NULL) {
+        if (!json_is_object(json_object_get(j_params, "data-format"))) {
+          json_array_append_new(j_error, json_string("data-format is optional and must be a JSON object"));
+        } else {
+          json_object_foreach(json_object_get(j_params, "data-format"), field, j_element) {
+            if (0 == o_strcmp(field, "client_id") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "description") || 0 == o_strcmp(field, "enabled") || 0 == o_strcmp(field, "confidential") || 0 == o_strcmp(field, "password")) {
+              json_array_append_new(j_error, json_string("data-format can not have settings for properties 'client_id', 'name', 'description', 'enabled', 'confidential' or 'password'"));
+            } else {
+              if (json_object_get(j_element, "multiple") != NULL && !json_is_boolean(json_object_get(j_element, "multiple"))) {
+                json_array_append_new(j_error, json_string("multiple is optional and must be a boolean (default: false)"));
+              }
+              if (json_object_get(j_element, "read") != NULL && !json_is_boolean(json_object_get(j_element, "read"))) {
+                json_array_append_new(j_error, json_string("read is optional and must be a boolean (default: true)"));
+              }
+              if (json_object_get(j_element, "write") != NULL && !json_is_boolean(json_object_get(j_element, "write"))) {
+                json_array_append_new(j_error, json_string("write is optional and must be a boolean (default: true)"));
+              }
+              if (json_object_get(j_element, "covert") != NULL && 0 != o_strcmp("jwk", json_string_value(json_object_get(j_element, "covert")))) {
+                json_array_append_new(j_error, json_string("covert is optional and must be have the value 'jwk'"));
+              }
+            }
+          }
+        }
+      }
+    }
+    if (json_array_size(j_error)) {
+      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
+    } else {
+      j_return = json_pack("{si}", "result", G_OK);
+    }
+    json_decref(j_error);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "is_client_database_parameters_valid - Error allocating resources for j_error");
+    j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+  }
+  return j_return;
+}
+
 static char * get_pattern_clause(struct mod_parameters * param, const char * pattern) {
   char * escape_pattern = h_escape_string_with_quotes(param->conn, pattern), * clause = NULL;
   
@@ -54,7 +132,7 @@ static char * get_pattern_clause(struct mod_parameters * param, const char * pat
 }
 
 static int append_client_properties(struct mod_parameters * param, json_t * j_client, int profile) {
-  json_t * j_query, * j_result, * j_element = NULL, * j_param_config;
+  json_t * j_query, * j_result, * j_element = NULL, * j_param_config, * j_value;
   int res, ret;
   size_t index = 0;
   
@@ -75,33 +153,63 @@ static int append_client_properties(struct mod_parameters * param, json_t * j_cl
     if (res == H_OK) {
       json_array_foreach(j_result, index, j_element) {
         j_param_config = json_object_get(json_object_get(param->j_params, "data-format"), json_string_value(json_object_get(j_element, "name")));
-        if ((!profile && json_object_get(j_param_config, "read") != json_false()) || (profile && json_object_get(j_param_config, "profile-read") != json_false())) {
+        if (!profile && json_object_get(j_param_config, "read") != json_false()) {
           if (json_object_get(j_element, "value_tiny") != json_null()) {
-            if (json_object_get(j_param_config, "multiple") == json_true()) {
-              if (json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))) == NULL) {
-                json_object_set_new(j_client, json_string_value(json_object_get(j_element, "name")), json_array());
-              }
-              json_array_append(json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))), json_object_get(j_element, "value_tiny"));
+            if (0 == o_strcmp("jwk", json_string_value(json_object_get(j_param_config, "convert")))) {
+              j_value = json_loads(json_string_value(json_object_get(j_element, "value_tiny")), JSON_DECODE_ANY, NULL);
             } else {
-              json_object_set(j_client, json_string_value(json_object_get(j_element, "name")), json_object_get(j_element, "value_tiny"));
+              j_value = json_incref(json_object_get(j_element, "value_tiny"));
+            }
+            if (j_value != NULL) {
+              if (json_object_get(j_param_config, "multiple") == json_true()) {
+                if (json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))) == NULL) {
+                  json_object_set_new(j_client, json_string_value(json_object_get(j_element, "name")), json_array());
+                }
+                json_array_append(json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))), j_value);
+              } else {
+                json_object_set(j_client, json_string_value(json_object_get(j_element, "name")), j_value);
+              }
+              json_decref(j_value);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "append_client_properties - Error j_value is NULL (value_tiny)");
             }
           } else if (json_object_get(j_element, "value_small") != json_null()) {
-            if (json_object_get(j_param_config, "multiple") == json_true()) {
-              if (json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))) == NULL) {
-                json_object_set_new(j_client, json_string_value(json_object_get(j_element, "name")), json_array());
-              }
-              json_array_append(json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))), json_object_get(j_element, "value_small"));
+            if (0 == o_strcmp("jwk", json_string_value(json_object_get(j_param_config, "convert")))) {
+              j_value = json_loads(json_string_value(json_object_get(j_element, "value_small")), JSON_DECODE_ANY, NULL);
             } else {
-              json_object_set(j_client, json_string_value(json_object_get(j_element, "name")), json_object_get(j_element, "value_small"));
+              j_value = json_incref(json_object_get(j_element, "value_small"));
+            }
+            if (j_value != NULL) {
+              if (json_object_get(j_param_config, "multiple") == json_true()) {
+                if (json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))) == NULL) {
+                  json_object_set_new(j_client, json_string_value(json_object_get(j_element, "name")), json_array());
+                }
+                json_array_append(json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))), j_value);
+              } else {
+                json_object_set(j_client, json_string_value(json_object_get(j_element, "name")), j_value);
+              }
+              json_decref(j_value);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "append_client_properties - Error j_value is NULL (value_small)");
             }
           } else if (json_object_get(j_element, "value_medium") != json_null()) {
-            if (json_object_get(j_param_config, "multiple") == json_true()) {
-              if (json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))) == NULL) {
-                json_object_set_new(j_client, json_string_value(json_object_get(j_element, "name")), json_array());
-              }
-              json_array_append(json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))), json_object_get(j_element, "value_medium"));
+            if (0 == o_strcmp("jwk", json_string_value(json_object_get(j_param_config, "convert")))) {
+              j_value = json_loads(json_string_value(json_object_get(j_element, "value_medium")), JSON_DECODE_ANY, NULL);
             } else {
-              json_object_set(j_client, json_string_value(json_object_get(j_element, "name")), json_object_get(j_element, "value_medium"));
+              j_value = json_incref(json_object_get(j_element, "value_medium"));
+            }
+            if (j_value != NULL) {
+              if (json_object_get(j_param_config, "multiple") == json_true()) {
+                if (json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))) == NULL) {
+                  json_object_set_new(j_client, json_string_value(json_object_get(j_element, "name")), json_array());
+                }
+                json_array_append(json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))), j_value);
+              } else {
+                json_object_set(j_client, json_string_value(json_object_get(j_element, "name")), j_value);
+              }
+              json_decref(j_value);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "append_client_properties - Error j_value is NULL (value_medium)");
             }
           } else {
             if (json_object_get(j_param_config, "multiple") == json_true()) {
@@ -136,15 +244,25 @@ static int append_client_properties(struct mod_parameters * param, json_t * j_cl
     if (res == H_OK) {
       json_array_foreach(j_result, index, j_element) {
         j_param_config = json_object_get(json_object_get(param->j_params, "data-format"), json_string_value(json_object_get(j_element, "name")));
-        if ((!profile && json_object_get(j_param_config, "read") != json_false()) || (profile && json_object_get(j_param_config, "profile-read") != json_false())) {
+        if (!profile && json_object_get(j_param_config, "read") != json_false()) {
           if (json_object_get(j_element, "value") != json_null()) {
-            if (json_object_get(j_param_config, "multiple") == json_true()) {
-              if (json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))) == NULL) {
-                json_object_set_new(j_client, json_string_value(json_object_get(j_element, "name")), json_array());
-              }
-              json_array_append(json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))), json_object_get(j_element, "value"));
+            if (0 == o_strcmp("jwk", json_string_value(json_object_get(j_param_config, "convert")))) {
+              j_value = json_loads(json_string_value(json_object_get(j_element, "value")), JSON_DECODE_ANY, NULL);
             } else {
-              json_object_set(j_client, json_string_value(json_object_get(j_element, "name")), json_object_get(j_element, "value"));
+              j_value = json_incref(json_object_get(j_element, "value"));
+            }
+            if (j_value != NULL) {
+              if (json_object_get(j_param_config, "multiple") == json_true()) {
+                if (json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))) == NULL) {
+                  json_object_set_new(j_client, json_string_value(json_object_get(j_element, "name")), json_array());
+                }
+                json_array_append(json_object_get(j_client, json_string_value(json_object_get(j_element, "name"))), j_value);
+              } else {
+                json_object_set(j_client, json_string_value(json_object_get(j_element, "name")), j_value);
+              }
+              json_decref(j_value);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "append_client_properties - Error j_value is NULL (value)");
             }
           } else {
             if (json_object_get(j_param_config, "multiple") == json_true()) {
@@ -268,87 +386,6 @@ static json_t * database_client_get(const char * client_id, void * cls, int prof
   return j_return;
 }
 
-static json_t * is_client_database_parameters_valid(json_t * j_params) {
-  json_t * j_return, * j_error = json_array(), * j_element = NULL;
-  const char * field = NULL;
-  
-  if (j_error != NULL) {
-    if (!json_is_object(j_params)) {
-      json_array_append_new(j_error, json_string("parameters must be a JSON object"));
-    } else {
-      if (json_object_get(j_params, "use-glewlwyd-connection") != NULL && !json_is_boolean(json_object_get(j_params, "use-glewlwyd-connection"))) {
-        json_array_append_new(j_error, json_string("use-glewlwyd-connection must be a boolean"));
-      }
-      if (json_object_get(j_params, "use-glewlwyd-connection") == json_false()) {
-        if (json_object_get(j_params, "connection-type") == NULL || !json_is_string(json_object_get(j_params, "connection-type")) || (0 != o_strcmp("sqlite", json_string_value(json_object_get(j_params, "connection-type"))) && 0 != o_strcmp("mariadb", json_string_value(json_object_get(j_params, "connection-type"))) && 0 != o_strcmp("postgre", json_string_value(json_object_get(j_params, "connection-type"))))) {
-          json_array_append_new(j_error, json_string("connection-type is mandatory and must be one of the following values: 'sqlite', 'mariadb', 'postgre'"));
-        } else if (0 == o_strcmp("sqlite", json_string_value(json_object_get(j_params, "connection-type")))) {
-          if (json_object_get(j_params, "sqlite-dbpath") == NULL || !json_is_string(json_object_get(j_params, "sqlite-dbpath"))) {
-            json_array_append_new(j_error, json_string("sqlite-dbpath is mandatory and must be a string"));
-          }
-        } else if (0 == o_strcmp("mariadb", json_string_value(json_object_get(j_params, "connection-type")))) {
-          if (json_object_get(j_params, "mariadb-host") == NULL || !json_is_string(json_object_get(j_params, "mariadb-host"))) {
-            json_array_append_new(j_error, json_string("mariadb-host is mandatory and must be a string"));
-          }
-          if (json_object_get(j_params, "mariadb-client") == NULL || !json_is_string(json_object_get(j_params, "mariadb-client"))) {
-            json_array_append_new(j_error, json_string("mariadb-client is mandatory and must be a string"));
-          }
-          if (json_object_get(j_params, "mariadb-password") == NULL || !json_is_string(json_object_get(j_params, "mariadb-password"))) {
-            json_array_append_new(j_error, json_string("mariadb-password is mandatory and must be a string"));
-          }
-          if (json_object_get(j_params, "mariadb-dbname") == NULL || !json_is_string(json_object_get(j_params, "mariadb-dbname"))) {
-            json_array_append_new(j_error, json_string("mariadb-dbname is mandatory and must be a string"));
-          }
-          if (json_object_get(j_params, "mariadb-port") != NULL && (!json_is_integer(json_object_get(j_params, "mariadb-dbname")) || json_integer_value(json_object_get(j_params, "mariadb-dbname")) < 0)) {
-            json_array_append_new(j_error, json_string("mariadb-port is optional and must be a positive integer (default: 0)"));
-          }
-        } else if (0 == o_strcmp("postgre", json_string_value(json_object_get(j_params, "connection-type")))) {
-          if (json_object_get(j_params, "postgre-conninfo") == NULL || !json_is_string(json_object_get(j_params, "postgre-conninfo"))) {
-            json_array_append_new(j_error, json_string("postgre-conninfo is mandatory and must be a string"));
-          }
-        }
-      }
-      if (json_object_get(j_params, "data-format") != NULL) {
-        if (!json_is_object(json_object_get(j_params, "data-format"))) {
-          json_array_append_new(j_error, json_string("data-format is optional and must be a JSON object"));
-        } else {
-          json_object_foreach(json_object_get(j_params, "data-format"), field, j_element) {
-            if (0 == o_strcmp(field, "client_id") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "description") || 0 == o_strcmp(field, "enabled") || 0 == o_strcmp(field, "confidential") || 0 == o_strcmp(field, "password")) {
-              json_array_append_new(j_error, json_string("data-format can not have settings for properties 'client_id', 'name', 'description', 'enabled', 'confidential' or 'password'"));
-            } else {
-              if (json_object_get(j_element, "multiple") != NULL && !json_is_boolean(json_object_get(j_element, "multiple"))) {
-                json_array_append_new(j_error, json_string("multiple is optional and must be a boolean (default: false)"));
-              }
-              if (json_object_get(j_element, "read") != NULL && !json_is_boolean(json_object_get(j_element, "read"))) {
-                json_array_append_new(j_error, json_string("read is optional and must be a boolean (default: true)"));
-              }
-              if (json_object_get(j_element, "write") != NULL && !json_is_boolean(json_object_get(j_element, "write"))) {
-                json_array_append_new(j_error, json_string("write is optional and must be a boolean (default: true)"));
-              }
-              if (json_object_get(j_element, "profile-read") != NULL && !json_is_boolean(json_object_get(j_element, "profile-read"))) {
-                json_array_append_new(j_error, json_string("profile-read is optional and must be a boolean (default: false)"));
-              }
-              if (json_object_get(j_element, "profile-write") != NULL && !json_is_boolean(json_object_get(j_element, "profile-write"))) {
-                json_array_append_new(j_error, json_string("profile-write is optional and must be a boolean (default: false)"));
-              }
-            }
-          }
-        }
-      }
-    }
-    if (json_array_size(j_error)) {
-      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
-    } else {
-      j_return = json_pack("{si}", "result", G_OK);
-    }
-    json_decref(j_error);
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "is_client_database_parameters_valid - Error allocating resources for j_error");
-    j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
-  }
-  return j_return;
-}
-
 static char * get_password_clause_write(struct mod_parameters * param, const char * password) {
   char * clause = NULL, * password_encoded, digest[1024] = {0};
   
@@ -458,20 +495,33 @@ static char * get_password_clause_check(struct mod_parameters * param, const cha
 }
 
 static json_t * get_property_value_db(struct mod_parameters * param, const char * name, json_t * j_property, json_int_t gc_id) {
+  json_t * j_value;
+  char * tmp;
+  
+  if (0 == o_strcmp("jwk", json_string_value(json_object_get(json_object_get(json_object_get(param->j_params, "data-format"), name), "convert")))) {
+    tmp = json_dumps(j_property, JSON_COMPACT);
+    j_value = json_string(tmp);
+    o_free(tmp);
+  } else {
+    j_value = json_incref(j_property);
+  }
   if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
-    if (json_string_length(j_property) < 512) {
-      return json_pack("{sIsssO}", "gc_id", gc_id, "gcp_name", name, "gcp_value_tiny", j_property);
-    } else if (json_string_length(j_property) < 16*1024) {
-      return json_pack("{sIsssO}", "gc_id", gc_id, "gcp_name", name, "gcp_value_small", j_property);
+    if (json_string_length(j_value) < 512) {
+      return json_pack("{sIssso}", "gc_id", gc_id, "gcp_name", name, "gcp_value_tiny", j_value);
+    } else if (json_string_length(j_value) < 16*1024) {
+      return json_pack("{sIssso}", "gc_id", gc_id, "gcp_name", name, "gcp_value_small", j_value);
+    } else if (json_string_length(j_value) < 16*1024*1024) {
+      return json_pack("{sIssso}", "gc_id", gc_id, "gcp_name", name, "gcp_value_medium", j_value);
     } else {
-      return json_pack("{sIsssO}", "gc_id", gc_id, "gcp_name", name, "gcp_value_medium", j_property);
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_property_value_db - Error value is too large");
+      return NULL;
     }
   } else {
-    return json_pack("{sIsssO}", "gc_id", gc_id, "gcp_name", name, "gcp_value", j_property);;
+    return json_pack("{sIssso}", "gc_id", gc_id, "gcp_name", name, "gcp_value", j_value);
   }
 }
 
-static int save_client_properties(struct mod_parameters * param, json_t * j_client, json_int_t gc_id, int profile) {
+static int save_client_properties(struct mod_parameters * param, json_t * j_client, json_int_t gc_id) {
   json_t * j_property = NULL, * j_query, * j_array = json_array(), * j_format, * j_property_value = NULL;
   const char * name = NULL;
   int ret, res;
@@ -481,7 +531,7 @@ static int save_client_properties(struct mod_parameters * param, json_t * j_clie
     json_object_foreach(j_client, name, j_property) {
       if (0 != o_strcmp(name, "client_id") && 0 != o_strcmp(name, "name") && 0 != o_strcmp(name, "password") && 0 != o_strcmp(name, "description") && 0 != o_strcmp(name, "enabled") && 0 != o_strcmp(name, "confidential") && 0 != o_strcmp(name, "scope")) {
         j_format = json_object_get(json_object_get(param->j_params, "data-format"), name);
-        if ((!profile && json_object_get(j_format, "write") != json_false()) || (profile && json_object_get(j_format, "profile-write") == json_true())) {
+        if (json_object_get(j_format, "write") != json_false()) {
           if (!json_is_array(j_property)) {
             json_array_append_new(j_array, get_property_value_db(param, name, j_property, gc_id));
           } else {
@@ -629,7 +679,7 @@ static int save_client_scope(struct mod_parameters * param, json_t * j_scope, js
 
 json_t * client_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{si ss ss ss s{s{ssso} s{sss[sss]so} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{s{s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} }}}}",
+  return json_pack("{si ss ss ss s{s{ssso} s{sss[sss]so} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{s{s{ssso} s{ssso} s{ssso} }}}}",
                    "result",
                    G_OK,
                    
@@ -719,19 +769,7 @@ json_t * client_module_load(struct config_module * config) {
                            "type",
                            "boolean",
                            "default",
-                           json_true(),
-                           
-                         "profile-read",
-                           "type",
-                           "boolean",
-                           "default",
-                           json_false(),
-                           
-                         "profile-write",
-                           "type",
-                           "boolean",
-                           "default",
-                           json_false());
+                           json_true());
 }
 
 int client_module_unload(struct config_module * config) {
@@ -903,11 +941,6 @@ json_t * client_module_get(struct config_module * config, const char * client_id
   return database_client_get(client_id, cls, 0);
 }
 
-json_t * client_module_get_profile(struct config_module * config, const char * client_id, void * cls) {
-  UNUSED(config);
-  return database_client_get(client_id, cls, 1);
-}
-
 json_t * client_module_is_valid(struct config_module * config, const char * client_id, json_t * j_client, int mode, void * cls) {
   UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
@@ -970,7 +1003,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
             o_free(message);
           } else {
             json_array_foreach(j_element, index, j_value) {
-              if (!json_is_string(j_value) || json_string_length(j_value) > 16*1024*1024) {
+              if ((!json_is_string(j_value) || json_string_length(j_value) > 16*1024*1024) && 0 != o_strcmp("jwk", json_string_value(json_object_get(j_format, "convert")))) {
                 message = msprintf("property '%s' must contain a string value (maximum 16M characters)", property);
                 json_array_append_new(j_result, json_string(message));
                 o_free(message);
@@ -978,7 +1011,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
             }
           }
         } else {
-          if ((!json_is_string(j_element) && json_object_get(j_client, "description") != json_null()) || json_string_length(j_element) > 16*1024*1024) {
+          if ((((!json_is_string(j_element) && json_object_get(j_client, "description") != json_null()) || json_string_length(j_element) > 16*1024*1024)) && 0 != o_strcmp("jwk", json_string_value(json_object_get(j_format, "convert")))) {
             message = msprintf("property '%s' must be a string value (maximum 16M characters)", property);
             json_array_append_new(j_result, json_string(message));
             o_free(message);
@@ -1034,7 +1067,7 @@ int client_module_add(struct config_module * config, json_t * j_client, void * c
   json_decref(j_query);
   if (res == H_OK) {
     j_gc_id = h_last_insert_id(param->conn);
-    if (save_client_properties(param, j_client, json_integer_value(j_gc_id), 0) != G_OK) {
+    if (save_client_properties(param, j_client, json_integer_value(j_gc_id)) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_properties");
       ret = G_ERROR_DB;
     } else if (json_object_get(j_client, "scope") != NULL && save_client_scope(param, json_object_get(j_client, "scope"), json_integer_value(j_gc_id)) != G_OK) {
@@ -1099,7 +1132,7 @@ int client_module_update(struct config_module * config, const char * client_id, 
     }
     json_decref(j_query);
     if (res == H_OK) {
-      if (save_client_properties(param, j_client, json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id")), 0) != G_OK) {
+      if (save_client_properties(param, j_client, json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id"))) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_properties");
         ret = G_ERROR_DB;
       } else if (json_object_get(j_client, "scope") != NULL && save_client_scope(param, json_object_get(j_client, "scope"), json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id"))) != G_OK) {
