@@ -817,7 +817,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
                   has_error = 1;
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_WARNING, "get_ldap_write_mod - Error field '%s' has invaid format", field);
+                y_log_message(Y_LOG_LEVEL_WARNING, "get_ldap_write_mod - Error field '%s' has invalid format", field);
               }
               i++;
             }
