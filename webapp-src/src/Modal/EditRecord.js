@@ -16,7 +16,7 @@ class EditRecord extends Component {
       validateCb: props.validateCallback,
       profile: props.profile,
       add: props.add,
-      listAddValue: this.initListAdd(props.pattern),
+      listAddValue: this.initListAdd(props.pattern, props.data),
       listEltConfirm: this.initListConfirm(props.pattern),
       listError: {},
       hasError: false,
@@ -62,7 +62,7 @@ class EditRecord extends Component {
       profile: nextProps.profile,
       add: nextProps.add,
       listAddValue: this.initListAdd(nextProps.pattern),
-      listEltConfirm: this.initListConfirm(nextProps.pattern),
+      listEltConfirm: this.initListConfirm(nextProps.pattern, nextProps.data),
       listError: {},
       hasError: false,
       listPwd: this.initListPwd(nextProps.pattern, nextProps.add),
@@ -78,12 +78,13 @@ class EditRecord extends Component {
       if (result) {
         if (this.state.validateCb) {
           // Clean data of empty and unset values
-          for (var key in this.state.data) {
-            if (Array.isArray(this.state.data[key])) {
-              if (!this.state.data[key].length) {
-                delete(this.state.data[key]);
+          var data = this.state.data;
+          for (var key in data) {
+            if (Array.isArray(data[key])) {
+              if (!data[key].length) {
+                delete(data[key]);
               } else {
-                var arr = this.state.data[key];
+                var arr = data[key];
                 for (var i=arr.length-1; i>=0; i--) {
                   if (arr[i] === "") {
                     arr.splice(i, 1);
@@ -100,18 +101,18 @@ class EditRecord extends Component {
             }
           }
           if (!hasError) {
-            this.state.validateCb(this.state.data, this.state.listEltConfirm, this.state.add, (res, data) => {
+            this.state.validateCb(data, this.state.listEltConfirm, this.state.add, (res, errData) => {
               if (res) {
-                this.state.cb(result, this.state.data);
+                this.state.cb(result, data);
               } else {
-                this.setState({listError: data, hasError: true});
+                this.setState({listError: errData, hasError: true});
               }
             });
           } else {
             this.setState({listError: listError, hasError: true});
           }
         } else {
-          this.state.cb(result, this.state.data);
+          this.state.cb(result, data);
         }
       } else {
         this.state.cb(result, {});
@@ -235,7 +236,7 @@ class EditRecord extends Component {
           }
         } else if (pattern.type === "file") {
           if (elt) {
-            listJsx.push(<a href="#" key={0} onClick={(e) => this.deleteFile(e, pattern.name)}><span className="badge badge-primary btn-icon-right">{elt.substring(0, elt.indexOf("/"))}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
+            listJsx.push(<a href="#" key={0} onClick={(e) => this.deleteFile(e, pattern.name, -1)}><span className="badge badge-primary btn-icon-right">{elt.substring(0, elt.indexOf("/"))}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
           }
           if (pattern.edit || this.state.add) {
             inputJsx = <input type="file" className={"form-control" + validInput} onChange={(e) => this.uploadFile(e, pattern.name)} />
@@ -286,6 +287,8 @@ class EditRecord extends Component {
                 <input type="password" autoComplete="new-password" disabled={this.state.listPwd[pattern.name]==="disabled"||this.state.listPwd[pattern.name]==="keep"} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} onChange={(e) => this.changeElt(e, pattern.name)} value={elt||""}/>
                 <input type="password" autoComplete="new-password" disabled={this.state.listPwd[pattern.name]==="disabled"||this.state.listPwd[pattern.name]==="keep"} className={"form-control" + validInput} id={"modal-edit-confirm" + pattern.name} placeholder={i18next.t(pattern.placeholderConfirm)} value={this.state.listEltConfirm[pattern.name]||""} onChange={(e) => this.changeEltConfirm(e, pattern.name)} />
               </div>
+            } else if (pattern.type === "jwks") {
+              inputJsx = <input type="text" className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={this.state.listEltConfirm[pattern.name]||""} onChange={(e) => this.setJwks(e, pattern.name)} />
             } else {
               inputJsx = <input type={(pattern.type||"text")} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={elt||""} onChange={(e) => this.changeElt(e, pattern.name)} />
             }
@@ -322,6 +325,27 @@ class EditRecord extends Component {
     var data = this.state.data;
     data[name] = e.target.value;
     this.setState({data: data});
+  }
+  
+  setJwks(e, name) {
+    var data = this.state.data;
+    var listError = this.state.listError;
+    var hasError = this.state.hasError;
+    var listEltConfirm = this.state.listEltConfirm;
+    var value = e.target.value;
+    listError[name] = false;
+    hasError = false;
+    if (value) {
+      try {
+        data[name] = JSON.parse(value);
+      } catch (e) {
+        listError[name] = i18next.t("admin.invalid-json");
+        delete(data[name]);
+        hasError = true;
+      }
+    }
+    listEltConfirm[name] = value;
+    this.setState({data: data, listEltConfirm: listEltConfirm, hasError: hasError});
   }
 
   toggleBooleanElt(e, name) {
@@ -385,11 +409,13 @@ class EditRecord extends Component {
     return listAddValue;
   }
 
-  initListConfirm(patternList) {
+  initListConfirm(patternList, data) {
     var listEltConfirm = {};
     patternList.forEach((pat) => {
       if (pat.confirm) {
         listEltConfirm[pat.name] = "";
+      } else if (pat.type === "jwks") {
+        listEltConfirm[pat.name] = JSON.stringify(data[pat.name]);
       }
     });
     return listEltConfirm;
@@ -462,6 +488,16 @@ class EditRecord extends Component {
   }
   
   removeImage(e, name, index) {
+    var data = this.state.data;
+    if (index > -1) {
+      data[name].splice(index, 1);
+    } else {
+      delete(data[name]);
+    }
+    this.setState({data: data});
+  }
+  
+  deleteFile(e, name, index) {
     var data = this.state.data;
     if (index > -1) {
       data[name].splice(index, 1);
