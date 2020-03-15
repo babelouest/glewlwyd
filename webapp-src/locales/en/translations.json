@@ -350,6 +350,7 @@
     "mod-database-data-format-convert": "Convert",
     "mod-database-data-format-convert-none": "None",
     "mod-database-data-format-convert-base64": "Base64",
+    "mod-database-data-format-convert-jwks": "JWKS",
     "mod-http-default-scope": "Default scopes",
     "mod-http-url": "URL",
     "mod-http-url-ph": "Ex: http://glewlwyd.tld/",
