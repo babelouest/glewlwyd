@@ -33,6 +33,7 @@ class DatabaseParams extends Component {
     this.addDataFormat = this.addDataFormat.bind(this);
     this.deleteDataFormat = this.deleteDataFormat.bind(this);
     this.checkParameters = this.checkParameters.bind(this);
+    this.changedataFormatConvert = this.changedataFormatConvert.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -103,6 +104,16 @@ class DatabaseParams extends Component {
     var mod = this.state.mod;
     mod.parameters["data-format"][e.target.value] = mod.parameters["data-format"][property];
     delete(mod.parameters["data-format"][property]);
+    this.setState({mod: mod});
+  }
+  
+  changedataFormatConvert(e, property, convert) {
+    var mod = this.state.mod;
+    if (convert) {
+      mod.parameters["data-format"][property]["convert"] = convert;
+    } else {
+      delete(mod.parameters["data-format"][property]["convert"]);
+    }
     this.setState({mod: mod});
   }
   
@@ -322,6 +333,22 @@ class DatabaseParams extends Component {
           <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteDataFormat(e, property)} title={i18next.t("admin.mod-data-format-delete")}>
             <i className="fas fa-trash"></i>
           </button>
+          <div className="form-group">
+            <div className="btn-group" role="group">
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor={"dropdownFormatConvert-"+i}>{i18next.t("admin.mod-database-data-format-convert")}</label>
+              </div>
+              <div className="dropdown">
+                <button className="btn btn-secondary dropdown-toggle" type="button" id={"dropdownFormatConvert-"+i} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  {i18next.t("admin.mod-database-data-format-convert-"+(this.state.mod.parameters["data-format"][property]["convert"]?this.state.mod.parameters["data-format"][property]["convert"]:"none"))}
+                </button>
+                <div className="dropdown-menu" aria-labelledby={"dropdownFormatConvert-"+i}>
+                  <a className="dropdown-item" href="#" onClick={(e) => this.changedataFormatConvert(e, property, false)}>{i18next.t("admin.mod-database-data-format-convert-none")}</a>
+                  <a className="dropdown-item" href="#" onClick={(e) => this.changedataFormatConvert(e, property, 'jwks')}>{i18next.t("admin.mod-database-data-format-convert-jwks")}</a>
+                </div>
+              </div>
+            </div>
+          </div>
           <hr/>
         </div>);
       }

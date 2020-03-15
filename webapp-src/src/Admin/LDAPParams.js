@@ -352,6 +352,7 @@ class LDAPParams extends Component {
               <div className="dropdown-menu" aria-labelledby={"dropdownFormatConvert-"+i}>
                 <a className="dropdown-item" href="#" onClick={(e) => this.changedataFormatConvert(e, property, false)}>{i18next.t("admin.mod-database-data-format-convert-none")}</a>
                 <a className="dropdown-item" href="#" onClick={(e) => this.changedataFormatConvert(e, property, 'base64')}>{i18next.t("admin.mod-database-data-format-convert-base64")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changedataFormatConvert(e, property, 'jwks')}>{i18next.t("admin.mod-database-data-format-convert-jwks")}</a>
               </div>
             </div>
           </div>
