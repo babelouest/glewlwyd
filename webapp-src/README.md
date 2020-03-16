@@ -2,6 +2,8 @@
 
 Glewlwyd front-end is a single Page Application based on ReactJS/JQuery. Uses Webpack 4 to build, requires npm or yarn.
 
+Many thanks to [Marco DE BOOIJ](https://github.com/mdebooy) for the Dutch translation!
+
 ## Install dependencies
 
 Prior to running the development instance or building the front-end, you must install the dependencies.
