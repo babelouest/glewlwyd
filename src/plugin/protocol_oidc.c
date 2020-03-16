@@ -236,9 +236,23 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("Property 'request-parameter-allow' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "request-uri-allow-https-non-secure") != NULL && !json_is_boolean(json_object_get(j_params, "request-uri-allow-https-non-secure"))) {
-      json_array_append_new(j_error, json_string("Property 'request-uri-allow-https-non-secure' is optional and must be a boolean"));
-      ret = G_ERROR_PARAM;
+    if (json_object_get(j_params, "request-parameter-allow") == json_true()) {
+      if (json_object_get(j_params, "request-uri-allow-https-non-secure") != NULL && !json_is_boolean(json_object_get(j_params, "request-uri-allow-https-non-secure"))) {
+        json_array_append_new(j_error, json_string("Property 'request-uri-allow-https-non-secure' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "client-pubkey-parameter") != NULL && !json_is_string(json_object_get(j_params, "client-pubkey-parameter"))) {
+        json_array_append_new(j_error, json_string("Property 'client-pubkey-parameter' is optional and must be a string"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "client-jwks-parameter") != NULL && !json_is_string(json_object_get(j_params, "client-jwks-parameter"))) {
+        json_array_append_new(j_error, json_string("Property 'client-jwks-parameter' is optional and must be a string"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "client-jwks_uri-parameter") != NULL && !json_is_string(json_object_get(j_params, "client-jwks_uri-parameter"))) {
+        json_array_append_new(j_error, json_string("Property 'client-jwks_uri-parameter' is optional and must be a string"));
+        ret = G_ERROR_PARAM;
+      }
     }
     if (json_object_get(j_params, "subject-type") != NULL && 0 != o_strcmp("public", json_string_value(json_object_get(j_params, "subject-type"))) && 0 != o_strcmp("pairwise", json_string_value(json_object_get(j_params, "subject-type")))) {
       json_array_append_new(j_error, json_string("Property 'op-tos-uri' is optional and must have one of the following values: 'public' or 'pairwise'"));
@@ -2801,9 +2815,14 @@ static char * get_request_from_uri(struct _oidc_config * config, const char * re
  * validate a request object in jwt format
  */
 static json_t * validate_jwt_request(struct _oidc_config * config, const char * jwt_request, const char * ip_source) {
-  json_t * j_return, * j_payload, * j_client = NULL;
+  json_t * j_return, * j_payload, * j_header, * j_client = NULL;
   jwt_t * jwt_unverified = NULL, * jwt_verified = NULL;
-  char * jwt_payload;
+  char * jwt_payload = NULL, * jwt_header = NULL;
+  unsigned char pubkey[4096] = {0};
+  size_t pubkey_len = 4096;
+  jwks_t * jwks = NULL;
+  jwk_t * jwk = NULL;
+  jwt_alg_t alg = JWT_ALG_NONE;
   
   if (jwt_request != NULL) {
     // First, parse jwt_request without verifying the signature
@@ -2811,34 +2830,69 @@ static json_t * validate_jwt_request(struct _oidc_config * config, const char * 
       // Extract header and payload
       jwt_payload = jwt_get_grants_json(jwt_unverified, NULL);
       j_payload = json_loads(jwt_payload, JSON_DECODE_ANY, NULL);
-      if (j_payload != NULL) {
+      jwt_header = jwt_get_headers_json(jwt_unverified, NULL);
+      j_header = json_loads(jwt_header, JSON_DECODE_ANY, NULL);
+      if (j_payload != NULL && j_header != NULL) {
         // request or request_uri must not be present in the payload
         if (json_object_get(j_payload, "request") == NULL && json_object_get(j_payload, "request_uri") == NULL) {
           // Check client_id
           j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get(j_payload, "client_id")));
           if (check_result_value(j_client, G_OK)) {
-            // Client must have a non empty client_secret or be non confidential
+            // Client must have a non empty client_secret, a public key available, a jwks or be non confidential
+            alg = jwt_str_alg(json_string_value(json_object_get(j_header, "alg")));
             if (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
-              if (json_string_length(json_object_get(json_object_get(j_client, "client"), "client_secret"))) {
-                if (!jwt_decode(&jwt_verified, jwt_request, (const unsigned char *)json_string_value(json_object_get(json_object_get(j_client, "client"), "client_secret")), json_string_length(json_object_get(json_object_get(j_client, "client"), "client_secret")))) {
-                  if (jwt_get_alg(jwt_verified) == JWT_ALG_HS256 || jwt_get_alg(jwt_verified) == JWT_ALG_HS384 || jwt_get_alg(jwt_verified) == JWT_ALG_HS512) {
+              if (alg == JWT_ALG_HS256 || alg == JWT_ALG_HS384 || alg == JWT_ALG_HS512) {
+                if (json_string_length(json_object_get(json_object_get(j_client, "client"), "client_secret"))) {
+                  if (!jwt_decode(&jwt_verified, jwt_request, (const unsigned char *)json_string_value(json_object_get(json_object_get(j_client, "client"), "client_secret")), json_string_length(json_object_get(json_object_get(j_client, "client"), "client_secret")))) {
                     j_return = json_pack("{sisOsO}", "result", G_OK, "request", j_payload, "client", j_client);
                   } else {
-                    y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt has unsupported algorithm: %s, origin: %s", jwt_alg_str(jwt_get_alg(jwt_verified)), ip_source);
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt has an invalid signature (client_secret), origin: %s", ip_source);
                     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
                   }
+                  jwt_free(jwt_verified);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt has an invalid signature", ip_source);
+                  y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - client has no attribute 'client_secret', origin: %s", ip_source);
                   j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
                 }
-                jwt_free(jwt_verified);
+              } else if (alg == JWT_ALG_ES256 || alg == JWT_ALG_ES384 || alg == JWT_ALG_ES512 || alg == JWT_ALG_RS256 || alg == JWT_ALG_RS384 || alg == JWT_ALG_RS512) {
+                if (json_string_length(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))) && json_string_length(json_object_get(j_header, "kid"))) {
+                  if (r_init_jwks(&jwks) == RHN_OK && r_jwks_import_from_uri(jwks, json_string_value(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))), R_FLAG_FOLLOW_REDIRECT|(json_object_get(config->j_params, "request-uri-allow-https-non-secure")==json_true()?R_FLAG_IGNORE_SERVER_CERTIFICATE:0)) == RHN_OK) {
+                    if ((jwk = r_jwks_get_by_kid(jwks, json_string_value(json_object_get(j_header, "kid")))) == NULL || r_jwk_export_to_pem_der(jwk, R_FORMAT_PEM, pubkey, &pubkey_len, 0) != RHN_OK) {
+                      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - unable to get pubkey from jwks_uri, origin: %s", ip_source);
+                    }
+                    r_free_jwk(jwk);
+                  }
+                  r_free_jwks(jwks);
+                } else if (json_is_object(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks-parameter")))) && json_string_length(json_object_get(j_header, "kid"))) {
+                  if (r_init_jwks(&jwks) == RHN_OK && r_jwks_import_from_json_t(jwks, json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks-parameter")))) == RHN_OK) {
+                    if ((jwk = r_jwks_get_by_kid(jwks, json_string_value(json_object_get(j_header, "kid")))) == NULL || r_jwk_export_to_pem_der(jwk, R_FORMAT_PEM, pubkey, &pubkey_len, 0) != RHN_OK) {
+                      y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - unable to get pubkey from jwks, origin: %s", ip_source);
+                    }
+                    r_free_jwk(jwk);
+                  }
+                  r_free_jwks(jwks);
+                } else if (json_string_length(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-pubkey-parameter"))))) {
+                  o_strncpy((char *)pubkey, json_string_value(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-pubkey-parameter")))), 4096);
+                }
+                if (o_strlen((char *)pubkey)) {
+                  if (!jwt_decode(&jwt_verified, jwt_request, pubkey, o_strlen((char *)pubkey))) {
+                    j_return = json_pack("{sisOsO}", "result", G_OK, "request", j_payload, "client", j_client);
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt has an invalid signature (pubkey)", ip_source);
+                    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+                  }
+                  jwt_free(jwt_verified);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - invalid pubkey, origin: %s", ip_source);
+                  j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+                }
               } else {
-                y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - client has no attribute 'client_secret', origin: %s", ip_source);
+                y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt has unsupported algorithm: %s, origin: %s", jwt_alg_str(jwt_get_alg(jwt_unverified)), ip_source);
                 j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
               }
             } else {
               // jwt_header must have alg set to "none"
-              if (jwt_get_alg(jwt_unverified) == JWT_ALG_NONE) {
+              if (alg == JWT_ALG_NONE) {
                 j_return = json_pack("{sisOsO}", "result", G_OK, "request", j_payload, "client", j_client);
               } else {
                 y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - jwt alg is not none although the client is not confidential, origin: %s", ip_source);
@@ -2862,6 +2916,8 @@ static json_t * validate_jwt_request(struct _oidc_config * config, const char * 
       }
       json_decref(j_payload);
       o_free(jwt_payload);
+      json_decref(j_header);
+      o_free(jwt_header);
       jwt_free(jwt_unverified);
     } else {
       y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_request - Error jwt_request is not a valid jwt, origin: %s", ip_source);
@@ -3379,7 +3435,7 @@ static json_t * client_register(struct _oidc_config * config, const struct _u_re
   return j_return;
 }
 
-static json_t * is_client_registration_valid(json_t * j_registration) {
+static json_t * is_client_registration_valid(struct _oidc_config * config, json_t * j_registration) {
   json_t * j_error = json_array(), * j_return, * j_element = NULL;
   size_t index = 0;
   jwks_t * jwks = NULL;
@@ -3439,7 +3495,7 @@ static json_t * is_client_registration_valid(json_t * j_registration) {
           json_array_append_new(j_error, json_string("jwks_uri is optional and must be an https:// url"));
         } else {
           r_init_jwks(&jwks);
-          if (r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_registration, "jwks_uri"))) != RHN_OK) {
+          if (r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_registration, "jwks_uri")), R_FLAG_FOLLOW_REDIRECT|(json_object_get(config->j_params, "request-uri-allow-https-non-secure")==json_true()?R_FLAG_IGNORE_SERVER_CERTIFICATE:0)) != RHN_OK) {
             json_array_append_new(j_error, json_string("Invalid JWKS pointed by jwks_uri"));
           }
           r_free_jwks(jwks);
@@ -3653,7 +3709,7 @@ static int callback_client_registration(const struct _u_request * request, struc
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   json_t * j_result_check, * j_result, * j_registration = ulfius_get_json_body_request(request, NULL);
   
-  j_result_check = is_client_registration_valid(j_registration);
+  j_result_check = is_client_registration_valid(config, j_registration);
   if (check_result_value(j_result_check, G_OK)) {
     j_result = client_register(config, request, j_registration);
     if (check_result_value(j_result, G_OK)) {
