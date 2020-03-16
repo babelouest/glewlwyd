@@ -520,6 +520,8 @@
     "mod-glwd-jwks-show": "JWKS available",
     "mod-glwd-jwks-x5c": "X5C certificate chain (optional)",
     "mod-glwd-request-parameter-allow": "Allow passing request parameter as JWT",
+    "mod-glwd-request-parameter-encryption-allow": "Allow encrypted request parameter as JWT",
+    "mod-glwd-token-encryption-allow": "Allow out token encryption",
     "mod-glwd-request-uri-allow-https-non-secure": "Allow request_uri and jwks_uri to a unsecure https:// uri",
     "mod-glwd-url-auth": "URL API Auth for this instance",
     "mod-glwd-url-token": "URL API Token for this instance",
