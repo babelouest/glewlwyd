@@ -718,7 +718,7 @@ END_TEST
 
 START_TEST(test_oidc_request_jwt_add_module_request_signed)
 {
-  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisosososososososossssss}}",
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososososossssss}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_DISPLAY_NAME,
@@ -734,6 +734,7 @@ START_TEST(test_oidc_request_jwt_add_module_request_signed)
                                   "allow-non-oidc", json_true(),
                                   "auth-type-client-enabled", json_true(),
                                   "auth-type-code-enabled", json_true(),
+                                  "auth-type-token-enabled", json_true(),
                                   "auth-type-implicit-enabled", json_true(),
                                   "auth-type-password-enabled", json_true(),
                                   "auth-type-refresh-enabled", json_true(),
@@ -837,7 +838,7 @@ START_TEST(test_oidc_request_jwt_response_client_pubkey_ok)
   request = jwt_encode_str(jwt_request);
   ck_assert_ptr_ne(request, NULL);
   
-  url = msprintf(SERVER_URI "/oidc/auth?g_continue&request=%s", request);
+  url = msprintf(SERVER_URI "/" PLUGIN_NAME "/auth?g_continue&request=%s", request);
   ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "id_token="), 1);
   
   ulfius_stop_framework(&instance);
@@ -874,7 +875,7 @@ START_TEST(test_oidc_request_jwt_response_client_pubkey_invalid_signature)
   request = jwt_encode_str(jwt_request);
   ck_assert_ptr_ne(request, NULL);
   
-  url = msprintf(SERVER_URI "/oidc/auth?g_continue&request=%s", request);
+  url = msprintf(SERVER_URI "/" PLUGIN_NAME "/auth?g_continue&request=%s", request);
   ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
   
   ulfius_stop_framework(&instance);
@@ -911,7 +912,7 @@ START_TEST(test_oidc_request_jwt_response_client_pubkey_invalid_kid)
   request = jwt_encode_str(jwt_request);
   ck_assert_ptr_ne(request, NULL);
   
-  url = msprintf(SERVER_URI "/oidc/auth?g_continue&request=%s", request);
+  url = msprintf(SERVER_URI "/" PLUGIN_NAME "/auth?g_continue&request=%s", request);
   ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
   
   ulfius_stop_framework(&instance);
@@ -947,7 +948,7 @@ START_TEST(test_oidc_request_jwt_response_client_pubkey_no_kid_ok)
   request = jwt_encode_str(jwt_request);
   ck_assert_ptr_ne(request, NULL);
   
-  url = msprintf(SERVER_URI "/oidc/auth?g_continue&request=%s", request);
+  url = msprintf(SERVER_URI "/" PLUGIN_NAME "/auth?g_continue&request=%s", request);
   ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "id_token="), 1);
   
   ulfius_stop_framework(&instance);
@@ -984,7 +985,7 @@ START_TEST(test_oidc_request_jwt_response_client_pubkey_test_priority)
   request = jwt_encode_str(jwt_request);
   ck_assert_ptr_ne(request, NULL);
   
-  url = msprintf(SERVER_URI "/oidc/auth?g_continue&request=%s", request);
+  url = msprintf(SERVER_URI "/" PLUGIN_NAME "/auth?g_continue&request=%s", request);
   ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "id_token="), 1);
   o_free(url);
   o_free(request);
@@ -992,7 +993,7 @@ START_TEST(test_oidc_request_jwt_response_client_pubkey_test_priority)
   ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_2_pem, o_strlen(privkey_2_pem)), 0);
   request = jwt_encode_str(jwt_request);
   ck_assert_ptr_ne(request, NULL);
-  url = msprintf(SERVER_URI "/oidc/auth?g_continue&request=%s", request);
+  url = msprintf(SERVER_URI "/" PLUGIN_NAME "/auth?g_continue&request=%s", request);
   ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
   
   ulfius_stop_framework(&instance);
