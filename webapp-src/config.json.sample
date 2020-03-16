@@ -215,6 +215,14 @@
       "config_endpoint": "https://accounts.google.com/.well-known/openid-configuration"
     },
     {
+      "help_url": "https://developer.yahoo.com/oauth2/guide/openid_connect/getting_started.html",
+      "name": "Yahoo",
+      "logo_fa": "fab fa-yahoo",
+      "provider_type": "oidc",
+      "response_type": "code",
+      "config_endpoint": "https://api.login.yahoo.com/.well-known/openid-configuration"
+    },
+    {
       "help_url": "https://docs.microsoft.com/en-us/azure/active-directory/develop/v1-protocols-oauth-code#register-your-application-with-your-ad-tenant",
       "name": "Microsoft",
       "logo_fa": "fab fa-microsoft",
