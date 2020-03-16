@@ -3598,7 +3598,13 @@ static int generate_discovery_content(struct _oidc_config * config) {
     json_object_set_new(j_discovery, "token_endpoint", json_pack("s+", plugin_url, "/token"));
     json_object_set_new(j_discovery, "userinfo_endpoint", json_pack("s+", plugin_url, "/userinfo"));
     json_object_set_new(j_discovery, "jwks_uri", json_pack("s+", plugin_url, "/jwks"));
-    json_object_set_new(j_discovery, "token_endpoint_auth_methods_supported", json_pack("[sss]", "client_secret_basic", "client_secret_post", "client_secret_jwt"));
+    json_object_set_new(j_discovery, "token_endpoint_auth_methods_supported", json_pack("[ss]", "client_secret_basic", "client_secret_post"));
+    if (json_object_get(config->j_params, "request-parameter-allow") == json_true()) {
+      json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_methods_supported"), json_string("client_secret_jwt"));
+      if (json_string_length(json_object_get(config->j_params, "client-pubkey-parameter")) || json_string_length(json_object_get(config->j_params, "client-jwks-parameter")) || json_string_length(json_object_get(config->j_params, "client-jwks_uri-parameter"))) {
+        json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_methods_supported"), json_string("private_key_jwt"));
+      }
+    }
     json_object_set_new(j_discovery, "id_token_signing_alg_values_supported", json_pack("[s]", jwt_alg_str(jwt_get_alg(config->jwt_key))));
     if (json_object_get(config->j_params, "allowed-scope") != NULL && json_array_size(json_object_get(config->j_params, "allowed-scope"))) {
       json_object_set(j_discovery, "scopes_supported", json_object_get(config->j_params, "allowed-scope"));
