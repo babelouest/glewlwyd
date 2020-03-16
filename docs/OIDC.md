@@ -88,16 +88,6 @@ Name of the instance displayed to the user.
 
 Issuer that will be added in all ID Tokens, must correspond to your Glewlwyd instance URL.
 
-### Allow passing request parameter as JWT
-
-Allow using request parameters as JWT with `request` objects or `request_uri` links.
-
-### Allow request_uri to a unsecure https:// uri
-
-If the specified `request_uri` link points to an unsecure https:// page with invalid certificate or hostname, allow it anyway.
-
-Warning! This may lead to unsecure connections or MITM attacks.
-
 ### Subject type identifier
 
 Specify the way to identify subjects.
@@ -271,6 +261,30 @@ For example:
 ```
 
 To have a claim available in the claim request, it must be set to `on-demand` in the plugin configuration.
+
+## JWT requests, public keys and JWKS
+
+### Allow passing request parameter as JWT
+
+Allow using request parameters as JWT with `request` objects or `request_uri` links.
+
+### Allow request_uri and jwks_uri to a unsecure https:// uri
+
+If the specified `request_uri` link points to an unsecure https:// page with invalid certificate or hostname, allow it anyway.
+
+Warning! This may lead to unsecure connections or MITM attacks.
+
+### pubkey property
+
+Enter the client property that will hold a public key in PEM format.
+
+### JWKS property
+
+Enter the client property that will hold the JWKS of the client.
+
+### JWKS_URI property
+
+Enter the client property that will hold the JWKS_URI of the client. The JWKS will be downloaded each time the JWKS is requested.
 
 ## PKCE - Code challenge (RFC 7636)
 
