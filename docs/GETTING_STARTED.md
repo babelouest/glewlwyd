@@ -29,19 +29,9 @@
       - [Setup the required scopes for a user](#setup-the-required-scopes-for-a-user)
 - [How-Tos](#how-tos)
     - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
-      - [Step 1: Change admin password](#step-1-change-admin-password)
-      - [Step 2: Add OTP and Webauthn schemes](#step-2-add-otp-and-webauthn-schemes)
-      - [Step 3: Add scopes in Glewlwyd](#step-3-add-scopes-in-glewlwyd)
-      - [Step 4: Add a Glewlwyd OAuth2 plugin instance](#step-4-add-a-glewlwyd-oauth2-plugin-instance)
-      - [Step 5: Add the client Taliesin](#step-5-add-the-client-taliesin)
-      - [Step 6: Add a simple user and setup admin user](#step-6-add-a-simple-user-and-setup-admin-user)
-      - [Step 7: Configure OTP and Webauthn for admin](#step-7-configure-otp-and-webauthn-for-admin)
-      - [Step 8: Configure Taliesin's `config.json` file](#step-8-configure-taliesin-s-config-json-file)
-      - [Step 9: Open Taliesin in your browser](#step-9-open-taliesin-in-your-browser)
+    - [Use case: Configure a registration process with a confirmed e-mail address and OTP, Webauthn or OAuth2 Client schemes](#)
     - [User profile delegation](#user-profile-delegation)
     - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
-      - [Step 1: Add a specific data format](#step-1-add-a-specific-data-format)
-      - [Step 2: Update webapp/config.json to show the new property](#step-2-update-webapp-config-json-to-show-the-new-property) 
     - [Non-password authentication](#non-password-authentication)
 
 The installation comes with a default configuration that can be updated or overwritten via the administration page or the configuration file.
@@ -374,6 +364,84 @@ Click on the login button, you should be redirected to Glewlwyd's login page.
 
 There, log in with your admin password. After that, use the second factor authenticaiton of your choice. When completed, click on the `Continue` button which should be enabled. You will be redirected to Taliesin with a valid login and able to use the application as administrator, enjoy!
 
+### Use case: Configure a registration process with a confirmed e-mail address and OTP, Webauthn or OAuth2 Client schemes
+
+Let's say you want to organize a conference with an open registration, you don't want your users to remember a password but you want a secure login.
+New users will use their e-mail address as username, will have to register a new OTP before completing registration, then will be allowed to register their Facebook or Google account to login to your application, and also will be allowed to register a Webauthn device such as Yubikey or an android phone with fingerprint scan.
+
+This use case will describe configuration steps to have a Glewlwyd instance where new users will have to register an account using a verified e-mai address, at least the OTP scheme and optionnally a Webauthn or an external OAuth2 register (Gooogle or Facebook in this example).
+
+This use case is based on the following assertions:
+- Glewlwyd is freshly installed with default configuration
+- Glewlwyd is installed on a machine and available at an external address, for the rest of this documentation, the following example address will be used: [https://glewlwyd.tld/](https://glewlwyd.tld/).
+
+#### Step 1: Register your Glewlwyd instance as an OAuth2 client at Facebook and Google
+
+Follow the procedure for each provider to create an OAuth2 client:
+
+- Facebook: [https://developers.facebook.com/docs/facebook-login/manually-build-a-login-flow/](https://developers.facebook.com/docs/facebook-login/manually-build-a-login-flow/)
+- Google: [https://developers.google.com/identity/protocols/OAuth2](https://developers.google.com/identity/protocols/OAuth2)
+
+For each provider, you must use the callback address [https://glewlwyd.tld/callback.tld](https://glewlwyd.tld/callback.tld) in your registration (replace `https://glewlwyd.tld/` with your glewlwyd instance external address).
+
+#### Step 2: Add authentication schemes
+
+You must instanciate the schemes [OTP](OTP.md), [Webauthn](WEBAUTHN.md) and [OAuth2](OAUTH2_SCHEME.md) by using their respective documentation.
+
+#### Step 3: Add a new scope
+
+Add the [new scope](SCOPE.md) `conference`, uncheck `Password` in the Authentication paragraph, then add the 3 schemes to the scope `Additional authentication scheme` in the same group, see screenshot below.
+
+![use case register scope](screenshots/usecase-register-scope.png)
+
+#### Step 4: Add a register plugin
+
+Add a new register plugin, name `register`:
+- `Password` set to `No`
+- `scopes to add` set to `conference` only
+- Add the schemes `OTP`, `oauth2` and `Webauthn`, for the scope `OTP`, set `mandatory` to `Yes`
+- Check `verify e-mail` and `username is e-mail`
+- Enter your SMTP server configuration, at least `SMTP server` and `E-mail sender address`
+- In `E-mail body`, replace `<your_registration_plugin_name>` with `register`
+
+#### Step 5: Update webapp/config.json
+
+In the last step, you will have to update your `webapp/config.json` file to adapt your front-end to your configuration.
+
+```javascript
+"defaultScheme": "otp", // This will be the default authentication scheme
+"sessionSchemes": [
+  {
+    "scheme_name": "webauthn",
+    "scheme_display_name": "login.webauthn-title",
+    "scheme_type": "webauthn"
+  },
+  {
+    "scheme_name": "otp",
+    "scheme_display_name": "login.otp-title",
+    "scheme_type": "otp"
+  },
+  {
+    "scheme_name": "oauth2",
+    "scheme_display_name": "login.oauth2-title",
+    "scheme_type": "oauth2"
+  }
+],
+"register": [
+  {
+    "name": "registration",
+    "message": "login.register-link"
+  }
+],
+"register-complete": [
+  {
+    "name": "registration",
+    "complete-link": "https://www.example.com/", // Replace with the url of your application
+    "complete-link-label": "profile.register-complete-link"
+  }
+],
+```
+
 ### User profile delegation
 
 ![user-list-delegate](screenshots/user-list-delegate.png)
@@ -465,7 +533,7 @@ One or more schemes must be already installed: E-mail code, Webauthn, Client cer
 
 Then, in the login page for a new user, the dropdown `Scheme` will be available, allowing to authentify with the schemes specified.
 
-The option `defaultScheme` in the `config.json` file can be used to overwrite password as default scheme to authenticate users. Fill this option with a scheme name present in the `sessionSchemes` array. Exemple:
+The option `defaultScheme` in the `config.json` file can be used to overwrite password as default scheme to authenticate users. Fill this option with a scheme name present in the `sessionSchemes` array. Example:
 
 ```javascript
   "defaultScheme": "webauthn",
