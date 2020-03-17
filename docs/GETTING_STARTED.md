@@ -29,7 +29,7 @@
       - [Setup the required scopes for a user](#setup-the-required-scopes-for-a-user)
 - [How-Tos](#how-tos)
     - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
-    - [Use case: Configure a registration process with a confirmed e-mail address and OTP, Webauthn or OAuth2 Client schemes](#)
+    - [Use case: Configure a registration process with a confirmed e-mail address and OTP, Webauthn or OAuth2 Client schemes](#use-case-configure-a-registration-process-with-a-confirmed-e-mail-address-and-otp-webauthn-or-oauth2-client-schemes)
     - [User profile delegation](#user-profile-delegation)
     - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
     - [Non-password authentication](#non-password-authentication)
