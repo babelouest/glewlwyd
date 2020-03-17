@@ -1364,20 +1364,6 @@ class GlwdOIDCParams extends Component {
                   </div>
                 </div>
                 <hr/>
-                <div className="accordion" id="accordionAddParam">
-                  <div className="card">
-                    <div className="card-header" id="addParamCard">
-                      <h2 className="mb-0">
-                        <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#colx#lapseAddParam" aria-expanded="true" aria-controls="collapseAddParam">
-                        </button>
-                      </h2>
-                    </div>
-                    <div id="collapseAddParam" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionAddParam">
-                      <div className="card-body">
-                      </div>
-                    </div>
-                  </div>
-                </div>
                 <div className="form-group">
                   <div className="input-group mb-3">
                     <div className="input-group-prepend">
