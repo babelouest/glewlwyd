@@ -131,3 +131,13 @@ CREATE TABLE gpo_client_registration (
   gpocr_user_agent TEXT,
   FOREIGN KEY(gpoa_id) REFERENCES gpo_access_token(gpoa_id) ON DELETE CASCADE
 );
+
+-- store meta information about client request on token endpoint
+CREATE TABLE gpo_client_token_request (
+  gpoctr_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpoctr_plugin_name TEXT NOT NULL,
+  gpoctr_cient_id TEXT NOT NULL,
+  gpoctr_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpoctr_issued_for TEXT, -- IP address or hostname
+  gpoctr_jti_hash TEXT
+);
