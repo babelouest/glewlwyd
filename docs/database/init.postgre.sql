@@ -418,6 +418,16 @@ CREATE TABLE gpo_client_registration (
   FOREIGN KEY(gpoa_id) REFERENCES gpo_access_token(gpoa_id) ON DELETE CASCADE
 );
 
+-- store meta information about client request on token endpoint
+CREATE TABLE gpo_client_token_request (
+  gpoctr_id SERIAL PRIMARY KEY,
+  gpoctr_plugin_name VARCHAR(256) NOT NULL,
+  gpoctr_cient_id VARCHAR(256) NOT NULL,
+  gpoctr_created_at TIMESTAMPTZ DEFAULT NOW(),
+  gpoctr_issued_for VARCHAR(256), -- IP address or hostname
+  gpoctr_jti_hash VARCHAR(512)
+);
+
 CREATE TABLE gs_code (
   gsc_id SERIAL PRIMARY KEY,
   gsc_mod_name VARCHAR(128) NOT NULL,
