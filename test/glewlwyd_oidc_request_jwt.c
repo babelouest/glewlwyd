@@ -6,6 +6,9 @@
 #include <errno.h>
 #include <time.h>
 #include <jwt.h>
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
+#include <gnutls/abstract.h>
 
 #include <check.h>
 #include <ulfius.h>
@@ -48,6 +51,7 @@
 #define CLIENT_PUBKEY_ID "client_pubkey"
 #define CLIENT_PUBKEY_NAME "client with pubkey"
 #define CLIENT_PUBKEY_REDIRECT "https://glewlwyd.local/"
+#define CLIENT_SCOPE "scope1"
 #define KID_PUB "pubkey"
 
 struct _u_request admin_req;
@@ -751,7 +755,7 @@ END_TEST
 
 START_TEST(test_oidc_request_jwt_add_client_pubkey)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[sss] ss so}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "pubkey", pubkey_1_pem, "enabled", json_true());
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] ss so}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enabled", json_true());
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -763,7 +767,7 @@ END_TEST
 
 START_TEST(test_oidc_request_jwt_add_client_jwks)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[sss] so so}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "jwks", json_loads(pubkey_1_jwk, JSON_DECODE_ANY, NULL), "enabled", json_true());
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] so so}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "jwks", json_loads(pubkey_1_jwk, JSON_DECODE_ANY, NULL), "enabled", json_true());
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -775,7 +779,7 @@ END_TEST
 
 START_TEST(test_oidc_request_jwt_add_client_jwks_uri)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[sss] ss so}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "jwks_uri", "http://localhost:7462/jwks", "enabled", json_true());
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] ss so}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "jwks_uri", "http://localhost:7462/jwks", "enabled", json_true());
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -787,7 +791,7 @@ END_TEST
 
 START_TEST(test_oidc_request_jwt_add_client_multiple)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[sss] so ss so ss}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "enabled", json_true(), "pubkey", pubkey_2_pem, "jwks", json_loads(pubkey_2_jwk, JSON_DECODE_ANY, NULL), "jwks_uri", "http://localhost:7462/jwks");
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] so ss so ss}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "enabled", json_true(), "pubkey", pubkey_2_pem, "jwks", json_loads(pubkey_2_jwk, JSON_DECODE_ANY, NULL), "jwks_uri", "http://localhost:7462/jwks");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -845,6 +849,539 @@ START_TEST(test_oidc_request_jwt_response_client_pubkey_ok)
   ulfius_clean_instance(&instance);
 
   o_free(url);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_jwt_response_client_pubkey_uauthorized)
+{
+  jwt_t * jwt_request = NULL;
+  char * url, * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem)), 0);
+  jwt_add_grant(jwt_request, "aud", CLIENT_PUBKEY_REDIRECT);
+  jwt_add_grant(jwt_request, "response_type", RESPONSE_TYPE);
+  jwt_add_grant(jwt_request, "client_id", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "redirect_uri", CLIENT_PUBKEY_REDIRECT);
+  jwt_add_grant(jwt_request, "scope", SCOPE_LIST);
+  jwt_add_grant(jwt_request, "state", "xyzabcd");
+  jwt_add_grant(jwt_request, "nonce", "nonce1234");
+  jwt_add_header(jwt_request, "kid", KID_PUB);
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  url = msprintf(SERVER_URI "/oidc/auth?g_continue&request=%s", request);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  o_free(url);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_token_jwt_ok)
+{
+  jwt_t * jwt_request = NULL;
+  char * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  int rnd;
+  gnutls_rnd(GNUTLS_RND_NONCE, &rnd, sizeof(int));
+  char jti[12] = {0};
+  struct _u_map body;
+  snprintf(jti, 11, "jti_%06d", rnd);
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem)), 0);
+  jwt_add_grant(jwt_request, "iss", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
+  jwt_add_grant(jwt_request, "jti", jti);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "iat", time(NULL));
+  jwt_add_header(jwt_request, "kid", KID_PUB);
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", CLIENT_SCOPE);
+  u_map_put(&body, "client_assertion", request);
+  u_map_put(&body, "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 200, NULL, "access_token", NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  u_map_clean(&body);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_token_jwt_unauthorized)
+{
+  jwt_t * jwt_request = NULL;
+  char * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  int rnd;
+  gnutls_rnd(GNUTLS_RND_NONCE, &rnd, sizeof(int));
+  char jti[12] = {0};
+  struct _u_map body;
+  snprintf(jti, 11, "jti_%06d", rnd);
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem)), 0);
+  jwt_add_grant(jwt_request, "iss", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
+  jwt_add_grant(jwt_request, "jti", jti);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "iat", time(NULL));
+  jwt_add_header(jwt_request, "kid", KID_PUB);
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", CLIENT_SCOPE);
+  u_map_put(&body, "client_assertion", request);
+  u_map_put(&body, "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/oidc/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  u_map_clean(&body);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_token_jwt_invalid_signature)
+{
+  jwt_t * jwt_request = NULL;
+  char * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  int rnd;
+  gnutls_rnd(GNUTLS_RND_NONCE, &rnd, sizeof(int));
+  char jti[12] = {0};
+  struct _u_map body;
+  snprintf(jti, 11, "jti_%06d", rnd);
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem)), 0);
+  jwt_add_grant(jwt_request, "iss", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
+  jwt_add_grant(jwt_request, "jti", jti);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "iat", time(NULL));
+  jwt_add_header(jwt_request, "kid", KID_PUB);
+  request = jwt_encode_str(jwt_request);
+  request[o_strlen(request)-1] = '\0';
+  ck_assert_ptr_ne(request, NULL);
+  
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", CLIENT_SCOPE);
+  u_map_put(&body, "client_assertion", request);
+  u_map_put(&body, "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  u_map_clean(&body);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_token_jwt_invalid_iss)
+{
+  jwt_t * jwt_request = NULL;
+  char * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  int rnd;
+  gnutls_rnd(GNUTLS_RND_NONCE, &rnd, sizeof(int));
+  char jti[12] = {0};
+  struct _u_map body;
+  snprintf(jti, 11, "jti_%06d", rnd);
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem)), 0);
+  jwt_add_grant(jwt_request, "iss", "error");
+  jwt_add_grant(jwt_request, "sub", "error");
+  jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
+  jwt_add_grant(jwt_request, "jti", jti);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "iat", time(NULL));
+  request = jwt_encode_str(jwt_request);
+  jwt_add_header(jwt_request, "kid", KID_PUB);
+  ck_assert_ptr_ne(request, NULL);
+  
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", CLIENT_SCOPE);
+  u_map_put(&body, "client_assertion", request);
+  u_map_put(&body, "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  u_map_clean(&body);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_token_jwt_inconsistent_iss)
+{
+  jwt_t * jwt_request = NULL;
+  char * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  int rnd;
+  gnutls_rnd(GNUTLS_RND_NONCE, &rnd, sizeof(int));
+  char jti[12] = {0};
+  struct _u_map body;
+  snprintf(jti, 11, "jti_%06d", rnd);
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem)), 0);
+  jwt_add_grant(jwt_request, "iss", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "sub", "error");
+  jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
+  jwt_add_grant(jwt_request, "jti", jti);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "iat", time(NULL));
+  jwt_add_header(jwt_request, "kid", KID_PUB);
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", CLIENT_SCOPE);
+  u_map_put(&body, "client_assertion", request);
+  u_map_put(&body, "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  u_map_clean(&body);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_token_jwt_invalud_aud)
+{
+  jwt_t * jwt_request = NULL;
+  char * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  int rnd;
+  gnutls_rnd(GNUTLS_RND_NONCE, &rnd, sizeof(int));
+  char jti[12] = {0};
+  struct _u_map body;
+  snprintf(jti, 11, "jti_%06d", rnd);
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem)), 0);
+  jwt_add_grant(jwt_request, "iss", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "aud", "error");
+  jwt_add_grant(jwt_request, "jti", jti);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "iat", time(NULL));
+  jwt_add_header(jwt_request, "kid", KID_PUB);
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", CLIENT_SCOPE);
+  u_map_put(&body, "client_assertion", request);
+  u_map_put(&body, "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  u_map_clean(&body);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_token_jwt_expired)
+{
+  jwt_t * jwt_request = NULL;
+  char * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  int rnd;
+  gnutls_rnd(GNUTLS_RND_NONCE, &rnd, sizeof(int));
+  char jti[12] = {0};
+  struct _u_map body;
+  snprintf(jti, 11, "jti_%06d", rnd);
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem)), 0);
+  jwt_add_grant(jwt_request, "iss", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
+  jwt_add_grant(jwt_request, "jti", jti);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)-3600);
+  jwt_add_grant_int(jwt_request, "iat", time(NULL));
+  jwt_add_header(jwt_request, "kid", KID_PUB);
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", CLIENT_SCOPE);
+  u_map_put(&body, "client_assertion", request);
+  u_map_put(&body, "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  u_map_clean(&body);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_token_jwt_invalid_client_assertion_type)
+{
+  jwt_t * jwt_request = NULL;
+  char * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  int rnd;
+  gnutls_rnd(GNUTLS_RND_NONCE, &rnd, sizeof(int));
+  char jti[12] = {0};
+  struct _u_map body;
+  snprintf(jti, 11, "jti_%06d", rnd);
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem)), 0);
+  jwt_add_grant(jwt_request, "iss", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
+  jwt_add_grant(jwt_request, "jti", jti);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "iat", time(NULL));
+  jwt_add_header(jwt_request, "kid", KID_PUB);
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", CLIENT_SCOPE);
+  u_map_put(&body, "client_assertion", request);
+  u_map_put(&body, "client_assertion_type", "e");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  u_map_clean(&body);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_token_jwt_invalid_kid)
+{
+  jwt_t * jwt_request = NULL;
+  char * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  int rnd;
+  gnutls_rnd(GNUTLS_RND_NONCE, &rnd, sizeof(int));
+  char jti[12] = {0};
+  struct _u_map body;
+  snprintf(jti, 11, "jti_%06d", rnd);
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem)), 0);
+  jwt_add_grant(jwt_request, "iss", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
+  jwt_add_grant(jwt_request, "jti", jti);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "iat", time(NULL));
+  jwt_add_header(jwt_request, "kid", "error");
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", CLIENT_SCOPE);
+  u_map_put(&body, "client_assertion", request);
+  u_map_put(&body, "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  u_map_clean(&body);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_token_jwt_no_jti)
+{
+  jwt_t * jwt_request = NULL;
+  char * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  int rnd;
+  gnutls_rnd(GNUTLS_RND_NONCE, &rnd, sizeof(int));
+  char jti[12] = {0};
+  struct _u_map body;
+  snprintf(jti, 11, "jti_%06d", rnd);
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem)), 0);
+  jwt_add_grant(jwt_request, "iss", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "iat", time(NULL));
+  jwt_add_header(jwt_request, "kid", KID_PUB);
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", CLIENT_SCOPE);
+  u_map_put(&body, "client_assertion", request);
+  u_map_put(&body, "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  u_map_clean(&body);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_token_jwt_jti_duplicate)
+{
+  jwt_t * jwt_request = NULL;
+  char * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  int rnd;
+  gnutls_rnd(GNUTLS_RND_NONCE, &rnd, sizeof(int));
+  char jti[12] = {0};
+  struct _u_map body;
+  snprintf(jti, 11, "jti_%06d", rnd);
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem)), 0);
+  jwt_add_grant(jwt_request, "iss", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
+  jwt_add_grant(jwt_request, "jti", jti);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "iat", time(NULL));
+  jwt_add_header(jwt_request, "kid", KID_PUB);
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", CLIENT_SCOPE);
+  u_map_put(&body, "client_assertion", request);
+  u_map_put(&body, "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 200, NULL, "access_token", NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  u_map_clean(&body);
   o_free(request);
   jwt_free(jwt_request);
 }
@@ -1012,6 +1549,8 @@ static Suite *glewlwyd_suite(void)
 
   s = suite_create("Glewlwyd oidc request_jwt");
   tc_core = tcase_create("test_oidc_implicit");
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_unauthorized);
+  tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_uauthorized);
   tcase_add_test(tc_core, test_oidc_request_jwt_redirect_login);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_ok);
   tcase_add_test(tc_core, test_oidc_request_jwt_client_public_response_ok);
@@ -1032,16 +1571,45 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_request_uri_jwt_response_incomplete);
   tcase_add_test(tc_core, test_oidc_request_jwt_add_module_request_signed);
   tcase_add_test(tc_core, test_oidc_request_jwt_add_client_pubkey);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_ok);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_signature);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_iss);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_inconsistent_iss);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalud_aud);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_expired);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_client_assertion_type);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_no_jti);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_jti_duplicate);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_ok);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_invalid_signature);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_no_kid_ok);
   tcase_add_test(tc_core, test_oidc_request_jwt_delete_client_pubkey);
   tcase_add_test(tc_core, test_oidc_request_jwt_add_client_jwks);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_ok);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_signature);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_iss);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_inconsistent_iss);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalud_aud);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_expired);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_client_assertion_type);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_kid);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_no_jti);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_jti_duplicate);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_ok);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_invalid_signature);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_invalid_kid);
   tcase_add_test(tc_core, test_oidc_request_jwt_delete_client_pubkey);
   tcase_add_test(tc_core, test_oidc_request_jwt_add_client_jwks_uri);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_ok);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_signature);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_iss);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_inconsistent_iss);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalud_aud);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_expired);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_client_assertion_type);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_kid);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_no_jti);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_jti_duplicate);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_ok);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_invalid_signature);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_invalid_kid);
