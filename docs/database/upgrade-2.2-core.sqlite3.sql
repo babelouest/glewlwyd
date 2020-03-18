@@ -68,3 +68,13 @@ CREATE TABLE gs_oauth2_session (
   gsos_status INTEGER DEFAULT 0, -- 0: registration, 1: authentication, 2: verified, 3: cancelled
   FOREIGN KEY(gsor_id) REFERENCES gs_oauth2_registration(gsor_id) ON DELETE CASCADE
 );
+
+-- store meta information about client request on token endpoint
+CREATE TABLE gpo_client_token_request (
+  gpoctr_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpoctr_plugin_name TEXT NOT NULL,
+  gpoctr_cient_id TEXT NOT NULL,
+  gpoctr_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpoctr_issued_for TEXT, -- IP address or hostname
+  gpoctr_jti_hash TEXT
+);
