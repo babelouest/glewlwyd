@@ -885,18 +885,27 @@ This endpoint is defined in the OpenID Connect core: [Userinfo Endpoint](https:/
 
 #### Method
 
-`GET`
+`GET`, `POST`
 
 #### Security
 
 A valid access token is required to access tis endpoint. The user shown in this endpoint result will be the one the access token was created for.
 
-#### URL Parameters
+#### URL or POST body Parameters
 
 Optional
 
 ```
-`claims`: text, list of additional claims separated by space
+claims: text, list of additional claims separated by space
+format=jwt: send the result in JSON Web Token (JWT) format
+```
+
+#### Header parameters
+
+Optional
+
+```
+Accept: application/jwt - send the result in JSON Web Token (JWT) format
 ```
 
 ##### Result
@@ -904,6 +913,8 @@ Optional
 ##### Success response
 
 Code 200
+
+**JSON Format**
 
 Content
 
@@ -913,6 +924,14 @@ Content
   "name": text, name of the user
   "email": text, email of the user
 }
+```
+
+**JWT Format**
+
+Content
+
+```javascript
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
 ```
 
 ##### Error Response
@@ -1040,7 +1059,8 @@ Example:
          "n":"AMLaTADOJdR_feaKpanTIbqjbn36ePuGlAsLhRPQebPTCa-t4Mn_I1tKA6-zG9V2_MvYhpFn4aLmajSWzBa8vogbPs9k7SRdOr2x0Gc2ow7Hbsd11X17_b-nQyCJslNuDLBjZKTbdBiEmmoqr-dTTGUF9Jojl11nZEL1k2RV4ZrBQpiSxOu6EBUmq-Ic3wGgrpWjA_m9zHLI5YdMr0qu4OrMIiGrBFN6jSymiQGRM38sK6FWK9wcDNSIlW0HioCJMj0v_OTOGOkrP0_jlotTniuPTXWAbxT_oTVRKHmcyc-Sv53egt-SF9LdmzeQlV3IVBZmlDGJNoj3YV3bAu9tLQc"
       }
    ]
-}```
+}
+```
 
 ##### Error Response
 
