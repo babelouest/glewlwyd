@@ -5785,7 +5785,7 @@ static int callback_oidc_get_userinfo(const struct _u_request * request, struct 
     if (check_result_value(j_user, G_OK)) {
       j_userinfo = get_userinfo(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")), json_object_get(j_user, "user"), json_object_get((json_t *)response->shared_data, "claims"), json_string_value(json_object_get((json_t *)response->shared_data, "scope")));
       if (j_userinfo != NULL) {
-        if (0 == o_strcmp("jwt", u_map_get(request->map_url, "format")) || 0 == o_strcmp("jwt", u_map_get(request->map_post_body, "format"))) {
+        if (0 == o_strcmp("jwt", u_map_get(request->map_url, "format")) || 0 == o_strcmp("jwt", u_map_get(request->map_post_body, "format")) || 0 == o_strcasecmp("application/jwt", u_map_get(request->map_header, "Accept"))) {
           if ((jwt = jwt_dup(config->jwt_key)) != NULL) {
             json_object_set(j_userinfo, "iss", json_object_get(config->j_params, "iss"));
             user_info_str = json_dumps(j_userinfo, JSON_COMPACT);
