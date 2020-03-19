@@ -7,6 +7,7 @@
 #include <time.h>
 #include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>
+#include <jwt.h>
 
 #include <check.h>
 #include <ulfius.h>
@@ -190,6 +191,93 @@ START_TEST(test_oidc_userinfo)
 }
 END_TEST
 
+START_TEST(test_oidc_userinfo_jwt)
+{
+  struct _u_response resp;
+  struct _u_request req;
+  char * access_token, * bearer, * body, * jwt_payload;
+  json_t * j_result, * j_payload = NULL;
+  jwt_t * jwt;
+  
+  ulfius_init_response(&resp);
+  ulfius_init_request(&req);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "access_token="), NULL);
+  access_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "access_token=") + o_strlen("access_token="));
+  if (o_strchr(access_token, '&')) {
+    *(o_strchr(access_token, '&')) = '\0';
+  }
+  ulfius_clean_response(&resp);
+  bearer = msprintf("Bearer %s", access_token);
+  u_map_put(req.map_header, "Authorization", bearer);
+
+  j_result = json_pack("{sssssssisosss[ss]s[ii]s[oo]}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", CLAIM_STR, "claim-number", 42, "claim-bool", json_true(), "claim-mandatory", CLAIM_MANDATORY, "claim-array-str", CLAIM_STR, CLAIM_STR_2, "claim-array-number", 42, 43, "claim-array-bool", json_true(), json_false());
+
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/userinfo/?format=jwt");
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_str_eq(u_map_get(resp.map_header, "Content-Type"), "application/jwt");
+  body = o_strndup(resp.binary_body, resp.binary_body_length);
+  ck_assert_int_eq(jwt_decode(&jwt, body, (unsigned char *)("secret_" PLUGIN_NAME), o_strlen("secret_" PLUGIN_NAME)), 0);
+  ck_assert_ptr_ne((jwt_payload = jwt_get_grants_json(jwt, NULL)), NULL);
+  ck_assert_ptr_ne((j_payload = json_loads(jwt_payload, JSON_DECODE_ANY, NULL)), NULL);
+  ck_assert_ptr_ne(json_search(j_payload, j_result), NULL);
+  o_free(jwt_payload);
+  json_decref(j_payload);
+  ulfius_clean_response(&resp);
+  o_free(body);
+  jwt_free(jwt);
+  
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  o_free(req.http_url);
+  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/userinfo/");
+  u_map_put(req.map_post_body, "format", "jwt");
+  req.http_verb = o_strdup("POST");
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_str_eq(u_map_get(resp.map_header, "Content-Type"), "application/jwt");
+  body = o_strndup(resp.binary_body, resp.binary_body_length);
+  ck_assert_int_eq(jwt_decode(&jwt, body, (unsigned char *)("secret_" PLUGIN_NAME), o_strlen("secret_" PLUGIN_NAME)), 0);
+  ck_assert_ptr_ne((jwt_payload = jwt_get_grants_json(jwt, NULL)), NULL);
+  ck_assert_ptr_ne((j_payload = json_loads(jwt_payload, JSON_DECODE_ANY, NULL)), NULL);
+  ck_assert_ptr_ne(json_search(j_payload, j_result), NULL);
+  o_free(jwt_payload);
+  json_decref(j_payload);
+  ulfius_clean_response(&resp);
+  o_free(body);
+  jwt_free(jwt);
+  
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  u_map_remove_from_key(req.map_post_body, "format");
+  u_map_put(req.map_header, "Accept", "application/jwt");
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_str_eq(u_map_get(resp.map_header, "Content-Type"), "application/jwt");
+  body = o_strndup(resp.binary_body, resp.binary_body_length);
+  ck_assert_int_eq(jwt_decode(&jwt, body, (unsigned char *)("secret_" PLUGIN_NAME), o_strlen("secret_" PLUGIN_NAME)), 0);
+  ck_assert_ptr_ne((jwt_payload = jwt_get_grants_json(jwt, NULL)), NULL);
+  ck_assert_ptr_ne((j_payload = json_loads(jwt_payload, JSON_DECODE_ANY, NULL)), NULL);
+  ck_assert_ptr_ne(json_search(j_payload, j_result), NULL);
+  o_free(jwt_payload);
+  json_decref(j_payload);
+  ulfius_clean_response(&resp);
+  o_free(body);
+  jwt_free(jwt);
+  
+  json_decref(j_result);
+  
+  ulfius_clean_request(&req);
+  o_free(access_token);
+  o_free(bearer);
+}
+END_TEST
+
 START_TEST(test_oidc_userinfo_delete_plugin)
 {
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/plugin/" PLUGIN_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
@@ -225,6 +313,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_userinfo_add_plugin);
   tcase_add_test(tc_core, test_oidc_userinfo_noauth);
   tcase_add_test(tc_core, test_oidc_userinfo);
+  tcase_add_test(tc_core, test_oidc_userinfo_jwt);
   tcase_add_test(tc_core, test_oidc_userinfo_delete_plugin);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
