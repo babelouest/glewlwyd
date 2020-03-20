@@ -45,6 +45,7 @@
 #define PLUGIN_REFRESH_TOKEN_DURATION 1209600
 #define PLUGIN_ACCESS_TOKEN_DURATION 3600
 
+#define CLIENT_AUTH_TOKEN_MAX_AGE 3600
 #define CLIENT_PUBKEY_PARAM "pubkey"
 #define CLIENT_JWKS_PARAM "jwks"
 #define CLIENT_JWKS_URI_PARAM "jwks_uri"
@@ -722,7 +723,7 @@ END_TEST
 
 START_TEST(test_oidc_request_jwt_add_module_request_signed)
 {
-  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososososossssss}}",
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisosososososososososissssss}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_DISPLAY_NAME,
@@ -744,6 +745,7 @@ START_TEST(test_oidc_request_jwt_add_module_request_signed)
                                   "auth-type-refresh-enabled", json_true(),
                                   "request-parameter-allow", json_true(),
                                   "request-uri-allow-https-non-secure", json_true(),
+                                  "request-maximum-exp", CLIENT_AUTH_TOKEN_MAX_AGE,
                                   "client-pubkey-parameter", CLIENT_PUBKEY_PARAM,
                                   "client-jwks-parameter", CLIENT_JWKS_PARAM,
                                   "client-jwks_uri-parameter", CLIENT_JWKS_URI_PARAM);
@@ -914,7 +916,7 @@ START_TEST(test_oidc_request_token_jwt_ok)
   jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
   jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
   jwt_add_grant(jwt_request, "jti", jti);
-  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+(CLIENT_AUTH_TOKEN_MAX_AGE/2));
   jwt_add_grant_int(jwt_request, "iat", time(NULL));
   jwt_add_header(jwt_request, "kid", KID_PUB);
   request = jwt_encode_str(jwt_request);
@@ -959,7 +961,7 @@ START_TEST(test_oidc_request_token_jwt_unauthorized)
   jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
   jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
   jwt_add_grant(jwt_request, "jti", jti);
-  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+(CLIENT_AUTH_TOKEN_MAX_AGE/2));
   jwt_add_grant_int(jwt_request, "iat", time(NULL));
   jwt_add_header(jwt_request, "kid", KID_PUB);
   request = jwt_encode_str(jwt_request);
@@ -1004,7 +1006,7 @@ START_TEST(test_oidc_request_token_jwt_invalid_signature)
   jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
   jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
   jwt_add_grant(jwt_request, "jti", jti);
-  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+(CLIENT_AUTH_TOKEN_MAX_AGE/2));
   jwt_add_grant_int(jwt_request, "iat", time(NULL));
   jwt_add_header(jwt_request, "kid", KID_PUB);
   request = jwt_encode_str(jwt_request);
@@ -1050,7 +1052,7 @@ START_TEST(test_oidc_request_token_jwt_invalid_iss)
   jwt_add_grant(jwt_request, "sub", "error");
   jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
   jwt_add_grant(jwt_request, "jti", jti);
-  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+(CLIENT_AUTH_TOKEN_MAX_AGE/2));
   jwt_add_grant_int(jwt_request, "iat", time(NULL));
   request = jwt_encode_str(jwt_request);
   jwt_add_header(jwt_request, "kid", KID_PUB);
@@ -1095,7 +1097,7 @@ START_TEST(test_oidc_request_token_jwt_inconsistent_iss)
   jwt_add_grant(jwt_request, "sub", "error");
   jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
   jwt_add_grant(jwt_request, "jti", jti);
-  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+(CLIENT_AUTH_TOKEN_MAX_AGE/2));
   jwt_add_grant_int(jwt_request, "iat", time(NULL));
   jwt_add_header(jwt_request, "kid", KID_PUB);
   request = jwt_encode_str(jwt_request);
@@ -1140,7 +1142,7 @@ START_TEST(test_oidc_request_token_jwt_invalud_aud)
   jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
   jwt_add_grant(jwt_request, "aud", "error");
   jwt_add_grant(jwt_request, "jti", jti);
-  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+(CLIENT_AUTH_TOKEN_MAX_AGE/2));
   jwt_add_grant_int(jwt_request, "iat", time(NULL));
   jwt_add_header(jwt_request, "kid", KID_PUB);
   request = jwt_encode_str(jwt_request);
@@ -1185,7 +1187,52 @@ START_TEST(test_oidc_request_token_jwt_expired)
   jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
   jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
   jwt_add_grant(jwt_request, "jti", jti);
-  jwt_add_grant_int(jwt_request, "exp", time(NULL)-3600);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)-(CLIENT_AUTH_TOKEN_MAX_AGE/2));
+  jwt_add_grant_int(jwt_request, "iat", time(NULL));
+  jwt_add_header(jwt_request, "kid", KID_PUB);
+  request = jwt_encode_str(jwt_request);
+  ck_assert_ptr_ne(request, NULL);
+  
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "client_credentials");
+  u_map_put(&body, "scope", CLIENT_SCOPE);
+  u_map_put(&body, "client_assertion", request);
+  u_map_put(&body, "client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  u_map_clean(&body);
+  o_free(request);
+  jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_token_jwt_max_age_too_long)
+{
+  jwt_t * jwt_request = NULL;
+  char * request;
+  jwt_new(&jwt_request);
+  struct _u_instance instance;
+  int rnd;
+  gnutls_rnd(GNUTLS_RND_NONCE, &rnd, sizeof(int));
+  char jti[12] = {0};
+  struct _u_map body;
+  snprintf(jti, 11, "jti_%06d", rnd);
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_RS256, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem)), 0);
+  jwt_add_grant(jwt_request, "iss", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
+  jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
+  jwt_add_grant(jwt_request, "jti", jti);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+7200);
   jwt_add_grant_int(jwt_request, "iat", time(NULL));
   jwt_add_header(jwt_request, "kid", KID_PUB);
   request = jwt_encode_str(jwt_request);
@@ -1230,7 +1277,7 @@ START_TEST(test_oidc_request_token_jwt_invalid_client_assertion_type)
   jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
   jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
   jwt_add_grant(jwt_request, "jti", jti);
-  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+(CLIENT_AUTH_TOKEN_MAX_AGE/2));
   jwt_add_grant_int(jwt_request, "iat", time(NULL));
   jwt_add_header(jwt_request, "kid", KID_PUB);
   request = jwt_encode_str(jwt_request);
@@ -1275,7 +1322,7 @@ START_TEST(test_oidc_request_token_jwt_invalid_kid)
   jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
   jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
   jwt_add_grant(jwt_request, "jti", jti);
-  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+(CLIENT_AUTH_TOKEN_MAX_AGE/2));
   jwt_add_grant_int(jwt_request, "iat", time(NULL));
   jwt_add_header(jwt_request, "kid", "error");
   request = jwt_encode_str(jwt_request);
@@ -1319,7 +1366,7 @@ START_TEST(test_oidc_request_token_jwt_no_jti)
   jwt_add_grant(jwt_request, "iss", CLIENT_PUBKEY_ID);
   jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
   jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
-  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+(CLIENT_AUTH_TOKEN_MAX_AGE/2));
   jwt_add_grant_int(jwt_request, "iat", time(NULL));
   jwt_add_header(jwt_request, "kid", KID_PUB);
   request = jwt_encode_str(jwt_request);
@@ -1364,7 +1411,7 @@ START_TEST(test_oidc_request_token_jwt_jti_duplicate)
   jwt_add_grant(jwt_request, "sub", CLIENT_PUBKEY_ID);
   jwt_add_grant(jwt_request, "aud", SERVER_URI "/" PLUGIN_NAME "/token");
   jwt_add_grant(jwt_request, "jti", jti);
-  jwt_add_grant_int(jwt_request, "exp", time(NULL)+3600);
+  jwt_add_grant_int(jwt_request, "exp", time(NULL)+(CLIENT_AUTH_TOKEN_MAX_AGE/2));
   jwt_add_grant_int(jwt_request, "iat", time(NULL));
   jwt_add_header(jwt_request, "kid", KID_PUB);
   request = jwt_encode_str(jwt_request);
@@ -1577,6 +1624,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_request_token_jwt_inconsistent_iss);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_invalud_aud);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_expired);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_max_age_too_long);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_client_assertion_type);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_no_jti);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_jti_duplicate);
@@ -1591,6 +1639,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_request_token_jwt_inconsistent_iss);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_invalud_aud);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_expired);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_max_age_too_long);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_client_assertion_type);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_kid);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_no_jti);
@@ -1606,6 +1655,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_request_token_jwt_inconsistent_iss);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_invalud_aud);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_expired);
+  tcase_add_test(tc_core, test_oidc_request_token_jwt_max_age_too_long);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_client_assertion_type);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_invalid_kid);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_no_jti);
