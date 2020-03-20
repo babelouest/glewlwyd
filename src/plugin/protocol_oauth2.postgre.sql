@@ -67,7 +67,7 @@ CREATE TABLE gpg_access_token (
   gpga_issued_for VARCHAR(256), -- IP address or hostname
   gpga_user_agent VARCHAR(256),
   gpga_token_hash VARCHAR(512) NOT NULL,
-  gpga_enabled TINYINT(1) DEFAULT 1,
+  gpga_enabled SMALLINT DEFAULT 1,
   FOREIGN KEY(gpgr_id) REFERENCES gpg_refresh_token(gpgr_id) ON DELETE CASCADE
 );
 CREATE INDEX i_gpga_token_hash ON gpg_access_token(gpga_token_hash);
