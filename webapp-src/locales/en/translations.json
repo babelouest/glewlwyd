@@ -505,6 +505,8 @@
     "mod-glwd-jwt-request-pubkey-client-jwks-parameter-ph": "Ex: jwks",
     "mod-glwd-jwt-request-pubkey-client-jwks_uri-parameter": "JWKS_URI property",
     "mod-glwd-jwt-request-pubkey-client-jwks_uri-parameter-ph": "jwks_uri",
+    "mod-glwd-jwt-request-maximum-exp": "Maximum expiration time authorized for JWT requests",
+    "mod-glwd-jwt-request-maximum-exp-ph": "Ex: 3600",
     "mod-glwd-oidc-general-title": "General",
     "mod-glwd-sign-title": "Tokens signature",
     "mod-glwd-token-title": "Tokens parameter",

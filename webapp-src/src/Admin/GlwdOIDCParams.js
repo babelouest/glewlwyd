@@ -53,6 +53,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["client-pubkey-parameter"]!==undefined?"":(props.mod.parameters["client-pubkey-parameter"] = "");
     props.mod.parameters["client-jwks-parameter"]!==undefined?"":(props.mod.parameters["client-jwks-parameter"] = "jwks");
     props.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(props.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
+    props.mod.parameters["request-maximum-exp"]!==undefined?"":(props.mod.parameters["request-maximum-exp"] = 3600);
 
     this.state = {
       config: props.config,
@@ -157,6 +158,7 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["client-pubkey-parameter"]!==undefined?"":(nextProps.mod.parameters["client-pubkey-parameter"] = "");
     nextProps.mod.parameters["client-jwks-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks-parameter"] = "jwks");
     nextProps.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
+    nextProps.mod.parameters["request-maximum-exp"]!==undefined?"":(nextProps.mod.parameters["request-maximum-exp"] = 3600);
     
     this.setState({
       config: nextProps.config,
@@ -1581,6 +1583,14 @@ class GlwdOIDCParams extends Component {
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-request-uri-allow-https-non-secure" onChange={(e) => this.toggleParam(e, "request-uri-allow-https-non-secure")} checked={this.state.mod.parameters["request-uri-allow-https-non-secure"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-request-uri-allow-https-non-secure">{i18next.t("admin.mod-glwd-request-uri-allow-https-non-secure")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwt-request-maximum-exp">{i18next.t("admin.mod-glwd-jwt-request-maximum-exp")}</label>
+                    </div>
+                    <input type="number" className="form-control" id="mod-glwd-jwt-request-maximum-exp" onChange={(e) => this.changeParam(e, "request-maximum-exp", 1)} value={this.state.mod.parameters["request-maximum-exp"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-maximum-exp-ph")} />
+                  </div>
                 </div>
                 <div className="form-group">
                   <div className="input-group mb-3">
