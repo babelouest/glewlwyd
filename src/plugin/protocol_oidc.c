@@ -88,6 +88,7 @@
 #define GLEWLWYD_CLIENT_ID_LENGTH     16
 #define GLEWLWYD_CLIENT_SECRET_LENGTH 32
 
+#define GLEWLWYD_AUTH_TOKEN_DEFAULT_MAX_AGE 3600
 #define GLEWLWYD_AUTH_TOKEN_ASSERTION_TYPE "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
 
 /**
@@ -105,6 +106,7 @@ struct _oidc_config {
   json_int_t                     access_token_duration;
   json_int_t                     refresh_token_duration;
   json_int_t                     code_duration;
+  json_int_t                     auth_token_max_age;
   unsigned short int             allow_non_oidc;
   unsigned short int             refresh_token_rolling;
   unsigned short int             auth_type_enabled[7];
@@ -242,6 +244,10 @@ static json_t * check_parameters (json_t * j_params) {
     if (json_object_get(j_params, "request-parameter-allow") == json_true()) {
       if (json_object_get(j_params, "request-uri-allow-https-non-secure") != NULL && !json_is_boolean(json_object_get(j_params, "request-uri-allow-https-non-secure"))) {
         json_array_append_new(j_error, json_string("Property 'request-uri-allow-https-non-secure' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "request-maximum-exp") != NULL && json_integer_value(json_object_get(j_params, "request-maximum-exp")) <= 0) {
+        json_array_append_new(j_error, json_string("Property 'request-maximum-exp' is optional and must be a positive integer"));
         ret = G_ERROR_PARAM;
       }
       if (json_object_get(j_params, "client-pubkey-parameter") != NULL && !json_is_string(json_object_get(j_params, "client-pubkey-parameter"))) {
@@ -3018,6 +3024,7 @@ static json_t * validate_jwt_assertion_request(struct _oidc_config * config, con
   json_t * j_return, * j_payload, * j_header, * j_result;
   jwt_t * jwt_unverified = NULL;
   char * jwt_payload = NULL, * jwt_header = NULL, * token_endpoint, * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, config->name);
+  json_int_t j_now = (json_int_t)time(NULL);
   
   token_endpoint = msprintf("%s/token", plugin_url);
   
@@ -3032,7 +3039,7 @@ static json_t * validate_jwt_assertion_request(struct _oidc_config * config, con
       if (j_payload != NULL && j_header != NULL) {
         j_result = verify_request_signature(config, jwt_assertion, j_header, json_string_value(json_object_get(j_payload, "iss")), ip_source);
         if (check_result_value(j_result, G_OK)) {
-          if (0 == o_strcmp(json_string_value(json_object_get(j_payload, "iss")), json_string_value(json_object_get(j_payload, "sub"))) && json_integer_value(json_object_get(j_payload, "exp")) > (json_int_t)time(NULL) && 0 == o_strcmp(token_endpoint, json_string_value(json_object_get(j_payload, "aud"))) && check_request_jti_unused(config, j_payload, ip_source) == G_OK) {
+          if (0 == o_strcmp(json_string_value(json_object_get(j_payload, "iss")), json_string_value(json_object_get(j_payload, "sub"))) && json_integer_value(json_object_get(j_payload, "exp")) > 0 && json_integer_value(json_object_get(j_payload, "exp")) > j_now && ((json_integer_value(json_object_get(j_payload, "exp")) - j_now) <= config->auth_token_max_age) && 0 == o_strcmp(token_endpoint, json_string_value(json_object_get(j_payload, "aud"))) && check_request_jti_unused(config, j_payload, ip_source) == G_OK) {
             j_return = json_pack("{sisOsO}", "result", G_OK, "request", j_payload, "client", json_object_get(j_result, "client"));
           } else {
             y_log_message(Y_LOG_LEVEL_DEBUG, "invalid jwt assertion content");
@@ -6166,6 +6173,10 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-client-enabled")==json_true()?1:0;
           ((struct _oidc_config *)*cls)->auth_type_enabled[GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN] = json_object_get(((struct _oidc_config *)*cls)->j_params, "auth-type-refresh-enabled")==json_true()?1:0;
           ((struct _oidc_config *)*cls)->subject_type = 0==o_strcmp("pairwise", json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "subject-type")))?GLEWLWYD_OIDC_SUBJECT_TYPE_PAIRWISE:GLEWLWYD_OIDC_SUBJECT_TYPE_PUBLIC;
+          ((struct _oidc_config *)*cls)->auth_token_max_age = json_integer_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "request-maximum-exp"));
+          if (!((struct _oidc_config *)*cls)->auth_token_max_age) {
+            ((struct _oidc_config *)*cls)->auth_token_max_age = GLEWLWYD_AUTH_TOKEN_DEFAULT_MAX_AGE;
+          }
           if (!jwt_new(&((struct _oidc_config *)*cls)->jwt_key)) {
             if (0 == o_strcmp("rsa", json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "jwt-type")))) {
               key = (const unsigned char *)json_string_value(json_object_get(((struct _oidc_config *)*cls)->j_params, "key"));
