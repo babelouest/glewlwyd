@@ -274,6 +274,10 @@ If the specified `request_uri` link points to an unsecure https:// page with inv
 
 Warning! This may lead to unsecure connections or MITM attacks.
 
+### Maximum expiration time authorized for JWT requests
+
+Maximum time a token JWT request is allowed to use in seconds. A JWT request with a higher expiration time will be refused.
+
 ### pubkey property
 
 Enter the client property that will hold a public key in PEM format.
