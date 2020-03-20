@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS gpo_refresh_token;
 DROP TABLE IF EXISTS gpo_code_scheme;
 DROP TABLE IF EXISTS gpo_code_scope;
 DROP TABLE IF EXISTS gpo_code;
+DROP TABLE IF EXISTS gpo_client_token_request;
 
 CREATE TABLE gpo_code (
   gpoc_id INT(11) PRIMARY KEY AUTO_INCREMENT,

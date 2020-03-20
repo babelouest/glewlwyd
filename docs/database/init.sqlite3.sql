@@ -38,6 +38,7 @@ DROP TABLE IF EXISTS gpo_refresh_token;
 DROP TABLE IF EXISTS gpo_code_scheme;
 DROP TABLE IF EXISTS gpo_code_scope;
 DROP TABLE IF EXISTS gpo_code;
+DROP TABLE IF EXISTS gpo_client_token_request;
 DROP TABLE IF EXISTS gs_code;
 DROP TABLE IF EXISTS gs_webauthn_assertion;
 DROP TABLE IF EXISTS gs_webauthn_credential;

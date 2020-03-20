@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS gpo_refresh_token;
 DROP TABLE IF EXISTS gpo_code_scheme;
 DROP TABLE IF EXISTS gpo_code_scope;
 DROP TABLE IF EXISTS gpo_code;
+DROP TABLE IF EXISTS gpo_client_token_request;
 
 CREATE TABLE gpo_code (
   gpoc_id SERIAL PRIMARY KEY,
@@ -82,7 +83,7 @@ CREATE TABLE gpo_access_token (
   gpoa_issued_for VARCHAR(256), -- IP address or hostname
   gpoa_user_agent VARCHAR(256),
   gpoa_token_hash VARCHAR(512) NOT NULL,
-  gpoa_enabled TINYINT(1) DEFAULT 1,
+  gpoa_enabled SMALLINT DEFAULT 1,
   FOREIGN KEY(gpor_id) REFERENCES gpo_refresh_token(gpor_id) ON DELETE CASCADE
 );
 CREATE INDEX i_gpoa_token_hash ON gpo_access_token(gpoa_token_hash);
@@ -105,7 +106,7 @@ CREATE TABLE gpo_id_token (
   gpoi_issued_for VARCHAR(256), -- IP address or hostname
   gpoi_user_agent VARCHAR(256),
   gpoi_hash VARCHAR(512),
-  gpoi_enabled SMALLINT(1) DEFAULT 1
+  gpoi_enabled SMALLINT DEFAULT 1
 );
 CREATE INDEX i_gpoi_hash ON gpo_id_token(gpoi_hash);
 
