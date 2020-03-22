@@ -167,14 +167,22 @@ $ sudo dpkg -i glewlwyd_2.0.0_raspbian_buster_x86_64.deb
 ### Install Glewlwyd on Ubuntu 18.04 LTS Bionic
 
 ```shell
-$ # Note: libjwt provided with Ubuntu 18.04 LTS Bionic is too old to work with Glewlwyd module Webauthn
-$ sudo apt install -y pkg-config autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libcbor0 libssl-dev libmicrohttpd12 default-mysql-client wget
+$ # Note: jansson and libjwt provided in Ubuntu 18.04 LTS Bionic is too old to work with Glewlwyd, here is the procedure to install them from the source
+$ sudo apt install -y pkg-config autoconf automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libcbor0 libssl-dev libmicrohttpd12 default-mysql-client wget
 $ wget https://github.com/benmcollins/libjwt/archive/v1.12.0.tar.gz -O libjwt.tar.gz
 $ tar -zxvf libjwt.tar.gz
 $ cd libjwt-1.12.0
 $ autoreconf -i
 $ ./configure
 $ make && sudo make install
+$ cd ..
+$ wget https://github.com/akheron/jansson/archive/v2.12.tar.gz -O jansson.tar.gz
+$ tar xf jansson.tar.gz
+$ cd jansson-2.12
+$ autoreconf -i
+$ ./configure
+$ make
+$ sudo make install
 $ cd ..
 $ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.0.0_ubuntu_bionic_x86_64.tar.gz
 $ tar xf glewlwyd-full_2.0.0_ubuntu_bionic_x86_64.tar.gz
