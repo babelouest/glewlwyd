@@ -169,9 +169,9 @@ $ sudo dpkg -i glewlwyd_2.0.0_raspbian_buster_x86_64.deb
 ```shell
 $ # Note: libjwt provided with Ubuntu 18.04 LTS Bionic is too old to work with Glewlwyd module Webauthn
 $ sudo apt install -y pkg-config autoconf libjansson-dev automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libcbor0 libssl-dev libmicrohttpd12 default-mysql-client wget
-$ wget https://github.com/benmcollins/libjwt/archive/v1.10.2.tar.gz -O libjwt.tar.gz
+$ wget https://github.com/benmcollins/libjwt/archive/v1.12.0.tar.gz -O libjwt.tar.gz
 $ tar -zxvf libjwt.tar.gz
-$ cd libjwt-1.10.2
+$ cd libjwt-1.12.0
 $ autoreconf -i
 $ ./configure
 $ make && sudo make install
