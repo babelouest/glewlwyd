@@ -487,7 +487,8 @@ if (WITH_SCHEME_HTTP)
 
 	add_library(schememodhttp MODULE ${LIB_SRC})
 	set_target_properties(schememodhttp PROPERTIES
-			COMPILE_OPTIONS -Wextra)
+			COMPILE_OPTIONS -Wextra
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
 	target_link_libraries(schememodhttp ${GLWD_LIBS})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodhttp)
 endif ()
