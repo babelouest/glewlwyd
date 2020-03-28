@@ -121,7 +121,7 @@ $ apt install glewlwyd
 
 ## Pre-compiled packages
 
-You can install Glewlwyd with a pre-compiled package available in the [release pages](https://github.com/babelouest/glewlwyd/releases/). The package files `glewlwyd-full_*` contain the package libraries of `orcania`, `yder`, `ulfius` and `hoel` pre-compiled for `glewlwyd`, plus `glewlwyd` package. To install a pre-compiled package, you need the following libraries installed:
+You can install Glewlwyd with a pre-compiled package available in the [release pages](https://github.com/babelouest/glewlwyd/releases/). The package files `glewlwyd-full_*` contain the package libraries of `orcania`, `yder`, `ulfius`, `hoel` pre-compiled for `glewlwyd`, plus `glewlwyd` package. To install a pre-compiled package, you need the following libraries installed:
 
 ```
 libmicrohttpd
@@ -142,26 +142,30 @@ libcbor
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.0.0_debian_buster_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0_debian_buster_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.0.1_debian_buster_x86_64.deb
-$ sudo dpkg -i libyder_1.4.8_debian_buster_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.12_debian_buster_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.4_debian_buster_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0_debian_buster_x86_64.deb
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.2.0_debian_buster_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.2.0_debian_buster_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.1.0_debian_buster_x86_64.deb
+$ sudo dpkg -i libyder_1.4.10_debian_buster_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.14_debian_buster_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.5_debian_buster_x86_64.deb
+$ sudo dpkg -i librhonabwy_0.9.5_debian_buster_x86_64.deb
+$ sudo dpkg -i libiddawc_0.9.4_debian_buster_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.2.0_debian_buster_x86_64.deb
 ```
 
 ### Install Glewlwyd on Raspbian Buster for Raspberry Pi
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.0.0_raspbian_buster_armv6l.tar.gz
-$ tar xf glewlwyd-full_2.0.0_raspbian_buster_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.2.0_raspbian_buster_armv6l.tar.gz
+$ tar xf glewlwyd-full_2.2.0_raspbian_buster_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.0_raspbian_buster_x86_64.deb
 $ sudo dpkg -i libyder_1.4.6_raspbian_buster_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.12_raspbian_buster_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.14_raspbian_buster_x86_64.deb
 $ sudo dpkg -i libulfius_2.6.1_raspbian_buster_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0_raspbian_buster_x86_64.deb
+$ sudo dpkg -i librhonabwy_0.9.5_raspbian_buster_x86_64.deb
+$ sudo dpkg -i libiddawc_0.9.4_raspbian_buster_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.2.0_raspbian_buster_x86_64.deb
 ```
 
 ### Install Glewlwyd on Ubuntu 18.04 LTS Bionic
@@ -186,26 +190,30 @@ $ ./configure
 $ make
 $ sudo make install
 $ cd ..
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.0.0_ubuntu_bionic_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0_ubuntu_bionic_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.0.1_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libyder_1.4.8_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.12_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.4_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0_ubuntu_bionic_x86_64.deb
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.2.0_ubuntu_bionic_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.2.0_ubuntu_bionic_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.1.0_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libyder_1.4.10_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.14_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.5_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i librhonabwy_0.9.5_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libiddawc_0.9.4_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.2.0_ubuntu_bionic_x86_64.deb
 ```
 
 ### Install Glewlwyd on Ubuntu 19.10 Eoan
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.0.0_ubuntu_eoan_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.0.0_ubuntu_eoan_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.0.1_ubuntu_eoan_x86_64.deb
-$ sudo dpkg -i libyder_1.4.8_ubuntu_eoan_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.12_ubuntu_eoan_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.4_ubuntu_eoan_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.0.0_ubuntu_eoan_x86_64.deb
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.2.0_ubuntu_eoan_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.2.0_ubuntu_eoan_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.1.0_ubuntu_eoan_x86_64.deb
+$ sudo dpkg -i libyder_1.4.10_ubuntu_eoan_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.14_ubuntu_eoan_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.5_ubuntu_eoan_x86_64.deb
+$ sudo dpkg -i librhonabwy_0.9.5_ubuntu_eoan_x86_64.deb
+$ sudo dpkg -i libiddawc_0.9.4_ubuntu_eoan_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.2.0_ubuntu_eoan_x86_64.deb
 ```
 
 If there's no package available for your distribution, you can compile it manually using `CMake` or `Makefile`.
