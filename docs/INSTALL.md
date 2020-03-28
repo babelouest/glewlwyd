@@ -142,7 +142,7 @@ libcbor
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.2.0_debian_buster_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.2.0/glewlwyd-full_2.2.0_debian_buster_x86_64.tar.gz
 $ tar xf glewlwyd-full_2.2.0_debian_buster_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.1.0_debian_buster_x86_64.deb
 $ sudo dpkg -i libyder_1.4.10_debian_buster_x86_64.deb
@@ -157,7 +157,7 @@ $ sudo dpkg -i glewlwyd_2.2.0_debian_buster_x86_64.deb
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.2.0_raspbian_buster_armv6l.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.2.0/glewlwyd-full_2.2.0_raspbian_buster_armv6l.tar.gz
 $ tar xf glewlwyd-full_2.2.0_raspbian_buster_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.0_raspbian_buster_x86_64.deb
 $ sudo dpkg -i libyder_1.4.6_raspbian_buster_x86_64.deb
@@ -171,7 +171,7 @@ $ sudo dpkg -i glewlwyd_2.2.0_raspbian_buster_x86_64.deb
 ### Install Glewlwyd on Ubuntu 18.04 LTS Bionic
 
 ```shell
-$ # Note: jansson and libjwt provided in Ubuntu 18.04 LTS Bionic is too old to work with Glewlwyd, here is the procedure to install them from the source
+$ # Note: jansson and libjwt provided in Ubuntu 18.04 LTS Bionic are too old to work with Glewlwyd, here is the procedure to install them from the source
 $ # If you have installed their packages, please uninstall them first
 $ sudo apt remove libjwt0 libjansson4
 $ sudo apt install -y pkg-config autoconf automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libcbor0 libssl-dev libmicrohttpd12 default-mysql-client wget
@@ -190,7 +190,7 @@ $ ./configure
 $ make
 $ sudo make install
 $ cd ..
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.2.0_ubuntu_bionic_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.2.0/glewlwyd-full_2.2.0_ubuntu_bionic_x86_64.tar.gz
 $ tar xf glewlwyd-full_2.2.0_ubuntu_bionic_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.1.0_ubuntu_bionic_x86_64.deb
 $ sudo dpkg -i libyder_1.4.10_ubuntu_bionic_x86_64.deb
@@ -205,7 +205,7 @@ $ sudo dpkg -i glewlwyd_2.2.0_ubuntu_bionic_x86_64.deb
 
 ```shell
 $ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.0.0/glewlwyd-full_2.2.0_ubuntu_eoan_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.2.0/glewlwyd-full_2.2.0_ubuntu_eoan_x86_64.tar.gz
 $ tar xf glewlwyd-full_2.2.0_ubuntu_eoan_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.1.0_ubuntu_eoan_x86_64.deb
 $ sudo dpkg -i libyder_1.4.10_ubuntu_eoan_x86_64.deb
