@@ -30,6 +30,8 @@ RUN apk add --no-cache \
     tar xvf libyder_*.tar.gz -C /usr/ --strip 1 && \
     tar xvf libulfius_*.tar.gz -C /usr/ --strip 1 && \
     tar xvf libhoel_*.tar.gz -C /usr/ --strip 1 && \
+    tar xvf librhonabwy_*.tar.gz -C /usr/ --strip 1 && \
+    tar xvf libiddawc_*.tar.gz -C /usr/ --strip 1 && \
     tar xvf glewlwyd_*.tar.gz -C /usr/ --strip 1
 
 
@@ -55,6 +57,8 @@ COPY --from=builder /usr/lib/liborcania* /usr/lib/
 COPY --from=builder /usr/lib/libyder* /usr/lib/
 COPY --from=builder /usr/lib/libhoel* /usr/lib/
 COPY --from=builder /usr/lib/libulfius* /usr/lib/
+COPY --from=builder /usr/lib/librhonabwy* /usr/lib/
+COPY --from=builder /usr/lib/libiddawc* /usr/lib/
 COPY --from=builder /usr/lib/glewlwyd/ /usr/lib/glewlwyd/
 COPY --from=builder /usr/bin/glewlwyd /usr/bin
 COPY --from=builder /usr/share/glewlwyd/ /usr/share/glewlwyd/
