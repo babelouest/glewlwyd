@@ -13,14 +13,23 @@
 5.  [Manual install from source](#manual-install-from-source)
     * [Dependencies](#dependencies)
     * [Build Glewlwyd and its dependencies](#build-glewlwyd-and-its-dependencies)
-6.  [Configure glewlwyd.conf](#configure-glewlwyd)
+6.  [Configure Glewlwyd](#configure-glewlwyd)
     * [Port number](#port-number)
+    * [Bind address](#bind-address)
     * [External URL](#external-url)
-    * [SSL/TLS](#ssl-tls)
-    * [Digest algorithm](#digest-algorithm)
-    * [Database back-end initialisation](#database-back-end-initialisation)
+    * [API Prefix](#api-prefix)
+    * [Login URL](#login-url)
+    * [Delete profile](#delete-profile)
+    * [Static files path](#static-files-path)
     * [Static files mime types](#static-files-mime-types)
-    * [Install as a service](#install-as-a-service)
+    * [Allow Origin](#allow-origin)
+    * [Logs](#logs)
+    * [Cookies configuration](#cookies-configuration)
+    * [Default scope names](#default-scope-names)
+    * [Modules paths](#modules-paths)
+    * [Digest algorithm](#digest-algorithm)
+    * [SSL/TLS](#ssltls)
+    * [Database back-end initialisation](#database-back-end-initialisation)
 7.  [Initialise database](#initialise-database)
 8.  [Install as a service](#install-as-a-service)
 9.  [Fail2ban filter](#fail2ban-filter)
@@ -388,7 +397,7 @@ Optional, The TCP port the service will listen to incoming connections. The port
 ### Bind address
 
 - config file variable: `bind_address`
-- Environment variable: "GLWD_BIND_ADDRESS`
+- Environment variable: `GLWD_BIND_ADDRESS`
 
 Optional, use this address to bind incoming connections, can be use to restrict glewlwyd service to listen to a specific network, or localhost. Must be an IPV4 address. If not set or empty, all addresses will be able to connect to Glewlwyd. Note: this is NOT a `listen` option, this setting means that Glewlyd will accept connection sent to this address only, not from it.
 
@@ -433,7 +442,7 @@ Optional, local path to the webapp files. If not set, the front-end application 
 ### Static files mime types
 
 - Config file variable: `static_files_mime_types`
-- Environment variable: `GLWD_STATIC_FILES_MIME_TYPES` in JSON array format, example '[{"extension":".html","mime_type":"text/html"}{"extension":".css","mime_type":"text/css"}]'
+- Environment variable: `GLWD_STATIC_FILES_MIME_TYPES` in JSON array format, example `'[{"extension":".html","mime_type":"text/html"}{"extension":".css","mime_type":"text/css"}]'`
 
 Optional, list of mime types for the webapp files.
 
