@@ -473,7 +473,7 @@ The user pattern format is the following:
 ```javascript
 {
   "name": "postal-code", // name of the new property, mandatory
-  "type": "text", // values available are "text", "password" (hidden text) or "boolean" (checkbox), mandatory
+  "type": "text", // values available are "text", "password" (hidden text), "boolean" (checkbox) or "textarea", optional, default "text"
   "list": true, // set this to true if the new property has `multiple values` checked, optional, default false
   "listElements": ["value1","value2"] // restrict the values available to this list if the new property has `multiple values` checked, optional
   "profile": false, // visible on the profile page, optional, default false
