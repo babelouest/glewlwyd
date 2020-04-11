@@ -609,7 +609,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
           o_free(secret);
         }
       } else {
-        j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "invaid type, type must be 'HOTP' 'TOTP' or 'NONE'");
+        j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "invalid type, type must be 'HOTP' 'TOTP' or 'NONE'");
       }
     }
   } else {
