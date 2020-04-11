@@ -91,6 +91,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
             message = msprintf("name value must be 128 charcters maximum for provider at index %zu", index);
             json_array_append_new(j_errors, json_string(message));
             o_free(message);
+            name = NULL;
           } else {
             name = json_string_value(json_object_get(j_element, "name"));
           }
