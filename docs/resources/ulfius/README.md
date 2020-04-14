@@ -2,7 +2,7 @@
 
 These files contain an authentication callback for Ulfius framework to validate a Glewlwyd access token or OIDC access tokens with the correct scope.
 
-[ulfius](https://github.com/babelouest/ulfius), [libjwt](https://github.com/benmcollins/libjwt) and [jansson](https://github.com/akheron/jansson) are required.
+[ulfius](https://github.com/babelouest/ulfius), [rhonabwy](https://github.com/babelouest/rhonabwy) and [jansson](https://github.com/akheron/jansson) are required.
 
 ## Validate Glewlwyd OAuth2 access token
 
@@ -23,8 +23,8 @@ To use this file, you must create a `struct _glewlwyd_resource_config` with your
 struct _glewlwyd_resource_config {
   int            method;              // Values are G_METHOD_HEADER, G_METHOD_BODY or G_METHOD_URL for the access_token location, see https://tools.ietf.org/html/rfc6750
   char *         oauth_scope;         // Scope values required by the resource, multiple values must be separated by a space character
-  char *         jwt_decode_key;      // The key used to decode an access token
-  jwt_alg_t      jwt_alg;             // The algorithm used to encode a token, see http://benmcollins.github.io/libjwt/
+  jwt_t *        jwt;                 // The jwt used to decode and validate an access token
+  jwa_alg        alg;                 // The algorithm used to encode a token, see https://babelouest.github.io/rhonabwy/
   char *         realm;               // Optional, a realm value that will be sent back to the client
   unsigned short accept_access_token; // required, accept type access_token
   unsigned short accept_client_token; // required, accept type client_token
@@ -37,8 +37,10 @@ Then, you use `callback_check_glewlwyd_access_token` as authentication callback 
 struct _glewlwyd_resource_config g_config;
 g_config.method = G_METHOD_HEADER;
 g_config.oauth_scope = "scope1";
-g_config.jwt_decode_key = "secret";
-g_config.jwt_alg = JWT_ALG_HS512;
+r_jwt_init(&g_config.jwt);
+r_jwt_set_sign_alg(g_config.jwt, R_JWA_ALG_HS256);
+r_jwt_add_sign_key_symmetric(g_config.jwt, "secret", o_strlen("secret")
+g_config.alg = R_JWA_ALG_HS256;
 g_config.realm = "example";
 g_config.accept_access_token = 1;
 g_config.accept_client_token = 0;
@@ -77,8 +79,8 @@ To use this file, you must create a `struct _oidc_resource_config` with your spe
 struct _oidc_resource_config {
   int            method;              // Values are G_METHOD_HEADER, G_METHOD_BODY or G_METHOD_URL for the access_token location, see https://tools.ietf.org/html/rfc6750
   char *         oauth_scope;         // Scope values required by the resource, multiple values must be separated by a space character
-  char *         jwt_decode_key;      // The key used to decode an access token
-  jwt_alg_t      jwt_alg;             // The algorithm used to encode a token, see http://benmcollins.github.io/libjwt/
+  jwt_t *        jwt;                 // The jwt used to decode and validate an access token
+  jwa_alg        alg;                 // The algorithm used to encode a token, see https://babelouest.github.io/rhonabwy/
   char *         realm;               // Optional, a realm value that will be sent back to the client
   unsigned short accept_access_token; // required, accept type access_token
   unsigned short accept_client_token; // required, accept type client_token
@@ -91,8 +93,10 @@ Then, you use `callback_check_glewlwyd_oidc_access_token` as authentication call
 struct _oidc_resource_config g_config;
 g_config.method = G_METHOD_HEADER;
 g_config.oauth_scope = "scope1";
-g_config.jwt_decode_key = "secret";
-g_config.jwt_alg = JWT_ALG_HS512;
+r_jwt_init(&g_config.jwt);
+r_jwt_set_sign_alg(g_config.jwt, R_JWA_ALG_HS256);
+r_jwt_add_sign_key_symmetric(g_config.jwt, "secret", o_strlen("secret")
+g_config.alg = R_JWA_ALG_HS256;
 g_config.realm = "example";
 g_config.accept_access_token = 1;
 g_config.accept_client_token = 0;

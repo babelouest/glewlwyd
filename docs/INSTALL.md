@@ -142,7 +142,6 @@ libsqlite3
 libpq
 libconfig
 libgnutls
-libjwt
 liboath
 libcbor
 ```
@@ -150,7 +149,7 @@ libcbor
 ### Install Glewlwyd on Debian Buster
 
 ```shell
-$ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
+$ sudo apt install -y libjansson4 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
 $ wget https://github.com/babelouest/glewlwyd/releases/download/v2.2.0/glewlwyd-full_2.2.0_debian_buster_x86_64.tar.gz
 $ tar xf glewlwyd-full_2.2.0_debian_buster_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.1.0_debian_buster_x86_64.deb
@@ -165,7 +164,7 @@ $ sudo dpkg -i glewlwyd_2.2.0_debian_buster_x86_64.deb
 ### Install Glewlwyd on Raspbian Buster for Raspberry Pi
 
 ```shell
-$ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
+$ sudo apt install -y libjansson4 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
 $ wget https://github.com/babelouest/glewlwyd/releases/download/v2.2.0/glewlwyd-full_2.2.0_raspbian_buster_armv6l.tar.gz
 $ tar xf glewlwyd-full_2.2.0_raspbian_buster_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.0.0_raspbian_buster_x86_64.deb
@@ -180,17 +179,10 @@ $ sudo dpkg -i glewlwyd_2.2.0_raspbian_buster_x86_64.deb
 ### Install Glewlwyd on Ubuntu 18.04 LTS Bionic
 
 ```shell
-$ # Note: jansson and libjwt provided in Ubuntu 18.04 LTS Bionic are too old to work with Glewlwyd, here is the procedure to install them from the source
+$ # Note: jansson provided in Ubuntu 18.04 LTS Bionic is too old to work with Glewlwyd, here is the procedure to install them from the source
 $ # If you have installed their packages, please uninstall them first
-$ sudo apt remove libjwt0 libjansson4
+$ sudo apt remove libjansson4
 $ sudo apt install -y pkg-config autoconf automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libcbor0 libssl-dev libmicrohttpd12 default-mysql-client wget
-$ wget https://github.com/benmcollins/libjwt/archive/v1.12.0.tar.gz -O libjwt.tar.gz
-$ tar -zxvf libjwt.tar.gz
-$ cd libjwt-1.12.0
-$ autoreconf -i
-$ ./configure
-$ make && sudo make install
-$ cd ..
 $ wget https://github.com/akheron/jansson/archive/v2.12.tar.gz -O jansson.tar.gz
 $ tar xf jansson.tar.gz
 $ cd jansson-2.12
@@ -213,7 +205,7 @@ $ sudo dpkg -i glewlwyd_2.2.0_ubuntu_bionic_x86_64.deb
 ### Install Glewlwyd on Ubuntu 19.10 Eoan
 
 ```shell
-$ sudo apt install -y libjansson4 libjwt0 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
+$ sudo apt install -y libjansson4 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
 $ wget https://github.com/babelouest/glewlwyd/releases/download/v2.2.0/glewlwyd-full_2.2.0_ubuntu_eoan_x86_64.tar.gz
 $ tar xf glewlwyd-full_2.2.0_ubuntu_eoan_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.1.0_ubuntu_eoan_x86_64.deb
@@ -288,7 +280,7 @@ Download the [latest source tarball](https://github.com/babelouest/glewlwyd/rele
 On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install those dependencies using the following command:
 
 ```shell
-$ sudo apt-get install libmicrohttpd-dev sqlite3 libsqlite3-dev default-libmysqlclient-dev libpq-dev libgnutls-dev libconfig-dev libldap2-dev liboath-dev libjwt-dev libcbor-dev
+$ sudo apt-get install libmicrohttpd-dev sqlite3 libsqlite3-dev default-libmysqlclient-dev libpq-dev libgnutls-dev libconfig-dev libldap2-dev liboath-dev libcbor-dev
 ```
 
 #### Libmicrohttpd 0.9.38 minimum required
@@ -303,7 +295,7 @@ A bug has been [fixed](https://git.gnunet.org/libmicrohttpd.git/tree/ChangeLog?h
 
 #### CMake
 
-Download and install libjwt, then download Glewlwyd from GitHub, then use the CMake script to build the application. CMake will automatically download and build Ulfius, Hoel, Yder and Orcania if they are not present on the system.
+Download Glewlwyd from GitHub, then use the CMake script to build the application. CMake will automatically download and build Iddawc, Rhonabwy, Ulfius, Hoel, Yder and Orcania if they are not present on the system.
 
 ```shell
 # Install Glewlwyd
@@ -316,7 +308,7 @@ $ sudo make install
 ```
 
 The available options for cmake are:
-- `-DDOWNLOAD_DEPENDENCIES=[on|off]` (default `on`): Download some dependencies if missing or using an old version: `Orcania`, `Yder`, `Ulfius` and `Hoel`
+- `-DDOWNLOAD_DEPENDENCIES=[on|off]` (default `on`): Download some dependencies if missing or using an old version: `Orcania`, `Yder`, `Ulfius`, `Rhonabwy`, `Iddawc` and `Hoel`
 - `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support
 - `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
 - `-DWITH_SQLITE3=[on|off]` (default `on`): Enable/disabe SQLite3 database backend: This option is passed to Hoel library builder
@@ -363,6 +355,18 @@ $ sudo make install
 # Install Hoel
 $ git clone https://github.com/babelouest/hoel.git
 $ cd hoel/src/
+$ make
+$ sudo make install
+
+# Install Rhonabwy
+$ git clone https://github.com/babelouest/rhonabwy.git
+$ cd rhonabwy/src/
+$ make
+$ sudo make install
+
+# Install Iddawc
+$ git clone https://github.com/babelouest/iddawc.git
+$ cd iddawc/src/
 $ make
 $ sudo make install
 
