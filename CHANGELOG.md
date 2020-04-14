@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 2.3.0
+
+- Replace libjwt with Rhonabwy
+
 ## 2.2.0
 
 The `"Containment Release"`
