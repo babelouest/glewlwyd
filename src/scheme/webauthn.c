@@ -1371,7 +1371,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
         break;
       }
       
-      if (r_jwt_parse(j_response, response_token, 0)) {
+      if (r_jwt_parse(j_response, response_token, 0) != RHN_OK) {
         json_array_append_new(j_error, json_string("response invalid"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwt_parse");
         break;
@@ -1398,13 +1398,12 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error basicIntegrity invalid");
         j_value = NULL;
         break;
-        break;
       }
       json_decref(j_value);
       j_value = NULL;
       
       if (r_jwt_verify_signature(j_response, NULL, 0) != RHN_OK) {
-        json_array_append_new(j_error, json_string("internal error"));
+        json_array_append_new(j_error, json_string("Invalid signature"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwt_verify_signature");
         break;
       }
@@ -1499,6 +1498,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
     }
     json_decref(j_error);
     json_decref(j_header);
+    json_decref(j_header_x5c);
     gnutls_pubkey_deinit(pubkey);
     gnutls_x509_crt_deinit(cert);
     r_jwt_free(j_response);
