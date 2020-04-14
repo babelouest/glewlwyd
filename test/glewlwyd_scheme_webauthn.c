@@ -15,12 +15,12 @@
 #include <gnutls/crypto.h>
 #include <gnutls/abstract.h>
 #include <cbor.h>
-#include <jwt.h>
-
 #include <check.h>
-#include <ulfius.h>
+
 #include <orcania.h>
 #include <yder.h>
+#include <ulfius.h>
+#include <rhonabwy.h>
 
 #include "unit-tests.h"
 
@@ -333,7 +333,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_new_credential)
   
   ulfius_init_response(&resp);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -376,7 +378,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_bad_formed_response)
   
   ulfius_init_response(&resp);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -441,7 +445,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -697,7 +703,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -954,7 +962,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -1211,7 +1221,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_rpid)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -1469,7 +1481,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_a
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -1726,7 +1740,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_u
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -1983,7 +1999,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -2241,7 +2259,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -2499,7 +2519,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -2757,7 +2779,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -3014,7 +3038,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -3271,7 +3297,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -3528,7 +3556,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -3785,7 +3815,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -4043,7 +4075,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_map
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -4306,7 +4340,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_cer
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -4563,7 +4599,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_x5c
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -4821,7 +4859,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_pre
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -5078,7 +5118,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_rpi
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -5336,7 +5378,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -5594,7 +5638,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -5852,7 +5898,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -6109,7 +6157,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -6368,7 +6418,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -6627,7 +6679,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_siz
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -6885,7 +6939,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_con
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -7144,7 +7200,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_key)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -7402,7 +7460,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_obj_size
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -7661,7 +7721,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_auth_data_ke
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -7919,7 +7981,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_key
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -8177,7 +8241,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -8432,7 +8498,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success_already_registered
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -8689,7 +8757,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_success)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -8944,7 +9014,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_collision_error)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -9199,7 +9271,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_in_2_success)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -9464,7 +9538,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_error_session_invalid)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -9593,7 +9669,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_challenge)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -9721,7 +9799,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_origin)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -9850,7 +9930,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_type
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -9979,7 +10061,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_enco
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -10109,7 +10193,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_rp_id_hash)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -10239,7 +10325,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_flag_user_presen
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -10368,7 +10456,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_hash
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -10498,7 +10588,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_signature)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -10628,7 +10720,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_success)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -10757,7 +10851,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_credential_id)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -11484,7 +11580,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
   unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
-  char * client_data_json, * str_grant, * str_response;
+  char * client_data_json, * str_response;
   gnutls_datum_t key_data, key_x, key_y;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
@@ -11499,7 +11595,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -11620,16 +11718,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
   cert_der_enc = o_malloc(cert_der_enc_len+1);
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
-  ck_assert_int_eq(jwt_new(&jwt_response), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt_response, JWT_ALG_ES256, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE)), 0);
-  j_grant = json_pack("{sss[s]}",
-                      "alg",
-                      "RS256",
-                      "x5c",
-                        cert_der_enc);
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_headers_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
+  j_grant = json_pack("[s]", cert_der_enc);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
   json_decref(j_grant);
   
   key_data.data = (unsigned char *)client_data_json;
@@ -11652,11 +11745,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
                       "basicIntegrity", json_true(),
                       "apkCertificateDigestSha256",
                         "cGxlYXNlZG9udGRlY29kZW1lZWl0aGVyaXRzZmFrZSEK");
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_grants_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_t(jwt_response, j_grant), RHN_OK);
   json_decref(j_grant);
-  str_response = jwt_encode_str(jwt_response);
+  str_response = r_jwt_serialize_signed(jwt_response, NULL, 0);
   if (str_response == NULL) {
     // TODO: Remove when the test will pass on Travis CI
     y_log_message(Y_LOG_LEVEL_ERROR, "str_response is NULL: %s", strerror(errno));
@@ -11738,7 +11829,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
   o_free(att_obj_ser);
   o_free(str_response);
   o_free(cert_der_enc);
-  jwt_free(jwt_response);
+  r_jwt_free(jwt_response);
   cbor_decref(&att_obj);
   cbor_decref(&cbor_cose);
   cbor_decref(&att_stmt);
@@ -11758,7 +11849,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
   unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
-  char * client_data_json, * str_grant, * str_response;
+  char * client_data_json, * str_response;
   gnutls_datum_t key_data, key_x, key_y;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
@@ -11773,7 +11864,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -11894,16 +11987,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
   cert_der_enc = o_malloc(cert_der_enc_len+1);
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
-  ck_assert_int_eq(jwt_new(&jwt_response), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt_response, JWT_ALG_ES256, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE)), 0);
-  j_grant = json_pack("{sss[s]}",
-                      "alg",
-                      "RS256",
-                      "x5c",
-                        cert_der_enc);
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_headers_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
+  j_grant = json_pack("[s]", cert_der_enc);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
   json_decref(j_grant);
   
   key_data.data = (unsigned char *)client_data_json;
@@ -11926,11 +12014,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
                       "basicIntegrity", json_true(),
                       "apkCertificateDigestSha256",
                         "cGxlYXNlZG9udGRlY29kZW1lZWl0aGVyaXRzZmFrZSEK");
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_grants_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_t(jwt_response, j_grant), RHN_OK);
   json_decref(j_grant);
-  ck_assert_ptr_ne((str_response = jwt_encode_str(jwt_response)), NULL);
+  ck_assert_ptr_ne((str_response = r_jwt_serialize_signed(jwt_response, NULL, 0)), NULL);
   
   cose_pair.key = cbor_build_string("response");
   cose_pair.value = cbor_build_bytestring((unsigned char *)str_response, o_strlen(str_response));
@@ -12007,7 +12093,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
   o_free(att_obj_ser);
   o_free(str_response);
   o_free(cert_der_enc);
-  jwt_free(jwt_response);
+  r_jwt_free(jwt_response);
   cbor_decref(&att_obj);
   cbor_decref(&cbor_cose);
   cbor_decref(&att_stmt);
@@ -12027,7 +12113,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
   unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
-  char * client_data_json, * str_grant, * str_response;
+  char * client_data_json, * str_response;
   gnutls_datum_t key_data, key_x, key_y;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
@@ -12038,11 +12124,13 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
   struct cbor_pair cose_pair;
   jwt_t * jwt_response;
   json_t  * j_grant;
-    
+  
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -12164,16 +12252,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
   cert_der_enc[0]++;
 
-  ck_assert_int_eq(jwt_new(&jwt_response), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt_response, JWT_ALG_ES256, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE)), 0);
-  j_grant = json_pack("{sss[s]}",
-                      "alg",
-                      "RS256",
-                      "x5c",
-                        cert_der_enc);
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_headers_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
+  j_grant = json_pack("[s]", cert_der_enc);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
   json_decref(j_grant);
   
   key_data.data = (unsigned char *)client_data_json;
@@ -12196,11 +12279,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
                       "basicIntegrity", json_true(),
                       "apkCertificateDigestSha256",
                         "cGxlYXNlZG9udGRlY29kZW1lZWl0aGVyaXRzZmFrZSEK");
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_grants_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_t(jwt_response, j_grant), RHN_OK);
   json_decref(j_grant);
-  ck_assert_ptr_ne((str_response = jwt_encode_str(jwt_response)), NULL);
+  ck_assert_ptr_ne((str_response = r_jwt_serialize_signed(jwt_response, NULL, 0)), NULL);
   
   cose_pair.key = cbor_build_string("response");
   cose_pair.value = cbor_build_bytestring((unsigned char *)str_response, o_strlen(str_response));
@@ -12249,7 +12330,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
                               "response",
                                 "attestationObject", att_obj_ser_enc, att_obj_ser_enc_len,
                                 "clientDataJSON", client_data_json_enc, client_data_json_enc_len);
-  j_error = json_string("Error importing x509 certificate");
+  j_error = json_string("Invalid signature");
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_credential, NULL, 400, j_error, NULL, NULL), 1);
 
   /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
@@ -12277,7 +12358,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
   o_free(att_obj_ser);
   o_free(str_response);
   o_free(cert_der_enc);
-  jwt_free(jwt_response);
+  r_jwt_free(jwt_response);
   cbor_decref(&att_obj);
   cbor_decref(&cbor_cose);
   cbor_decref(&att_stmt);
@@ -12297,7 +12378,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
   unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
-  char * client_data_json, * str_grant, * str_response;
+  char * client_data_json, * str_response;
   gnutls_datum_t key_data, key_x, key_y;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
@@ -12312,7 +12393,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -12433,16 +12516,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
   cert_der_enc = o_malloc(cert_der_enc_len+1);
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
-  ck_assert_int_eq(jwt_new(&jwt_response), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt_response, JWT_ALG_ES256, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE)), 0);
-  j_grant = json_pack("{sss[]}",
-                      "alg",
-                      "RS256",
-                      "x5c");
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_headers_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
-  json_decref(j_grant);
+  ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
   
   key_data.data = (unsigned char *)client_data_json;
   key_data.size = o_strlen(client_data_json);
@@ -12464,11 +12540,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
                       "basicIntegrity", json_true(),
                       "apkCertificateDigestSha256",
                         "cGxlYXNlZG9udGRlY29kZW1lZWl0aGVyaXRzZmFrZSEK");
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_grants_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_t(jwt_response, j_grant), RHN_OK);
   json_decref(j_grant);
-  ck_assert_ptr_ne((str_response = jwt_encode_str(jwt_response)), NULL);
+  ck_assert_ptr_ne((str_response = r_jwt_serialize_signed(jwt_response, NULL, 0)), NULL);
   
   cose_pair.key = cbor_build_string("response");
   cose_pair.value = cbor_build_bytestring((unsigned char *)str_response, o_strlen(str_response));
@@ -12517,7 +12591,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
                               "response",
                                 "attestationObject", att_obj_ser_enc, att_obj_ser_enc_len,
                                 "clientDataJSON", client_data_json_enc, client_data_json_enc_len);
-  j_error = json_string("response invalid");
+  j_error = json_string("Invalid signature");
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_credential, NULL, 400, j_error, NULL, NULL), 1);
 
   /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
@@ -12545,7 +12619,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
   o_free(att_obj_ser);
   o_free(str_response);
   o_free(cert_der_enc);
-  jwt_free(jwt_response);
+  r_jwt_free(jwt_response);
   cbor_decref(&att_obj);
   cbor_decref(&cbor_cose);
   cbor_decref(&att_stmt);
@@ -12565,7 +12639,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
   unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
-  char * client_data_json, * str_grant, * str_response;
+  char * client_data_json, * str_response;
   gnutls_datum_t key_data, key_x, key_y;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
@@ -12580,7 +12654,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -12701,16 +12777,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
   cert_der_enc = o_malloc(cert_der_enc_len+1);
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
-  ck_assert_int_eq(jwt_new(&jwt_response), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt_response, JWT_ALG_ES256, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE)), 0);
-  j_grant = json_pack("{sss[s]}",
-                      "alg",
-                      "RS256",
-                      "x5c",
-                        cert_der_enc);
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_headers_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
+  j_grant = json_pack("[s]", cert_der_enc);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
   json_decref(j_grant);
   
   key_data.data = (unsigned char *)client_data_json;
@@ -12734,11 +12805,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
                       "basicIntegrity", json_true(),
                       "apkCertificateDigestSha256",
                         "cGxlYXNlZG9udGRlY29kZW1lZWl0aGVyaXRzZmFrZSEK");
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_grants_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_t(jwt_response, j_grant), RHN_OK);
   json_decref(j_grant);
-  ck_assert_ptr_ne((str_response = jwt_encode_str(jwt_response)), NULL);
+  ck_assert_ptr_ne((str_response = r_jwt_serialize_signed(jwt_response, NULL, 0)), NULL);
   
   cose_pair.key = cbor_build_string("response");
   cose_pair.value = cbor_build_bytestring((unsigned char *)str_response, o_strlen(str_response));
@@ -12815,7 +12884,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
   o_free(att_obj_ser);
   o_free(str_response);
   o_free(cert_der_enc);
-  jwt_free(jwt_response);
+  r_jwt_free(jwt_response);
   cbor_decref(&att_obj);
   cbor_decref(&cbor_cose);
   cbor_decref(&att_stmt);
@@ -12835,7 +12904,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
   unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
-  char * client_data_json, * str_grant, * str_response;
+  char * client_data_json, * str_response;
   gnutls_datum_t key_data, key_x, key_y;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
@@ -12850,7 +12919,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -12971,16 +13042,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
   cert_der_enc = o_malloc(cert_der_enc_len+1);
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
-  ck_assert_int_eq(jwt_new(&jwt_response), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt_response, JWT_ALG_ES256, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE)), 0);
-  j_grant = json_pack("{sss[s]}",
-                      "alg",
-                      "RS256",
-                      "x5c",
-                        cert_der_enc);
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_headers_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
+  j_grant = json_pack("[s]", cert_der_enc);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
   json_decref(j_grant);
   
   key_data.data = (unsigned char *)client_data_json;
@@ -13003,11 +13069,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
                       "basicIntegrity", json_true(),
                       "apkCertificateDigestSha256",
                         "cGxlYXNlZG9udGRlY29kZW1lZWl0aGVyaXRzZmFrZSEK");
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_grants_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_t(jwt_response, j_grant), RHN_OK);
   json_decref(j_grant);
-  ck_assert_ptr_ne((str_response = jwt_encode_str(jwt_response)), NULL);
+  ck_assert_ptr_ne((str_response = r_jwt_serialize_signed(jwt_response, NULL, 0)), NULL);
   str_response[0]++;
   
   cose_pair.key = cbor_build_string("response");
@@ -13085,7 +13149,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
   o_free(att_obj_ser);
   o_free(str_response);
   o_free(cert_der_enc);
-  jwt_free(jwt_response);
+  r_jwt_free(jwt_response);
   cbor_decref(&att_obj);
   cbor_decref(&cbor_cose);
   cbor_decref(&att_stmt);
@@ -13105,7 +13169,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
   unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
-  char * client_data_json, * str_grant, * str_response;
+  char * client_data_json, * str_response;
   gnutls_datum_t key_data, key_x, key_y;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
@@ -13120,7 +13184,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -13241,16 +13307,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
   cert_der_enc = o_malloc(cert_der_enc_len+1);
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
-  ck_assert_int_eq(jwt_new(&jwt_response), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt_response, JWT_ALG_ES256, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE)), 0);
-  j_grant = json_pack("{sss[s]}",
-                      "alg",
-                      "RS256",
-                      "x5c",
-                        cert_der_enc);
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_headers_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
+  j_grant = json_pack("[s]", cert_der_enc);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
   json_decref(j_grant);
   
   key_data.data = (unsigned char *)client_data_json;
@@ -13273,11 +13334,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
                       "basicIntegrity", json_true(),
                       "apkCertificateDigestSha256",
                         "cGxlYXNlZG9udGRlY29kZW1lZWl0aGVyaXRzZmFrZSEK");
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_grants_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_t(jwt_response, j_grant), RHN_OK);
   json_decref(j_grant);
-  ck_assert_ptr_ne((str_response = jwt_encode_str(jwt_response)), NULL);
+  ck_assert_ptr_ne((str_response = r_jwt_serialize_signed(jwt_response, NULL, 0)), NULL);
   
   cose_pair.key = cbor_build_string("response");
   cose_pair.value = cbor_build_bytestring((unsigned char *)str_response, o_strlen(str_response));
@@ -13354,7 +13413,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
   o_free(att_obj_ser);
   o_free(str_response);
   o_free(cert_der_enc);
-  jwt_free(jwt_response);
+  r_jwt_free(jwt_response);
   cbor_decref(&att_obj);
   cbor_decref(&cbor_cose);
   cbor_decref(&att_stmt);
@@ -13374,7 +13433,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
   unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
-  char * client_data_json, * str_grant, * str_response;
+  char * client_data_json, * str_response;
   gnutls_datum_t key_data, key_x, key_y;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
@@ -13389,7 +13448,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -13510,16 +13571,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
   cert_der_enc = o_malloc(cert_der_enc_len+1);
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
-  ck_assert_int_eq(jwt_new(&jwt_response), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt_response, JWT_ALG_ES256, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE)), 0);
-  j_grant = json_pack("{sss[s]}",
-                      "alg",
-                      "RS256",
-                      "x5c",
-                        cert_der_enc);
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_headers_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
+  j_grant = json_pack("[s]", cert_der_enc);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
   json_decref(j_grant);
   
   key_data.data = (unsigned char *)client_data_json;
@@ -13542,11 +13598,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
                       "basicIntegrity", json_true(),
                       "apkCertificateDigestSha256",
                         "cGxlYXNlZG9udGRlY29kZW1lZWl0aGVyaXRzZmFrZSEK");
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_grants_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_t(jwt_response, j_grant), RHN_OK);
   json_decref(j_grant);
-  ck_assert_ptr_ne((str_response = jwt_encode_str(jwt_response)), NULL);
+  ck_assert_ptr_ne((str_response = r_jwt_serialize_signed(jwt_response, NULL, 0)), NULL);
   str_response[o_strlen(str_response)-3]++;
   
   cose_pair.key = cbor_build_string("response");
@@ -13596,7 +13650,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
                               "response",
                                 "attestationObject", att_obj_ser_enc, att_obj_ser_enc_len,
                                 "clientDataJSON", client_data_json_enc, client_data_json_enc_len);
-  j_error = json_string("response invalid");
+  j_error = json_string("Invalid signature");
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_credential, NULL, 400, j_error, NULL, NULL), 1);
 
   /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
@@ -13624,7 +13678,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
   o_free(att_obj_ser);
   o_free(str_response);
   o_free(cert_der_enc);
-  jwt_free(jwt_response);
+  r_jwt_free(jwt_response);
   cbor_decref(&att_obj);
   cbor_decref(&cbor_cose);
   cbor_decref(&att_stmt);
@@ -13644,7 +13698,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   unsigned char challenge_dec[WEBAUTHN_CHALLENGE_LEN], challenge_b64url[WEBAUTHN_CHALLENGE_LEN*2], * client_data_json_enc, credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2], credential_id_enc_url[WEBAUTHN_CREDENTIAL_ID_LEN*2], auth_data[AUTH_DATA_SIZE], aaguid[AAGUID_LEN] = AAGUID, pubkey_id[128], cbor_cose_dump[512], cert_der[1024], * att_obj_ser = NULL, * att_obj_ser_enc, nonce[NONCE_SIZE], nonce_hash[32], nonce_hash_enc[64], * cert_der_enc;
   size_t challenge_dec_len, challenge_b64url_len, client_data_json_enc_len, credential_id_enc_len, credential_id_enc_url_len, auth_data_len = 1024, pubkey_id_len = 128, cbor_cose_dump_max_len = 512, cbor_cose_dump_len, cert_der_len = 1024, att_obj_ser_len, att_obj_ser_enc_len, nonce_len, nonce_hash_len = 32, nonce_hash_enc_len, cert_der_enc_len;
   const char * session, * challenge, * user_id, * username, * rpid;
-  char * client_data_json, * str_grant, * str_response;
+  char * client_data_json, * str_response;
   gnutls_datum_t key_data, key_x, key_y;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
@@ -13659,7 +13713,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -13780,16 +13836,11 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   cert_der_enc = o_malloc(cert_der_enc_len+1);
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
-  ck_assert_int_eq(jwt_new(&jwt_response), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt_response, JWT_ALG_ES256, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE)), 0);
-  j_grant = json_pack("{sss[s]}",
-                      "alg",
-                      "RS256",
-                      "x5c",
-                        cert_der_enc);
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_headers_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
+  j_grant = json_pack("[s]", cert_der_enc);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
   json_decref(j_grant);
   
   key_data.data = (unsigned char *)client_data_json;
@@ -13812,11 +13863,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
                       "basicIntegrity", json_true(),
                       "apkCertificateDigestSha256",
                         "cGxlYXNlZG9udGRlY29kZW1lZWl0aGVyaXRzZmFrZSEK");
-  str_grant = json_dumps(j_grant, JSON_COMPACT);
-  ck_assert_int_eq(jwt_add_grants_json(jwt_response, str_grant), 0);
-  o_free(str_grant);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_t(jwt_response, j_grant), RHN_OK);
   json_decref(j_grant);
-  ck_assert_ptr_ne((str_response = jwt_encode_str(jwt_response)), NULL);
+  ck_assert_ptr_ne((str_response = r_jwt_serialize_signed(jwt_response, NULL, 0)), NULL);
   
   cose_pair.key = cbor_build_string("response");
   cose_pair.value = cbor_build_bytestring((unsigned char *)str_response, o_strlen(str_response));
@@ -13892,7 +13941,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   o_free(cert_der_enc);
   o_free(att_obj_ser);
   o_free(str_response);
-  jwt_free(jwt_response);
+  r_jwt_free(jwt_response);
   cbor_decref(&att_obj);
   cbor_decref(&att_stmt);
   cbor_decref(&cbor_cose);
@@ -13925,7 +13974,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_success)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -14170,7 +14221,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_signature)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -14416,7 +14469,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_algorithm)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -14661,7 +14716,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_cert)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -14907,7 +14964,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_no_algorithm)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -15145,7 +15204,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_no_signature)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -15385,7 +15446,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_self_signed_success)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -15614,7 +15677,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_self_signed_invalid_sig
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -15844,7 +15909,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_self_signed_invalid_pub
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -16145,7 +16212,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_unregistered_ca)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -16390,7 +16459,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_ui)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -16635,7 +16706,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_c)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -16880,7 +16953,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_c)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -17125,7 +17200,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_o)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -17370,7 +17447,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_cn)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -17617,7 +17696,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_aaguid)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -18059,7 +18140,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_none_error_format)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
@@ -18263,7 +18346,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_none_success)
   ulfius_init_response(&resp);
   ulfius_init_response(&resp_register);
   
+  o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("POST");
+  o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
   ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_params), U_OK);
   
