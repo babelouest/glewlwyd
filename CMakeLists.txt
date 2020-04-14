@@ -568,13 +568,35 @@ endif ()
 
 option(WITH_PLUGIN_OAUTH2 "Build legacy oauth2 plugin module" on)
 if (WITH_PLUGIN_OAUTH2)
+	if (NOT RHONABWY_FOUND)
+		set(Rhonabwy_FIND_QUIETLY ON) # force to find Rhonabwy quietly
+		include(FindRhonabwy)
+		find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} QUIET) # try to find rhonabwy
+		if (RHONABWY_FOUND)
+			include_directories(${rhonabwy_SOURCE_DIR}/include)
+		elseif (NOT RHONABWY_FOUND AND DOWNLOAD_DEPENDENCIES)
+			include(DownloadProject)
+			message(STATUS "Download Rhonabwy ${RHONABWY_VERSION_REQUIRED}")
+			download_project(PROJ rhonabwy # ... otherwise, download archive
+					URL "https://github.com/babelouest/rhonabwy/archive/v${RHONABWY_VERSION_REQUIRED}.tar.gz"
+					QUIET)
+			add_subdirectory(${rhonabwy_SOURCE_DIR} ${rhonabwy_BINARY_DIR})
+			include_directories(${rhonabwy_SOURCE_DIR}/include)
+			set(RHONABWY_LIBRARIES rhonabwy)
+			include_directories(${rhonabwy_BINARY_DIR})
+			set (RHONABWY_FOUND ON)
+		else ()
+			message( FATAL_ERROR "Rhonabwy not found")
+		endif ()
+	endif ()
+
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oauth2.c ${RESOURCES_SRC_PATH}/glewlwyd_resource.c ${RESOURCES_SRC_PATH}/glewlwyd_resource.h)
 
 	add_library(protocol_oauth2 MODULE ${LIB_SRC})
 	set_target_properties(protocol_oauth2 PROPERTIES
 			COMPILE_OPTIONS -Wextra
 			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
-	target_link_libraries(protocol_oauth2 ${GLWD_LIBS})
+	target_link_libraries(protocol_oauth2 ${GLWD_LIBS} ${RHONABWY_LIBRARIES})
 	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oauth2)
 endif ()
 
@@ -608,7 +630,7 @@ if (WITH_PLUGIN_OIDC)
 	set_target_properties(protocol_oidc PROPERTIES
 			COMPILE_OPTIONS -Wextra
 			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
-	target_link_libraries(protocol_oidc ${GLWD_LIBS} ${LIBJWT_LIBRARIES} ${RHONABWY_LIBRARIES})
+	target_link_libraries(protocol_oidc ${GLWD_LIBS} ${RHONABWY_LIBRARIES})
 	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oidc)
 endif ()
 
