@@ -6047,7 +6047,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
   const unsigned char * key;
   jwa_alg alg = R_JWA_ALG_UNKNOWN;
   pthread_mutexattr_t mutexattr;
-  json_t * j_return = NULL, * j_result, * j_element = NULL;
+  json_t * j_return = NULL, * j_result = NULL, * j_element = NULL;
   size_t index = 0;
   struct _oidc_config * p_config = NULL;
   jwk_t * jwk = NULL;
