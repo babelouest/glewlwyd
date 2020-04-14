@@ -11567,6 +11567,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_remove_credential_2_in_2_success)
 }
 END_TEST
 
+#if GNUTLS_VERSION_NUMBER >= 0x030600
 START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
 {
   json_t * j_params = json_pack("{sssssss{ss}}", 
@@ -13947,6 +13948,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   cbor_decref(&cbor_cose);
 }
 END_TEST
+#endif
 
 START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_success)
 {
@@ -18619,6 +18621,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_auth_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_success);
+#if GNUTLS_VERSION_NUMBER >= 0x030600
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error_safetynet_cert);
@@ -18631,6 +18634,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_auth_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_success);
+#endif
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_u2f_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_u2f_success_already_registered);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_u2f_2_success);
