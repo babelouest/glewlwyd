@@ -27,7 +27,8 @@
  * SOFTWARE.
  *
  */
-#include <jwt.h>
+#include <jansson.h>
+#include <rhonabwy.h>
 
 #define G_TOKEN_OK                       0
 #define G_TOKEN_ERROR                    1
@@ -48,8 +49,8 @@
 struct _oidc_resource_config {
   int       method;
   char *    oauth_scope;
-  char *    jwt_decode_key;
-  jwt_alg_t jwt_alg;
+  jwt_t *   jwt;
+  jwa_alg   alg;
   char *    realm;
   unsigned short accept_access_token;
   unsigned short accept_client_token;

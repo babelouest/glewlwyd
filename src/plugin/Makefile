@@ -22,7 +22,7 @@
 DESTDIR=/usr/local
 MODULES_TARGET=$(DESTDIR)/lib/glewlwyd/plugin
 CC=gcc
-CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(shell pkg-config --cflags librhonabwy) $(shell pkg-config --cflags libiddawc) $(shell pkg-config --cflags libjwt) $(shell pkg-config --cflags gnutls) $(ADDITIONALFLAGS)
+CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(shell pkg-config --cflags librhonabwy) $(shell pkg-config --cflags libiddawc) $(shell pkg-config --cflags gnutls) $(ADDITIONALFLAGS)
 LIBS=$(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs libulfius) $(shell pkg-config --libs libhoel) $(shell pkg-config --libs librhonabwy) $(shell pkg-config --libs libiddawc) $(shell pkg-config --libs jansson) -ldl
 TARGET_RELEASE=libprotocol_oauth2.so libprotocol_oidc.so libprotocol_register.so
 TARGET_DEBUG=libprotocol_mock.so
@@ -42,10 +42,10 @@ oidc_resource.o: ../../docs/resources/ulfius/oidc_resource.c ../../docs/resource
 	$(CC) $(CFLAGS) $(CPPFLAGS) ../../docs/resources/ulfius/oidc_resource.c
 
 libprotocol_oauth2.so: protocol_oauth2.o misc.o glewlwyd_resource.o ../glewlwyd-common.h ../../docs/resources/ulfius/glewlwyd_resource.h
-	$(CC) -shared -Wl,-soname,libprotocol_oauth2.so -o libprotocol_oauth2.so protocol_oauth2.o misc.o glewlwyd_resource.o $(LIBS) $(shell pkg-config --libs libjwt)
+	$(CC) -shared -Wl,-soname,libprotocol_oauth2.so -o libprotocol_oauth2.so protocol_oauth2.o misc.o glewlwyd_resource.o $(LIBS)
 
 libprotocol_oidc.so: protocol_oidc.o misc.o oidc_resource.o ../glewlwyd-common.h ../../docs/resources/ulfius/oidc_resource.h
-	$(CC) -shared -Wl,-soname,libprotocol_oidc.so -o libprotocol_oidc.so protocol_oidc.o misc.o oidc_resource.o $(LIBS) $(shell pkg-config --libs libjwt) $(shell pkg-config --libs gnutls)
+	$(CC) -shared -Wl,-soname,libprotocol_oidc.so -o libprotocol_oidc.so protocol_oidc.o misc.o oidc_resource.o $(LIBS) $(shell pkg-config --libs gnutls)
 
 libprotocol_mock.so: mock.o misc.o ../glewlwyd-common.h
 	$(CC) -shared -Wl,-soname,libprotocol_mock.so -o libprotocol_mock.so mock.o misc.o $(LIBS)
