@@ -84,21 +84,51 @@ AwEHoUQDQgAEo/0S7ZHO3XmkqquIuKeKvIb3OxpsKr5o2d4H6aYgPBGSNqqkp4bD\
 O0sQcEZOseH2mhOgeRrFS4UT/BUP70axwQ==\
 -----END EC PRIVATE KEY-----"
 #define ANDROID_SAFETYNET_CERT_FAKE "-----BEGIN CERTIFICATE-----\
-MIIBjjCCATWgAwIBAgIUBBVE8xVCyFVkAKc/ff5IYVGRd4owCgYIKoZIzj0EAwIw\
-HTEbMBkGA1UEAwwSYXR0ZXN0LmFuZHJvaWQuY29tMB4XDTE5MDYxMzE3MDcwOVoX\
-DTI5MDYxMDE3MDcwOVowHTEbMBkGA1UEAwwSYXR0ZXN0LmFuZHJvaWQuY29tMFkw\
-EwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEnPsYjh4EWEVdhKCOI9lPkcRvxbNiTys9\
-FNXcuTmru+ezUZBYC8/lrP+ixoAonGXmFHqLk9cO4o4aGHo0/iQbG6NTMFEwHQYD\
-VR0OBBYEFNf2H7DiHhwNitBYAYL0naWYtgtJMB8GA1UdIwQYMBaAFNf2H7DiHhwN\
-itBYAYL0naWYtgtJMA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDRwAwRAIg\
-IoPfHSMerjoWwZZyK+sUY/2KISXEGV+1eMA1tEJGuxQCIFNUcg86sVutsnc7kg6T\
-GlbFDIPM76WpNvWi6HYt1D1H\
+MIIDCDCCAfCgAwIBAgIUanYfCOPdqYtyp33zBq8I7zWTMJkwDQYJKoZIhvcNAQEL\
+BQAwHTEbMBkGA1UEAxMSYXR0ZXN0LmFuZHJvaWQuY29tMB4XDTIwMDQxNDIyMjA1\
+NVoXDTMwMDIyMTIyMjA1OFowHTEbMBkGA1UEAxMSYXR0ZXN0LmFuZHJvaWQuY29t\
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA20Is5gSlCp+9ShWaqBrb\
+ovhLvhCUpsLlQ/q0FTSZ92WaU8J5Y3rlYLemU7vEbmTRlUTbkjFWtViRyotOdYIm\
+RS9qew490tWByC8WFYRlwxzYeShO0xPzhoTR0gW1fFrdaHNEYlUn02ZP8SuQ1tsC\
+BhKeBClvZpLn74+dnCpbdIUeomQGQWl5gOrI4xT7v1H/HCGBd3WwGp4tjBWNziQD\
+FONT5xbGPWI2sTF9oG43fBr/s2CZFLtW2yFA2764/+rHCCIa/bZ1wVIPJIyaj7BQ\
+dFffZkcbzpb57yCwnHQII5+Cl5MDBBPFV8amuuFCPkAiYCfj1NMipxcjBjtUFefw\
+wwIDAQABo0AwPjAMBgNVHRMBAf8EAjAAMA8GA1UdDwEB/wQFAwMHoAAwHQYDVR0O\
+BBYEFGDLOTy6/r6JdNaqCk4eeMByMsd5MA0GCSqGSIb3DQEBCwUAA4IBAQAhssH2\
+FmYr8O73jbRYfvqB9Kva75HBxvLzrAIkCzBVVcyaLEhrYCS/LSZtTcKMK4+qtSm9\
+hIG+5OTzeKmPO9hHrvGIn+oKFkfvf5ECDWFObVQXEf66WDIrKwu4FcBayg+Ara8I\
+opR6p8bu3DvjWeeo3d2UXfvfNWMA6BEVQ33Aap4gK05LPek4wYroHvuWvYdEkwPn\
+uSjpCoNkSlkEdugsykIA331yx/xuqwzxj+hrmflV/cQOLiGyQICsyHTrHfXrKlxB\
+RM1Bb803T8ucr1SEFV1HHhmCPUEluSzFwfwlklj4g36KTPh1Q6q/Kkpa+W5VsiVQ\
+HJsbGgr6C4Mjuymb\
 -----END CERTIFICATE-----"
-#define ANDROID_SAFETYNET_KEY_FAKE "-----BEGIN EC PRIVATE KEY-----\n"\
-"MHcCAQEEIE6yCbMycRFIsyJVpUAeUB5x38yhVx2H1BYuEjEJnBBEoAoGCCqGSM49\n"\
-"AwEHoUQDQgAEnPsYjh4EWEVdhKCOI9lPkcRvxbNiTys9FNXcuTmru+ezUZBYC8/l\n"\
-"rP+ixoAonGXmFHqLk9cO4o4aGHo0/iQbGw==\n"\
-"-----END EC PRIVATE KEY-----\n"
+#define ANDROID_SAFETYNET_KEY_FAKE "-----BEGIN RSA PRIVATE KEY-----\
+MIIEpAIBAAKCAQEA20Is5gSlCp+9ShWaqBrbovhLvhCUpsLlQ/q0FTSZ92WaU8J5\
+Y3rlYLemU7vEbmTRlUTbkjFWtViRyotOdYImRS9qew490tWByC8WFYRlwxzYeShO\
+0xPzhoTR0gW1fFrdaHNEYlUn02ZP8SuQ1tsCBhKeBClvZpLn74+dnCpbdIUeomQG\
+QWl5gOrI4xT7v1H/HCGBd3WwGp4tjBWNziQDFONT5xbGPWI2sTF9oG43fBr/s2CZ\
+FLtW2yFA2764/+rHCCIa/bZ1wVIPJIyaj7BQdFffZkcbzpb57yCwnHQII5+Cl5MD\
+BBPFV8amuuFCPkAiYCfj1NMipxcjBjtUFefwwwIDAQABAoIBAGXUPQ/y1kex2nKe\
+x/4MwzbUBDFYeAFfAKVquNokXOFmQZ9m8YN/HyqlAE1hJiBzGFcv7J3f5jpA0Sz1\
+N9IhSO7Wz6go/BN/709udt41aCGOswbJ7pnfaTlvVBcraZdAiBWrevYEQIPQv43t\
+Qs5WVoFFgjfCmqdT0P4UgAl4LpNVJ2/ltAXuEY2I96Znilqghz4BggrSExmHuokI\
+mbNcWcAHJguFSEm/0dqWMzUMkKqB2b9Dw9VTBYknHCgWb+zlJLlpXSaCtQzWn6/6\
+c+fECs8LFmrZqSV9cE2CVy2cTjEjEBAJ0j8H547/Si4t7BMP43rOTEVxVu+z84Xx\
+LGYEJjkCgYEA36TMRpSA5Hgf0PcnaCIfS9Eg4Ws7r/Ea9yZIPd4Z2hGn7m9u0Gzf\
+5vTtp6o3bgp1uHn3oJZM9Rx/fWVbRUcrFnVvRrLckjuCYlu08OGpMfZXvaYDktRM\
+oAKioW9HxP+oNHd2tMT70UuHj0qpVgZPxjjhYtNdO8Titr1eOaF//yUCgYEA+vr1\
+gThEPTqQTSulktsNW4E6pICy1MHb7eGxMndrdKGO3VujDMaXfkTffPKxGXBHWj16\
+AHMi/QpdqJaWqC+AIeVM6SKsgfgvKrs/1xRc1loWUvi95Uj+cgVu+RCY6Awx5tKs\
+VH83Y1LhuuG9BZGfrcqXD+QNG7ygTn6RvVQcv8cCgYBT8ZB3QZBrsScIEWzqKjyj\
+AZkc41og/RfJAsaE6lO7xXrKBWuLsgIMt4xorXxmwmhTWPx4e1HhgtPbpmquwzrK\
+EEQ3PjWKcenLr25oJ9uRFEz0s1aOCz/Do5mVjKZcrDVflCOrUHDQq0/zmeubjXzu\
+AzWeGYXaRFlwi/3NFfBsPQKBgQCWJp3J+QeaOfcqs/oSqcqL+/xBfl1+u5v/7Q49\
+ywQWerEl7TTW59iqSjoKXodlWK7XZgAfVMKR8CmoOq9XX1Og87XXpE7gUsKlJfFD\
+k4MXGj5Q1U+GZO0U+fsyNqPD78fK+C7xPkq8uVEipPqY4k5Ngu5tK1pMRcUCMOaw\
+BipM8QKBgQC57Gnk69VrmKzRddQ24/3Ik/J3EaiqIFlvsltVIu/Rx48ACgoQC5za\
+V/n46BaNkwghwMPXoO+iN5ToVW7IoSoB0y1dNBcTwseLunL9YRygMbvUVrHmwl99\
+3MhhFr/3pVUHbH3KaoxY6oTi4cwLEsTzUIFJCL7UzzjTvcvdErMwNg==\
+-----END RSA PRIVATE KEY-----"
 #define FIDO_CERT_FAKE_2 "-----BEGIN CERTIFICATE-----\
 MIIBezCCASGgAwIBAgIUGEWBYsFpIe6/YHJ6kWoUVbUADRowCgYIKoZIzj0EAwIw\
 EzERMA8GA1UEAwwIZ2xld2x3eWQwHhcNMTkwNjE1MDEwODAzWhcNMjkwNjEyMDEw\
@@ -11567,7 +11597,6 @@ START_TEST(test_glwd_scheme_webauthn_irl_remove_credential_2_in_2_success)
 }
 END_TEST
 
-#if GNUTLS_VERSION_NUMBER >= 0x030600
 START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
 {
   json_t * j_params = json_pack("{sssssss{ss}}", 
@@ -11720,7 +11749,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
-  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
   j_grant = json_pack("[s]", cert_der_enc);
   ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
@@ -11989,7 +12018,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
-  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
   j_grant = json_pack("[s]", cert_der_enc);
   ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
@@ -12254,7 +12283,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
   cert_der_enc[0]++;
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
-  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
   j_grant = json_pack("[s]", cert_der_enc);
   ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
@@ -12518,7 +12547,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
-  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
   
   key_data.data = (unsigned char *)client_data_json;
@@ -12779,7 +12808,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
-  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
   j_grant = json_pack("[s]", cert_der_enc);
   ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
@@ -13044,7 +13073,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
-  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
   j_grant = json_pack("[s]", cert_der_enc);
   ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
@@ -13309,7 +13338,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
-  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
   j_grant = json_pack("[s]", cert_der_enc);
   ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
@@ -13573,7 +13602,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
-  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
   j_grant = json_pack("[s]", cert_der_enc);
   ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
@@ -13838,7 +13867,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
-  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_ES256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_response, R_FORMAT_PEM, (unsigned char *)ANDROID_SAFETYNET_KEY_FAKE, o_strlen(ANDROID_SAFETYNET_KEY_FAKE), NULL, 0), RHN_OK);
   j_grant = json_pack("[s]", cert_der_enc);
   ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_response, "x5c", j_grant), RHN_OK);
@@ -13948,7 +13977,6 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   cbor_decref(&cbor_cose);
 }
 END_TEST
-#endif
 
 START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_success)
 {
@@ -18621,7 +18649,6 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_auth_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_success);
-#if GNUTLS_VERSION_NUMBER >= 0x030600
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error_safetynet_cert);
@@ -18634,7 +18661,6 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_test_assertion_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_auth_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_success);
-#endif
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_u2f_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_u2f_success_already_registered);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_u2f_2_success);
