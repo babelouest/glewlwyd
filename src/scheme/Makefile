@@ -22,8 +22,8 @@
 DESTDIR=/usr/local
 MODULES_TARGET=$(DESTDIR)/lib/glewlwyd/scheme
 CC=gcc
-CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(shell pkg-config --cflags librhonabwy) $(shell pkg-config --cflags libiddawc) $(shell pkg-config --cflags libjwt) $(shell pkg-config --cflags libcbor) $(ADDITIONALFLAGS)
-LIBS=$(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs libhoel) $(shell pkg-config --libs librhonabwy) $(shell pkg-config --libs libiddawc) $(shell pkg-config --libs jansson) -ldl
+CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(shell pkg-config --cflags librhonabwy) $(shell pkg-config --cflags libiddawc) $(shell pkg-config --cflags libcbor) $(ADDITIONALFLAGS)
+LIBS=$(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs libhoel) $(shell pkg-config --libs jansson) -ldl
 TARGET=libmodemail.so libmodwebauthn.so libmodotp.so libmodpassword.so libmodcertificate.so libmodhttp.so libmodoauth2.so
 
 all: release
@@ -41,7 +41,7 @@ libmodemail.so: email.o misc.o
 	$(CC) -shared -Wl,-soname,libmodemail.so -o libmodemail.so email.o misc.o $(LIBS)
 
 libmodwebauthn.so: webauthn.o misc.o
-	$(CC) -shared -Wl,-soname,libmodwebauthn.so -o libmodwebauthn.so webauthn.o misc.o $(LIBS) $(shell pkg-config --libs libcbor) $(shell pkg-config --libs libjwt) -lldap
+	$(CC) -shared -Wl,-soname,libmodwebauthn.so -o libmodwebauthn.so webauthn.o misc.o $(LIBS) $(shell pkg-config --libs libcbor) $(shell pkg-config --libs librhonabwy) -lldap
 
 libmodotp.so: otp.o misc.o
 	$(CC) -shared -Wl,-soname,libmodotp.so -o libmodotp.so otp.o misc.o $(LIBS) $(shell pkg-config --libs liboath)
@@ -56,7 +56,7 @@ libmodhttp.so: http.o misc.o
 	$(CC) -shared -Wl,-soname,libmodhttp.so -o libmodhttp.so http.o misc.o $(LIBS)
 
 libmodoauth2.so: oauth2.o misc.o
-	$(CC) -shared -Wl,-soname,libmodoauth2.so -o libmodoauth2.so oauth2.o misc.o $(LIBS)
+	$(CC) -shared -Wl,-soname,libmodoauth2.so -o libmodoauth2.so oauth2.o misc.o $(LIBS) $(shell pkg-config --libs libiddawc)
 
 clean:
 	rm -f *.o *.so

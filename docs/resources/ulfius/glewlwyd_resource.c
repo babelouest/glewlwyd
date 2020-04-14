@@ -2,7 +2,7 @@
  *
  * Glewlwyd SSO Access Token token check
  *
- * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2020 Nicolas Mora <mail@babelouest.org>
  *
  * Version 20190810
  *
@@ -136,26 +136,23 @@ static int access_token_check_validity(struct _glewlwyd_resource_config * config
  */
 static json_t * access_token_check_signature(struct _glewlwyd_resource_config * config, const char * token_value) {
   json_t * j_return, * j_grants;
-  jwt_t * jwt = NULL;
-  char  * grants;
+  jwt_t * jwt = r_jwt_copy(config->jwt);
   
   if (token_value != NULL) {
-    if (!jwt_decode(&jwt, token_value, (const unsigned char *)config->jwt_decode_key, o_strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == config->jwt_alg) {
-      grants = jwt_get_grants_json(jwt, NULL);
-      j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
+    if (r_jwt_parse(jwt, token_value, 0) == RHN_OK && r_jwt_verify_signature(jwt, NULL, 0) == RHN_OK && r_jwt_get_sign_alg(jwt) == config->alg) {
+      j_grants = r_jwt_get_full_claims_json_t(jwt);
       if (j_grants != NULL) {
         j_return = json_pack("{siso}", "result", G_TOKEN_OK, "grants", j_grants);
       } else {
         j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
       }
-      o_free(grants);
     } else {
       j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
     }
-    jwt_free(jwt);
   } else {
     j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
   }
+  r_jwt_free(jwt);
   return j_return;
 }
 

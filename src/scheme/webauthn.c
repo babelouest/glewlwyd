@@ -29,7 +29,6 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>
 #include <gnutls/abstract.h>
-#include <jwt.h>
 #include <jansson.h>
 #include <cbor.h>
 #include <ldap.h>
@@ -1283,11 +1282,10 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
   gnutls_x509_crt_t cert = NULL;
   cbor_item_t * key, * response = NULL;
   int i, ret;
-  jwt_t * j_response = NULL, * j_response_signed = NULL;
-  json_t * j_header_x5c = NULL, * j_cert = NULL, * j_header = NULL;
+  jwt_t * j_response = NULL;
+  json_t * j_header_x5c = NULL, * j_cert = NULL, * j_header = NULL, * j_value = NULL;
   gnutls_datum_t cert_dat;
   int has_ver = 0;
-  jwk_t * jwk = NULL;
   
   if (j_error != NULL) {
     do {
@@ -1367,55 +1365,51 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
         break;
       }
       
-      if (jwt_decode(&j_response, response_token, NULL, 0)) {
-        json_array_append_new(j_error, json_string("response invalid"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error jwt_decode response_token");
+      if (r_jwt_init(&j_response) != RHN_OK) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwt_init");
         break;
       }
       
-      if (o_strcmp(jwt_get_grant(j_response, "nonce"), (const char *)nonce_base_hash_b64)) {
+      if (r_jwt_parse(j_response, response_token, 0)) {
+        json_array_append_new(j_error, json_string("response invalid"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwt_parse");
+        break;
+      }
+      
+      if (o_strcmp(r_jwt_get_claim_str_value(j_response, "nonce"), (const char *)nonce_base_hash_b64)) {
         json_array_append_new(j_error, json_string("response invalid"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error nonce invalid");
         break;
       }
       
-      if (json_integer_value(json_object_get(j_params, "ctsProfileMatch")) != -1 && json_integer_value(json_object_get(j_params, "ctsProfileMatch")) != jwt_get_grant_bool(j_response, "ctsProfileMatch")) {
+      if (json_integer_value(json_object_get(j_params, "ctsProfileMatch")) != -1 && json_integer_value(json_object_get(j_params, "ctsProfileMatch")) != ((j_value = r_jwt_get_claim_json_t_value(j_response, "ctsProfileMatch"))==json_true()?1:0)) {
         json_array_append_new(j_error, json_string("response invalid"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error ctsProfileMatch invalid");
+        json_decref(j_value);
+        j_value = NULL;
         break;
       }
+      json_decref(j_value);
+      j_value = NULL;
       
-      if (json_integer_value(json_object_get(j_params, "basicIntegrity")) != -1 && json_integer_value(json_object_get(j_params, "basicIntegrity")) != jwt_get_grant_bool(j_response, "basicIntegrity")) {
+      if (json_integer_value(json_object_get(j_params, "basicIntegrity")) != -1 && json_integer_value(json_object_get(j_params, "basicIntegrity")) != ((j_value = r_jwt_get_claim_json_t_value(j_response, "basicIntegrity"))==json_true()?1:0)) {
         json_array_append_new(j_error, json_string("response invalid"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error basicIntegrity invalid");
+        j_value = NULL;
+        break;
         break;
       }
+      json_decref(j_value);
+      j_value = NULL;
       
-      if ((jwt_header = jwt_get_headers_json(j_response, NULL)) == NULL){
-        json_array_append_new(j_error, json_string("response invalid"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error jwt_get_headers_json");
-        break;
-      }
-      
-      if (r_init_jwk(&jwk) != RHN_OK) {
+      if (r_jwt_verify_signature(j_response, NULL, 0) != RHN_OK) {
         json_array_append_new(j_error, json_string("internal error"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_init_jwk");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwt_verify_signature");
         break;
       }
       
-      if (r_jwk_import_from_json_str(jwk, jwt_header) != RHN_OK) {
-        json_array_append_new(j_error, json_string("response invalid"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwk_import_from_json_str");
-        break;
-      }
-      
-      if ((j_header = r_jwk_export_to_json_t(jwk)) == NULL) {
-        json_array_append_new(j_error, json_string("internal error"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwk_export_to_json_t");
-        break;
-      }
-      
-      if ((j_header_x5c = json_object_get(j_header, "x5c")) == NULL) {
+      if ((j_header_x5c = r_jwt_get_header_json_t_value(j_response, "x5c")) == NULL) {
         json_array_append_new(j_error, json_string("response invalid"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error parsing x5c JSON");
         break;
@@ -1496,12 +1490,6 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
         break;
       }
       
-      if (jwt_decode(&j_response_signed, response_token, pubkey_export, pubkey_export_len)) {
-        json_array_append_new(j_error, json_string("response invalid"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error jwt_decode response_token with signature");
-        break;
-      }
-      
     } while (0);
 
     if (json_array_size(j_error)) {
@@ -1513,14 +1501,12 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
     json_decref(j_header);
     gnutls_pubkey_deinit(pubkey);
     gnutls_x509_crt_deinit(cert);
-    jwt_free(j_response);
-    jwt_free(j_response_signed);
+    r_jwt_free(j_response);
     o_free(nonce_base);
     o_free(nonce_base_hash_b64);
     o_free(response_token);
     o_free(header_cert_decoded);
     o_free(jwt_header);
-    r_free_jwk(jwk);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error allocating resources for j_error");
     j_return = json_pack("{si}", "result", G_ERROR);

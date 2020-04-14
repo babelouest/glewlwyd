@@ -2,9 +2,9 @@
  *
  * Glewlwyd SSO Access Token token check
  *
- * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2020 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20190810
+ * Version 20200413
  *
  * The MIT License (MIT)
  * 
@@ -27,8 +27,8 @@
  * SOFTWARE.
  *
  */
-#include <jwt.h>
 #include <jansson.h>
+#include <rhonabwy.h>
 
 #define G_TOKEN_OK                       0
 #define G_TOKEN_ERROR                    1
@@ -49,8 +49,8 @@
 struct _glewlwyd_resource_config {
   int       method;
   char *    oauth_scope;
-  char *    jwt_decode_key;
-  jwt_alg_t jwt_alg;
+  jwt_t *   jwt;
+  jwa_alg   alg;
   char *    realm;
   unsigned short accept_access_token;
   unsigned short accept_client_token;
