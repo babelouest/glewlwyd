@@ -29,11 +29,10 @@ set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, multiple factor authenti
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_REQUIRED "2.1.0")
 set(YDER_VERSION_REQUIRED "1.4.10")
-set(ULFIUS_VERSION_REQUIRED "2.6.5")
-set(HOEL_VERSION_REQUIRED "1.4.14")
-set(RHONABWY_VERSION_REQUIRED "0.9.5")
-set(IDDAWC_VERSION_REQUIRED "0.9.4")
-set(LIBJWT_VERSION_REQUIRED "1.10.0")
+set(ULFIUS_VERSION_REQUIRED "2.6.6")
+set(HOEL_VERSION_REQUIRED "1.4.15")
+set(RHONABWY_VERSION_REQUIRED "0.9.9")
+set(IDDAWC_VERSION_REQUIRED "0.9.5")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
 set(JANSSON_VERSION_REQUIRED "2.11")
 
@@ -414,12 +413,6 @@ endif ()
 
 option(WITH_SCHEME_WEBAUTHN "Build Webauthn scheme module" on)
 if (WITH_SCHEME_WEBAUTHN)
-	include(FindLibJWT)
-	find_package(LibJWT ${LIBJWT_VERSION_REQUIRED} REQUIRED)
-	if (LIBJWT_FOUND)
-			include_directories(${LIBJWT_INCLUDE_DIRS})
-	endif ()
-	
 	include(FindLibCBOR)
 	find_package(LibCBOR REQUIRED)
 	if (LIBCBOR_FOUND)
@@ -435,7 +428,7 @@ if (WITH_SCHEME_WEBAUTHN)
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/webauthn.c)
 
 	if (NOT ${RELEASE_CODENAME} STREQUAL "stretch" AND NOT ${RELEASE_CODENAME} STREQUAL "bionic")
-		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
+		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}")
 	endif ()
 	if (NOT ${RELEASE_CODENAME} STREQUAL "stretch")
 		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcbor0")
@@ -465,7 +458,7 @@ if (WITH_SCHEME_WEBAUTHN)
 	set_target_properties(schememodwebauthn PROPERTIES
 			COMPILE_OPTIONS -Wextra
 			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
-	target_link_libraries(schememodwebauthn ${GLWD_LIBS} ${LIBJWT_LIBRARIES} ${LIBCBOR_LIBRARIES} ${LDAP_LIBRARIES} ${RHONABWY_LIBRARIES})
+	target_link_libraries(schememodwebauthn ${GLWD_LIBS} ${LIBCBOR_LIBRARIES} ${LDAP_LIBRARIES} ${RHONABWY_LIBRARIES})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodwebauthn)
 endif ()
 
@@ -495,16 +488,10 @@ endif ()
 
 option(WITH_SCHEME_OAUTH2 "Build Oauth2/OIDC scheme module" on)
 if (WITH_SCHEME_OAUTH2)
-	include(FindLibJWT)
-	find_package(LibJWT ${LIBJWT_VERSION_REQUIRED} REQUIRED)
-	if (LIBJWT_FOUND)
-			include_directories(${LIBJWT_INCLUDE_DIRS})
-	endif ()
-	
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/oauth2.c)
 
 	if (NOT ${RELEASE_CODENAME} STREQUAL "stretch" AND NOT ${RELEASE_CODENAME} STREQUAL "bionic")
-		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
+		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}")
 	endif ()
 
 	if (NOT RHONABWY_FOUND)
@@ -560,7 +547,7 @@ if (WITH_SCHEME_OAUTH2)
 	set_target_properties(schememodoauth2 PROPERTIES
 			COMPILE_OPTIONS -Wextra
 			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
-	target_link_libraries(schememodoauth2 ${GLWD_LIBS} ${LIBJWT_LIBRARIES} ${RHONABWY_LIBRARIES} ${IDDAWC_LIBRARIES})
+	target_link_libraries(schememodoauth2 ${GLWD_LIBS} ${RHONABWY_LIBRARIES} ${IDDAWC_LIBRARIES})
 	set(SCHEME_MODULES ${SCHEME_MODULES} schememodoauth2)
 endif ()
 
@@ -581,33 +568,18 @@ endif ()
 
 option(WITH_PLUGIN_OAUTH2 "Build legacy oauth2 plugin module" on)
 if (WITH_PLUGIN_OAUTH2)
-		include(FindLibJWT)
-		find_package(LibJWT ${LIBJWT_VERSION_REQUIRED} REQUIRED)
-		if (LIBJWT_FOUND)
-				include_directories(${LIBJWT_INCLUDE_DIRS})
-		endif ()
-		
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oauth2.c ${RESOURCES_SRC_PATH}/glewlwyd_resource.c ${RESOURCES_SRC_PATH}/glewlwyd_resource.h)
-	if (NOT ${RELEASE_CODENAME} STREQUAL "stretch" AND NOT ${RELEASE_CODENAME} STREQUAL "bionic")
-		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
-	endif ()
 
 	add_library(protocol_oauth2 MODULE ${LIB_SRC})
 	set_target_properties(protocol_oauth2 PROPERTIES
 			COMPILE_OPTIONS -Wextra
 			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
-	target_link_libraries(protocol_oauth2 ${GLWD_LIBS} ${LIBJWT_LIBRARIES})
+	target_link_libraries(protocol_oauth2 ${GLWD_LIBS})
 	set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oauth2)
 endif ()
 
 option(WITH_PLUGIN_OIDC "Build OpenID Connect plugin module" on)
 if (WITH_PLUGIN_OIDC)
-	include(FindLibJWT)
-	find_package(LibJWT ${LIBJWT_VERSION_REQUIRED} REQUIRED)
-	if (LIBJWT_FOUND)
-			include_directories(${LIBJWT_INCLUDE_DIRS})
-	endif ()
-
 	if (NOT RHONABWY_FOUND)
 		set(Rhonabwy_FIND_QUIETLY ON) # force to find Rhonabwy quietly
 		include(FindRhonabwy)
@@ -631,9 +603,6 @@ if (WITH_PLUGIN_OIDC)
 	endif ()
 
 	set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oidc.c ${RESOURCES_SRC_PATH}/oidc_resource.c ${RESOURCES_SRC_PATH}/oidc_resource.h)
-	if (NOT ${RELEASE_CODENAME} STREQUAL "stretch" AND NOT ${RELEASE_CODENAME} STREQUAL "bionic")
-		set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjwt0 (>= ${LIBJWT_VERSION_REQUIRED})")
-	endif ()
 
 	add_library(protocol_oidc MODULE ${LIB_SRC})
 	set_target_properties(protocol_oidc PROPERTIES
@@ -680,7 +649,6 @@ if (BUILD_GLEWLWYD_TESTING)
 		set(TST_LIBS ${TST_LIBS} ${ULFIUS_LIBRARIES})
 		set(TST_LIBS ${TST_LIBS} ${RHONABWY_LIBRARIES})
 		set(TST_LIBS ${TST_LIBS} ${GNUTLS_LIBRARIES})
-		set(TST_LIBS ${TST_LIBS} ${LIBJWT_LIBRARIES})
 		set(TST_LIBS ${TST_LIBS} ${CHECK_LIBRARIES} ${SUBUNIT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} m rt)
 
 		set(TESTS glewlwyd_admin_mod_type 
@@ -707,7 +675,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							)
 
 		if (WITH_PLUGIN_OAUTH2)
-			set (TST_LIBS ${TST_LIBS} ${LIBJWT_LIBRARIES} ${GNUTLS_LIBRARIES})
+			set (TST_LIBS ${TST_LIBS} ${GNUTLS_LIBRARIES})
 			set (TESTS ${TESTS}
 							glewlwyd_oauth2_additional_parameters
 							glewlwyd_oauth2_auth_code 
@@ -733,7 +701,7 @@ if (BUILD_GLEWLWYD_TESTING)
 		endif ()
 		
 		if (WITH_PLUGIN_OIDC)
-			set (TST_LIBS ${TST_LIBS} ${LIBJWT_LIBRARIES} ${GNUTLS_LIBRARIES})
+			set (TST_LIBS ${TST_LIBS} ${GNUTLS_LIBRARIES})
 			set (TESTS ${TESTS}
 							glewlwyd_oidc_additional_parameters
 							glewlwyd_oidc_auth_code
