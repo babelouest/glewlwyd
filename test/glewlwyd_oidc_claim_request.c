@@ -7,12 +7,12 @@
 #include <time.h>
 #include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>
-#include <jwt.h>
-
 #include <check.h>
-#include <ulfius.h>
+
 #include <orcania.h>
 #include <yder.h>
+#include <ulfius.h>
+#include <rhonabwy.h>
 
 #include "unit-tests.h"
 
@@ -1266,24 +1266,23 @@ START_TEST(test_oidc_claim_request_user1_request_jwt_id_token_claim_str_null)
   jwt_t * jwt_request = NULL;
   char * request;
   struct _u_response resp;
-  char * id_token, ** id_token_split, str_payload[1024] = {0}, * claims_str;
+  char * id_token, ** id_token_split, str_payload[1024] = {0};
   size_t str_payload_len;
   json_t * j_result, * j_claims;
   
-  jwt_new(&jwt_request);
+  r_jwt_init(&jwt_request);
   ck_assert_ptr_ne(jwt_request, NULL);
-  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_NONE, NULL, 0), 0);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_request, R_JWA_ALG_NONE), RHN_OK);
   ck_assert_ptr_ne((j_claims = json_pack("{s{s{so}}}", "claims", "id_token", "claim-number", json_null())), NULL);
-  ck_assert_ptr_ne((claims_str = json_dumps(j_claims, JSON_COMPACT)), NULL);
-  jwt_add_grants_json(jwt_request, claims_str);
-  jwt_add_grant(jwt_request, "aud", CLIENT_REDIRECT_URI);
-  jwt_add_grant(jwt_request, "response_type", "id_token");
-  jwt_add_grant(jwt_request, "client_id", CLIENT);
-  jwt_add_grant(jwt_request, "redirect_uri", CLIENT_REDIRECT_URI);
-  jwt_add_grant(jwt_request, "scope", SCOPE_LIST);
-  jwt_add_grant(jwt_request, "state", "xyzabcd");
-  jwt_add_grant(jwt_request, "nonce", "nonce1234");
-  request = jwt_encode_str(jwt_request);
+  r_jwt_set_full_claims_json_t(jwt_request, j_claims);
+  r_jwt_set_claim_str_value(jwt_request, "aud", CLIENT_REDIRECT_URI);
+  r_jwt_set_claim_str_value(jwt_request, "response_type", "id_token");
+  r_jwt_set_claim_str_value(jwt_request, "client_id", CLIENT);
+  r_jwt_set_claim_str_value(jwt_request, "redirect_uri", CLIENT_REDIRECT_URI);
+  r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
+  r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
+  r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
+  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
   ck_assert_ptr_ne(request, NULL);
   
   ulfius_init_response(&resp);
@@ -1316,10 +1315,9 @@ START_TEST(test_oidc_claim_request_user1_request_jwt_id_token_claim_str_null)
   
   o_free(request);
   o_free(id_token);
-  o_free(claims_str);
   json_decref(j_result);
   json_decref(j_claims);
-  jwt_free(jwt_request);
+  r_jwt_free(jwt_request);
   free_string_array(id_token_split);
 }
 END_TEST
@@ -1329,24 +1327,23 @@ START_TEST(test_oidc_claim_request_user1_request_jwt_id_token_claim_full)
   jwt_t * jwt_request = NULL;
   char * request;
   struct _u_response resp;
-  char * id_token, ** id_token_split, str_payload[1024] = {0}, * claims_str;
+  char * id_token, ** id_token_split, str_payload[1024] = {0};
   size_t str_payload_len;
   json_t * j_result, * j_claims;
   
-  jwt_new(&jwt_request);
+  r_jwt_init(&jwt_request);
   ck_assert_ptr_ne(jwt_request, NULL);
-  ck_assert_int_eq(jwt_set_alg(jwt_request, JWT_ALG_NONE, NULL, 0), 0);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_request, R_JWA_ALG_NONE), RHN_OK);
   ck_assert_ptr_ne((j_claims = json_pack("{s{s{sososososo}}}", "claims", "id_token", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "name", json_null(), "email", json_null())), NULL);
-  ck_assert_ptr_ne((claims_str = json_dumps(j_claims, JSON_COMPACT)), NULL);
-  jwt_add_grants_json(jwt_request, claims_str);
-  jwt_add_grant(jwt_request, "aud", CLIENT_REDIRECT_URI);
-  jwt_add_grant(jwt_request, "response_type", "id_token");
-  jwt_add_grant(jwt_request, "client_id", CLIENT);
-  jwt_add_grant(jwt_request, "redirect_uri", CLIENT_REDIRECT_URI);
-  jwt_add_grant(jwt_request, "scope", SCOPE_LIST);
-  jwt_add_grant(jwt_request, "state", "xyzabcd");
-  jwt_add_grant(jwt_request, "nonce", "nonce1234");
-  request = jwt_encode_str(jwt_request);
+  r_jwt_set_full_claims_json_t(jwt_request, j_claims);
+  r_jwt_set_claim_str_value(jwt_request, "aud", CLIENT_REDIRECT_URI);
+  r_jwt_set_claim_str_value(jwt_request, "response_type", "id_token");
+  r_jwt_set_claim_str_value(jwt_request, "client_id", CLIENT);
+  r_jwt_set_claim_str_value(jwt_request, "redirect_uri", CLIENT_REDIRECT_URI);
+  r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
+  r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
+  r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
+  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
   ck_assert_ptr_ne(request, NULL);
   
   ulfius_init_response(&resp);
@@ -1381,10 +1378,9 @@ START_TEST(test_oidc_claim_request_user1_request_jwt_id_token_claim_full)
   
   o_free(request);
   o_free(id_token);
-  o_free(claims_str);
   json_decref(j_result);
   json_decref(j_claims);
-  jwt_free(jwt_request);
+  r_jwt_free(jwt_request);
   free_string_array(id_token_split);
 }
 END_TEST

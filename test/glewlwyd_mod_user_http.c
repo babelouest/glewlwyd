@@ -7,12 +7,11 @@
 #include <time.h>
 #include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>
-
 #include <check.h>
-#include <ulfius.h>
+
 #include <orcania.h>
 #include <yder.h>
-#include <jwt.h>
+#include <ulfius.h>
 
 #include "unit-tests.h"
 

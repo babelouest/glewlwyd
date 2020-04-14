@@ -12,13 +12,12 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <liboath/oath.h>
-
 #include <check.h>
+
 #include <ulfius.h>
 #include <orcania.h>
 #include <yder.h>
 #include <rhonabwy.h>
-#include <jwt.h>
 
 #include "unit-tests.h"
 
@@ -207,21 +206,22 @@ static int callback_token_oidc_error_signature (const struct _u_request * reques
   char * grants = NULL, * jwt_str;
   time_t now;
   
-  ck_assert_int_eq(jwt_new(&jwt), 0);
+  ck_assert_int_eq(r_jwt_init(&jwt), 0);
   time(&now);
   grants = msprintf(id_token_pattern, PROVIDER_CLIENT_ID, (long long)now, PROVIDER_CLIENT_ID, (long long)(now + EXPIRES_IN), (long long)now, ISSUER, (const char *)user_data);
   ck_assert_ptr_ne(grants, NULL);
-  ck_assert_int_eq(jwt_add_grants_json(jwt, grants), 0);
-  ck_assert_int_eq(jwt_add_grant(jwt, "c_hash", c_hash), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt, JWT_ALG_RS256, private_key, o_strlen((const char *)private_key)), 0);
-  ck_assert_ptr_ne((jwt_str = jwt_encode_str(jwt)), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), 0);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt, "c_hash", c_hash), 0);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, private_key, o_strlen((const char *)private_key), NULL, 0), RHN_OK);
+  ck_assert_ptr_ne((jwt_str = r_jwt_serialize_signed(jwt, NULL, 0)), NULL);
   jwt_str[o_strlen(jwt_str)-2] = '\0';
 
   json_t * j_result = json_pack("{sssssssiss}", "refresh_token", REFRESH_TOKEN, "access_token", ACCESS_TOKEN, "token_type", "bearer", "expires_in", EXPIRES_IN, "id_token", jwt_str);
   ulfius_set_json_body_response(response, 200, j_result);
   json_decref(j_result);
   
-  jwt_free(jwt);
+  r_jwt_free(jwt);
   o_free(grants);
   o_free(jwt_str);
   
@@ -233,20 +233,21 @@ static int callback_token_oidc_invalid_payload (const struct _u_request * reques
   char * grants = NULL, * jwt_str;
   time_t now;
   
-  ck_assert_int_eq(jwt_new(&jwt), 0);
+  ck_assert_int_eq(r_jwt_init(&jwt), 0);
   time(&now);
   grants = msprintf(id_token_pattern, PROVIDER_CLIENT_ID, (long long)now, PROVIDER_CLIENT_ID, (long long)(now - EXPIRES_IN), (long long)now, ISSUER, (const char *)user_data);
   ck_assert_ptr_ne(grants, NULL);
-  ck_assert_int_eq(jwt_add_grants_json(jwt, grants), 0);
-  ck_assert_int_eq(jwt_add_grant(jwt, "c_hash", c_hash), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt, JWT_ALG_RS256, private_key, o_strlen((const char *)private_key)), 0);
-  ck_assert_ptr_ne((jwt_str = jwt_encode_str(jwt)), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), 0);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt, "c_hash", c_hash), 0);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, private_key, o_strlen((const char *)private_key), NULL, 0), RHN_OK);
+  ck_assert_ptr_ne((jwt_str = r_jwt_serialize_signed(jwt, NULL, 0)), NULL);
 
   json_t * j_result = json_pack("{sssssssiss}", "refresh_token", REFRESH_TOKEN, "access_token", ACCESS_TOKEN, "token_type", "bearer", "expires_in", EXPIRES_IN, "id_token", jwt_str);
   ulfius_set_json_body_response(response, 200, j_result);
   json_decref(j_result);
   
-  jwt_free(jwt);
+  r_jwt_free(jwt);
   o_free(grants);
   o_free(jwt_str);
   
@@ -258,20 +259,21 @@ static int callback_token_oidc_ok (const struct _u_request * request, struct _u_
   char * grants = NULL, * jwt_str;
   time_t now;
   
-  ck_assert_int_eq(jwt_new(&jwt), 0);
+  ck_assert_int_eq(r_jwt_init(&jwt), 0);
   time(&now);
   grants = msprintf(id_token_pattern, PROVIDER_CLIENT_ID, (long long)now, PROVIDER_CLIENT_ID, (long long)(now + EXPIRES_IN), (long long)now, ISSUER, (const char *)user_data);
   ck_assert_ptr_ne(grants, NULL);
-  ck_assert_int_eq(jwt_add_grants_json(jwt, grants), 0);
-  ck_assert_int_eq(jwt_add_grant(jwt, "c_hash", c_hash), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt, JWT_ALG_RS256, private_key, o_strlen((const char *)private_key)), 0);
-  ck_assert_ptr_ne((jwt_str = jwt_encode_str(jwt)), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), 0);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt, "c_hash", c_hash), 0);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, private_key, o_strlen((const char *)private_key), NULL, 0), RHN_OK);
+  ck_assert_ptr_ne((jwt_str = r_jwt_serialize_signed(jwt, NULL, 0)), NULL);
 
   json_t * j_result = json_pack("{sssssssiss}", "refresh_token", REFRESH_TOKEN, "access_token", ACCESS_TOKEN, "token_type", "bearer", "expires_in", EXPIRES_IN, "id_token", jwt_str);
   ulfius_set_json_body_response(response, 200, j_result);
   json_decref(j_result);
   
-  jwt_free(jwt);
+  r_jwt_free(jwt);
   o_free(grants);
   o_free(jwt_str);
   
@@ -283,20 +285,21 @@ static int callback_token_oidc_invalid_userid (const struct _u_request * request
   char * grants = NULL, * jwt_str;
   time_t now;
   
-  ck_assert_int_eq(jwt_new(&jwt), 0);
+  ck_assert_int_eq(r_jwt_init(&jwt), 0);
   time(&now);
   grants = msprintf(id_token_invalid_sub_pattern, PROVIDER_CLIENT_ID, (long long)now, PROVIDER_CLIENT_ID, (long long)(now + EXPIRES_IN), (long long)now, ISSUER, (const char *)user_data);
   ck_assert_ptr_ne(grants, NULL);
-  ck_assert_int_eq(jwt_add_grants_json(jwt, grants), 0);
-  ck_assert_int_eq(jwt_add_grant(jwt, "c_hash", c_hash), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt, JWT_ALG_RS256, private_key, o_strlen((const char *)private_key)), 0);
-  ck_assert_ptr_ne((jwt_str = jwt_encode_str(jwt)), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), 0);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt, "c_hash", c_hash), 0);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, private_key, o_strlen((const char *)private_key), NULL, 0), RHN_OK);
+  ck_assert_ptr_ne((jwt_str = r_jwt_serialize_signed(jwt, NULL, 0)), NULL);
 
   json_t * j_result = json_pack("{sssssssiss}", "refresh_token", REFRESH_TOKEN, "access_token", ACCESS_TOKEN, "token_type", "bearer", "expires_in", EXPIRES_IN, "id_token", jwt_str);
   ulfius_set_json_body_response(response, 200, j_result);
   json_decref(j_result);
   
-  jwt_free(jwt);
+  r_jwt_free(jwt);
   o_free(grants);
   o_free(jwt_str);
   
@@ -335,15 +338,15 @@ static int callback_openid_configuration_valid (const struct _u_request * reques
 static int callback_openid_jwks_valid (const struct _u_request * request, struct _u_response * response, void * user_data) {
   jwk_t * jwk;
   jwks_t * jwks;
-  r_init_jwk(&jwk);
-  r_init_jwks(&jwks);
+  r_jwk_init(&jwk);
+  r_jwks_init(&jwks);
   
   r_jwk_import_from_pem_der(jwk, R_X509_TYPE_PUBKEY, R_FORMAT_PEM, (unsigned char *)public_key, o_strlen(public_key));
   r_jwks_append_jwk(jwks, jwk);
-  r_free_jwk(jwk);
+  r_jwk_free(jwk);
   
   json_t * j_response = r_jwks_export_to_json_t(jwks);
-  r_free_jwks(jwks);
+  r_jwks_free(jwks);
   ulfius_set_json_body_response(response, 200, j_response);
   json_decref(j_response);
   return U_CALLBACK_CONTINUE;
@@ -3297,13 +3300,14 @@ START_TEST(test_glwd_scheme_oauth2_irl_auth_oauth2_oidc_id_token_register_error_
   char * grants = NULL, * jwt_str;
   time_t now;
   
-  ck_assert_int_eq(jwt_new(&jwt), 0);
+  ck_assert_int_eq(r_jwt_init(&jwt), 0);
   time(&now);
   grants = msprintf(id_token_pattern, PROVIDER_CLIENT_ID, (long long)now, PROVIDER_CLIENT_ID, (long long)(now + EXPIRES_IN), (long long)now, ISSUER, (const char *)nonce);
   ck_assert_ptr_ne(grants, NULL);
-  ck_assert_int_eq(jwt_add_grants_json(jwt, grants), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt, JWT_ALG_RS256, private_key, o_strlen((const char *)private_key)), 0);
-  ck_assert_ptr_ne((jwt_str = jwt_encode_str(jwt)), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), 0);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, private_key, o_strlen((const char *)private_key), NULL, 0), RHN_OK);
+  ck_assert_ptr_ne((jwt_str = r_jwt_serialize_signed(jwt, NULL, 0)), NULL);
   jwt_str[o_strlen(jwt_str)-2] = '\0';
 
   o_free(grants);
@@ -3334,7 +3338,7 @@ START_TEST(test_glwd_scheme_oauth2_irl_auth_oauth2_oidc_id_token_register_error_
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
 
-  jwt_free(jwt);
+  r_jwt_free(jwt);
   free_string_array(url_array);
 }
 END_TEST
@@ -3386,13 +3390,14 @@ START_TEST(test_glwd_scheme_oauth2_irl_auth_oauth2_oidc_id_token_register_error_
   char * grants = NULL, * jwt_str;
   time_t now;
   
-  ck_assert_int_eq(jwt_new(&jwt), 0);
+  ck_assert_int_eq(r_jwt_init(&jwt), 0);
   time(&now);
   grants = msprintf(id_token_pattern, PROVIDER_CLIENT_ID, (long long)now, PROVIDER_CLIENT_ID, (long long)(now - EXPIRES_IN), (long long)now, ISSUER, (const char *)nonce);
   ck_assert_ptr_ne(grants, NULL);
-  ck_assert_int_eq(jwt_add_grants_json(jwt, grants), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt, JWT_ALG_RS256, private_key, o_strlen((const char *)private_key)), 0);
-  ck_assert_ptr_ne((jwt_str = jwt_encode_str(jwt)), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), 0);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, private_key, o_strlen((const char *)private_key), NULL, 0), RHN_OK);
+  ck_assert_ptr_ne((jwt_str = r_jwt_serialize_signed(jwt, NULL, 0)), NULL);
 
   o_free(grants);
   
@@ -3422,7 +3427,7 @@ START_TEST(test_glwd_scheme_oauth2_irl_auth_oauth2_oidc_id_token_register_error_
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
 
-  jwt_free(jwt);
+  r_jwt_free(jwt);
   free_string_array(url_array);
 }
 END_TEST
@@ -3474,13 +3479,14 @@ START_TEST(test_glwd_scheme_oauth2_irl_auth_oauth2_oidc_id_token_register_ok)
   char * grants = NULL, * jwt_str;
   time_t now;
   
-  ck_assert_int_eq(jwt_new(&jwt), 0);
+  ck_assert_int_eq(r_jwt_init(&jwt), 0);
   time(&now);
   grants = msprintf(id_token_pattern, PROVIDER_CLIENT_ID, (long long)now, PROVIDER_CLIENT_ID, (long long)(now + EXPIRES_IN), (long long)now, ISSUER, (const char *)nonce);
   ck_assert_ptr_ne(grants, NULL);
-  ck_assert_int_eq(jwt_add_grants_json(jwt, grants), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt, JWT_ALG_RS256, private_key, o_strlen((const char *)private_key)), 0);
-  ck_assert_ptr_ne((jwt_str = jwt_encode_str(jwt)), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), 0);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, private_key, o_strlen((const char *)private_key), NULL, 0), RHN_OK);
+  ck_assert_ptr_ne((jwt_str = r_jwt_serialize_signed(jwt, NULL, 0)), NULL);
 
   o_free(grants);
   
@@ -3500,7 +3506,7 @@ START_TEST(test_glwd_scheme_oauth2_irl_auth_oauth2_oidc_id_token_register_ok)
   json_decref(j_parameters);
   o_free(tmp);
 
-  jwt_free(jwt);
+  r_jwt_free(jwt);
   free_string_array(url_array);
 }
 END_TEST
@@ -3549,13 +3555,14 @@ START_TEST(test_glwd_scheme_oauth2_irl_auth_oauth2_id_token_error_userid)
   char * grants = NULL, * jwt_str;
   time_t now;
   
-  ck_assert_int_eq(jwt_new(&jwt), 0);
+  ck_assert_int_eq(r_jwt_init(&jwt), 0);
   time(&now);
   grants = msprintf(id_token_invalid_sub_pattern, PROVIDER_CLIENT_ID, (long long)now, PROVIDER_CLIENT_ID, (long long)(now + EXPIRES_IN), (long long)now, ISSUER, (const char *)nonce);
   ck_assert_ptr_ne(grants, NULL);
-  ck_assert_int_eq(jwt_add_grants_json(jwt, grants), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt, JWT_ALG_RS256, private_key, o_strlen((const char *)private_key)), 0);
-  ck_assert_ptr_ne((jwt_str = jwt_encode_str(jwt)), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), 0);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, private_key, o_strlen((const char *)private_key), NULL, 0), RHN_OK);
+  ck_assert_ptr_ne((jwt_str = r_jwt_serialize_signed(jwt, NULL, 0)), NULL);
 
   o_free(grants);
   
@@ -3575,7 +3582,7 @@ START_TEST(test_glwd_scheme_oauth2_irl_auth_oauth2_id_token_error_userid)
   json_decref(j_parameters);
   o_free(tmp);
 
-  jwt_free(jwt);
+  r_jwt_free(jwt);
   free_string_array(url_array);
 }
 END_TEST
@@ -3624,13 +3631,14 @@ START_TEST(test_glwd_scheme_oauth2_irl_auth_oauth2_id_token_ok)
   char * grants = NULL, * jwt_str;
   time_t now;
   
-  ck_assert_int_eq(jwt_new(&jwt), 0);
+  ck_assert_int_eq(r_jwt_init(&jwt), 0);
   time(&now);
   grants = msprintf(id_token_pattern, PROVIDER_CLIENT_ID, (long long)now, PROVIDER_CLIENT_ID, (long long)(now + EXPIRES_IN), (long long)now, ISSUER, (const char *)nonce);
   ck_assert_ptr_ne(grants, NULL);
-  ck_assert_int_eq(jwt_add_grants_json(jwt, grants), 0);
-  ck_assert_int_eq(jwt_set_alg(jwt, JWT_ALG_RS256, private_key, o_strlen((const char *)private_key)), 0);
-  ck_assert_ptr_ne((jwt_str = jwt_encode_str(jwt)), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), 0);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, private_key, o_strlen((const char *)private_key), NULL, 0), RHN_OK);
+  ck_assert_ptr_ne((jwt_str = r_jwt_serialize_signed(jwt, NULL, 0)), NULL);
 
   o_free(grants);
   
@@ -3650,7 +3658,7 @@ START_TEST(test_glwd_scheme_oauth2_irl_auth_oauth2_id_token_ok)
   json_decref(j_parameters);
   o_free(tmp);
 
-  jwt_free(jwt);
+  r_jwt_free(jwt);
   free_string_array(url_array);
 }
 END_TEST
