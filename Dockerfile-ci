@@ -37,8 +37,6 @@ RUN apk add --no-cache \
     (cd /opt && wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor.tar.gz && \
     tar xf libcbor.tar.gz && cd libcbor-0.5.0 && mkdir build && cd build && \
     cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib .. && make && make install) && \
-    (cd /opt && wget https://github.com/benmcollins/libjwt/archive/v1.12.0.tar.gz -O libjwt.tar.gz && \
-    tar xf libjwt.tar.gz && cd libjwt-1.12.0 && autoreconf -i && ./configure --without-openssl && make && make install) && \
     (cd /opt && wget https://ftp.gnu.org/gnu/libmicrohttpd/libmicrohttpd-0.9.70.tar.gz -O libmicrohttpd.tar.gz && \
     tar xf libmicrohttpd.tar.gz && cd libmicrohttpd-0.9.70 && ./configure && make && make install) && \
     ls -l /opt/glewlwyd/ && \
@@ -66,7 +64,6 @@ RUN apk add --no-cache \
     bash
 
 COPY --from=builder /usr/lib/libcbor.* /usr/lib/
-COPY --from=builder /usr/local/lib/libjwt.* /usr/lib/
 COPY --from=builder /usr/lib/liborcania* /usr/lib/
 COPY --from=builder /usr/lib/libyder* /usr/lib/
 COPY --from=builder /usr/lib/libhoel* /usr/lib/
