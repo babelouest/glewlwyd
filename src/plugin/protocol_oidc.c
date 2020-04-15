@@ -3692,12 +3692,12 @@ static void build_form_post_response(const char * redirect_uri, struct _u_map * 
 }
 
 static int generate_discovery_content(struct _oidc_config * config) {
-  json_t * j_discovery = json_object(), * j_element = NULL;
+  json_t * j_discovery = json_object(), * j_element = NULL, * j_rhon_info = r_library_info_json_t(), * j_sign_pubkey = json_array();
   char * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, config->name);
   size_t index = 0;
   int ret = G_OK;
   
-  if (j_discovery != NULL && plugin_url != NULL) {
+  if (j_discovery != NULL && j_sign_pubkey != NULL && plugin_url != NULL) {
     json_object_set(j_discovery, "issuer", json_object_get(config->j_params, "iss"));
     json_object_set_new(j_discovery, "authorization_endpoint", json_pack("s+", plugin_url, "/auth"));
     json_object_set_new(j_discovery, "token_endpoint", json_pack("s+", plugin_url, "/token"));
@@ -3707,24 +3707,23 @@ static int generate_discovery_content(struct _oidc_config * config) {
     
     json_object_set_new(j_discovery, "id_token_signing_alg_values_supported", json_pack("[s]", r_jwa_alg_to_str(r_jwt_get_sign_alg(config->jwt_key))));
     json_object_set_new(j_discovery, "userinfo_signing_alg_values_supported", json_pack("[s]", r_jwa_alg_to_str(r_jwt_get_sign_alg(config->jwt_key))));
+    json_object_set(j_discovery, "userinfo_encryption_alg_values_supported", json_object_get(json_object_get(j_rhon_info, "jwe"), "alg"));
+    json_object_set(j_discovery, "userinfo_encryption_enc_values_supported", json_object_get(json_object_get(j_rhon_info, "jwe"), "enc"));
     if (json_object_get(config->j_params, "request-parameter-allow") == json_true()) {
+      json_array_foreach(json_object_get(json_object_get(j_rhon_info, "jws"), "alg"), index, j_element) {
+        if (0 != o_strncmp("HS", json_string_value(j_element), 2) && 0 != o_strcmp("none", json_string_value(j_element))) {
+          json_array_append(j_sign_pubkey, j_element);
+        }
+      }
       json_object_set_new(j_discovery, "request_object_signing_alg_values_supported", json_pack("[ssss]", "none", "HS256", "HS384", "HS512"));
+      json_object_set(j_discovery, "request_object_encryption_alg_values_supported", json_object_get(json_object_get(j_rhon_info, "jwe"), "alg"));
+      json_object_set(j_discovery, "request_object_encryption_enc_values_supported", json_object_get(json_object_get(j_rhon_info, "jwe"), "enc"));
       json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_methods_supported"), json_string("client_secret_jwt"));
       json_object_set_new(j_discovery, "token_endpoint_auth_signing_alg_values_supported", json_pack("[sss]", "HS256", "HS384", "HS512"));
       if (json_string_length(json_object_get(config->j_params, "client-pubkey-parameter")) || json_string_length(json_object_get(config->j_params, "client-jwks-parameter")) || json_string_length(json_object_get(config->j_params, "client-jwks_uri-parameter"))) {
-        json_array_append_new(json_object_get(j_discovery, "request_object_signing_alg_values_supported"), json_string("RS256"));
-        json_array_append_new(json_object_get(j_discovery, "request_object_signing_alg_values_supported"), json_string("RS384"));
-        json_array_append_new(json_object_get(j_discovery, "request_object_signing_alg_values_supported"), json_string("RS512"));
-        json_array_append_new(json_object_get(j_discovery, "request_object_signing_alg_values_supported"), json_string("ES256"));
-        json_array_append_new(json_object_get(j_discovery, "request_object_signing_alg_values_supported"), json_string("ES384"));
-        json_array_append_new(json_object_get(j_discovery, "request_object_signing_alg_values_supported"), json_string("ES512"));
+        json_array_extend(json_object_get(j_discovery, "request_object_signing_alg_values_supported"), j_sign_pubkey);
+        json_array_extend(json_object_get(j_discovery, "token_endpoint_auth_signing_alg_values_supported"), j_sign_pubkey);
         json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_methods_supported"), json_string("private_key_jwt"));
-        json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_signing_alg_values_supported"), json_string("RS256"));
-        json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_signing_alg_values_supported"), json_string("RS384"));
-        json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_signing_alg_values_supported"), json_string("RS512"));
-        json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_signing_alg_values_supported"), json_string("ES256"));
-        json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_signing_alg_values_supported"), json_string("ES384"));
-        json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_signing_alg_values_supported"), json_string("ES512"));
       }
     }
     if (json_object_get(config->j_params, "allowed-scope") != NULL && json_array_size(json_object_get(config->j_params, "allowed-scope"))) {
@@ -3828,6 +3827,8 @@ static int generate_discovery_content(struct _oidc_config * config) {
     ret = G_ERROR;
   }
   json_decref(j_discovery);
+  json_decref(j_sign_pubkey);
+  json_decref(j_rhon_info);
   o_free(plugin_url);
   return ret;
 }
