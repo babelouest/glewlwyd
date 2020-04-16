@@ -96,6 +96,7 @@
 struct _oidc_config {
   struct config_plugin         * glewlwyd_config;
   int                            jwt_key_size;
+  jwk_t                        * jwk_priv;
   jwks_t                       * jwks;
   jwt_t                        * jwt_key;
   const char                   * name;
@@ -245,6 +246,10 @@ static json_t * check_parameters (json_t * j_params) {
         json_array_append_new(j_error, json_string("Property 'request-uri-allow-https-non-secure' is optional and must be a boolean"));
         ret = G_ERROR_PARAM;
       }
+      if (json_object_get(j_params, "request-parameter-allow-encrypted") != NULL && !json_is_boolean(json_object_get(j_params, "request-parameter-allow-encrypted"))) {
+        json_array_append_new(j_error, json_string("Property 'request-parameter-allow-encrypted' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
       if (json_object_get(j_params, "request-maximum-exp") != NULL && json_integer_value(json_object_get(j_params, "request-maximum-exp")) <= 0) {
         json_array_append_new(j_error, json_string("Property 'request-maximum-exp' is optional and must be a positive integer"));
         ret = G_ERROR_PARAM;
@@ -259,6 +264,18 @@ static json_t * check_parameters (json_t * j_params) {
       }
       if (json_object_get(j_params, "client-jwks_uri-parameter") != NULL && !json_is_string(json_object_get(j_params, "client-jwks_uri-parameter"))) {
         json_array_append_new(j_error, json_string("Property 'client-jwks_uri-parameter' is optional and must be a string"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "client-alg-parameter") != NULL && !json_is_string(json_object_get(j_params, "client-alg-parameter"))) {
+        json_array_append_new(j_error, json_string("Property 'client-alg-parameter' is optional and must be a string"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "client-enc-parameter") != NULL && !json_is_string(json_object_get(j_params, "client-enc-parameter"))) {
+        json_array_append_new(j_error, json_string("Property 'client-enc-parameter' is optional and must be a string"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "client-alg_kid-parameter") != NULL && !json_is_string(json_object_get(j_params, "client-alg_kid-parameter"))) {
+        json_array_append_new(j_error, json_string("Property 'client-alg_kid-parameter' is optional and must be a string"));
         ret = G_ERROR_PARAM;
       }
     }
@@ -820,6 +837,91 @@ static char get_url_separator(const char * redirect_uri, int implicit_flow) {
   }
   
   return sep;
+}
+
+static char * encrypt_jwt_if_required(struct _oidc_config * config, const char * jws_token, json_t * j_client) {
+  char * token = NULL;
+  unsigned char key[32] = {0};
+  size_t key_len = 32;
+  jwk_t * jwk = NULL;
+  jwks_t * jwks;
+  jwe_t * jwe = NULL;
+  jwa_alg alg;
+  const char * jwks_uri_p = json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")), 
+             * jwks_p = json_string_value(json_object_get(config->j_params, "client-jwks-parameter")), 
+             * pubkey_p = json_string_value(json_object_get(config->j_params, "client-pubkey-parameter")), 
+             * enc_p = json_string_value(json_object_get(config->j_params, "client-enc-parameter")), 
+             * alg_p = json_string_value(json_object_get(config->j_params, "client-alg-parameter")), 
+             * alg_kid_p = json_string_value(json_object_get(config->j_params, "client-alg_kid-parameter"));
+  
+  if (j_client != NULL && json_object_get(j_client, "confidential") == json_true() && json_object_get(j_client, alg_p) != NULL) {
+    if (r_jwe_init(&jwe) == RHN_OK && 
+        r_jwe_set_payload(jwe, (const unsigned char *)jws_token, o_strlen(jws_token)) == RHN_OK && 
+        r_jwe_set_header_str_value(jwe, "cty", "JWT") == RHN_OK && 
+        r_jwe_set_header_str_value(jwe, "typ", "JWT") == RHN_OK && 
+        ((json_object_get(j_client, enc_p) != NULL && r_jwe_set_enc(jwe, r_str_to_jwa_enc(json_string_value(json_object_get(j_client, enc_p)))) == RHN_OK) || 
+         (json_object_get(j_client, enc_p) == NULL && r_jwe_set_enc(jwe, R_JWA_ENC_A128CBC) == RHN_OK)) && 
+        r_jwe_set_alg(jwe, r_str_to_jwa_alg(json_string_value(json_object_get(j_client, alg_p)))) == RHN_OK) {
+      alg = r_jwe_get_alg(jwe);
+      if (alg == R_JWA_ALG_A128GCMKW || alg == R_JWA_ALG_A128KW || alg == R_JWA_ALG_A192GCMKW || alg == R_JWA_ALG_A192KW || alg == R_JWA_ALG_A256GCMKW || alg == R_JWA_ALG_A256KW || alg == R_JWA_ALG_DIR) {
+        if (json_string_length(json_object_get(j_client, "secret"))) {
+          if (generate_digest_raw(digest_SHA256, (const unsigned char *)json_string_value(json_object_get(j_client, "secret")), json_string_length(json_object_get(j_client, "secret")), key, &key_len)) {
+            if (alg == R_JWA_ALG_A128GCMKW || alg == R_JWA_ALG_A128KW) {
+              key_len = 16;
+            } else if (alg == R_JWA_ALG_A192GCMKW || alg == R_JWA_ALG_A192KW) {
+              key_len = 24;
+            }
+            if (r_jwk_init(&jwk) != RHN_OK || r_jwk_import_from_symmetric_key(jwk, key, key_len) != RHN_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "encrypt_jwt_if_required - Error setting jwk, client_id %s", json_string_value(json_object_get(j_client, "client_id")));
+              r_jwk_free(jwk);
+              jwk = NULL;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "encrypt_jwt_if_required - Error generate_digest_raw, client_id %s", json_string_value(json_object_get(j_client, "client_id")));
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "encrypt_jwt_if_required - client_id %s has no secret", json_string_value(json_object_get(j_client, "client_id")));
+        }
+      } else if (alg == R_JWA_ALG_ECDH_ES || alg == R_JWA_ALG_ECDH_ES_A128KW || alg == R_JWA_ALG_ECDH_ES_A192KW || alg == R_JWA_ALG_ECDH_ES_A256KW || alg == R_JWA_ALG_RSA1_5 || alg == R_JWA_ALG_RSA_OAEP || alg == R_JWA_ALG_RSA_OAEP_256) {
+        if (r_jwks_init(&jwks) == RHN_OK) {
+          if (json_string_length(json_object_get(j_client, jwks_uri_p)) && json_string_length(json_object_get(j_client, alg_kid_p))) {
+            if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_client, jwks_uri_p)), R_FLAG_FOLLOW_REDIRECT|(json_object_get(config->j_params, "request-uri-allow-https-non-secure")==json_true()?R_FLAG_IGNORE_SERVER_CERTIFICATE:0)) == RHN_OK) {
+              if ((jwk = r_jwks_get_by_kid(jwks, json_string_value(json_object_get(j_client, alg_kid_p)))) == NULL) {
+                y_log_message(Y_LOG_LEVEL_DEBUG, "encrypt_jwt_if_required - unable to get pubkey from jwks_uri, client_id %s", json_string_value(json_object_get(j_client, "client_id")));
+              }
+            }
+          } else if (json_is_object(json_object_get(j_client, jwks_p)) && json_string_length(json_object_get(j_client, alg_kid_p))) {
+            if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_json_t(jwks, json_object_get(j_client, jwks_p)) == RHN_OK) {
+              if ((jwk = r_jwks_get_by_kid(jwks, json_string_value(json_object_get(j_client, alg_kid_p)))) == NULL) {
+                y_log_message(Y_LOG_LEVEL_DEBUG, "encrypt_jwt_if_required - unable to get pubkey from jwks, client_id %s", json_string_value(json_object_get(j_client, "client_id")));
+              }
+            }
+          } else if (json_string_length(json_object_get(j_client, pubkey_p))) {
+            if (r_jwk_init(&jwk) != RHN_OK || r_jwk_import_from_pem_der(jwk, R_X509_TYPE_PUBKEY, R_FORMAT_PEM, (const unsigned char *)json_string_value(json_object_get(j_client, pubkey_p)), json_string_length(json_object_get(j_client, pubkey_p))) != RHN_OK) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "encrypt_jwt_if_required - unable to get pubkey from client, client_id %s", json_string_value(json_object_get(j_client, "client_id")));
+              r_jwk_free(jwk);
+              jwk = NULL;
+            }
+          }
+          r_jwks_free(jwks);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "encrypt_jwt_if_required - Error r_jwks_init, client_id %s", json_string_value(json_object_get(j_client, "client_id")));
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "encrypt_jwt_if_required - Invalid key management algorithm for client_id %s", json_string_value(json_object_get(j_client, "client_id")));
+      }
+      if (jwk != NULL) {
+        token = r_jwe_serialize(jwe, jwk, 0);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "encrypt_jwt_if_required - Error setting values enc or alg for client_id %s", json_string_value(json_object_get(j_client, "client_id")));
+    }
+    r_jwe_free(jwe);
+  } else {
+    token = o_strdup(jws_token);
+  }
+  r_jwk_free(jwk);
+  return token;
 }
 
 /**
@@ -2889,6 +2991,65 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
   return j_return;
 }
 
+static int decrypt_request_token(struct _oidc_config * config, jwt_t * jwt) {
+  int ret, res;
+  jwk_t * jwk = NULL;
+  unsigned char key[32] = {0};
+  size_t key_len = 32;
+  jwa_alg alg;
+  
+  if (r_jwt_get_type(jwt) == R_JWT_TYPE_SIGN) {
+    // Not encrypted
+    ret = G_OK;
+  } else if (r_jwt_get_type(jwt) == R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT) {
+    if (json_object_get(config->j_params, "request-parameter-allow-encrypted") == json_true()) {
+      alg = r_jwt_get_enc_alg(jwt);
+      if (0 == o_strcmp("sha", json_string_value(json_object_get(config->j_params, "jwt-type")))) {
+        if (alg == R_JWA_ALG_A128GCMKW || alg == R_JWA_ALG_A128KW || alg == R_JWA_ALG_A192GCMKW || alg == R_JWA_ALG_A192KW || alg == R_JWA_ALG_A256GCMKW || alg == R_JWA_ALG_A256KW) {
+          if (generate_digest_raw(digest_SHA256, (const unsigned char *)json_string_value(json_object_get(config->j_params, "key")), json_string_length(json_object_get(config->j_params, "key")), key, &key_len)) {
+            if (alg == R_JWA_ALG_A128GCMKW || alg == R_JWA_ALG_A128KW) {
+              key_len = 16;
+            } else if (alg == R_JWA_ALG_A192GCMKW || alg == R_JWA_ALG_A192KW) {
+              key_len = 24;
+            }
+            if (r_jwk_init(&jwk) != RHN_OK || r_jwk_import_from_symmetric_key(jwk, key, key_len) != RHN_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "decrypt_request_token - Error creating symmetric key");
+              r_jwk_free(jwk);
+              jwk = NULL;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "decrypt_request_token - Error generate_digest_raw");
+          }
+        }
+      } else {
+        jwk = r_jwk_copy(config->jwk_priv);
+      }
+      if (jwk != NULL) {
+        if ((res = r_jwt_decrypt_nested(jwt, jwk, 0)) == RHN_OK) {
+          ret = G_OK;
+        } else if (res == RHN_ERROR_INVALID) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "decrypt_request_token - invalid decrypt key");
+          ret = G_ERROR_PARAM;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "decrypt_request_token - Error r_jwt_decrypt_nested");
+          ret = G_ERROR;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "decrypt_request_token - No key to decrypt");
+        ret = G_ERROR;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "decrypt_request_token - Encrypted requests not allowed");
+      ret = G_ERROR_PARAM;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "decrypt_request_token - invalid nested JWT type");
+    ret = G_ERROR_PARAM;
+  }
+  r_jwk_free(jwk);
+  return ret;
+}
+
 /**
  * validate a request object in jwt format
  */
@@ -2897,9 +3058,9 @@ static json_t * validate_jwt_auth_request(struct _oidc_config * config, const ch
   jwt_t * jwt = NULL;
   
   if (jwt_request != NULL) {
-    if (r_jwt_init(&jwt) == RHN_OK && r_jwt_parse(jwt, jwt_request, 0) == RHN_OK) {
+    if (r_jwt_init(&jwt) == RHN_OK && r_jwt_parse(jwt, jwt_request, 0) == RHN_OK && decrypt_request_token(config, jwt) == G_OK) {
       // request or request_uri must not be present in the payload
-      if (r_jwt_get_claim_str_value(jwt, "request") == NULL && r_jwt_get_claim_str_value(jwt, "verify_request_signature") == NULL) {
+      if (r_jwt_get_claim_str_value(jwt, "request") == NULL && r_jwt_get_claim_str_value(jwt, "	request_uri") == NULL) {
         j_result = verify_request_signature(config, jwt, r_jwt_get_claim_str_value(jwt, "client_id"), ip_source);
         if (check_result_value(j_result, G_OK)) {
           j_return = json_pack("{sisosO}", "result", G_OK, "request", r_jwt_get_full_claims_json_t(jwt), "client", json_object_get(j_result, "client"));
@@ -2999,7 +3160,7 @@ static json_t * validate_jwt_assertion_request(struct _oidc_config * config, con
   token_endpoint = msprintf("%s/token", plugin_url);
   
   if (jwt_assertion != NULL) {
-    if (r_jwt_init(&jwt) == RHN_OK && r_jwt_parse(jwt, jwt_assertion, 0) == RHN_OK) {
+    if (r_jwt_init(&jwt) == RHN_OK && r_jwt_parse(jwt, jwt_assertion, 0) == RHN_OK && decrypt_request_token(config, jwt) == G_OK) {
       // Extract header and payload
       j_result = verify_request_signature(config, jwt, r_jwt_get_claim_str_value(jwt, "iss"), ip_source);
       if (check_result_value(j_result, G_OK)) {
@@ -3020,11 +3181,11 @@ static json_t * validate_jwt_assertion_request(struct _oidc_config * config, con
         j_return = json_pack("{si}", "result", G_ERROR);
       }
       json_decref(j_result);
-      r_jwt_free(jwt);
     } else {
       y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_assertion_request - Error jwt_assertion is not a valid jwt, origin: %s", ip_source);
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     }
+    r_jwt_free(jwt);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "validate_jwt_assertion_request - Error jwt_assertion is NULL");
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -4492,10 +4653,9 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
              * redirect_uri = u_map_get(request->map_post_body, "redirect_uri"),
              * code_verifier = u_map_get(request->map_post_body, "code_verifier"),
              * ip_source = get_ip_source(request);
-  char * issued_for = get_client_hostname(request), * id_token;
+  char * issued_for = get_client_hostname(request), * id_token, * id_token_out, * refresh_token = NULL, * access_token = NULL, * access_token_out = NULL;
   json_t * j_code, * j_body, * j_refresh_token, * j_client = NULL, * j_user, * j_amr, * j_claims_request = NULL;
   time_t now;
-  char * refresh_token = NULL, * access_token = NULL;
   
   if (client_id == NULL && request->auth_basic_user) {
     client_id = request->auth_basic_user;
@@ -4577,23 +4737,32 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                                issued_for, 
                                                u_map_get_case(request->map_header, "user-agent")) == G_OK) {
                           if (disable_authorization_code(config, json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpoc_id"))) == G_OK) {
-                            j_body = json_pack("{sssssssisIssss}",
-                                                  "token_type",
-                                                  "bearer",
-                                                  "access_token",
-                                                  access_token,
-                                                  "refresh_token",
-                                                  refresh_token,
-                                                  "iat",
-                                                  now,
-                                                  "expires_in",
-                                                  config->access_token_duration,
-                                                  "scope",
-                                                  json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")),
-                                                  "id_token",
-                                                  id_token);
-                            ulfius_set_json_body_response(response, 200, j_body);
-                            json_decref(j_body);
+                            if ((id_token_out = encrypt_jwt_if_required(config, id_token, json_object_get(j_client, "client"))) != NULL && (access_token_out = encrypt_jwt_if_required(config, access_token, json_object_get(j_client, "client"))) != NULL) {
+                              j_body = json_pack("{sssssssisIssss}",
+                                                    "token_type",
+                                                    "bearer",
+                                                    "access_token",
+                                                    access_token_out,
+                                                    "refresh_token",
+                                                    refresh_token,
+                                                    "iat",
+                                                    now,
+                                                    "expires_in",
+                                                    config->access_token_duration,
+                                                    "scope",
+                                                    json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")),
+                                                    "id_token",
+                                                    id_token_out);
+                              ulfius_set_json_body_response(response, 200, j_body);
+                              json_decref(j_body);
+                            } else {
+                              y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_access_token_request - Error encrypt_jwt_if_required");
+                              j_body = json_pack("{ss}", "error", "server_error");
+                              ulfius_set_json_body_response(response, 500, j_body);
+                              json_decref(j_body);
+                            }
+                            o_free(id_token_out);
+                            o_free(access_token_out);
                           } else {
                             y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_access_token_request - Error disable_authorization_code");
                             j_body = json_pack("{ss}", "error", "server_error");
@@ -4704,7 +4873,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
  */
 static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, struct _u_response * response, void * user_data, json_t * j_assertion_client) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_user, * j_client, * j_refresh_token, * j_body, * j_user_only, * j_client_for_sub = NULL, * j_element = NULL;
+  json_t * j_user, * j_client = NULL, * j_refresh_token, * j_body, * j_user_only, * j_client_for_sub = NULL, * j_element = NULL;
   int ret = G_OK, auth_type_allowed = 0;
   const char * username = u_map_get(request->map_post_body, "username"),
              * password = u_map_get(request->map_post_body, "password"),
@@ -4713,7 +4882,8 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
              * ip_source = get_ip_source(request);
   char * issued_for = get_client_hostname(request),
        * refresh_token,
-       * access_token;
+       * access_token,
+       * access_token_out;
   time_t now;
   size_t index = 0;
   
@@ -4745,6 +4915,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
       ret = G_ERROR;
     }
     json_decref(j_client);
+    j_client = NULL;
   }
   if (ret == G_OK) {
     j_user = config->glewlwyd_config->glewlwyd_callback_check_user_valid(config->glewlwyd_config, username, password, scope);
@@ -4761,7 +4932,6 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
           y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error glewlwyd_plugin_callback_get_client");
           ret = G_ERROR;
         }
-        json_decref(j_client);
       }
       if (ret == G_OK) {
         time(&now);
@@ -4799,21 +4969,29 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                                            issued_for, 
                                            u_map_get_case(request->map_header, "user-agent"),
                                            access_token) == G_OK) {
-                  j_body = json_pack("{sssssssisIss}",
-                                     "token_type",
-                                     "bearer",
-                                     "access_token",
-                                     access_token,
-                                     "refresh_token",
-                                     refresh_token,
-                                     "iat",
-                                     now,
-                                     "expires_in",
-                                     config->access_token_duration,
-                                     "scope",
-                                     json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")));
-                  ulfius_set_json_body_response(response, 200, j_body);
-                  json_decref(j_body);
+                  if ((access_token_out = encrypt_jwt_if_required(config, access_token, json_object_get(j_client, "client"))) != NULL) {
+                    j_body = json_pack("{sssssssisIss}",
+                                       "token_type",
+                                       "bearer",
+                                       "access_token",
+                                       access_token_out,
+                                       "refresh_token",
+                                       refresh_token,
+                                       "iat",
+                                       now,
+                                       "expires_in",
+                                       config->access_token_duration,
+                                       "scope",
+                                       json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")));
+                    ulfius_set_json_body_response(response, 200, j_body);
+                    json_decref(j_body);
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error encrypt_jwt_if_required");
+                    j_body = json_pack("{ss}", "error", "server_error");
+                    ulfius_set_json_body_response(response, 500, j_body);
+                    json_decref(j_body);
+                  }
+                  o_free(access_token_out);
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_access_token");
                   j_body = json_pack("{ss}", "error", "server_error");
@@ -4859,6 +5037,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
       response->status = 403;
     }
     json_decref(j_user);
+    json_decref(j_client);
   } else if (ret == G_ERROR_PARAM) {
     response->status = 400;
   } else {
@@ -4874,7 +5053,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
 static int check_auth_type_client_credentials_grant (const struct _u_request * request, struct _u_response * response, void * user_data, json_t * j_assertion_client) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   json_t * j_client, * j_element = NULL, * json_body;
-  char ** scope_array, ** scope_allowed = NULL, * scope_joined, * access_token, * issued_for = get_client_hostname(request);
+  char ** scope_array, ** scope_allowed = NULL, * scope_joined, * access_token, * access_token_out, * issued_for = get_client_hostname(request);
   size_t index = 0;
   int i, i_scope_allowed = 0, auth_type_allowed = 0;
   time_t now;
@@ -4932,13 +5111,19 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
                                        issued_for, 
                                        u_map_get_case(request->map_header, "user-agent"),
                                        access_token) == G_OK) {
-              json_body = json_pack("{sssssIss}",
-                                    "access_token", access_token,
-                                    "token_type", "bearer",
-                                    "expires_in", config->access_token_duration,
-                                    "scope", scope_joined);
-              ulfius_set_json_body_response(response, 200, json_body);
-              json_decref(json_body);
+              if ((access_token_out = encrypt_jwt_if_required(config, access_token, json_object_get(j_client, "client"))) != NULL) {
+                json_body = json_pack("{sssssIss}",
+                                      "access_token", access_token_out,
+                                      "token_type", "bearer",
+                                      "expires_in", config->access_token_duration,
+                                      "scope", scope_joined);
+                ulfius_set_json_body_response(response, 200, json_body);
+                json_decref(json_body);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_client_credentials_grant - Error encrypt_jwt_if_required");
+                response->status = 500;
+              }
+              o_free(access_token_out);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_client_credentials_grant - Error serialize_access_token");
               response->status = 500;
@@ -4976,9 +5161,9 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
 static int get_access_token_from_refresh (const struct _u_request * request, struct _u_response * response, void * user_data, json_t * j_assertion_client) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   const char * refresh_token = u_map_get(request->map_post_body, "refresh_token"), * ip_source = get_ip_source(request);
-  json_t * j_refresh, * json_body, * j_client, * j_user, * j_client_for_sub = NULL, * j_claims_request = NULL;
+  json_t * j_refresh, * json_body, * j_client = NULL, * j_user, * j_client_for_sub = NULL, * j_claims_request = NULL;
   time_t now;
-  char * access_token, * scope_joined = NULL, * issued_for;
+  char * access_token, * access_token_out, * scope_joined = NULL, * issued_for;
   int has_error = 0, has_issues = 0;
 
   if (refresh_token != NULL && o_strlen(refresh_token) == OIDC_REFRESH_TOKEN_LENGTH) {
@@ -5002,7 +5187,6 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
           has_issues = 1;
         }
         j_client_for_sub = json_incref(json_object_get(j_client, "client"));
-        json_decref(j_client);
       }
       time(&now);
       issued_for = get_client_hostname(request);
@@ -5035,14 +5219,20 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
                                       issued_for, 
                                       u_map_get_case(request->map_header, "user-agent"),
                                       access_token) == G_OK) {
-              json_body = json_pack("{sssssIsssi}",
-                                    "access_token", access_token,
-                                    "token_type", "bearer",
-                                    "expires_in", config->access_token_duration,
-                                    "scope", scope_joined,
-                                    "iat", now);
-              ulfius_set_json_body_response(response, 200, json_body);
-              json_decref(json_body);
+              if ((access_token_out = encrypt_jwt_if_required(config, access_token, json_object_get(j_client, "client"))) != NULL) {
+                json_body = json_pack("{sssssIsssi}",
+                                      "access_token", access_token_out,
+                                      "token_type", "bearer",
+                                      "expires_in", config->access_token_duration,
+                                      "scope", scope_joined,
+                                      "iat", now);
+                ulfius_set_json_body_response(response, 200, json_body);
+                json_decref(json_body);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "oidc get_access_token_from_refresh - Error encrypt_jwt_if_required");
+                response->status = 500;
+              }
+              o_free(access_token_out);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "oidc get_access_token_from_refresh - Error serialize_access_token");
               response->status = 500;
@@ -5064,6 +5254,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
       }
       o_free(issued_for);
       json_decref(j_claims_request);
+      json_decref(j_client);
     } else if (check_result_value(j_refresh, G_ERROR_NOT_FOUND)) {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
       response->status = 400;
@@ -5211,7 +5402,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   const char * response_type = NULL, * redirect_uri = NULL, * client_id = NULL, * nonce = NULL, * state_value = NULL, * ip_source = get_ip_source(request);
   int result = U_CALLBACK_CONTINUE;
-  char * redirect_url, ** resp_type_array = NULL, * authorization_code = NULL, * access_token = NULL, * id_token = NULL, * expires_in_str = NULL, * iat_str = NULL, * query_parameters = NULL, * state = NULL, * str_request = NULL;
+  char * redirect_url, ** resp_type_array = NULL, * authorization_code = NULL, * access_token = NULL, * id_token = NULL, * id_token_out = NULL, * expires_in_str = NULL, * iat_str = NULL, * query_parameters = NULL, * state = NULL, * str_request = NULL, * access_token_out = NULL;
   json_t * j_auth_result = NULL, * j_request = NULL, * j_client = NULL;
   time_t now;
   int ret, implicit_flow = 1, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NULL_FLAG, check_request = 0;
@@ -5284,12 +5475,12 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   }
   
   if (ret == G_OK && check_request) {
-    if (check_result_value(j_request, G_ERROR_UNAUTHORIZED)) {
+    if (check_result_value(j_request, G_ERROR_UNAUTHORIZED) || check_result_value(j_request, G_ERROR_PARAM)) {
       response->status = 403;
       ret = G_ERROR_PARAM;
     } else if (!check_result_value(j_request, G_OK)) {
-      response->status = 403;
-      ret = G_ERROR_PARAM;
+      response->status = 500;
+      ret = G_ERROR;
     } else {
       if (!json_string_length(json_object_get(json_object_get(j_request, "request"), "client_id")) || (u_map_has_key(map, "client_id") && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_request, "request"), "client_id")), u_map_get(map, "client_id")))) {
         // url parameter client_id can't differ from request parameter if set and must be present in request
@@ -5482,15 +5673,24 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 }
                 ret = G_ERROR;
               } else {
-                expires_in_str = msprintf("%" JSON_INTEGER_FORMAT, config->access_token_duration);
-                iat_str = msprintf("%ld", now);
-                u_map_put(&map_query, "access_token", access_token);
-                u_map_put(&map_query, "token_type", "bearer");
-                u_map_put(&map_query, "expires_in", expires_in_str);
-                u_map_put(&map_query, "iat", iat_str);
-                u_map_put(&map_query, "scope", json_string_value(json_object_get(json_object_get(j_auth_result, "session"), "scope_filtered")));
-                o_free(expires_in_str);
-                o_free(iat_str);
+                if ((access_token_out = encrypt_jwt_if_required(config, access_token, json_object_get(j_client, "client"))) != NULL) {
+                  expires_in_str = msprintf("%" JSON_INTEGER_FORMAT, config->access_token_duration);
+                  iat_str = msprintf("%ld", now);
+                  u_map_put(&map_query, "access_token", access_token_out);
+                  u_map_put(&map_query, "token_type", "bearer");
+                  u_map_put(&map_query, "expires_in", expires_in_str);
+                  u_map_put(&map_query, "iat", iat_str);
+                  u_map_put(&map_query, "scope", json_string_value(json_object_get(json_object_get(j_auth_result, "session"), "scope_filtered")));
+                  o_free(expires_in_str);
+                  o_free(iat_str);
+                } else {
+                  response->status = 302;
+                  redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+                  ulfius_add_header_to_response(response, "Location", redirect_url);
+                  o_free(redirect_url);
+                  ret = G_ERROR;
+                }
+                o_free(access_token_out);
               }
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_implicit_grant - Error generate_access_token");
@@ -5556,7 +5756,16 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 }
                 ret = G_ERROR;
               } else {
-                u_map_put(&map_query, "id_token", id_token);
+                if ((id_token_out = encrypt_jwt_if_required(config, id_token, json_object_get(j_client, "client"))) != NULL) {
+                  u_map_put(&map_query, "id_token", id_token_out);
+                } else {
+                  response->status = 302;
+                  redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+                  ulfius_add_header_to_response(response, "Location", redirect_url);
+                  o_free(redirect_url);
+                  ret = G_ERROR;
+                }
+                o_free(id_token_out);
               }
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_access_token_request - Error generate_id_token");
@@ -5673,7 +5882,7 @@ static int callback_oidc_token(const struct _u_request * request, struct _u_resp
   if (o_strlen(u_map_get(request->map_post_body, "client_assertion")) && 0 == o_strcmp(GLEWLWYD_AUTH_TOKEN_ASSERTION_TYPE, u_map_get(request->map_post_body, "client_assertion_type"))) {
     if (json_object_get(config->j_params, "request-parameter-allow") == json_true()) {
       j_assertion = validate_jwt_assertion_request(config, u_map_get(request->map_post_body, "client_assertion"), ip_source);
-      if (check_result_value(j_assertion, G_ERROR_UNAUTHORIZED)) {
+      if (check_result_value(j_assertion, G_ERROR_UNAUTHORIZED) || check_result_value(j_assertion, G_ERROR_PARAM)) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_token - Error validating client_assertion");
         result = U_CALLBACK_UNAUTHORIZED;
       } else if (!check_result_value(j_assertion, G_OK)) {
@@ -5737,8 +5946,8 @@ static int callback_oidc_token(const struct _u_request * request, struct _u_resp
  */
 static int callback_oidc_get_userinfo(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  char * username = get_username_from_sub(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub"))), * token = NULL;
-  json_t * j_user, * j_userinfo;
+  char * username = get_username_from_sub(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub"))), * token = NULL, * token_out = NULL;
+  json_t * j_user, * j_userinfo, * j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "aud")));
   jwt_t * jwt = NULL;
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
@@ -5755,10 +5964,16 @@ static int callback_oidc_get_userinfo(const struct _u_request * request, struct 
             if (!r_jwt_set_full_claims_json_t(jwt, j_userinfo)) {
               token = r_jwt_serialize_signed(jwt, NULL, 0);
               if (token != NULL) {
-                ulfius_set_string_body_response(response, 200, token);
-                u_map_put(response->map_header, "Content-Type", "application/jwt");
+                if ((token_out = encrypt_jwt_if_required(config, token, json_object_get(j_client, "client"))) != NULL) {
+                  ulfius_set_string_body_response(response, 200, token_out);
+                  u_map_put(response->map_header, "Content-Type", "application/jwt");
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_userinfo oidc - Error encrypt_jwt_if_required");
+                  response->status = 500;
+                }
+                o_free(token_out);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_userinfo oidc - Error jwt_encode_str");
+                y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_userinfo oidc - Error r_jwt_serialize_signed");
                 response->status = 500;
               }
               o_free(token);
@@ -5790,6 +6005,7 @@ static int callback_oidc_get_userinfo(const struct _u_request * request, struct 
     response->status = 404;
   }
   o_free(username);
+  json_decref(j_client);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -6052,6 +6268,8 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
   size_t index = 0;
   struct _oidc_config * p_config = NULL;
   jwk_t * jwk = NULL;
+  unsigned char key_hash[32] = {0};
+  size_t key_hash_len = 32;
   
   y_log_message(Y_LOG_LEVEL_INFO, "Init plugin Glewlwyd OpenID Connect '%s'", name);
   *cls = o_malloc(sizeof(struct _oidc_config));
@@ -6071,6 +6289,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       p_config->name = name;
       p_config->jwt_key = NULL;
       p_config->jwks = NULL;
+      p_config->jwk_priv = NULL;
       p_config->j_params = json_incref(j_parameters);
       json_object_set_new(p_config->j_params, "name", json_string(name));
       p_config->glewlwyd_config = config;
@@ -6135,8 +6354,14 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       if (!p_config->auth_token_max_age) {
         p_config->auth_token_max_age = GLEWLWYD_AUTH_TOKEN_DEFAULT_MAX_AGE;
       }
-          
+      
       if (r_jwt_init(&p_config->jwt_key) != RHN_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error allocating resources for jwt_key");
+        j_return = json_pack("{si}", "result", G_ERROR);
+        break;
+      }
+      
+      if (r_jwk_init(&p_config->jwk_priv) != RHN_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error allocating resources for jwt_key");
         j_return = json_pack("{si}", "result", G_ERROR);
         break;
@@ -6199,6 +6424,17 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       }
       
       if (0 == o_strcmp("sha", json_string_value(json_object_get(p_config->j_params, "jwt-type")))) {
+        if (generate_digest_raw(digest_SHA256, key, o_strlen((const char *)key), key_hash, &key_hash_len)) {
+          if (r_jwk_import_from_symmetric_key(p_config->jwk_priv, key_hash, key_hash_len) != RHN_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwk_import_from_symmetric_key");
+            j_return = json_pack("{si}", "result", G_ERROR);
+            break;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error generate_digest_raw");
+          j_return = json_pack("{si}", "result", G_ERROR);
+          break;
+        }
         if (r_jwt_add_sign_key_symmetric(p_config->jwt_key, key, o_strlen((const char *)key)) != RHN_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwt_add_sign_key_symmetric");
           j_return = json_pack("{si}", "result", G_ERROR);
@@ -6210,6 +6446,11 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           break;
         }
       } else {
+        if (r_jwk_import_from_pem_der(p_config->jwk_priv, R_X509_TYPE_PRIVKEY, R_FORMAT_PEM, key, o_strlen((const char *)key)) != RHN_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwk_import_from_pem_der");
+          j_return = json_pack("{si}", "result", G_ERROR);
+          break;
+        }
         if (r_jwt_add_sign_keys_pem_der(p_config->jwt_key, R_FORMAT_PEM, key, o_strlen((const char *)key), NULL, 0)  != RHN_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwt_add_sign_keys_pem_der");
           j_return = json_pack("{si}", "result", G_ERROR);
@@ -6441,6 +6682,7 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
       o_free(((struct _oidc_config *)cls)->oidc_resource_config);
     }
     r_jwt_free(((struct _oidc_config *)cls)->jwt_key);
+    r_jwk_free(((struct _oidc_config *)cls)->jwk_priv);
     r_jwks_free(((struct _oidc_config *)cls)->jwks);
     json_decref(((struct _oidc_config *)cls)->j_params);
     pthread_mutex_destroy(&((struct _oidc_config *)cls)->insert_lock);
