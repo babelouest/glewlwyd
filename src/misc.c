@@ -290,7 +290,7 @@ int generate_digest(digest_algorithm digest, const char * data, int use_salt, ch
         break;
     }
     
-    if(alg != GNUTLS_MAC_UNKNOWN) {
+    if(alg != GNUTLS_DIG_UNKNOWN) {
       if (o_strlen(data) > 0) {
         if (use_salt) {
           rand_string_nonce(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
@@ -342,10 +342,10 @@ int generate_digest_raw(digest_algorithm digest, const unsigned char * data, siz
         alg = GNUTLS_DIG_SHA1;
         break;
       case digest_SHA224:
-        alg = GNUTLS_MAC_SHA224;
+        alg = GNUTLS_DIG_SHA224;
         break;
       case digest_SHA256:
-        alg = GNUTLS_MAC_SHA256;
+        alg = GNUTLS_DIG_SHA256;
         break;
       case digest_SHA384:
         alg = GNUTLS_DIG_SHA384;
@@ -354,14 +354,14 @@ int generate_digest_raw(digest_algorithm digest, const unsigned char * data, siz
         alg = GNUTLS_DIG_SHA512;
         break;
       case digest_MD5:
-        alg = GNUTLS_MAC_MD5;
+        alg = GNUTLS_DIG_MD5;
         break;
       default:
-        alg = GNUTLS_MAC_UNKNOWN;
+        alg = GNUTLS_DIG_UNKNOWN;
         break;
     }
     
-    if(alg != GNUTLS_MAC_UNKNOWN) {
+    if(alg != GNUTLS_DIG_UNKNOWN) {
       if (data_len > 0) {
         key_data.data = (unsigned char *)data;
         key_data.size = data_len;
