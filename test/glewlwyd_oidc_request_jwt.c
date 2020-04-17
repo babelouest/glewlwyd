@@ -1818,7 +1818,7 @@ START_TEST(test_oidc_request_jwt_nested_hsa_response_ok)
   r_jwt_add_sign_key_symmetric(jwt_request, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET));
   key_data.data = (unsigned char *)PLUGIN_KEY;
   key_data.size = o_strlen(PLUGIN_KEY);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
   ck_assert_int_eq(r_jwk_init(&jwk), RHN_OK);
   ck_assert_int_eq(r_jwk_import_from_symmetric_key(jwk, key, key_len/2), RHN_OK);
   ck_assert_int_eq(r_jwt_add_enc_keys(jwt_request, jwk, jwk), RHN_OK);
@@ -1859,7 +1859,7 @@ START_TEST(test_oidc_request_jwt_nested_hsa_response_invalid_enc_key)
   r_jwt_add_sign_key_symmetric(jwt_request, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET));
   key_data.data = (unsigned char *)PLUGIN_KEY;
   key_data.size = o_strlen(PLUGIN_KEY);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
   ck_assert_int_eq(r_jwk_init(&jwk), RHN_OK);
   ck_assert_int_eq(r_jwk_import_from_symmetric_key(jwk, key+1, key_len/2), RHN_OK);
   ck_assert_int_eq(r_jwt_add_enc_keys(jwt_request, jwk, jwk), RHN_OK);
@@ -1900,7 +1900,7 @@ START_TEST(test_oidc_request_jwt_nested_hsa_response_invalid_token)
   r_jwt_add_sign_key_symmetric(jwt_request, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET));
   key_data.data = (unsigned char *)PLUGIN_KEY;
   key_data.size = o_strlen(PLUGIN_KEY);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
   ck_assert_int_eq(r_jwk_init(&jwk), RHN_OK);
   ck_assert_int_eq(r_jwk_import_from_symmetric_key(jwk, key, key_len/2), RHN_OK);
   ck_assert_int_eq(r_jwt_add_enc_keys(jwt_request, jwk, jwk), RHN_OK);
@@ -2098,7 +2098,7 @@ START_TEST(test_oidc_request_token_jwt_nested_hsa_ok)
   r_jwt_add_sign_key_symmetric(jwt_request, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET));
   key_data.data = (unsigned char *)PLUGIN_KEY;
   key_data.size = o_strlen(PLUGIN_KEY);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
   ck_assert_int_eq(r_jwk_init(&jwk), RHN_OK);
   ck_assert_int_eq(r_jwk_import_from_symmetric_key(jwk, key, key_len/2), RHN_OK);
   ck_assert_int_eq(r_jwt_add_enc_keys(jwt_request, jwk, jwk), RHN_OK);
@@ -2156,7 +2156,7 @@ START_TEST(test_oidc_request_token_jwt_nested_hsa_invalid_enc_key)
   r_jwt_add_sign_key_symmetric(jwt_request, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET));
   key_data.data = (unsigned char *)PLUGIN_KEY;
   key_data.size = o_strlen(PLUGIN_KEY)-1;
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
   ck_assert_int_eq(r_jwk_init(&jwk), RHN_OK);
   ck_assert_int_eq(r_jwk_import_from_symmetric_key(jwk, key, key_len/2), RHN_OK);
   ck_assert_int_eq(r_jwt_add_enc_keys(jwt_request, jwk, jwk), RHN_OK);
@@ -2214,7 +2214,7 @@ START_TEST(test_oidc_request_token_jwt_nested_hsa_invalid_token)
   r_jwt_add_sign_key_symmetric(jwt_request, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET));
   key_data.data = (unsigned char *)PLUGIN_KEY;
   key_data.size = o_strlen(PLUGIN_KEY);
-  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_MAC_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
   ck_assert_int_eq(r_jwk_init(&jwk), RHN_OK);
   ck_assert_int_eq(r_jwk_import_from_symmetric_key(jwk, key, key_len/2), RHN_OK);
   ck_assert_int_eq(r_jwt_add_enc_keys(jwt_request, jwk, jwk), RHN_OK);
