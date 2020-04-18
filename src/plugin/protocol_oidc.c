@@ -969,13 +969,13 @@ static char * encrypt_token_if_required(struct _oidc_config * config, const char
       } else if (alg == R_JWA_ALG_ECDH_ES || alg == R_JWA_ALG_ECDH_ES_A128KW || alg == R_JWA_ALG_ECDH_ES_A192KW || alg == R_JWA_ALG_ECDH_ES_A256KW || alg == R_JWA_ALG_RSA1_5 || alg == R_JWA_ALG_RSA_OAEP || alg == R_JWA_ALG_RSA_OAEP_256) {
         if (r_jwks_init(&jwks) == RHN_OK) {
           if (json_string_length(json_object_get(j_client, jwks_uri_p)) && json_string_length(json_object_get(j_client, alg_kid_p))) {
-            if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_client, jwks_uri_p)), R_FLAG_FOLLOW_REDIRECT|(json_object_get(config->j_params, "request-uri-allow-https-non-secure")==json_true()?R_FLAG_IGNORE_SERVER_CERTIFICATE:0)) == RHN_OK) {
+            if (r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_client, jwks_uri_p)), R_FLAG_FOLLOW_REDIRECT|(json_object_get(config->j_params, "request-uri-allow-https-non-secure")==json_true()?R_FLAG_IGNORE_SERVER_CERTIFICATE:0)) == RHN_OK) {
               if ((jwk = r_jwks_get_by_kid(jwks, json_string_value(json_object_get(j_client, alg_kid_p)))) == NULL) {
                 y_log_message(Y_LOG_LEVEL_DEBUG, "encrypt_token_if_required - unable to get pubkey from jwks_uri, client_id %s", json_string_value(json_object_get(j_client, "client_id")));
               }
             }
           } else if (json_is_object(json_object_get(j_client, jwks_p)) && json_string_length(json_object_get(j_client, alg_kid_p))) {
-            if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_json_t(jwks, json_object_get(j_client, jwks_p)) == RHN_OK) {
+            if (r_jwks_import_from_json_t(jwks, json_object_get(j_client, jwks_p)) == RHN_OK) {
               if ((jwk = r_jwks_get_by_kid(jwks, json_string_value(json_object_get(j_client, alg_kid_p)))) == NULL) {
                 y_log_message(Y_LOG_LEVEL_DEBUG, "encrypt_token_if_required - unable to get pubkey from jwks, client_id %s", json_string_value(json_object_get(j_client, "client_id")));
               }
