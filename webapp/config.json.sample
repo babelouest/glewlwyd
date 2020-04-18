@@ -125,6 +125,56 @@
       "forceShow": true,
       "label": "admin.client-pubkey"
     },{
+      "name": "enc",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-enc",
+      "placeholder": "admin.client-enc-ph",
+      "listElements": ["A128CBC-HS256","A192CBC-HS384","A256CBC-HS512","A128GCM","A256GCM"]
+    },{
+      "name": "alg",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-alg",
+      "placeholder": "admin.client-alg-ph",
+      "listElements": ["RSA1_5","dir","A128GCMKW","A192GCMKW","A256GCMKW"]
+    },{
+      "name": "alg_kid",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-alg_kid",
+      "placeholder": "admin.client-alg_kid-ph"
+    },{
+      "name": "encrypt_code",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-encrypt_code",
+      "listElements": ["admin.no","admin.yes"]
+    },{
+      "name": "encrypt_at",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-encrypt_at",
+      "listElements": ["admin.no","admin.yes"]
+    },{
+      "name": "encrypt_userinfo",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-encrypt_userinfo",
+      "listElements": ["admin.no","admin.yes"]
+    },{
+      "name": "encrypt_id_token",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-encrypt_id_token",
+      "listElements": ["admin.no","admin.yes"]
+    },{
+      "name": "encrypt_refresh_token",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-encrypt_refresh_token",
+      "listElements": ["admin.no","admin.yes"]
+    },{
       "name": "scope",
       "list": true,
       "edit": true,
