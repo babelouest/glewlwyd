@@ -51,6 +51,7 @@
 #define CLIENT_SCOPE "scope1"
 #define KID_1 "1"
 #define KID_2 "2"
+#define KID_3 "3"
 
 const char pubkey_1_jwk[] = "{\"keys\":[{\"kty\":\"RSA\",\"n\":\"AMWhdXoJpkPtPwABHL_yXUwgcYuwNOVbw70YGmMzhFqiRd6r92-onw-BOAvfnIq-rSMgjidllxOE1fXwlgUIyKJmnHUI3RMDABFmGFRM-Dz6VmQxHgiioLM-Q5yzcj85zIqJvNrw0RL0qhvssQBG5Fta_jLXBUXeGEmciWA0lSfrdlS-zbfxsWqPzAvKyT_0B80m1o8K7ksFtyTPu-cHbCVGx4ciGeZUNrtOnevGQPUOE-tIvsxOPcqC3fPjyI3K4TN5GCCZHEyso1qmRFfsHtenq6EvD1_2DebcODnfnym-iNFyC4YsgqipToNxR3WPIgCu-WrSOk71-93ovs0hd1MhBYw03J4Xupjxy_URCFZm9Pp-9H3j_0hUKmhUWmpsQTpAT7FWvTT-MyyYkZ-9Y33-6KR3E-82kdfXIoEMbGJnfq2Z4Yh_lF3pfD-5FUzOzgnOy0UiTxusWOBbaVhNqmm6xmlHwQjBrax9Bqo7WzQpwXgXgooo6TeVz6pxpUl6V63d5o5XZaxYYilUpZ78qXpHQMwNFr6a2gct-dU8zLF6YaJHIaMp6XT9OD8r-w7SOkq1O7J-UGRqGbUVczYzhApY1Q-B2ZnO18P5KQnG97AbU_Sjk5Rnf6HJ-w-E8NOIwgo5jzloV_5Ck6w-DH_sL5FDca89BGuzwpQEH_h3ma43\",\"e\":\"AQAB\",\"kid\":\"" KID_1 "\"}]}";
 const char privkey_1_jwk[] = "{\"kty\":\"RSA\",\"n\":\"AMWhdXoJpkPtPwABHL_yXUwgcYuwNOVbw70YGmMzhFqiRd6r92-onw-BOAvfnIq-rSMgjidllxOE1fXwlgUIyKJmnHUI3RMDABFmGFRM-Dz6VmQxHgiioLM-Q5yzcj85zIqJvNrw0RL0qhvssQBG5Fta_jLXBUXeGEmciWA0lSfrdlS-zbfxsWqPzAvKyT_0B80m1o8K7ksFtyTPu-cHbCVGx4ciGeZUNrtOnevGQPUOE-tIvsxOPcqC3fPjyI3K4TN5GCCZHEyso1qmRFfsHtenq6EvD1_2DebcODnfnym-iNFyC4YsgqipToNxR3WPIgCu-WrSOk71-93ovs0hd1MhBYw03J4Xupjxy_URCFZm9Pp-9H3j_0hUKmhUWmpsQTpAT7FWvTT-MyyYkZ-9Y33-6KR3E-82kdfXIoEMbGJnfq2Z4Yh_lF3pfD-5FUzOzgnOy0UiTxusWOBbaVhNqmm6xmlHwQjBrax9Bqo7WzQpwXgXgooo6TeVz6pxpUl6V63d5o5XZaxYYilUpZ78qXpHQMwNFr6a2gct-dU8zLF6YaJHIaMp6XT9OD8r-w7SOkq1O7J-UGRqGbUVczYzhApY1Q-B2ZnO18P5KQnG97AbU_Sjk5Rnf6HJ-w-E8NOIwgo5jzloV_5Ck6w-DH_sL5FDca89BGuzwpQEH_h3ma43\",\"e\":\"AQAB\",\"d\":\"AIiu6F7k-ZcVKHNKUaX3a8tQzPb9gTf3xWKsnuNpJ-q_PG-Ko_EXwBqrFiYwG0ZiJcCbrXVV76zSPGCCal9E-e5H5YGUBcI2Wv-tiroTGcSipslYpxr1zwrozz47ZZKQ2QQfyvvpfdAMYvI5Oxmj7h-4yQJEcCMoPcf7eY-ODnKziP2HkSPdBwVaOpcVQyb2EcczS0VXHAPLCiVtftmD6qnFUA4H6b3BFLFq6BG-5gIWIHSjtUH8AwRiijs5mOVoIWTGJYe2HTpyU_BH-hCM_6_LCQrLT2jg9jBqsoBkRuJKIroolAvSEPOxVNnXqMKHoc6zNVFJ4IXn3rBVXlDlCm69xoe67-X2M4o8LXpdnwFtvao3YYKqAqv1kH0JZE9kJyY3odhXa-SRZpvOCoE3YpDr5UTlRkEWZATQjqtGP7JEq_RQwtDwM1NpANIl4cFAJVhUJbndjMeJqBcA4-NEV6bBjWkenw179H6UuWNXNzXklPsgtMnF_PwcBFKutwnFqHAE5g6w9iHQ5yG7_2m4zModfBiGiSy3cdQ2f3MEHRRoBmqooEGU_6Urrn6iyAFxk_sINEnT_7Emygle_QwP5N-BQuFpD_NWojGirWwOwiWYBHRBXP0ub17bNx7w4gha6CxHnXyJ0MZBayOIMrnQGeWC7o5a932LCTQfegdBh5xh\",\"p\":\"APQQSKxv01Oky-jENQwxiZcpI4a5PzLPFFCgEqIjSRamCzrCQ07e97iqhU1b8IvRwxDtX358pFKAq7tmwpN2QQb1T9fqUwCpeQuMwRsZwoaM7ZcTSj2FZ_2djN1ixQfzqQ21VxkMRbrdyExqCSJXnHMcLeiFmu81dVopV2iwDbUQv4jZe_ktPUTH4HKle48Y0v9pu22lD5cknAQGB1gUNfyJ0PbUxZMITrZDz4khhYgxqvJ7GluYRNv2tezV-bb5leXbSLDrRgTKqcl5ZjkgLm9FRNGZZAmlsCHEeB3nvCs2ePQYDuLgEkNtuu39kpLFJO6j70bjnvpaIAcDVpPmEE8\",\"q\":\"AM9L09Grg2uSrNUGfj9pfpsMn0k5kqV0n3WjX9z5ZLkwLNNrs0SJjb93haO2MPNlyYhctCpPKnfHJKZWaLhFDV6xr-ubf7c3DbBJjPhlV8dUkgmHfIqWDPl6pzN0xC61zC4IE15LgW_JEMpq53fRWnIHdufs-105QO8YOo0CVYKYjqut4hVbYRBSTaeVLb1vj_yhaL0qV7orQoTrpr6Bg20nftBBa-8Md_B5l0QyiSfvOjKnXsjULQdQGbtypQZvu2jUasnUVUQHBgeF5W5WFj8qCGGnmehqY6QissipLoRMcGPaV_gJKisgcorF7sSU_QzcBUmPk377LkzZXGNUYZk\",\"qi\":\"AILHVNisODhO4GC8P709DqGdVdufLZf2Bl7AwjWyYTkpEzEfQCHHUnmOoTCn-OEvnn9lWiaCaTijtlUmos0fCfvSQLk9elciIOmlRk8G1EtnnzYQsTmerLoMJBgQ02hhip8GK47Y7mbZIjaPB625Dv8F4RHd9ZiTzXTGcNc6bldWlNNbbqw9DWS1DORPhdQEPU424qcYvHq_eklFCujWukO8ul3FEZYnTcth2ODSFMb0a0SCuDGkGI8BDI-_4n6-4wIlAXtc8Vt9Ko8WxJjCK_v2Ae9x05eknWZj0JxuyoAjPtJApp0pt25omJwZr_lY5i8T0cL6dDF5nZcA9hN__eo\",\"dp\":\"ALL4hfI9BmCdxhFoX-YTJWw9dJnEmf1uMN12pHNVILGFDVMHRUg-5LT8BkhWFSzSoxJ0nsQoLm95f3Uqw6BS5RhvJx-T603e-K5phumSmD0GduuD77rxavJlZ_ioBwfvu5Yb1kS95RxEqi6uywft6wHWNiv-XUDwmJ-HFVvlTgfqwileIjT04argT0yC4PpsH73AEPs0QRx6chXZPeVu3K_Vd_Co0kEhpGavjy5l8H-QvGSXtRpZrJUIcxu7RSTSHQOzK7jgrjWxT5Q4e6eEW8ioqPByZRNV9rSsV9DGMAwYI9YLFk90NLBRdPQ0MBmEi7KbcEkxfVDkafv6jLBj0q0\",\"dq\":\"AJldyYY7dczVxMcKucbinwfJq-N6E_QTt5JKYDdV0F5utQtqiEQx3MyGejooJkk9yn_3zlfrIElj7cqe7XU_qWeg4L3Y2wHLWnZNxF1WZT4VZMJmGg9SeqDtTNz2C9tfJ4P695FxHX99681GkKAGJPtuaFuo6kQLgu4iJ9eBnZA0nIGJ8VXJuKNhsRBGf4PDEW1gYeRqemNDdEBxNHmHypusd9dOP7OpruccnnyXQwBnrtAhIjBFQldBvPgBFvUPH0GsvqE6VicxZxWTy635RRZQW8kcPfNFGxkpjsqE2OSKxTArL6BT733e0L-5NzD75cho1ASblA2DerriqcbXfCk\",\"kid\":\"" KID_1 "\"}";
@@ -186,6 +187,8 @@ const char privkey_2_pem[] = "-----BEGIN RSA PRIVATE KEY-----\n"\
                             "WElzAPXDF0YKMiKzA4fTqVtbamVHz64k7xgWVwdWXDbdqOWOtI0weeeHMy2Y9Ktz\n"\
                             "7eXh0rK0fG1c35qJ+V61oXdyfapmI7uGH2R5J+Q2LDJw/3AMGb6oCsPfdQ==\n"\
                             "-----END RSA PRIVATE KEY-----\n";
+const char jwks_privkey[] = "{\"keys\":[{\"kty\":\"RSA\",\"n\":\"ANGS3uxrb3Nu1fN8yP-JOvl_vyj7qu-6EoXYkBlXKxtNEaugyuVb2VByJYcY-mVVmQrlGv3usvLO_42Mub5xlsOrhpcz2ccK3Nup7avKHTTyfub6O6_ozwrN8Z1DHOfrtS11NzLmPOQkyGVT259w8VJFGy4r7KAdbqwsELuJnRO4OuHKvDpxPQ5cTysgFRqaDQFxflrhZlVupcmflImvltycS-6y_1LoRr8BLZ-9-P7PvDGM0bBenJjciib9jY-E4CL5xbbHCSldJ-KlQSW7al1a9rgJEE6ALpJHCA5TgwXP-e03UkNR9gj7VSN4yHgierw7y-ii3NKOCkh8oPJkgyM\",\"e\":\"AQAB\",\"d\":\"Buq1BtKI7CNlVlLxA1YRJzjrIzwjKSRYBijeoKd62bzSb3qwF5_PbVNHH81YPk3z7iMfn-_n4hGo55AUdU-kbTLVD1p7vpECNxHFsVzLV_sE6zSpEaY6Zx3i8pDLfHAQG775omls6w63unhpEDsXC-MSAZUbizFNfMs7hiUFlSf5FHxyzyHez7wXTaLhxZRwIhXX5eLGIs-lSt6dbj9JT0Ws2rUXsW0fuHf-L2XjW9ymnrW5sFz4Bpna3MfoWB3J76da_bWHPAEXmYMfwfTRy-XD8ry6WsmTi1HkPepk9FGPb1iGn3W72y7HV_jnRiV8nRHtsYwAwUyK0oNYOJDhcQ\",\"p\":\"ANHxqqBCBcjsPOxNXP7xqYqEfYRR3ROQNMbJtslfzvbpCKNLi-1JnvSIYftIidKGQT50dTBP_LGnHlJtilOPPlTCIi12zTGveilHz8Hx2zMaqcCTAtl0Jh-KUJE366oFMUKa_2I2gsLqAzwkPBmxHv7qQ3TtnqueAu6JGOlLgpkL\",\"q\":\"AP-MaKAabOFrwBtLVgi7M0ug0S68ICJLWN4cNPpnN-d9V8Gu4D9N9Ba6vS5jgP2rF7mVSNGJQVMHTDATEkeb5UBKFWrpomJ6rTC3Jz9mdo4MLs2yYKA-17Yo0EmmKQRaoGb4RiTWcU61FdxPkfymBWfe7MTgEUs1GZeoaLhBFf1J\",\"qi\":\"eHV_XLC9OtXpb1HaQGi2mjuicbzRKd90yQnSeuM-GUyI9qJ2BEgoUvDlQqmHsp1kSMRK0rsXJbVcABT3HvSVtbnfSlBKwm2tkCr_G5niv1C6NzTu5rDHMikCIuU5EXAByF88rmpEWfRBHiLOviFacS3nWFIVS4qjy3QhcToUn2g\",\"dp\":\"AI0yuOvxm4xnfg37dhktFTbJJtXQbRyUNzqfPaUwH7UmQ5332FMt2Y9jDmr_fVou20CS-KIWmcAtwpHzhD3wsB43Nt9W8GiDOWj8GDm7XQ6A1zxiY18249EAqHESqBgASAIg1rQKL2XCF4ziXd11p4AQtG-2xKltq1EcublmBJ7D\",\"dq\":\"ALwpJ1RTgL4ON3ohY2y0YdWayMtPi52Uuw93125Ul-4j9XzQBZ-3BzXBM9C3RWACHUrxZ5eZJ3c6FVgEgt4lJIzMv65j7sPyLhmDkit1h2-Z-tBMOidjfjNLI-pGpUbmb9rBjexL1Uwtu7XnBMfxemN72fwwO6uToo9vWgPpMIa5\",\"kid\":\"" KID_1 "\"},{\"kty\":\"RSA\",\"n\":\"ALLesxikdsNXzAB1rjsjZk4qB7n1wZnxhzDuctRmFeeecVZbClbF_4AdboKKJU0Ylac1q1HMpqAnLJceXGy4CFyCl_P3R_jRUWQ0qwQOCqq1SgLY1xPHKdU7VMrCbo9pm-bOxoQ1Ac6QgpOZqmpOlvhmgvDQP-Yfu3fHtquMEl69ztq8tECKcJpbkBxeqy5QsfGfeBPoNSwTLKv2L-wGYah6OdugmrhflMjrSa3ZbGWcQxzc5Fpr0-SVLpq5k45kbKz7qxlGDNd545mkAXchuTar_IMOqBQ_u6GJ2hGm38DJsAhNTnudfPk5-c6aZyZgJ1ePgOoQG6SgLhwu7XD2Gf0\",\"e\":\"AQAB\",\"d\":\"J0b9vuCGb7i8xDETNEs-sNVL4wrTG3HNBPKnZnqQPs8tBhBxwcIyq7hKxwF81WQboJ8JYqn0wOA5S2nQU9NJir7mjRz0we981us1zmsi7n9mpB9ngyFNz1P695cgXf-Ly3AGaYuWPPzAn5aztCpTvnIMOMMR9P9s1A2X0C2u7vyS_vT4rnt40Emr8sLK-iKa0RxSzNkS520KexppBqJvrEwEuKwUrXvF89Pn4LZcF43KJBRKzPPXRyeGayK0RiWI6rV13vGbg1p25ojswizuj5I6xSZqun1QlTNkh4lbGH64yL9oDxylyruMB5R-Zyg4iQAgjK_bS-xdmQ3YU76AwQ\",\"p\":\"AN47ss-tPevD9-nJMPVXEBu_IxJ0gDH5Stx_VAevXBhIbil4mnldvJtgQDnaPGp-s120GXtTaMKFKCbDlX2w0gX5RkZdtRQy4Z9nrx2AGYi_V5pPF6UwITKPDAwqBqcSdmIekeSRKT5OhLjHpl8swK0hHycAq4V8-r-o2I1OA11N\",\"q\":\"AM4MR-TDU4Ex7BqoFu1qJIRFZJ1jSDXaLU1qHSEn_HvPuzaROaiTQCq-m-AWh-nMsObxADJyW0dl0Mxgzpo8P27Biqd8ujcwfLBnrqMNL0a2CgmpML0JJ616GCnSPuMZ6ngry_FsI-38x6t0s5CC1d0PxZX4ZkbbG0qZM7vYeBdx\",\"qi\":\"Tc6npYyctyc0ROYTU06BkaoW9lA0eXPYQ6vHWx8foP-KDqBSEmgXiyW9q6UUSVsbPFi1YsMB5X38bbXIr5qcLUB_eFWyuEUgxAtImDA-kKyYqAjdrGqE9w1Eol6P_b0Kfp4NxdvMx9sph9__-uaSIUjFAKhbO5cQ1lb_lJX1iSQ\",\"dp\":\"aegJTu9AkxrRCpjWvBTBmHd-P01FyosDIhGL-h2Xxfq-hQT0mOIS__jeorNeF2JKGF27xwn44rqSZ-bNVxjs_evNkbsWkImu_EhtK6HgiUqmdOM8YXyOVYnWM_XTNcuWnyvyWvrSrN6-YVDD-JdbOyaNsgiftP3agXv1t2F2OQ\",\"dq\":\"IxiuakXnBFuXhtbYyOnKfIlBYRmXJC0ciFIp0gr4k7JHhjzoYFFsnZtH-7x6vBU0kLG-Qdl-uMOb9CQNLPJUL65hyrORGHN22alfcsB9LAM35HtgJOLZUlA4q273bUFt0bhMDbxIxnHHJOpE57mRag0Ur73W1fzeQi-kQzvVANE\",\"kid\":\"" KID_2 "\"},{\"kty\":\"RSA\",\"n\":\"ALOmOGou1SeK8IvwUCzX6D1qDsYdCsAO91aZv9lKJqLJ1sat7EsH_onBVbTr4OV8RH5G09CAh3dWmm7sJUPAgYWjcNtKIGG6bmcpqw6B1QNX4cc6g_1yeALyxMQoxUUkIXF0nhILz2Zu4163J8BmmIq7TVjMrrOmfIO044Z9cdZcagv1rP0GOcMy5qh03Uu_yKj0e7OBTa_FrpOZkRcS-Uq2j4kUGJKydtWvEBc3IpEeal_ZIlaTIvCFhfMCWE377ne0w3BTHTlCVE9n-JJ3UCENIxVfXxvP3zhtBOkNxIqMBUO8RxBW0ugDHu269By5WSBekuU2oLRb6lQkSco9ECM\",\"e\":\"AQAB\",\"d\":\"F6BVrQlJuTCZoB3TvYILpgALv1xUbJvLRZVk2MPavvACkhCPkfKUNDO7_NZEtomYTG8uLi6pIjW-i7X81KM9pYCwN_bQuWmWWXTubTL_-7eUFuqIL03doK2i2RVvlD9DMrOekksBVLxipLM7xB76Esy9SF9q3m-X0o54mdhnn0RBsBY0pr9aPPoch7KXkkNoA2jMZb8DQpkE2x3oz2dS4BzlW46hmVwWHwHaefgIgKaNkNOhi39RnxcRZyptnEjtiD3y6N-Qq2UZWruglY_7LcCA0hYmor7J486w1KH9Gfy3SSii-sEEa-Rb2-s-Be2mUgj3AC47OQ_AaJ_D85GBoQ\",\"p\":\"AM7EW-1rcU1KEj7K1nJSAnRuduY4c3B3wUFdndiAG1U_7c0bGGcsPlIcEJu8nz6wHR-zy7bsm2PNG0AmWVu1GsV3o2W0h7eR6iw8EVhmTDYORzdYG49TM2ZvsWZNueQrn8cLGssB-exeLBkpM4_V4BuhoIADz0refAvSdFsnwnzx\",\"q\":\"AN5s4SjGH8e44xGcH2enOoOUIuFaR-a8JwQIXkYcDqbDAG-57loqjfCnrgiZ19L87FDWumRXUa4jAi7NpTEHiFPTQ2EnkX37DQxPMCcDXvgLAC3HVauy8iwiverXeqzHib5jZ1qhRKic4qSxorB8jygPSvLMVpJMtlUBdZSob25T\",\"qi\":\"b9q5wu5Nm2K87k462BnKIOTHBD3BOH5YQkisOPqA2_C5E9ur7eYZg4c0M1SdauFk_fw7NzZTpGiVfKpqUxtuBIaOsls1lIJCRFLJQLQYBUrG2F1lpMLex7Azisa8qdqDTwTi1N0GBA1_Tl_-1nPuihaL51aTjK3RX_GY7K0R8y8\",\"dp\":\"AK0t470AT56nmo6DP4fyzmGMoAOFZpLdirzf1zQdYEdPyzIOLqtDcFM_dF2sZ0iPI2WJJufoVuIJSXi6Zf-cuXaJFQ87XKzRBuzTxsderxhbbySYpESwMA3tIQ2JrlfAfgutblx4JEboPVE5pBklzpX2EsMF7dpMbGNOeuxaadhR\",\"dq\":\"ALkXsBMnNEEWmVcJLZUrM2VVe-U-JMFc57bSY-lB5eteMNnIxxGfgfi3APtFUrXQJbNrzTY898rKdUGPfh0b4JWpI9QQgmFs7kHFEBQXGQue0-pEjAVS53ZU_ugTopFvhy-5NsPTmfgaffyBmhn1vYefmkYMRyp9zelVSoyH0hrj\",\"kid\":\"" KID_3 "\"}]}";
+const char jwks_pubkey[] = "{\"keys\":[{\"kty\":\"RSA\",\"n\":\"ANGS3uxrb3Nu1fN8yP-JOvl_vyj7qu-6EoXYkBlXKxtNEaugyuVb2VByJYcY-mVVmQrlGv3usvLO_42Mub5xlsOrhpcz2ccK3Nup7avKHTTyfub6O6_ozwrN8Z1DHOfrtS11NzLmPOQkyGVT259w8VJFGy4r7KAdbqwsELuJnRO4OuHKvDpxPQ5cTysgFRqaDQFxflrhZlVupcmflImvltycS-6y_1LoRr8BLZ-9-P7PvDGM0bBenJjciib9jY-E4CL5xbbHCSldJ-KlQSW7al1a9rgJEE6ALpJHCA5TgwXP-e03UkNR9gj7VSN4yHgierw7y-ii3NKOCkh8oPJkgyM\",\"e\":\"AQAB\",\"kid\":\"" KID_1 "\"},{\"kty\":\"RSA\",\"n\":\"ALLesxikdsNXzAB1rjsjZk4qB7n1wZnxhzDuctRmFeeecVZbClbF_4AdboKKJU0Ylac1q1HMpqAnLJceXGy4CFyCl_P3R_jRUWQ0qwQOCqq1SgLY1xPHKdU7VMrCbo9pm-bOxoQ1Ac6QgpOZqmpOlvhmgvDQP-Yfu3fHtquMEl69ztq8tECKcJpbkBxeqy5QsfGfeBPoNSwTLKv2L-wGYah6OdugmrhflMjrSa3ZbGWcQxzc5Fpr0-SVLpq5k45kbKz7qxlGDNd545mkAXchuTar_IMOqBQ_u6GJ2hGm38DJsAhNTnudfPk5-c6aZyZgJ1ePgOoQG6SgLhwu7XD2Gf0\",\"e\":\"AQAB\",\"kid\":\"" KID_2 "\"},{\"kty\":\"RSA\",\"n\":\"ALOmOGou1SeK8IvwUCzX6D1qDsYdCsAO91aZv9lKJqLJ1sat7EsH_onBVbTr4OV8RH5G09CAh3dWmm7sJUPAgYWjcNtKIGG6bmcpqw6B1QNX4cc6g_1yeALyxMQoxUUkIXF0nhILz2Zu4163J8BmmIq7TVjMrrOmfIO044Z9cdZcagv1rP0GOcMy5qh03Uu_yKj0e7OBTa_FrpOZkRcS-Uq2j4kUGJKydtWvEBc3IpEeal_ZIlaTIvCFhfMCWE377ne0w3BTHTlCVE9n-JJ3UCENIxVfXxvP3zhtBOkNxIqMBUO8RxBW0ugDHu269By5WSBekuU2oLRb6lQkSco9ECM\",\"e\":\"AQAB\",\"kid\":\"" KID_3 "\"}]}";
 
 struct _u_request admin_req;
 struct _u_request user_req;
@@ -223,7 +226,7 @@ START_TEST(test_oidc_jwt_encrypted_add_module_rsa)
                                   "encrypt-out-token-allow", json_true(),
                                   "client-enc-parameter", "enc",
                                   "client-alg-parameter", "alg",
-                                  "client-alg_kid-parameter", "kid",
+                                  "client-alg_kid-parameter", "alg_kid",
                                   "client-encrypt_code-parameter", "encrypt_code",
                                   "client-encrypt_at-parameter", "encrypt_at",
                                   "client-encrypt_userinfo-parameter", "encrypt_userinfo",
@@ -268,6 +271,18 @@ END_TEST
 START_TEST(test_oidc_jwt_encrypted_add_client_error)
 {
   json_t * j_client = json_pack("{ss ss ss so s[s] s[sssss] s[s] ss ss ss ss ss ss ss ss so}", "client_id", CLIENT_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_NAME, "confidential", json_true(), "redirect_uri", CLIENT_REDIRECT, "authorization_type", "code", "token", "id_token", "password", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enc", CLIENT_ENC, "alg", "error", "encrypt_code", "1", "encrypt_at", "TruE", "encrypt_userinfo", "YES", "encrypt_id_token", "indeed, my friend", "encrypt_refresh_token", "1", "enabled", json_true());
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  json_t * j_param = json_pack("{ss}", "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_param);
+}
+END_TEST
+
+START_TEST(test_oidc_jwt_encrypted_add_client_jwks)
+{
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[sssss] s[s] so ss ss ss ss ss ss ss ss so}", "client_id", CLIENT_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_NAME, "confidential", json_true(), "redirect_uri", CLIENT_REDIRECT, "authorization_type", "code", "token", "id_token", "password", "client_credentials", "scope", CLIENT_SCOPE, "jwks", json_loads(jwks_pubkey, JSON_DECODE_ANY, NULL), "alg_kid", KID_2, "enc", CLIENT_ENC, "alg", CLIENT_PUBKEY_ALG, "encrypt_code", "1", "encrypt_at", "TruE", "encrypt_userinfo", "YES", "encrypt_id_token", "indeed, my friend", "encrypt_refresh_token", "1", "enabled", json_true());
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -880,7 +895,6 @@ START_TEST(test_oidc_jwt_encrypted_id_token_valid_secret_dir)
 {
   struct _u_response resp;
   jwt_t * jwt_idt;
-  jwk_t * jwk;
   char * id_token;
   unsigned char key[64] = {0};
   size_t key_len = 64;
@@ -899,7 +913,6 @@ START_TEST(test_oidc_jwt_encrypted_id_token_valid_secret_dir)
     *o_strchr(id_token, '&') = '\0';
   }
   ck_assert_int_eq(r_jwt_init(&jwt_idt), RHN_OK);
-  ck_assert_int_eq(r_jwk_init(&jwk), RHN_OK);
   key_data.data = (unsigned char *)CLIENT_SECRET;
   key_data.size = o_strlen(CLIENT_SECRET);
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA512, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
@@ -912,7 +925,44 @@ START_TEST(test_oidc_jwt_encrypted_id_token_valid_secret_dir)
   
   o_free(id_token);
   r_jwt_free(jwt_idt);
-  r_jwk_free(jwk);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
+START_TEST(test_oidc_jwt_encrypted_id_token_valid_jwks)
+{
+  struct _u_response resp;
+  jwt_t * jwt_idt;
+  jwks_t * jwks;
+  char * id_token;
+  
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=id_token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
+  ck_assert_ptr_eq(o_strstr(u_map_get(resp.map_header, "Location"), "access_token="), NULL);
+  ck_assert_ptr_eq(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
+  id_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "id_token=")+o_strlen("id_token="));
+  if (o_strchr(id_token, '&')) {
+    *o_strchr(id_token, '&') = '\0';
+  }
+  ck_assert_int_eq(r_jwt_init(&jwt_idt), RHN_OK);
+  ck_assert_int_eq(r_jwks_init(&jwks), RHN_OK);
+  ck_assert_int_eq(r_jwks_import_from_str(jwks, jwks_privkey), RHN_OK);
+  
+  ck_assert_int_eq(r_jwt_parse(jwt_idt, id_token, 0), RHN_OK);
+  ck_assert_int_eq(R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT, r_jwt_get_type(jwt_idt));
+  ck_assert_int_eq(r_jwt_add_enc_jwks(jwt_idt, jwks, NULL), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_idt, R_FORMAT_PEM, NULL, 0, (unsigned char *)pubkey_2_pem, o_strlen(pubkey_2_pem)), RHN_OK);
+  ck_assert_int_eq(r_jwt_decrypt_verify_signature_nested(jwt_idt, NULL, 0, NULL, 0), RHN_OK);
+  
+  o_free(id_token);
+  r_jwt_free(jwt_idt);
+  r_jwks_free(jwks);
   ulfius_clean_response(&resp);
 }
 END_TEST
@@ -951,6 +1001,9 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_delete_client_pubkey);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_add_client_secret_dir);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_id_token_valid_secret_dir);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_delete_client_pubkey);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_add_client_jwks);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_id_token_valid_jwks);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_delete_client_pubkey);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_delete_module);
   tcase_set_timeout(tc_core, 30);
