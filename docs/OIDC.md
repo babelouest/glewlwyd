@@ -23,11 +23,31 @@ The following OpenID Connect functionalities are currently supported:
 - [Token revocation (RFC 7009)](https://tools.ietf.org/html/rfc7009)
 - [OpenID Connect Dynamic Registration](http://openid.net/specs/openid-connect-registration-1_0.html)
 - [OAuth 2.0 Form Post Response Mode](http://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html)
+- [Messages encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
 
 The following OpenID Connect functionalities are not supported yet:
 
 - [Self-Issued OpenID Provider](https://openid.net/specs/openid-connect-core-1_0.html#SelfIssued)
-- [Messages encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
+
+## Messages encryption
+
+Glewlwyd OIDC plugin relies on Rhonabwy library to sign and encrypt tokens. All the JWT signing algorithms are supported but not all the JWT key management encryption algorithms and data encryption algorithms. The discovery endpoint is up-to-date with the supported encryption algorithms.
+
+Concerning key management encryption using symmetric keys, the encryption key is based on a hash of the client secret or the server secret depending on the token to encrypt.
+
+To generate a symmetric key encryption, you must build a SHA256 hash of the secret for the key management encryption algorithms `A128KW`, `A192KW`, `A256KW`, `A128GCMKW`, `A192GCMKW` and `A256GCMKW`. Depending on the alg value, you must use the n first bytes of the hash as follows:
+- `A128KW`, `A128GCMKW`: 16 first bytes of the hash
+- `A192KW`, `A192GCMKW`: 24 first bytes of the hash
+- `A256KW`, `A256GCMKW`: 32 bytes of the hash
+
+If the key management encryption algorithm is `dir`, you must build a SHA256 hash of the secret, then depending on the `enc` value, you must use the n first bytes of the hash as follows:
+- `A128CBC-HS256`, `A128GCM`, `A192GCM`, `A256GCM`: 32 first bytes of the hash
+- `A192CBC-HS384`: 48 first bytes of the hash
+- `A256CBC-HS512`: 64 bytes of the hash
+
+### Access tokens, refresh tokens and code encryption
+
+If the client receives an encrypted access tokens, refresh tokens or code, it must decrypt it in order to use it with Glewlwyd. In particular, the encrypted access token must be decrypted and the nested JWS must be extracted to be usable by Glewlwyd for getting access to userinfo, token revocation or introspection, etc.
 
 ## Access token format
 
@@ -289,6 +309,44 @@ Enter the client property that will hold the JWKS of the client.
 ### JWKS_URI property
 
 Enter the client property that will hold the JWKS_URI of the client. The JWKS will be downloaded each time the JWKS is requested.
+
+## Encrypt out tokens
+
+### Allow out token encryption
+
+Allow to encrypt out tokens for client that have an encryption setup.
+
+### enc property
+
+Enter the client property that will hold the `enc` of the client. If not set, the `enc` value will be set to default `A128CBC-HS256`.
+
+### alg property
+
+Enter the client property that will hold the `alg` of the client. If not set token encryption will be disabled for all.
+
+### kid_alg property
+
+Enter the client property that will hold the `kid_alg` of the client. Mandatory if the client uses jwks, ignored if the client uses a public key in PEM format.
+
+### encrypt_code property
+
+Enter the client property that will hold the `encrypt_code` flag of the client. This property value will tell if the client allows to encrypt authorization code.
+
+### encrypt_at property
+
+Enter the client property that will hold the `encrypt_at` flag of the client. This property value will tell if the client allows to encrypt access tokens.
+
+### encrypt_userinfo property
+
+Enter the client property that will hold the `encrypt_userinfo` flag of the client. This property value will tell if the client allows to encrypt userinfo when sent as JWT.
+
+### encrypt_id_token property
+
+Enter the client property that will hold the `encrypt_id_token` flag of the client. This property value will tell if the client allows to encrypt id_tokens.
+
+### encrypt_refresh_token property
+
+Enter the client property that will hold the `encrypt_refresh_token` flag of the client. This property value will tell if the client allows to encrypt refresh tokens code.
 
 ## PKCE - Code challenge (RFC 7636)
 
