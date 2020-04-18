@@ -54,6 +54,15 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["client-jwks-parameter"]!==undefined?"":(props.mod.parameters["client-jwks-parameter"] = "jwks");
     props.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(props.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
     props.mod.parameters["request-maximum-exp"]!==undefined?"":(props.mod.parameters["request-maximum-exp"] = 3600);
+    props.mod.parameters["encrypt-out-token-allow"]!==undefined?"":(props.mod.parameters["encrypt-out-token-allow"] = false);
+    props.mod.parameters["client-enc-parameter"]!==undefined?"":(props.mod.parameters["client-enc-parameter"] = "enc");
+    props.mod.parameters["client-alg-parameter"]!==undefined?"":(props.mod.parameters["client-alg-parameter"] = "alg");
+    props.mod.parameters["client-alg_kid-parameter"]!==undefined?"":(props.mod.parameters["client-alg_kid-parameter"] = "alg_kid");
+    props.mod.parameters["client-encrypt_code-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_code-parameter"] = "encrypt_code");
+    props.mod.parameters["client-encrypt_at-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_at-parameter"] = "encrypt_at");
+    props.mod.parameters["client-encrypt_userinfo-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_userinfo-parameter"] = "encrypt_userinfo");
+    props.mod.parameters["client-encrypt_id_token-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_id_token-parameter"] = "encrypt_id_token");
+    props.mod.parameters["client-encrypt_refresh_token-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_refresh_token-parameter"] = "encrypt_refresh_token");
 
     this.state = {
       config: props.config,
@@ -159,6 +168,15 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["client-jwks-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks-parameter"] = "jwks");
     nextProps.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
     nextProps.mod.parameters["request-maximum-exp"]!==undefined?"":(nextProps.mod.parameters["request-maximum-exp"] = 3600);
+    nextProps.mod.parameters["encrypt-out-token-allow"]!==undefined?"":(nextProps.mod.parameters["encrypt-out-token-allow"] = false);
+    nextProps.mod.parameters["client-enc-parameter"]!==undefined?"":(nextProps.mod.parameters["client-enc-parameter"] = "enc");
+    nextProps.mod.parameters["client-alg-parameter"]!==undefined?"":(nextProps.mod.parameters["client-alg-parameter"] = "alg");
+    nextProps.mod.parameters["client-alg_kid-parameter"]!==undefined?"":(nextProps.mod.parameters["client-alg_kid-parameter"] = "alg_kid");
+    nextProps.mod.parameters["client-encrypt_code-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_code-parameter"] = "encrypt_code");
+    nextProps.mod.parameters["client-encrypt_at-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_at-parameter"] = "encrypt_at");
+    nextProps.mod.parameters["client-encrypt_userinfo-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_userinfo-parameter"] = "encrypt_userinfo");
+    nextProps.mod.parameters["client-encrypt_id_token-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_id_token-parameter"] = "encrypt_id_token");
+    nextProps.mod.parameters["client-encrypt_refresh_token-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_refresh_token-parameter"] = "encrypt_refresh_token");
     
     this.setState({
       config: nextProps.config,
@@ -1581,6 +1599,10 @@ class GlwdOIDCParams extends Component {
                   <label className="form-check-label" htmlFor="mod-glwd-request-parameter-allow">{i18next.t("admin.mod-glwd-request-parameter-allow")}</label>
                 </div>
                 <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-request-parameter-encryption-allow" onChange={(e) => this.toggleParam(e, "request-parameter-encryption-allow")} checked={this.state.mod.parameters["request-parameter-encryption-allow"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-request-parameter-encryption-allow">{i18next.t("admin.mod-glwd-request-parameter-encryption-allow")}</label>
+                </div>
+                <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-request-uri-allow-https-non-secure" onChange={(e) => this.toggleParam(e, "request-uri-allow-https-non-secure")} checked={this.state.mod.parameters["request-uri-allow-https-non-secure"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-request-uri-allow-https-non-secure">{i18next.t("admin.mod-glwd-request-uri-allow-https-non-secure")}</label>
                 </div>
@@ -1614,6 +1636,89 @@ class GlwdOIDCParams extends Component {
                       <label className="input-group-text" htmlFor="mod-glwd-jwt-request-pubkey-client-jwks_uri-parameter">{i18next.t("admin.mod-glwd-jwt-request-pubkey-client-jwks_uri-parameter")}</label>
                     </div>
                     <input type="text" className="form-control" id="mod-glwd-jwt-request-pubkey-client-jwks_uri-parameter" onChange={(e) => this.changeParam(e, "client-jwks_uri-parameter")} value={this.state.mod.parameters["client-jwks_uri-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-pubkey-client-jwks_uri-parameter-ph")} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionEncryptOutToken">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseEncryptOutToken" aria-expanded="true" aria-controls="collapseEncryptOutToken">
+                  {i18next.t("admin.mod-glwd-jwt-request-encrypt-out-tokens")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapseEncryptOutToken" className="collapse" aria-labelledby="addressClaimCard" data-parent="#accordionEncryptOutToken">
+              <div className="card-body">
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-encrypt-out-token-allow" onChange={(e) => this.toggleParam(e, "encrypt-out-token-allow")} checked={this.state.mod.parameters["encrypt-out-token-allow"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-encrypt-out-token-allow">{i18next.t("admin.mod-glwd-encrypt-out-token-allow")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwt-request-client-enc-parameter">{i18next.t("admin.mod-glwd-jwt-request-client-enc-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwt-request-client-enc-parameter" onChange={(e) => this.changeParam(e, "client-enc-parameter")} value={this.state.mod.parameters["client-enc-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-client-enc-parameter-ph")} disabled={!this.state.mod.parameters["encrypt-out-token-allow"]} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwt-request-client-alg-parameter">{i18next.t("admin.mod-glwd-jwt-request-client-alg-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwt-request-client-alg-parameter" onChange={(e) => this.changeParam(e, "client-alg-parameter")} value={this.state.mod.parameters["client-alg-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-client-alg-parameter-ph")} disabled={!this.state.mod.parameters["encrypt-out-token-allow"]} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwt-request-client-alg_kid-parameter">{i18next.t("admin.mod-glwd-jwt-request-client-alg_kid-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwt-request-client-alg_kid-parameter" onChange={(e) => this.changeParam(e, "client-alg_kid-parameter")} value={this.state.mod.parameters["client-alg_kid-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-client-alg_kid-parameter-ph")} disabled={!this.state.mod.parameters["encrypt-out-token-allow"]} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwt-request-client-encrypt_code-parameter">{i18next.t("admin.mod-glwd-jwt-request-client-encrypt_code-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwt-request-client-encrypt_code-parameter" onChange={(e) => this.changeParam(e, "client-encrypt_code-parameter")} value={this.state.mod.parameters["client-encrypt_code-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-client-encrypt_code-parameter-ph")} disabled={!this.state.mod.parameters["encrypt-out-token-allow"]} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwt-request-client-encrypt_at-parameter">{i18next.t("admin.mod-glwd-jwt-request-client-encrypt_at-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwt-request-client-encrypt_at-parameter" onChange={(e) => this.changeParam(e, "client-encrypt_at-parameter")} value={this.state.mod.parameters["client-encrypt_at-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-client-encrypt_at-parameter-ph")} disabled={!this.state.mod.parameters["encrypt-out-token-allow"]} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwt-request-client-encrypt_userinfo-parameter">{i18next.t("admin.mod-glwd-jwt-request-client-encrypt_userinfo-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwt-request-client-encrypt_userinfo-parameter" onChange={(e) => this.changeParam(e, "client-encrypt_userinfo-parameter")} value={this.state.mod.parameters["client-encrypt_userinfo-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-client-encrypt_userinfo-parameter-ph")} disabled={!this.state.mod.parameters["encrypt-out-token-allow"]} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwt-request-client-encrypt_id_token-parameter">{i18next.t("admin.mod-glwd-jwt-request-client-encrypt_id_token-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwt-request-client-encrypt_id_token-parameter" onChange={(e) => this.changeParam(e, "client-encrypt_id_token-parameter")} value={this.state.mod.parameters["client-encrypt_id_token-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-client-encrypt_id_token-parameter-ph")} disabled={!this.state.mod.parameters["encrypt-out-token-allow"]} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwt-request-client-encrypt_refresh_token-parameter">{i18next.t("admin.mod-glwd-jwt-request-client-encrypt_refresh_token-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwt-request-client-encrypt_refresh_token-parameter" onChange={(e) => this.changeParam(e, "client-encrypt_refresh_token-parameter")} value={this.state.mod.parameters["client-encrypt_refresh_token-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-client-encrypt_refresh_token-parameter-ph")} disabled={!this.state.mod.parameters["encrypt-out-token-allow"]} />
                   </div>
                 </div>
               </div>

@@ -266,7 +266,20 @@ class EditRecord extends Component {
           if (pattern.edit === false && !this.state.add) {
             inputJsx = <input disabled={true} type={(pattern.type||"text")} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={elt||""}/>
           } else {
-            if (pattern.type === "password") {
+            if (pattern.listElements) {
+              var listElements = [];
+              pattern.listElements.forEach((element, index) => {
+                listElements.push(<a className="dropdown-item" key={index} href="#" onClick={(e) => this.changeElt({target: {value: element}}, pattern.name)}>{i18next.t(element)}</a>);
+              });
+              inputJsx = <div className="dropdown">
+                <button className="btn btn-secondary dropdown-toggle" type="button" id={"modal-edit-" + pattern.name} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  {i18next.t((elt?elt:"login.select"))}
+                </button>
+                <div className="dropdown-menu" aria-labelledby={"modal-edit-" + pattern.name}>
+                  {listElements}
+                </div>
+              </div>
+            } else if (pattern.type === "password") {
               var keepOption = "";
               if (!this.state.add) {
                 keepOption = <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "keep")}>{i18next.t("modal.pwd-keep")}</a>;
