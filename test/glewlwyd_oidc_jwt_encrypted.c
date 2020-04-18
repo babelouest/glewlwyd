@@ -41,12 +41,13 @@
 #define CLIENT_PUBKEY_PARAM "pubkey"
 #define CLIENT_JWKS_PARAM "jwks"
 #define CLIENT_JWKS_URI_PARAM "jwks_uri"
-#define CLIENT_PUBKEY_ID "client_pubkey"
-#define CLIENT_PUBKEY_SECRET "short-secret"
-#define CLIENT_PUBKEY_NAME "client with pubkey"
-#define CLIENT_PUBKEY_REDIRECT "https://glewlwyd.local/"
-#define CLIENT_PUBKEY_ENC "A128CBC-HS256"
+#define CLIENT_ID "client_encrypt"
+#define CLIENT_SECRET "short-secret"
+#define CLIENT_NAME "client with pubkey"
+#define CLIENT_REDIRECT "https://glewlwyd.local/"
+#define CLIENT_ENC "A128CBC-HS256"
 #define CLIENT_PUBKEY_ALG "RSA1_5"
+#define CLIENT_SECRET_ALG "A128GCMKW"
 #define CLIENT_SCOPE "scope1"
 #define KID_1 "1"
 #define KID_2 "2"
@@ -191,7 +192,7 @@ struct _u_request user_req;
 
 START_TEST(test_oidc_jwt_encrypted_add_module_rsa)
 {
-  json_t * j_parameters = json_pack("{sssssssos{sssssssssssisisisososososososososososissssssssssss}}",
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssssisisisososososososososososisssssssossssssssssssssss}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_DISPLAY_NAME,
@@ -219,9 +220,15 @@ START_TEST(test_oidc_jwt_encrypted_add_module_rsa)
                                   "client-pubkey-parameter", CLIENT_PUBKEY_PARAM,
                                   "client-jwks-parameter", CLIENT_JWKS_PARAM,
                                   "client-jwks_uri-parameter", CLIENT_JWKS_URI_PARAM,
+                                  "encrypt-out-token-allow", json_true(),
                                   "client-enc-parameter", "enc",
                                   "client-alg-parameter", "alg",
-                                  "client-alg_kid-parameter", "kid");
+                                  "client-alg_kid-parameter", "kid",
+                                  "client-encrypt_code-parameter", "encrypt_code",
+                                  "client-encrypt_at-parameter", "encrypt_at",
+                                  "client-encrypt_userinfo-parameter", "encrypt_userinfo",
+                                  "client-encrypt_id_token-parameter", "encrypt_id_token",
+                                  "client-encrypt_refresh_token-parameter", "encrypt_refresh_token");
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -236,24 +243,60 @@ END_TEST
 
 START_TEST(test_oidc_jwt_encrypted_add_client_pubkey)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[sssss] s[s] ss ss ss so}", "client_id", CLIENT_PUBKEY_ID, "client_secret", CLIENT_PUBKEY_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "password", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enc", CLIENT_PUBKEY_ENC, "alg", CLIENT_PUBKEY_ALG, "enabled", json_true());
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[sssss] s[s] ss ss ss ss ss ss ss ss so}", "client_id", CLIENT_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_NAME, "confidential", json_true(), "redirect_uri", CLIENT_REDIRECT, "authorization_type", "code", "token", "id_token", "password", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enc", CLIENT_ENC, "alg", CLIENT_PUBKEY_ALG, "encrypt_code", "1", "encrypt_at", "TruE", "encrypt_userinfo", "YES", "encrypt_id_token", "indeed, my friend", "encrypt_refresh_token", "1", "enabled", json_true());
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
   json_t * j_param = json_pack("{ss}", "scope", SCOPE_LIST);
-  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_PUBKEY_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_param);
+}
+END_TEST
+
+START_TEST(test_oidc_jwt_encrypted_add_client_pubkey_partial_enc)
+{
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[sssss] s[s] ss ss ss ss ss ss ss ss so}", "client_id", CLIENT_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_NAME, "confidential", json_true(), "redirect_uri", CLIENT_REDIRECT, "authorization_type", "code", "token", "id_token", "password", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enc", CLIENT_ENC, "alg", CLIENT_PUBKEY_ALG, "encrypt_code", "1", "encrypt_at", "0", "encrypt_userinfo", "YES", "encrypt_id_token", "no", "encrypt_refresh_token", "1", "enabled", json_true());
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  json_t * j_param = json_pack("{ss}", "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
 }
 END_TEST
 
 START_TEST(test_oidc_jwt_encrypted_add_client_error)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[sssss] s[s] ss ss ss so}", "client_id", CLIENT_PUBKEY_ID, "client_secret", CLIENT_PUBKEY_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "password", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enc", "error", "alg", CLIENT_PUBKEY_ALG, "enabled", json_true());
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[sssss] s[s] ss ss ss ss ss ss ss ss so}", "client_id", CLIENT_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_NAME, "confidential", json_true(), "redirect_uri", CLIENT_REDIRECT, "authorization_type", "code", "token", "id_token", "password", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enc", CLIENT_ENC, "alg", "error", "encrypt_code", "1", "encrypt_at", "TruE", "encrypt_userinfo", "YES", "encrypt_id_token", "indeed, my friend", "encrypt_refresh_token", "1", "enabled", json_true());
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
   json_t * j_param = json_pack("{ss}", "scope", SCOPE_LIST);
-  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_PUBKEY_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_param);
+}
+END_TEST
+
+START_TEST(test_oidc_jwt_encrypted_add_client_secret_a128gcmkw)
+{
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[sssss] s[s] ss ss ss ss ss ss ss so}", "client_id", CLIENT_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_NAME, "confidential", json_true(), "redirect_uri", CLIENT_REDIRECT, "authorization_type", "code", "token", "id_token", "password", "client_credentials", "scope", CLIENT_SCOPE, "enc", CLIENT_ENC, "alg", CLIENT_SECRET_ALG, "encrypt_code", "1", "encrypt_at", "TruE", "encrypt_userinfo", "YES", "encrypt_id_token", "indeed, my friend", "encrypt_refresh_token", "1", "enabled", json_true());
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  json_t * j_param = json_pack("{ss}", "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_param);
+}
+END_TEST
+
+START_TEST(test_oidc_jwt_encrypted_add_client_secret_dir)
+{
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[sssss] s[s] ss ss ss ss ss ss ss so}", "client_id", CLIENT_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_NAME, "confidential", json_true(), "redirect_uri", CLIENT_REDIRECT, "authorization_type", "code", "token", "id_token", "password", "client_credentials", "scope", CLIENT_SCOPE, "enc", CLIENT_ENC, "alg", "dir", "encrypt_code", "1", "encrypt_at", "TruE", "encrypt_userinfo", "YES", "encrypt_id_token", "indeed, my friend", "encrypt_refresh_token", "1", "enabled", json_true());
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  json_t * j_param = json_pack("{ss}", "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
 }
 END_TEST
@@ -261,10 +304,10 @@ END_TEST
 START_TEST(test_oidc_jwt_encrypted_delete_client_pubkey)
 {
   json_t * j_param = json_pack("{ss}", "scope", "");
-  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_PUBKEY_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
   
-  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/client/" CLIENT_PUBKEY_ID, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/client/" CLIENT_ID, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
 }
 END_TEST
 
@@ -276,7 +319,7 @@ START_TEST(test_oidc_jwt_encrypted_token_id_token_valid)
   
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
-  user_req.http_url = msprintf("%s/%s/auth?response_type=id_token token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_PUBKEY_ID, CLIENT_PUBKEY_REDIRECT, SCOPE_LIST);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=id_token token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -314,6 +357,63 @@ START_TEST(test_oidc_jwt_encrypted_token_id_token_valid)
 }
 END_TEST
 
+START_TEST(test_oidc_jwt_encrypted_code_token_id_token_valid)
+{
+  struct _u_response resp;
+  jwt_t * jwt_idt, * jwt_at;
+  jwe_t * jwe_code;
+  char * id_token, * access_token, * code;
+  
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=code id_token token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "access_token="), NULL);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
+  id_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "id_token=")+o_strlen("id_token="));
+  if (o_strchr(id_token, '&')) {
+    *o_strchr(id_token, '&') = '\0';
+  }
+  access_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "access_token=")+o_strlen("access_token="));
+  if (o_strchr(access_token, '&')) {
+    *o_strchr(access_token, '&') = '\0';
+  }
+  code = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "code=")+o_strlen("code="));
+  if (o_strchr(code, '&')) {
+    *o_strchr(code, '&') = '\0';
+  }
+  ck_assert_int_eq(r_jwt_init(&jwt_idt), RHN_OK);
+  ck_assert_int_eq(r_jwt_init(&jwt_at), RHN_OK);
+  ck_assert_int_eq(r_jwe_init(&jwe_code), RHN_OK);
+  
+  ck_assert_int_eq(r_jwt_parse(jwt_idt, id_token, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_parse(jwt_at, access_token, 0), RHN_OK);
+  ck_assert_int_eq(r_jwe_parse(jwe_code, code, 0), RHN_OK);
+  ck_assert_int_eq(R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT, r_jwt_get_type(jwt_idt));
+  ck_assert_int_eq(R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT, r_jwt_get_type(jwt_at));
+  ck_assert_int_eq(r_jwt_add_enc_keys_pem_der(jwt_idt, R_FORMAT_PEM, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem), NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_enc_keys_pem_der(jwt_at, R_FORMAT_PEM, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem), NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwe_add_keys_pem_der(jwe_code, R_FORMAT_PEM, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem), NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_idt, R_FORMAT_PEM, NULL, 0, (unsigned char *)pubkey_2_pem, o_strlen(pubkey_2_pem)), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_at, R_FORMAT_PEM, NULL, 0, (unsigned char *)pubkey_2_pem, o_strlen(pubkey_2_pem)), RHN_OK);
+  ck_assert_int_eq(r_jwt_decrypt_verify_signature_nested(jwt_idt, NULL, 0, NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_decrypt_verify_signature_nested(jwt_at, NULL, 0, NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwe_decrypt(jwe_code, NULL, 0), RHN_OK);
+  
+  o_free(id_token);
+  o_free(access_token);
+  o_free(code);
+  r_jwt_free(jwt_idt);
+  r_jwt_free(jwt_at);
+  r_jwe_free(jwe_code);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
 START_TEST(test_oidc_jwt_encrypted_id_token_valid)
 {
   struct _u_response resp;
@@ -322,7 +422,7 @@ START_TEST(test_oidc_jwt_encrypted_id_token_valid)
   
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
-  user_req.http_url = msprintf("%s/%s/auth?response_type=id_token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_PUBKEY_ID, CLIENT_PUBKEY_REDIRECT, SCOPE_LIST);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=id_token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -356,7 +456,7 @@ START_TEST(test_oidc_jwt_encrypted_token_valid)
   
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
-  user_req.http_url = msprintf("%s/%s/auth?response_type=token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_PUBKEY_ID, CLIENT_PUBKEY_REDIRECT, SCOPE_LIST);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -396,7 +496,7 @@ START_TEST(test_oidc_jwt_encrypted_userinfo_valid)
   
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
-  user_req.http_url = msprintf("%s/%s/auth?response_type=token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_PUBKEY_ID, CLIENT_PUBKEY_REDIRECT, SCOPE_LIST);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -464,8 +564,8 @@ START_TEST(test_oidc_jwt_encrypted_client_cred_valid)
   req.http_verb = o_strdup("POST");
   u_map_put(req.map_post_body, "grant_type", "client_credentials");
   u_map_put(req.map_post_body, "scope", CLIENT_SCOPE);
-  req.auth_basic_user = o_strdup(CLIENT_PUBKEY_ID);
-  req.auth_basic_password = o_strdup(CLIENT_PUBKEY_SECRET);
+  req.auth_basic_user = o_strdup(CLIENT_ID);
+  req.auth_basic_password = o_strdup(CLIENT_SECRET);
   
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(200, resp.status);
@@ -499,8 +599,8 @@ START_TEST(test_oidc_jwt_encrypted_resource_owner_pwd_cred_valid)
   u_map_put(req.map_post_body, "username", USER_USERNAME);
   u_map_put(req.map_post_body, "password", USER_PASSWORD);
   u_map_put(req.map_post_body, "scope", SCOPE_LIST);
-  req.auth_basic_user = o_strdup(CLIENT_PUBKEY_ID);
-  req.auth_basic_password = o_strdup(CLIENT_PUBKEY_SECRET);
+  req.auth_basic_user = o_strdup(CLIENT_ID);
+  req.auth_basic_password = o_strdup(CLIENT_SECRET);
   
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(200, resp.status);
@@ -524,12 +624,15 @@ START_TEST(test_oidc_jwt_encrypted_code_valid)
   struct _u_response resp;
   struct _u_request req;
   jwt_t * jwt;
-  char * code;
+  jwe_t * jwe;
+  char * code, * code_dec;
   json_t * j_resp;
+  const unsigned char * payload;
+  size_t payload_len = 0;
   
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
-  user_req.http_url = msprintf("%s/%s/auth?response_type=code&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_PUBKEY_ID, CLIENT_PUBKEY_REDIRECT, SCOPE_LIST);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=code&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -540,17 +643,23 @@ START_TEST(test_oidc_jwt_encrypted_code_valid)
     *o_strchr(code, '&') = '\0';
   }
   ulfius_clean_response(&resp);
+  ck_assert_int_eq(r_jwe_init(&jwe), RHN_OK);
+  ck_assert_int_eq(r_jwe_parse(jwe, code, 0), RHN_OK);
+  ck_assert_int_eq(r_jwe_add_keys_pem_der(jwe, R_FORMAT_PEM, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem), NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwe_decrypt(jwe, NULL, 0), RHN_OK);
+  ck_assert_ptr_ne(payload = r_jwe_get_payload(jwe, &payload_len), NULL);
+  code_dec = o_strndup((const char *)payload, payload_len);
 
   ck_assert_int_eq(ulfius_init_request(&req), U_OK);
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/token/");
   req.http_verb = o_strdup("POST");
   u_map_put(req.map_post_body, "grant_type", "authorization_code");
-  u_map_put(req.map_post_body, "client_id", CLIENT_PUBKEY_ID);
-  u_map_put(req.map_post_body, "redirect_uri", CLIENT_PUBKEY_REDIRECT);
-  u_map_put(req.map_post_body, "code", code);
-  req.auth_basic_user = o_strdup(CLIENT_PUBKEY_ID);
-  req.auth_basic_password = o_strdup(CLIENT_PUBKEY_SECRET);
+  u_map_put(req.map_post_body, "client_id", CLIENT_ID);
+  u_map_put(req.map_post_body, "redirect_uri", CLIENT_REDIRECT);
+  u_map_put(req.map_post_body, "code", code_dec);
+  req.auth_basic_user = o_strdup(CLIENT_ID);
+  req.auth_basic_password = o_strdup(CLIENT_SECRET);
   
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(200, resp.status);
@@ -568,10 +677,12 @@ START_TEST(test_oidc_jwt_encrypted_code_valid)
   ck_assert_int_eq(r_jwt_decrypt_verify_signature_nested(jwt, NULL, 0, NULL, 0), RHN_OK);
   
   r_jwt_free(jwt);
+  r_jwe_free(jwe);
   json_decref(j_resp);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(code);
+  o_free(code_dec);
 }
 END_TEST
 
@@ -581,7 +692,7 @@ START_TEST(test_oidc_jwt_encrypted_token_invalid)
   
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
-  user_req.http_url = msprintf("%s/%s/auth?response_type=token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_PUBKEY_ID, CLIENT_PUBKEY_REDIRECT, SCOPE_LIST);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -598,7 +709,7 @@ START_TEST(test_oidc_jwt_encrypted_id_token_invalid)
   
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
-  user_req.http_url = msprintf("%s/%s/auth?response_type=id_token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_PUBKEY_ID, CLIENT_PUBKEY_REDIRECT, SCOPE_LIST);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=id_token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -615,7 +726,7 @@ START_TEST(test_oidc_jwt_encrypted_token_id_token_invalid)
   
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
-  user_req.http_url = msprintf("%s/%s/auth?response_type=token id_token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_PUBKEY_ID, CLIENT_PUBKEY_REDIRECT, SCOPE_LIST);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=token id_token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -633,7 +744,7 @@ START_TEST(test_oidc_jwt_encrypted_client_cred_invalid)
   u_map_put(&body, "grant_type", "client_credentials");
   u_map_put(&body, "scope", CLIENT_SCOPE);
   
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/token/", CLIENT_PUBKEY_ID, CLIENT_PUBKEY_SECRET, NULL, &body, 500, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/token/", CLIENT_ID, CLIENT_SECRET, NULL, &body, 500, NULL, NULL, NULL), 1);
   u_map_clean(&body);
 }
 END_TEST
@@ -647,7 +758,7 @@ START_TEST(test_oidc_jwt_encrypted_resource_owner_pwd_cred_invalid)
   u_map_put(&body, "username", USER_USERNAME);
   u_map_put(&body, "password", USER_PASSWORD);
 
-  ck_assert_int_eq(1, run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/token/", CLIENT_PUBKEY_ID, CLIENT_PUBKEY_SECRET, NULL, &body, 500, NULL, NULL, NULL));
+  ck_assert_int_eq(1, run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/token/", CLIENT_ID, CLIENT_SECRET, NULL, &body, 500, NULL, NULL, NULL));
   u_map_clean(&body);
 }
 END_TEST
@@ -655,40 +766,154 @@ END_TEST
 START_TEST(test_oidc_jwt_encrypted_code_invalid)
 {
   struct _u_response resp;
-  struct _u_request req;
-  char * code;
   
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
-  user_req.http_url = msprintf("%s/%s/auth?response_type=code&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_PUBKEY_ID, CLIENT_PUBKEY_REDIRECT, SCOPE_LIST);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=code&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "server_error"), NULL);
+
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
+START_TEST(test_oidc_jwt_encrypted_code_token_id_token_valid_partial_enc)
+{
+  struct _u_response resp;
+  jwt_t * jwt_idt, * jwt_at;
+  jwe_t * jwe_code;
+  char * id_token, * access_token, * code;
+  
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=code id_token token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "access_token="), NULL);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
+  id_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "id_token=")+o_strlen("id_token="));
+  if (o_strchr(id_token, '&')) {
+    *o_strchr(id_token, '&') = '\0';
+  }
+  access_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "access_token=")+o_strlen("access_token="));
+  if (o_strchr(access_token, '&')) {
+    *o_strchr(access_token, '&') = '\0';
+  }
   code = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "code=")+o_strlen("code="));
   if (o_strchr(code, '&')) {
     *o_strchr(code, '&') = '\0';
   }
-  ulfius_clean_response(&resp);
-
-  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
-  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
-  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/token/");
-  req.http_verb = o_strdup("POST");
-  u_map_put(req.map_post_body, "grant_type", "authorization_code");
-  u_map_put(req.map_post_body, "client_id", CLIENT_PUBKEY_ID);
-  u_map_put(req.map_post_body, "redirect_uri", CLIENT_PUBKEY_REDIRECT);
-  u_map_put(req.map_post_body, "code", code);
-  req.auth_basic_user = o_strdup(CLIENT_PUBKEY_ID);
-  req.auth_basic_password = o_strdup(CLIENT_PUBKEY_SECRET);
+  ck_assert_int_eq(r_jwt_init(&jwt_idt), RHN_OK);
+  ck_assert_int_eq(r_jwt_init(&jwt_at), RHN_OK);
+  ck_assert_int_eq(r_jwe_init(&jwe_code), RHN_OK);
   
-  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
-  ck_assert_int_eq(500, resp.status);
-
-  ulfius_clean_request(&req);
-  ulfius_clean_response(&resp);
+  ck_assert_int_eq(r_jwt_parse(jwt_idt, id_token, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_parse(jwt_at, access_token, 0), RHN_OK);
+  ck_assert_int_eq(r_jwe_parse(jwe_code, code, 0), RHN_OK);
+  ck_assert_int_eq(R_JWT_TYPE_SIGN, r_jwt_get_type(jwt_idt));
+  ck_assert_int_eq(R_JWT_TYPE_SIGN, r_jwt_get_type(jwt_at));
+  ck_assert_int_eq(r_jwe_add_keys_pem_der(jwe_code, R_FORMAT_PEM, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem), NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_idt, R_FORMAT_PEM, NULL, 0, (unsigned char *)pubkey_2_pem, o_strlen(pubkey_2_pem)), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_at, R_FORMAT_PEM, NULL, 0, (unsigned char *)pubkey_2_pem, o_strlen(pubkey_2_pem)), RHN_OK);
+  ck_assert_int_eq(r_jwt_verify_signature(jwt_idt, NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_verify_signature(jwt_at, NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwe_decrypt(jwe_code, NULL, 0), RHN_OK);
+  
+  o_free(id_token);
+  o_free(access_token);
   o_free(code);
+  r_jwt_free(jwt_idt);
+  r_jwt_free(jwt_at);
+  r_jwe_free(jwe_code);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
+START_TEST(test_oidc_jwt_encrypted_id_token_valid_secret_a128gcmkw)
+{
+  struct _u_response resp;
+  jwt_t * jwt_idt;
+  jwk_t * jwk;
+  char * id_token;
+  unsigned char key[32] = {0};
+  size_t key_len = 32;
+  gnutls_datum_t key_data;
+  
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=id_token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
+  id_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "id_token=")+o_strlen("id_token="));
+  if (o_strchr(id_token, '&')) {
+    *o_strchr(id_token, '&') = '\0';
+  }
+  ck_assert_int_eq(r_jwt_init(&jwt_idt), RHN_OK);
+  ck_assert_int_eq(r_jwk_init(&jwk), RHN_OK);
+  key_data.data = (unsigned char *)CLIENT_SECRET;
+  key_data.size = o_strlen(CLIENT_SECRET);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(r_jwt_add_enc_key_symmetric(jwt_idt, key, 16), RHN_OK);
+  
+  ck_assert_int_eq(r_jwt_parse(jwt_idt, id_token, 0), RHN_OK);
+  ck_assert_int_eq(R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT, r_jwt_get_type(jwt_idt));
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_idt, R_FORMAT_PEM, NULL, 0, (unsigned char *)pubkey_2_pem, o_strlen(pubkey_2_pem)), RHN_OK);
+  ck_assert_int_eq(r_jwt_decrypt_verify_signature_nested(jwt_idt, NULL, 0, NULL, 0), RHN_OK);
+  
+  o_free(id_token);
+  r_jwk_free(jwk);
+  r_jwt_free(jwt_idt);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
+START_TEST(test_oidc_jwt_encrypted_id_token_valid_secret_dir)
+{
+  struct _u_response resp;
+  jwt_t * jwt_idt;
+  jwk_t * jwk;
+  char * id_token;
+  unsigned char key[64] = {0};
+  size_t key_len = 64;
+  gnutls_datum_t key_data;
+  
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=id_token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
+  id_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "id_token=")+o_strlen("id_token="));
+  if (o_strchr(id_token, '&')) {
+    *o_strchr(id_token, '&') = '\0';
+  }
+  ck_assert_int_eq(r_jwt_init(&jwt_idt), RHN_OK);
+  ck_assert_int_eq(r_jwk_init(&jwk), RHN_OK);
+  key_data.data = (unsigned char *)CLIENT_SECRET;
+  key_data.size = o_strlen(CLIENT_SECRET);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA512, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
+  
+  ck_assert_int_eq(r_jwt_parse(jwt_idt, id_token, 0), RHN_OK);
+  ck_assert_int_eq(R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT, r_jwt_get_type(jwt_idt));
+  r_jwe_set_cypher_key(jwt_idt->jwe, key, 32);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt_idt, R_FORMAT_PEM, NULL, 0, (unsigned char *)pubkey_2_pem, o_strlen(pubkey_2_pem)), RHN_OK);
+  ck_assert_int_eq(r_jwt_decrypt_verify_signature_nested(jwt_idt, NULL, 0, NULL, 0), RHN_OK);
+  
+  o_free(id_token);
+  r_jwt_free(jwt_idt);
+  r_jwk_free(jwk);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -702,6 +927,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_add_module_rsa);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_add_client_pubkey);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_token_id_token_valid);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_code_token_id_token_valid);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_id_token_valid);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_token_valid);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_userinfo_valid);
@@ -716,6 +942,15 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_client_cred_invalid);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_resource_owner_pwd_cred_invalid);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_code_invalid);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_delete_client_pubkey);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_add_client_pubkey_partial_enc);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_code_token_id_token_valid_partial_enc);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_delete_client_pubkey);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_add_client_secret_a128gcmkw);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_id_token_valid_secret_a128gcmkw);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_delete_client_pubkey);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_add_client_secret_dir);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_id_token_valid_secret_dir);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_delete_client_pubkey);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_delete_module);
   tcase_set_timeout(tc_core, 30);
