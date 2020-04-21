@@ -2309,7 +2309,7 @@ static Suite *glewlwyd_suite(void)
   TCase *tc_core;
 
   s = suite_create("Glewlwyd oidc request_jwt");
-  tc_core = tcase_create("test_oidc_implicit");
+  tc_core = tcase_create("test_oidc_request_jwt");
   tcase_add_test(tc_core, test_oidc_request_token_jwt_unauthorized);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_uauthorized);
   tcase_add_test(tc_core, test_oidc_request_jwt_redirect_login);
