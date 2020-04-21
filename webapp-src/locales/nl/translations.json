@@ -416,6 +416,8 @@
     "mod-glwd-jwt-type-rsa": "RSA",
     "mod-glwd-jwt-type-ecdsa": "ECDSA",
     "mod-glwd-jwt-type-sha": "SHA",
+    "mod-glwd-jwt-type-rsa-pss": "RSA-PSS",
+    "mod-glwd-jwt-type-eddsa": "EdDSA",
     "mod-glwd-jwt-key-size": "Sleutel lengte",
     "mod-glwd-jwt-key-size-256": "256 bits",
     "mod-glwd-jwt-key-size-384": "384 bits",
